@@ -2,9 +2,9 @@ package de.aaaaaaah.backend.storage.repo;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import de.aaaaaaah.designproto.backend.storage.repo.RepoStorage;
-import de.aaaaaaah.designproto.backend.storage.repo.exception.AddRepositoryException;
-import de.aaaaaaah.designproto.backend.util.DirectoryRemover;
+import de.aaaaaaah.velcom.backend.storage.repo.RepoStorage;
+import de.aaaaaaah.velcom.backend.storage.repo.exception.AddRepositoryException;
+import de.aaaaaaah.velcom.backend.util.DirectoryRemover;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;

@@ -36,7 +36,7 @@
             <transformer
               implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
               <manifestEntries>
-                <Main-Class>de.aaaaaaah.designproto.runner.TestMain</Main-Class>
+                <Main-Class>de.aaaaaaah.velcom.runner.TestMain</Main-Class>
               </manifestEntries>
             </transformer>
           </transformers>

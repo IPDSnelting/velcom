@@ -1,12 +1,12 @@
 package de.aaaaaaah.backend.storage.access.archive;
 
-import de.aaaaaaah.designproto.backend.access.commit.CommitHash;
-import de.aaaaaaah.designproto.backend.access.repo.RepoId;
-import de.aaaaaaah.designproto.backend.access.repo.archive.ArchiveException;
-import de.aaaaaaah.designproto.backend.access.repo.archive.Archiver;
-import de.aaaaaaah.designproto.backend.storage.repo.RepoStorage;
-import de.aaaaaaah.designproto.backend.storage.repo.exception.AddRepositoryException;
-import de.aaaaaaah.designproto.backend.util.DirectoryRemover;
+import de.aaaaaaah.velcom.backend.access.commit.CommitHash;
+import de.aaaaaaah.velcom.backend.access.repo.RepoId;
+import de.aaaaaaah.velcom.backend.access.repo.archive.ArchiveException;
+import de.aaaaaaah.velcom.backend.access.repo.archive.Archiver;
+import de.aaaaaaah.velcom.backend.storage.repo.RepoStorage;
+import de.aaaaaaah.velcom.backend.storage.repo.exception.AddRepositoryException;
+import de.aaaaaaah.velcom.backend.util.DirectoryRemover;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;

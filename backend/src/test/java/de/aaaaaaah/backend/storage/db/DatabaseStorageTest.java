@@ -10,7 +10,7 @@ import static org.jooq.codegen.db.Tables.TRACKED_BRANCH;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import de.aaaaaaah.designproto.backend.storage.db.DatabaseStorage;
+import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import de.mkammerer.argon2.Argon2;
 import de.mkammerer.argon2.Argon2Factory;
 import de.mkammerer.argon2.Argon2Helper;
