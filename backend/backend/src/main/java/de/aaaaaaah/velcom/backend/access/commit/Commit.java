@@ -89,12 +89,7 @@ public class Commit {
 		return commitAccess.isKnown(repoId, hash);
 	}
 
-	/**
-	 * @return true if the commit has not yet been benchmarked or is currently being benchmarked,
-	 * 	false if the commit has already been benchmarked and the measured values have been stored in
-	 * 	the db
-	 */
-	public boolean requiresBenchmark() {
-		return commitAccess.requiresBenchmark(repoId, hash);
+	public BenchmarkStatus getBenchmarkStatus() {
+		return commitAccess.getBenchmarkStatus(repoId, hash);
 	}
 }

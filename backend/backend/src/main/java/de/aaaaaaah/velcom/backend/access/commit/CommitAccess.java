@@ -66,7 +66,9 @@ public class CommitAccess {
 	// Mutable properties
 
 	/**
-	 * See {@link Commit#isKnown()}.
+	 * See {@link Commit#isKnown()}. To make an unknown commit known, use {@link
+	 * #setBenchmarkStatus(RepoId, CommitHash, BenchmarkStatus)} to set its benchmark status. To
+	 * make a known commit unknown, use {@link #makeUnknown(RepoId, CommitHash)}.
 	 *
 	 * @param repoId the repo the commit is in
 	 * @param hash the commit's hash
@@ -77,11 +79,14 @@ public class CommitAccess {
 		return false;
 	}
 
-	public void setKnown(Commit commit, boolean isKnown) {
-		setKnown(commit.getRepoId(), commit.getHash(), isKnown);
-	}
-
-	public void setKnown(RepoId repoId, CommitHash commitHash, boolean isKnown) {
+	/**
+	 * Remove a commit from the list of known commits. This also deletes associated information,
+	 * such as the commit's benchmark status.
+	 *
+	 * @param repoId the repo the commit is in
+	 * @param hash the commit's hash
+	 */
+	public void makeUnknown(RepoId repoId, CommitHash hash) {
 		// TODO implement
 	}
 
@@ -96,26 +101,12 @@ public class CommitAccess {
 		return false;
 	}
 
-	/**
-	 * See {@link Commit#requiresBenchmark()}.
-	 *
-	 * @param repoId the repo the commit is in
-	 * @param hash the commit's hash
-	 * @return true if the commit has not yet been benchmarked or is currently being benchmarked,
-	 * 	false if the commit has already been benchmarked and the measured values have been stored in
-	 * 	the db. Defaults to false if the repo id or commit hash are invalid
-	 */
-	public boolean requiresBenchmark(RepoId repoId, CommitHash hash) {
-		// TODO implement
-		return false;
+	public BenchmarkStatus getBenchmarkStatus(RepoId repoId, CommitHash commitHash) {
+		return null; // TODO implement
 	}
 
-	public void setRequiresBenchmark(Commit commit, boolean requiresBenchmark) {
-		setRequiresBenchmark(commit.getRepoId(), commit.getHash(), requiresBenchmark);
-	}
-
-	public void setRequiresBenchmark(RepoId repoId, CommitHash commitHash,
-		boolean requiresBenchmark) {
+	public void setBenchmarkStatus(RepoId repoId, CommitHash commitHash,
+		BenchmarkStatus benchmarkStatus) {
 
 		// TODO implement
 	}
