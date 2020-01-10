@@ -1,0 +1,81 @@
+package de.aaaaaaah.designproto.backend;
+
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import de.aaaaaaah.designproto.backend.access.AccessLayer;
+import de.aaaaaaah.designproto.backend.access.benchmark.BenchmarkAccess;
+import de.aaaaaaah.designproto.backend.access.commit.CommitAccess;
+import de.aaaaaaah.designproto.backend.access.queue.QueueAccess;
+import de.aaaaaaah.designproto.backend.access.repo.RepoAccess;
+import de.aaaaaaah.designproto.backend.access.token.AuthToken;
+import de.aaaaaaah.designproto.backend.access.token.TokenAccess;
+import de.aaaaaaah.designproto.backend.data.linearlog.CommitAccessBasedLinearLog;
+import de.aaaaaaah.designproto.backend.data.linearlog.LinearLog;
+import de.aaaaaaah.designproto.backend.data.queue.PolicyManualFilo;
+import de.aaaaaaah.designproto.backend.data.queue.Queue;
+import de.aaaaaaah.designproto.backend.restapi.endpoints.AllReposEndpoint;
+import de.aaaaaaah.designproto.backend.restapi.endpoints.CommitCompareEndpoint;
+import de.aaaaaaah.designproto.backend.restapi.endpoints.CommitHistoryEndpoint;
+import de.aaaaaaah.designproto.backend.restapi.endpoints.MeasurementsEndpoint;
+import de.aaaaaaah.designproto.backend.restapi.endpoints.QueueEndpoint;
+import de.aaaaaaah.designproto.backend.restapi.endpoints.RecentlyBenchmarkedCommitsEndpoint;
+import de.aaaaaaah.designproto.backend.restapi.endpoints.RepoComparisonGraphEndpoint;
+import de.aaaaaaah.designproto.backend.restapi.endpoints.RepoEndpoint;
+import de.aaaaaaah.designproto.backend.restapi.endpoints.TestTokenEndpoint;
+import de.aaaaaaah.designproto.backend.runner.Dispatcher;
+import de.aaaaaaah.designproto.backend.runner.DispatcherImpl;
+import de.aaaaaaah.designproto.backend.storage.db.DatabaseStorage;
+import de.aaaaaaah.designproto.backend.storage.repo.RepoStorage;
+import io.dropwizard.Application;
+import io.dropwizard.setup.Environment;
+import java.net.URI;
+
+/**
+ * The backend's main class. Contains the core initialisation routines for the web server.
+ */
+public class ServerMain extends Application<GlobalConfig> {
+
+	/**
+	 * The backend's main class's main method. Starts the web server.
+	 *
+	 * @param args the command line arguments
+	 * @throws Exception if the web server can not be started
+	 */
+	public static void main(String[] args) throws Exception {
+		new ServerMain().run(args);
+	}
+
+	@Override
+	public void run(GlobalConfig configuration, Environment environment) throws Exception {
+		environment.getObjectMapper().setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
+
+		DatabaseStorage databaseStorage = new DatabaseStorage(configuration);
+		RepoStorage repoStorage = new RepoStorage();
+
+		AccessLayer accessLayer = new AccessLayer();
+		BenchmarkAccess benchmarkAccess = new BenchmarkAccess(accessLayer, databaseStorage);
+		CommitAccess commitAccess = new CommitAccess(accessLayer, databaseStorage, repoStorage);
+		QueueAccess queueAccess = new QueueAccess(accessLayer, databaseStorage);
+		RepoAccess repoAccess = new RepoAccess(accessLayer, databaseStorage, repoStorage,
+			new URI(configuration.getBenchmarkRepoRemoteUrl()));
+		TokenAccess tokenAccess = new TokenAccess(accessLayer, databaseStorage,
+			new AuthToken(configuration.getWebAdminToken()));
+
+		LinearLog linearLog = new CommitAccessBasedLinearLog(commitAccess);
+		Queue queue = new Queue(queueAccess, new PolicyManualFilo());
+		Dispatcher dispatcher = new DispatcherImpl(queue);
+
+		RunnerAwareServerFactory.getInstance().setDispatcher(dispatcher);
+
+		environment.jersey().register(new AllReposEndpoint(repoAccess));
+		environment.jersey()
+			.register(new CommitCompareEndpoint(benchmarkAccess, commitAccess, linearLog));
+		environment.jersey().register(new CommitHistoryEndpoint(repoAccess, linearLog));
+		environment.jersey().register(new MeasurementsEndpoint(benchmarkAccess));
+		environment.jersey().register(new QueueEndpoint(commitAccess, queue, dispatcher));
+		environment.jersey()
+			.register(new RecentlyBenchmarkedCommitsEndpoint(benchmarkAccess, linearLog));
+		environment.jersey().register(new RepoComparisonGraphEndpoint());
+		environment.jersey().register(new RepoEndpoint(repoAccess, tokenAccess));
+		environment.jersey().register(new TestTokenEndpoint(tokenAccess));
+	}
+}

@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns="http://maven.apache.org/POM/4.0.0"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <modules>
+    <module>runner</module>
+    <module>backend</module>
+    <module>shared</module>
+  </modules>
+
+  <artifactId>velcom</artifactId>
+  <groupId>de.aaaaaaah</groupId>
+  <name>VelCom</name>
+  <version>0.0</version>
+
+  <packaging>pom</packaging>
+
+  <properties>
+    <junit.version>5.5.2</junit.version>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
+
+  <build>
+    <pluginManagement>
+      <plugins>
+
+        <!-- COMPILER SETTINGS -->
+        <plugin>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <configuration>
+            <compilerArgs>
+              <arg>-parameters</arg>
+            </compilerArgs>
+            <release>11</release>
+          </configuration>
+          <version>3.8.1</version>
+        </plugin>
+
+        <!-- RUNNABLE JAR -->
+        <plugin>
+          <artifactId>maven-shade-plugin</artifactId>
+          <configuration>
+            <finalName>${project.name}</finalName>
+          </configuration>
+          <executions>
+            <execution>
+              <goals>
+                <goal>shade</goal>
+              </goals>
+              <id>shade</id>
+              <phase>package</phase>
+            </execution>
+          </executions>
+          <version>3.2.1</version>
+        </plugin>
+
+        <!-- UNIT TESTING -->
+        <plugin>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <groupId>org.apache.maven.plugins</groupId>
+          <version>3.0.0-M3</version>
+        </plugin>
+
+      </plugins>
+    </pluginManagement>
+  </build>
+
+  <dependencyManagement>
+    <dependencies>
+
+      <!-- COMPRESSION -->
+      <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-compress -->
+      <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-compress</artifactId>
+        <version>1.19</version>
+      </dependency>
+
+      <!-- TESTING -->
+      <dependency>
+        <artifactId>junit-jupiter-api</artifactId>
+        <groupId>org.junit.jupiter</groupId>
+        <scope>test</scope>
+        <version>${junit.version}</version>
+      </dependency>
+      <dependency>
+        <artifactId>junit-jupiter-engine</artifactId>
+        <groupId>org.junit.jupiter</groupId>
+        <scope>test</scope>
+        <version>${junit.version}</version>
+      </dependency>
+
+      <!-- PARAMETERIZED TESTS -->
+      <dependency>
+        <artifactId>junit-jupiter-params</artifactId>
+        <groupId>org.junit.jupiter</groupId>
+        <scope>test</scope>
+        <version>${junit.version}</version>
+      </dependency>
+
+      <dependency>
+        <artifactId>jackson-bom</artifactId>
+        <groupId>com.fasterxml.jackson</groupId>
+        <scope>import</scope>
+        <type>pom</type>
+        <version>2.10.0</version>
+      </dependency>
+
+    </dependencies>
+  </dependencyManagement>
+
+</project>

@@ -1,0 +1,19 @@
+# The JDBC (Java database connectivity) url used to connect to the database
+jdbcUrl: "jdbc:sqlite:file:data/data.db"
+# The username to use for the database connection. Optional.
+jdbcUsername: ""
+# The password to use for the database connection. Optional.
+jdbcPassword: ""
+# The interval between listener updates. (in seconds)
+pollInterval: 600
+# The token for the web administrator
+webAdminToken: "12345"
+# The port that the REST API should be listening on
+restApiPort: 80
+# The port that the dispatcher should be listening on
+runnerPort: 3546
+# The remote url where the benchmark repo remote url can be cloned from
+benchmarkRepoRemoteUrl: "https://git.scc.kit.edu/aaaaaaah/codespeed-runner"
+# The token runners need to provide in order to connect successfully.
+# Will be transmitted in plain text over an HTTPS connection.
+runnerToken: "Correct-Horse_Battery Staple"

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE module PUBLIC
+  "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN"
+  "https://checkstyle.org/dtds/configuration_1_3.dtd">
+
+<module name="Checker">
+  <module name="TreeWalker">
+    <module name="AtclauseOrder"/>
+    <module name="InvalidJavadocPosition"/>
+    <module name="JavadocBlockTagLocation"/>
+
+    <module name="JavadocMethod">
+      <property name="validateThrows" value="true"/>
+    </module>
+
+    <module name="JavadocParagraph">
+      <!-- Setting this property to false actually allows spaces and newlines after the <p> tag. -->
+      <property name="allowNewlineParagraph" value="false"/>
+    </module>
+
+    <module name="JavadocStyle"/>
+    <module name="JavadocType"/>
+
+    <module name="MissingJavadocMethod">
+      <!-- Ignore all getters, setters and constructors by default -->
+      <property name="ignoreMethodNamesRegex" value="^[gs]et[A-Z].*$"/>
+      <property name="tokens" value="METHOD_DEF, ANNOTATION_FIELD_DEF"/>
+    </module>
+
+    <module name="MissingJavadocType"/>
+    <module name="NonEmptyAtclauseDescription"/>
+  </module>
+</module>
