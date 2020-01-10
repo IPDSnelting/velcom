@@ -21,7 +21,7 @@ public class TestTokenEndpoint {
 	}
 
 	/**
-	 * Returns the push notification token that can be used to send push requests.
+	 * Checks whether an access token is valid for a given repo.
 	 *
 	 * @param repoUuid the id of the repo
 	 */
