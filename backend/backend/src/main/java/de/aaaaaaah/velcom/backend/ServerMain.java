@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import de.aaaaaaah.velcom.backend.access.AccessLayer;
 import de.aaaaaaah.velcom.backend.access.benchmark.BenchmarkAccess;
 import de.aaaaaaah.velcom.backend.access.commit.CommitAccess;
-import de.aaaaaaah.velcom.backend.access.queue.QueueAccess;
 import de.aaaaaaah.velcom.backend.access.repo.RepoAccess;
 import de.aaaaaaah.velcom.backend.access.token.AuthToken;
 import de.aaaaaaah.velcom.backend.access.token.TokenAccess;
@@ -54,14 +53,13 @@ public class ServerMain extends Application<GlobalConfig> {
 		AccessLayer accessLayer = new AccessLayer();
 		BenchmarkAccess benchmarkAccess = new BenchmarkAccess(accessLayer, databaseStorage);
 		CommitAccess commitAccess = new CommitAccess(accessLayer, databaseStorage, repoStorage);
-		QueueAccess queueAccess = new QueueAccess(accessLayer, databaseStorage);
 		RepoAccess repoAccess = new RepoAccess(accessLayer, databaseStorage, repoStorage,
 			new URI(configuration.getBenchmarkRepoRemoteUrl()));
 		TokenAccess tokenAccess = new TokenAccess(accessLayer, databaseStorage,
 			new AuthToken(configuration.getWebAdminToken()));
 
 		LinearLog linearLog = new CommitAccessBasedLinearLog(commitAccess);
-		Queue queue = new Queue(queueAccess, new PolicyManualFilo());
+		Queue queue = new Queue(commitAccess, new PolicyManualFilo());
 		Dispatcher dispatcher = new DispatcherImpl(queue);
 
 		RunnerAwareServerFactory.getInstance().setDispatcher(dispatcher);

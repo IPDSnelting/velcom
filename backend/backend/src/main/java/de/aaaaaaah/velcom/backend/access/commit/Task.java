@@ -1,4 +1,4 @@
-package de.aaaaaaah.velcom.backend.access.queue;
+package de.aaaaaaah.velcom.backend.access.commit;
 
 import de.aaaaaaah.velcom.backend.access.commit.CommitHash;
 import de.aaaaaaah.velcom.backend.access.repo.RepoId;

@@ -1,7 +1,7 @@
 package de.aaaaaaah.velcom.backend.data.queue;
 
 import de.aaaaaaah.velcom.backend.access.commit.CommitHash;
-import de.aaaaaaah.velcom.backend.access.queue.Task;
+import de.aaaaaaah.velcom.backend.access.commit.Task;
 import de.aaaaaaah.velcom.backend.access.repo.RepoId;
 import java.util.List;
 import java.util.Optional;

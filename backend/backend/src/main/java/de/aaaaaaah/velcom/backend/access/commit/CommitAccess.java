@@ -105,10 +105,16 @@ public class CommitAccess {
 		return null; // TODO implement
 	}
 
-	public void setBenchmarkStatus(RepoId repoId, CommitHash commitHash,
+	public Task setBenchmarkStatus(RepoId repoId, CommitHash commitHash,
 		BenchmarkStatus benchmarkStatus) {
 
 		// TODO implement
+		return null;
+	}
+
+	public Collection<Task> getAllTasksOfStatus(RepoId repoId, BenchmarkStatus status) {
+		// TODO implement
+		return null;
 	}
 
 	// Advanced operations
