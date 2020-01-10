@@ -10,8 +10,8 @@ import de.aaaaaaah.velcom.backend.access.repo.RepoId;
  * it can then be evaluated and checked.
  *
  * <p> To check whether a token is valid for a specific repo, use {@link
- * de.aaaaaaah.velcom.backend.access.repo.Repo#isValidToken(AuthToken)}. To check whether a
- * token is a valid admin token, use {@link TokenAccess#isValidAdminToken(AuthToken)}.
+ * de.aaaaaaah.velcom.backend.access.repo.Repo#isValidToken(AuthToken)}. To check whether a token is
+ * a valid admin token, use {@link TokenAccess#isValidAdminToken(AuthToken)}.
  */
 public class AuthToken {
 

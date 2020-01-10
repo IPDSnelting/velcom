@@ -145,9 +145,7 @@ public class RepoAccess {
 	 * Delete an existing repo.
 	 *
 	 * @param repoId the id of the repo to delete
-	 *
-	 * @throws DeleteRepoException if an error occurs while trying to delete
-	 * the repo
+	 * @throws DeleteRepoException if an error occurs while trying to delete the repo
 	 */
 	public void deleteRepo(RepoId repoId) throws DeleteRepoException {
 		try (DSLContext db = databaseStorage.acquireContext()) {
