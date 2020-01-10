@@ -1,0 +1,17 @@
+image: maven:3-jdk-11
+
+variables:
+  # Recursive clone breaks as the ssh keys for Pseudoclet are not available
+  # (I think)
+  #GIT_SUBMODULE_STRATEGY: recursive
+
+stages:
+  - build
+
+compile:
+  stage: build
+  script:
+    - mvn clean package
+  artifacts:
+  tags:
+    - keep
