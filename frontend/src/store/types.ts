@@ -1,3 +1,52 @@
+export interface RootState {
+  apiBaseURL: string
+
+  colorState: ColorState
+  repoState: RepoState
+  repoComparisonState: RepoComparisonState
+  repoDetailState: RepoDetailState
+  newsState: NewsState
+  commitComparisonState: CommitComparisonState
+  queueState: QueueState
+  userState: UserState
+}
+
+export interface ColorState {
+  colors: Array<string>
+}
+
+export interface RepoState {
+  repos: { [id: string]: Repo }
+}
+
+export interface RepoComparisonState {
+  runsByRepoID: { [repoID: string]: Array<Run> }
+}
+
+export interface RepoDetailState {
+  comparisonsByRepoID: { [repoID: string]: Array<CommitComparison> }
+}
+
+export interface NewsState {
+  recentRuns: Array<CommitComparison>
+  recentSignificantRuns: Array<CommitComparison>
+}
+
+export interface CommitComparisonState {
+  comparisons: Map<{ repoID: string; hashOne: string}, {[hashTwo: string]: CommitComparison}>
+}
+
+export interface QueueState {
+  openTasks: Array<Commit>
+  workers: Array<Worker>
+}
+
+export interface UserState {
+  role: 'WEB_ADMIN' | 'REPO_ADMIN' | null
+  repoID: string | null
+  token: string | null
+}
+
 export class Repo {
   id: string | null
   name: string | null
