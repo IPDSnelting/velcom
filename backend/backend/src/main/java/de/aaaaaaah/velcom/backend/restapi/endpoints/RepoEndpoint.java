@@ -8,7 +8,9 @@ import de.aaaaaaah.velcom.backend.access.repo.RepoAccess;
 import de.aaaaaaah.velcom.backend.access.repo.RepoId;
 import de.aaaaaaah.velcom.backend.access.token.AuthToken;
 import de.aaaaaaah.velcom.backend.access.token.TokenAccess;
+import de.aaaaaaah.velcom.backend.restapi.RepoUser;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRepo;
+import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.PATCH;
 import java.util.Objects;
 import java.util.Optional;
@@ -62,8 +64,11 @@ public class RepoEndpoint {
 	 * @param request the repo add metadata
 	 * @return the added repo
 	 */
+	@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 	@POST
-	public GetReply post(@NotNull PostRequest request) {
+	public GetReply post(@Auth Optional<RepoUser> user, @NotNull PostRequest request) {
+		RepoUser.guardAdminAccess(user);
+
 		Repo repo = repoAccess.addRepo(request.getName(), request.getRemoteUrl());
 
 		request.getToken()
@@ -74,13 +79,15 @@ public class RepoEndpoint {
 	}
 
 	/**
-	 * Changes an existing.
+	 * Changes an existing repo.
 	 *
 	 * @param request the change request
 	 */
+	@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 	@PATCH
-	public void patch(@NotNull PatchRequest request) {
+	public void patch(@Auth Optional<RepoUser> user, @NotNull PatchRequest request) {
 		RepoId repoId = new RepoId(request.getRepoId());
+		RepoUser.guardRepoAccess(user, repoId);
 
 		request.getName().ifPresent(name -> repoAccess.setName(repoId, name));
 
@@ -100,11 +107,13 @@ public class RepoEndpoint {
 	 *
 	 * @param repoUuid the id of the repo to delete
 	 */
+	@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 	@DELETE
-	public void delete(
+	public void delete(@Auth Optional<RepoUser> user,
 		@NotNull @QueryParam("repo_id") UUID repoUuid) {
-
 		RepoId repoId = new RepoId(repoUuid);
+		RepoUser.guardRepoAccess(user, repoId);
+
 		Repo repo = repoAccess.getRepo(repoId);
 
 		repoAccess.deleteRepo(repoId);
