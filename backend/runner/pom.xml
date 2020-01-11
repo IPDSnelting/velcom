@@ -14,6 +14,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <jbock.version>3.4.008</jbock.version>
   </properties>
 
   <build>
@@ -60,7 +61,7 @@
     <dependency>
       <groupId>com.github.h908714124</groupId>
       <artifactId>jbock</artifactId>
-      <version>3.4.008</version>
+      <version>${jbock.version}</version>
       <scope>provided</scope>
     </dependency>
   </dependencies>

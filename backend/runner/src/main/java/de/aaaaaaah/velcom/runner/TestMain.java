@@ -1,8 +1,8 @@
 package de.aaaaaaah.velcom.runner;
 
-import de.aaaaaaah.velcom.runner.entity.BenchmarkscriptWorkExecutor;
 import de.aaaaaaah.velcom.runner.entity.RunnerConfiguration;
 import de.aaaaaaah.velcom.runner.entity.TempFileBenchmarkRepoOrganizer;
+import de.aaaaaaah.velcom.runner.entity.execution.BenchmarkscriptWorkExecutor;
 import de.aaaaaaah.velcom.runner.exceptions.ConnectionException;
 import de.aaaaaaah.velcom.runner.protocol.WebsocketListener;
 import de.aaaaaaah.velcom.runner.shared.protocol.serialization.SimpleJsonSerializer;

@@ -8,6 +8,7 @@ import de.aaaaaaah.velcom.backend.runner.single.ActiveRunnerInformation;
 import de.aaaaaaah.velcom.runner.shared.RunnerStatusEnum;
 import de.aaaaaaah.velcom.runner.shared.protocol.runnerbound.entities.RunnerWorkOrder;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkResults;
+import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.RunnerInformation;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
@@ -37,6 +38,8 @@ public class DispatcherImpl implements Dispatcher {
 
 	@Override
 	public void addRunner(ActiveRunnerInformation runnerInformation) {
+		removeRunner(runnerInformation);
+
 		runnerInformation.addStatusListener(status -> {
 			if (status == RunnerStatusEnum.IDLE) {
 				onFreeRunner(runnerInformation);
@@ -55,9 +58,20 @@ public class DispatcherImpl implements Dispatcher {
 		System.out.println("Added a runner " + runnerInformation);
 	}
 
-	private void removeRunner(ActiveRunnerInformation runnerInformation) {
-		System.out.println("Removing runner " + runnerInformation);
-		activeRunners.remove(runnerInformation);
+	private void removeRunner(ActiveRunnerInformation activeRunner) {
+		if (activeRunner.getRunnerInformation().isEmpty()) {
+			// Can not do anything else
+			activeRunners.remove(activeRunner);
+			return;
+		}
+		String name = activeRunner.getRunnerInformation().get().getName();
+		System.out.println("Removing runner with name " + name);
+		activeRunners.removeIf(runner ->
+			runner.getRunnerInformation()
+				.map(RunnerInformation::getName)
+				.map(name::equals)
+				.orElse(false)
+		);
 	}
 
 	@Override
