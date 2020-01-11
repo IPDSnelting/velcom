@@ -38,8 +38,8 @@ public class RepoStorage {
 	 *
 	 * @see #RepoStorage(Path)
 	 */
-	public RepoStorage() {
-		this.rootDir = Paths.get("data/repos");
+	public RepoStorage() throws IOException {
+		this(Paths.get("data/repos"));
 	}
 
 	/**
@@ -47,8 +47,9 @@ public class RepoStorage {
 	 *
 	 * @param rootDir the directory where all repositories will be stored in
 	 */
-	public RepoStorage(Path rootDir) {
+	public RepoStorage(Path rootDir) throws IOException {
 		this.rootDir = rootDir;
+		Files.createDirectories(rootDir);
 	}
 
 	/**
@@ -101,7 +102,6 @@ public class RepoStorage {
 				throw new DirectoryAlreadyExistsException(repoDir);
 			}
 
-			// TODO: 27.12.19 createDirectories? Also create parents if needed [the root dir]?
 			Files.createDirectory(repoDir);
 
 			CloneCommand cloneCommand = Git.cloneRepository()
