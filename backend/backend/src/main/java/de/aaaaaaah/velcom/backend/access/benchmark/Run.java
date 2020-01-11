@@ -2,6 +2,7 @@ package de.aaaaaaah.velcom.backend.access.benchmark;
 
 import de.aaaaaaah.velcom.backend.access.commit.Commit;
 import de.aaaaaaah.velcom.backend.access.commit.CommitAccess;
+import de.aaaaaaah.velcom.backend.access.commit.CommitAccessException;
 import de.aaaaaaah.velcom.backend.access.commit.CommitHash;
 import de.aaaaaaah.velcom.backend.access.repo.Repo;
 import de.aaaaaaah.velcom.backend.access.repo.RepoAccess;
@@ -65,7 +66,7 @@ public class Run {
 		return commitHash;
 	}
 
-	public Commit getCommit() {
+	public Commit getCommit() throws CommitAccessException {
 		return commitAccess.getCommit(repoId, commitHash);
 	}
 

@@ -252,6 +252,11 @@ class RepoStorageTest {
 					+ " <" + commit.getCommitterIdent().getEmailAddress() + ">");
 				System.out.println(commit.getCommitterIdent().getWhen());
 
+				System.out.println(commit.getParentCount());
+
+				for (RevCommit parentCommit : commit.getParents()) {
+					System.out.println(parentCommit.getId().getName());
+				}
 			}
 		}
 	}

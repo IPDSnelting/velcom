@@ -3,7 +3,7 @@ package de.aaaaaaah.velcom.backend.access.commit;
 /**
  * This exception is thrown when something goes wrong while accessing commits in a repository.
  */
-public class CommitAccessException extends Exception {
+public class CommitAccessException extends RuntimeException {
 
 	public CommitAccessException() {
 	}

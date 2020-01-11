@@ -1,8 +1,8 @@
 CREATE TABLE repository
 (
-    id            CHAR(36) UNIQUE NOT NULL,
-    name          TEXT            NOT NULL,
-    remote_url    TEXT            NOT NULL
+    id         CHAR(36) UNIQUE NOT NULL,
+    name       TEXT            NOT NULL,
+    remote_url TEXT            NOT NULL
 );
 
 CREATE TABLE tracked_branch
@@ -16,11 +16,11 @@ CREATE TABLE tracked_branch
 
 CREATE TABLE known_commit
 (
-    repo_id            CHAR(36)  NOT NULL,
-    hash               CHAR(40)  NOT NULL,
-    requires_benchmark BOOLEAN   NOT NULL,
-    update_time        TIMESTAMP NOT NULL,
-    insert_time        TIMESTAMP NOT NULL,
+    repo_id     CHAR(36)  NOT NULL,
+    hash        CHAR(40)  NOT NULL,
+    status      INTEGER   NOT NULL,
+    update_time TIMESTAMP NOT NULL,
+    insert_time TIMESTAMP NOT NULL,
 
     PRIMARY KEY (repo_id, hash),
     FOREIGN KEY (repo_id) REFERENCES repository (id)

@@ -3,6 +3,7 @@ package de.aaaaaaah.velcom.backend.access.commit;
 import de.aaaaaaah.velcom.backend.access.repo.Repo;
 import de.aaaaaaah.velcom.backend.access.repo.RepoAccess;
 import de.aaaaaaah.velcom.backend.access.repo.RepoId;
+import de.aaaaaaah.velcom.backend.access.repo.exception.NoSuchRepoException;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
@@ -46,7 +47,7 @@ public class Commit {
 		return repoId;
 	}
 
-	public Repo getRepo() {
+	public Repo getRepo() throws NoSuchRepoException {
 		return repoAccess.getRepo(repoId);
 	}
 
@@ -58,7 +59,7 @@ public class Commit {
 		return parentHashes;
 	}
 
-	public Collection<Commit> getParents() {
+	public Collection<Commit> getParents() throws CommitAccessException {
 		return commitAccess.getCommits(repoId, parentHashes);
 	}
 
