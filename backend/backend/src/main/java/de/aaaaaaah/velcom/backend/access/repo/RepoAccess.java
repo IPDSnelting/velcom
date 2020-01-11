@@ -27,6 +27,8 @@ import java.util.List;
 import java.util.UUID;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.jooq.DSLContext;
@@ -64,13 +66,13 @@ public class RepoAccess {
 		this.archiver = new Archiver(repoStorage);
 
 		// Clone benchmark repo if needed
-		//if (!repoStorage.containsRepository(benchRepoDirName)) {
-		//	try {
-		//		repoStorage.addRepository(benchRepoDirName, benchRepoUrl);
-		//	} catch (AddRepositoryException e) {
-		//		throw new AddRepoException(e);
-		//	}
-		//}
+		if (!repoStorage.containsRepository(benchRepoDirName)) {
+			try {
+				repoStorage.addRepository(benchRepoDirName, benchRepoUrl);
+			} catch (AddRepositoryException e) {
+				throw new AddRepoException(e);
+			}
+		}
 
 		accessLayer.registerRepoAccess(this);
 	}
@@ -131,7 +133,27 @@ public class RepoAccess {
 		}
 
 		// (3): Find master branch and set it to tracked
-		// TODO: implement
+		try (Repository repo = repoStorage.acquireRepository(repoId.getDirectoryName())) {
+			Ref foundBranchRef = null;
+
+			// Try to find master but if master does not exist, choose some other branch
+			for (Ref branchRef : Git.wrap(repo).branchList().call()) {
+				if (foundBranchRef == null || branchRef.getName().equals("master")) {
+					foundBranchRef = branchRef;
+				}
+			}
+
+			if (foundBranchRef == null) {
+				// There are no branches in this repository ?!
+				throw new AddRepoException("repo does not contain any branches: " + name);
+			}
+
+			BranchName branchName = new BranchName(foundBranchRef.getName());
+
+			setBranchTracked(repoId, branchName, true);
+		} catch (RepositoryAcquisitionException | GitAPIException e) {
+			throw new AddRepoException(e);
+		}
 
 		return new Repo(
 			this,
@@ -158,6 +180,31 @@ public class RepoAccess {
 			repoStorage.deleteRepository(repoId.getDirectoryName());
 		} catch (IOException e) {
 			throw new DeleteRepoException(e);
+		}
+	}
+
+	/**
+	 * Performs either fetch operation on the specified repository, or a clone operation if the
+	 * repository has not been cloned to the local repo storage yet.
+	 *
+	 * @param repoId the id of the repository
+	 */
+	public void fetchOrClone(RepoId repoId) {
+		if (repoStorage.containsRepository(repoId.getDirectoryName())) {
+			// local repo exists => just fetch
+			try (Repository repo = repoStorage.acquireRepository(repoId.getDirectoryName())) {
+				Git.wrap(repo).fetch().call();
+			} catch (RepositoryAcquisitionException | GitAPIException e) {
+				throw new RepoAccessException(repoId, e);
+			}
+		} else {
+			// local repo does not exist => clone
+			Repo repo = getRepo(repoId);
+			try {
+				repoStorage.addRepository(repoId.getDirectoryName(), repo.getRemoteUrl());
+			} catch (AddRepositoryException e) {
+				throw new RepoAccessException(repoId, e);
+			}
 		}
 	}
 
@@ -225,16 +272,27 @@ public class RepoAccess {
 	}
 
 	/**
-	 * Sets the local repo id of the repository associated with the given repo id.
+	 * Sets the remote url of the repository associated with the given repo id.
 	 *
 	 * @param repoId the id of the repository
 	 * @param remoteUrl the new remote url
 	 */
-	public void setRemoteUrl(RepoId repoId, URI remoteUrl) {
-		// (1): Update local repo
-		// TODO implement
+	public void setRemoteUrl(RepoId repoId, URI remoteUrl) throws RepoAccessException {
+		// (1): Because this operation is quite expensive, check if remote url really changed
+		URI oldRemoteUrl = getRemoteUrl(repoId);
+		if (oldRemoteUrl.equals(remoteUrl)) {
+			return;
+		}
 
-		// (2): Update database
+		// (2): Update local repo
+		try {
+			repoStorage.deleteRepository(repoId.getDirectoryName());
+			repoStorage.addRepository(repoId.getDirectoryName(), remoteUrl);
+		} catch (IOException | AddRepositoryException e) {
+			throw new RepoAccessException(repoId);
+		}
+
+		// (3): Update database
 		try (DSLContext db = databaseStorage.acquireContext()) {
 			db.update(REPOSITORY)
 				.set(REPOSITORY.REMOTE_URL, remoteUrl.toString())
@@ -244,12 +302,12 @@ public class RepoAccess {
 	}
 
 	/**
-	 * Sets the local repo id of the given repository.
+	 * Sets the remote url of the given repository.
 	 *
 	 * @param repo the repository
 	 * @param remoteUrl the new remote url
 	 */
-	public void setLocalRepoId(Repo repo, URI remoteUrl) {
+	public void setRemoteUrl(Repo repo, URI remoteUrl) {
 		setRemoteUrl(repo.getId(), remoteUrl);
 	}
 
@@ -276,11 +334,24 @@ public class RepoAccess {
 	 * @param tracked the branch's new tracked state
 	 */
 	public void setBranchTracked(RepoId repoId, BranchName branchName, boolean tracked) {
-		try (DSLContext db = databaseStorage.acquireContext()) {
-			TrackedBranchRecord record = db.newRecord(TRACKED_BRANCH);
-			record.setRepoId(repoId.getId().toString());
-			record.setBranchName(branchName.getName());
-			record.insert();
+		if (tracked) {
+			if (isBranchTracked(repoId, branchName)) {
+				return; // branch already tracked
+			}
+
+			try (DSLContext db = databaseStorage.acquireContext()) {
+				TrackedBranchRecord record = db.newRecord(TRACKED_BRANCH);
+				record.setRepoId(repoId.getId().toString());
+				record.setBranchName(branchName.getName());
+				record.insert();
+			}
+		} else {
+			try (DSLContext db = databaseStorage.acquireContext()) {
+				db.deleteFrom(TRACKED_BRANCH)
+					.where(TRACKED_BRANCH.REPO_ID.eq(repoId.getId().toString()))
+					.and(TRACKED_BRANCH.BRANCH_NAME.eq(branchName.getName()))
+					.execute();
+			}
 		}
 	}
 
@@ -302,7 +373,6 @@ public class RepoAccess {
 	 * @throws RepoAccessException if an error occurs trying to read data from the repository
 	 */
 	public Collection<Branch> getBranches(RepoId repoId) throws RepoAccessException {
-		Repo repo = getRepo(repoId);
 		String dirName = repoId.getDirectoryName();
 
 		try (Repository jgitRepo = repoStorage.acquireRepository(dirName)) {
@@ -364,6 +434,36 @@ public class RepoAccess {
 	}
 
 	/**
+	 * @return the latest commit on the master branch of the benchmark repository
+	 */
+	public CommitHash getLatestBenchmarkRepoHash() {
+		return new CommitHash(getCommitHashByRef(benchRepoDirName, Constants.HEAD));
+	}
+
+	/**
+	 * @param branch the branch
+	 * @return returns the commit that the specified branch has pointed to
+	 */
+	public CommitHash getLatestCommitHash(Branch branch) {
+		return new CommitHash(getCommitHashByRef(
+			branch.getRepoId().getDirectoryName(),
+			branch.getName().getName()
+		));
+	}
+
+	private String getCommitHashByRef(String dirName, String ref) {
+		try (Repository repo = repoStorage.acquireRepository(dirName)) {
+			ObjectId refPtr = repo.resolve(ref);
+			return refPtr.getName(); // returns sha-1 hash
+		} catch (RepositoryAcquisitionException | IOException e) {
+			throw new RepoAccessException("failed to access ref " + ref + " under local repo "
+				+ dirName, e);
+		}
+	}
+
+	// Archive
+
+	/**
 	 * Write an uncompressed tar archive containing the (recursively cloned) working directory for
 	 * the specified commit to the output stream.
 	 *
@@ -391,30 +491,5 @@ public class RepoAccess {
 		CommitHash commitHash = getLatestBenchmarkRepoHash();
 		archiver.archive(this.benchRepoDirName, commitHash, outputStream, true);
 	}
-
-	/**
-	 * @return the latest commit on the master branch of the benchmark repository
-	 */
-	public CommitHash getLatestBenchmarkRepoHash() {
-		return null;
-	}
-
-	/**
-	 * @param branch the branch
-	 * @return returns the commit that the specified branch has pointed to
-	 */
-	public CommitHash getLatestCommitHash(Branch branch) {
-		return null;
-	}
-
-	/**
-	 * Performs either fetch operation on the specified repository, or a clone operation if the
-	 * repository has not been cloned to the local repo storage yet.
-	 *
-	 * @param repoId the id of the repository
-	 */
-	public void fetch(RepoId repoId) {
-	}
-
 
 }

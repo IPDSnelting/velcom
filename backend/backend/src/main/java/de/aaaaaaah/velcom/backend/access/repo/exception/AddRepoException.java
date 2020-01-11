@@ -9,4 +9,8 @@ public class AddRepoException extends RuntimeException {
 		super(cause);
 	}
 
+	public AddRepoException(String message) {
+		super(message);
+	}
+
 }
