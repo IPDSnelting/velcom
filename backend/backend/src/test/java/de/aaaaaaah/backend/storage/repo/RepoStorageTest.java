@@ -76,7 +76,7 @@ class RepoStorageTest {
 	public void testFetch()
 		throws AddRepositoryException, RepositoryAcquisitionException, InterruptedException, GitAPIException {
 
-		URI url = URI.create("https://github.com/kwerber/tiny_repo");
+		String url = "https://github.com/kwerber/tiny_repo";
 
 		Path repoDir = storage.addRepository("test_repo", url);
 
@@ -135,7 +135,7 @@ class RepoStorageTest {
 	public void testReachableCommitsWithMultipleBranches() throws GitAPIException, IOException,
 		AddRepositoryException {
 
-		URI url = URI.create("https://github.com/kwerber/tiny_repo");
+		String url = "https://github.com/kwerber/tiny_repo";
 
 		Path repoDir = storage.addRepository("test_repo", url);
 		assertTrue(Files.exists(repoDir));
@@ -171,7 +171,7 @@ class RepoStorageTest {
 	@Test
 	@Disabled
 	public void testReachableCommits() throws GitAPIException, IOException, AddRepositoryException {
-		URI url = URI.create("https://github.com/kwerber/tiny_repo");
+		String url = "https://github.com/kwerber/tiny_repo";
 
 		Path repoDir = storage.addRepository("test_repo", url);
 		assertTrue(Files.exists(repoDir));
@@ -206,7 +206,7 @@ class RepoStorageTest {
 	@Test
 	@Disabled
 	public void testCommitIteration() throws IOException, GitAPIException, AddRepositoryException {
-		URI url = URI.create("https://github.com/kwerber/tiny_repo");
+		String url = "https://github.com/kwerber/tiny_repo";
 
 		Path repoDir = storage.addRepository("test_repo", url);
 		assertTrue(Files.exists(repoDir));
@@ -230,7 +230,7 @@ class RepoStorageTest {
 	@Test
 	@Disabled
 	public void testCommitAccess() throws IOException, AddRepositoryException {
-		URI url = URI.create("https://github.com/kwerber/tiny_repo");
+		String url = "https://github.com/kwerber/tiny_repo";
 
 		Path repoDir = storage.addRepository("test_repo", url);
 		assertTrue(Files.exists(repoDir));
@@ -259,7 +259,7 @@ class RepoStorageTest {
 	@Test
 	@Disabled
 	public void testLocalClone() throws GitAPIException, AddRepositoryException {
-		URI url = URI.create("https://github.com/kwerber/tiny_repo");
+		String url = "https://github.com/kwerber/tiny_repo";
 
 		Path repoDir = storage.addRepository("test_repo", url);
 

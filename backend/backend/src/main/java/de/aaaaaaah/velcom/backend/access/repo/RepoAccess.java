@@ -19,8 +19,6 @@ import de.aaaaaaah.velcom.backend.storage.repo.exception.AddRepositoryException;
 import de.aaaaaaah.velcom.backend.storage.repo.exception.RepositoryAcquisitionException;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -58,7 +56,7 @@ public class RepoAccess {
 	 * @throws AddRepoException if an error occurs while trying to clone the benchmark repository
 	 */
 	public RepoAccess(AccessLayer accessLayer, DatabaseStorage databaseStorage,
-		RepoStorage repoStorage, URI benchRepoUrl) throws AddRepoException {
+		RepoStorage repoStorage, RemoteUrl benchRepoUrl) throws AddRepoException {
 
 		this.accessLayer = accessLayer;
 		this.databaseStorage = databaseStorage;
@@ -68,7 +66,7 @@ public class RepoAccess {
 		// Clone benchmark repo if needed
 		if (!repoStorage.containsRepository(benchRepoDirName)) {
 			try {
-				repoStorage.addRepository(benchRepoDirName, benchRepoUrl);
+				repoStorage.addRepository(benchRepoDirName, benchRepoUrl.getUrl());
 			} catch (AddRepositoryException e) {
 				throw new AddRepoException(e);
 			}
@@ -112,13 +110,13 @@ public class RepoAccess {
 	 * @return a new {@link Repo} instance
 	 * @throws AddRepoException if an error occurs while trying to add the repository
 	 */
-	public Repo addRepo(String name, URI remoteUrl) throws AddRepoException {
+	public Repo addRepo(String name, RemoteUrl remoteUrl) throws AddRepoException {
 
 		RepoId repoId = new RepoId();
 
 		// (1): Clone repository (this may take a while)
 		try {
-			repoStorage.addRepository(repoId.getDirectoryName(), remoteUrl);
+			repoStorage.addRepository(repoId.getDirectoryName(), remoteUrl.getUrl());
 		} catch (AddRepositoryException e) {
 			throw new AddRepoException(e);
 		}
@@ -188,7 +186,7 @@ public class RepoAccess {
 			// local repo does not exist => clone
 			Repo repo = getRepo(repoId);
 			try {
-				repoStorage.addRepository(repoId.getDirectoryName(), repo.getRemoteUrl());
+				repoStorage.addRepository(repoId.getDirectoryName(), repo.getRemoteUrl().getUrl());
 			} catch (AddRepositoryException e) {
 				throw new RepoAccessException(repoId, e);
 			}
@@ -241,7 +239,7 @@ public class RepoAccess {
 	 * @param repoId the id of the repository
 	 * @return the local repo id
 	 */
-	public URI getRemoteUrl(RepoId repoId) {
+	public RemoteUrl getRemoteUrl(RepoId repoId) {
 		try (DSLContext db = databaseStorage.acquireContext()) {
 			String uriStr = db.select(REPOSITORY.REMOTE_URL)
 				.from(REPOSITORY)
@@ -250,11 +248,7 @@ public class RepoAccess {
 				.map(Record1::value1)
 				.orElseThrow(() -> new NoSuchRepoException(repoId));
 
-			try {
-				return new URI(uriStr);
-			} catch (URISyntaxException e) {
-				throw new IllegalStateException("remote url is invalid: " + uriStr);
-			}
+			return new RemoteUrl(uriStr);
 		}
 	}
 
@@ -264,9 +258,9 @@ public class RepoAccess {
 	 * @param repoId the id of the repository
 	 * @param remoteUrl the new remote url
 	 */
-	public void setRemoteUrl(RepoId repoId, URI remoteUrl) throws RepoAccessException {
+	public void setRemoteUrl(RepoId repoId, RemoteUrl remoteUrl) throws RepoAccessException {
 		// (1): Because this operation is quite expensive, check if remote url really changed
-		URI oldRemoteUrl = getRemoteUrl(repoId);
+		RemoteUrl oldRemoteUrl = getRemoteUrl(repoId);
 		if (oldRemoteUrl.equals(remoteUrl)) {
 			return;
 		}
@@ -274,7 +268,7 @@ public class RepoAccess {
 		// (2): Update local repo
 		try {
 			repoStorage.deleteRepository(repoId.getDirectoryName());
-			repoStorage.addRepository(repoId.getDirectoryName(), remoteUrl);
+			repoStorage.addRepository(repoId.getDirectoryName(), remoteUrl.getUrl());
 		} catch (IOException | AddRepositoryException e) {
 			throw new RepoAccessException(repoId);
 		}
@@ -294,7 +288,7 @@ public class RepoAccess {
 	 * @param repo the repository
 	 * @param remoteUrl the new remote url
 	 */
-	public void setRemoteUrl(Repo repo, URI remoteUrl) {
+	public void setRemoteUrl(Repo repo, RemoteUrl remoteUrl) {
 		setRemoteUrl(repo.getId(), remoteUrl);
 	}
 

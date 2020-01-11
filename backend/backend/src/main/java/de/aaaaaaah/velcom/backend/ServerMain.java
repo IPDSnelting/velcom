@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import de.aaaaaaah.velcom.backend.access.AccessLayer;
 import de.aaaaaaah.velcom.backend.access.benchmark.BenchmarkAccess;
 import de.aaaaaaah.velcom.backend.access.commit.CommitAccess;
+import de.aaaaaaah.velcom.backend.access.repo.RemoteUrl;
 import de.aaaaaaah.velcom.backend.access.repo.RepoAccess;
 import de.aaaaaaah.velcom.backend.access.token.AuthToken;
 import de.aaaaaaah.velcom.backend.access.token.TokenAccess;
@@ -26,7 +27,6 @@ import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import de.aaaaaaah.velcom.backend.storage.repo.RepoStorage;
 import io.dropwizard.Application;
 import io.dropwizard.setup.Environment;
-import java.net.URI;
 
 /**
  * The backend's main class. Contains the core initialisation routines for the web server.
@@ -54,7 +54,7 @@ public class ServerMain extends Application<GlobalConfig> {
 		BenchmarkAccess benchmarkAccess = new BenchmarkAccess(accessLayer, databaseStorage);
 		CommitAccess commitAccess = new CommitAccess(accessLayer, databaseStorage, repoStorage);
 		RepoAccess repoAccess = new RepoAccess(accessLayer, databaseStorage, repoStorage,
-			new URI(configuration.getBenchmarkRepoRemoteUrl()));
+			new RemoteUrl(configuration.getBenchmarkRepoRemoteUrl()));
 		TokenAccess tokenAccess = new TokenAccess(accessLayer, databaseStorage,
 			new AuthToken(configuration.getWebAdminToken()));
 

@@ -4,7 +4,6 @@ import de.aaaaaaah.velcom.backend.access.benchmark.BenchmarkAccess;
 import de.aaaaaaah.velcom.backend.access.benchmark.MeasurementName;
 import de.aaaaaaah.velcom.backend.access.token.AuthToken;
 import de.aaaaaaah.velcom.backend.access.token.TokenAccess;
-import java.net.URI;
 import java.util.Collection;
 import java.util.Objects;
 
@@ -43,7 +42,7 @@ public class Repo {
 		return repoAccess.getName(id);
 	}
 
-	public URI getRemoteUrl() {
+	public RemoteUrl getRemoteUrl() {
 		return repoAccess.getRemoteUrl(id);
 	}
 

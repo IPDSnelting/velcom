@@ -3,7 +3,6 @@ package de.aaaaaaah.velcom.backend.restapi.jsonobjects;
 import de.aaaaaaah.velcom.backend.access.repo.Branch;
 import de.aaaaaaah.velcom.backend.access.repo.BranchName;
 import de.aaaaaaah.velcom.backend.access.repo.Repo;
-import java.net.URI;
 import java.util.Collection;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -18,7 +17,7 @@ public class JsonRepo {
 	private final Collection<String> branches;
 	private final Collection<String> trackedBranches;
 	private final Collection<JsonMeasurementName> measurements;
-	private final URI remoteUrl;
+	private final String remoteUrl;
 
 	public JsonRepo(Repo repo) {
 		id = repo.getId().getId();
@@ -39,7 +38,7 @@ public class JsonRepo {
 			.map(JsonMeasurementName::new)
 			.collect(Collectors.toUnmodifiableList());
 
-		remoteUrl = repo.getRemoteUrl();
+		remoteUrl = repo.getRemoteUrl().getUrl();
 
 		System.out.println("bla");
 	}
@@ -64,7 +63,7 @@ public class JsonRepo {
 		return measurements;
 	}
 
-	public URI getRemoteUrl() {
+	public String getRemoteUrl() {
 		return remoteUrl;
 	}
 }

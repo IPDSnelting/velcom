@@ -13,7 +13,7 @@ restApiPort: 80
 # The port that the dispatcher should be listening on
 runnerPort: 3546
 # The remote url where the benchmark repo remote url can be cloned from
-benchmarkRepoRemoteUrl: "ssh://git@git.scc.kit.edu/IPDSnelting/codespeed-runner.git"
+benchmarkRepoRemoteUrl: "git@git.scc.kit.edu:IPDSnelting/codespeed-runner.git"
 # The token runners need to provide in order to connect successfully.
 # Will be transmitted in plain text over an HTTPS connection.
 runnerToken: "Correct-Horse_Battery Staple"

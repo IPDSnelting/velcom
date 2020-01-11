@@ -7,7 +7,6 @@ import de.aaaaaaah.velcom.backend.storage.repo.exception.RepositoryAcquisitionEx
 import de.aaaaaaah.velcom.backend.util.CheckedConsumer;
 import de.aaaaaaah.velcom.backend.util.DirectoryRemover;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -91,7 +90,7 @@ public class RepoStorage {
 	 * @return the path of the directory containing the new repository
 	 * @throws AddRepositoryException if an exception occurs while trying to add the repository
 	 */
-	public Path addRepository(String dirName, URI remoteUrl) throws AddRepositoryException {
+	public Path addRepository(String dirName, String remoteUrl) throws AddRepositoryException {
 		Path repoDir = rootDir.resolve(dirName);
 
 		this.lock.writeLock().lock();
@@ -103,7 +102,7 @@ public class RepoStorage {
 			Files.createDirectory(repoDir);
 
 			CloneCommand cloneCommand = Git.cloneRepository()
-				.setURI(remoteUrl.toString())
+				.setURI(remoteUrl)
 				.setDirectory(repoDir.toFile())
 				.setBare(true);
 

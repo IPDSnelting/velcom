@@ -2,6 +2,7 @@ package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import de.aaaaaaah.velcom.backend.access.repo.RemoteUrl;
 import de.aaaaaaah.velcom.backend.access.repo.Repo;
 import de.aaaaaaah.velcom.backend.access.repo.RepoAccess;
 import de.aaaaaaah.velcom.backend.access.repo.RepoId;
@@ -9,7 +10,6 @@ import de.aaaaaaah.velcom.backend.access.token.AuthToken;
 import de.aaaaaaah.velcom.backend.access.token.TokenAccess;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRepo;
 import io.dropwizard.jersey.PATCH;
-import java.net.URI;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -127,18 +127,18 @@ public class RepoEndpoint {
 	private static class PostRequest {
 
 		private final String name;
-		private final URI remoteUrl;
+		private final RemoteUrl remoteUrl;
 		@Nullable
 		private final String token;
 
 		@JsonCreator
 		public PostRequest(
 			@JsonProperty(value = "name", required = true) String name,
-			@JsonProperty(value = "remote_url", required = true) URI remoteUrl,
+			@JsonProperty(value = "remote_url", required = true) String remoteUrl,
 			@Nullable @JsonProperty("token") String token) {
 
 			this.name = Objects.requireNonNull(name);
-			this.remoteUrl = Objects.requireNonNull(remoteUrl);
+			this.remoteUrl = new RemoteUrl(remoteUrl);
 			this.token = token;
 		}
 
@@ -146,7 +146,7 @@ public class RepoEndpoint {
 			return name;
 		}
 
-		public URI getRemoteUrl() {
+		public RemoteUrl getRemoteUrl() {
 			return remoteUrl;
 		}
 
@@ -161,7 +161,7 @@ public class RepoEndpoint {
 		@Nullable
 		private final String name;
 		@Nullable
-		private final URI remoteUrl;
+		private final RemoteUrl remoteUrl;
 		@Nullable
 		private final String token;
 
@@ -169,12 +169,12 @@ public class RepoEndpoint {
 		public PatchRequest(
 			@JsonProperty(value = "repo_id", required = true) UUID repoId,
 			@Nullable @JsonProperty("name") String name,
-			@Nullable @JsonProperty("remote_url") URI remoteUrl,
+			@Nullable @JsonProperty("remote_url") String remoteUrl,
 			@Nullable @JsonProperty("token") String token) {
 
 			this.repoId = Objects.requireNonNull(repoId);
 			this.name = name;
-			this.remoteUrl = remoteUrl;
+			this.remoteUrl = new RemoteUrl(remoteUrl);
 			this.token = token;
 		}
 
@@ -186,7 +186,7 @@ public class RepoEndpoint {
 			return Optional.ofNullable(name);
 		}
 
-		public Optional<URI> getRemoteUrl() {
+		public Optional<RemoteUrl> getRemoteUrl() {
 			return Optional.ofNullable(remoteUrl);
 		}
 
