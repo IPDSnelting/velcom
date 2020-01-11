@@ -1,7 +1,7 @@
 package de.aaaaaaah.velcom.backend.data.queue;
 
+import de.aaaaaaah.velcom.backend.access.commit.Commit;
 import de.aaaaaaah.velcom.backend.access.commit.CommitHash;
-import de.aaaaaaah.velcom.backend.access.commit.Task;
 import de.aaaaaaah.velcom.backend.access.repo.RepoId;
 import java.util.List;
 import java.util.Optional;
@@ -17,23 +17,23 @@ import java.util.Optional;
 public class PolicyManualFilo implements QueuePolicy {
 
 	@Override
-	public void addTask(Task task) {
+	public void addTask(Commit commit) {
 		// TODO implement
 	}
 
 	@Override
-	public void addManualTask(Task task) {
+	public void addManualTask(Commit commit) {
 		// TODO implement
 	}
 
 	@Override
-	public Optional<Task> getNextTask() {
+	public Optional<Commit> getNextTask() {
 		// TODO implement
 		return Optional.empty();
 	}
 
 	@Override
-	public List<Task> viewAllCurrentTasks() {
+	public List<Commit> viewAllCurrentTasks() {
 		// TODO implement
 		return null;
 	}

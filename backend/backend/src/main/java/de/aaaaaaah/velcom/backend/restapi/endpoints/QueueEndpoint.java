@@ -2,6 +2,7 @@ package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import de.aaaaaaah.velcom.backend.access.commit.Commit;
 import de.aaaaaaah.velcom.backend.access.commit.CommitAccess;
 import de.aaaaaaah.velcom.backend.access.commit.CommitHash;
 import de.aaaaaaah.velcom.backend.access.repo.RepoId;
@@ -48,7 +49,6 @@ public class QueueEndpoint {
 	@GET
 	public GetReply get() {
 		List<JsonCommit> tasks = queue.viewAllCurrentTasks().stream()
-			.map(task -> commitAccess.getCommit(task.getRepoId(), task.getCommitHash()))
 			.map(JsonCommit::new)
 			.collect(Collectors.toUnmodifiableList());
 
@@ -69,7 +69,8 @@ public class QueueEndpoint {
 		RepoId repoId = new RepoId(postRequest.getRepoId());
 		CommitHash commitHash = new CommitHash(postRequest.getCommitHash());
 
-		queue.addManualTask(repoId, commitHash);
+		Commit commit = commitAccess.getCommit(repoId, commitHash);
+		queue.addManualTask(commit);
 	}
 
 	/**
