@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import de.aaaaaaah.velcom.backend.storage.repo.RepoStorage;
 import de.aaaaaaah.velcom.backend.storage.repo.exception.AddRepositoryException;
+import de.aaaaaaah.velcom.backend.storage.repo.exception.RepositoryAcquisitionException;
 import de.aaaaaaah.velcom.backend.util.DirectoryRemover;
 import java.io.IOException;
 import java.net.URI;
@@ -15,10 +16,17 @@ import java.util.List;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.ProgressMonitor;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
+import org.eclipse.jgit.transport.FetchResult;
+import org.eclipse.jgit.transport.SshSessionFactory;
+import org.eclipse.jgit.transport.TrackingRefUpdate;
+import org.eclipse.jgit.transport.sshd.DefaultProxyDataFactory;
+import org.eclipse.jgit.transport.sshd.JGitKeyCache;
+import org.eclipse.jgit.transport.sshd.SshdSessionFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -41,6 +49,85 @@ class RepoStorageTest {
 	@AfterEach
 	void tearDown() throws IOException {
 		DirectoryRemover.deleteDirectoryRecursive(this.storageDir);
+	}
+
+	@Test
+	@Disabled
+	public void testSsh() throws GitAPIException {
+		SshdSessionFactory factory = new SshdSessionFactory(
+			new JGitKeyCache(),
+			new DefaultProxyDataFactory()
+		);
+
+		SshSessionFactory.setInstance(factory);
+
+		Git git = Git.cloneRepository()
+			.setURI("git@git.scc.kit.edu:IPDSnelting/codespeed-runner.git")
+			.setDirectory(this.storageDir.resolve("bla").toFile())
+			.call();
+
+		git.close();
+
+		System.out.println("done");
+	}
+
+	@Test
+	@Disabled
+	public void testFetch()
+		throws AddRepositoryException, RepositoryAcquisitionException, InterruptedException, GitAPIException {
+
+		URI url = URI.create("https://github.com/kwerber/tiny_repo");
+
+		Path repoDir = storage.addRepository("test_repo", url);
+
+		Thread.sleep(2000);
+
+		try (Repository repo = storage.acquireRepository("test_repo")) {
+			ProgressMonitor monitor = new ProgressMonitor() {
+				@Override
+				public void start(int i) {
+					System.err.println("start(" + i + ")");
+				}
+
+				@Override
+				public void beginTask(String s, int i) {
+					System.err.println("beginTask(" + s + ", " + i + ")");
+				}
+
+				@Override
+				public void update(int i) {
+					System.err.println("update(" + i + ")");
+				}
+
+				@Override
+				public void endTask() {
+					System.err.println("endTask()");
+				}
+
+				@Override
+				public boolean isCancelled() {
+					System.err.println("isCancelled()");
+					return false;
+				}
+			};
+
+			FetchResult result = Git.wrap(repo).fetch().setProgressMonitor(monitor).call();
+
+			for (Ref advertisedRef : result.getAdvertisedRefs()) {
+				System.out.println("Advertised ref: " + advertisedRef.getName());
+			}
+
+			for (TrackingRefUpdate trackingRefUpdate : result.getTrackingRefUpdates()) {
+				System.out.println("-- TrackingRefUpdate --------------------------");
+				System.out.println(trackingRefUpdate.getLocalName());
+				System.out.println(trackingRefUpdate.getRemoteName());
+				System.out.println(trackingRefUpdate.getNewObjectId().name());
+				System.out.println(trackingRefUpdate.getOldObjectId().name());
+				System.out.println(trackingRefUpdate.getResult());
+			}
+		}
+
+		System.out.println("done");
 	}
 
 	@Test
@@ -171,7 +258,7 @@ class RepoStorageTest {
 
 	@Test
 	@Disabled
-	public void testLocalClone() throws IOException, GitAPIException, AddRepositoryException {
+	public void testLocalClone() throws GitAPIException, AddRepositoryException {
 		URI url = URI.create("https://github.com/kwerber/tiny_repo");
 
 		Path repoDir = storage.addRepository("test_repo", url);
