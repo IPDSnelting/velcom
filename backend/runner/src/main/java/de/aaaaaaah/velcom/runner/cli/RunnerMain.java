@@ -61,6 +61,10 @@ public class RunnerMain {
 		System.err.println("------------------------");
 		System.err.println();
 
+		System.err.println(
+			"I will keep trying to connect and reconnect until you kill me (SIGTERM)"
+		);
+
 		// Initial connect
 		try {
 			websocketListener.connect();
@@ -68,9 +72,9 @@ public class RunnerMain {
 			System.err.println("Initial server connection failed. Consider checking your details!");
 			System.err.println("Message: " + e.getMessage());
 		}
-		System.err.println(
-			"I will keep trying to connect and reconnect until you kill me (SIGTERM)"
-		);
+
+		// Graceful shutdown
+		Runtime.getRuntime().addShutdownHook(new Thread(websocketListener::disconnect));
 
 		// That was my goal.
 		//noinspection InfiniteLoopStatement

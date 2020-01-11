@@ -43,6 +43,9 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 			Path tempDir = Files.createTempDirectory(workOrder.getRemoteUrlIdentifier());
 			TarHelper.untar(workPath, tempDir);
 
+			FileHelper.deleteOnExit(tempDir);
+			FileHelper.deleteOnExit(workPath);
+
 			Process process = new ProcessBuilder(
 				benchmarkScript.toAbsolutePath().toString(),
 				workPath.toAbsolutePath().toString()

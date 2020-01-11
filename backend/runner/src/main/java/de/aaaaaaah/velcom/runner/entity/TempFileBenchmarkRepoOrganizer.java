@@ -1,5 +1,6 @@
 package de.aaaaaaah.velcom.runner.entity;
 
+import de.aaaaaaah.velcom.runner.util.compression.FileHelper;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -23,6 +24,7 @@ public class TempFileBenchmarkRepoOrganizer implements BenchmarkRepoOrganizer {
 	 */
 	public TempFileBenchmarkRepoOrganizer() throws IOException {
 		this.rootTempDir = Files.createTempDirectory("velcom-runner-benchmark");
+		FileHelper.deleteOnExit(rootTempDir);
 	}
 
 	@Override
