@@ -12,6 +12,8 @@ import de.aaaaaaah.velcom.backend.data.linearlog.CommitAccessBasedLinearLog;
 import de.aaaaaaah.velcom.backend.data.linearlog.LinearLog;
 import de.aaaaaaah.velcom.backend.data.queue.PolicyManualFilo;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
+import de.aaaaaaah.velcom.backend.restapi.RepoAuthenticator;
+import de.aaaaaaah.velcom.backend.restapi.RepoUser;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.AllReposEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.CommitCompareEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.CommitHistoryEndpoint;
@@ -26,6 +28,9 @@ import de.aaaaaaah.velcom.backend.runner.DispatcherImpl;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import de.aaaaaaah.velcom.backend.storage.repo.RepoStorage;
 import io.dropwizard.Application;
+import io.dropwizard.auth.AuthDynamicFeature;
+import io.dropwizard.auth.AuthValueFactoryProvider;
+import io.dropwizard.auth.basic.BasicCredentialAuthFilter;
 import io.dropwizard.setup.Environment;
 
 /**
@@ -47,9 +52,11 @@ public class ServerMain extends Application<GlobalConfig> {
 	public void run(GlobalConfig configuration, Environment environment) throws Exception {
 		environment.getObjectMapper().setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
 
+		// Storage layer
 		DatabaseStorage databaseStorage = new DatabaseStorage(configuration);
 		RepoStorage repoStorage = new RepoStorage();
 
+		// Access layer
 		AccessLayer accessLayer = new AccessLayer();
 		BenchmarkAccess benchmarkAccess = new BenchmarkAccess(accessLayer, databaseStorage);
 		CommitAccess commitAccess = new CommitAccess(accessLayer, databaseStorage, repoStorage);
@@ -58,12 +65,25 @@ public class ServerMain extends Application<GlobalConfig> {
 		TokenAccess tokenAccess = new TokenAccess(accessLayer, databaseStorage,
 			new AuthToken(configuration.getWebAdminToken()));
 
+		// Data layer
 		LinearLog linearLog = new CommitAccessBasedLinearLog(commitAccess);
 		Queue queue = new Queue(commitAccess, new PolicyManualFilo());
 		Dispatcher dispatcher = new DispatcherImpl(queue);
 
+		// Dispatcher
 		RunnerAwareServerFactory.getInstance().setDispatcher(dispatcher);
 
+		// API authentication
+		environment.jersey().register(
+			new AuthDynamicFeature(
+				new BasicCredentialAuthFilter.Builder<RepoUser>()
+					.setAuthenticator(new RepoAuthenticator(tokenAccess))
+					.buildAuthFilter()
+			)
+		);
+		environment.jersey().register(new AuthValueFactoryProvider.Binder<>(RepoUser.class));
+
+		// API endpoints
 		environment.jersey().register(new AllReposEndpoint(repoAccess));
 		environment.jersey()
 			.register(new CommitCompareEndpoint(benchmarkAccess, commitAccess, linearLog));
