@@ -51,8 +51,6 @@ public class WebsocketListener implements WebSocket.Listener, SocketConnectionMa
 		this.stateListeners = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
 		addStateListener(new ReestablishConnectionListener(this));
-
-		stateListeners.forEach(it -> it.onStateChange(ConnectionState.DISCONNECTED));
 	}
 
 	/**
