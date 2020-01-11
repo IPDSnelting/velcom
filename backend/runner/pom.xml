@@ -56,6 +56,13 @@
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-compress</artifactId>
     </dependency>
+
+    <dependency>
+      <groupId>com.github.h908714124</groupId>
+      <artifactId>jbock</artifactId>
+      <version>3.4.008</version>
+      <scope>provided</scope>
+    </dependency>
   </dependencies>
 
 </project>

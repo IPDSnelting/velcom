@@ -50,7 +50,9 @@ public class WebsocketListener implements WebSocket.Listener, SocketConnectionMa
 		this.textBuilder = new StringBuilder();
 		this.stateListeners = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
-		addStateListener(new RestablishConnectionListener(this));
+		addStateListener(new ReestablishConnectionListener(this));
+
+		stateListeners.forEach(it -> it.onStateChange(ConnectionState.DISCONNECTED));
 	}
 
 	/**
@@ -199,7 +201,10 @@ public class WebsocketListener implements WebSocket.Listener, SocketConnectionMa
 		try {
 			future.get(20, TimeUnit.SECONDS);
 		} catch (InterruptedException | ExecutionException | TimeoutException e) {
-			throw new ConnectionException("Error connecting", e);
+			throw new ConnectionException(
+				e.getMessage() == null ? "Error connecting" : e.getMessage(),
+				e
+			);
 		}
 	}
 
