@@ -12,3 +12,13 @@ compile-backend:
     - mvn clean package
   tags:
     - keep
+
+compile-frontend:
+  image: velcom-frontend:latest
+  stage: build
+  script:
+    - cd frontend
+    - yarn install
+    - yarn build
+  tags:
+    - keep
