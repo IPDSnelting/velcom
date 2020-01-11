@@ -132,26 +132,13 @@ public class RepoAccess {
 			record.insert();
 		}
 
-		// (3): Find master branch and set it to tracked
+		// (3): Track branch that head points to
 		try (Repository repo = repoStorage.acquireRepository(repoId.getDirectoryName())) {
-			Ref foundBranchRef = null;
-
-			// Try to find master but if master does not exist, choose some other branch
-			for (Ref branchRef : Git.wrap(repo).branchList().call()) {
-				if (foundBranchRef == null || branchRef.getName().equals("master")) {
-					foundBranchRef = branchRef;
-				}
-			}
-
-			if (foundBranchRef == null) {
-				// There are no branches in this repository ?!
-				throw new AddRepoException("repo does not contain any branches: " + name);
-			}
-
-			BranchName branchName = new BranchName(foundBranchRef.getName());
+			String defaultBranchStr = repo.getBranch();
+			BranchName branchName = new BranchName(defaultBranchStr);
 
 			setBranchTracked(repoId, branchName, true);
-		} catch (RepositoryAcquisitionException | GitAPIException e) {
+		} catch (RepositoryAcquisitionException | IOException e) {
 			throw new AddRepoException(e);
 		}
 
