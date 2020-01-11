@@ -45,6 +45,7 @@ public class RepoAccess {
 	private final Archiver archiver;
 
 	private final String benchRepoDirName = "benchrepo";
+	private final String benchRepoRemoteUrl;
 
 	/**
 	 * This constructor also registers the {@link RepoAccess} in the accessLayer.
@@ -64,9 +65,11 @@ public class RepoAccess {
 		this.archiver = new Archiver(repoStorage);
 
 		// Clone benchmark repo if needed
+		this.benchRepoRemoteUrl = benchRepoUrl.getUrl();
+
 		if (!repoStorage.containsRepository(benchRepoDirName)) {
 			try {
-				repoStorage.addRepository(benchRepoDirName, benchRepoUrl.getUrl());
+				repoStorage.addRepository(benchRepoDirName, benchRepoRemoteUrl);
 			} catch (AddRepositoryException e) {
 				throw new AddRepoException(e);
 			}
@@ -169,27 +172,47 @@ public class RepoAccess {
 	}
 
 	/**
-	 * Performs either fetch operation on the specified repository, or a clone operation if the
+	 * Performs either a fetch operation on the specified repository, or a clone operation if the
 	 * repository has not been cloned to the local repo storage yet.
 	 *
 	 * @param repoId the id of the repository
+	 * @throws RepoAccessException if an error occurs during the fetch/clone operation
 	 */
-	public void fetchOrClone(RepoId repoId) {
-		if (repoStorage.containsRepository(repoId.getDirectoryName())) {
+	public void fetchOrClone(RepoId repoId) throws RepoAccessException {
+		Repo repo = getRepo(repoId);
+		try {
+			fetchOrCloneLocalRepo(repoId.getDirectoryName(), repo.getRemoteUrl().getUrl());
+		} catch (GitAPIException | RepositoryAcquisitionException | AddRepositoryException e) {
+			throw new RepoAccessException(repoId, e);
+		}
+	}
+
+	/**
+	 * Performs either a fetch operation on the benchmark repository, or clones it to the local repo
+	 * storage, if it has not yet been cloned.
+	 *
+	 * @throws RepoAccessException if an error occurs during the fetch/clone operation
+	 */
+	public void fetchOrCloneBenchmarkRepo() throws RepoAccessException {
+		try {
+			fetchOrCloneLocalRepo(benchRepoDirName, benchRepoRemoteUrl);
+		} catch (GitAPIException | RepositoryAcquisitionException | AddRepositoryException e) {
+			throw new RepoAccessException("failed to fetch/clone benchmark repo with remote url: "
+				+ benchRepoRemoteUrl, e);
+		}
+	}
+
+	private void fetchOrCloneLocalRepo(String dirName, String remoteUrl)
+		throws GitAPIException, RepositoryAcquisitionException, AddRepositoryException {
+
+		if (repoStorage.containsRepository(dirName)) {
 			// local repo exists => just fetch
-			try (Repository repo = repoStorage.acquireRepository(repoId.getDirectoryName())) {
+			try (Repository repo = repoStorage.acquireRepository(dirName)) {
 				Git.wrap(repo).fetch().call();
-			} catch (RepositoryAcquisitionException | GitAPIException e) {
-				throw new RepoAccessException(repoId, e);
 			}
 		} else {
 			// local repo does not exist => clone
-			Repo repo = getRepo(repoId);
-			try {
-				repoStorage.addRepository(repoId.getDirectoryName(), repo.getRemoteUrl().getUrl());
-			} catch (AddRepositoryException e) {
-				throw new RepoAccessException(repoId, e);
-			}
+			repoStorage.addRepository(dirName, remoteUrl);
 		}
 	}
 
