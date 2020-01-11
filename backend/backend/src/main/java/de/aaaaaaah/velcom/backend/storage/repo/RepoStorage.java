@@ -18,7 +18,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.lib.RepositoryBuilder;
 
@@ -93,11 +92,10 @@ public class RepoStorage {
 	 * @throws AddRepositoryException if an exception occurs while trying to add the repository
 	 */
 	public Path addRepository(String dirName, URI remoteUrl) throws AddRepositoryException {
+		Path repoDir = rootDir.resolve(dirName);
+
 		this.lock.writeLock().lock();
-
 		try {
-			Path repoDir = rootDir.resolve(dirName);
-
 			if (Files.exists(repoDir)) {
 				throw new DirectoryAlreadyExistsException(repoDir);
 			}
@@ -112,7 +110,15 @@ public class RepoStorage {
 			cloneCommand.call().close();
 
 			return repoDir;
-		} catch (IOException | GitAPIException | DirectoryAlreadyExistsException e) {
+		} catch (DirectoryAlreadyExistsException e) {
+			throw new AddRepositoryException(dirName, remoteUrl, e);
+		} catch (Exception e) {
+			// try to clean up directory
+			try {
+				DirectoryRemover.deleteDirectoryRecursive(repoDir);
+			} catch (Exception ignore) {
+			}
+
 			throw new AddRepositoryException(dirName, remoteUrl, e);
 		} finally {
 			this.lock.writeLock().unlock();
