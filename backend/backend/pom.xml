@@ -180,42 +180,16 @@
     </dependency>
 
     <!-- https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit -->
-    <!--    <dependency>-->
-    <!--      <artifactId>org.eclipse.jgit</artifactId>-->
-    <!--      <groupId>org.eclipse.jgit</groupId>-->
-    <!--      <version>5.5.1.201910021850-r</version>-->
-    <!--    </dependency>-->
+    <dependency>
+      <artifactId>org.eclipse.jgit</artifactId>
+      <groupId>org.eclipse.jgit</groupId>
+      <version>5.5.1.201910021850-r</version>
+    </dependency>
     <!-- https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit.ssh.apache -->
     <dependency>
       <groupId>org.eclipse.jgit</groupId>
       <artifactId>org.eclipse.jgit.ssh.apache</artifactId>
       <version>5.6.0.201912101111-r</version>
-      <scope>system</scope>
-      <systemPath>
-        /home/i_al_istannen/Uni/Karlsruhe/PSE/jgit/org.eclipse.jgit.ssh.apache/target/org.eclipse.jgit.ssh.apache-5.7.0-SNAPSHOT.jar
-      </systemPath>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.jgit</groupId>
-      <artifactId>org.eclipse.jgit</artifactId>
-      <version>5.6.0.201912101111-r</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.sshd</groupId>
-      <artifactId>sshd-osgi</artifactId>
-      <version>2.2.0</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.apache.sshd</groupId>
-      <artifactId>sshd-sftp</artifactId>
-      <version>2.2.0</version>
-    </dependency>
-
-    <dependency>
-      <groupId>net.i2p.crypto</groupId>
-      <artifactId>eddsa</artifactId>
-      <version>0.3.0</version>
     </dependency>
 
 
