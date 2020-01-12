@@ -25,6 +25,8 @@ import java.util.stream.Collectors;
  */
 public class DispatcherImpl implements Dispatcher {
 
+	// TODO: 12.01.20 Put commit back when runner crashes (ping failure) 
+
 	private final Collection<ActiveRunnerInformation> activeRunners;
 	private final Queue queue;
 	private final RepoAccess repoAccess;
@@ -169,8 +171,8 @@ public class DispatcherImpl implements Dispatcher {
 				// return;
 			}
 			Commit commitToBenchmark = nextTask.get();
-			if (dispatchCommit(runner, commitToBenchmark)) {
-				// TODO: 12.01.20 Mark as dispatched
+			if (!dispatchCommit(runner, commitToBenchmark)) {
+				// TODO: 12.01.20 Re-Add it to queue
 			}
 		}
 	}
