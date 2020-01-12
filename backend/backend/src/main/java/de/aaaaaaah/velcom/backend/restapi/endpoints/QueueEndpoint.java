@@ -15,7 +15,6 @@ import io.dropwizard.auth.Auth;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.validation.constraints.NotNull;
@@ -67,11 +66,10 @@ public class QueueEndpoint {
 	 *
 	 * @param postRequest the commit to add
 	 */
-	@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 	@POST
-	public void post(@Auth Optional<RepoUser> user, @NotNull PostRequest postRequest) {
+	public void post(@Auth RepoUser user, @NotNull PostRequest postRequest) {
 		RepoId repoId = new RepoId(postRequest.getRepoId());
-		RepoUser.guardRepoAccess(user, repoId);
+		user.guardRepoAccess(repoId);
 
 		CommitHash commitHash = new CommitHash(postRequest.getCommitHash());
 
@@ -85,15 +83,14 @@ public class QueueEndpoint {
 	 * @param repoUuid the id of the repo
 	 * @param hashString the hash of the commit
 	 */
-	@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 	@DELETE
 	public void delete(
-		@Auth Optional<RepoUser> user,
+		@Auth RepoUser user,
 		@NotNull @QueryParam("repo_id") UUID repoUuid,
 		@NotNull @QueryParam("commit_hash") String hashString) {
 
 		RepoId repoId = new RepoId(repoUuid);
-		RepoUser.guardRepoAccess(user, repoId);
+		user.guardRepoAccess(repoId);
 
 		CommitHash commitHash = new CommitHash(hashString);
 

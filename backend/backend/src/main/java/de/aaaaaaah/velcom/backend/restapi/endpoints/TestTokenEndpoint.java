@@ -4,7 +4,6 @@ import de.aaaaaaah.velcom.backend.access.repo.RepoId;
 import de.aaaaaaah.velcom.backend.access.token.TokenAccess;
 import de.aaaaaaah.velcom.backend.restapi.RepoUser;
 import io.dropwizard.auth.Auth;
-import java.util.Optional;
 import java.util.UUID;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -29,12 +28,12 @@ public class TestTokenEndpoint {
 	 */
 	@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 	@GET
-	public void get(@Auth Optional<RepoUser> user, @QueryParam("repo_id") UUID repoUuid) {
+	public void get(@Auth RepoUser user, @QueryParam("repo_id") UUID repoUuid) {
 		if (repoUuid == null) {
-			RepoUser.guardAdminAccess(user);
+			user.guardAdminAccess();
 		} else {
 			RepoId repoId = new RepoId(repoUuid);
-			RepoUser.guardRepoAccess(user, repoId);
+			user.guardRepoAccess(repoId);
 		}
 	}
 

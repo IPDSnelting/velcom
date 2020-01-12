@@ -16,50 +16,6 @@ public class RepoUser implements Principal {
 		this.repoId = repoId;
 	}
 
-	@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-	public static boolean mayAccessRepo(Optional<RepoUser> user, RepoId repoId) {
-		// If this user has no repo id, they're an admin and thus have access to all repos.
-		return user.map(repoUser -> repoUser.getRepoId().map(repoId::equals).orElse(true))
-			.orElse(false);
-	}
-
-	/**
-	 * Helper function for use in API endpoints to quickly check whether a user is allowed to access
-	 * a repo.
-	 *
-	 * @param user the user
-	 * @param repoId the repo the user is trying to access
-	 * @throws ClientErrorException if the user is not allowed to access the repo
-	 */
-	@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-	public static void guardRepoAccess(Optional<RepoUser> user, RepoId repoId)
-		throws ClientErrorException {
-
-		if (!mayAccessRepo(user, repoId)) {
-			throw new ClientErrorException(Status.UNAUTHORIZED);
-		}
-	}
-
-	@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-	public static boolean mayAccessAdmin(Optional<RepoUser> user) {
-		// If this user has no repo id, they're an admin and thus have access to all repos.
-		return user.map(repoUser -> repoUser.getRepoId().isEmpty()).orElse(false);
-	}
-
-	/**
-	 * Helper function for use in API endpoints to quickly check whether a user has admin
-	 * permissions.
-	 *
-	 * @param user the user
-	 * @throws ClientErrorException if the user doesn't have admin permissions
-	 */
-	@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-	public static void guardAdminAccess(Optional<RepoUser> user) throws ClientErrorException {
-		if (!mayAccessAdmin(user)) {
-			throw new ClientErrorException(Status.UNAUTHORIZED);
-		}
-	}
-
 	@Override
 	public String getName() {
 		return getRepoId().map(RepoId::toString).orElse("");
@@ -67,5 +23,39 @@ public class RepoUser implements Principal {
 
 	public Optional<RepoId> getRepoId() {
 		return Optional.ofNullable(repoId);
+	}
+
+	public boolean mayAccessRepo(RepoId repoId) {
+		// If this user has no repo id, they're an admin and thus have access to all repos.
+		return getRepoId().map(repoId::equals).orElse(true);
+	}
+
+	public boolean isAdmin() {
+		return getRepoId().isEmpty();
+	}
+
+	/**
+	 * Helper function for use in API endpoints to quickly check whether a user is allowed to access
+	 * a repo.
+	 *
+	 * @param repoId the repo the user is trying to access
+	 * @throws ClientErrorException if the user is not allowed to access the repo
+	 */
+	public void guardRepoAccess(RepoId repoId) throws ClientErrorException {
+		if (!mayAccessRepo(repoId)) {
+			throw new ClientErrorException(Status.UNAUTHORIZED);
+		}
+	}
+
+	/**
+	 * Helper function for use in API endpoints to quickly check whether a user has admin
+	 * permissions.
+	 *
+	 * @throws ClientErrorException if the user doesn't have admin permissions
+	 */
+	public void guardAdminAccess() throws ClientErrorException {
+		if (!isAdmin()) {
+			throw new ClientErrorException(Status.UNAUTHORIZED);
+		}
 	}
 }

@@ -64,10 +64,9 @@ public class RepoEndpoint {
 	 * @param request the repo add metadata
 	 * @return the added repo
 	 */
-	@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 	@POST
-	public GetReply post(@Auth Optional<RepoUser> user, @NotNull PostRequest request) {
-		RepoUser.guardAdminAccess(user);
+	public GetReply post(@Auth RepoUser user, @NotNull PostRequest request) {
+		user.guardAdminAccess();
 
 		Repo repo = repoAccess.addRepo(request.getName(), request.getRemoteUrl());
 
@@ -83,11 +82,10 @@ public class RepoEndpoint {
 	 *
 	 * @param request the change request
 	 */
-	@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 	@PATCH
-	public void patch(@Auth Optional<RepoUser> user, @NotNull PatchRequest request) {
+	public void patch(@Auth RepoUser user, @NotNull PatchRequest request) {
 		RepoId repoId = new RepoId(request.getRepoId());
-		RepoUser.guardRepoAccess(user, repoId);
+		user.guardRepoAccess(repoId);
 
 		request.getName().ifPresent(name -> repoAccess.setName(repoId, name));
 
@@ -107,12 +105,10 @@ public class RepoEndpoint {
 	 *
 	 * @param repoUuid the id of the repo to delete
 	 */
-	@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 	@DELETE
-	public void delete(@Auth Optional<RepoUser> user,
-		@NotNull @QueryParam("repo_id") UUID repoUuid) {
+	public void delete(@Auth RepoUser user, @NotNull @QueryParam("repo_id") UUID repoUuid) {
 		RepoId repoId = new RepoId(repoUuid);
-		RepoUser.guardRepoAccess(user, repoId);
+		user.guardRepoAccess(repoId);
 
 		Repo repo = repoAccess.getRepo(repoId);
 
