@@ -9,6 +9,7 @@ import de.aaaaaaah.velcom.runner.entity.RunnerConfiguration;
 import de.aaaaaaah.velcom.runner.entity.WorkExecutor;
 import de.aaaaaaah.velcom.runner.entity.execution.ProgramExecutor.ProgramResult;
 import de.aaaaaaah.velcom.runner.entity.execution.output.BenchmarkScriptOutputParser;
+import de.aaaaaaah.velcom.runner.entity.execution.output.BenchmarkScriptOutputParser.BareResult;
 import de.aaaaaaah.velcom.runner.entity.execution.output.OutputParseException;
 import de.aaaaaaah.velcom.runner.shared.protocol.runnerbound.entities.RunnerWorkOrder;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkResults;
@@ -18,6 +19,7 @@ import de.aaaaaaah.velcom.runner.util.compression.TarHelper;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -47,11 +49,14 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 	@Override
 	public void startExecution(Path workPath, RunnerWorkOrder workOrder,
 		RunnerConfiguration configuration) {
+		Instant startTime = Instant.now();
+
 		try (var execEnv = new ExecutionEnv(workPath, configuration.getBenchmarkRepoOrganizer())) {
 			programResult = new ProgramExecutor().execute(
 				execEnv.getExecutablePath().toAbsolutePath().toString(),
 				execEnv.unpack(workOrder).toAbsolutePath().toString()
 			);
+			Instant endTime = Instant.now();
 
 			ProgramResult result = programResult.get();
 
@@ -62,7 +67,9 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 						"Non-zero exit code: " + result.getExitCode()
 							+ "\nOutput       : " + result.getStdOut()
 							+ "\nError Output : " + result.getStdErr()
-							+ "\nRan for      : " + result.getRuntime()
+							+ "\nRan for      : " + result.getRuntime(),
+						startTime,
+						endTime
 					),
 					configuration
 				);
@@ -71,7 +78,14 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 
 			JsonNode resultTree = objectMapper.readTree(result.getStdOut());
 
-			BenchmarkResults results = benchmarkScriptOutputParser.parse(workOrder, resultTree);
+			BareResult bareResult = benchmarkScriptOutputParser.parse(resultTree);
+
+			BenchmarkResults results = new BenchmarkResults(
+				workOrder,
+				bareResult.getBenchmarks(),
+				bareResult.getError(),
+				startTime, endTime
+			);
 
 			// Delay a bit for testing
 			Thread.sleep(5000);
@@ -83,7 +97,10 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 			System.err.println("Stacktrace:");
 			e.printStackTrace();
 			configuration.getRunnerStateMachine().onWorkDone(
-				new BenchmarkResults(workOrder, ExceptionHelper.getStackTrace(e)),
+				new BenchmarkResults(workOrder, ExceptionHelper.getStackTrace(e),
+					startTime,
+					Instant.now()
+				),
 				configuration
 			);
 		} catch (OutputParseException e) {
@@ -92,7 +109,9 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 			configuration.getRunnerStateMachine().onWorkDone(
 				new BenchmarkResults(
 					workOrder,
-					"Error processing runner output: " + e.getMessage()
+					"Error processing runner output: " + e.getMessage(),
+					startTime,
+					Instant.now()
 				),
 				configuration
 			);

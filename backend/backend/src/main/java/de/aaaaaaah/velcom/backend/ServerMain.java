@@ -79,7 +79,7 @@ public class ServerMain extends Application<GlobalConfig> {
 		// Data layer
 		LinearLog linearLog = new CommitAccessBasedLinearLog(commitAccess);
 		Queue queue = new Queue(commitAccess, new PolicyManualFilo());
-		Dispatcher dispatcher = new DispatcherImpl(queue, repoAccess);
+		Dispatcher dispatcher = new DispatcherImpl(queue, repoAccess, benchmarkAccess);
 
 		// Dispatcher
 		RunnerAwareServerFactory.getInstance().setDispatcher(dispatcher);

@@ -2,12 +2,12 @@ package de.aaaaaaah.velcom.runner.entity.execution.output;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import de.aaaaaaah.velcom.runner.shared.protocol.runnerbound.entities.RunnerWorkOrder;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkResults;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkResults.Benchmark;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkResults.Metric;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkResults.MetricInterpretation;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
@@ -20,12 +20,11 @@ public class BenchmarkScriptOutputParser {
 	/**
 	 * Parses the benchmark output node to a {@link BenchmarkResults} object.
 	 *
-	 * @param workOrder the initial work order
 	 * @param root the root node of the script output
 	 * @return the parsed benchmark results
 	 * @throws OutputParseException if an error occurs
 	 */
-	public BenchmarkResults parse(RunnerWorkOrder workOrder, JsonNode root)
+	public BareResult parse(JsonNode root)
 		throws OutputParseException {
 		System.err.println("Parsing: ");
 		System.err.println(root);
@@ -36,7 +35,7 @@ public class BenchmarkScriptOutputParser {
 			if (!root.get("error").isTextual()) {
 				throw new OutputParseException("Error is no string: " + root);
 			}
-			return new BenchmarkResults(workOrder, root.get("error").asText());
+			return new BareResult(Collections.emptyList(), root.get("error").asText());
 		}
 
 		List<Benchmark> benchmarks = new ArrayList<>();
@@ -47,7 +46,7 @@ public class BenchmarkScriptOutputParser {
 			benchmarks.add(parseBenchmark(field.getKey(), field.getValue()));
 		}
 
-		return new BenchmarkResults(workOrder, benchmarks);
+		return new BareResult(benchmarks, null);
 	}
 
 	private Benchmark parseBenchmark(String name, JsonNode node) {
@@ -136,5 +135,27 @@ public class BenchmarkScriptOutputParser {
 			);
 		}
 		return interpretation;
+	}
+
+	/**
+	 * A bare result with just the parsed properties and errors.
+	 */
+	public static class BareResult {
+
+		private List<Benchmark> benchmarks;
+		private String error;
+
+		public BareResult(List<Benchmark> benchmarks, String error) {
+			this.benchmarks = benchmarks;
+			this.error = error;
+		}
+
+		public List<Benchmark> getBenchmarks() {
+			return benchmarks;
+		}
+
+		public String getError() {
+			return error;
+		}
 	}
 }

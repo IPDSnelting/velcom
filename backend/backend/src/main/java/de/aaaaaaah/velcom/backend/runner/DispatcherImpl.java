@@ -1,5 +1,10 @@
 package de.aaaaaaah.velcom.backend.runner;
 
+import de.aaaaaaah.velcom.backend.access.benchmark.BenchmarkAccess;
+import de.aaaaaaah.velcom.backend.access.benchmark.Interpretation;
+import de.aaaaaaah.velcom.backend.access.benchmark.MeasurementName;
+import de.aaaaaaah.velcom.backend.access.benchmark.Run;
+import de.aaaaaaah.velcom.backend.access.benchmark.Unit;
 import de.aaaaaaah.velcom.backend.access.commit.Commit;
 import de.aaaaaaah.velcom.backend.access.commit.CommitHash;
 import de.aaaaaaah.velcom.backend.access.repo.Branch;
@@ -10,8 +15,11 @@ import de.aaaaaaah.velcom.backend.runner.single.ActiveRunnerInformation;
 import de.aaaaaaah.velcom.runner.shared.RunnerStatusEnum;
 import de.aaaaaaah.velcom.runner.shared.protocol.runnerbound.entities.RunnerWorkOrder;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkResults;
+import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkResults.Benchmark;
+import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkResults.Metric;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.RunnerInformation;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -33,6 +41,7 @@ public class DispatcherImpl implements Dispatcher {
 	private final Collection<ActiveRunnerInformation> activeRunners;
 	private final Queue queue;
 	private final RepoAccess repoAccess;
+	private final BenchmarkAccess benchmarkAccess;
 	private final java.util.Queue<ActiveRunnerInformation> freeRunners;
 	private final ExecutorService dispatcherWorkerPool;
 
@@ -41,10 +50,12 @@ public class DispatcherImpl implements Dispatcher {
 	 *
 	 * @param queue the queue to register to
 	 * @param repoAccess the repo access to use for fetching repositories
+	 * @param benchmarkAccess the benchmark access to store results in
 	 */
-	public DispatcherImpl(Queue queue, RepoAccess repoAccess) {
+	public DispatcherImpl(Queue queue, RepoAccess repoAccess, BenchmarkAccess benchmarkAccess) {
 		this.queue = queue;
 		this.repoAccess = repoAccess;
+		this.benchmarkAccess = benchmarkAccess;
 		this.activeRunners = Collections.newSetFromMap(new ConcurrentHashMap<>());
 		this.freeRunners = new LinkedBlockingDeque<>();
 		// TODO: 12.01.20 cached? Fixed size?
@@ -202,6 +213,52 @@ public class DispatcherImpl implements Dispatcher {
 
 	private void onResultsReceived(ActiveRunnerInformation runner, BenchmarkResults results) {
 		System.out.println("Got work " + results + " from " + runner);
+
+		RepoId repoId = new RepoId(results.getWorkOrder().getRepoId());
+		CommitHash commitHash = new CommitHash(results.getWorkOrder().getCommitHash());
+		Instant startTime = results.getStartTime();
+		Instant endTime = results.getEndTime();
+
+		if (results.isError()) {
+			benchmarkAccess.addFailedRun(
+				repoId,
+				commitHash,
+				startTime,
+				endTime,
+				results.getError()
+			);
+		} else {
+			Run run = benchmarkAccess.addRun(repoId, commitHash, startTime, endTime);
+			for (Benchmark benchmark : results.getBenchmarks()) {
+				for (Metric metric : benchmark.getMetrics()) {
+					addMeasurementToRun(run, benchmark, metric);
+				}
+			}
+		}
+	}
+
+	private void addMeasurementToRun(Run run, Benchmark benchmark, Metric metric) {
+		MeasurementName measurementName = new MeasurementName(
+			benchmark.getName(),
+			metric.getName()
+		);
+		if (metric.isError()) {
+			benchmarkAccess.addFailedMeasurement(
+				run.getId(),
+				measurementName,
+				metric.getError()
+			);
+		} else {
+			benchmarkAccess.addMeasurement(
+				run.getId(),
+				measurementName,
+				metric.getResults(),
+				Interpretation.fromTextualRepresentation(
+					metric.getResultInterpretation().name()
+				),
+				new Unit(metric.getUnit())
+			);
+		}
 	}
 
 	/**
