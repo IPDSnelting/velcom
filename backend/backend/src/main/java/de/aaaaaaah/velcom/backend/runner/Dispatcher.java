@@ -18,12 +18,6 @@ public interface Dispatcher {
 	void addRunner(ActiveRunnerInformation runnerInformation);
 
 	/**
-	 * Called when the queue has changed. This means that the dispatcher might need to fetch new
-	 * work to distribute.
-	 */
-	void onQueueChanged();
-
-	/**
 	 * Aborts a given commit if it is currently being executed by a runner.
 	 *
 	 * @param commitHash the hash of the commit

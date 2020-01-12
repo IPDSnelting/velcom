@@ -2,7 +2,7 @@ package de.aaaaaaah.velcom.backend.runner;
 
 import de.aaaaaaah.velcom.backend.access.commit.Commit;
 import de.aaaaaaah.velcom.backend.access.commit.CommitHash;
-import de.aaaaaaah.velcom.backend.access.repo.Repo;
+import de.aaaaaaah.velcom.backend.access.repo.Branch;
 import de.aaaaaaah.velcom.backend.access.repo.RepoAccess;
 import de.aaaaaaah.velcom.backend.access.repo.RepoId;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
@@ -17,6 +17,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 /**
@@ -24,8 +25,9 @@ import java.util.stream.Collectors;
  */
 public class DispatcherImpl implements Dispatcher {
 
-	private Collection<ActiveRunnerInformation> activeRunners;
-	private RepoAccess repoAccess;
+	private final Collection<ActiveRunnerInformation> activeRunners;
+	private final Queue queue;
+	private final RepoAccess repoAccess;
 
 	/**
 	 * Creates a new dispatcher.
@@ -34,26 +36,31 @@ public class DispatcherImpl implements Dispatcher {
 	 * @param repoAccess the repo access to use for fetching repositories
 	 */
 	public DispatcherImpl(Queue queue, RepoAccess repoAccess) {
+		this.queue = queue;
 		this.repoAccess = repoAccess;
 		this.activeRunners = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
 		queue.onSomethingAborted(task -> abort(task.getSecond(), task.getFirst()));
-		queue.onSomethingAdded(task -> onQueueChanged());
+		queue.onSomethingAdded(task -> updateDispatching());
 	}
 
 	@Override
 	public void addRunner(ActiveRunnerInformation runnerInformation) {
-		removeRunner(runnerInformation);
+		Optional<Commit> lastCommit = removeRunner(runnerInformation);
+
+		AtomicBoolean initialConnect = new AtomicBoolean(true);
 
 		runnerInformation.addStatusListener(status -> {
-			if (status == RunnerStatusEnum.IDLE) {
-				onFreeRunner(runnerInformation);
-			}
-			// Runner reconnected after an abort
-			else if (status == RunnerStatusEnum.WORKING) {
-				if (runnerInformation.getCurrentCommit().isEmpty()) {
+			// Runner reconnected while working
+			if (initialConnect.getAndSet(false) && status == RunnerStatusEnum.WORKING) {
+				// It should not be doing anything right now!
+				if (lastCommit.isEmpty()) {
 					resetRunner(runnerInformation);
 				}
+			}
+
+			if (status != RunnerStatusEnum.WORKING) {
+				updateDispatching();
 			}
 		});
 		runnerInformation.addResultListener(
@@ -63,26 +70,43 @@ public class DispatcherImpl implements Dispatcher {
 		System.out.println("Added a runner " + runnerInformation);
 	}
 
-	private void removeRunner(ActiveRunnerInformation activeRunner) {
+	/**
+	 * Removes a runner, returning the commit it is working on.
+	 *
+	 * @param activeRunner the runner to remove
+	 * @return the last commit it should be working on or an empty commit if the runner should be in
+	 * 	idle mode
+	 */
+	private Optional<Commit> removeRunner(ActiveRunnerInformation activeRunner) {
 		if (activeRunner.getRunnerInformation().isEmpty()) {
 			// Can not do anything else
 			activeRunners.remove(activeRunner);
-			return;
+			return Optional.empty();
 		}
 		String name = activeRunner.getRunnerInformation().get().getName();
 		System.out.println("Removing runner with name " + name);
-		activeRunners.removeIf(runner ->
-			runner.getRunnerInformation()
-				.map(RunnerInformation::getName)
-				.map(name::equals)
-				.orElse(false)
-		);
-	}
+		List<ActiveRunnerInformation> matchingRunners = activeRunners.stream()
+			.filter(runner ->
+				runner.getRunnerInformation()
+					.map(RunnerInformation::getName)
+					.map(name::equals)
+					.orElse(false)
+			)
+			.collect(Collectors.toList());
 
-	@Override
-	public void onQueueChanged() {
-		// TODO: 13.12.19 Implement
-		System.out.println("Queue changed, TODO me");
+		// Delete them
+		activeRunners.removeAll(matchingRunners);
+
+		// This is confusing, two runners had the same name. Should not happen, so reset the new one
+		if (matchingRunners.size() > 1) {
+			return Optional.empty();
+		}
+		// Runner is new
+		if (matchingRunners.isEmpty()) {
+			return Optional.empty();
+		}
+
+		return matchingRunners.get(0).getCurrentCommit();
 	}
 
 	@Override
@@ -120,9 +144,43 @@ public class DispatcherImpl implements Dispatcher {
 			.collect(Collectors.toList());
 	}
 
+	private synchronized void updateDispatching() {
+		System.out.println("\n\nUpdating dispatching with runners:");
+		for (ActiveRunnerInformation runner : activeRunners) {
+			System.out.println("\t" + runner);
+		}
+		for (ActiveRunnerInformation runner : activeRunners) {
+			if (runner.getState() != RunnerStatusEnum.IDLE) {
+				System.out.println("Skipped runner " + runner);
+				continue;
+			}
+			Optional<Commit> nextTask = queue.getNextTask();
+			if (nextTask.isEmpty()) {
+				nextTask = repoAccess.getAllRepos().stream()
+					.filter(it -> it.getName().equals("test-work"))
+					.findFirst()
+					.flatMap(it -> it.getBranches()
+						.stream()
+						.filter(b -> b.getName().getName().endsWith("master"))
+						.findFirst()
+					)
+					.map(Branch::getCommit);
+				// TODO: 12.01.20 Replace this with the following line
+				// return;
+			}
+			Commit commitToBenchmark = nextTask.get();
+			if (dispatchCommit(runner, commitToBenchmark)) {
+				// TODO: 12.01.20 Mark as dispatched
+			}
+		}
+	}
+
+
 	private void resetRunner(ActiveRunnerInformation runner) {
+		System.out.println("Resetting runner " + runner);
 		try {
 			runner.getRunnerStateMachine().resetRunner("Abort requested");
+			runner.setCurrentCommit(null);
 		} catch (IOException e) {
 			e.printStackTrace();
 			// It is already disconnected, so force it now
@@ -134,60 +192,48 @@ public class DispatcherImpl implements Dispatcher {
 		System.out.println("Got work " + results + " from " + runner);
 	}
 
-	private void onFreeRunner(ActiveRunnerInformation runner) {
-		System.out.println("Free runner! " + runner);
-
+	/**
+	 * Dispatches a commit to the given runner. Directly marks the runner as working.
+	 *
+	 * @param runner the runner to dispatch it to
+	 * @param commit the commit to benchmark
+	 * @return true if the commit was dispatched, false otherwise
+	 */
+	private boolean dispatchCommit(ActiveRunnerInformation runner, Commit commit) {
 		if (runner.getRunnerInformation().isEmpty()) {
 			System.err.println("Did not get any information about an active runner!");
 			runner.getConnectionManager().disconnect();
-			return;
+			return false;
 		}
 
-		String runnerCommitHash = runner.getRunnerInformation()
+		String runnerBenchmarkCommitHash = runner.getRunnerInformation()
 			.get()
 			.getCurrentBenchmarkRepoHash()
 			.orElse("");
 
-		String actualCommitHash = repoAccess.getLatestBenchmarkRepoHash().getHash();
+		String actualBenchmarkCommitHash = repoAccess.getLatestBenchmarkRepoHash().getHash();
 
 		try {
-			if (!runnerCommitHash.equals(actualCommitHash)) {
+			if (!runnerBenchmarkCommitHash.equals(actualBenchmarkCommitHash)) {
 				runner.getRunnerStateMachine().sendBenchmarkRepo(
 					repoAccess::streamBenchmarkRepoArchive,
-					actualCommitHash
+					actualBenchmarkCommitHash
 				);
 			}
 
-			Commit commitToTransfer = getUnsafeNewDummyCommit();
 			RunnerWorkOrder workOrder = new RunnerWorkOrder(
-				commitToTransfer.getRepoId().getId(), commitToTransfer.getHash().getHash()
+				commit.getRepoId().getId(), commit.getHash().getHash()
 			);
 
 			runner.getRunnerStateMachine().startWork(
-				getUnsafeNewDummyCommit(),
+				commit,
 				workOrder,
-				outputStream -> repoAccess.streamNormalRepoArchive(commitToTransfer, outputStream)
+				outputStream -> repoAccess.streamNormalRepoArchive(commit, outputStream)
 			);
-
-			System.out.println("Known runners: " + getKnownRunners());
+			return true;
 		} catch (IOException e) {
 			e.printStackTrace();
+			return false;
 		}
-	}
-
-	// FIXME: 15.12.19 Delete this
-	private Commit getUnsafeNewDummyCommit() {
-		Optional<Repo> workRepo = repoAccess.getAllRepos()
-			.stream()
-			.filter(it -> it.getName().equals("test-work"))
-			.findFirst();
-		if (workRepo.isEmpty()) {
-			throw new IllegalStateException("No 'test-work' repo found!");
-		}
-		return new Commit(
-			null, repoAccess,
-			workRepo.get().getId(), new CommitHash("2be75aa4edb1dbe322d28b2bc1bd9277fd9233cb"),
-			List.of(), null, null, null, null, null
-		);
 	}
 }
