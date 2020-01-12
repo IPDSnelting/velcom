@@ -34,6 +34,7 @@ import org.jooq.InsertValuesStep2;
 import org.jooq.Record1;
 import org.jooq.codegen.db.tables.records.RepositoryRecord;
 import org.jooq.codegen.db.tables.records.TrackedBranchRecord;
+import org.jooq.impl.DSL;
 
 /**
  * This class is an abstraction for accessing the {@link Repo}s in the db.
@@ -341,13 +342,16 @@ public class RepoAccess {
 		String repoIdStr = repoId.getId().toString();
 
 		try (DSLContext db = databaseStorage.acquireContext()) {
-			db.transaction(() -> {
+			db.transaction((configuration) -> {
+				DSLContext ts = DSL.using(configuration);
+
 				// Remove existing tracked branches
-				db.deleteFrom(TRACKED_BRANCH)
+				ts.deleteFrom(TRACKED_BRANCH)
 					.where(TRACKED_BRANCH.REPO_ID.eq(repoIdStr))
 					.execute();
+
 				// Add new tracked branches
-				InsertValuesStep2<TrackedBranchRecord, String, String> step = db
+				InsertValuesStep2<TrackedBranchRecord, String, String> step = ts
 					.insertInto(TRACKED_BRANCH, TRACKED_BRANCH.REPO_ID, TRACKED_BRANCH.BRANCH_NAME);
 				branches.forEach(branchName -> step.values(repoIdStr, branchName.getName()));
 				step.execute();
