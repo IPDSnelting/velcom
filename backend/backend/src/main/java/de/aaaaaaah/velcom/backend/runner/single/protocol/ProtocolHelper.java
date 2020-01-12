@@ -35,6 +35,7 @@ public class ProtocolHelper {
 	 */
 	public static OutputStream createBinaryOutputStream(Session session) {
 		return new OutputStream() {
+			private boolean closed = false;
 			private ByteBuffer buffer = ByteBuffer.allocate(DEFAULT_BUFFER_SIZE);
 
 			@Override
@@ -49,9 +50,13 @@ public class ProtocolHelper {
 
 			@Override
 			public void close() throws IOException {
+				if (closed) {
+					return;
+				}
 				buffer.limit(buffer.position());
 				buffer.rewind();
 				session.getRemote().sendPartialBytes(buffer, true);
+				closed = true;
 			}
 		};
 	}
