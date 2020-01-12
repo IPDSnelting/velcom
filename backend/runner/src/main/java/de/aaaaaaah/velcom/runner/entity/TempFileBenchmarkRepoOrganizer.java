@@ -47,6 +47,9 @@ public class TempFileBenchmarkRepoOrganizer implements BenchmarkRepoOrganizer {
 
 	@Override
 	public void copyToYourself(Path source, String headHash) throws IOException {
+		if (hasLocalCopy()) {
+			FileHelper.deleteDirectoryOrFile(getPathToRepo());
+		}
 		copyDirectory(source, getPathToRepo());
 		this.headHash = headHash;
 	}
