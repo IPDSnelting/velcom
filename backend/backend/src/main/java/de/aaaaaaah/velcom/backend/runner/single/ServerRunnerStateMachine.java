@@ -88,7 +88,7 @@ public class ServerRunnerStateMachine {
 	 * @throws IOException if an error occurs
 	 */
 	public void startWork(Commit commit, RunnerWorkOrder workOrder,
-		CheckedConsumer<OutputStream, Exception> writer)
+		CheckedConsumer<OutputStream, IOException> writer)
 		throws IOException {
 		if (runnerInformation.getState() != RunnerStatusEnum.IDLE) {
 			throw new IllegalStateException(
@@ -113,7 +113,7 @@ public class ServerRunnerStateMachine {
 	 * @param repoHeadHash the hash of the head commit
 	 * @throws IOException if an error occurs
 	 */
-	public void sendBenchmarkRepo(CheckedConsumer<OutputStream, Exception> writer,
+	public void sendBenchmarkRepo(CheckedConsumer<OutputStream, IOException> writer,
 		String repoHeadHash) throws IOException {
 		System.out.println("Sending an updated repo (" + repoHeadHash + ")");
 		runnerInformation.getConnectionManager()
