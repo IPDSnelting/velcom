@@ -2,6 +2,8 @@ package de.aaaaaaah.velcom.backend.runner;
 
 import de.aaaaaaah.velcom.backend.access.commit.Commit;
 import de.aaaaaaah.velcom.backend.access.commit.CommitHash;
+import de.aaaaaaah.velcom.backend.access.repo.Repo;
+import de.aaaaaaah.velcom.backend.access.repo.RepoAccess;
 import de.aaaaaaah.velcom.backend.access.repo.RepoId;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.runner.single.ActiveRunnerInformation;
@@ -14,7 +16,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -24,14 +25,18 @@ import java.util.stream.Collectors;
 public class DispatcherImpl implements Dispatcher {
 
 	private Collection<ActiveRunnerInformation> activeRunners;
+	private RepoAccess repoAccess;
 
 	/**
 	 * Creates a new dispatcher.
 	 *
 	 * @param queue the queue to register to
+	 * @param repoAccess the repo access to use for fetching repositories
 	 */
-	public DispatcherImpl(Queue queue) {
+	public DispatcherImpl(Queue queue, RepoAccess repoAccess) {
+		this.repoAccess = repoAccess;
 		this.activeRunners = Collections.newSetFromMap(new ConcurrentHashMap<>());
+
 		queue.onSomethingAborted(task -> abort(task.getSecond(), task.getFirst()));
 		queue.onSomethingAdded(task -> onQueueChanged());
 	}
@@ -149,23 +154,25 @@ public class DispatcherImpl implements Dispatcher {
 			.getCurrentBenchmarkRepoHash()
 			.orElse("");
 
-		// FIXME: 15.12.19 Implement
-		String actualCommitHash = "hey";
+		String actualCommitHash = repoAccess.getLatestBenchmarkRepoHash().getHash();
 
 		try {
 			if (!runnerCommitHash.equals(actualCommitHash)) {
 				runner.getRunnerStateMachine().sendBenchmarkRepo(
-					outputStream -> getClass().getResourceAsStream("/runner-test-tmp/benchrepo.tar")
-						.transferTo(outputStream),
+					repoAccess::streamBenchmarkRepoArchive,
 					actualCommitHash
 				);
 			}
 
+			Commit commitToTransfer = getUnsafeNewDummyCommit();
+			RunnerWorkOrder workOrder = new RunnerWorkOrder(
+				commitToTransfer.getRepoId().getId(), commitToTransfer.getHash().getHash()
+			);
+
 			runner.getRunnerStateMachine().startWork(
 				getUnsafeNewDummyCommit(),
-				new RunnerWorkOrder(UUID.randomUUID(), "hey", "test"),
-				outputStream -> getClass().getResourceAsStream("/runner-test-tmp/work.tar")
-					.transferTo(outputStream)
+				workOrder,
+				outputStream -> repoAccess.streamNormalRepoArchive(commitToTransfer, outputStream)
 			);
 
 			System.out.println("Known runners: " + getKnownRunners());
@@ -176,9 +183,16 @@ public class DispatcherImpl implements Dispatcher {
 
 	// FIXME: 15.12.19 Delete this
 	private Commit getUnsafeNewDummyCommit() {
+		Optional<Repo> workRepo = repoAccess.getAllRepos()
+			.stream()
+			.filter(it -> it.getName().equals("test-work"))
+			.findFirst();
+		if (workRepo.isEmpty()) {
+			throw new IllegalStateException("No 'test-work' repo found!");
+		}
 		return new Commit(
-			null, null,
-			new RepoId(UUID.randomUUID()), new CommitHash("hey"),
+			null, repoAccess,
+			workRepo.get().getId(), new CommitHash("2be75aa4edb1dbe322d28b2bc1bd9277fd9233cb"),
 			List.of(), null, null, null, null, null
 		);
 	}

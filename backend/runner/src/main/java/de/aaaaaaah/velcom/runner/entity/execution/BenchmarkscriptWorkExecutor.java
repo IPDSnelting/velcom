@@ -115,7 +115,7 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 		}
 
 		public Path unpack(RunnerWorkOrder workOrder) throws IOException {
-			unarchivedWorkPath = Files.createTempDirectory(workOrder.getRemoteUrlIdentifier());
+			unarchivedWorkPath = Files.createTempDirectory(workOrder.getRepoId().toString());
 			TarHelper.untar(workBinaryPath, unarchivedWorkPath);
 
 			return unarchivedWorkPath;

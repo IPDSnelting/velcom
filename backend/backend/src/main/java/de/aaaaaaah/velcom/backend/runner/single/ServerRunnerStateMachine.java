@@ -88,7 +88,7 @@ public class ServerRunnerStateMachine {
 	 * @throws IOException if an error occurs
 	 */
 	public void startWork(Commit commit, RunnerWorkOrder workOrder,
-		CheckedConsumer<OutputStream, IOException> writer)
+		CheckedConsumer<OutputStream, Exception> writer)
 		throws IOException {
 		if (runnerInformation.getState() != RunnerStatusEnum.IDLE) {
 			throw new IllegalStateException(
@@ -100,6 +100,9 @@ public class ServerRunnerStateMachine {
 		runnerInformation.getConnectionManager().sendEntity(workOrder);
 		try (var out = runnerInformation.getConnectionManager().createBinaryOutputStream()) {
 			writer.accept(out);
+		} catch (Exception e) {
+			// TODO: 12.01.20 Make nicer catch
+			throw new IOException(e);
 		}
 	}
 
@@ -110,7 +113,7 @@ public class ServerRunnerStateMachine {
 	 * @param repoHeadHash the hash of the head commit
 	 * @throws IOException if an error occurs
 	 */
-	public void sendBenchmarkRepo(CheckedConsumer<OutputStream, IOException> writer,
+	public void sendBenchmarkRepo(CheckedConsumer<OutputStream, Exception> writer,
 		String repoHeadHash) throws IOException {
 		System.out.println("Sending an updated repo (" + repoHeadHash + ")");
 		runnerInformation.getConnectionManager()
@@ -118,6 +121,9 @@ public class ServerRunnerStateMachine {
 
 		try (var out = runnerInformation.getConnectionManager().createBinaryOutputStream()) {
 			writer.accept(out);
+		} catch (Exception e) {
+			// TODO: 12.01.20 Make nicer catch
+			throw new IOException(e);
 		}
 
 		// TODO: Update the stored repo hash. Could also force a disconnect or re-send the

@@ -32,6 +32,10 @@ import io.dropwizard.auth.AuthDynamicFeature;
 import io.dropwizard.auth.AuthValueFactoryProvider;
 import io.dropwizard.auth.basic.BasicCredentialAuthFilter;
 import io.dropwizard.setup.Environment;
+import org.eclipse.jgit.transport.SshSessionFactory;
+import org.eclipse.jgit.transport.sshd.DefaultProxyDataFactory;
+import org.eclipse.jgit.transport.sshd.JGitKeyCache;
+import org.eclipse.jgit.transport.sshd.SshdSessionFactory;
 
 /**
  * The backend's main class. Contains the core initialisation routines for the web server.
@@ -52,6 +56,13 @@ public class ServerMain extends Application<GlobalConfig> {
 	public void run(GlobalConfig configuration, Environment environment) throws Exception {
 		environment.getObjectMapper().setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
 
+		SshdSessionFactory factory = new SshdSessionFactory(
+			new JGitKeyCache(),
+			new DefaultProxyDataFactory()
+		);
+
+		SshSessionFactory.setInstance(factory);
+
 		// Storage layer
 		DatabaseStorage databaseStorage = new DatabaseStorage(configuration);
 		RepoStorage repoStorage = new RepoStorage();
@@ -68,10 +79,11 @@ public class ServerMain extends Application<GlobalConfig> {
 		// Data layer
 		LinearLog linearLog = new CommitAccessBasedLinearLog(commitAccess);
 		Queue queue = new Queue(commitAccess, new PolicyManualFilo());
-		Dispatcher dispatcher = new DispatcherImpl(queue);
+		Dispatcher dispatcher = new DispatcherImpl(queue, repoAccess);
 
 		// Dispatcher
 		RunnerAwareServerFactory.getInstance().setDispatcher(dispatcher);
+		addDummyWorkRepo(repoAccess);
 
 		// API authentication
 		environment.jersey().register(
@@ -95,5 +107,18 @@ public class ServerMain extends Application<GlobalConfig> {
 		environment.jersey().register(new RepoComparisonGraphEndpoint());
 		environment.jersey().register(new RepoEndpoint(repoAccess, tokenAccess));
 		environment.jersey().register(new TestTokenEndpoint(tokenAccess));
+	}
+
+	private void addDummyWorkRepo(RepoAccess repoAccess) {
+		boolean containsRepo = repoAccess.getAllRepos()
+			.stream()
+			.anyMatch(it -> it.getName().equals("test-work"));
+		if (containsRepo) {
+			return;
+		}
+		repoAccess.addRepo(
+			"test-work", new RemoteUrl("https://github.com/I-Al-Istannen/Configurator.git")
+		);
+		System.out.println("Added test-work repo!");
 	}
 }
