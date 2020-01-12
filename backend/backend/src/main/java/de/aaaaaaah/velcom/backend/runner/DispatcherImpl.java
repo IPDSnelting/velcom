@@ -143,12 +143,6 @@ public class DispatcherImpl implements Dispatcher {
 			return;
 		}
 
-		// It executes too fast...
-		try {
-			Thread.sleep(5000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
 		String runnerCommitHash = runner.getRunnerInformation()
 			.get()
 			.getCurrentBenchmarkRepoHash()

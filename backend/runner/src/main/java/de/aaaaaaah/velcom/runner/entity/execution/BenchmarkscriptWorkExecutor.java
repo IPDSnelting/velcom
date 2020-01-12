@@ -73,6 +73,9 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 
 			BenchmarkResults results = benchmarkScriptOutputParser.parse(workOrder, resultTree);
 
+			// Delay a bit for testing
+			Thread.sleep(5000);
+
 			configuration.getRunnerStateMachine().onWorkDone(results, configuration);
 		} catch (IOException | ExecutionException | InterruptedException e) {
 			System.err.println("Error executing some work (" + workOrder + ")");
