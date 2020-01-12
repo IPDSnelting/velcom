@@ -130,7 +130,7 @@ public class RepoAccess {
 			RepositoryRecord record = db.newRecord(REPOSITORY);
 			record.setId(repoId.getId().toString());
 			record.setName(name);
-			record.setRemoteUrl(remoteUrl.toString());
+			record.setRemoteUrl(remoteUrl.getUrl());
 			record.insert();
 		}
 
@@ -299,7 +299,7 @@ public class RepoAccess {
 		// (3): Update database
 		try (DSLContext db = databaseStorage.acquireContext()) {
 			db.update(REPOSITORY)
-				.set(REPOSITORY.REMOTE_URL, remoteUrl.toString())
+				.set(REPOSITORY.REMOTE_URL, remoteUrl.getUrl())
 				.where(REPOSITORY.ID.eq(repoId.getId().toString()))
 				.execute();
 		}
