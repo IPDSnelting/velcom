@@ -87,7 +87,7 @@ class DatabaseStorageTest {
 			benchmarkRunRecord.setRepoId(repoId);
 			benchmarkRunRecord.setCommitHash("f3c12144172b81880e39c274f74daa53d76797a5");
 			benchmarkRunRecord.setStartTime(Timestamp.from(Instant.now()));
-			benchmarkRunRecord.setEndTime(Timestamp.from(Instant.now()));
+			benchmarkRunRecord.setStopTime(Timestamp.from(Instant.now()));
 			benchmarkRunRecord.insert();
 
 			assertNotNull(benchmarkRunRecord.getId());
@@ -155,7 +155,7 @@ class DatabaseStorageTest {
 				benchmarkRunRecord.setRepoId(repoId);
 				benchmarkRunRecord.setCommitHash(commitHash);
 				benchmarkRunRecord.setStartTime(Timestamp.from(Instant.now()));
-				benchmarkRunRecord.setEndTime(Timestamp.from(Instant.now()));
+				benchmarkRunRecord.setStopTime(Timestamp.from(Instant.now()));
 				benchmarkRunRecord.insert();
 			}
 
