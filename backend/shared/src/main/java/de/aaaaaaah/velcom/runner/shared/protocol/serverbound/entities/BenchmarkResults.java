@@ -133,6 +133,8 @@ public class BenchmarkResults implements SentEntity {
 			"workOrder=" + workOrder +
 			", benchmarks=" + benchmarks +
 			", error='" + error + '\'' +
+			", startTime=" + startTime +
+			", endTime=" + endTime +
 			'}';
 	}
 
