@@ -14,6 +14,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <jbock.version>3.4.008</jbock.version>
   </properties>
 
   <build>
@@ -36,7 +37,7 @@
             <transformer
               implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
               <manifestEntries>
-                <Main-Class>de.aaaaaaah.velcom.runner.TestMain</Main-Class>
+                <Main-Class>de.aaaaaaah.velcom.runner.cli.RunnerMain</Main-Class>
               </manifestEntries>
             </transformer>
           </transformers>
@@ -55,6 +56,13 @@
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-compress</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.github.h908714124</groupId>
+      <artifactId>jbock</artifactId>
+      <version>${jbock.version}</version>
+      <scope>provided</scope>
     </dependency>
   </dependencies>
 

@@ -1,6 +1,5 @@
 package de.aaaaaaah.velcom.backend.storage.repo.exception;
 
-import java.net.URI;
 import java.util.Objects;
 
 /**
@@ -9,7 +8,7 @@ import java.util.Objects;
 public class AddRepositoryException extends Exception {
 
 	private final String dirName;
-	private final URI remoteUrl;
+	private final String remoteUrl;
 
 	/**
 	 * Constructs a new {@link AddRepositoryException}.
@@ -18,7 +17,7 @@ public class AddRepositoryException extends Exception {
 	 * @param remoteUrl the remote url of the repository
 	 * @param cause the cause
 	 */
-	public AddRepositoryException(String dirName, URI remoteUrl, Throwable cause) {
+	public AddRepositoryException(String dirName, String remoteUrl, Throwable cause) {
 		super("failed to add repository to directory \"" + dirName + "\": " + remoteUrl, cause);
 		this.dirName = Objects.requireNonNull(dirName);
 		this.remoteUrl = Objects.requireNonNull(remoteUrl);
@@ -34,7 +33,7 @@ public class AddRepositoryException extends Exception {
 	/**
 	 * @return Returns the remote url of the repository
 	 */
-	public URI getRemoteUrl() {
+	public String getRemoteUrl() {
 		return remoteUrl;
 	}
 

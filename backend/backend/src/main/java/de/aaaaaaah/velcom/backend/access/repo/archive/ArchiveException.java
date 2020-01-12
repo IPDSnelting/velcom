@@ -1,11 +1,12 @@
 package de.aaaaaaah.velcom.backend.access.repo.archive;
 
 import de.aaaaaaah.velcom.backend.access.commit.CommitHash;
+import java.io.IOException;
 
 /**
  * This exception is thrown when something goes wrong while trying to archive a repository.
  */
-public class ArchiveException extends Exception {
+public class ArchiveException extends IOException {
 
 	private final String dirName;
 	private final CommitHash commitHash;

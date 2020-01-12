@@ -1,15 +1,31 @@
 package de.aaaaaaah.velcom.backend.access.benchmark;
 
+import static org.jooq.codegen.db.tables.Repository.REPOSITORY;
+import static org.jooq.codegen.db.tables.Run.RUN;
+import static org.jooq.codegen.db.tables.RunMeasurement.RUN_MEASUREMENT;
+import static org.jooq.codegen.db.tables.RunMeasurementValue.RUN_MEASUREMENT_VALUE;
+import static org.jooq.impl.DSL.exists;
+import static org.jooq.impl.DSL.notExists;
+
 import de.aaaaaaah.velcom.backend.access.AccessLayer;
 import de.aaaaaaah.velcom.backend.access.commit.Commit;
 import de.aaaaaaah.velcom.backend.access.commit.CommitHash;
 import de.aaaaaaah.velcom.backend.access.repo.RepoId;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
+import de.aaaaaaah.velcom.backend.util.Either;
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.jooq.DSLContext;
+import org.jooq.InsertValuesStep2;
+import org.jooq.codegen.db.tables.records.RunMeasurementRecord;
+import org.jooq.codegen.db.tables.records.RunMeasurementValueRecord;
+import org.jooq.codegen.db.tables.records.RunRecord;
 
 /**
  * This class abstracts away access to the benchmark results such as runs and measurements.
@@ -38,9 +54,30 @@ public class BenchmarkAccess {
 	Basic querying
 	 */
 
+	private Run runFromRecord(RunRecord runRecord) {
+		return new Run(
+			accessLayer.getBenchmarkAccess(),
+			accessLayer.getCommitAccess(),
+			accessLayer.getRepoAccess(),
+			new RunId(UUID.fromString(runRecord.getId())),
+			new RepoId(UUID.fromString(runRecord.getRepoId())),
+			new CommitHash(runRecord.getCommitHash()),
+			runRecord.getStartTime().toInstant(),
+			runRecord.getStopTime().toInstant(),
+			runRecord.getErrorMessage()
+		);
+	}
+
 	public Run getRun(RunId runId) {
-		// TODO implement
-		return null;
+		try (DSLContext db = databaseStorage.acquireContext()) {
+			final RunRecord runRecord = db.fetchOne(RUN, RUN.ID.eq(runId.getId().toString()));
+
+			if (runRecord == null) {
+				throw new NoSuchRunException(runId);
+			}
+
+			return runFromRecord(runRecord);
+		}
 	}
 
 	public Optional<Run> getLatestRunOf(Commit commit) {
@@ -48,8 +85,14 @@ public class BenchmarkAccess {
 	}
 
 	public Optional<Run> getLatestRunOf(RepoId repoId, CommitHash commitHash) {
-		// TODO implement
-		return null;
+		try (DSLContext db = databaseStorage.acquireContext()) {
+			final Optional<RunRecord> runRecord = db.selectFrom(RUN)
+				.where(RUN.REPO_ID.eq(repoId.getId().toString()))
+				.orderBy(RUN.START_TIME.desc())
+				.fetchOptional();
+
+			return runRecord.map(this::runFromRecord);
+		}
 	}
 
 	/*
@@ -66,8 +109,18 @@ public class BenchmarkAccess {
 	 * @return the newly created {@link Run}
 	 */
 	public Run addRun(RepoId repoId, CommitHash commitHash, Instant startTime, Instant stopTime) {
-		// TODO implement
-		return null;
+		try (DSLContext db = databaseStorage.acquireContext()) {
+			final RunRecord runRecord = db.newRecord(RUN);
+
+			runRecord.setId(UUID.randomUUID().toString());
+			runRecord.setRepoId(repoId.getId().toString());
+			runRecord.setCommitHash(commitHash.getHash());
+			runRecord.setStartTime(Timestamp.from(startTime));
+			runRecord.setStopTime(Timestamp.from(stopTime));
+
+			runRecord.insert();
+			return runFromRecord(runRecord);
+		}
 	}
 
 	/**
@@ -83,8 +136,19 @@ public class BenchmarkAccess {
 	public Run addFailedRun(RepoId repoId, CommitHash commitHash, Instant startTime,
 		Instant stopTime, String errorMessage) {
 
-		// TODO implement
-		return null;
+		try (DSLContext db = databaseStorage.acquireContext()) {
+			final RunRecord runRecord = db.newRecord(RUN);
+
+			runRecord.setId(UUID.randomUUID().toString());
+			runRecord.setRepoId(repoId.getId().toString());
+			runRecord.setCommitHash(commitHash.getHash());
+			runRecord.setStartTime(Timestamp.from(startTime));
+			runRecord.setStopTime(Timestamp.from(stopTime));
+			runRecord.setErrorMessage(errorMessage);
+
+			runRecord.insert();
+			return runFromRecord(runRecord);
+		}
 	}
 
 	/**
@@ -100,8 +164,34 @@ public class BenchmarkAccess {
 	public Measurement addMeasurement(RunId runId, MeasurementName measurementName,
 		List<Double> values, Interpretation interpretation, Unit unit) {
 
-		// TODO implement
-		return null;
+		try (DSLContext db = databaseStorage.acquireContext()) {
+			// Insert new measurement
+			final UUID measurement_id = UUID.randomUUID();
+			final RunMeasurementRecord runMeasurementRecord = db.newRecord(RUN_MEASUREMENT);
+
+			runMeasurementRecord.setId(measurement_id.toString());
+			runMeasurementRecord.setRunId(runId.getId().toString());
+			runMeasurementRecord.setBenchmark(measurementName.getBenchmark());
+			runMeasurementRecord.setMetric(measurementName.getMetric());
+			runMeasurementRecord.setUnit(unit.getName());
+			runMeasurementRecord.setInterpretation(interpretation.getTextualRepresentation());
+
+			runMeasurementRecord.insert();
+
+			// Insert individual measurement values
+			final InsertValuesStep2<RunMeasurementValueRecord, String, Double> step = db.insertInto(
+				RUN_MEASUREMENT_VALUE)
+				.columns(RUN_MEASUREMENT_VALUE.MEASUREMENT_ID, RUN_MEASUREMENT_VALUE.VALUE);
+			values.forEach(value -> step.values(measurement_id.toString(), value));
+			step.execute();
+
+			return new Measurement(
+				accessLayer.getBenchmarkAccess(),
+				runId,
+				measurementName,
+				Either.ofRight(new MeasurementValues(values, unit, interpretation))
+			);
+		}
 	}
 
 
@@ -116,8 +206,26 @@ public class BenchmarkAccess {
 	public Measurement addFailedMeasurement(RunId runId, MeasurementName measurementName,
 		String errorMessage) {
 
-		// TODO implement
-		return null;
+		try (DSLContext db = databaseStorage.acquireContext()) {
+			// Insert new measurement
+			final UUID measurement_id = UUID.randomUUID();
+			final RunMeasurementRecord runMeasurementRecord = db.newRecord(RUN_MEASUREMENT);
+
+			runMeasurementRecord.setId(measurement_id.toString());
+			runMeasurementRecord.setRunId(runId.getId().toString());
+			runMeasurementRecord.setBenchmark(measurementName.getBenchmark());
+			runMeasurementRecord.setMetric(measurementName.getMetric());
+			runMeasurementRecord.setErrorMessage(errorMessage);
+
+			runMeasurementRecord.insert();
+
+			return new Measurement(
+				accessLayer.getBenchmarkAccess(),
+				runId,
+				measurementName,
+				Either.ofLeft(new MeasurementError(errorMessage))
+			);
+		}
 	}
 
 	// TODO mention that the stream needs to be closed after use
@@ -135,7 +243,17 @@ public class BenchmarkAccess {
 	 * @param measurementName the name specifying which measurements to delete.
 	 */
 	public void deleteAllMeasurementsOfName(RepoId repoId, MeasurementName measurementName) {
-		// TODO implement
+		try (DSLContext db = databaseStorage.acquireContext()) {
+			db.deleteFrom(RUN_MEASUREMENT)
+				.where(
+					exists(db.selectOne().from(RUN)
+						.where(RUN.ID.eq(RUN_MEASUREMENT.RUN_ID)
+							.and(RUN.REPO_ID.eq(repoId.getId().toString())))
+					)
+						.and(RUN_MEASUREMENT.BENCHMARK.eq(measurementName.getBenchmark()))
+						.and(RUN_MEASUREMENT.METRIC.eq(measurementName.getMetric())))
+				.execute();
+		}
 	}
 
 	/**
@@ -147,10 +265,39 @@ public class BenchmarkAccess {
 	 * </ol>
 	 */
 	public void deleteAllUnused() {
-		// TODO implement
+		try (DSLContext db = databaseStorage.acquireContext()) {
+			db.transaction(() -> {
+				// Delete all runs that don't have a corresponding repo
+				db.deleteFrom(RUN)
+					.where(notExists(
+						db.selectOne()
+							.from(REPOSITORY)
+							.where(REPOSITORY.ID.eq(RUN.REPO_ID))
+					))
+					.execute();
+
+				// Delete all runs that don't have any corresponding measurements
+				db.deleteFrom(RUN)
+					.where(notExists(
+						db.selectOne()
+							.from(RUN_MEASUREMENT)
+							.where(RUN_MEASUREMENT.RUN_ID.eq(RUN.ID))
+					))
+					.execute();
+
+				// Delete all measurements that don't have any corresponding runs
+				db.deleteFrom(RUN_MEASUREMENT)
+					.where(notExists(
+						db.selectOne()
+							.from(RUN)
+							.where(RUN.ID.eq(RUN_MEASUREMENT.RUN_ID))
+					))
+					.execute();
+			});
+		}
 	}
 
-	public Collection<Measurement> getMeasurements(RunId id) {
+	public Collection<Measurement> getMeasurements(RunId runId) {
 		// TODO implement
 		return null;
 	}
@@ -160,8 +307,13 @@ public class BenchmarkAccess {
 	 * @return all {@link MeasurementName}s of which at least one measurement exists for this repo
 	 */
 	public Collection<MeasurementName> getAvailableMeasurements(RepoId repoId) {
-		// TODO implement
-		return null;
+		try (DSLContext db = databaseStorage.acquireContext()) {
+			return db.selectDistinct(RUN_MEASUREMENT.BENCHMARK, RUN_MEASUREMENT.METRIC)
+				.from(RUN_MEASUREMENT)
+				.stream()
+				.map(record -> new MeasurementName(record.value1(), record.value2()))
+				.collect(Collectors.toUnmodifiableSet());
+		}
 	}
 
 }

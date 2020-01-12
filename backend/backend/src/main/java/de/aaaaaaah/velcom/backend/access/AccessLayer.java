@@ -2,7 +2,6 @@ package de.aaaaaaah.velcom.backend.access;
 
 import de.aaaaaaah.velcom.backend.access.benchmark.BenchmarkAccess;
 import de.aaaaaaah.velcom.backend.access.commit.CommitAccess;
-import de.aaaaaaah.velcom.backend.access.queue.QueueAccess;
 import de.aaaaaaah.velcom.backend.access.repo.RepoAccess;
 import de.aaaaaaah.velcom.backend.access.token.TokenAccess;
 
@@ -16,7 +15,6 @@ public class AccessLayer {
 
 	private BenchmarkAccess benchmarkAccess;
 	private CommitAccess commitAccess;
-	private QueueAccess queueAccess;
 	private RepoAccess repoAccess;
 	private TokenAccess tokenAccess;
 
@@ -36,15 +34,6 @@ public class AccessLayer {
 	 */
 	public void registerCommitAccess(CommitAccess commitAccess) {
 		this.commitAccess = commitAccess;
-	}
-
-	/**
-	 * Add a {@link QueueAccess} to this layer.
-	 *
-	 * @param queueAccess the access class
-	 */
-	public void registerQueueAccess(QueueAccess queueAccess) {
-		this.queueAccess = queueAccess;
 	}
 
 	/**
@@ -71,10 +60,6 @@ public class AccessLayer {
 
 	public CommitAccess getCommitAccess() {
 		return commitAccess;
-	}
-
-	public QueueAccess getQueueAccess() {
-		return queueAccess;
 	}
 
 	public RepoAccess getRepoAccess() {

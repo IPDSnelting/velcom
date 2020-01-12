@@ -1,9 +1,9 @@
 package de.aaaaaaah.velcom.backend.data.queue;
 
+import de.aaaaaaah.velcom.backend.access.commit.BenchmarkStatus;
 import de.aaaaaaah.velcom.backend.access.commit.Commit;
+import de.aaaaaaah.velcom.backend.access.commit.CommitAccess;
 import de.aaaaaaah.velcom.backend.access.commit.CommitHash;
-import de.aaaaaaah.velcom.backend.access.queue.QueueAccess;
-import de.aaaaaaah.velcom.backend.access.queue.Task;
 import de.aaaaaaah.velcom.backend.access.repo.RepoId;
 import de.aaaaaaah.velcom.backend.util.Pair;
 import java.util.ArrayList;
@@ -13,13 +13,13 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 /**
- * The queue is passed tasks from various sources. It keeps track of all manual tasks in a {@link
- * QueueAccess}, and also passes all tasks to an internal {@link QueuePolicy}. That policy keeps the
- * tasks and decides in which order they should be executed.
+ * The queue is passed tasks from various sources. It keeps track of all tasks and updates their
+ * benchmark status in the {@link CommitAccess}, and also passes all tasks to an internal {@link
+ * QueuePolicy}. That policy keeps the tasks and decides in which order they should be executed.
  *
  * <p> When the queue is loaded after a restart, all the known commits which still need to be
- * benchmarked (see {@link Commit#requiresBenchmark()}) as well as the manual commits need to be
- * added one by one again. The queue does <em>>not</em> do this itself.
+ * benchmarked as well as the manual commits need to be added one by one again. The queue does
+ * <em>>not</em> do this itself.
  *
  * <p> The policy must follow these rules:
  * <ul>
@@ -31,16 +31,14 @@ import java.util.function.Consumer;
  */
 public class Queue {
 
-	// TODO: 27.12.19 Where/When/How is there dispatcher notified?
-
-	private final QueueAccess queueAccess;
+	private final CommitAccess commitAccess;
 	private final QueuePolicy queuePolicy;
 
-	private final Collection<Consumer<Task>> somethingAddedListeners;
+	private final Collection<Consumer<Commit>> somethingAddedListeners;
 	private final Collection<Consumer<Pair<RepoId, CommitHash>>> somethingAbortedListeners;
 
-	public Queue(QueueAccess queueAccess, QueuePolicy queuePolicy) {
-		this.queueAccess = queueAccess;
+	public Queue(CommitAccess commitAccess, QueuePolicy queuePolicy) {
+		this.commitAccess = commitAccess;
 		this.queuePolicy = queuePolicy;
 
 		somethingAddedListeners = new ArrayList<>();
@@ -50,36 +48,38 @@ public class Queue {
 	/**
 	 * Add a new task to the queue.
 	 *
-	 * @param repoId the repo the commit is in
-	 * @param commitHash the hash of the commit to benchmark
-	 * @return the task that was just added to the queue
+	 * @param commit the commit that should be added as task
 	 */
-	public Task addTask(RepoId repoId, CommitHash commitHash) {
-		Task task = new Task(repoId, commitHash);
-		queuePolicy.addTask(task);
-		callAllAddedListeners(task);
-		return task;
+	public void addTask(Commit commit) {
+		queuePolicy.addTask(commit);
+		callAllAddedListeners(commit);
 	}
 
 	/**
 	 * Add a new manual task to the queue. Usually, manual tasks have a higher priority than other
 	 * tasks, though this is up to the queue policy.
 	 *
-	 * @param repoId the repo the commit is in
-	 * @param commitHash the hash of the commit to benchmark
-	 * @return the task that was just added to the queue
+	 * @param commit the commit that should be added as task
 	 */
-	public Task addManualTask(RepoId repoId, CommitHash commitHash) {
-		Task task = queueAccess.addManualTask(repoId, commitHash);
-		queuePolicy.addManualTask(task);
-		callAllAddedListeners(task);
-		return task;
+	public void addManualTask(Commit commit) {
+		commitAccess.setBenchmarkStatus(commit.getRepoId(), commit.getHash(),
+			BenchmarkStatus.BENCHMARK_REQUIRED_MANUAL_PRIORITY);
+		queuePolicy.addManualTask(commit);
+		callAllAddedListeners(commit);
 	}
 
-	public Optional<Task> getNextTask() {
-		Optional<Task> task = queuePolicy.getNextTask();
-		task.ifPresent(queueAccess::deleteManualTask);
-		return task;
+	public Optional<Commit> getNextTask() {
+		return queuePolicy.getNextTask();
+	}
+
+	/**
+	 * This function must be called once a task was completed and should not be benchmarked again.
+	 *
+	 * @param commit the commit that was completed
+	 */
+	public void finishTask(Commit commit) {
+		commitAccess.setBenchmarkStatus(commit.getRepoId(), commit.getHash(),
+			BenchmarkStatus.NO_BENCHMARK_REQUIRED);
 	}
 
 	/**
@@ -89,7 +89,7 @@ public class Queue {
 	 *
 	 * @return the list of tasks in the order they will be executed
 	 */
-	public List<Task> viewAllCurrentTasks() {
+	public List<Commit> viewAllCurrentTasks() {
 		return queuePolicy.viewAllCurrentTasks();
 	}
 
@@ -101,7 +101,7 @@ public class Queue {
 	 */
 	public void abortTask(RepoId repoId, CommitHash commitHash) {
 		queuePolicy.abortTask(repoId, commitHash);
-		queueAccess.deleteManualTask(repoId, commitHash);
+		commitAccess.setBenchmarkStatus(repoId, commitHash, BenchmarkStatus.NO_BENCHMARK_REQUIRED);
 		callAllAbortedListeners(repoId, commitHash);
 	}
 
@@ -110,12 +110,12 @@ public class Queue {
 	 *
 	 * @param listener the listener to call if something is added to the queue
 	 */
-	public void onSomethingAdded(Consumer<Task> listener) {
+	public void onSomethingAdded(Consumer<Commit> listener) {
 		somethingAddedListeners.add(listener);
 	}
 
-	private void callAllAddedListeners(Task task) {
-		somethingAddedListeners.forEach(taskConsumer -> taskConsumer.accept(task));
+	private void callAllAddedListeners(Commit commit) {
+		somethingAddedListeners.forEach(taskConsumer -> taskConsumer.accept(commit));
 	}
 
 	/**

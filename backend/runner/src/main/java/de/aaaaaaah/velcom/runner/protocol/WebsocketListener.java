@@ -2,6 +2,7 @@ package de.aaaaaaah.velcom.runner.protocol;
 
 import de.aaaaaaah.velcom.runner.entity.RunnerConfiguration;
 import de.aaaaaaah.velcom.runner.exceptions.ConnectionException;
+import de.aaaaaaah.velcom.runner.exceptions.HandshakeFailureException;
 import de.aaaaaaah.velcom.runner.shared.protocol.HeartbeatHandler;
 import de.aaaaaaah.velcom.runner.shared.protocol.HeartbeatHandler.HeartbeatWebsocket;
 import de.aaaaaaah.velcom.runner.shared.protocol.SentEntity;
@@ -13,6 +14,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.http.HttpClient;
 import java.net.http.WebSocket;
+import java.net.http.WebSocketHandshakeException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -49,8 +51,6 @@ public class WebsocketListener implements WebSocket.Listener, SocketConnectionMa
 		this.textLock = new Object();
 		this.textBuilder = new StringBuilder();
 		this.stateListeners = Collections.newSetFromMap(new ConcurrentHashMap<>());
-
-		addStateListener(new RestablishConnectionListener(this));
 	}
 
 	/**
@@ -198,9 +198,26 @@ public class WebsocketListener implements WebSocket.Listener, SocketConnectionMa
 
 		try {
 			future.get(20, TimeUnit.SECONDS);
-		} catch (InterruptedException | ExecutionException | TimeoutException e) {
-			throw new ConnectionException("Error connecting", e);
+		} catch (ExecutionException e) {
+			handleExecutionException(e);
+		} catch (InterruptedException | TimeoutException e) {
+			throw new ConnectionException(
+				e.getMessage() == null ? "Error connecting" : e.getMessage(),
+				e
+			);
 		}
+	}
+
+	private void handleExecutionException(ExecutionException e) {
+		if (e.getCause() instanceof WebSocketHandshakeException) {
+			throw new HandshakeFailureException(
+				((WebSocketHandshakeException) e.getCause()).getResponse()
+			);
+		}
+		throw new ConnectionException(
+			e.getMessage() == null ? "Error connecting" : e.getMessage(),
+			e
+		);
 	}
 
 	@Override

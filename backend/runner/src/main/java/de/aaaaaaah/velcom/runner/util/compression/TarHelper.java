@@ -1,5 +1,6 @@
 package de.aaaaaaah.velcom.runner.util.compression;
 
+import de.aaaaaaah.velcom.runner.shared.util.compression.PermissionsHelper;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -30,6 +31,10 @@ public class TarHelper {
 				if (entry.isDirectory()) {
 					Files.createDirectories(entryPath);
 				} else {
+					// TODO: Remove this, if the tar has a nice format!
+					if (Files.notExists(entryPath.getParent())) {
+						Files.createDirectories(entryPath.getParent());
+					}
 					Files.createFile(entryPath);
 					try (var fileOut = Files.newOutputStream(entryPath)) {
 						IOUtils.copy(inputStream, fileOut);

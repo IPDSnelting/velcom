@@ -5,6 +5,7 @@ import de.aaaaaaah.velcom.backend.storage.repo.RepoStorage;
 import de.aaaaaaah.velcom.backend.storage.repo.exception.RepositoryAcquisitionException;
 import de.aaaaaaah.velcom.backend.util.CheckedConsumer;
 import de.aaaaaaah.velcom.backend.util.DirectoryRemover;
+import de.aaaaaaah.velcom.runner.shared.util.compression.PermissionsHelper;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -82,6 +83,7 @@ public class Archiver {
 					String relativePath = cloneDir.relativize(file).toString();
 
 					TarArchiveEntry entry = new TarArchiveEntry(file.toFile(), relativePath);
+					entry.setMode(PermissionsHelper.toOctal(Files.getPosixFilePermissions(file)));
 
 					try (InputStream in = Files.newInputStream(file)) {
 						tarOut.putArchiveEntry(entry);

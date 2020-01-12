@@ -100,6 +100,9 @@ public class ServerRunnerStateMachine {
 		runnerInformation.getConnectionManager().sendEntity(workOrder);
 		try (var out = runnerInformation.getConnectionManager().createBinaryOutputStream()) {
 			writer.accept(out);
+		} catch (Exception e) {
+			// TODO: 12.01.20 Make nicer catch
+			throw new IOException(e);
 		}
 	}
 
@@ -118,6 +121,9 @@ public class ServerRunnerStateMachine {
 
 		try (var out = runnerInformation.getConnectionManager().createBinaryOutputStream()) {
 			writer.accept(out);
+		} catch (Exception e) {
+			// TODO: 12.01.20 Make nicer catch
+			throw new IOException(e);
 		}
 
 		// TODO: Update the stored repo hash. Could also force a disconnect or re-send the

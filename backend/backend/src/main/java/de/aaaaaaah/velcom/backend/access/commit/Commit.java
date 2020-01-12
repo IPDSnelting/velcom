@@ -3,6 +3,7 @@ package de.aaaaaaah.velcom.backend.access.commit;
 import de.aaaaaaah.velcom.backend.access.repo.Repo;
 import de.aaaaaaah.velcom.backend.access.repo.RepoAccess;
 import de.aaaaaaah.velcom.backend.access.repo.RepoId;
+import de.aaaaaaah.velcom.backend.access.repo.exception.NoSuchRepoException;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
@@ -24,8 +25,7 @@ public class Commit {
 	private final Instant committerDate;
 	private final String message;
 
-	// FIXME: 15.12.19 I wanna be the most package private constructor in the world
-	public Commit(CommitAccess commitAccess, RepoAccess repoAccess, RepoId repoId, CommitHash hash,
+	Commit(CommitAccess commitAccess, RepoAccess repoAccess, RepoId repoId, CommitHash hash,
 		Collection<CommitHash> parentHashes, String author, Instant authorDate, String committer,
 		Instant committerDate, String message) {
 
@@ -46,7 +46,7 @@ public class Commit {
 		return repoId;
 	}
 
-	public Repo getRepo() {
+	public Repo getRepo() throws NoSuchRepoException {
 		return repoAccess.getRepo(repoId);
 	}
 
@@ -58,7 +58,7 @@ public class Commit {
 		return parentHashes;
 	}
 
-	public Collection<Commit> getParents() {
+	public Collection<Commit> getParents() throws CommitAccessException {
 		return commitAccess.getCommits(repoId, parentHashes);
 	}
 
@@ -89,12 +89,7 @@ public class Commit {
 		return commitAccess.isKnown(repoId, hash);
 	}
 
-	/**
-	 * @return true if the commit has not yet been benchmarked or is currently being benchmarked,
-	 * 	false if the commit has already been benchmarked and the measured values have been stored in
-	 * 	the db
-	 */
-	public boolean requiresBenchmark() {
-		return commitAccess.requiresBenchmark(repoId, hash);
+	public BenchmarkStatus getBenchmarkStatus() {
+		return commitAccess.getBenchmarkStatus(repoId, hash);
 	}
 }

@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Tries to reestablish a connection if the connection is lost.
  */
-public class RestablishConnectionListener implements
+public class ReestablishConnectionListener implements
 	SocketConnectionManager.ConnectionStateListener {
 
 	private ScheduledExecutorService scheduler;
@@ -26,7 +26,7 @@ public class RestablishConnectionListener implements
 	 *
 	 * @param connectionManager the connection manager
 	 */
-	public RestablishConnectionListener(SocketConnectionManager connectionManager) {
+	public ReestablishConnectionListener(SocketConnectionManager connectionManager) {
 		this.connectionManager = connectionManager;
 
 		this.scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
@@ -53,7 +53,9 @@ public class RestablishConnectionListener implements
 	}
 
 	private void reconnect(int expectedBackoffCount) {
-		System.out.println("Called reconnect");
+		if (connectionManager.isConnected()) {
+			return;
+		}
 		if (stop) {
 			return;
 		}
@@ -68,7 +70,6 @@ public class RestablishConnectionListener implements
 		}
 		try {
 			connectionManager.connect();
-			System.out.println("Connect done!");
 		} catch (ConnectionException e) {
 			currentBackoffTry++;
 			nextCheckTime = Instant.now().plusSeconds(getSleepTime());
@@ -92,5 +93,12 @@ public class RestablishConnectionListener implements
 		if (scheduledFuture != null) {
 			scheduledFuture.cancel(true);
 		}
+	}
+
+	/**
+	 * Schedules a reconnect.
+	 */
+	public void scheduleReconnect() {
+		onStateChange(ConnectionState.DISCONNECTED);
 	}
 }

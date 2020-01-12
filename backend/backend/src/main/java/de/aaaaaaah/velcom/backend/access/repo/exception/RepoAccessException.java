@@ -7,22 +7,51 @@ import de.aaaaaaah.velcom.backend.access.repo.RepoId;
  */
 public class RepoAccessException extends RuntimeException {
 
-	private final RepoId repoId;
-
 	/**
 	 * Constructs a new {@link RepoAccessException}.
 	 *
 	 * @param repoId the id of the repository that was accessed
 	 */
 	public RepoAccessException(RepoId repoId) {
-		this.repoId = repoId;
+		super("failed to access repo: " + repoId);
 	}
 
 	/**
-	 * @return the id of the repository that was accessed
+	 * Constructs a new {@link RepoAccessException}.
+	 *
+	 * @param repoId the id of the repository that was accessed
+	 * @param cause the cause for this exception
 	 */
-	public RepoId getRepoId() {
-		return repoId;
+	public RepoAccessException(RepoId repoId, Throwable cause) {
+		super("failed to access repo: " + repoId, cause);
+	}
+
+	/**
+	 * Constructs a new {@link RepoAccessException}.
+	 *
+	 * @param message message describing the cause for this exception
+	 */
+	public RepoAccessException(String message) {
+		super(message);
+	}
+
+	/**
+	 * Constructs a new {@link RepoAccessException}.
+	 *
+	 * @param cause the cause for this exception
+	 */
+	public RepoAccessException(Throwable cause) {
+		super(cause);
+	}
+
+	/**
+	 * Constructs a new {@link RepoAccessException}.
+	 *
+	 * @param message message describing the cause for this exception
+	 * @param cause the cause for this exception
+	 */
+	public RepoAccessException(String message, Throwable cause) {
+		super(message, cause);
 	}
 
 }

@@ -11,20 +11,17 @@ public class RunnerWorkOrder implements SentEntity {
 
 	private final UUID repoId;
 	private final String commitHash;
-	private final String remoteUrlIdentifier;
 
 	/**
 	 * Creates a new {@link RunnerWorkOrder}.
 	 *
 	 * @param repoId the id of the repo that should be benchmarked
 	 * @param commitHash the commit hash
-	 * @param remoteUrlIdentifier an identifier for the remote URL to select a nice directory to
 	 */
 	@JsonCreator
-	public RunnerWorkOrder(UUID repoId, String commitHash, String remoteUrlIdentifier) {
+	public RunnerWorkOrder(UUID repoId, String commitHash) {
 		this.repoId = repoId;
 		this.commitHash = commitHash;
-		this.remoteUrlIdentifier = remoteUrlIdentifier;
 	}
 
 	/**
@@ -45,21 +42,11 @@ public class RunnerWorkOrder implements SentEntity {
 		return commitHash;
 	}
 
-	/**
-	 * Returns an identifier for the remote URL to select a nice directory to clone to.
-	 *
-	 * @return an identifier for the remote URL to select a nice directory to clone to
-	 */
-	public String getRemoteUrlIdentifier() {
-		return remoteUrlIdentifier;
-	}
-
 	@Override
 	public String toString() {
 		return "RunnerWorkOrder{" +
 			"repoId=" + repoId +
 			", commitHash='" + commitHash + '\'' +
-			", remoteUrlIdentifier='" + remoteUrlIdentifier + '\'' +
 			'}';
 	}
 }

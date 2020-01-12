@@ -39,6 +39,9 @@ public class UpdateBenchmarkRepoState implements RunnerState {
 			tempDirectory, newRepoHeadHash
 		);
 
+		FileHelper.deleteOnExit(tempDirectory);
+		FileHelper.deleteOnExit(path);
+
 		FileHelper.deleteDirectoryOrFile(tempDirectory);
 		FileHelper.deleteDirectoryOrFile(path);
 		return new IdleState();

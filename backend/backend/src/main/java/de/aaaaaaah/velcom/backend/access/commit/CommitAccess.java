@@ -1,5 +1,9 @@
 package de.aaaaaaah.velcom.backend.access.commit;
 
+import static de.aaaaaaah.velcom.backend.access.commit.BenchmarkStatus.BENCHMARK_REQUIRED;
+import static de.aaaaaaah.velcom.backend.access.commit.BenchmarkStatus.BENCHMARK_REQUIRED_MANUAL_PRIORITY;
+import static org.jooq.codegen.db.tables.KnownCommit.KNOWN_COMMIT;
+
 import de.aaaaaaah.velcom.backend.access.AccessLayer;
 import de.aaaaaaah.velcom.backend.access.repo.Branch;
 import de.aaaaaaah.velcom.backend.access.repo.BranchName;
@@ -9,10 +13,14 @@ import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import de.aaaaaaah.velcom.backend.storage.repo.RepoStorage;
 import de.aaaaaaah.velcom.backend.storage.repo.exception.RepositoryAcquisitionException;
 import java.io.IOException;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Spliterator;
 import java.util.Spliterators;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -24,6 +32,11 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevWalk;
+import org.jooq.DSLContext;
+import org.jooq.Record1;
+import org.jooq.Result;
+import org.jooq.codegen.db.tables.records.KnownCommitRecord;
 
 /**
  * This class abstracts away access to commits and the commit history of repositories.
@@ -53,36 +66,77 @@ public class CommitAccess {
 
 	// Commit operations
 
-	public Commit getCommit(RepoId repoId, CommitHash commitHash) {
-		// TODO implement
-		return null;
+	public Commit getCommit(RepoId repoId, CommitHash commitHash) throws CommitAccessException {
+		try (Repository repo = repoStorage.acquireRepository(repoId.getDirectoryName())) {
+			try (RevWalk walk = new RevWalk(repo)) {
+				ObjectId commitPtr = repo.resolve(commitHash.getHash());
+				RevCommit revCommit = walk.parseCommit(commitPtr);
+
+				return commitFromRevCommit(repoId, revCommit);
+			}
+		} catch (RepositoryAcquisitionException | IOException e) {
+			throw new CommitAccessException("Failed to access commit " + commitHash
+				+ " in repository " + repoId, e);
+		}
 	}
 
-	public Collection<Commit> getCommits(RepoId repoId, Collection<CommitHash> commitHashes) {
-		// TODO implement
-		return null;
+	public Collection<Commit> getCommits(RepoId repoId, Collection<CommitHash> commitHashes)
+		throws CommitAccessException {
+		List<Commit> commitList = new ArrayList<>(commitHashes.size());
+
+		try (Repository repo = repoStorage.acquireRepository(repoId.getDirectoryName())) {
+			try (RevWalk walk = new RevWalk(repo)) {
+				for (CommitHash commitHash : commitHashes) {
+					ObjectId commitPtr = repo.resolve(commitHash.getHash());
+					RevCommit revCommit = walk.parseCommit(commitPtr);
+
+					Commit commit = commitFromRevCommit(repoId, revCommit);
+
+					commitList.add(commit);
+				}
+			}
+		} catch (RepositoryAcquisitionException | IOException e) {
+			throw new CommitAccessException("Failed to access multiple commits in repository "
+				+ repoId, e);
+		}
+
+		return commitList;
 	}
 
 	// Mutable properties
 
 	/**
-	 * See {@link Commit#isKnown()}.
+	 * See {@link Commit#isKnown()}. To make an unknown commit known, use {@link
+	 * #setBenchmarkStatus(RepoId, CommitHash, BenchmarkStatus)} to set its benchmark status. To
+	 * make a known commit unknown, use {@link #makeUnknown(RepoId, CommitHash)}.
 	 *
 	 * @param repoId the repo the commit is in
 	 * @param hash the commit's hash
 	 * @return whether the commit is known. Defaults to false if the repo id is invalid
 	 */
 	public boolean isKnown(RepoId repoId, CommitHash hash) {
-		// TODO implement
-		return false;
+		// Commit is known if resides in database
+		try (DSLContext db = databaseStorage.acquireContext()) {
+			return db.fetchExists(db.selectFrom(KNOWN_COMMIT)
+				.where(KNOWN_COMMIT.REPO_ID.eq(repoId.getId().toString()))
+				.and(KNOWN_COMMIT.HASH.eq(hash.getHash())));
+		}
 	}
 
-	public void setKnown(Commit commit, boolean isKnown) {
-		setKnown(commit.getRepoId(), commit.getHash(), isKnown);
-	}
-
-	public void setKnown(RepoId repoId, CommitHash commitHash, boolean isKnown) {
-		// TODO implement
+	/**
+	 * Remove a commit from the list of known commits. This also deletes associated information,
+	 * such as the commit's benchmark status.
+	 *
+	 * @param repoId the repo the commit is in
+	 * @param hash the commit's hash
+	 */
+	public void makeUnknown(RepoId repoId, CommitHash hash) {
+		try (DSLContext db = databaseStorage.acquireContext()) {
+			db.deleteFrom(KNOWN_COMMIT)
+				.where(KNOWN_COMMIT.REPO_ID.eq(repoId.getId().toString()))
+				.and(KNOWN_COMMIT.HASH.eq(hash.getHash()))
+				.execute();
+		}
 	}
 
 	/**
@@ -92,76 +146,126 @@ public class CommitAccess {
 	 * @return true if at least one commit of the repository is known
 	 */
 	public boolean hasKnownCommits(RepoId repoId) {
-		// TODO implement
-		return false;
+		try (DSLContext db = databaseStorage.acquireContext()) {
+			return db.fetchExists(db.selectFrom(KNOWN_COMMIT)
+				.where(KNOWN_COMMIT.REPO_ID.eq(repoId.getId().toString())));
+		}
 	}
 
-	/**
-	 * See {@link Commit#requiresBenchmark()}.
-	 *
-	 * @param repoId the repo the commit is in
-	 * @param hash the commit's hash
-	 * @return true if the commit has not yet been benchmarked or is currently being benchmarked,
-	 * 	false if the commit has already been benchmarked and the measured values have been stored in
-	 * 	the db. Defaults to false if the repo id or commit hash are invalid
-	 */
-	public boolean requiresBenchmark(RepoId repoId, CommitHash hash) {
-		// TODO implement
-		return false;
+	public BenchmarkStatus getBenchmarkStatus(RepoId repoId, CommitHash commitHash) {
+		try (DSLContext db = databaseStorage.acquireContext()) {
+			return db.select(KNOWN_COMMIT.STATUS).from(KNOWN_COMMIT)
+				.where(KNOWN_COMMIT.REPO_ID.eq(repoId.getId().toString()))
+				.and(KNOWN_COMMIT.HASH.eq(commitHash.getHash()))
+				.fetchOptional()
+				.map(Record1::value1)
+				.map(BenchmarkStatus::fromNumericalValue)
+				.orElse(BENCHMARK_REQUIRED);
+		}
 	}
 
-	public void setRequiresBenchmark(Commit commit, boolean requiresBenchmark) {
-		setRequiresBenchmark(commit.getRepoId(), commit.getHash(), requiresBenchmark);
+	public void setBenchmarkStatus(RepoId repoId, CommitHash commitHash, BenchmarkStatus status) {
+		try (DSLContext db = databaseStorage.acquireContext()) {
+			db.insertInto(KNOWN_COMMIT)
+				.set(KNOWN_COMMIT.REPO_ID, repoId.getId().toString())
+				.set(KNOWN_COMMIT.HASH, commitHash.getHash())
+				.set(KNOWN_COMMIT.STATUS, status.getNumericalValue())
+				.set(KNOWN_COMMIT.UPDATE_TIME, Timestamp.from(Instant.now()))
+				.set(KNOWN_COMMIT.INSERT_TIME, Timestamp.from(Instant.now()))
+				.onDuplicateKeyUpdate()
+				.set(KNOWN_COMMIT.STATUS, status.getNumericalValue())
+				.set(KNOWN_COMMIT.UPDATE_TIME, Timestamp.from(Instant.now()))
+				.execute();
+		}
 	}
 
-	public void setRequiresBenchmark(RepoId repoId, CommitHash commitHash,
-		boolean requiresBenchmark) {
+	public Collection<Commit> getAllTasksOfStatus(RepoId repoId, BenchmarkStatus status)
+		throws CommitAccessException {
 
-		// TODO implement
+		try (Repository repo = repoStorage.acquireRepository(repoId.getDirectoryName())) {
+			Result<KnownCommitRecord> results;
+
+			try (DSLContext db = databaseStorage.acquireContext()) {
+				results = db.selectFrom(KNOWN_COMMIT)
+					.where(KNOWN_COMMIT.REPO_ID.eq(repoId.getId().toString()))
+					.and(KNOWN_COMMIT.STATUS.eq(status.getNumericalValue()))
+					.fetch();
+			}
+
+			List<Commit> commitList = new ArrayList<>(results.size());
+
+			try (RevWalk walk = new RevWalk(repo)) {
+				for (KnownCommitRecord knownCommitRecord : results) {
+					ObjectId commitPtr = repo.resolve(knownCommitRecord.getHash());
+					RevCommit revCommit = walk.parseCommit(commitPtr);
+
+					Commit commit = commitFromRevCommit(repoId, revCommit);
+
+					commitList.add(commit);
+				}
+			}
+
+			return commitList;
+		} catch (RepositoryAcquisitionException | IOException e) {
+			throw new CommitAccessException("Failed to get all tasks of status " + status
+				+ " from repo " + repoId);
+		}
 	}
 
 	// Advanced operations
 
 	public Collection<Commit> getAllCommitsRequiringBenchmark() {
-		// TODO implement
-		return null;
-	}
-
-	private Commit commitFromRevCommit(RepoId repoId, RevCommit revCommit) {
-		CommitHash ownHash = new CommitHash(revCommit.getId().toString());
-		List<CommitHash> parentHashes = List.of(revCommit.getParents()).stream()
-			.map(RevCommit::getId)
-			.map(AnyObjectId::toString)
-			.map(CommitHash::new)
-			.collect(Collectors.toUnmodifiableList());
-
-		PersonIdent author = revCommit.getAuthorIdent();
-		PersonIdent committer = revCommit.getCommitterIdent();
-
-		return new Commit(
-			accessLayer.getCommitAccess(),
-			accessLayer.getRepoAccess(),
-			repoId,
-			ownHash,
-			parentHashes,
-			author.toExternalString(),
-			author.getWhen().toInstant(),
-			committer.toExternalString(),
-			committer.getWhen().toInstant(),
-			revCommit.getFullMessage()
-		);
+		try (DSLContext db = databaseStorage.acquireContext()) {
+			return db.selectFrom(KNOWN_COMMIT)
+				.where(KNOWN_COMMIT.STATUS.eq(BENCHMARK_REQUIRED.getNumericalValue()))
+				.or(KNOWN_COMMIT.STATUS.eq(BENCHMARK_REQUIRED_MANUAL_PRIORITY.getNumericalValue()))
+				.fetch()
+				.map(record -> getCommit(
+					new RepoId(UUID.fromString(record.getRepoId())),
+					new CommitHash(record.getHash())
+				));
+		}
 	}
 
 	// TODO find out more about jgit's commit order
 	// TODO What about the RepoStorage lock? Is the CommitAccessException enough?
-	// TODO Make CommitAccessException unckecked?
 
+	/**
+	 * Constructs a new commit walk instance starting at the commit that the given branch points
+	 * at.
+	 *
+	 * @param branch the branch whose commit it points to should be the start
+	 * @return returns the commit walk instance
+	 */
 	public CommitWalk getCommitWalk(Branch branch) {
-		return null;
+		return getCommitWalk(branch.getCommit());
 	}
 
-	public CommitWalk getCommitWalk(Repo repo, Commit startCommit) {
-		return null;
+	/**
+	 * Constructs a new commit walk instance starting at the specified commit.
+	 *
+	 * @param startCommit the commit to start at
+	 * @return the commit walk instance
+	 */
+	public CommitWalk getCommitWalk(Commit startCommit) {
+		RepoId repoId = startCommit.getRepoId();
+		Repository repo = null;
+		RevWalk walk = null;
+
+		try {
+			repo = repoStorage.acquireRepository(repoId.getDirectoryName());
+			walk = new RevWalk(repo);
+
+			return new CommitWalk(this, repoId, repo, walk, startCommit);
+		} catch (Exception e) {
+			if (walk != null) {
+				walk.close();
+			}
+			if (repo != null) {
+				repo.close();
+			}
+			throw new CommitAccessException("Failed to create commit walk for: " + startCommit, e);
+		}
 	}
 
 	/**
@@ -206,8 +310,34 @@ public class CommitAccess {
 				.map(revCommit -> commitFromRevCommit(repo.getId(), revCommit))
 				.onClose(jgitRepo::close);
 		} catch (IOException | GitAPIException e) {
-			jgitRepo.close();
+			jgitRepo.close(); // Release repo storage lock if this fails
 			throw new CommitAccessException(e);
 		}
 	}
+
+	Commit commitFromRevCommit(RepoId repoId, RevCommit revCommit) {
+		CommitHash ownHash = new CommitHash(revCommit.getId().getName());
+		List<CommitHash> parentHashes = List.of(revCommit.getParents()).stream()
+			.map(RevCommit::getId)
+			.map(AnyObjectId::getName)
+			.map(CommitHash::new)
+			.collect(Collectors.toUnmodifiableList());
+
+		PersonIdent author = revCommit.getAuthorIdent();
+		PersonIdent committer = revCommit.getCommitterIdent();
+
+		return new Commit(
+			accessLayer.getCommitAccess(),
+			accessLayer.getRepoAccess(),
+			repoId,
+			ownHash,
+			parentHashes,
+			author.toExternalString(),
+			author.getWhen().toInstant(),
+			committer.toExternalString(),
+			committer.getWhen().toInstant(),
+			revCommit.getFullMessage()
+		);
+	}
+
 }

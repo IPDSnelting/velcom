@@ -30,15 +30,15 @@ public class MeasurementValues {
 		return interpretation;
 	}
 
-	// TODO decide on which algorithm to use for combining the values. A simple average?
-
 	/**
-	 * Combines all the measured values into a single value.
-	 *
-	 * @return the combined value
+	 * @return the algebraic mean of all values
 	 */
 	public double getValue() {
-		// TODO implement
-		return 0;
+		double sum = 0;
+		for (Double value : values) {
+			sum += value;
+		}
+
+		return sum / values.size();
 	}
 }

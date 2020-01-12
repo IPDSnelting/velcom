@@ -9,7 +9,6 @@ import de.aaaaaaah.velcom.backend.storage.repo.exception.AddRepositoryException;
 import de.aaaaaaah.velcom.backend.util.DirectoryRemover;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -46,7 +45,7 @@ class ArchiveAccessTest {
 	@Test
 	@Disabled
 	void testArchive() throws IOException, AddRepositoryException, ArchiveException {
-		URI url = URI.create("https://github.com/leanprover/lean.git");
+		String url = "https://github.com/leanprover/lean.git";
 		CommitHash commitHash = new CommitHash("72a965986fa5aeae54062e98efb3140b2c4e79fd");
 
 		RepoId repoId = new RepoId();

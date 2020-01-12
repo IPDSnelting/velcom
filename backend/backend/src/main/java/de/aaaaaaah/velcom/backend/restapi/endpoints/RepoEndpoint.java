@@ -2,17 +2,23 @@ package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import de.aaaaaaah.velcom.backend.access.repo.BranchName;
+import de.aaaaaaah.velcom.backend.access.repo.RemoteUrl;
 import de.aaaaaaah.velcom.backend.access.repo.Repo;
 import de.aaaaaaah.velcom.backend.access.repo.RepoAccess;
 import de.aaaaaaah.velcom.backend.access.repo.RepoId;
 import de.aaaaaaah.velcom.backend.access.token.AuthToken;
 import de.aaaaaaah.velcom.backend.access.token.TokenAccess;
+import de.aaaaaaah.velcom.backend.restapi.RepoUser;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRepo;
+import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.PATCH;
-import java.net.URI;
+import java.util.Collection;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
@@ -63,7 +69,9 @@ public class RepoEndpoint {
 	 * @return the added repo
 	 */
 	@POST
-	public GetReply post(@NotNull PostRequest request) {
+	public GetReply post(@Auth RepoUser user, @NotNull PostRequest request) {
+		user.guardAdminAccess();
+
 		Repo repo = repoAccess.addRepo(request.getName(), request.getRemoteUrl());
 
 		request.getToken()
@@ -74,13 +82,14 @@ public class RepoEndpoint {
 	}
 
 	/**
-	 * Changes an existing.
+	 * Changes an existing repo.
 	 *
 	 * @param request the change request
 	 */
 	@PATCH
-	public void patch(@NotNull PatchRequest request) {
+	public void patch(@Auth RepoUser user, @NotNull PatchRequest request) {
 		RepoId repoId = new RepoId(request.getRepoId());
+		user.guardRepoAccess(repoId);
 
 		request.getName().ifPresent(name -> repoAccess.setName(repoId, name));
 
@@ -93,6 +102,13 @@ public class RepoEndpoint {
 				tokenAccess.setToken(repoId, new AuthToken(string));
 			}
 		});
+
+		request.getTrackedBranches().ifPresent(trackedBranches -> {
+			Set<BranchName> trackedBranchNames = trackedBranches.stream()
+				.map(BranchName::new)
+				.collect(Collectors.toUnmodifiableSet());
+			repoAccess.setTrackedBranches(repoId, trackedBranchNames);
+		});
 	}
 
 	/**
@@ -101,10 +117,10 @@ public class RepoEndpoint {
 	 * @param repoUuid the id of the repo to delete
 	 */
 	@DELETE
-	public void delete(
-		@NotNull @QueryParam("repo_id") UUID repoUuid) {
-
+	public void delete(@Auth RepoUser user, @NotNull @QueryParam("repo_id") UUID repoUuid) {
 		RepoId repoId = new RepoId(repoUuid);
+		user.guardRepoAccess(repoId);
+
 		Repo repo = repoAccess.getRepo(repoId);
 
 		repoAccess.deleteRepo(repoId);
@@ -127,18 +143,18 @@ public class RepoEndpoint {
 	private static class PostRequest {
 
 		private final String name;
-		private final URI remoteUrl;
+		private final RemoteUrl remoteUrl;
 		@Nullable
 		private final String token;
 
 		@JsonCreator
 		public PostRequest(
 			@JsonProperty(value = "name", required = true) String name,
-			@JsonProperty(value = "remote_url", required = true) URI remoteUrl,
+			@JsonProperty(value = "remote_url", required = true) String remoteUrl,
 			@Nullable @JsonProperty("token") String token) {
 
 			this.name = Objects.requireNonNull(name);
-			this.remoteUrl = Objects.requireNonNull(remoteUrl);
+			this.remoteUrl = new RemoteUrl(remoteUrl);
 			this.token = token;
 		}
 
@@ -146,7 +162,7 @@ public class RepoEndpoint {
 			return name;
 		}
 
-		public URI getRemoteUrl() {
+		public RemoteUrl getRemoteUrl() {
 			return remoteUrl;
 		}
 
@@ -161,21 +177,25 @@ public class RepoEndpoint {
 		@Nullable
 		private final String name;
 		@Nullable
-		private final URI remoteUrl;
+		private final RemoteUrl remoteUrl;
 		@Nullable
 		private final String token;
+		@Nullable
+		private final Collection<String> trackedBranches;
 
 		@JsonCreator
 		public PatchRequest(
 			@JsonProperty(value = "repo_id", required = true) UUID repoId,
 			@Nullable @JsonProperty("name") String name,
-			@Nullable @JsonProperty("remote_url") URI remoteUrl,
-			@Nullable @JsonProperty("token") String token) {
-
+			@Nullable @JsonProperty("remote_url") String remoteUrl,
+			@Nullable @JsonProperty("token") String token,
+			@Nullable @JsonProperty("tracked_branches") Collection<String> trackedBranches
+		) {
 			this.repoId = Objects.requireNonNull(repoId);
 			this.name = name;
-			this.remoteUrl = remoteUrl;
+			this.remoteUrl = new RemoteUrl(remoteUrl);
 			this.token = token;
+			this.trackedBranches = trackedBranches;
 		}
 
 		public UUID getRepoId() {
@@ -186,7 +206,7 @@ public class RepoEndpoint {
 			return Optional.ofNullable(name);
 		}
 
-		public Optional<URI> getRemoteUrl() {
+		public Optional<RemoteUrl> getRemoteUrl() {
 			return Optional.ofNullable(remoteUrl);
 		}
 
@@ -194,6 +214,9 @@ public class RepoEndpoint {
 			return Optional.ofNullable(token);
 		}
 
+		public Optional<Collection<String>> getTrackedBranches() {
+			return Optional.ofNullable(trackedBranches);
+		}
 	}
 
 }

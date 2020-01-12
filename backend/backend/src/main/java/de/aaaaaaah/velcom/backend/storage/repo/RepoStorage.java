@@ -7,7 +7,6 @@ import de.aaaaaaah.velcom.backend.storage.repo.exception.RepositoryAcquisitionEx
 import de.aaaaaaah.velcom.backend.util.CheckedConsumer;
 import de.aaaaaaah.velcom.backend.util.DirectoryRemover;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -18,7 +17,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.lib.RepositoryBuilder;
 
@@ -38,8 +36,8 @@ public class RepoStorage {
 	 *
 	 * @see #RepoStorage(Path)
 	 */
-	public RepoStorage() {
-		this.rootDir = Paths.get("data/repos");
+	public RepoStorage() throws IOException {
+		this(Paths.get("data/repos"));
 	}
 
 	/**
@@ -47,8 +45,9 @@ public class RepoStorage {
 	 *
 	 * @param rootDir the directory where all repositories will be stored in
 	 */
-	public RepoStorage(Path rootDir) {
+	public RepoStorage(Path rootDir) throws IOException {
 		this.rootDir = rootDir;
+		Files.createDirectories(rootDir);
 	}
 
 	/**
@@ -91,28 +90,34 @@ public class RepoStorage {
 	 * @return the path of the directory containing the new repository
 	 * @throws AddRepositoryException if an exception occurs while trying to add the repository
 	 */
-	public Path addRepository(String dirName, URI remoteUrl) throws AddRepositoryException {
+	public Path addRepository(String dirName, String remoteUrl) throws AddRepositoryException {
+		Path repoDir = rootDir.resolve(dirName);
+
 		this.lock.writeLock().lock();
-
 		try {
-			Path repoDir = rootDir.resolve(dirName);
-
 			if (Files.exists(repoDir)) {
 				throw new DirectoryAlreadyExistsException(repoDir);
 			}
 
-			// TODO: 27.12.19 createDirectories? Also create parents if needed [the root dir]?
 			Files.createDirectory(repoDir);
 
 			CloneCommand cloneCommand = Git.cloneRepository()
-				.setURI(remoteUrl.toString())
+				.setURI(remoteUrl)
 				.setDirectory(repoDir.toFile())
 				.setBare(true);
 
 			cloneCommand.call().close();
 
 			return repoDir;
-		} catch (IOException | GitAPIException | DirectoryAlreadyExistsException e) {
+		} catch (DirectoryAlreadyExistsException e) {
+			throw new AddRepositoryException(dirName, remoteUrl, e);
+		} catch (Exception e) {
+			// try to clean up directory
+			try {
+				DirectoryRemover.deleteDirectoryRecursive(repoDir);
+			} catch (Exception ignore) {
+			}
+
 			throw new AddRepositoryException(dirName, remoteUrl, e);
 		} finally {
 			this.lock.writeLock().unlock();

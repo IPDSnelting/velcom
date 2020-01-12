@@ -19,20 +19,22 @@ import de.aaaaaaah.velcom.backend.storage.repo.exception.AddRepositoryException;
 import de.aaaaaaah.velcom.backend.storage.repo.exception.RepositoryAcquisitionException;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.jooq.DSLContext;
+import org.jooq.InsertValuesStep2;
 import org.jooq.Record1;
 import org.jooq.codegen.db.tables.records.RepositoryRecord;
 import org.jooq.codegen.db.tables.records.TrackedBranchRecord;
+import org.jooq.impl.DSL;
 
 /**
  * This class is an abstraction for accessing the {@link Repo}s in the db.
@@ -45,6 +47,7 @@ public class RepoAccess {
 	private final Archiver archiver;
 
 	private final String benchRepoDirName = "benchrepo";
+	private final String benchRepoRemoteUrl;
 
 	/**
 	 * This constructor also registers the {@link RepoAccess} in the accessLayer.
@@ -56,7 +59,7 @@ public class RepoAccess {
 	 * @throws AddRepoException if an error occurs while trying to clone the benchmark repository
 	 */
 	public RepoAccess(AccessLayer accessLayer, DatabaseStorage databaseStorage,
-		RepoStorage repoStorage, URI benchRepoUrl) throws AddRepoException {
+		RepoStorage repoStorage, RemoteUrl benchRepoUrl) throws AddRepoException {
 
 		this.accessLayer = accessLayer;
 		this.databaseStorage = databaseStorage;
@@ -64,13 +67,15 @@ public class RepoAccess {
 		this.archiver = new Archiver(repoStorage);
 
 		// Clone benchmark repo if needed
-		//if (!repoStorage.containsRepository(benchRepoDirName)) {
-		//	try {
-		//		repoStorage.addRepository(benchRepoDirName, benchRepoUrl);
-		//	} catch (AddRepositoryException e) {
-		//		throw new AddRepoException(e);
-		//	}
-		//}
+		this.benchRepoRemoteUrl = benchRepoUrl.getUrl();
+
+		if (!repoStorage.containsRepository(benchRepoDirName)) {
+			try {
+				repoStorage.addRepository(benchRepoDirName, benchRepoRemoteUrl);
+			} catch (AddRepositoryException e) {
+				throw new AddRepoException(e);
+			}
+		}
 
 		accessLayer.registerRepoAccess(this);
 	}
@@ -110,13 +115,13 @@ public class RepoAccess {
 	 * @return a new {@link Repo} instance
 	 * @throws AddRepoException if an error occurs while trying to add the repository
 	 */
-	public Repo addRepo(String name, URI remoteUrl) throws AddRepoException {
+	public Repo addRepo(String name, RemoteUrl remoteUrl) throws AddRepoException {
 
 		RepoId repoId = new RepoId();
 
 		// (1): Clone repository (this may take a while)
 		try {
-			repoStorage.addRepository(repoId.getDirectoryName(), remoteUrl);
+			repoStorage.addRepository(repoId.getDirectoryName(), remoteUrl.getUrl());
 		} catch (AddRepositoryException e) {
 			throw new AddRepoException(e);
 		}
@@ -126,12 +131,18 @@ public class RepoAccess {
 			RepositoryRecord record = db.newRecord(REPOSITORY);
 			record.setId(repoId.getId().toString());
 			record.setName(name);
-			record.setRemoteUrl(remoteUrl.toString());
+			record.setRemoteUrl(remoteUrl.getUrl());
 			record.insert();
 		}
 
-		// (3): Find master branch and set it to tracked
-		// TODO: implement
+		// (3): Track branch that head points to
+		try (Repository repo = repoStorage.acquireRepository(repoId.getDirectoryName())) {
+			String defaultBranchStr = repo.getBranch();
+			BranchName branchName = new BranchName(defaultBranchStr);
+			setTrackedBranches(repoId, List.of(branchName));
+		} catch (RepositoryAcquisitionException | IOException e) {
+			throw new AddRepoException(e);
+		}
 
 		return new Repo(
 			this,
@@ -158,6 +169,51 @@ public class RepoAccess {
 			repoStorage.deleteRepository(repoId.getDirectoryName());
 		} catch (IOException e) {
 			throw new DeleteRepoException(e);
+		}
+	}
+
+	/**
+	 * Performs either a fetch operation on the specified repository, or a clone operation if the
+	 * repository has not been cloned to the local repo storage yet.
+	 *
+	 * @param repoId the id of the repository
+	 * @throws RepoAccessException if an error occurs during the fetch/clone operation
+	 */
+	public void fetchOrClone(RepoId repoId) throws RepoAccessException {
+		Repo repo = getRepo(repoId);
+		try {
+			fetchOrCloneLocalRepo(repoId.getDirectoryName(), repo.getRemoteUrl().getUrl());
+		} catch (GitAPIException | RepositoryAcquisitionException | AddRepositoryException e) {
+			throw new RepoAccessException(repoId, e);
+		}
+	}
+
+	/**
+	 * Performs either a fetch operation on the benchmark repository, or clones it to the local repo
+	 * storage, if it has not yet been cloned.
+	 *
+	 * @throws RepoAccessException if an error occurs during the fetch/clone operation
+	 */
+	public void fetchOrCloneBenchmarkRepo() throws RepoAccessException {
+		try {
+			fetchOrCloneLocalRepo(benchRepoDirName, benchRepoRemoteUrl);
+		} catch (GitAPIException | RepositoryAcquisitionException | AddRepositoryException e) {
+			throw new RepoAccessException("failed to fetch/clone benchmark repo with remote url: "
+				+ benchRepoRemoteUrl, e);
+		}
+	}
+
+	private void fetchOrCloneLocalRepo(String dirName, String remoteUrl)
+		throws GitAPIException, RepositoryAcquisitionException, AddRepositoryException {
+
+		if (repoStorage.containsRepository(dirName)) {
+			// local repo exists => just fetch
+			try (Repository repo = repoStorage.acquireRepository(dirName)) {
+				Git.wrap(repo).fetch().call();
+			}
+		} else {
+			// local repo does not exist => clone
+			repoStorage.addRepository(dirName, remoteUrl);
 		}
 	}
 
@@ -207,7 +263,7 @@ public class RepoAccess {
 	 * @param repoId the id of the repository
 	 * @return the local repo id
 	 */
-	public URI getRemoteUrl(RepoId repoId) {
+	public RemoteUrl getRemoteUrl(RepoId repoId) {
 		try (DSLContext db = databaseStorage.acquireContext()) {
 			String uriStr = db.select(REPOSITORY.REMOTE_URL)
 				.from(REPOSITORY)
@@ -216,40 +272,47 @@ public class RepoAccess {
 				.map(Record1::value1)
 				.orElseThrow(() -> new NoSuchRepoException(repoId));
 
-			try {
-				return new URI(uriStr);
-			} catch (URISyntaxException e) {
-				throw new IllegalStateException("remote url is invalid: " + uriStr);
-			}
+			return new RemoteUrl(uriStr);
 		}
 	}
 
 	/**
-	 * Sets the local repo id of the repository associated with the given repo id.
+	 * Sets the remote url of the repository associated with the given repo id.
 	 *
 	 * @param repoId the id of the repository
 	 * @param remoteUrl the new remote url
 	 */
-	public void setRemoteUrl(RepoId repoId, URI remoteUrl) {
-		// (1): Update local repo
-		// TODO implement
+	public void setRemoteUrl(RepoId repoId, RemoteUrl remoteUrl) throws RepoAccessException {
+		// (1): Because this operation is quite expensive, check if remote url really changed
+		RemoteUrl oldRemoteUrl = getRemoteUrl(repoId);
+		if (oldRemoteUrl.equals(remoteUrl)) {
+			return;
+		}
 
-		// (2): Update database
+		// (2): Update local repo
+		try {
+			repoStorage.deleteRepository(repoId.getDirectoryName());
+			repoStorage.addRepository(repoId.getDirectoryName(), remoteUrl.getUrl());
+		} catch (IOException | AddRepositoryException e) {
+			throw new RepoAccessException(repoId);
+		}
+
+		// (3): Update database
 		try (DSLContext db = databaseStorage.acquireContext()) {
 			db.update(REPOSITORY)
-				.set(REPOSITORY.REMOTE_URL, remoteUrl.toString())
+				.set(REPOSITORY.REMOTE_URL, remoteUrl.getUrl())
 				.where(REPOSITORY.ID.eq(repoId.getId().toString()))
 				.execute();
 		}
 	}
 
 	/**
-	 * Sets the local repo id of the given repository.
+	 * Sets the remote url of the given repository.
 	 *
 	 * @param repo the repository
 	 * @param remoteUrl the new remote url
 	 */
-	public void setLocalRepoId(Repo repo, URI remoteUrl) {
+	public void setRemoteUrl(Repo repo, RemoteUrl remoteUrl) {
 		setRemoteUrl(repo.getId(), remoteUrl);
 	}
 
@@ -269,29 +332,31 @@ public class RepoAccess {
 	}
 
 	/**
-	 * Marks the given branch inside the given repository as tracked.
+	 * Set the repo's tracked branches. Ignores duplicate branches and invalid branches. All
+	 * branches not inside the collection are set to untracked.
 	 *
-	 * @param repoId the repo the branch is in
-	 * @param branchName the name of the branch
-	 * @param tracked the branch's new tracked state
+	 * @param repoId the repo's id
+	 * @param branches the branches to be set as tracked
 	 */
-	public void setBranchTracked(RepoId repoId, BranchName branchName, boolean tracked) {
-		try (DSLContext db = databaseStorage.acquireContext()) {
-			TrackedBranchRecord record = db.newRecord(TRACKED_BRANCH);
-			record.setRepoId(repoId.getId().toString());
-			record.setBranchName(branchName.getName());
-			record.insert();
-		}
-	}
+	public void setTrackedBranches(RepoId repoId, Collection<BranchName> branches) {
+		String repoIdStr = repoId.getId().toString();
 
-	/**
-	 * A helper function for {@link #setBranchTracked(RepoId, BranchName, boolean)}.
-	 *
-	 * @param branch the branch
-	 * @param tracked the branch's new tracked state
-	 */
-	public void setBranchTracked(Branch branch, boolean tracked) {
-		setBranchTracked(branch.getRepoId(), branch.getName(), tracked);
+		try (DSLContext db = databaseStorage.acquireContext()) {
+			db.transaction((configuration) -> {
+				DSLContext ts = DSL.using(configuration);
+
+				// Remove existing tracked branches
+				ts.deleteFrom(TRACKED_BRANCH)
+					.where(TRACKED_BRANCH.REPO_ID.eq(repoIdStr))
+					.execute();
+
+				// Add new tracked branches
+				InsertValuesStep2<TrackedBranchRecord, String, String> step = ts
+					.insertInto(TRACKED_BRANCH, TRACKED_BRANCH.REPO_ID, TRACKED_BRANCH.BRANCH_NAME);
+				branches.forEach(branchName -> step.values(repoIdStr, branchName.getName()));
+				step.execute();
+			});
+		}
 	}
 
 	// Queries
@@ -302,7 +367,6 @@ public class RepoAccess {
 	 * @throws RepoAccessException if an error occurs trying to read data from the repository
 	 */
 	public Collection<Branch> getBranches(RepoId repoId) throws RepoAccessException {
-		Repo repo = getRepo(repoId);
 		String dirName = repoId.getDirectoryName();
 
 		try (Repository jgitRepo = repoStorage.acquireRepository(dirName)) {
@@ -364,6 +428,36 @@ public class RepoAccess {
 	}
 
 	/**
+	 * @return the latest commit on the master branch of the benchmark repository
+	 */
+	public CommitHash getLatestBenchmarkRepoHash() {
+		return new CommitHash(getCommitHashByRef(benchRepoDirName, Constants.HEAD));
+	}
+
+	/**
+	 * @param branch the branch
+	 * @return returns the commit that the specified branch has pointed to
+	 */
+	public CommitHash getLatestCommitHash(Branch branch) {
+		return new CommitHash(getCommitHashByRef(
+			branch.getRepoId().getDirectoryName(),
+			branch.getName().getName()
+		));
+	}
+
+	private String getCommitHashByRef(String dirName, String ref) {
+		try (Repository repo = repoStorage.acquireRepository(dirName)) {
+			ObjectId refPtr = repo.resolve(ref);
+			return refPtr.getName(); // returns sha-1 hash
+		} catch (RepositoryAcquisitionException | IOException e) {
+			throw new RepoAccessException("failed to access ref " + ref + " under local repo "
+				+ dirName, e);
+		}
+	}
+
+	// Archive
+
+	/**
 	 * Write an uncompressed tar archive containing the (recursively cloned) working directory for
 	 * the specified commit to the output stream.
 	 *
@@ -391,30 +485,5 @@ public class RepoAccess {
 		CommitHash commitHash = getLatestBenchmarkRepoHash();
 		archiver.archive(this.benchRepoDirName, commitHash, outputStream, true);
 	}
-
-	/**
-	 * @return the latest commit on the master branch of the benchmark repository
-	 */
-	public CommitHash getLatestBenchmarkRepoHash() {
-		return null;
-	}
-
-	/**
-	 * @param branch the branch
-	 * @return returns the commit that the specified branch has pointed to
-	 */
-	public CommitHash getLatestCommitHash(Branch branch) {
-		return null;
-	}
-
-	/**
-	 * Performs either fetch operation on the specified repository, or a clone operation if the
-	 * repository has not been cloned to the local repo storage yet.
-	 *
-	 * @param repoId the id of the repository
-	 */
-	public void fetch(RepoId repoId) {
-	}
-
 
 }

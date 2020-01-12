@@ -2,6 +2,7 @@ package de.aaaaaaah.velcom.backend.access.benchmark;
 
 import de.aaaaaaah.velcom.backend.access.commit.Commit;
 import de.aaaaaaah.velcom.backend.access.commit.CommitAccess;
+import de.aaaaaaah.velcom.backend.access.commit.CommitAccessException;
 import de.aaaaaaah.velcom.backend.access.commit.CommitHash;
 import de.aaaaaaah.velcom.backend.access.repo.Repo;
 import de.aaaaaaah.velcom.backend.access.repo.RepoAccess;
@@ -65,7 +66,7 @@ public class Run {
 		return commitHash;
 	}
 
-	public Commit getCommit() {
+	public Commit getCommit() throws CommitAccessException {
 		return commitAccess.getCommit(repoId, commitHash);
 	}
 
@@ -77,6 +78,11 @@ public class Run {
 		return stopTime;
 	}
 
+	/**
+	 * @return a collection of measurements, or an empty collection if the run has an error message.
+	 * 	To check if this run is successful or failed, use {@link #getErrorMessage()} and not this
+	 * 	function
+	 */
 	public Optional<Collection<Measurement>> getMeasurements() {
 		if (errorMessage == null) {
 			return Optional.of(benchmarkAccess.getMeasurements(id));
@@ -85,8 +91,10 @@ public class Run {
 		}
 	}
 
-	// TODO: 27.12.19 hasError method?
-
+	/**
+	 * @return an error message if the run is failed, an empty {@link Optional} otherwise. If the
+	 * 	run is failed, {@link #getMeasurements()} will always return an empty collection
+	 */
 	public Optional<String> getErrorMessage() {
 		return Optional.ofNullable(errorMessage);
 	}

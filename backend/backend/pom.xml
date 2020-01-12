@@ -15,6 +15,7 @@
   <properties>
     <db.url>jdbc:sqlite:backend/data/data.db</db.url>
     <dropwizard-core.version>1.3.17</dropwizard-core.version>
+    <dropwizard-auth.version>1.3.17</dropwizard-auth.version>
     <jetty.version>9.4.20.v20190813</jetty.version>
     <jgit.version>5.5.1.201910021850-r</jgit.version>
     <jooq.version>3.12.3</jooq.version>
@@ -125,6 +126,11 @@
       <groupId>io.dropwizard</groupId>
       <version>${dropwizard-core.version}</version>
     </dependency>
+    <dependency>
+      <groupId>io.dropwizard</groupId>
+      <artifactId>dropwizard-auth</artifactId>
+      <version>${dropwizard-auth.version}</version>
+    </dependency>
 
     <!--NEEDED FOR DROPWIZARD (NO LONGER INCLUDED IN THE JDK)-->
     <dependency>
@@ -179,6 +185,13 @@
       <groupId>org.eclipse.jgit</groupId>
       <version>5.5.1.201910021850-r</version>
     </dependency>
+    <!-- https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit.ssh.apache -->
+    <dependency>
+      <groupId>org.eclipse.jgit</groupId>
+      <artifactId>org.eclipse.jgit.ssh.apache</artifactId>
+      <version>5.6.0.201912101111-r</version>
+    </dependency>
+
 
     <!-- database dependencies -->
 

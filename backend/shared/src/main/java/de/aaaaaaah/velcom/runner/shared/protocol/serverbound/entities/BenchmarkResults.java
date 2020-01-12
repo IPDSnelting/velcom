@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import de.aaaaaaah.velcom.runner.shared.protocol.SentEntity;
 import de.aaaaaaah.velcom.runner.shared.protocol.runnerbound.entities.RunnerWorkOrder;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -17,6 +18,8 @@ public class BenchmarkResults implements SentEntity {
 	private final RunnerWorkOrder workOrder;
 	private final List<Benchmark> benchmarks;
 	private final String error;
+	private final Instant startTime;
+	private final Instant endTime;
 
 	/**
 	 * Creates a new {@link BenchmarkResults} packet.
@@ -24,13 +27,17 @@ public class BenchmarkResults implements SentEntity {
 	 * @param workOrder the work order that initiated the benchmark
 	 * @param benchmarks the benchmarks
 	 * @param error the error message. Null if there was none.
+	 * @param startTime the time the benchmark script started executing
+	 * @param endTime the time the benchmark script finished executing
 	 */
 	@JsonCreator
 	public BenchmarkResults(RunnerWorkOrder workOrder, List<Benchmark> benchmarks,
-		String error) {
+		String error, Instant startTime, Instant endTime) {
 		this.workOrder = workOrder;
 		this.benchmarks = benchmarks == null ? List.of() : new ArrayList<>(benchmarks);
 		this.error = error;
+		this.startTime = startTime;
+		this.endTime = endTime;
 	}
 
 	/**
@@ -38,10 +45,15 @@ public class BenchmarkResults implements SentEntity {
 	 *
 	 * @param workOrder the work order that initiated the benchmark
 	 * @param benchmarks the benchmarks
+	 * @param startTime the time the benchmark script started executing
+	 * @param endTime the time the benchmark script finished executing
 	 */
-	public BenchmarkResults(RunnerWorkOrder workOrder, List<Benchmark> benchmarks) {
+	public BenchmarkResults(RunnerWorkOrder workOrder, List<Benchmark> benchmarks,
+		Instant startTime, Instant endTime) {
 		this.workOrder = workOrder;
 		this.benchmarks = benchmarks == null ? List.of() : new ArrayList<>(benchmarks);
+		this.startTime = startTime;
+		this.endTime = endTime;
 		this.error = null;
 	}
 
@@ -50,9 +62,14 @@ public class BenchmarkResults implements SentEntity {
 	 *
 	 * @param workOrder the work order that initiated the benchmark
 	 * @param error the error message. Null if there was none.
+	 * @param startTime the time the benchmark script started executing
+	 * @param endTime the time the benchmark script finished executing
 	 */
-	public BenchmarkResults(RunnerWorkOrder workOrder, String error) {
+	public BenchmarkResults(RunnerWorkOrder workOrder, String error, Instant startTime,
+		Instant endTime) {
 		this.workOrder = workOrder;
+		this.startTime = startTime;
+		this.endTime = endTime;
 		this.benchmarks = Collections.emptyList();
 		this.error = error;
 	}
@@ -88,6 +105,20 @@ public class BenchmarkResults implements SentEntity {
 	}
 
 	/**
+	 * @return the time the benchmark script started executing
+	 */
+	public Instant getStartTime() {
+		return startTime;
+	}
+
+	/**
+	 * @return the time the benchmark script finished executing
+	 */
+	public Instant getEndTime() {
+		return endTime;
+	}
+
+	/**
 	 * Returns the work order that initiated the benchmark.
 	 *
 	 * @return the work order that initiated the benchmark
@@ -102,6 +133,8 @@ public class BenchmarkResults implements SentEntity {
 			"workOrder=" + workOrder +
 			", benchmarks=" + benchmarks +
 			", error='" + error + '\'' +
+			", startTime=" + startTime +
+			", endTime=" + endTime +
 			'}';
 	}
 
@@ -120,17 +153,17 @@ public class BenchmarkResults implements SentEntity {
 	public static class Benchmark {
 
 		private String name;
-		private List<Metric> properties;
+		private List<Metric> metrics;
 
 		/**
 		 * Creates a new benchmark.
 		 *
 		 * @param name the name of the benchmark
-		 * @param properties the contained metrics
+		 * @param metrics the contained metrics
 		 */
-		public Benchmark(String name, List<Metric> properties) {
+		public Benchmark(String name, List<Metric> metrics) {
 			this.name = name;
-			this.properties = new ArrayList<>(properties);
+			this.metrics = new ArrayList<>(metrics);
 		}
 
 		/**
@@ -147,15 +180,15 @@ public class BenchmarkResults implements SentEntity {
 		 *
 		 * @return all contained metrics
 		 */
-		public List<Metric> getProperties() {
-			return properties;
+		public List<Metric> getMetrics() {
+			return metrics;
 		}
 
 		@Override
 		public String toString() {
 			return "Benchmark{" +
 				"name='" + name + '\'' +
-				", metrics=" + properties +
+				", metrics=" + metrics +
 				'}';
 		}
 	}

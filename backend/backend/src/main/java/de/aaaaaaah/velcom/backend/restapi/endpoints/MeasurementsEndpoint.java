@@ -3,6 +3,8 @@ package de.aaaaaaah.velcom.backend.restapi.endpoints;
 import de.aaaaaaah.velcom.backend.access.benchmark.BenchmarkAccess;
 import de.aaaaaaah.velcom.backend.access.benchmark.MeasurementName;
 import de.aaaaaaah.velcom.backend.access.repo.RepoId;
+import de.aaaaaaah.velcom.backend.restapi.RepoUser;
+import io.dropwizard.auth.Auth;
 import java.util.UUID;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.DELETE;
@@ -34,11 +36,14 @@ public class MeasurementsEndpoint {
 	 */
 	@DELETE
 	public void delete(
+		@Auth RepoUser user,
 		@NotNull @QueryParam("repo_id") UUID repoUuid,
 		@NotNull @QueryParam("benchmark") String benchmark,
 		@NotNull @QueryParam("metric") String metric) {
 
 		RepoId repoId = new RepoId(repoUuid);
+		user.guardRepoAccess(repoId);
+
 		MeasurementName measurementName = new MeasurementName(benchmark, metric);
 
 		benchmarkAccess.deleteAllMeasurementsOfName(repoId, measurementName);

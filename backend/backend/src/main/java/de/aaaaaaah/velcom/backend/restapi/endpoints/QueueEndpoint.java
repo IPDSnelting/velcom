@@ -2,13 +2,16 @@ package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import de.aaaaaaah.velcom.backend.access.commit.Commit;
 import de.aaaaaaah.velcom.backend.access.commit.CommitAccess;
 import de.aaaaaaah.velcom.backend.access.commit.CommitHash;
 import de.aaaaaaah.velcom.backend.access.repo.RepoId;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
+import de.aaaaaaah.velcom.backend.restapi.RepoUser;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonCommit;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonWorker;
 import de.aaaaaaah.velcom.backend.runner.Dispatcher;
+import io.dropwizard.auth.Auth;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -48,7 +51,6 @@ public class QueueEndpoint {
 	@GET
 	public GetReply get() {
 		List<JsonCommit> tasks = queue.viewAllCurrentTasks().stream()
-			.map(task -> commitAccess.getCommit(task.getRepoId(), task.getCommitHash()))
 			.map(JsonCommit::new)
 			.collect(Collectors.toUnmodifiableList());
 
@@ -65,11 +67,14 @@ public class QueueEndpoint {
 	 * @param postRequest the commit to add
 	 */
 	@POST
-	public void post(@NotNull PostRequest postRequest) {
+	public void post(@Auth RepoUser user, @NotNull PostRequest postRequest) {
 		RepoId repoId = new RepoId(postRequest.getRepoId());
+		user.guardRepoAccess(repoId);
+
 		CommitHash commitHash = new CommitHash(postRequest.getCommitHash());
 
-		queue.addManualTask(repoId, commitHash);
+		Commit commit = commitAccess.getCommit(repoId, commitHash);
+		queue.addManualTask(commit);
 	}
 
 	/**
@@ -80,10 +85,13 @@ public class QueueEndpoint {
 	 */
 	@DELETE
 	public void delete(
+		@Auth RepoUser user,
 		@NotNull @QueryParam("repo_id") UUID repoUuid,
 		@NotNull @QueryParam("commit_hash") String hashString) {
 
 		RepoId repoId = new RepoId(repoUuid);
+		user.guardRepoAccess(repoId);
+
 		CommitHash commitHash = new CommitHash(hashString);
 
 		queue.abortTask(repoId, commitHash);
