@@ -17,6 +17,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
@@ -30,6 +33,8 @@ public class DispatcherImpl implements Dispatcher {
 	private final Collection<ActiveRunnerInformation> activeRunners;
 	private final Queue queue;
 	private final RepoAccess repoAccess;
+	private final java.util.Queue<ActiveRunnerInformation> freeRunners;
+	private final ExecutorService dispatcherWorkerPool;
 
 	/**
 	 * Creates a new dispatcher.
@@ -41,9 +46,12 @@ public class DispatcherImpl implements Dispatcher {
 		this.queue = queue;
 		this.repoAccess = repoAccess;
 		this.activeRunners = Collections.newSetFromMap(new ConcurrentHashMap<>());
+		this.freeRunners = new LinkedBlockingDeque<>();
+		// TODO: 12.01.20 cached? Fixed size?
+		this.dispatcherWorkerPool = Executors.newFixedThreadPool(5);
 
 		queue.onSomethingAborted(task -> abort(task.getSecond(), task.getFirst()));
-		queue.onSomethingAdded(task -> updateDispatching());
+		queue.onSomethingAdded(task -> dispatcherWorkerPool.submit(this::updateDispatching));
 	}
 
 	@Override
@@ -61,8 +69,12 @@ public class DispatcherImpl implements Dispatcher {
 				}
 			}
 
-			if (status != RunnerStatusEnum.WORKING) {
-				updateDispatching();
+			// TODO: 12.01.20 What to do with disconnected runners?
+			// This listener here might be called from the websocket listener's
+			// setState method if the connection is closed in onError while it is writing.
+			if (status == RunnerStatusEnum.IDLE) {
+				freeRunners.add(runnerInformation);
+				dispatcherWorkerPool.submit(this::updateDispatching);
 			}
 		});
 		runnerInformation.addResultListener(
@@ -146,16 +158,14 @@ public class DispatcherImpl implements Dispatcher {
 			.collect(Collectors.toList());
 	}
 
-	private synchronized void updateDispatching() {
+	private void updateDispatching() {
 		System.out.println("\n\nUpdating dispatching with runners:");
-		for (ActiveRunnerInformation runner : activeRunners) {
+		for (ActiveRunnerInformation runner : freeRunners) {
 			System.out.println("\t" + runner);
 		}
-		for (ActiveRunnerInformation runner : activeRunners) {
-			if (runner.getState() != RunnerStatusEnum.IDLE) {
-				System.out.println("Skipped runner " + runner);
-				continue;
-			}
+
+		while (!freeRunners.isEmpty()) {
+			ActiveRunnerInformation runner = freeRunners.poll();
 			Optional<Commit> nextTask = queue.getNextTask();
 			if (nextTask.isEmpty()) {
 				nextTask = repoAccess.getAllRepos().stream()
@@ -234,7 +244,7 @@ public class DispatcherImpl implements Dispatcher {
 			);
 			return true;
 		} catch (IOException e) {
-			e.printStackTrace();
+			System.err.println("Dispatching commit not possible :/ " + e.getMessage());
 			return false;
 		}
 	}
