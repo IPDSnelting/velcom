@@ -1,6 +1,7 @@
-package de.aaaaaaah.velcom.runner.util.compression;
+package de.aaaaaaah.velcom.runner.shared.util.compression;
 
 import java.nio.file.attribute.PosixFilePermission;
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
@@ -33,13 +34,31 @@ public class PermissionsHelper {
 	public static Set<PosixFilePermission> fromOctal(int mode) {
 		Set<PosixFilePermission> permissions = EnumSet.noneOf(PosixFilePermission.class);
 
-		for (int i = 0; i < 9; i++) {
+		for (int i = 0; i < INDEX_PERMISSION_MAP.size(); i++) {
 			if (isBitSet(i, mode)) {
 				permissions.add(INDEX_PERMISSION_MAP.get(i));
 			}
 		}
 
 		return permissions;
+	}
+
+	/**
+	 * Converts a set of {@link java.nio.file.attribute.PosixFilePermission}s to the octal posix
+	 * mode.
+	 *
+	 * @param permissions the permissions
+	 * @return the octal posix mode
+	 */
+	public static int toOctal(Collection<PosixFilePermission> permissions) {
+		int result = 0;
+
+		for (int i = 0; i < INDEX_PERMISSION_MAP.size(); i++) {
+			if (permissions.contains(INDEX_PERMISSION_MAP.get(i))) {
+				result |= 1 << i;
+			}
+		}
+		return result;
 	}
 
 	private static boolean isBitSet(int offset, int number) {
