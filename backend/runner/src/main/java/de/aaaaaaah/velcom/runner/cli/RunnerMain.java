@@ -9,6 +9,8 @@ import de.aaaaaaah.velcom.runner.entity.RunnerConfiguration;
 import de.aaaaaaah.velcom.runner.entity.TempFileBenchmarkRepoOrganizer;
 import de.aaaaaaah.velcom.runner.entity.execution.BenchmarkscriptWorkExecutor;
 import de.aaaaaaah.velcom.runner.exceptions.ConnectionException;
+import de.aaaaaaah.velcom.runner.exceptions.HandshakeFailureException;
+import de.aaaaaaah.velcom.runner.protocol.ReestablishConnectionListener;
 import de.aaaaaaah.velcom.runner.protocol.WebsocketListener;
 import de.aaaaaaah.velcom.runner.shared.protocol.serialization.SimpleJsonSerializer;
 import de.aaaaaaah.velcom.runner.state.RunnerStateMachine;
@@ -62,16 +64,34 @@ public class RunnerMain {
 		System.err.println();
 
 		System.err.println(
-			"I will keep trying to connect and reconnect until you kill me (SIGTERM)"
+			"I will keep trying to connect and reconnect until you kill me (SIGTERM)\n"
 		);
+
+		ReestablishConnectionListener reconnectListener = new ReestablishConnectionListener(
+			websocketListener
+		);
+		websocketListener.addStateListener(reconnectListener);
 
 		// Initial connect
 		try {
 			websocketListener.connect();
+		} catch (HandshakeFailureException e) {
+			System.err.println("\n========= HANDSHAKE  FAILED =========");
+
+			System.err.println(
+				"Handshake with server failed with response '" + e.getResponse() + "'"
+			);
+			if (e.isAuthenticationFailure()) {
+				System.err.println("\n====== RESPONSE INTERPRETATION ======");
+				System.err.println("Invalid credentials, please check them!");
+			}
+			System.exit(1);
 		} catch (ConnectionException e) {
-			System.err.println("Initial server connection failed. Consider checking your details!");
-			System.err.println("Message: " + e.getMessage());
+			System.err.println("Initial server connection failed with '" + e.getMessage() + "'\n");
 		}
+
+		// Start reconnection attempts
+		reconnectListener.scheduleReconnect();
 
 		// Graceful shutdown
 		Runtime.getRuntime().addShutdownHook(new Thread(websocketListener::disconnect));

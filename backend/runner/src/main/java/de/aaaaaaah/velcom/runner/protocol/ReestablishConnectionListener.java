@@ -53,6 +53,9 @@ public class ReestablishConnectionListener implements
 	}
 
 	private void reconnect(int expectedBackoffCount) {
+		if (connectionManager.isConnected()) {
+			return;
+		}
 		if (stop) {
 			return;
 		}
@@ -90,5 +93,12 @@ public class ReestablishConnectionListener implements
 		if (scheduledFuture != null) {
 			scheduledFuture.cancel(true);
 		}
+	}
+
+	/**
+	 * Schedules a reconnect.
+	 */
+	public void scheduleReconnect() {
+		onStateChange(ConnectionState.DISCONNECTED);
 	}
 }
