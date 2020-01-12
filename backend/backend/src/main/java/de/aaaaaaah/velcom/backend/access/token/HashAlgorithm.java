@@ -13,12 +13,14 @@ public enum HashAlgorithm {
 	 * The password hashing algorithm Argon2id. See https://github.com/P-H-C/phc-winner-argon2
 	 */
 	ARGON2ID(1) {
-		Argon2 argon = Argon2Factory.create(Argon2Factory.Argon2Types.ARGON2id);
+		private final Argon2 argon = Argon2Factory.create(Argon2Factory.Argon2Types.ARGON2id);
 
-		int memoryInKiB = 488281; // = 500MB
-		int parallelism = Runtime.getRuntime().availableProcessors();
-		long maxMillis = 2000;
-		int iterations = Argon2Helper.findIterations(argon, maxMillis, memoryInKiB, parallelism);
+		private final int memoryInKiB = 488281; // = 500MB
+		private final int parallelism = Runtime.getRuntime().availableProcessors();
+		private final long maxMillis = 250;
+		private final int iterations = Argon2Helper.findIterations(
+			argon, maxMillis, memoryInKiB, parallelism
+		);
 
 		@Override
 		public String generateHash(AuthToken token) {
