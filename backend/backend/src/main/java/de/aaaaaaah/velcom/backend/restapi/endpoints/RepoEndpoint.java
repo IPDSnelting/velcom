@@ -2,6 +2,7 @@ package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import de.aaaaaaah.velcom.backend.access.repo.BranchName;
 import de.aaaaaaah.velcom.backend.access.repo.RemoteUrl;
 import de.aaaaaaah.velcom.backend.access.repo.Repo;
 import de.aaaaaaah.velcom.backend.access.repo.RepoAccess;
@@ -12,9 +13,12 @@ import de.aaaaaaah.velcom.backend.restapi.RepoUser;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRepo;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.PATCH;
+import java.util.Collection;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
@@ -98,6 +102,13 @@ public class RepoEndpoint {
 				tokenAccess.setToken(repoId, new AuthToken(string));
 			}
 		});
+
+		request.getTrackedBranches().ifPresent(trackedBranches -> {
+			Set<BranchName> trackedBranchNames = trackedBranches.stream()
+				.map(BranchName::new)
+				.collect(Collectors.toUnmodifiableSet());
+			repoAccess.setTrackedBranches(repoId, trackedBranchNames);
+		});
 	}
 
 	/**
@@ -169,18 +180,22 @@ public class RepoEndpoint {
 		private final RemoteUrl remoteUrl;
 		@Nullable
 		private final String token;
+		@Nullable
+		private final Collection<String> trackedBranches;
 
 		@JsonCreator
 		public PatchRequest(
 			@JsonProperty(value = "repo_id", required = true) UUID repoId,
 			@Nullable @JsonProperty("name") String name,
 			@Nullable @JsonProperty("remote_url") String remoteUrl,
-			@Nullable @JsonProperty("token") String token) {
-
+			@Nullable @JsonProperty("token") String token,
+			@Nullable @JsonProperty("tracked_branches") Collection<String> trackedBranches
+		) {
 			this.repoId = Objects.requireNonNull(repoId);
 			this.name = name;
 			this.remoteUrl = new RemoteUrl(remoteUrl);
 			this.token = token;
+			this.trackedBranches = trackedBranches;
 		}
 
 		public UUID getRepoId() {
@@ -199,6 +214,9 @@ public class RepoEndpoint {
 			return Optional.ofNullable(token);
 		}
 
+		public Optional<Collection<String>> getTrackedBranches() {
+			return Optional.ofNullable(trackedBranches);
+		}
 	}
 
 }

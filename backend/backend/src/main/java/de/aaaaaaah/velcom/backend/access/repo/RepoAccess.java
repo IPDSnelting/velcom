@@ -30,6 +30,7 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.jooq.DSLContext;
+import org.jooq.InsertValuesStep2;
 import org.jooq.Record1;
 import org.jooq.codegen.db.tables.records.RepositoryRecord;
 import org.jooq.codegen.db.tables.records.TrackedBranchRecord;
@@ -137,8 +138,7 @@ public class RepoAccess {
 		try (Repository repo = repoStorage.acquireRepository(repoId.getDirectoryName())) {
 			String defaultBranchStr = repo.getBranch();
 			BranchName branchName = new BranchName(defaultBranchStr);
-
-			setBranchTracked(repoId, branchName, true);
+			setTrackedBranches(repoId, List.of(branchName));
 		} catch (RepositoryAcquisitionException | IOException e) {
 			throw new AddRepoException(e);
 		}
@@ -331,42 +331,28 @@ public class RepoAccess {
 	}
 
 	/**
-	 * Marks the given branch inside the given repository as tracked.
+	 * Set the repo's tracked branches. Ignores duplicate branches and invalid branches. All
+	 * branches not inside the collection are set to untracked.
 	 *
-	 * @param repoId the repo the branch is in
-	 * @param branchName the name of the branch
-	 * @param tracked the branch's new tracked state
+	 * @param repoId the repo's id
+	 * @param branches the branches to be set as tracked
 	 */
-	public void setBranchTracked(RepoId repoId, BranchName branchName, boolean tracked) {
-		if (tracked) {
-			if (isBranchTracked(repoId, branchName)) {
-				return; // branch already tracked
-			}
+	public void setTrackedBranches(RepoId repoId, Collection<BranchName> branches) {
+		String repoIdStr = repoId.getId().toString();
 
-			try (DSLContext db = databaseStorage.acquireContext()) {
-				TrackedBranchRecord record = db.newRecord(TRACKED_BRANCH);
-				record.setRepoId(repoId.getId().toString());
-				record.setBranchName(branchName.getName());
-				record.insert();
-			}
-		} else {
-			try (DSLContext db = databaseStorage.acquireContext()) {
+		try (DSLContext db = databaseStorage.acquireContext()) {
+			db.transaction(() -> {
+				// Remove existing tracked branches
 				db.deleteFrom(TRACKED_BRANCH)
-					.where(TRACKED_BRANCH.REPO_ID.eq(repoId.getId().toString()))
-					.and(TRACKED_BRANCH.BRANCH_NAME.eq(branchName.getName()))
+					.where(TRACKED_BRANCH.REPO_ID.eq(repoIdStr))
 					.execute();
-			}
+				// Add new tracked branches
+				InsertValuesStep2<TrackedBranchRecord, String, String> step = db
+					.insertInto(TRACKED_BRANCH, TRACKED_BRANCH.REPO_ID, TRACKED_BRANCH.BRANCH_NAME);
+				branches.forEach(branchName -> step.values(repoIdStr, branchName.getName()));
+				step.execute();
+			});
 		}
-	}
-
-	/**
-	 * A helper function for {@link #setBranchTracked(RepoId, BranchName, boolean)}.
-	 *
-	 * @param branch the branch
-	 * @param tracked the branch's new tracked state
-	 */
-	public void setBranchTracked(Branch branch, boolean tracked) {
-		setBranchTracked(branch.getRepoId(), branch.getName(), tracked);
 	}
 
 	// Queries
