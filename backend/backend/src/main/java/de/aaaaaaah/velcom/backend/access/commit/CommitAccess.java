@@ -316,7 +316,7 @@ public class CommitAccess {
 	}
 
 	Commit commitFromRevCommit(RepoId repoId, RevCommit revCommit) {
-		CommitHash ownHash = new CommitHash(revCommit.getId().toString());
+		CommitHash ownHash = new CommitHash(revCommit.getId().getName());
 		List<CommitHash> parentHashes = List.of(revCommit.getParents()).stream()
 			.map(RevCommit::getId)
 			.map(AnyObjectId::getName)
