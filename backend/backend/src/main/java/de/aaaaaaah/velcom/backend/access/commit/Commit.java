@@ -25,8 +25,7 @@ public class Commit {
 	private final Instant committerDate;
 	private final String message;
 
-	// FIXME: 15.12.19 I wanna be the most package private constructor in the world
-	public Commit(CommitAccess commitAccess, RepoAccess repoAccess, RepoId repoId, CommitHash hash,
+	Commit(CommitAccess commitAccess, RepoAccess repoAccess, RepoId repoId, CommitHash hash,
 		Collection<CommitHash> parentHashes, String author, Instant authorDate, String committer,
 		Instant committerDate, String message) {
 

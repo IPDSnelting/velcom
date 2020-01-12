@@ -31,8 +31,6 @@ import java.util.function.Consumer;
  */
 public class Queue {
 
-	// TODO: 27.12.19 Where/When/How is there dispatcher notified?
-
 	private final CommitAccess commitAccess;
 	private final QueuePolicy queuePolicy;
 
