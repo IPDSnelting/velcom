@@ -38,6 +38,8 @@ import java.util.stream.Collectors;
  */
 public class DispatcherImpl implements Dispatcher {
 
+	// TODO: 14.01.20 Remove runner directly if it disconnects cleanly? 
+
 	private final Collection<ActiveRunnerInformation> activeRunners;
 	private final Queue queue;
 	private final RepoAccess repoAccess;
