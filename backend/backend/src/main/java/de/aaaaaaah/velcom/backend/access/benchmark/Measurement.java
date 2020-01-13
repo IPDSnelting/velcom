@@ -16,6 +16,16 @@ public class Measurement {
 	private final Either<MeasurementError, MeasurementValues> content;
 
 	public Measurement(BenchmarkAccess benchmarkAccess, RunId runId,
+		MeasurementName measurementName, MeasurementError error) {
+		this(benchmarkAccess, runId, measurementName, Either.ofLeft(error));
+	}
+
+	public Measurement(BenchmarkAccess benchmarkAccess, RunId runId,
+		MeasurementName measurementName, MeasurementValues values) {
+		this(benchmarkAccess, runId, measurementName, Either.ofRight(values));
+	}
+
+	public Measurement(BenchmarkAccess benchmarkAccess, RunId runId,
 		MeasurementName measurementName, Either<MeasurementError, MeasurementValues> content) {
 
 		this.benchmarkAccess = benchmarkAccess;
