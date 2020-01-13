@@ -4,6 +4,7 @@ import de.aaaaaaah.velcom.backend.access.commit.Commit;
 import de.aaaaaaah.velcom.runner.shared.RunnerStatusEnum;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkResults;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.RunnerInformation;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -26,6 +27,8 @@ public class ActiveRunnerInformation {
 	private BenchmarkResults results;
 	private Commit currentCommit;
 
+	private Instant lastReceivedMessage;
+
 	/**
 	 * Creates a new runner information.
 	 *
@@ -37,6 +40,7 @@ public class ActiveRunnerInformation {
 		this.connectionManager = connectionManager;
 		this.runnerStateMachine = runnerStateMachine;
 		this.state = RunnerStatusEnum.DISCONNECTED;
+		this.lastReceivedMessage = Instant.now();
 
 		this.statusListeners = new ArrayList<>();
 		this.resultListeners = new ArrayList<>();
@@ -154,6 +158,24 @@ public class ActiveRunnerInformation {
 	 */
 	public void addResultListener(Consumer<BenchmarkResults> listener) {
 		this.resultListeners.add(listener);
+	}
+
+	/**
+	 * Returns the time the last runner message arrived.
+	 *
+	 * @return the time the last runner message arrived
+	 */
+	public Instant getLastReceivedMessage() {
+		return lastReceivedMessage;
+	}
+
+	/**
+	 * Sets the time the last runner message arrived.
+	 *
+	 * @param lastReceivedMessage the time the last runner message arrived
+	 */
+	public void setLastReceivedMessage(Instant lastReceivedMessage) {
+		this.lastReceivedMessage = lastReceivedMessage;
 	}
 
 	@Override

@@ -17,3 +17,6 @@ benchmarkRepoRemoteUrl: "git@git.scc.kit.edu:aaaaaaah/pseubench.git"
 # The token runners need to provide in order to connect successfully.
 # Will be transmitted in plain text over an HTTPS connection.
 runnerToken: "Correct-Horse_Battery Staple"
+# The duration in seconds after which disconnected runners are given up on (removed and commit
+# rescheduled)
+disconnectedRunnerGracePeriodSeconds: 2

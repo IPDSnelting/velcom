@@ -2,6 +2,7 @@ package de.aaaaaaah.velcom.backend;
 
 import io.dropwizard.Configuration;
 import io.dropwizard.server.ServerFactory;
+import java.time.Duration;
 import java.util.Optional;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
@@ -38,6 +39,9 @@ public class GlobalConfig extends Configuration {
 
 	@NotEmpty
 	private String runnerToken;
+
+	@Min(1)
+	private long disconnectedRunnerGracePeriodSeconds;
 
 	public GlobalConfig() {
 		RunnerAwareServerFactory.getInstance().setConfig(this);
@@ -105,6 +109,22 @@ public class GlobalConfig extends Configuration {
 	 */
 	public String getRunnerToken() {
 		return runnerToken;
+	}
+
+	/**
+	 * @return the duration in seconds after which disconnected runners are given up on (removed and
+	 * 	commit rescheduled)
+	 */
+	public long getDisconnectedRunnerGracePeriodSeconds() {
+		return disconnectedRunnerGracePeriodSeconds;
+	}
+
+	/**
+	 * @return the duration after which disconnected runners are given up on (removed and commit
+	 * 	rescheduled)
+	 */
+	public Duration getDisconnectedRunnerGracePeriod() {
+		return Duration.ofSeconds(disconnectedRunnerGracePeriodSeconds);
 	}
 
 	@Override

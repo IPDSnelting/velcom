@@ -13,6 +13,7 @@ import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.WorkReceiv
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import org.eclipse.jetty.websocket.api.Session;
@@ -55,11 +56,13 @@ public class RunnerServerWebsocketListener implements WebSocketListener, WebSock
 
 	@Override
 	public void onWebSocketBinary(byte[] payload, int offset, int len) {
+		// TODO: 13.01.20 Kick runner?
 		System.err.println("Received a binary transmission");
 	}
 
 	@Override
 	public void onWebSocketText(String message) {
+		runnerInformation.setLastReceivedMessage(Instant.now());
 		SentEntity entity;
 		String type = serializer.peekType(message);
 		switch (type) {
@@ -123,6 +126,7 @@ public class RunnerServerWebsocketListener implements WebSocketListener, WebSock
 	public void onWebSocketFrame(Frame frame) {
 		if (frame.getType() == Type.PONG) {
 			heartbeatHandler.onPong();
+			runnerInformation.setLastReceivedMessage(Instant.now());
 		}
 	}
 
