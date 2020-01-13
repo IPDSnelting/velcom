@@ -19,7 +19,6 @@ const storeOptions: StoreOptions<RootState> = {
   mutations: {},
   actions: {
     hello () {
-      console.log('hello from base')
     }
   },
   modules: {
