@@ -56,7 +56,7 @@ public class ServerMain extends Application<GlobalConfig> {
 	public void run(GlobalConfig configuration, Environment environment) throws Exception {
 		environment.getObjectMapper().setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
 
-		SshdSessionFactory factory = new SshdSessionFactory(
+		SshdSessionFactory factory = new KnownHostsIgnoringSshdFactory(
 			new JGitKeyCache(),
 			new DefaultProxyDataFactory()
 		);
