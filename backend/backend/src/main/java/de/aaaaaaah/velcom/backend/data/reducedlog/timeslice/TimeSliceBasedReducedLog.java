@@ -11,7 +11,6 @@ import de.aaaaaaah.velcom.backend.data.reducedlog.ReducedLog;
 import de.aaaaaaah.velcom.backend.util.Either;
 import java.time.LocalTime;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -45,17 +44,15 @@ public class TimeSliceBasedReducedLog implements ReducedLog {
 		return Optional.empty();
 	}
 
-	public Optional<Commit> getBestCommitOf(List<Commit> commits, MeasurementName measurementName) {
+	public Optional<Run> getBestRunOf(List<Run> runs, MeasurementName measurementName) {
 		double maxValue = 0;
 		int indexOfMaxValue = -1;
-		Optional<Commit> commitWithMaxValue = Optional.empty();
+		Optional<Run> runWithMaxValue = Optional.empty();
 
-		for (int i = 0; i < commits.size(); i++) {
-			final Commit commit = commits.get(i);
+		for (int i = 0; i < runs.size(); i++) {
+			final Run run = runs.get(i);
 			// Hey, we can make a monad out of this :P
-			final Optional<MeasurementValues> maybeValues = benchmarkAccess.getLatestRunOf(
-				commit)
-				.flatMap(Run::getMeasurements)
+			final Optional<MeasurementValues> maybeValues = run.getMeasurements()
 				.flatMap(measurements -> findMeasurementOfName(measurements, measurementName))
 				.map(Measurement::getContent)
 				.flatMap(Either::getRight);
@@ -73,16 +70,15 @@ public class TimeSliceBasedReducedLog implements ReducedLog {
 			if (indexIsNegative || interpretationApplies) {
 				indexOfMaxValue = i;
 				maxValue = values.getValue();
-				commitWithMaxValue = Optional.of(commit);
+				runWithMaxValue = Optional.of(run);
 			}
 		}
 
-		return commitWithMaxValue;
+		return runWithMaxValue;
 	}
 
 	@Override
-	public List<Commit> reduce(Collection<Commit> originalCommits,
-		MeasurementName measurementName) {
+	public List<Run> reduce(Collection<Commit> originalCommits, MeasurementName measurementName) {
 		final Map<Long, List<Commit>> grouped = originalCommits.stream()
 			.collect(Collectors.groupingBy(
 				commit -> commitGrouper.getGroup(LocalTime.from(commit.getAuthorDate()))));
@@ -90,10 +86,15 @@ public class TimeSliceBasedReducedLog implements ReducedLog {
 		return grouped.keySet().stream()
 			.sorted()
 			.map(grouped::get)
-			.map(commits -> getBestCommitOf(commits, measurementName))
+			.map(commits -> commits.stream()
+				.map(benchmarkAccess::getLatestRunOf)
+				.filter(Optional::isPresent)
+				.map(Optional::get)
+				.collect(Collectors.toUnmodifiableList())
+			)
+			.map(commits -> getBestRunOf(commits, measurementName))
 			.filter(Optional::isPresent)
 			.map(Optional::get)
-			.sorted(Comparator.comparing(Commit::getAuthorDate))
 			.collect(Collectors.toUnmodifiableList());
 	}
 

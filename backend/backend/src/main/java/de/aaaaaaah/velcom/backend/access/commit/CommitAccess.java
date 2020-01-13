@@ -24,6 +24,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+import javax.annotation.Nullable;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.LogCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -340,4 +341,10 @@ public class CommitAccess {
 		);
 	}
 
+	public Collection<Commit> getCommitsBetween(RepoId repoId, Collection<String> branches,
+		@Nullable Instant startTime, @Nullable Instant stopTime) {
+
+		// TODO implement
+		return null;
+	}
 }
