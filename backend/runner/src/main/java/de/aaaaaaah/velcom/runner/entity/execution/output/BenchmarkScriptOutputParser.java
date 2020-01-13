@@ -1,7 +1,11 @@
 package de.aaaaaaah.velcom.runner.entity.execution.output;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkResults;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkResults.Benchmark;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkResults.Metric;
@@ -17,15 +21,24 @@ import java.util.Map.Entry;
  */
 public class BenchmarkScriptOutputParser {
 
+	private ObjectMapper objectMapper = new ObjectMapper()
+		.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE)
+		.registerModule(new ParameterNamesModule());
+
 	/**
 	 * Parses the benchmark output node to a {@link BenchmarkResults} object.
 	 *
-	 * @param root the root node of the script output
+	 * @param data the textual data
 	 * @return the parsed benchmark results
 	 * @throws OutputParseException if an error occurs
 	 */
-	public BareResult parse(JsonNode root)
-		throws OutputParseException {
+	public BareResult parse(String data) throws OutputParseException {
+		JsonNode root;
+		try {
+			root = objectMapper.readTree(data);
+		} catch (JsonProcessingException e) {
+			throw new OutputParseException(e.getMessage(), e);
+		}
 		System.err.println("Parsing: ");
 		System.err.println(root);
 		if (!root.isObject()) {
