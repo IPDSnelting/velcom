@@ -12,6 +12,9 @@ import de.aaaaaaah.velcom.backend.data.linearlog.CommitAccessBasedLinearLog;
 import de.aaaaaaah.velcom.backend.data.linearlog.LinearLog;
 import de.aaaaaaah.velcom.backend.data.queue.PolicyManualFilo;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
+import de.aaaaaaah.velcom.backend.data.reducedlog.ReducedLog;
+import de.aaaaaaah.velcom.backend.data.reducedlog.timeslice.GroupByHour;
+import de.aaaaaaah.velcom.backend.data.reducedlog.timeslice.TimeSliceBasedReducedLog;
 import de.aaaaaaah.velcom.backend.restapi.RepoAuthenticator;
 import de.aaaaaaah.velcom.backend.restapi.RepoUser;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.AllReposEndpoint;
@@ -78,15 +81,16 @@ public class ServerMain extends Application<GlobalConfig> {
 
 		// Data layer
 		LinearLog linearLog = new CommitAccessBasedLinearLog(commitAccess);
+		ReducedLog reducedLog = new TimeSliceBasedReducedLog(benchmarkAccess, new GroupByHour());
 		Queue queue = new Queue(commitAccess, new PolicyManualFilo());
+
+		// Dispatcher
 		Dispatcher dispatcher = new DispatcherImpl(
 			queue,
 			repoAccess,
 			benchmarkAccess,
 			configuration.getDisconnectedRunnerGracePeriod()
 		);
-
-		// Dispatcher
 		RunnerAwareServerFactory.getInstance().setDispatcher(dispatcher);
 		addDummyWorkRepo(repoAccess);
 
@@ -109,7 +113,7 @@ public class ServerMain extends Application<GlobalConfig> {
 		environment.jersey().register(new QueueEndpoint(commitAccess, queue, dispatcher));
 		environment.jersey()
 			.register(new RecentlyBenchmarkedCommitsEndpoint(benchmarkAccess, linearLog));
-		environment.jersey().register(new RepoComparisonGraphEndpoint());
+		environment.jersey().register(new RepoComparisonGraphEndpoint(reducedLog));
 		environment.jersey().register(new RepoEndpoint(repoAccess, tokenAccess));
 		environment.jersey().register(new TestTokenEndpoint(tokenAccess));
 	}

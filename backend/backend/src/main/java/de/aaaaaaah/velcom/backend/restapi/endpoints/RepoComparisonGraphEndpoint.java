@@ -2,6 +2,7 @@ package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import de.aaaaaaah.velcom.backend.data.reducedlog.ReducedLog;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRepo;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRun;
 import java.util.Collection;
@@ -24,6 +25,12 @@ import javax.ws.rs.core.MediaType;
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 public class RepoComparisonGraphEndpoint {
+
+	private final ReducedLog reducedLog;
+
+	public RepoComparisonGraphEndpoint(ReducedLog reducedLog) {
+		this.reducedLog = reducedLog;
+	}
 
 	/**
 	 * Returns all measurements that are needed to build a repository comparison graph between the
@@ -54,6 +61,8 @@ public class RepoComparisonGraphEndpoint {
 			this.repos = Objects.requireNonNull(repos);
 			this.startTime = startTime;
 			this.stopTime = stopTime;
+
+			// TODO implement
 		}
 
 		public Collection<BranchSpec> getRepos() {
