@@ -19,4 +19,4 @@ benchmarkRepoRemoteUrl: "git@git.scc.kit.edu:aaaaaaah/pseubench.git"
 runnerToken: "Correct-Horse_Battery Staple"
 # The duration in seconds after which disconnected runners are given up on (removed and commit
 # rescheduled)
-disconnectedRunnerGracePeriodSeconds: 2
+disconnectedRunnerGracePeriodSeconds: 600
