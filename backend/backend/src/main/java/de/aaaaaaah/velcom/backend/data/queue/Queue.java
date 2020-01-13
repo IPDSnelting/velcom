@@ -46,7 +46,8 @@ public class Queue {
 	}
 
 	/**
-	 * Add a new task to the queue.
+	 * Add a new non-manual task to the queue. This ignores and overwrites any existing {@link
+	 * BenchmarkStatus}.
 	 *
 	 * @param commit the commit that should be added as task
 	 */
@@ -57,7 +58,8 @@ public class Queue {
 
 	/**
 	 * Add a new manual task to the queue. Usually, manual tasks have a higher priority than other
-	 * tasks, though this is up to the queue policy.
+	 * tasks, though this is up to the queue policy. This ignores and overwrites any existing {@link
+	 * BenchmarkStatus}.
 	 *
 	 * @param commit the commit that should be added as task
 	 */
@@ -66,6 +68,22 @@ public class Queue {
 			BenchmarkStatus.BENCHMARK_REQUIRED_MANUAL_PRIORITY);
 		queuePolicy.addManualTask(commit);
 		callAllAddedListeners(commit);
+	}
+
+	/**
+	 * Add a commit either as a task or a manual task, based on its {@link
+	 * Commit#getBenchmarkStatus()}.
+	 *
+	 * @param commit the commit that should be added as a task
+	 */
+	public void addCommit(Commit commit) {
+		if (commit.getBenchmarkStatus()
+			.equals(BenchmarkStatus.BENCHMARK_REQUIRED_MANUAL_PRIORITY)) {
+
+			addManualTask(commit);
+		} else {
+			addTask(commit);
+		}
 	}
 
 	public Optional<Commit> getNextTask() {
