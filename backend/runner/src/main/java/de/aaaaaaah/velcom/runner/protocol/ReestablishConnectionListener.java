@@ -81,8 +81,12 @@ public class ReestablishConnectionListener implements
 		}
 	}
 
+	/**
+	 * @return the time in seconds to sleep before reconnecting
+	 */
 	private long getSleepTime() {
-		return (long) Math.exp(currentBackoffTry);
+		// TODO: 14.01.20 One minute too low? 
+		return Math.min((long) Math.exp(currentBackoffTry), TimeUnit.MINUTES.toSeconds(1));
 	}
 
 	/**
