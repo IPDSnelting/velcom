@@ -26,7 +26,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ScheduledExecutorService;
@@ -39,15 +38,12 @@ import java.util.stream.Collectors;
  */
 public class DispatcherImpl implements Dispatcher {
 
-	// TODO: 12.01.20 Put commit back when runner crashes (ping failure) 
-
 	private final Collection<ActiveRunnerInformation> activeRunners;
 	private final Queue queue;
 	private final RepoAccess repoAccess;
 	private final BenchmarkAccess benchmarkAccess;
 	private final Duration allowedRunnerDisconnectTime;
 	private final java.util.Queue<ActiveRunnerInformation> freeRunners;
-	private final ExecutorService dispatcherWorkerPool;
 	private final ScheduledExecutorService watchdogPool;
 
 	/**
@@ -67,13 +63,10 @@ public class DispatcherImpl implements Dispatcher {
 		this.allowedRunnerDisconnectTime = allowedRunnerDisconnectTime;
 		this.activeRunners = Collections.newSetFromMap(new ConcurrentHashMap<>());
 		this.freeRunners = new LinkedBlockingDeque<>();
-		// TODO: 12.01.20 cached? Fixed size?
-		// TODO: 13.01.20 Pool swallows exceptions!
-		this.dispatcherWorkerPool = Executors.newFixedThreadPool(5);
 		this.watchdogPool = Executors.newSingleThreadScheduledExecutor();
 
 		queue.onSomethingAborted(task -> abort(task.getSecond(), task.getFirst()));
-		queue.onSomethingAdded(task -> dispatcherWorkerPool.submit(this::updateDispatching));
+		queue.onSomethingAdded(it -> updateDispatching());
 
 		watchdogPool.scheduleAtFixedRate(
 			this::cleanupCrashedRunners,
@@ -119,7 +112,7 @@ public class DispatcherImpl implements Dispatcher {
 			// setState method if the connection is closed in onError while it is writing.
 			if (status == RunnerStatusEnum.IDLE) {
 				freeRunners.add(runnerInformation);
-				dispatcherWorkerPool.submit(this::updateDispatching);
+				updateDispatching();
 			}
 		});
 		runnerInformation.addResultListener(
@@ -209,11 +202,8 @@ public class DispatcherImpl implements Dispatcher {
 			System.out.println("\t" + runner);
 		}
 
-		System.out.println(freeRunners);
-
 		while (!freeRunners.isEmpty()) {
 			ActiveRunnerInformation runner = freeRunners.poll();
-			System.out.println(runner);
 			Optional<Commit> nextTask = queue.getNextTask();
 			if (nextTask.isEmpty()) {
 				nextTask = repoAccess.getAllRepos().stream()
@@ -228,7 +218,6 @@ public class DispatcherImpl implements Dispatcher {
 				// TODO: 12.01.20 Replace this with the following line
 				// return;
 			}
-			System.out.println(nextTask);
 			Commit commitToBenchmark = nextTask.get();
 			if (!dispatchCommit(runner, commitToBenchmark)) {
 				queue.addCommit(commitToBenchmark);
