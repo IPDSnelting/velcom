@@ -15,17 +15,22 @@ import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import de.aaaaaaah.velcom.backend.util.Either;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.jooq.DSLContext;
 import org.jooq.InsertValuesStep2;
+import org.jooq.Result;
 import org.jooq.codegen.db.tables.records.RunMeasurementRecord;
 import org.jooq.codegen.db.tables.records.RunMeasurementValueRecord;
 import org.jooq.codegen.db.tables.records.RunRecord;
+import org.jooq.exception.DataAccessException;
 
 /**
  * This class abstracts away access to the benchmark results such as runs and measurements.
@@ -229,9 +234,28 @@ public class BenchmarkAccess {
 	}
 
 	// TODO mention that the stream needs to be closed after use
+
+	/**
+	 * Streams all runs sorted by their start time where run with the most recent start time is the
+	 * first element in the stream.
+	 *
+	 * <p>Note that this stream must be closed after it is no longer being used.</p>
+	 *
+	 * @return sorted stream containing all runs
+	 */
 	public Stream<Run> getRecentRuns() {
-		// TODO implement
-		return null;
+		DSLContext db = databaseStorage.acquireContext();
+
+		try {
+			return db.selectFrom(RUN)
+				.orderBy(RUN.START_TIME)
+				.fetchStream()
+				.map(this::runFromRecord)
+				.onClose(db::close);
+		} catch (DataAccessException e) {
+			db.close();
+			throw e;
+		}
 	}
 
 	/**
@@ -298,8 +322,66 @@ public class BenchmarkAccess {
 	}
 
 	public Collection<Measurement> getMeasurements(RunId runId) {
-		// TODO implement
-		return null;
+		Map<String, RunMeasurementRecord> measurementRecordMap; // key: run_measurement_id
+		Collection<String> measurementIds;
+		Map<String, Result<RunMeasurementValueRecord>> valueMap; // key: run_measurement_id
+
+		try (DSLContext db = databaseStorage.acquireContext()) {
+			// 1.) Load measurement records
+			measurementRecordMap = db.selectFrom(RUN_MEASUREMENT)
+				.where(RUN_MEASUREMENT.RUN_ID.eq(runId.getId().toString()))
+				.fetch()
+				.intoMap(RUN_MEASUREMENT.ID);
+
+			measurementIds = measurementRecordMap.keySet();
+
+			// 2.) Load measurement values
+			valueMap = db.selectFrom(
+				RUN_MEASUREMENT_VALUE)
+				.where(RUN_MEASUREMENT_VALUE.MEASUREMENT_ID.in(measurementIds))
+				.fetch()
+				.intoGroups(RUN_MEASUREMENT_VALUE.MEASUREMENT_ID);
+		}
+
+		// 3.) Construct measurement entities
+		List<Measurement> measurements = new ArrayList<>(measurementRecordMap.size());
+
+		for (RunMeasurementRecord measureRecord : measurementRecordMap.values()) {
+			MeasurementName name = new MeasurementName(
+				measureRecord.getBenchmark(),
+				measureRecord.getMetric()
+			);
+
+			if (measureRecord.getErrorMessage() != null) {
+				// measurement failed
+				var error = new MeasurementError(measureRecord.getErrorMessage());
+				var measurement = new Measurement(this, runId, name, error);
+
+				measurements.add(measurement);
+			} else {
+				// measurement succeeded
+				var unit = new Unit(measureRecord.getUnit());
+
+				String interpStr = measureRecord.getInterpretation();
+				Interpretation interp = Interpretation.fromTextualRepresentation(interpStr);
+
+				final List<Double> valueList;
+
+				if (valueMap.containsKey(measureRecord.getId())) {
+					valueList = valueMap.get(measureRecord.getId())
+						.map(RunMeasurementValueRecord::getValue);
+				} else {
+					valueList = Collections.emptyList();
+				}
+
+				var values = new MeasurementValues(valueList, unit, interp);
+				var measurement = new Measurement(this, runId, name, values);
+
+				measurements.add(measurement);
+			}
+		}
+
+		return measurements;
 	}
 
 	/**
