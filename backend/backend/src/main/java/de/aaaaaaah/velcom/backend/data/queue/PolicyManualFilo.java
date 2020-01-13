@@ -3,11 +3,13 @@ package de.aaaaaaah.velcom.backend.data.queue;
 import de.aaaaaaah.velcom.backend.access.commit.Commit;
 import de.aaaaaaah.velcom.backend.access.commit.CommitHash;
 import de.aaaaaaah.velcom.backend.access.repo.RepoId;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Queue;
 import java.util.Stack;
 
 /**
@@ -20,11 +22,55 @@ import java.util.Stack;
  */
 public class PolicyManualFilo implements QueuePolicy {
 
-	private Stack<Commit> manualTasks;
-	private Map<RepoId, Stack<Commit>> tasks;
-	private List<RepoId> keyByIndex = new ArrayList<>();
+	private final Stack<Commit> manualTasks;
+	private final Map<RepoId, Stack<Commit>> tasks;
+	private final Queue<RepoId> repoIdQueue;
 
-	private int index;
+	public PolicyManualFilo() {
+		this(new Stack<>(), new HashMap<>(), new ArrayDeque<>());
+	}
+
+	private PolicyManualFilo(Stack<Commit> manualTasks, Map<RepoId, Stack<Commit>> tasks,
+		Queue<RepoId> repoIdQueue) {
+
+		this.manualTasks = manualTasks;
+		this.tasks = tasks;
+		this.repoIdQueue = repoIdQueue;
+	}
+
+	private Optional<Stack<Commit>> getRepoStack(RepoId repoId) {
+		return Optional.ofNullable(tasks.get(repoId));
+	}
+
+	private Optional<Commit> findTaskInStack(Stack<Commit> stack, RepoId repoId, CommitHash hash) {
+		for (Commit commit : stack) {
+			if (commit.getRepoId().equals(repoId) && commit.getHash().equals(hash)) {
+				return Optional.of(commit);
+			}
+		}
+		return Optional.empty();
+	}
+
+	private Optional<Commit> findTask(RepoId repoId, CommitHash hash) {
+		return getRepoStack(repoId).flatMap(stack -> findTaskInStack(stack, repoId, hash));
+	}
+
+	private Optional<Commit> findManualTask(RepoId repoId, CommitHash hash) {
+		return findTaskInStack(manualTasks, repoId, hash);
+	}
+
+	private void removeTaskFromStack(Stack<Commit> stack, RepoId repoId, CommitHash hash) {
+		stack.removeIf(
+			commit -> commit.getRepoId().equals(repoId) && commit.getHash().equals(hash));
+	}
+
+	private void removeTask(RepoId repoId, CommitHash hash) {
+		getRepoStack(repoId).ifPresent(stack -> removeTaskFromStack(stack, repoId, hash));
+	}
+
+	private void removeManualTask(RepoId repoId, CommitHash hash) {
+		removeTaskFromStack(manualTasks, repoId, hash);
+	}
 
 	/**
 	 * Adds task to stack of its repo and if necessary creates new stack for that repo.
@@ -33,13 +79,18 @@ public class PolicyManualFilo implements QueuePolicy {
 	 */
 	@Override
 	public void addTask(Commit commit) {
-		if (!tasks.containsKey(commit.getRepoId())) {
-			tasks.put(commit.getRepoId(), new Stack<>());
-			keyByIndex.add(commit.getRepoId());
-		} else {
-			abortTask(commit.getRepoId(), commit.getHash(), true);
+		if (findManualTask(commit.getRepoId(), commit.getHash()).isPresent()
+			|| findTask(commit.getRepoId(), commit.getHash()).isPresent()) {
+			return;
 		}
-		tasks.get(commit.getRepoId()).push(commit);
+
+		Stack<Commit> stack = tasks.get(commit.getRepoId());
+		if (stack == null) {
+			stack = new Stack<>();
+			tasks.put(commit.getRepoId(), stack);
+			repoIdQueue.add(commit.getRepoId());
+		}
+		stack.push(commit);
 	}
 
 	/**
@@ -52,6 +103,7 @@ public class PolicyManualFilo implements QueuePolicy {
 		abortTask(commit.getRepoId(), commit.getHash());
 		manualTasks.push(commit);
 	}
+
 
 	/**
 	 * Returns next commit.
@@ -68,21 +120,20 @@ public class PolicyManualFilo implements QueuePolicy {
 			return Optional.of(manualTasks.pop());
 		}
 
-		//If map is empty, return empty
-		if (keyByIndex.isEmpty()) {
+		final RepoId startRepoId = repoIdQueue.peek();
+		if (startRepoId == null) {
+			// The queue is empty.
 			return Optional.empty();
 		}
 
-		//Iterate to next non-empty repo stack
-		int startIndex = index;
 		do {
-			index = (index + 1) % keyByIndex.size();
+			repoIdQueue.add(repoIdQueue.remove());
 
-			Stack<Commit> stack = tasks.get(keyByIndex.get(index));
-			if (!stack.isEmpty()) {
-				return Optional.of(stack.pop());
+			final Optional<Stack<Commit>> stack = getRepoStack(repoIdQueue.peek());
+			if (stack.isPresent() && !stack.get().isEmpty()) {
+				return Optional.of(stack.get().pop());
 			}
-		} while (index != startIndex);
+		} while (!startRepoId.equals(repoIdQueue.peek()));
 
 		//If stacks are empty, return empty
 		return Optional.empty();
@@ -109,44 +160,22 @@ public class PolicyManualFilo implements QueuePolicy {
 	 * Removes commit from queue.
 	 *
 	 * @param repoId the repo the commit is in
-	 * @param commitHash the commit hash of the commit to be removed
+	 * @param hash the commit hash of the commit to be removed
 	 */
 	@Override
-	public void abortTask(RepoId repoId, CommitHash commitHash) {
-		abortTask(repoId, commitHash, false);
+	public void abortTask(RepoId repoId, CommitHash hash) {
+		removeTask(repoId, hash);
+		removeManualTask(repoId, hash);
 	}
 
-	private void abortTask(RepoId repoId, CommitHash commitHash, boolean keepManual) {
-		if (!keepManual) {
-			removeCommitFromStack(manualTasks, repoId, commitHash);
-		}
-		Stack<Commit> stack = tasks.get(repoId);
-		if (stack != null) {
-			removeCommitFromStack(stack, repoId, commitHash);
-		}
-	}
-
-	//Finds commit in stack by repoId commitHash and removes it
-	private void removeCommitFromStack(Stack<Commit> stack, RepoId repoId, CommitHash commitHash) {
-		for (Commit commit : stack) {
-			if (commit.getRepoId().equals(repoId) && commit.getHash().equals(commitHash)) {
-				stack.remove(commit);
-				break;
-			}
-		}
-	}
-
-	//Returns copy of this policy
 	private PolicyManualFilo copy() {
-		PolicyManualFilo pmf = new PolicyManualFilo();
+		Stack<Commit> newManualTasks = new Stack<>();
+		manualTasks.forEach(newManualTasks::push);
 
-		pmf.manualTasks = new Stack<>();
-		manualTasks.forEach(pmf.manualTasks::push);
+		Map<RepoId, Stack<Commit>> newTasks = new HashMap<>(tasks);
+		Queue<RepoId> newRepoIdQueue = new ArrayDeque<>(repoIdQueue);
 
-		pmf.tasks = new HashMap<>(tasks);
-		pmf.keyByIndex = new ArrayList<>(keyByIndex);
-		pmf.index = index;
-		return pmf;
+		return new PolicyManualFilo(newManualTasks, newTasks, newRepoIdQueue);
 	}
 
 }
