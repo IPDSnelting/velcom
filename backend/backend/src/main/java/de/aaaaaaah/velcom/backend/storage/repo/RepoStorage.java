@@ -1,5 +1,6 @@
 package de.aaaaaaah.velcom.backend.storage.repo;
 
+import de.aaaaaaah.velcom.backend.KnownHostsIgnoringSshdFactory;
 import de.aaaaaaah.velcom.backend.storage.repo.exception.AddRepositoryException;
 import de.aaaaaaah.velcom.backend.storage.repo.exception.DirectoryAlreadyExistsException;
 import de.aaaaaaah.velcom.backend.storage.repo.exception.NoSuchRepositoryException;
@@ -19,6 +20,10 @@ import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.lib.RepositoryBuilder;
+import org.eclipse.jgit.transport.SshSessionFactory;
+import org.eclipse.jgit.transport.sshd.DefaultProxyDataFactory;
+import org.eclipse.jgit.transport.sshd.JGitKeyCache;
+import org.eclipse.jgit.transport.sshd.SshdSessionFactory;
 
 /**
  * // TODO: 27.12.19 Repo vs Repository?
@@ -48,6 +53,13 @@ public class RepoStorage {
 	public RepoStorage(Path rootDir) throws IOException {
 		this.rootDir = rootDir;
 		Files.createDirectories(rootDir);
+
+		SshdSessionFactory factory = new KnownHostsIgnoringSshdFactory(
+			new JGitKeyCache(),
+			new DefaultProxyDataFactory()
+		);
+
+		SshSessionFactory.setInstance(factory);
 	}
 
 	/**

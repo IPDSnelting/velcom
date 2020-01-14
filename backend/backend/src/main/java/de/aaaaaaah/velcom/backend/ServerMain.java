@@ -36,10 +36,6 @@ import io.dropwizard.auth.AuthDynamicFeature;
 import io.dropwizard.auth.AuthValueFactoryProvider;
 import io.dropwizard.auth.basic.BasicCredentialAuthFilter;
 import io.dropwizard.setup.Environment;
-import org.eclipse.jgit.transport.SshSessionFactory;
-import org.eclipse.jgit.transport.sshd.DefaultProxyDataFactory;
-import org.eclipse.jgit.transport.sshd.JGitKeyCache;
-import org.eclipse.jgit.transport.sshd.SshdSessionFactory;
 
 /**
  * The backend's main class. Contains the core initialisation routines for the web server.
@@ -59,13 +55,6 @@ public class ServerMain extends Application<GlobalConfig> {
 	@Override
 	public void run(GlobalConfig configuration, Environment environment) throws Exception {
 		environment.getObjectMapper().setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
-
-		SshdSessionFactory factory = new KnownHostsIgnoringSshdFactory(
-			new JGitKeyCache(),
-			new DefaultProxyDataFactory()
-		);
-
-		SshSessionFactory.setInstance(factory);
 
 		// Storage layer
 		DatabaseStorage databaseStorage = new DatabaseStorage(configuration);
