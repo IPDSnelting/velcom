@@ -1,5 +1,9 @@
 package de.aaaaaaah.velcom.runner.cli;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import de.aaaaaaah.velcom.runner.cli.RunnerCliSpec_Parser.HelpRequested;
 import de.aaaaaaah.velcom.runner.cli.RunnerCliSpec_Parser.ParseResult;
 import de.aaaaaaah.velcom.runner.cli.RunnerCliSpec_Parser.ParsingFailed;
@@ -15,6 +19,7 @@ import de.aaaaaaah.velcom.runner.protocol.WebsocketListener;
 import de.aaaaaaah.velcom.runner.shared.protocol.serialization.SimpleJsonSerializer;
 import de.aaaaaaah.velcom.runner.state.RunnerStateMachine;
 import java.io.IOException;
+import java.net.URI;
 
 /**
  * The runner main class.
@@ -42,16 +47,18 @@ public class RunnerMain {
 		}
 		RunnerCliSpec cliSpec = ((ParsingSuccess) parseResult).getResult();
 
+		RunnerConfigPojo configPojo = getConfig(cliSpec);
+
 		WebsocketListener websocketListener = new WebsocketListener();
 
 		RunnerConfiguration runnerConfiguration = new RunnerConfiguration(
 			new SimpleJsonSerializer(),
-			cliSpec.runnerName(),
-			cliSpec.accessToken(),
+			configPojo.getRunnerName(),
+			configPojo.getRunnerToken(),
 			websocketListener,
 			new RunnerStateMachine(),
 			new BenchmarkscriptWorkExecutor(),
-			cliSpec.serverUrl(),
+			configPojo.getServerUrl(),
 			createBenchmarkRepoOrganizer()
 		);
 		websocketListener.setConfiguration(runnerConfiguration);
@@ -103,19 +110,71 @@ public class RunnerMain {
 		}
 	}
 
+	private static RunnerConfigPojo getConfig(RunnerCliSpec cliSpec) {
+		ObjectMapper objectMapper = new ObjectMapper()
+			.registerModule(new ParameterNamesModule());
+		try {
+			return objectMapper.readValue(
+				cliSpec.configFileLocation().toFile(), RunnerConfigPojo.class
+			);
+		} catch (IOException e) {
+			die(e, "Error reading config!");
+			// never reached
+			return null;
+		}
+	}
+
 	private static BenchmarkRepoOrganizer createBenchmarkRepoOrganizer() {
 		try {
 			return new TempFileBenchmarkRepoOrganizer();
 		} catch (IOException e) {
-			System.err.println("Could not create temporary files :(");
-			System.err.println("A more detailed message: " + e.getMessage());
-			System.err.println();
-			System.err.println("And here is the full stack trace if you want to report the error:");
-			e.printStackTrace(System.err);
-			System.exit(1);
+			die(e, "Could not create temporary files :(");
 			// can not be reached as exit exits
 			return null;
 		}
 	}
 
+	/**
+	 * Exists the program after printing an error message.
+	 *
+	 * @param e the exception
+	 * @param message the message to print first
+	 */
+	private static void die(Throwable e, String message) {
+		System.err.println(message);
+		System.err.println("A more detailed message: " + e.getMessage());
+		System.err.println();
+		System.err.println("And here is the full stack trace if you want to report the error:");
+		e.printStackTrace(System.err);
+		System.exit(1);
+	}
+
+	@JsonIgnoreProperties("_comment")
+	private static class RunnerConfigPojo {
+
+		private URI serverUrl;
+
+		private String runnerToken;
+
+		private String runnerName;
+
+		@JsonCreator
+		public RunnerConfigPojo(URI serverUrl, String runnerToken, String runnerName) {
+			this.serverUrl = serverUrl;
+			this.runnerToken = runnerToken;
+			this.runnerName = runnerName;
+		}
+
+		public URI getServerUrl() {
+			return serverUrl;
+		}
+
+		public String getRunnerToken() {
+			return runnerToken;
+		}
+
+		public String getRunnerName() {
+			return runnerName;
+		}
+	}
 }
