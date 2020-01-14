@@ -33,11 +33,15 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The main dispatcher routine.
  */
 public class DispatcherImpl implements Dispatcher {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(DispatcherImpl.class);
 
 	// TODO: 14.01.20 Remove runner directly if it disconnects cleanly?
 
@@ -89,7 +93,10 @@ public class DispatcherImpl implements Dispatcher {
 				Instant.now()
 			);
 			if (timeSinceLastMessage.compareTo(allowedRunnerDisconnectTime) > 0) {
-				System.out.println("\tKilling runner " + runner.getRunnerInformation());
+				LOGGER.info(
+					"Kicking inactive runner (Time since last message: {}) with information {}",
+					timeSinceLastMessage, runner.getRunnerInformation()
+				);
 				removeRunner(runner).ifPresent(queue::addCommit);
 			}
 		}
@@ -110,15 +117,15 @@ public class DispatcherImpl implements Dispatcher {
 			if (initialConnect.getAndSet(false) && isWorking && lastCommit.isEmpty()) {
 				resetRunner(runnerInformation);
 			}
+			LOGGER.info("Finished adding a runner {}.", newInformation);
 		});
 		runnerInformation.setOnIdle(() -> {
-			System.out.println("Idle called!");
 			freeRunners.add(runnerInformation);
 			updateDispatching();
 		});
 		runnerInformation.setOnDisconnected(value -> {
 			if (value == StatusCodeMappings.CLIENT_ORDERLY_DISCONNECT) {
-				System.out.println("Runner exited properly. Removing it without grace period.");
+				LOGGER.debug("Runner exited properly. Removing it without grace period.");
 				removeRunner(runnerInformation).ifPresent(queue::addCommit);
 			}
 		});
@@ -126,7 +133,7 @@ public class DispatcherImpl implements Dispatcher {
 			results -> this.onResultsReceived(runnerInformation, results)
 		);
 		activeRunners.add(runnerInformation);
-		System.out.println("Added a runner " + runnerInformation);
+		LOGGER.debug("Added a runner {}", runnerInformation);
 	}
 
 	/**
@@ -143,7 +150,8 @@ public class DispatcherImpl implements Dispatcher {
 			return Optional.empty();
 		}
 		String name = activeRunner.getRunnerInformation().get().getName();
-		System.out.println("Removing runner with name " + name);
+		LOGGER.info("Removing running '{}'", name);
+
 		List<ActiveRunnerInformation> matchingRunners = activeRunners.stream()
 			.filter(runner ->
 				runner.getRunnerInformation()
@@ -170,7 +178,8 @@ public class DispatcherImpl implements Dispatcher {
 
 	@Override
 	public boolean abort(CommitHash commitHash, RepoId repoId) {
-		System.out.println("Aborting " + commitHash + " " + repoId);
+		LOGGER.debug("Aborting commit {} for repo {}!", commitHash, repoId);
+
 		for (ActiveRunnerInformation runner : activeRunners) {
 			Optional<Commit> currentCommit = runner.getCurrentCommit();
 			if (currentCommit.isEmpty()) {
@@ -182,7 +191,10 @@ public class DispatcherImpl implements Dispatcher {
 			if (!currentCommit.get().getRepoId().equals(repoId)) {
 				continue;
 			}
-			System.out.println("Found a runner for it!");
+			LOGGER.debug(
+				"Aborting {} for repo {} on runner {}",
+				commitHash, repoId, runner.getRunnerInformation()
+			);
 			if (runner.getState() == RunnerStatusEnum.WORKING) {
 				resetRunner(runner);
 			}
@@ -203,10 +215,7 @@ public class DispatcherImpl implements Dispatcher {
 	}
 
 	private void updateDispatching() {
-		System.out.println("\n\nUpdating dispatching with runners:");
-		for (ActiveRunnerInformation runner : freeRunners) {
-			System.out.println("\t" + runner);
-		}
+		LOGGER.debug("Updating dispatching with {} free runners", freeRunners.size());
 
 		while (!freeRunners.isEmpty()) {
 			ActiveRunnerInformation runner = freeRunners.poll();
@@ -233,7 +242,8 @@ public class DispatcherImpl implements Dispatcher {
 
 
 	private void resetRunner(ActiveRunnerInformation runner) {
-		System.out.println("Resetting runner " + runner);
+		LOGGER.debug("Resetting runner {}", runner.getRunnerInformation());
+
 		try {
 			runner.getRunnerStateMachine().resetRunner("Abort requested");
 		} catch (IOException e) {
@@ -244,7 +254,7 @@ public class DispatcherImpl implements Dispatcher {
 	}
 
 	private void onResultsReceived(ActiveRunnerInformation runner, BenchmarkResults results) {
-		System.out.println("Got work " + results + " from " + runner);
+		LOGGER.debug("Received runner results from {}", runner.getRunnerInformation());
 
 		RepoId repoId = new RepoId(results.getWorkOrder().getRepoId());
 		CommitHash commitHash = new CommitHash(results.getWorkOrder().getCommitHash());
@@ -301,9 +311,10 @@ public class DispatcherImpl implements Dispatcher {
 	 * @return true if the commit was dispatched, false otherwise
 	 */
 	private boolean dispatchCommit(ActiveRunnerInformation runner, Commit commit) {
-		System.out.println("Dispatching...");
+		LOGGER.info("Dispatching {} on {}", commit, runner.getRunnerInformation());
+
 		if (runner.getRunnerInformation().isEmpty()) {
-			System.err.println("Did not get any information about an active runner!");
+			LOGGER.warn("Tried to dispatch a commit to a runner without information! ({})", commit);
 			runner.getConnectionManager().disconnect();
 			return false;
 		}
@@ -334,7 +345,7 @@ public class DispatcherImpl implements Dispatcher {
 			);
 			return true;
 		} catch (IOException e) {
-			System.err.println("Dispatching commit not possible :/ " + e.getMessage());
+			LOGGER.debug("Dispatching commit not possible", e);
 			return false;
 		}
 	}

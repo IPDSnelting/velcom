@@ -19,12 +19,17 @@ import org.eclipse.jetty.websocket.api.WebSocketFrameListener;
 import org.eclipse.jetty.websocket.api.WebSocketListener;
 import org.eclipse.jetty.websocket.api.extensions.Frame;
 import org.eclipse.jetty.websocket.api.extensions.Frame.Type;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Listens to websocket messages from the runner and keeps the connection alive.
  */
 public class RunnerServerWebsocketListener implements WebSocketListener, WebSocketFrameListener,
 	HeartbeatWebsocket, RunnerConnectionManager {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(
+		RunnerServerWebsocketListener.class);
 
 	private HeartbeatHandler heartbeatHandler;
 	private Session session;
@@ -52,8 +57,11 @@ public class RunnerServerWebsocketListener implements WebSocketListener, WebSock
 
 	@Override
 	public void onWebSocketBinary(byte[] payload, int offset, int len) {
-		// TODO: 13.01.20 Kick runner?
-		System.err.println("Received a binary transmission");
+		LOGGER.warn(
+			"Runner sent us a binary transmission, kicking it! [{}]",
+			runnerInformation.getRunnerInformation()
+		);
+		disconnect();
 	}
 
 	@Override
@@ -72,7 +80,10 @@ public class RunnerServerWebsocketListener implements WebSocketListener, WebSock
 				entity = serializer.deserialize(message, RunnerInformation.class);
 				break;
 			default:
-				System.err.println("Unknwon type received: " + message);
+				LOGGER.warn(
+					"Runner send an invalid packet type ({}) from {}",
+					type, runnerInformation.getRunnerInformation()
+				);
 				return;
 		}
 		runnerInformation.getRunnerStateMachine().onMessageReceived(type, entity);
@@ -80,7 +91,10 @@ public class RunnerServerWebsocketListener implements WebSocketListener, WebSock
 
 	@Override
 	public void onWebSocketClose(int statusCode, String reason) {
-		System.out.println("Closing: statusCode = " + statusCode + ", reason = " + reason);
+		LOGGER.info(
+			"Closed connection with {} - {} for {}",
+			statusCode, reason, runnerInformation.getRunnerInformation()
+		);
 		heartbeatHandler.shutdown();
 		runnerInformation.setDisconnected(statusCode);
 	}
@@ -99,7 +113,7 @@ public class RunnerServerWebsocketListener implements WebSocketListener, WebSock
 
 	@Override
 	public void onTimeoutDetected() {
-		System.out.println("Timeout detected :(");
+		LOGGER.info("Runner timed out [{}]", runnerInformation.getRunnerInformation());
 		disconnect();
 	}
 

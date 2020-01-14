@@ -15,11 +15,15 @@ import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkR
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.RunnerInformation;
 import java.io.IOException;
 import java.io.OutputStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The main runner state machine.
  */
 public class ServerRunnerStateMachine {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(ServerRunnerStateMachine.class);
 
 	private ActiveRunnerInformation runnerInformation;
 	private RunnerState state;
@@ -44,7 +48,6 @@ public class ServerRunnerStateMachine {
 	 * @param information the information about the runner
 	 */
 	public void onConnectionOpened(ActiveRunnerInformation information) {
-		System.out.println("Connection opened: " + information);
 		this.runnerInformation = information;
 		switchState(new RunnerInitializingState());
 	}
@@ -64,7 +67,7 @@ public class ServerRunnerStateMachine {
 	}
 
 	private void switchState(RunnerState newState) {
-		System.out.println("Switching from " + state + " to " + newState);
+		LOGGER.debug("Switching runner state from {} to {}", state, newState);
 		state = newState;
 		newState.onSelected(runnerInformation);
 	}
@@ -107,7 +110,7 @@ public class ServerRunnerStateMachine {
 				"Invalid state, runner is in " + runnerInformation.getState()
 			);
 		}
-		System.out.println("Sending work: " + workOrder);
+		LOGGER.debug("Sending work {} to {}", workOrder, runnerInformation.getRunnerInformation());
 		runnerInformation.setCurrentCommit(commit);
 		runnerInformation.getConnectionManager().sendEntity(workOrder);
 		try (var out = runnerInformation.getConnectionManager().createBinaryOutputStream()) {
@@ -127,7 +130,10 @@ public class ServerRunnerStateMachine {
 	 */
 	public void sendBenchmarkRepo(CheckedConsumer<OutputStream, IOException> writer,
 		String repoHeadHash) throws IOException {
-		System.out.println("Sending an updated repo (" + repoHeadHash + ")");
+		LOGGER.debug(
+			"Updating benchmark repo for {} to {}",
+			runnerInformation.getRunnerInformation(), repoHeadHash
+		);
 		runnerInformation.getConnectionManager()
 			.sendEntity(new UpdateBenchmarkRepoOrder(repoHeadHash));
 

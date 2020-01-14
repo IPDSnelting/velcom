@@ -39,8 +39,6 @@ public class JsonRepo {
 			.collect(Collectors.toUnmodifiableList());
 
 		remoteUrl = repo.getRemoteUrl().getUrl();
-
-		System.out.println("bla");
 	}
 
 	public UUID getId() {

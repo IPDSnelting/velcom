@@ -4,11 +4,15 @@ import de.aaaaaaah.velcom.backend.runner.single.ActiveRunnerInformation;
 import de.aaaaaaah.velcom.runner.shared.RunnerStatusEnum;
 import de.aaaaaaah.velcom.runner.shared.protocol.SentEntity;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkResults;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The runner is currently idle or getting work.
  */
 public class RunnerIdleState implements RunnerState {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(RunnerWorkingState.class);
 
 	@Override
 	public RunnerStatusEnum getStatus() {
@@ -31,7 +35,11 @@ public class RunnerIdleState implements RunnerState {
 					.onWorkDone((BenchmarkResults) entity);
 				return this;
 			default:
-				System.err.println("Unknown message received: " + type + " " + entity);
+				LOGGER.info(
+					"Runner sent invalid message of type {} with data {}, kicking {}",
+					type, entity, information.getRunnerInformation()
+				);
+				information.getConnectionManager().disconnect();
 				return this;
 		}
 

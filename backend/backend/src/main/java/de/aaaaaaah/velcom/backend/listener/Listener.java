@@ -18,12 +18,16 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A listener periodically checks if there are new commits on stored repositories and, if there are,
  * passes them to the queue.
  */
 public class Listener {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(Listener.class);
 
 	private final RepoAccess repoAccess;
 	private final CommitAccess commitAccess;
@@ -129,7 +133,7 @@ public class Listener {
 
 				// Wait a while for tasks to respond to being cancelled
 				if (!executor.awaitTermination(60, TimeUnit.SECONDS)) {
-					System.err.println("Pool did not terminate");
+					LOGGER.warn("Listener thread pool did not terminate!");
 				}
 			}
 		} catch (InterruptedException ie) {
