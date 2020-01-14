@@ -1,7 +1,9 @@
 package de.aaaaaaah.velcom.backend.runner.single;
 
 import de.aaaaaaah.velcom.backend.access.commit.Commit;
+import de.aaaaaaah.velcom.backend.runner.single.state.RunnerDisconnectedState;
 import de.aaaaaaah.velcom.backend.runner.single.state.RunnerIdleState;
+import de.aaaaaaah.velcom.backend.runner.single.state.RunnerInitializingState;
 import de.aaaaaaah.velcom.backend.runner.single.state.RunnerState;
 import de.aaaaaaah.velcom.backend.util.CheckedConsumer;
 import de.aaaaaaah.velcom.runner.shared.RunnerStatusEnum;
@@ -26,7 +28,14 @@ public class ServerRunnerStateMachine {
 	 * Creates a new server-side state machine for a single runner.
 	 */
 	public ServerRunnerStateMachine() {
-		this.state = new RunnerIdleState();
+		this.state = new RunnerDisconnectedState();
+	}
+
+	/**
+	 * @return the current state
+	 */
+	public RunnerState getState() {
+		return state;
 	}
 
 	/**
@@ -37,6 +46,7 @@ public class ServerRunnerStateMachine {
 	public void onConnectionOpened(ActiveRunnerInformation information) {
 		System.out.println("Connection opened: " + information);
 		this.runnerInformation = information;
+		switchState(new RunnerInitializingState());
 	}
 
 	/**
@@ -66,6 +76,7 @@ public class ServerRunnerStateMachine {
 	 */
 	public void onWorkDone(BenchmarkResults results) {
 		runnerInformation.setResults(results);
+		runnerInformation.setCurrentCommit(null);
 	}
 
 	/**
@@ -76,6 +87,7 @@ public class ServerRunnerStateMachine {
 	 */
 	public void resetRunner(String reason) throws IOException {
 		runnerInformation.getConnectionManager().sendEntity(new ResetOrder(reason));
+		runnerInformation.setCurrentCommit(null);
 		switchState(new RunnerIdleState());
 	}
 

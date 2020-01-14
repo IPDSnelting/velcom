@@ -18,10 +18,10 @@ public class ActiveRunnerInformation {
 	private ServerRunnerStateMachine runnerStateMachine;
 
 	private RunnerInformation runnerInformation;
-	private RunnerStatusEnum state;
 
 	private Consumer<BenchmarkResults> resultListener;
-	private Consumer<RunnerStatusEnum> statusListener;
+	private Consumer<RunnerInformation> runnerInformationListener;
+	private Runnable idleListener;
 	private IntConsumer disconnectedListener;
 
 	private Commit currentCommit;
@@ -37,14 +37,15 @@ public class ActiveRunnerInformation {
 		ServerRunnerStateMachine runnerStateMachine) {
 		this.connectionManager = connectionManager;
 		this.runnerStateMachine = runnerStateMachine;
-		this.state = RunnerStatusEnum.DISCONNECTED;
 		this.lastReceivedMessage = Instant.now();
 
 		this.resultListener = it -> {
 		};
-		this.statusListener = it -> {
-		};
 		this.disconnectedListener = (statusCode) -> {
+		};
+		this.idleListener = () -> {
+		};
+		this.runnerInformationListener = ignored -> {
 		};
 	}
 
@@ -64,48 +65,14 @@ public class ActiveRunnerInformation {
 	 */
 	public void setRunnerInformation(RunnerInformation runnerInformation) {
 		this.runnerInformation = runnerInformation;
+		this.runnerInformationListener.accept(runnerInformation);
 	}
 
 	/**
-	 * Returns the current runner state.
-	 *
 	 * @return the current runner state
 	 */
 	public RunnerStatusEnum getState() {
-		return state;
-	}
-
-	/**
-	 * Sets the current runner state.
-	 *
-	 * @param state the current runner state
-	 */
-	public void setState(RunnerStatusEnum state) {
-		boolean callListeners = state != this.state;
-		this.state = state;
-		if (callListeners && state != RunnerStatusEnum.DISCONNECTED) {
-			this.statusListener.accept(state);
-		}
-	}
-
-	/**
-	 * Marks the runner as disconnected.
-	 *
-	 * @param statusCode the status code
-	 */
-	public void setDisconnected(int statusCode) {
-		this.setState(RunnerStatusEnum.DISCONNECTED);
-		disconnectedListener.accept(statusCode);
-	}
-
-	/**
-	 * Sets the last results.
-	 *
-	 * @param results the last results
-	 */
-	public void setResults(BenchmarkResults results) {
-		this.resultListener.accept(results);
-		setCurrentCommit(null);
+		return runnerStateMachine.getState().getStatus();
 	}
 
 	/**
@@ -115,15 +82,6 @@ public class ActiveRunnerInformation {
 	 */
 	public Optional<Commit> getCurrentCommit() {
 		return Optional.ofNullable(currentCommit);
-	}
-
-	/**
-	 * Sets the current commit.
-	 *
-	 * @param currentCommit the current commit. May be null.
-	 */
-	public void setCurrentCommit(Commit currentCommit) {
-		this.currentCommit = currentCommit;
 	}
 
 	/**
@@ -145,12 +103,10 @@ public class ActiveRunnerInformation {
 	}
 
 	/**
-	 * Sets the listener for status changes.
-	 *
-	 * @param statusListener the status listener
+	 * Marks the runner as idle.
 	 */
-	public void setStatusListener(Consumer<RunnerStatusEnum> statusListener) {
-		this.statusListener = statusListener;
+	public void setIdle() {
+		idleListener.run();
 	}
 
 	/**
@@ -160,6 +116,24 @@ public class ActiveRunnerInformation {
 	 */
 	public void setOnDisconnected(IntConsumer listener) {
 		this.disconnectedListener = listener;
+	}
+
+	/**
+	 * Sets the listener to call when the runner switches to idle.
+	 *
+	 * @param idleListener the idle listener
+	 */
+	public void setOnIdle(Runnable idleListener) {
+		this.idleListener = idleListener;
+	}
+
+	/**
+	 * Sets the listener to call when the {@link RunnerInformation} are set or updated.
+	 *
+	 * @param listener the listener
+	 */
+	public void setOnRunnerInformation(Consumer<RunnerInformation> listener) {
+		this.runnerInformationListener = listener;
 	}
 
 	/**
@@ -189,11 +163,38 @@ public class ActiveRunnerInformation {
 		this.lastReceivedMessage = lastReceivedMessage;
 	}
 
+	/**
+	 * Marks the runner as disconnected.
+	 *
+	 * @param statusCode the status code
+	 */
+	public void setDisconnected(int statusCode) {
+		disconnectedListener.accept(statusCode);
+	}
+
+	/**
+	 * Sets the last results.
+	 *
+	 * @param results the last results
+	 */
+	void setResults(BenchmarkResults results) {
+		this.resultListener.accept(results);
+		setCurrentCommit(null);
+	}
+
+	/**
+	 * Sets the current commit.
+	 *
+	 * @param currentCommit the current commit. May be null.
+	 */
+	void setCurrentCommit(Commit currentCommit) {
+		this.currentCommit = currentCommit;
+	}
+
 	@Override
 	public String toString() {
 		return "ActiveRunnerInformation{" +
 			"runnerInformation=" + runnerInformation +
-			", state=" + state +
 			", connectionManager=" + connectionManager +
 			", runnerStateMachine=" + runnerStateMachine +
 			'}';

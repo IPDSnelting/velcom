@@ -101,21 +101,20 @@ public class DispatcherImpl implements Dispatcher {
 
 		AtomicBoolean initialConnect = new AtomicBoolean(true);
 
-		runnerInformation.setStatusListener(status -> {
-			// Runner reconnected while working
-			if (initialConnect.getAndSet(false) && status == RunnerStatusEnum.WORKING) {
-				// It should not be doing anything right now!
-				if (lastCommit.isEmpty()) {
-					resetRunner(runnerInformation);
-				}
-			}
+		runnerInformation.setOnRunnerInformation(newInformation -> {
+			boolean isWorking = newInformation.getRunnerState() == RunnerStatusEnum.WORKING;
 
-			// This listener here might be called from the websocket listener's
-			// setState method if the connection is closed in onError while it is writing.
-			if (status == RunnerStatusEnum.IDLE) {
-				freeRunners.add(runnerInformation);
-				updateDispatching();
+			// the initialConnect is not needed atm, as the information is only transmitted at
+			// startup. But that might change in the future and people will not look in this class
+			// to fix it.
+			if (initialConnect.getAndSet(false) && isWorking && lastCommit.isEmpty()) {
+				resetRunner(runnerInformation);
 			}
+		});
+		runnerInformation.setOnIdle(() -> {
+			System.out.println("Idle called!");
+			freeRunners.add(runnerInformation);
+			updateDispatching();
 		});
 		runnerInformation.setOnDisconnected(value -> {
 			if (value == StatusCodeMappings.CLIENT_ORDERLY_DISCONNECT) {
@@ -187,7 +186,6 @@ public class DispatcherImpl implements Dispatcher {
 			if (runner.getState() == RunnerStatusEnum.WORKING) {
 				resetRunner(runner);
 			}
-			runner.setCurrentCommit(null);
 			return true;
 		}
 		return false;
@@ -238,7 +236,6 @@ public class DispatcherImpl implements Dispatcher {
 		System.out.println("Resetting runner " + runner);
 		try {
 			runner.getRunnerStateMachine().resetRunner("Abort requested");
-			runner.setCurrentCommit(null);
 		} catch (IOException e) {
 			e.printStackTrace();
 			// It is already disconnected, so force it now

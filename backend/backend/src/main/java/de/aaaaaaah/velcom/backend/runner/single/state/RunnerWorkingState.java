@@ -11,8 +11,8 @@ import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkR
 public class RunnerWorkingState implements RunnerState {
 
 	@Override
-	public void onSelected(ActiveRunnerInformation information) {
-		information.setState(RunnerStatusEnum.WORKING);
+	public RunnerStatusEnum getStatus() {
+		return RunnerStatusEnum.WORKING;
 	}
 
 	@Override
