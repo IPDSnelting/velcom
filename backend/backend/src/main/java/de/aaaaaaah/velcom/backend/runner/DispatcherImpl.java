@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
  */
 public class DispatcherImpl implements Dispatcher {
 
-	// TODO: 14.01.20 Remove runner directly if it disconnects cleanly? 
+	// TODO: 14.01.20 Remove runner directly if it disconnects cleanly?
 
 	private final Collection<ActiveRunnerInformation> activeRunners;
 	private final Queue queue;
@@ -109,7 +109,6 @@ public class DispatcherImpl implements Dispatcher {
 				}
 			}
 
-			// TODO: 12.01.20 What to do with disconnected runners?
 			// This listener here might be called from the websocket listener's
 			// setState method if the connection is closed in onError while it is writing.
 			if (status == RunnerStatusEnum.IDLE) {
