@@ -94,10 +94,6 @@ public class CommitComparison {
 		Collection<CommitDifference> commitDifferences = getDifferences();
 		for (CommitDifference difference : commitDifferences) {
 			final double previousValue = difference.getFirst();
-			if (previousValue == 0) {
-				continue;
-			}
-
 			final double significanceThreshold = Math.abs(previousValue * significantFactor);
 			if (Math.abs(difference.getDifference()) >= significanceThreshold) {
 				return true;
