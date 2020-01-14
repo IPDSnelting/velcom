@@ -6,6 +6,7 @@ import de.aaaaaaah.velcom.runner.exceptions.HandshakeFailureException;
 import de.aaaaaaah.velcom.runner.shared.protocol.HeartbeatHandler;
 import de.aaaaaaah.velcom.runner.shared.protocol.HeartbeatHandler.HeartbeatWebsocket;
 import de.aaaaaaah.velcom.runner.shared.protocol.SentEntity;
+import de.aaaaaaah.velcom.runner.shared.protocol.StatusCodeMappings;
 import de.aaaaaaah.velcom.runner.shared.protocol.exceptions.SerializationException;
 import de.aaaaaaah.velcom.runner.shared.protocol.runnerbound.entities.ResetOrder;
 import de.aaaaaaah.velcom.runner.shared.protocol.runnerbound.entities.RunnerWorkOrder;
@@ -254,7 +255,9 @@ public class WebsocketListener implements WebSocket.Listener, SocketConnectionMa
 
 	private void disconnectImpl() {
 		if (websocket != null) {
-			websocket.sendClose(4000, "Client initiated close")
+			websocket.sendClose(
+				StatusCodeMappings.CLIENT_ORDERLY_DISCONNECT, "Client initiated close"
+			)
 				.thenAccept(WebSocket::abort)
 				.thenRun(
 					() -> stateListeners.forEach(

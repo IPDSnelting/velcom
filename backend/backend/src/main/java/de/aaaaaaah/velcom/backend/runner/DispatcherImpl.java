@@ -13,6 +13,7 @@ import de.aaaaaaah.velcom.backend.access.repo.RepoId;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.runner.single.ActiveRunnerInformation;
 import de.aaaaaaah.velcom.runner.shared.RunnerStatusEnum;
+import de.aaaaaaah.velcom.runner.shared.protocol.StatusCodeMappings;
 import de.aaaaaaah.velcom.runner.shared.protocol.runnerbound.entities.RunnerWorkOrder;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkResults;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkResults.Benchmark;
@@ -100,7 +101,7 @@ public class DispatcherImpl implements Dispatcher {
 
 		AtomicBoolean initialConnect = new AtomicBoolean(true);
 
-		runnerInformation.addStatusListener(status -> {
+		runnerInformation.setStatusListener(status -> {
 			// Runner reconnected while working
 			if (initialConnect.getAndSet(false) && status == RunnerStatusEnum.WORKING) {
 				// It should not be doing anything right now!
@@ -116,7 +117,13 @@ public class DispatcherImpl implements Dispatcher {
 				updateDispatching();
 			}
 		});
-		runnerInformation.addResultListener(
+		runnerInformation.setOnDisconnected(value -> {
+			if (value == StatusCodeMappings.CLIENT_ORDERLY_DISCONNECT) {
+				System.out.println("Runner exited properly. Removing it without grace period.");
+				removeRunner(runnerInformation).ifPresent(queue::addCommit);
+			}
+		});
+		runnerInformation.setResultListener(
 			results -> this.onResultsReceived(runnerInformation, results)
 		);
 		activeRunners.add(runnerInformation);

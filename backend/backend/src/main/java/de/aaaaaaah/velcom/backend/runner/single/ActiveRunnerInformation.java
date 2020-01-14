@@ -5,10 +5,9 @@ import de.aaaaaaah.velcom.runner.shared.RunnerStatusEnum;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkResults;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.RunnerInformation;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.IntConsumer;
 
 /**
  * Contains information about a single runner, how to reach it and its state machine.
@@ -21,12 +20,11 @@ public class ActiveRunnerInformation {
 	private RunnerInformation runnerInformation;
 	private RunnerStatusEnum state;
 
-	private List<Consumer<BenchmarkResults>> resultListeners;
-	private List<Consumer<RunnerStatusEnum>> statusListeners;
+	private Consumer<BenchmarkResults> resultListener;
+	private Consumer<RunnerStatusEnum> statusListener;
+	private IntConsumer disconnectedListener;
 
-	private BenchmarkResults results;
 	private Commit currentCommit;
-
 	private Instant lastReceivedMessage;
 
 	/**
@@ -42,8 +40,12 @@ public class ActiveRunnerInformation {
 		this.state = RunnerStatusEnum.DISCONNECTED;
 		this.lastReceivedMessage = Instant.now();
 
-		this.statusListeners = new ArrayList<>();
-		this.resultListeners = new ArrayList<>();
+		this.resultListener = it -> {
+		};
+		this.statusListener = it -> {
+		};
+		this.disconnectedListener = (statusCode) -> {
+		};
 	}
 
 	/**
@@ -81,18 +83,19 @@ public class ActiveRunnerInformation {
 	public void setState(RunnerStatusEnum state) {
 		boolean callListeners = state != this.state;
 		this.state = state;
-		if (callListeners) {
-			this.statusListeners.forEach(it -> it.accept(state));
+		if (callListeners && state != RunnerStatusEnum.DISCONNECTED) {
+			this.statusListener.accept(state);
 		}
 	}
 
 	/**
-	 * Returns the last benchmark results, if any.
+	 * Marks the runner as disconnected.
 	 *
-	 * @return the last benchmark results
+	 * @param statusCode the status code
 	 */
-	public Optional<BenchmarkResults> getResults() {
-		return Optional.ofNullable(results);
+	public void setDisconnected(int statusCode) {
+		this.setState(RunnerStatusEnum.DISCONNECTED);
+		disconnectedListener.accept(statusCode);
 	}
 
 	/**
@@ -101,8 +104,7 @@ public class ActiveRunnerInformation {
 	 * @param results the last results
 	 */
 	public void setResults(BenchmarkResults results) {
-		this.results = results;
-		this.resultListeners.forEach(it -> it.accept(results));
+		this.resultListener.accept(results);
 		setCurrentCommit(null);
 	}
 
@@ -143,21 +145,30 @@ public class ActiveRunnerInformation {
 	}
 
 	/**
-	 * Adds a listener for status changes. You may change the state from a listener!
+	 * Sets the listener for status changes.
 	 *
-	 * @param listener the listener
+	 * @param statusListener the status listener
 	 */
-	public void addStatusListener(Consumer<RunnerStatusEnum> listener) {
-		this.statusListeners.add(listener);
+	public void setStatusListener(Consumer<RunnerStatusEnum> statusListener) {
+		this.statusListener = statusListener;
 	}
 
 	/**
-	 * Adds a listener for results.
+	 * Sets the listener for disconnections.
+	 *
+	 * @param listener the listener. Receives the status code as a parameter.
+	 */
+	public void setOnDisconnected(IntConsumer listener) {
+		this.disconnectedListener = listener;
+	}
+
+	/**
+	 * Sets the listener for results.
 	 *
 	 * @param listener the listener
 	 */
-	public void addResultListener(Consumer<BenchmarkResults> listener) {
-		this.resultListeners.add(listener);
+	public void setResultListener(Consumer<BenchmarkResults> listener) {
+		this.resultListener = listener;
 	}
 
 	/**
@@ -183,7 +194,6 @@ public class ActiveRunnerInformation {
 		return "ActiveRunnerInformation{" +
 			"runnerInformation=" + runnerInformation +
 			", state=" + state +
-			", results=" + results +
 			", connectionManager=" + connectionManager +
 			", runnerStateMachine=" + runnerStateMachine +
 			'}';
