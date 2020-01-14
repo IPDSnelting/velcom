@@ -13,6 +13,7 @@ import javax.annotation.Nullable;
  * This class compares a first commit to a second commit. If one or both of the commits are null,
  * the resulting collection of {@link CommitDifference}s is always empty though.
  */
+@SuppressWarnings("checkstyle:JavadocStyle")
 public class CommitComparison {
 
 	@Nullable
@@ -34,7 +35,8 @@ public class CommitComparison {
 	}
 
 	/**
-	 * Returns list of commitDifferences (of all measurements that exist in both runs)
+	 * Returns list of commitDifferences. (of all measurements that exist in both runs)
+	 *
 	 * @return ArrayList of commitDifferences
 	 */
 	public Collection<CommitDifference> getDifferences() {
@@ -67,14 +69,38 @@ public class CommitComparison {
 		return commitDifferences;
 	}
 
-	// TODO maybe use cutoff value from config file to determine the significance of commits?
-
 	/**
-	 * @return whether the difference is significant enough to appear in the "important news"
-	 * 	section of the website.
+	 * Checks if difference between two commits is significant.
+	 *
+	 * @param significantFactor factor determining when a change is significant
+	 * @return whether the difference of any measurement is significant enough to appear in the
+	 * 	"important news" section of the website.
 	 */
-	public boolean isSignificant() {
-		// TODO implement
+	public boolean isSignificant(double significantFactor) {
+		Collection<CommitDifference> commitDifferences = getDifferences();
+		if (commitDifferences.isEmpty()) {
+			return false;
+		}
+
+		assert firstRun != null;
+
+		//Get measurements and put those from first run into hashmap
+		Collection<Measurement> fm = firstRun.getMeasurements().get();
+		HashMap<MeasurementName, Measurement> firstMeasurements = new HashMap<>();
+		for (Measurement m : fm) {
+			firstMeasurements.put(m.getMeasurementName(), m);
+		}
+
+		//Iterate thorough all commit differences and checks if any difference is significant
+		for (CommitDifference cd : commitDifferences) {
+			Measurement m = firstMeasurements.get(cd.getMeasurementName());
+			double significanceThreshold =
+				m.getContent().getRight().get().getValue() * significantFactor;
+			if (Math.abs(cd.getDifference()) >= significanceThreshold) {
+				return true;
+			}
+		}
+
 		return false;
 	}
 }
