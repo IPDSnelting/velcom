@@ -8,6 +8,7 @@ import de.aaaaaaah.velcom.backend.access.repo.RemoteUrl;
 import de.aaaaaaah.velcom.backend.access.repo.RepoAccess;
 import de.aaaaaaah.velcom.backend.access.token.AuthToken;
 import de.aaaaaaah.velcom.backend.access.token.TokenAccess;
+import de.aaaaaaah.velcom.backend.data.commitcomparison.CommitComparer;
 import de.aaaaaaah.velcom.backend.data.linearlog.CommitAccessBasedLinearLog;
 import de.aaaaaaah.velcom.backend.data.linearlog.LinearLog;
 import de.aaaaaaah.velcom.backend.data.queue.PolicyManualFilo;
@@ -80,6 +81,7 @@ public class ServerMain extends Application<GlobalConfig> {
 			new AuthToken(configuration.getWebAdminToken()));
 
 		// Data layer
+		CommitComparer commitComparer = new CommitComparer(configuration.getSignificantFactor());
 		LinearLog linearLog = new CommitAccessBasedLinearLog(commitAccess);
 		ReducedLog reducedLog = new TimeSliceBasedReducedLog(benchmarkAccess, new GroupByHour());
 		Queue queue = new Queue(commitAccess, new PolicyManualFilo());
@@ -106,15 +108,15 @@ public class ServerMain extends Application<GlobalConfig> {
 
 		// API endpoints
 		environment.jersey().register(new AllReposEndpoint(repoAccess));
-		environment.jersey()
-			.register(new CommitCompareEndpoint(benchmarkAccess, commitAccess, linearLog));
+		environment.jersey().register(
+			new CommitCompareEndpoint(benchmarkAccess, commitAccess, commitComparer, linearLog));
 		environment.jersey().register(new CommitHistoryEndpoint(repoAccess, linearLog));
 		environment.jersey().register(new MeasurementsEndpoint(benchmarkAccess));
 		environment.jersey().register(new QueueEndpoint(commitAccess, queue, dispatcher));
-		environment.jersey()
-			.register(new RecentlyBenchmarkedCommitsEndpoint(benchmarkAccess, linearLog));
-		environment.jersey()
-			.register(new RepoComparisonGraphEndpoint(commitAccess, repoAccess, reducedLog));
+		environment.jersey().register(
+			new RecentlyBenchmarkedCommitsEndpoint(benchmarkAccess, commitComparer, linearLog));
+		environment.jersey().register(
+			new RepoComparisonGraphEndpoint(commitAccess, repoAccess, reducedLog));
 		environment.jersey().register(new RepoEndpoint(repoAccess, tokenAccess));
 		environment.jersey().register(new TestTokenEndpoint(tokenAccess));
 	}

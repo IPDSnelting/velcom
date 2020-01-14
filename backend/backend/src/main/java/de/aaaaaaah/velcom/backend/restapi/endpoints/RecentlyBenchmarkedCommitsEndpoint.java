@@ -2,7 +2,7 @@ package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
 import de.aaaaaaah.velcom.backend.access.benchmark.BenchmarkAccess;
 import de.aaaaaaah.velcom.backend.access.benchmark.Run;
-import de.aaaaaaah.velcom.backend.data.commitcomparison.CommitComparison;
+import de.aaaaaaah.velcom.backend.data.commitcomparison.CommitComparer;
 import de.aaaaaaah.velcom.backend.data.linearlog.LinearLog;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonCommitComparison;
 import java.util.List;
@@ -25,12 +25,14 @@ import javax.ws.rs.core.MediaType;
 public class RecentlyBenchmarkedCommitsEndpoint {
 
 	private final BenchmarkAccess benchmarkAccess;
+	private final CommitComparer commitComparer;
 	private final LinearLog linearLog;
 
 	public RecentlyBenchmarkedCommitsEndpoint(BenchmarkAccess benchmarkAccess,
-		LinearLog linearLog) {
+		CommitComparer commitComparer, LinearLog linearLog) {
 
 		this.benchmarkAccess = benchmarkAccess;
+		this.commitComparer = commitComparer;
 		this.linearLog = linearLog;
 	}
 
@@ -52,7 +54,7 @@ public class RecentlyBenchmarkedCommitsEndpoint {
 			.map(run -> {
 				Optional<Run> previousRun = linearLog.getPreviousCommit(run.getCommit())
 					.flatMap(benchmarkAccess::getLatestRunOf);
-				return new CommitComparison(previousRun.orElse(null), run);
+				return commitComparer.compare(previousRun.orElse(null), run);
 			})
 			.filter(comparison -> !significantOnly || comparison.isSignificant())
 			.limit(amount)

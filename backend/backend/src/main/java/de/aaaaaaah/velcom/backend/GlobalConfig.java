@@ -43,6 +43,8 @@ public class GlobalConfig extends Configuration {
 	@Min(1)
 	private long disconnectedRunnerGracePeriodSeconds;
 
+	private double significantFactor;
+
 	public GlobalConfig() {
 		RunnerAwareServerFactory.getInstance().setConfig(this);
 		RunnerAwareServerFactory.getInstance().setServerFactory(super.getServerFactory());
@@ -125,6 +127,14 @@ public class GlobalConfig extends Configuration {
 	 */
 	public Duration getDisconnectedRunnerGracePeriod() {
 		return Duration.ofSeconds(disconnectedRunnerGracePeriodSeconds);
+	}
+
+	/**
+	 * @return the factor which controls what commit differences become significant. Must be
+	 * 	positive
+	 */
+	public double getSignificantFactor() {
+		return significantFactor;
 	}
 
 	@Override
