@@ -2,12 +2,22 @@ package de.aaaaaaah.velcom.backend.listener;
 
 import de.aaaaaaah.velcom.backend.GlobalConfig;
 import de.aaaaaaah.velcom.backend.access.AccessLayer;
+import de.aaaaaaah.velcom.backend.access.commit.Commit;
 import de.aaaaaaah.velcom.backend.access.commit.CommitAccess;
+import de.aaaaaaah.velcom.backend.access.repo.Branch;
+import de.aaaaaaah.velcom.backend.access.repo.Repo;
 import de.aaaaaaah.velcom.backend.access.repo.RepoAccess;
 import de.aaaaaaah.velcom.backend.access.repo.RepoId;
+import de.aaaaaaah.velcom.backend.data.queue.Queue;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * A listener periodically checks if there are new commits on stored repositories and, if there are,
@@ -17,8 +27,12 @@ public class Listener {
 
 	private final RepoAccess repoAccess;
 	private final CommitAccess commitAccess;
+	private final Queue queue;
 
 	private final ScheduledExecutorService executor;
+	private final Lock lock = new ReentrantLock();
+
+	private final UnknownCommitFinder unknownCommitFinder;
 
 	/**
 	 * Constructs a new listener instance.
@@ -26,19 +40,29 @@ public class Listener {
 	 * @param config the config where the listener gets the poll interval from
 	 * @param accessLayer the access layer to get several access instances, that the listener
 	 * 	needs, from
+	 * @param queue the queue into which unknown commits will be inserted
 	 */
-	public Listener(GlobalConfig config, AccessLayer accessLayer) {
+	public Listener(GlobalConfig config, AccessLayer accessLayer, Queue queue) {
 		this.repoAccess = accessLayer.getRepoAccess();
 		this.commitAccess = accessLayer.getCommitAccess();
+		this.queue = queue;
 
 		long pollInterval = config.getPollInterval();
 
 		executor = Executors.newSingleThreadScheduledExecutor();
 		executor.scheduleAtFixedRate(this::update, 0, pollInterval, TimeUnit.SECONDS);
+
+		unknownCommitFinder = new BreadthFirstSearchFinder();
 	}
 
 	private void update() {
-		// TODO implement
+		for (Repo repo : repoAccess.getAllRepos()) {
+			try {
+				checkForUnknownCommits(repo.getId());
+			} catch (CommitSearchException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 
 	/**
@@ -46,8 +70,50 @@ public class Listener {
 	 *
 	 * @param repoId the id of the repository to check for
 	 */
-	public void checkForUnknownCommits(RepoId repoId) {
-		// TODO implement
+	public void checkForUnknownCommits(RepoId repoId) throws CommitSearchException {
+		try {
+			this.lock.lock();
+
+			Repo repo = repoAccess.getRepo(repoId);
+
+			if (!commitAccess.hasKnownCommits(repoId)) {
+				// this repository does not have any known commits which means that it must be new
+				// therefore only the first commit of each tracked branch is inserted into the queue
+
+				repo.getTrackedBranches()
+					.stream()
+					.map(Branch::getCommit)
+					.forEach(queue::addTask);
+			} else {
+				// The repo already has some known commits so we need to be smart about it
+				// Group all new commits across all tracked branches into this
+				// list before inserting them into the queue
+				ArrayList<Commit> allNewCommits = new ArrayList<>();
+
+				// (1): Find new commits
+				try {
+					for (Branch trackedBranch : repo.getTrackedBranches()) {
+						Collection<Commit> newCommits = unknownCommitFinder.find(
+							commitAccess, trackedBranch
+						);
+
+						allNewCommits.addAll(newCommits);
+					}
+				} catch (IOException e) {
+					throw new CommitSearchException("failed to check for unknown commits in repo: "
+						+ repoId, e);
+				}
+
+				// (2): Add new commits to queue (in a sorted manner)
+				// TODO: Check if sorting order is correct or if it needs to be reversed
+				allNewCommits.sort(Comparator.comparing(Commit::getAuthorDate));
+				allNewCommits.forEach(queue::addTask);
+			}
+		} catch (Exception e) {
+			throw new CommitSearchException(repoId, e);
+		} finally {
+			this.lock.unlock();
+		}
 	}
 
 	/**

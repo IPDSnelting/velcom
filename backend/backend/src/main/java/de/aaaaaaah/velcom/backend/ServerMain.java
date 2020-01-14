@@ -16,6 +16,7 @@ import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.data.reducedlog.ReducedLog;
 import de.aaaaaaah.velcom.backend.data.reducedlog.timeslice.GroupByHour;
 import de.aaaaaaah.velcom.backend.data.reducedlog.timeslice.TimeSliceBasedReducedLog;
+import de.aaaaaaah.velcom.backend.listener.Listener;
 import de.aaaaaaah.velcom.backend.restapi.RepoAuthenticator;
 import de.aaaaaaah.velcom.backend.restapi.RepoUser;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.AllReposEndpoint;
@@ -74,6 +75,9 @@ public class ServerMain extends Application<GlobalConfig> {
 		LinearLog linearLog = new CommitAccessBasedLinearLog(commitAccess);
 		ReducedLog reducedLog = new TimeSliceBasedReducedLog(benchmarkAccess, new GroupByHour());
 		Queue queue = new Queue(commitAccess, new PolicyManualFilo());
+
+		// Listener
+		Listener listener = new Listener(configuration, accessLayer, queue);
 
 		// Dispatcher
 		Dispatcher dispatcher = new DispatcherImpl(
