@@ -2,6 +2,8 @@ package de.aaaaaaah.velcom.backend.access.repo;
 
 import de.aaaaaaah.velcom.backend.access.commit.Commit;
 import de.aaaaaaah.velcom.backend.access.commit.CommitAccess;
+import de.aaaaaaah.velcom.backend.access.commit.CommitAccessException;
+import de.aaaaaaah.velcom.backend.access.repo.exception.RepoAccessException;
 import java.util.Objects;
 
 /**
@@ -35,7 +37,7 @@ public class Branch {
 		return name;
 	}
 
-	public Commit getCommit() {
+	public Commit getCommit() throws CommitAccessException, RepoAccessException {
 		return commitAccess.getCommit(repoId, repoAccess.getLatestCommitHash(this));
 	}
 

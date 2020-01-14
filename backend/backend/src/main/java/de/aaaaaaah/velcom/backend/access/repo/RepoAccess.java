@@ -430,7 +430,7 @@ public class RepoAccess {
 	/**
 	 * @return the latest commit on the master branch of the benchmark repository
 	 */
-	public CommitHash getLatestBenchmarkRepoHash() {
+	public CommitHash getLatestBenchmarkRepoHash() throws RepoAccessException {
 		return new CommitHash(getCommitHashByRef(benchRepoDirName, Constants.HEAD));
 	}
 
@@ -438,14 +438,14 @@ public class RepoAccess {
 	 * @param branch the branch
 	 * @return returns the commit that the specified branch has pointed to
 	 */
-	public CommitHash getLatestCommitHash(Branch branch) {
+	public CommitHash getLatestCommitHash(Branch branch) throws RepoAccessException {
 		return new CommitHash(getCommitHashByRef(
 			branch.getRepoId().getDirectoryName(),
 			branch.getName().getName()
 		));
 	}
 
-	private String getCommitHashByRef(String dirName, String ref) {
+	private String getCommitHashByRef(String dirName, String ref) throws RepoAccessException {
 		try (Repository repo = repoStorage.acquireRepository(dirName)) {
 			ObjectId refPtr = repo.resolve(ref);
 			return refPtr.getName(); // returns sha-1 hash
