@@ -1,7 +1,6 @@
 package de.aaaaaaah.velcom.runner.state;
 
 import de.aaaaaaah.velcom.runner.entity.RunnerConfiguration;
-import de.aaaaaaah.velcom.runner.shared.RunnerStatusEnum;
 import de.aaaaaaah.velcom.runner.shared.protocol.runnerbound.entities.RunnerWorkOrder;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkResults;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.RunnerInformation;
@@ -15,14 +14,12 @@ public class RunnerStateMachine {
 
 	private RunnerState state;
 	private BenchmarkResults lastResults;
-	private RunnerStatusEnum currentState;
 
 	/**
 	 * Creates a new state machine.
 	 */
 	public RunnerStateMachine() {
 		this.state = new IdleState();
-		this.currentState = RunnerStatusEnum.IDLE;
 	}
 
 	/**
@@ -33,7 +30,7 @@ public class RunnerStateMachine {
 	public void onConnectionEstablished(RunnerConfiguration configuration) {
 		doWithErrorAndSwitch(
 			() -> {
-				System.out.println("Established with " + currentState);
+				System.out.println("Established with " + state.getStatus());
 				configuration.getConnectionManager().sendEntity(new RunnerInformation(
 					"Test name",
 					System.getProperty("os.name")
@@ -41,7 +38,7 @@ public class RunnerStateMachine {
 						+ " " + System.getProperty("os.version"),
 					Runtime.getRuntime().availableProcessors(),
 					Runtime.getRuntime().maxMemory(),
-					currentState,
+					state.getStatus(),
 					configuration.getBenchmarkRepoOrganizer().getHeadHash().orElse(null)
 				));
 				sendResultsIfAny(configuration);
@@ -49,16 +46,6 @@ public class RunnerStateMachine {
 			},
 			configuration
 		);
-	}
-
-	/**
-	 * Sets the current runner state enum.
-	 *
-	 * @param currentState the runner state e num
-	 */
-	public void setCurrentRunnerStateEnum(RunnerStatusEnum currentState) {
-		System.out.println("Set state from " + this.currentState + " to " + currentState);
-		this.currentState = currentState;
 	}
 
 	/**
