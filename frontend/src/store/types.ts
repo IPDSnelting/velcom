@@ -20,7 +20,7 @@ export interface RepoState {
 }
 
 export interface RepoComparisonState {
-  runsByRepoID: { [repoID: string]: Array<Run> }
+  runsByRepoID: Map<string,Array<Run>>
 }
 
 export interface RepoDetailState {
