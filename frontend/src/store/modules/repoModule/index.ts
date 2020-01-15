@@ -5,7 +5,7 @@ import { actions } from './actions'
 import { getters } from './getters'
 
 export const state: RepoState = {
-  repos: new Map<string, Repo>
+  repos: new Map<string, Repo>()
 }
 
 const namespaced: boolean = true

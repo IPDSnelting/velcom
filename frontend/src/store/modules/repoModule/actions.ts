@@ -67,26 +67,29 @@ export const actions: ActionTree<RepoState, RootState> = {
         },
         error => {
           console.log('error: could not add new repo ' + payload.name)
+          console.log(error)
         }
       )
   },
 
   deleteRepo({ commit, rootGetters }, repoID: string) {
-    axios.delete('/repo', {
-      auth: {
-        username: rootGetters['userModule/repoID'],
-        password: rootGetters['userModule/token']
-      },
-      params: {
-        repo_id: repoID
-      }
-    })
-    .then(
-      response => {
-        commit('REMOVE_REPO', repoID)
-      },
+    axios
+      .delete('/repo', {
+        auth: {
+          username: rootGetters['userModule/repoID'],
+          password: rootGetters['userModule/token']
+        },
+        params: {
+          repo_id: repoID
+        }
+      })
+      .then(
+        response => {
+          commit('REMOVE_REPO', repoID)
+        },
         error => {
           console.log('error: could not remove repo ' + repoID)
+          console.log(error)
         }
       )
   },
@@ -111,6 +114,7 @@ export const actions: ActionTree<RepoState, RootState> = {
         },
         error => {
           console.log('error: could not change repo ' + payload.name)
+          console.log(error)
         }
       )
   }
