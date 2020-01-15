@@ -7,7 +7,7 @@ export const getters: GetterTree<UserState, RootState> = {
   },
 
   authorized: state => (repoID: string) => {
-    return state.repoID == repoID
+    return state.repoID === repoID
   },
 
   repoID: state => {

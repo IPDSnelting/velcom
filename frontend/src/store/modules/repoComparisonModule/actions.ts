@@ -3,11 +3,8 @@ import axios from 'axios'
 import { RepoComparisonState, RootState, Run } from '../../types'
 
 export const actions: ActionTree<RepoComparisonState, RootState> = {
-  async setDatapoints(
-    { commit, rootGetters },
-    payload
-  ): Promise<Map<string, Array<Run>>> {
-    var repos = new Array<string>()
+  async setDatapoints({ commit }, payload): Promise<Map<string, Array<Run>>> {
+    var repos: Array<string> = []
     Array.from(payload.repos.keys()).forEach(repoID => {
       repos.push(
         JSON.stringify({ repo_id: repoID, branches: payload.repos.get(repoID) })
@@ -25,7 +22,7 @@ export const actions: ActionTree<RepoComparisonState, RootState> = {
     let jsonData: Array<any> = response.data.repos
 
     jsonData.forEach((item: any) => {
-      var runs = new Array<Run>()
+      var runs: Array<Run> = []
       item.runs.forEach((run: any) => {
         runs.push(
           new Run(

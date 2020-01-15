@@ -25,7 +25,7 @@ export const actions: ActionTree<UserState, RootState> = {
           commit('SET_TOKEN', payload.token)
         },
         error => {
-          console.log('error, could not log in')
+          console.log(error)
         }
       )
   },
