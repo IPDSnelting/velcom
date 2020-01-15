@@ -18,11 +18,15 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Executes work based on the benchmark script specification.
  */
 public class BenchmarkscriptWorkExecutor implements WorkExecutor {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(BenchmarkscriptWorkExecutor.class);
 
 	private final BenchmarkScriptOutputParser benchmarkScriptOutputParser;
 	private Future<ProgramResult> programResult;
@@ -82,10 +86,8 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 
 			configuration.getRunnerStateMachine().onWorkDone(results, configuration);
 		} catch (IOException | ExecutionException | InterruptedException e) {
-			System.err.println("Error executing some work (" + workOrder + ")");
-			System.err.println("Message is: " + e.getMessage());
-			System.err.println("Stacktrace:");
-			e.printStackTrace();
+			LOGGER.info("Error executing some work for {}", workOrder);
+			LOGGER.info("Stacktrace:", e);
 			configuration.getRunnerStateMachine().onWorkDone(
 				new BenchmarkResults(workOrder, ExceptionHelper.getStackTrace(e),
 					startTime,
@@ -94,7 +96,7 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 				configuration
 			);
 		} catch (OutputParseException e) {
-			System.err.println("Benchmark script returned invalid data: " + e.getMessage());
+			LOGGER.info("Benchmark script returned invalid data: '{}'", e.getMessage());
 			configuration.getRunnerStateMachine().onWorkDone(
 				new BenchmarkResults(
 					workOrder,

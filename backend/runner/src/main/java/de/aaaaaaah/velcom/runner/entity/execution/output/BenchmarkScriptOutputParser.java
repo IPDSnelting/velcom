@@ -15,11 +15,15 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The pojo for the output of the benchmark script.
  */
 public class BenchmarkScriptOutputParser {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(BenchmarkScriptOutputParser.class);
 
 	private ObjectMapper objectMapper = new ObjectMapper()
 		.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE)
@@ -33,14 +37,15 @@ public class BenchmarkScriptOutputParser {
 	 * @throws OutputParseException if an error occurs
 	 */
 	public BareResult parse(String data) throws OutputParseException {
+		LOGGER.debug("Parsing message '{}'", data);
+
 		JsonNode root;
 		try {
 			root = objectMapper.readTree(data);
 		} catch (JsonProcessingException e) {
 			throw new OutputParseException(e.getMessage(), e);
 		}
-		System.err.println("Parsing: ");
-		System.err.println(root);
+
 		if (!root.isObject()) {
 			throw new OutputParseException("Root is no object");
 		}
@@ -129,7 +134,7 @@ public class BenchmarkScriptOutputParser {
 			JsonNode element = arrayNode.get(i);
 			if (!element.isNumber()) {
 				throw new OutputParseException(
-					"Exepected a number in: " + node + " at position " + i
+					"Expected a number in: " + node + " at position " + i
 				);
 			}
 			results.add(element.asDouble());

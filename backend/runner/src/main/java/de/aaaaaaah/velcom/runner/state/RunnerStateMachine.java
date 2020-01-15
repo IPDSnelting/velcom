@@ -6,11 +6,15 @@ import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkR
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.RunnerInformation;
 import java.io.IOException;
 import java.nio.file.Path;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The main state machine for the runner.
  */
 public class RunnerStateMachine {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(RunnerStateMachine.class);
 
 	private RunnerState state;
 	private BenchmarkResults lastResults;
@@ -30,7 +34,7 @@ public class RunnerStateMachine {
 	public void onConnectionEstablished(RunnerConfiguration configuration) {
 		doWithErrorAndSwitch(
 			() -> {
-				System.out.println("Established with " + state.getStatus());
+				LOGGER.info("Established connection with status {}", state.getStatus());
 				configuration.getConnectionManager().sendEntity(new RunnerInformation(
 					"Test name",
 					System.getProperty("os.name")
@@ -84,7 +88,7 @@ public class RunnerStateMachine {
 	public void onResetRequested(String reason, RunnerConfiguration configuration) {
 		doWithErrorAndSwitch(
 			() -> {
-				System.out.println("Aborting due to " + reason + "...");
+				LOGGER.info("Aborting current benchmark ('{}')", reason);
 				configuration.getWorkExecutor().abortExecution();
 				return new IdleState();
 			},
@@ -122,7 +126,7 @@ public class RunnerStateMachine {
 
 	private void sendResultsIfAny(RunnerConfiguration configuration) throws IOException {
 		if (lastResults != null && configuration.getConnectionManager().isConnected()) {
-			System.out.println("Sending results...");
+			LOGGER.info("Sending results...");
 			configuration.getConnectionManager().sendEntity(lastResults);
 			lastResults = null;
 		}
@@ -132,7 +136,7 @@ public class RunnerStateMachine {
 		try {
 			RunnerState newState = action.run();
 			if (newState != state) {
-				System.out.println("Switching from " + state + " to " + newState);
+				LOGGER.debug("Switching from {} to {}", state, newState);
 				this.state = newState;
 				newState.onSelected(configuration);
 			}
