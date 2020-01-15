@@ -3,7 +3,7 @@ import { ColorState, RootState, ColorConverter } from '../../types'
 import store from '@/store'
 
 export const actions: ActionTree<ColorState, RootState> = {
-  addColors ({ state, commit }, amount: number) {
+  addColors({ state, commit }, amount: number) {
     // generating new colors in hsl color space using golden ratio to maximize difference
     var converter = new ColorConverter()
     const colors = state.colors
