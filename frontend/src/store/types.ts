@@ -16,7 +16,7 @@ export interface ColorState {
 }
 
 export interface RepoState {
-  repos: { [id: string]: Repo }
+  repos: Map<string, Repo>
 }
 
 export interface RepoComparisonState {
@@ -51,7 +51,7 @@ export interface UserState {
 }
 
 export class Repo {
-  id: string | null
+  id: string
   name: string | null
   branches: Array<string>
   trackedBranches: Array<string>

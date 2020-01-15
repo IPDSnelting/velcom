@@ -17,10 +17,7 @@ const storeOptions: StoreOptions<RootState> = {
     apiBaseURL: 'https://aaaaaaah.de:8667'
   } as RootState,
   mutations: {},
-  actions: {
-    hello () {
-    }
-  },
+  actions: {},
   modules: {
     colorModule,
     commitComparisonModule,
