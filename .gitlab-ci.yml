@@ -8,8 +8,7 @@ stages:
 compile-backend:
   stage: build
   script:
-    - cd backend
-    - mvn clean package
+    - make backend
   tags:
     - keep
 
