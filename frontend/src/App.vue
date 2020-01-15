@@ -1,6 +1,7 @@
 <template>
   <v-app>
     <v-content>
+      <nav-bar></nav-bar>
       <color-module-tester></color-module-tester>
       <repo-module-tester></repo-module-tester>
     </v-content>
@@ -11,17 +12,15 @@
 import Vue from 'vue'
 import ColorModuleTester from './testComponents/ColorModuleTester.vue'
 import RepoModuleTester from './testComponents/RepoModuleTester.vue'
+import Component from 'vue-class-component'
+import NavigationBar from './components/NavigationBar.vue'
 
-export default Vue.extend({
-  name: 'App',
-
+@Component({
   components: {
-    ColorModuleTester,
-    RepoModuleTester
-  },
-
-  data: () => ({
-    //
-  })
+    'color-module-tester': ColorModuleTester,
+    'repo-module-tester': RepoModuleTester,
+    'nav-bar': NavigationBar
+  }
 })
+export default class App extends Vue {}
 </script>
