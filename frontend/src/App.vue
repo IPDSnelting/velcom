@@ -1,20 +1,23 @@
 <template>
   <v-app>
     <v-content>
-      <HelloWorld />
+      <color-module-tester></color-module-tester>
+      <repo-module-tester></repo-module-tester>
     </v-content>
   </v-app>
 </template>
 
 <script lang="ts">
 import Vue from 'vue'
-import HelloWorld from './components/HelloWorld.vue'
+import ColorModuleTester from './testComponents/ColorModuleTester.vue'
+import RepoModuleTester from './testComponents/RepoModuleTester.vue'
 
 export default Vue.extend({
   name: 'App',
 
   components: {
-    HelloWorld
+    ColorModuleTester,
+    RepoModuleTester
   },
 
   data: () => ({
