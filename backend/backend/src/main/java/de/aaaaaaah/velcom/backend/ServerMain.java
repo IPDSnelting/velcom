@@ -87,7 +87,6 @@ public class ServerMain extends Application<GlobalConfig> {
 			configuration.getDisconnectedRunnerGracePeriod()
 		);
 		RunnerAwareServerFactory.getInstance().setDispatcher(dispatcher);
-		addDummyWorkRepo(repoAccess);
 
 		// API authentication
 		environment.jersey().register(
@@ -114,16 +113,4 @@ public class ServerMain extends Application<GlobalConfig> {
 		environment.jersey().register(new TestTokenEndpoint(tokenAccess));
 	}
 
-	private void addDummyWorkRepo(RepoAccess repoAccess) {
-		boolean containsRepo = repoAccess.getAllRepos()
-			.stream()
-			.anyMatch(it -> it.getName().equals("test-work"));
-		if (containsRepo) {
-			return;
-		}
-		repoAccess.addRepo(
-			"test-work", new RemoteUrl("https://github.com/I-Al-Istannen/Configurator.git")
-		);
-		System.out.println("Added test-work repo!");
-	}
 }
