@@ -18,6 +18,7 @@
         <v-icon right dark :size="iconFontSize">{{ item.icon }}</v-icon>
       </v-btn>
     </v-toolbar>
+
     <!-- Navigation drawer -->
     <v-navigation-drawer class="hidden-md-and-up" v-model="drawerShown" app temporary>
       <v-toolbar dark color="primary darken-1">
@@ -31,7 +32,11 @@
       <v-divider></v-divider>
 
       <v-list dense class="pt-0">
-        <v-list-item v-for="item in validRoutes" :key="item.routeName" :to="item.routeName">
+        <v-list-item
+          v-for="item in validRoutes"
+          :key="item.routeName"
+          :to="{ name: item.routeName }"
+        >
           <v-list-item-icon>
             <v-icon>{{ item.icon }}</v-icon>
           </v-list-item-icon>
