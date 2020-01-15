@@ -1,8 +1,10 @@
-.PHONY: build clean
+.PHONY: clean
 
 all: build
 
-build:
+build: backend/target/backend.jar
+
+backend/target/backend.jar: $(find -name '*.java' -o -name pom.xml)
 	@echo 'Building backend'
 	mvn package
 
