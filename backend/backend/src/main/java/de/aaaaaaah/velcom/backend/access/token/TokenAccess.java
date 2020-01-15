@@ -54,7 +54,6 @@ public class TokenAccess {
 		try (DSLContext db = databaseStorage.acquireContext()) {
 			RepoTokenRecord tokenRecord = db.selectFrom(REPO_TOKEN)
 				.where(REPO_TOKEN.REPO_ID.eq(repoId.getId().toString()))
-				.and(REPO_TOKEN.TOKEN.eq(token.getToken()))
 				.fetchOptional()
 				.orElse(null);
 
