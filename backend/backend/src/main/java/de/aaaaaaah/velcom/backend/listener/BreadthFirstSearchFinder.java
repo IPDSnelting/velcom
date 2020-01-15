@@ -10,6 +10,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+import java.util.Set;
 
 /**
  * A breadth first search implementation of {@link UnknownCommitFinder}.
@@ -19,21 +22,19 @@ public class BreadthFirstSearchFinder implements UnknownCommitFinder {
 	@Override
 	public Collection<Commit> find(CommitAccess commitAccess, Branch branch) throws IOException {
 		try (CommitWalk walk = commitAccess.getCommitWalk(branch)) {
-			ArrayList<Commit> unknownCommits = new ArrayList<>();
-			HashSet<CommitHash> visitedCommits = new HashSet<>();
+			List<Commit> unknownCommits = new ArrayList<>();
+			Set<CommitHash> visitedCommits = new HashSet<>();
 
-			LinkedList<Commit> commitQueue = new LinkedList<>();
+			Queue<Commit> commitQueue = new LinkedList<>();
 			commitQueue.add(walk.getStart());
 
 			while (!commitQueue.isEmpty()) {
 				Commit current = commitQueue.poll();
 
-				if (visitedCommits.contains(current.getHash())) {
+				if (!visitedCommits.add(current.getHash())) {
 					// current commit was already visited within the context
 					// of this breadth first search
 					continue;
-				} else {
-					visitedCommits.add(current.getHash());
 				}
 
 				if (current.isKnown()) {

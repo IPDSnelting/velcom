@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -64,7 +65,7 @@ public class Listener {
 			try {
 				checkForUnknownCommits(repo.getId());
 			} catch (CommitSearchException e) {
-				e.printStackTrace();
+				LOGGER.warn("Could not fetch updates for repo " + repo, e);
 			}
 		}
 	}
@@ -92,7 +93,7 @@ public class Listener {
 				// The repo already has some known commits so we need to be smart about it
 				// Group all new commits across all tracked branches into this
 				// list before inserting them into the queue
-				ArrayList<Commit> allNewCommits = new ArrayList<>();
+				List<Commit> allNewCommits = new ArrayList<>();
 
 				// (1): Find new commits
 				try {
@@ -104,8 +105,9 @@ public class Listener {
 						allNewCommits.addAll(newCommits);
 					}
 				} catch (IOException e) {
-					throw new CommitSearchException("failed to check for unknown commits in repo: "
-						+ repoId, e);
+					throw new CommitSearchException(
+						"failed to check for unknown commits in repo: " + repoId, e
+					);
 				}
 
 				// (2): Add new commits to queue (in a sorted manner)
