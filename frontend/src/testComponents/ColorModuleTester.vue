@@ -3,9 +3,7 @@
     <v-container>
       <v-layout text-center wrap>
         <v-flex mb-5 xs12>
-          <h1 class="headline font-weight-bold mb-3">
-            Testing the ColorModule
-          </h1>
+          <h1 class="headline font-weight-bold mb-3">Testing the ColorModule</h1>
           <v-layout justify-center>
             <v-btn @click="addColor(1)">add color</v-btn>
           </v-layout>
@@ -36,12 +34,12 @@ export default Vue.extend({
     ...mapActions('colorModule', { addColor: 'addColors' })
   },
 
-  mounted () {
+  mounted() {
     this.$store.dispatch('repoModule/fetchRepos')
   },
 
   watch: {
-    allRepos: function () {
+    allRepos: function() {
       if (this.allColors.length < this.allRepos.length) {
         let diff = this.allRepos.length - this.allColors.length
         this.$store.dispatch('colorModule/addColors', diff)
