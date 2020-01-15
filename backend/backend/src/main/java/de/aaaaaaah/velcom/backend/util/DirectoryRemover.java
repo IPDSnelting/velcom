@@ -6,7 +6,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.DosFileAttributeView;
 
 /**
  * Provides the ability to completely remove directories with all its content.
@@ -25,13 +24,7 @@ public class DirectoryRemover {
 			public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
 				throws IOException {
 
-				DosFileAttributeView fileAttributeView = Files.getFileAttributeView(
-					file, DosFileAttributeView.class
-				);
-
-				if (fileAttributeView != null) {
-					fileAttributeView.setReadOnly(false);
-				}
+				file.toFile().setWritable(true);
 
 				Files.delete(file);
 				return FileVisitResult.CONTINUE;

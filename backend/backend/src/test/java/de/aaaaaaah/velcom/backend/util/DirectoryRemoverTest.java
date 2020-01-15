@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.attribute.DosFileAttributeView;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -50,13 +49,7 @@ class DirectoryRemoverTest {
 		for (int i = 0; i < 10; i++) {
 			Path file = dirPath.resolve("hey" + i);
 			Files.writeString(file, "Test " + i);
-			DosFileAttributeView view = Files.getFileAttributeView(
-				file,
-				DosFileAttributeView.class
-			);
-			if (view != null) {
-				view.setReadOnly(true);
-			}
+			file.toFile().setWritable(false);
 		}
 
 		DirectoryRemover.deleteDirectoryRecursive(dirPath);
