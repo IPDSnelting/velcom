@@ -8,6 +8,8 @@ stages:
 compile-backend:
   stage: build
   script:
+    - apt update
+    - apt install make
     - make backend
   tags:
     - keep
