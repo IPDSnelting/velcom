@@ -17,16 +17,6 @@ public interface RunnerState {
 	RunnerStatusEnum getStatus();
 
 	/**
-	 * Called when this stage is selected.
-	 *
-	 * @param configuration the runner configuration
-	 * @throws IOException if an error occurs
-	 */
-	@SuppressWarnings("RedundantThrows")
-	default void onSelected(RunnerConfiguration configuration) throws IOException {
-	}
-
-	/**
 	 * Called with the saved path when a file was received.
 	 *
 	 * @param path the path to the received file. Most likely a temporary directory and deleting it

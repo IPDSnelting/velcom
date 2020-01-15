@@ -138,7 +138,6 @@ public class RunnerStateMachine {
 			if (newState != state) {
 				LOGGER.debug("Switching from {} to {}", state, newState);
 				this.state = newState;
-				newState.onSelected(configuration);
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
