@@ -14,7 +14,7 @@ Vue.use(Vuex)
 
 const storeOptions: StoreOptions<RootState> = {
   state: {
-    apiBaseURL: 'http://localhost:8080'
+    apiBaseURL: 'https://aaaaaaah.de:8667'
   } as RootState,
   mutations: {},
   actions: {},
