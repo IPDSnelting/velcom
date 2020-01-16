@@ -1,10 +1,14 @@
 package de.aaaaaaah.velcom.backend.listener;
 
+import static java.util.stream.Collectors.toList;
+
 import de.aaaaaaah.velcom.backend.GlobalConfig;
 import de.aaaaaaah.velcom.backend.access.AccessLayer;
+import de.aaaaaaah.velcom.backend.access.commit.BenchmarkStatus;
 import de.aaaaaaah.velcom.backend.access.commit.Commit;
 import de.aaaaaaah.velcom.backend.access.commit.CommitAccess;
 import de.aaaaaaah.velcom.backend.access.repo.Branch;
+import de.aaaaaaah.velcom.backend.access.repo.BranchName;
 import de.aaaaaaah.velcom.backend.access.repo.Repo;
 import de.aaaaaaah.velcom.backend.access.repo.RepoAccess;
 import de.aaaaaaah.velcom.backend.access.repo.RepoId;
@@ -19,6 +23,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -79,12 +84,28 @@ public class Listener {
 		try {
 			this.lock.lock();
 
+			LOGGER.info("Checking for unknown commits on repo: {}", repoId);
+
 			Repo repo = repoAccess.getRepo(repoId);
 
 			if (!commitAccess.hasKnownCommits(repoId)) {
 				// this repository does not have any known commits which means that it must be new
 				// therefore only the first commit of each tracked branch is inserted into the queue
+				// and all other commits that exist so far will be marked as known
 
+				// (1): Mark all commits as known (NO_BENCHMARK_REQUIRED)
+				List<BranchName> branches = repo.getTrackedBranches()
+					.stream()
+					.map(Branch::getName)
+					.collect(toList());
+
+				try (Stream<Commit> commits = commitAccess.getCommitLog(repo, branches)) {
+					commits.map(Commit::getHash).forEach(hash -> commitAccess.setBenchmarkStatus(
+						repoId, hash, BenchmarkStatus.NO_BENCHMARK_REQUIRED
+					));
+				}
+
+				// (2): Set last commit of each tracked branch to BENCHMARK_REQUIRED
 				repo.getTrackedBranches()
 					.stream()
 					.map(Branch::getCommit)

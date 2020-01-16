@@ -37,6 +37,9 @@ import io.dropwizard.auth.AuthDynamicFeature;
 import io.dropwizard.auth.AuthValueFactoryProvider;
 import io.dropwizard.auth.basic.BasicCredentialAuthFilter;
 import io.dropwizard.setup.Environment;
+import java.util.EnumSet;
+import javax.servlet.DispatcherType;
+import org.eclipse.jetty.servlets.CrossOriginFilter;
 
 /**
  * The backend's main class. Contains the core initialisation routines for the web server.
@@ -56,6 +59,8 @@ public class ServerMain extends Application<GlobalConfig> {
 	@Override
 	public void run(GlobalConfig configuration, Environment environment) throws Exception {
 		environment.getObjectMapper().setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
+
+		configureCors(environment);
 
 		// Storage layer
 		DatabaseStorage databaseStorage = new DatabaseStorage(configuration);
@@ -109,8 +114,25 @@ public class ServerMain extends Application<GlobalConfig> {
 			new RecentlyBenchmarkedCommitsEndpoint(benchmarkAccess, commitComparer, linearLog));
 		environment.jersey().register(
 			new RepoComparisonGraphEndpoint(commitAccess, repoAccess, reducedLog));
-		environment.jersey().register(new RepoEndpoint(repoAccess, tokenAccess));
+		environment.jersey().register(new RepoEndpoint(repoAccess, tokenAccess, listener));
 		environment.jersey().register(new TestTokenEndpoint(tokenAccess));
 	}
+
+	private void configureCors(Environment environment) {
+		var filter = environment.servlets().addFilter("CORS", CrossOriginFilter.class);
+		filter.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");
+		filter.setInitParameter(
+			CrossOriginFilter.ALLOWED_METHODS_PARAM,
+			"GET,PUT,POST,DELETE,OPTIONS"
+		);
+		filter.setInitParameter(CrossOriginFilter.ALLOWED_ORIGINS_PARAM, "*");
+		filter.setInitParameter(CrossOriginFilter.ACCESS_CONTROL_ALLOW_ORIGIN_HEADER, "*");
+		filter.setInitParameter(
+			"allowedHeaders",
+			"Content-Type,Authorization,X-Requested-With,Content-Length,Accept,Origin"
+		);
+		filter.setInitParameter("allowCredentials", "true");
+	}
+
 
 }

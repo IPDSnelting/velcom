@@ -55,6 +55,8 @@ public class Queue {
 	 * @param commit the commit that should be added as task
 	 */
 	public synchronized void addTask(Commit commit) {
+		commitAccess.setBenchmarkStatus(commit.getRepoId(), commit.getHash(),
+			BenchmarkStatus.BENCHMARK_REQUIRED);
 		queuePolicy.addTask(commit);
 		callAllAddedListeners(commit);
 	}
