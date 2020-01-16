@@ -24,7 +24,7 @@ export interface RepoComparisonState {
 }
 
 export interface RepoDetailState {
-  comparisonsByRepoID: { [repoID: string]: Array<CommitComparison> }
+  comparisonsByRepoID: Map<string, Array<CommitComparison>>
 }
 
 export interface NewsState {

@@ -1,11 +1,11 @@
 import { Module } from 'vuex'
-import { RootState, RepoDetailState } from '../../types'
+import { RootState, RepoDetailState, CommitComparison } from '../../types'
 import { mutations } from './mutations'
 import { actions } from './actions'
 import { getters } from './getters'
 
 export const state: RepoDetailState = {
-  comparisonsByRepoID: {}
+  comparisonsByRepoID: new Map<string, Array<CommitComparison>>
 }
 
 const namespaced: boolean = true
