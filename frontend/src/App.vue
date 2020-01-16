@@ -2,6 +2,7 @@
   <v-app>
     <v-content>
       <nav-bar></nav-bar>
+      <router-view></router-view>
       <color-module-tester></color-module-tester>
       <repo-module-tester></repo-module-tester>
     </v-content>
