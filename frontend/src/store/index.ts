@@ -14,7 +14,7 @@ Vue.use(Vuex)
 
 const storeOptions: StoreOptions<RootState> = {
   state: {
-    apiBaseURL: 'https://aaaaaaah.de:8667'
+    apiBaseURL: 'http://localhost:8080'
   } as RootState,
   mutations: {},
   actions: {},
@@ -28,7 +28,6 @@ const storeOptions: StoreOptions<RootState> = {
     repoModule,
     userModule
   }
-
 }
 
 export default new Vuex.Store(storeOptions)

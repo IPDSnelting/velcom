@@ -1,6 +1,12 @@
 import { ActionTree } from 'vuex'
-import axios from 'axios'
+import axios, { AxiosPromise } from 'axios'
 import { RepoState, RootState, Repo } from '../../types'
+
+export declare class AddRepoRequest {
+  public readonly repoName: string
+  public readonly remoteUrl: string
+  public readonly repoToken: string | null
+}
 
 export const actions: ActionTree<RepoState, RootState> = {
   async fetchRepos({ commit }): Promise<Array<Repo>> {
@@ -48,28 +54,24 @@ export const actions: ActionTree<RepoState, RootState> = {
     return repo
   },
 
-  addRepo({ commit, rootGetters }, payload) {
-    axios
+  addRepo({ commit, rootGetters }, payload: AddRepoRequest): Promise<Repo> {
+    return axios
       .post('/repo', {
         auth: {
           username: rootGetters['userModule/repoID'],
           password: rootGetters['userModule/token']
         },
         params: {
-          name: payload.name,
+          name: payload.repoName,
           remote_url: payload.remoteUrl,
-          token: payload.token
+          token: payload.repoToken
         }
       })
-      .then(
-        response => {
-          commit('SET_REPO', response.data)
-        },
-        error => {
-          console.log('error: could not add new repo ' + payload.name)
-          console.log(error)
-        }
-      )
+      .then(response => {
+        const repo: Repo = response.data
+        commit('SET_REPO', repo)
+        return repo
+      })
   },
 
   deleteRepo({ commit, rootGetters }, repoID: string) {
