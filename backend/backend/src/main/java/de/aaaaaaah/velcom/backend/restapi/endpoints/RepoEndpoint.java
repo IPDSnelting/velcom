@@ -9,6 +9,8 @@ import de.aaaaaaah.velcom.backend.access.repo.RepoAccess;
 import de.aaaaaaah.velcom.backend.access.repo.RepoId;
 import de.aaaaaaah.velcom.backend.access.token.AuthToken;
 import de.aaaaaaah.velcom.backend.access.token.TokenAccess;
+import de.aaaaaaah.velcom.backend.listener.CommitSearchException;
+import de.aaaaaaah.velcom.backend.listener.Listener;
 import de.aaaaaaah.velcom.backend.restapi.RepoUser;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRepo;
 import io.dropwizard.auth.Auth;
@@ -29,6 +31,8 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The REST API endpoint allowing to query and modify repos.
@@ -38,13 +42,18 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 public class RepoEndpoint {
 
+	private static final Logger LOGGER = LoggerFactory.getLogger(RepoEndpoint.class);
+
 	private final RepoAccess repoAccess;
 	private final TokenAccess tokenAccess;
 
-	public RepoEndpoint(RepoAccess repoAccess, TokenAccess tokenAccess) {
+	private final Listener listener;
+
+	public RepoEndpoint(RepoAccess repoAccess, TokenAccess tokenAccess, Listener listener) {
 
 		this.repoAccess = repoAccess;
 		this.tokenAccess = tokenAccess;
+		this.listener = listener;
 	}
 
 	/**
@@ -77,6 +86,15 @@ public class RepoEndpoint {
 		request.getToken()
 			.map(AuthToken::new)
 			.ifPresent(token -> tokenAccess.setToken(repo.getId(), token));
+
+		// Run listener on this repo on a seperate thread
+		new Thread(() -> {
+			try {
+				listener.checkForUnknownCommits(repo.getId());
+			} catch (CommitSearchException e) {
+				LOGGER.warn("Failed to run listener for new repo: " + repo, e);
+			}
+		}, "ListenerThreadFor" + repo.getId().getId().toString()).start();
 
 		return new GetReply(new JsonRepo(repo));
 	}
