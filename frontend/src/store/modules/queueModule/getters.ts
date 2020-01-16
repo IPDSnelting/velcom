@@ -11,14 +11,12 @@ export const getters: GetterTree<QueueState, RootState> = {
   },
 
   openTasksByRepoID: state => (repoID: string) => {
-    return state.openTasks.filter(task => {
-      task.repoID === repoID
-    })
+    return state.openTasks.filter(task => task.repoID === repoID)
   },
 
   openTask: state => (repoID: string, hash: string) => {
-    return state.openTasks.filter(task => {
-      task.repoID === repoID && task.hash === hash
-    })
+    return state.openTasks.filter(
+      task => task.repoID === repoID && task.hash === hash
+    )
   }
 }

@@ -13,7 +13,7 @@ export const mutations: MutationTree<QueueState> = {
     if (oldIndex !== -1) {
       state.openTasks.splice(0, 0, state.openTasks.splice(oldIndex)[0])
     } else {
-      state.openTasks.splice(0,0, payload)
+      state.openTasks.splice(0, 0, payload)
     }
   },
 

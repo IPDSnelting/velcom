@@ -5,7 +5,7 @@ import { actions } from './actions'
 import { getters } from './getters'
 
 export const state: RepoDetailState = {
-  comparisonsByRepoID: new Map<string, Array<CommitComparison>>
+  comparisonsByRepoID: new Map<string, Array<CommitComparison>>()
 }
 
 const namespaced: boolean = true
