@@ -17,7 +17,7 @@ compile-backend:
       - backend/.repository/
   # Tell maven to use the cache
   variables:
-    MAVEN_OPTS: "MAVEN_OPTS=-Dmaven.repo.local=./backend/.repository"
+    MAVEN_OPTS: "-Dmaven.repo.local=./.repository"
 
   script:
     - apt update
