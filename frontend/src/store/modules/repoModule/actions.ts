@@ -54,7 +54,7 @@ export const actions: ActionTree<RepoState, RootState> = {
     return repo
   },
 
-  addRepo({ commit, rootGetters }, payload: AddRepoRequest): Promise<Repo> {
+  addRepo({ commit, rootGetters }, payload): Promise<Repo> {
     return axios
       .post('/repo', {
         auth: {
