@@ -1,14 +1,14 @@
 export interface RootState {
   apiBaseURL: string
 
-  colorState: ColorState
-  repoState: RepoState
-  repoComparisonState: RepoComparisonState
-  repoDetailState: RepoDetailState
-  newsState: NewsState
-  commitComparisonState: CommitComparisonState
-  queueState: QueueState
-  userState: UserState
+  colorModule: ColorState
+  repoModule: RepoState
+  repoComparisonModule: RepoComparisonState
+  repoDetailModule: RepoDetailState
+  newsModule: NewsState
+  commitComparisonModule: CommitComparisonState
+  queueModule: QueueState
+  userModule: UserState
 }
 
 export interface ColorState {
@@ -16,11 +16,11 @@ export interface ColorState {
 }
 
 export interface RepoState {
-  repos: { [id: string]: Repo }
+  repos: Map<string, Repo>
 }
 
 export interface RepoComparisonState {
-  runsByRepoID: { [repoID: string]: Array<Run> }
+  runsByRepoID: Map<string, Array<Run>>
 }
 
 export interface RepoDetailState {
@@ -33,10 +33,7 @@ export interface NewsState {
 }
 
 export interface CommitComparisonState {
-  comparisons: Map<
-    { repoID: string; hashOne: string },
-    { [hashTwo: string]: CommitComparison }
-  >
+  comparisons: Map<string, Array<CommitComparison>>
 }
 
 export interface QueueState {
@@ -51,14 +48,14 @@ export interface UserState {
 }
 
 export class Repo {
-  id: string | null
+  id: string
   name: string | null
   branches: Array<string>
   trackedBranches: Array<string>
   measurements: Array<MeasurementID>
   remoteURL: string | null
 
-  constructor (
+  constructor(
     id: string,
     name: string,
     branches: Array<string>,
@@ -84,7 +81,7 @@ export class Measurement {
   value: number | null
   errorMessage: string | null
 
-  constructor (
+  constructor(
     id: MeasurementID,
     unit?: string,
     interpretation?: string,
@@ -106,7 +103,7 @@ export class MeasurementID {
   benchmark: string | null
   metric: string | null
 
-  constructor (benchmark: string, metric: string) {
+  constructor(benchmark: string, metric: string) {
     this.benchmark = benchmark
     this.metric = metric
   }
@@ -122,7 +119,7 @@ export class Commit {
   message: string | null
   parents: Array<string>
 
-  constructor (
+  constructor(
     repoID: string,
     hash: string,
     author: string,
@@ -144,13 +141,13 @@ export class Commit {
 }
 
 export class Run {
-  commit: Commit | null
+  commit: Commit
   startTime: number | null
   stopTime: number | null
   measurements: Array<Measurement> | null
   errorMessage: string | null
 
-  constructor (
+  constructor(
     commit: Commit,
     startTime: number,
     stopTime: number,
@@ -169,18 +166,18 @@ export class Difference {
   measurement: MeasurementID | null
   difference: number | null
 
-  constructor (measurement: MeasurementID, difference: number) {
+  constructor(measurement: MeasurementID, difference: number) {
     this.measurement = measurement
     this.difference = difference
   }
 }
 
 export class CommitComparison {
-  first: Run | null
-  second: Run | null
+  first: Run
+  second: Run
   differences: Array<Difference>
 
-  constructor (first: Run, second: Run, differences: Array<Difference>) {
+  constructor(first: Run, second: Run, differences: Array<Difference>) {
     this.first = first
     this.second = second
     this.differences = differences
@@ -191,7 +188,7 @@ export class Worker {
   name: string | null
   osData: string | null
 
-  constructor (name: string, osData: string) {
+  constructor(name: string, osData: string) {
     this.name = name
     this.osData = osData
   }
@@ -199,7 +196,7 @@ export class Worker {
 
 // util for generating new distinguishable hex colors
 export class ColorConverter {
-  hexToHsl (hex: string) {
+  hexToHsl(hex: string) {
     // convert hex to rgb
     var r = parseInt(hex.substr(1, 2), 16)
     var g = parseInt(hex.substr(3, 2), 16)
@@ -240,7 +237,7 @@ export class ColorConverter {
     return [h, s, l]
   }
 
-  hslToHex (h: number, s: number, l: number) {
+  hslToHex(h: number, s: number, l: number) {
     var r = 0
     var g = 0
     var b = 0
