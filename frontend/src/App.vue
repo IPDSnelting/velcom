@@ -2,7 +2,7 @@
   <v-app>
     <v-content>
       <nav-bar></nav-bar>
-      <snackbar></snackbar>
+      <snackbar ref="global-snackbar"></snackbar>
       <repo-add>
         <template #activator="{ on }">
           <v-btn v-on="on">Test</v-btn>
@@ -25,6 +25,8 @@ import NavigationBar from './components/NavigationBar.vue'
 import RepoAddDialog from './components/RepoAddDialog.vue'
 import WorkerOverview from './components/WorkerOverview.vue'
 import Snackbar from './components/Snackbar.vue'
+import { Store } from 'vuex'
+import { RootState, Worker } from './store/types'
 
 @Component({
   components: {
@@ -36,5 +38,13 @@ import Snackbar from './components/Snackbar.vue'
     snackbar: Snackbar
   }
 })
-export default class App extends Vue {}
+export default class App extends Vue {
+  get store() {
+    return this.$store as Store<RootState>
+  }
+
+  get workers(): Worker[] {
+    return this.store.state.queueModule.workers
+  }
+}
 </script>
