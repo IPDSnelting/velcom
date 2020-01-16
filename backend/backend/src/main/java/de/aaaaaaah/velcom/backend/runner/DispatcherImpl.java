@@ -7,7 +7,6 @@ import de.aaaaaaah.velcom.backend.access.benchmark.Run;
 import de.aaaaaaah.velcom.backend.access.benchmark.Unit;
 import de.aaaaaaah.velcom.backend.access.commit.Commit;
 import de.aaaaaaah.velcom.backend.access.commit.CommitHash;
-import de.aaaaaaah.velcom.backend.access.repo.Branch;
 import de.aaaaaaah.velcom.backend.access.repo.RepoAccess;
 import de.aaaaaaah.velcom.backend.access.repo.RepoId;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
@@ -221,18 +220,9 @@ public class DispatcherImpl implements Dispatcher {
 			ActiveRunnerInformation runner = freeRunners.poll();
 			Optional<Commit> nextTask = queue.getNextTask();
 			if (nextTask.isEmpty()) {
-				nextTask = repoAccess.getAllRepos().stream()
-					.filter(it -> it.getName().equals("test-work"))
-					.findFirst()
-					.flatMap(it -> it.getBranches()
-						.stream()
-						.filter(b -> b.getName().getName().endsWith("master"))
-						.findFirst()
-					)
-					.map(Branch::getCommit);
-				// TODO: 12.01.20 Replace this with the following line
-				// return;
+				return;
 			}
+
 			Commit commitToBenchmark = nextTask.get();
 			if (!dispatchCommit(runner, commitToBenchmark)) {
 				queue.addCommit(commitToBenchmark);
