@@ -105,7 +105,7 @@ public class RepoEndpoint {
 
 		request.getTrackedBranches().ifPresent(trackedBranches -> {
 			Set<BranchName> trackedBranchNames = trackedBranches.stream()
-				.map(BranchName::new)
+				.map(BranchName::fromName)
 				.collect(Collectors.toUnmodifiableSet());
 			repoAccess.setTrackedBranches(repoId, trackedBranchNames);
 		});

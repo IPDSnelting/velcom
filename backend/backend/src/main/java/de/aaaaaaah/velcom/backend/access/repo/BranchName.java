@@ -9,12 +9,29 @@ public class BranchName {
 
 	private final String name;
 
-	public BranchName(String name) {
+	private BranchName(String name) {
 		this.name = name;
 	}
 
-	public String getName() {
+	public static BranchName fromFullName(String name) {
+		return new BranchName(name);
+	}
+
+	public static BranchName fromName(String name) {
+		return new BranchName("refs/heads/" + name);
+	}
+
+	public String getFullName() {
 		return name;
+	}
+
+	public String getName() {
+		if (name.startsWith("refs/heads/")) {
+			return name.substring(11);
+		} else {
+			// Not sure what format the name is in
+			return name;
+		}
 	}
 
 	@Override

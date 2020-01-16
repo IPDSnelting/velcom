@@ -138,7 +138,7 @@ public class RepoAccess {
 		// (3): Track branch that head points to
 		try (Repository repo = repoStorage.acquireRepository(repoId.getDirectoryName())) {
 			String defaultBranchStr = repo.getBranch();
-			BranchName branchName = new BranchName(defaultBranchStr);
+			BranchName branchName = BranchName.fromFullName(defaultBranchStr);
 			setTrackedBranches(repoId, List.of(branchName));
 		} catch (RepositoryAcquisitionException | IOException e) {
 			throw new AddRepoException(e);
@@ -373,7 +373,7 @@ public class RepoAccess {
 			List<Branch> branchList = new ArrayList<>();
 
 			for (Ref branchRef : Git.wrap(jgitRepo).branchList().call()) {
-				BranchName name = new BranchName(branchRef.getName());
+				BranchName name = BranchName.fromFullName(branchRef.getName());
 
 				Branch branch = new Branch(
 					this,
@@ -404,7 +404,7 @@ public class RepoAccess {
 					this,
 					accessLayer.getCommitAccess(),
 					repoId,
-					new BranchName(record.getBranchName())
+					BranchName.fromFullName(record.getBranchName())
 				))
 				.collect(toList());
 		}
@@ -441,7 +441,7 @@ public class RepoAccess {
 	public CommitHash getLatestCommitHash(Branch branch) throws RepoAccessException {
 		return new CommitHash(getCommitHashByRef(
 			branch.getRepoId().getDirectoryName(),
-			branch.getName().getName()
+			branch.getName().getFullName()
 		));
 	}
 

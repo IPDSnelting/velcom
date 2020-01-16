@@ -300,7 +300,7 @@ public class CommitAccess {
 
 			for (BranchName branchName : branches) {
 
-				ObjectId branchId = jgitRepo.resolve(branchName.getName());
+				ObjectId branchId = jgitRepo.resolve(branchName.getFullName());
 
 				logCommand.add(branchId);
 			}
