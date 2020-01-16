@@ -33,10 +33,7 @@ export interface NewsState {
 }
 
 export interface CommitComparisonState {
-  comparisons: Map<
-    { repoID: string; hashOne: string },
-    { [hashTwo: string]: CommitComparison }
-  >
+  comparisons: Map<string, Array<CommitComparison>>
 }
 
 export interface QueueState {
@@ -144,7 +141,7 @@ export class Commit {
 }
 
 export class Run {
-  commit: Commit | null
+  commit: Commit
   startTime: number | null
   stopTime: number | null
   measurements: Array<Measurement> | null
@@ -176,8 +173,8 @@ export class Difference {
 }
 
 export class CommitComparison {
-  first: Run | null
-  second: Run | null
+  first: Run
+  second: Run
   differences: Array<Difference>
 
   constructor(first: Run, second: Run, differences: Array<Difference>) {
