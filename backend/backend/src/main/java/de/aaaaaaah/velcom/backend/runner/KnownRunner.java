@@ -90,7 +90,7 @@ public class KnownRunner {
 	 */
 	public String getMachineInfo() {
 		String memory = getAvailableMemory() / 1_000_000 + "MB";
-		return getOperatingSystem() + ", " + getCoreCount() + " cores, " + memory + " max RAM";
+		return getOperatingSystem() + "\n" + getCoreCount() + " cores\n" + memory + " max RAM";
 	}
 
 	/**
