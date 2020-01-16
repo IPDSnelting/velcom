@@ -6,6 +6,7 @@ import de.aaaaaaah.velcom.backend.access.commit.Commit;
 import de.aaaaaaah.velcom.backend.access.commit.CommitAccess;
 import de.aaaaaaah.velcom.backend.access.commit.CommitHash;
 import de.aaaaaaah.velcom.backend.access.repo.RepoId;
+import de.aaaaaaah.velcom.backend.data.commitcomparison.CommitComparer;
 import de.aaaaaaah.velcom.backend.data.commitcomparison.CommitComparison;
 import de.aaaaaaah.velcom.backend.data.linearlog.LinearLog;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonCommitComparison;
@@ -27,13 +28,15 @@ public class CommitCompareEndpoint {
 
 	private final BenchmarkAccess benchmarkAccess;
 	private final CommitAccess commitAccess;
+	private final CommitComparer commitComparer;
 	private final LinearLog linearLog;
 
 	public CommitCompareEndpoint(BenchmarkAccess benchmarkAccess, CommitAccess commitAccess,
-		LinearLog linearLog) {
+		CommitComparer commitComparer, LinearLog linearLog) {
 
 		this.benchmarkAccess = benchmarkAccess;
 		this.commitAccess = commitAccess;
+		this.commitComparer = commitComparer;
 		this.linearLog = linearLog;
 	}
 
@@ -65,7 +68,8 @@ public class CommitCompareEndpoint {
 		Optional<Run> first = firstCommit.flatMap(benchmarkAccess::getLatestRunOf);
 		Optional<Run> second = secondCommit.flatMap(benchmarkAccess::getLatestRunOf);
 
-		CommitComparison comparison = new CommitComparison(first.orElse(null), second.orElse(null));
+		CommitComparison comparison = commitComparer.compare(first.orElse(null),
+			second.orElse(null));
 		return new GetReply(new JsonCommitComparison(comparison));
 	}
 

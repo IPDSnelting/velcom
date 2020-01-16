@@ -4,10 +4,10 @@ import de.aaaaaaah.velcom.backend.access.commit.Commit;
 import de.aaaaaaah.velcom.runner.shared.RunnerStatusEnum;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkResults;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.RunnerInformation;
-import java.util.ArrayList;
-import java.util.List;
+import java.time.Instant;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.IntConsumer;
 
 /**
  * Contains information about a single runner, how to reach it and its state machine.
@@ -18,13 +18,14 @@ public class ActiveRunnerInformation {
 	private ServerRunnerStateMachine runnerStateMachine;
 
 	private RunnerInformation runnerInformation;
-	private RunnerStatusEnum state;
 
-	private List<Consumer<BenchmarkResults>> resultListeners;
-	private List<Consumer<RunnerStatusEnum>> statusListeners;
+	private Consumer<BenchmarkResults> resultListener;
+	private Consumer<RunnerInformation> runnerInformationListener;
+	private Runnable idleListener;
+	private IntConsumer disconnectedListener;
 
-	private BenchmarkResults results;
 	private Commit currentCommit;
+	private Instant lastReceivedMessage;
 
 	/**
 	 * Creates a new runner information.
@@ -36,10 +37,16 @@ public class ActiveRunnerInformation {
 		ServerRunnerStateMachine runnerStateMachine) {
 		this.connectionManager = connectionManager;
 		this.runnerStateMachine = runnerStateMachine;
-		this.state = RunnerStatusEnum.DISCONNECTED;
+		this.lastReceivedMessage = Instant.now();
 
-		this.statusListeners = new ArrayList<>();
-		this.resultListeners = new ArrayList<>();
+		this.resultListener = it -> {
+		};
+		this.disconnectedListener = (statusCode) -> {
+		};
+		this.idleListener = () -> {
+		};
+		this.runnerInformationListener = ignored -> {
+		};
 	}
 
 	/**
@@ -58,48 +65,14 @@ public class ActiveRunnerInformation {
 	 */
 	public void setRunnerInformation(RunnerInformation runnerInformation) {
 		this.runnerInformation = runnerInformation;
+		this.runnerInformationListener.accept(runnerInformation);
 	}
 
 	/**
-	 * Returns the current runner state.
-	 *
 	 * @return the current runner state
 	 */
 	public RunnerStatusEnum getState() {
-		return state;
-	}
-
-	/**
-	 * Sets the current runner state.
-	 *
-	 * @param state the current runner state
-	 */
-	public void setState(RunnerStatusEnum state) {
-		boolean callListeners = state != this.state;
-		this.state = state;
-		if (callListeners) {
-			this.statusListeners.forEach(it -> it.accept(state));
-		}
-	}
-
-	/**
-	 * Returns the last benchmark results, if any.
-	 *
-	 * @return the last benchmark results
-	 */
-	public Optional<BenchmarkResults> getResults() {
-		return Optional.ofNullable(results);
-	}
-
-	/**
-	 * Sets the last results.
-	 *
-	 * @param results the last results
-	 */
-	public void setResults(BenchmarkResults results) {
-		this.results = results;
-		this.resultListeners.forEach(it -> it.accept(results));
-		setCurrentCommit(null);
+		return runnerStateMachine.getState().getStatus();
 	}
 
 	/**
@@ -109,15 +82,6 @@ public class ActiveRunnerInformation {
 	 */
 	public Optional<Commit> getCurrentCommit() {
 		return Optional.ofNullable(currentCommit);
-	}
-
-	/**
-	 * Sets the current commit.
-	 *
-	 * @param currentCommit the current commit. May be null.
-	 */
-	public void setCurrentCommit(Commit currentCommit) {
-		this.currentCommit = currentCommit;
 	}
 
 	/**
@@ -139,29 +103,98 @@ public class ActiveRunnerInformation {
 	}
 
 	/**
-	 * Adds a listener for status changes. You may change the state from a listener!
-	 *
-	 * @param listener the listener
+	 * Marks the runner as idle.
 	 */
-	public void addStatusListener(Consumer<RunnerStatusEnum> listener) {
-		this.statusListeners.add(listener);
+	public void setIdle() {
+		idleListener.run();
 	}
 
 	/**
-	 * Adds a listener for results.
+	 * Sets the listener for disconnections.
+	 *
+	 * @param listener the listener. Receives the status code as a parameter.
+	 */
+	public void setOnDisconnected(IntConsumer listener) {
+		this.disconnectedListener = listener;
+	}
+
+	/**
+	 * Sets the listener to call when the runner switches to idle.
+	 *
+	 * @param idleListener the idle listener
+	 */
+	public void setOnIdle(Runnable idleListener) {
+		this.idleListener = idleListener;
+	}
+
+	/**
+	 * Sets the listener to call when the {@link RunnerInformation} are set or updated.
 	 *
 	 * @param listener the listener
 	 */
-	public void addResultListener(Consumer<BenchmarkResults> listener) {
-		this.resultListeners.add(listener);
+	public void setOnRunnerInformation(Consumer<RunnerInformation> listener) {
+		this.runnerInformationListener = listener;
+	}
+
+	/**
+	 * Sets the listener for results.
+	 *
+	 * @param listener the listener
+	 */
+	public void setResultListener(Consumer<BenchmarkResults> listener) {
+		this.resultListener = listener;
+	}
+
+	/**
+	 * Returns the time the last runner message arrived.
+	 *
+	 * @return the time the last runner message arrived
+	 */
+	public Instant getLastReceivedMessage() {
+		return lastReceivedMessage;
+	}
+
+	/**
+	 * Sets the time the last runner message arrived.
+	 *
+	 * @param lastReceivedMessage the time the last runner message arrived
+	 */
+	public void setLastReceivedMessage(Instant lastReceivedMessage) {
+		this.lastReceivedMessage = lastReceivedMessage;
+	}
+
+	/**
+	 * Marks the runner as disconnected.
+	 *
+	 * @param statusCode the status code
+	 */
+	public void setDisconnected(int statusCode) {
+		disconnectedListener.accept(statusCode);
+	}
+
+	/**
+	 * Sets the last results.
+	 *
+	 * @param results the last results
+	 */
+	void setResults(BenchmarkResults results) {
+		this.resultListener.accept(results);
+		setCurrentCommit(null);
+	}
+
+	/**
+	 * Sets the current commit.
+	 *
+	 * @param currentCommit the current commit. May be null.
+	 */
+	void setCurrentCommit(Commit currentCommit) {
+		this.currentCommit = currentCommit;
 	}
 
 	@Override
 	public String toString() {
 		return "ActiveRunnerInformation{" +
 			"runnerInformation=" + runnerInformation +
-			", state=" + state +
-			", results=" + results +
 			", connectionManager=" + connectionManager +
 			", runnerStateMachine=" + runnerStateMachine +
 			'}';

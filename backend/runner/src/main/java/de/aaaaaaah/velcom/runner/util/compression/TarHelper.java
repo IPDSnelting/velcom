@@ -31,7 +31,6 @@ public class TarHelper {
 				if (entry.isDirectory()) {
 					Files.createDirectories(entryPath);
 				} else {
-					// TODO: Remove this, if the tar has a nice format!
 					if (Files.notExists(entryPath.getParent())) {
 						Files.createDirectories(entryPath.getParent());
 					}

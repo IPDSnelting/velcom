@@ -25,9 +25,8 @@ public class UpdateBenchmarkRepoState implements RunnerState {
 	}
 
 	@Override
-	public RunnerState onSelected(RunnerConfiguration configuration) {
-		configuration.getRunnerStateMachine().setCurrentRunnerStateEnum(RunnerStatusEnum.IDLE);
-		return this;
+	public RunnerStatusEnum getStatus() {
+		return RunnerStatusEnum.IDLE;
 	}
 
 	@Override

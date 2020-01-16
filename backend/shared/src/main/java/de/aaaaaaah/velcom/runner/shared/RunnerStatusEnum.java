@@ -9,6 +9,10 @@ public enum RunnerStatusEnum {
 	 */
 	IDLE,
 	/**
+	 * The runner is connected but not ready to accept jobs.
+	 */
+	INITIALIZING,
+	/**
 	 * The runner is currently working.
 	 */
 	WORKING,

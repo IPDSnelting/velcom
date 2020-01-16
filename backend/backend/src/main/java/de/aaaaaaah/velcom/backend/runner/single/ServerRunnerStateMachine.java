@@ -1,7 +1,9 @@
 package de.aaaaaaah.velcom.backend.runner.single;
 
 import de.aaaaaaah.velcom.backend.access.commit.Commit;
+import de.aaaaaaah.velcom.backend.runner.single.state.RunnerDisconnectedState;
 import de.aaaaaaah.velcom.backend.runner.single.state.RunnerIdleState;
+import de.aaaaaaah.velcom.backend.runner.single.state.RunnerInitializingState;
 import de.aaaaaaah.velcom.backend.runner.single.state.RunnerState;
 import de.aaaaaaah.velcom.backend.util.CheckedConsumer;
 import de.aaaaaaah.velcom.runner.shared.RunnerStatusEnum;
@@ -13,11 +15,15 @@ import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkR
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.RunnerInformation;
 import java.io.IOException;
 import java.io.OutputStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The main runner state machine.
  */
 public class ServerRunnerStateMachine {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(ServerRunnerStateMachine.class);
 
 	private ActiveRunnerInformation runnerInformation;
 	private RunnerState state;
@@ -26,7 +32,14 @@ public class ServerRunnerStateMachine {
 	 * Creates a new server-side state machine for a single runner.
 	 */
 	public ServerRunnerStateMachine() {
-		this.state = new RunnerIdleState();
+		this.state = new RunnerDisconnectedState();
+	}
+
+	/**
+	 * @return the current state
+	 */
+	public RunnerState getState() {
+		return state;
 	}
 
 	/**
@@ -35,8 +48,8 @@ public class ServerRunnerStateMachine {
 	 * @param information the information about the runner
 	 */
 	public void onConnectionOpened(ActiveRunnerInformation information) {
-		System.out.println("Connection opened: " + information);
 		this.runnerInformation = information;
+		switchState(new RunnerInitializingState());
 	}
 
 	/**
@@ -54,7 +67,7 @@ public class ServerRunnerStateMachine {
 	}
 
 	private void switchState(RunnerState newState) {
-		System.out.println("Switching from " + state + " to " + newState);
+		LOGGER.debug("Switching runner state from {} to {}", state, newState);
 		state = newState;
 		newState.onSelected(runnerInformation);
 	}
@@ -66,6 +79,7 @@ public class ServerRunnerStateMachine {
 	 */
 	public void onWorkDone(BenchmarkResults results) {
 		runnerInformation.setResults(results);
+		runnerInformation.setCurrentCommit(null);
 	}
 
 	/**
@@ -76,6 +90,7 @@ public class ServerRunnerStateMachine {
 	 */
 	public void resetRunner(String reason) throws IOException {
 		runnerInformation.getConnectionManager().sendEntity(new ResetOrder(reason));
+		runnerInformation.setCurrentCommit(null);
 		switchState(new RunnerIdleState());
 	}
 
@@ -95,7 +110,7 @@ public class ServerRunnerStateMachine {
 				"Invalid state, runner is in " + runnerInformation.getState()
 			);
 		}
-		System.out.println("Sending work: " + workOrder);
+		LOGGER.debug("Sending work {} to {}", workOrder, runnerInformation.getRunnerInformation());
 		runnerInformation.setCurrentCommit(commit);
 		runnerInformation.getConnectionManager().sendEntity(workOrder);
 		try (var out = runnerInformation.getConnectionManager().createBinaryOutputStream()) {
@@ -115,7 +130,10 @@ public class ServerRunnerStateMachine {
 	 */
 	public void sendBenchmarkRepo(CheckedConsumer<OutputStream, IOException> writer,
 		String repoHeadHash) throws IOException {
-		System.out.println("Sending an updated repo (" + repoHeadHash + ")");
+		LOGGER.debug(
+			"Updating benchmark repo for {} to {}",
+			runnerInformation.getRunnerInformation(), repoHeadHash
+		);
 		runnerInformation.getConnectionManager()
 			.sendEntity(new UpdateBenchmarkRepoOrder(repoHeadHash));
 

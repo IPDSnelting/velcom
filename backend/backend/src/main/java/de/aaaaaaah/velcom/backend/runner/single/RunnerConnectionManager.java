@@ -29,45 +29,4 @@ public interface RunnerConnectionManager {
 	 * @return a new output stream that transfers data to the runner
 	 */
 	OutputStream createBinaryOutputStream();
-
-	/**
-	 * Adds a new connection state listener.
-	 *
-	 * @param listener the listener
-	 */
-	void addConnectionStateListener(ConnectionStateListener listener);
-
-	/**
-	 * Removes an existing connection state listener. Does nothing it the listener does not exist.
-	 *
-	 * @param listener the listener
-	 */
-	void removeConnectionStateListener(ConnectionStateListener listener);
-
-	/**
-	 * The state of the connection.
-	 */
-	enum ConnectionState {
-		/**
-		 * The runner is connected.
-		 */
-		CONNECTED,
-		/**
-		 * The runner is disconnected.
-		 */
-		DISCONNECTED
-	}
-
-	/**
-	 * A listener for connection state changes.
-	 */
-	interface ConnectionStateListener {
-
-		/**
-		 * Called when the connection state changes.
-		 *
-		 * @param state the connection state
-		 */
-		void onStateChanged(ConnectionState state);
-	}
 }

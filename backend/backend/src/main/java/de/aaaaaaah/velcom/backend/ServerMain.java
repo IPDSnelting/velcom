@@ -8,10 +8,15 @@ import de.aaaaaaah.velcom.backend.access.repo.RemoteUrl;
 import de.aaaaaaah.velcom.backend.access.repo.RepoAccess;
 import de.aaaaaaah.velcom.backend.access.token.AuthToken;
 import de.aaaaaaah.velcom.backend.access.token.TokenAccess;
+import de.aaaaaaah.velcom.backend.data.commitcomparison.CommitComparer;
 import de.aaaaaaah.velcom.backend.data.linearlog.CommitAccessBasedLinearLog;
 import de.aaaaaaah.velcom.backend.data.linearlog.LinearLog;
 import de.aaaaaaah.velcom.backend.data.queue.PolicyManualFilo;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
+import de.aaaaaaah.velcom.backend.data.reducedlog.ReducedLog;
+import de.aaaaaaah.velcom.backend.data.reducedlog.timeslice.GroupByHour;
+import de.aaaaaaah.velcom.backend.data.reducedlog.timeslice.TimeSliceBasedReducedLog;
+import de.aaaaaaah.velcom.backend.listener.Listener;
 import de.aaaaaaah.velcom.backend.restapi.RepoAuthenticator;
 import de.aaaaaaah.velcom.backend.restapi.RepoUser;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.AllReposEndpoint;
@@ -32,10 +37,6 @@ import io.dropwizard.auth.AuthDynamicFeature;
 import io.dropwizard.auth.AuthValueFactoryProvider;
 import io.dropwizard.auth.basic.BasicCredentialAuthFilter;
 import io.dropwizard.setup.Environment;
-import org.eclipse.jgit.transport.SshSessionFactory;
-import org.eclipse.jgit.transport.sshd.DefaultProxyDataFactory;
-import org.eclipse.jgit.transport.sshd.JGitKeyCache;
-import org.eclipse.jgit.transport.sshd.SshdSessionFactory;
 
 /**
  * The backend's main class. Contains the core initialisation routines for the web server.
@@ -56,13 +57,6 @@ public class ServerMain extends Application<GlobalConfig> {
 	public void run(GlobalConfig configuration, Environment environment) throws Exception {
 		environment.getObjectMapper().setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
 
-		SshdSessionFactory factory = new SshdSessionFactory(
-			new JGitKeyCache(),
-			new DefaultProxyDataFactory()
-		);
-
-		SshSessionFactory.setInstance(factory);
-
 		// Storage layer
 		DatabaseStorage databaseStorage = new DatabaseStorage(configuration);
 		RepoStorage repoStorage = new RepoStorage();
@@ -77,13 +71,22 @@ public class ServerMain extends Application<GlobalConfig> {
 			new AuthToken(configuration.getWebAdminToken()));
 
 		// Data layer
+		CommitComparer commitComparer = new CommitComparer(configuration.getSignificantFactor());
 		LinearLog linearLog = new CommitAccessBasedLinearLog(commitAccess);
+		ReducedLog reducedLog = new TimeSliceBasedReducedLog(benchmarkAccess, new GroupByHour());
 		Queue queue = new Queue(commitAccess, new PolicyManualFilo());
-		Dispatcher dispatcher = new DispatcherImpl(queue, repoAccess, benchmarkAccess);
+
+		// Listener
+		Listener listener = new Listener(configuration, accessLayer, queue);
 
 		// Dispatcher
+		Dispatcher dispatcher = new DispatcherImpl(
+			queue,
+			repoAccess,
+			benchmarkAccess,
+			configuration.getDisconnectedRunnerGracePeriod()
+		);
 		RunnerAwareServerFactory.getInstance().setDispatcher(dispatcher);
-		addDummyWorkRepo(repoAccess);
 
 		// API authentication
 		environment.jersey().register(
@@ -97,28 +100,17 @@ public class ServerMain extends Application<GlobalConfig> {
 
 		// API endpoints
 		environment.jersey().register(new AllReposEndpoint(repoAccess));
-		environment.jersey()
-			.register(new CommitCompareEndpoint(benchmarkAccess, commitAccess, linearLog));
+		environment.jersey().register(
+			new CommitCompareEndpoint(benchmarkAccess, commitAccess, commitComparer, linearLog));
 		environment.jersey().register(new CommitHistoryEndpoint(repoAccess, linearLog));
 		environment.jersey().register(new MeasurementsEndpoint(benchmarkAccess));
 		environment.jersey().register(new QueueEndpoint(commitAccess, queue, dispatcher));
-		environment.jersey()
-			.register(new RecentlyBenchmarkedCommitsEndpoint(benchmarkAccess, linearLog));
-		environment.jersey().register(new RepoComparisonGraphEndpoint());
+		environment.jersey().register(
+			new RecentlyBenchmarkedCommitsEndpoint(benchmarkAccess, commitComparer, linearLog));
+		environment.jersey().register(
+			new RepoComparisonGraphEndpoint(commitAccess, repoAccess, reducedLog));
 		environment.jersey().register(new RepoEndpoint(repoAccess, tokenAccess));
 		environment.jersey().register(new TestTokenEndpoint(tokenAccess));
 	}
 
-	private void addDummyWorkRepo(RepoAccess repoAccess) {
-		boolean containsRepo = repoAccess.getAllRepos()
-			.stream()
-			.anyMatch(it -> it.getName().equals("test-work"));
-		if (containsRepo) {
-			return;
-		}
-		repoAccess.addRepo(
-			"test-work", new RemoteUrl("https://github.com/I-Al-Istannen/Configurator.git")
-		);
-		System.out.println("Added test-work repo!");
-	}
 }

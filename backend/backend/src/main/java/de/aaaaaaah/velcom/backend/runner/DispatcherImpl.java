@@ -7,43 +7,50 @@ import de.aaaaaaah.velcom.backend.access.benchmark.Run;
 import de.aaaaaaah.velcom.backend.access.benchmark.Unit;
 import de.aaaaaaah.velcom.backend.access.commit.Commit;
 import de.aaaaaaah.velcom.backend.access.commit.CommitHash;
-import de.aaaaaaah.velcom.backend.access.repo.Branch;
 import de.aaaaaaah.velcom.backend.access.repo.RepoAccess;
 import de.aaaaaaah.velcom.backend.access.repo.RepoId;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.runner.single.ActiveRunnerInformation;
 import de.aaaaaaah.velcom.runner.shared.RunnerStatusEnum;
+import de.aaaaaaah.velcom.runner.shared.protocol.StatusCodeMappings;
 import de.aaaaaaah.velcom.runner.shared.protocol.runnerbound.entities.RunnerWorkOrder;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkResults;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkResults.Benchmark;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkResults.Metric;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.RunnerInformation;
 import java.io.IOException;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The main dispatcher routine.
  */
 public class DispatcherImpl implements Dispatcher {
 
-	// TODO: 12.01.20 Put commit back when runner crashes (ping failure) 
+	private static final Logger LOGGER = LoggerFactory.getLogger(DispatcherImpl.class);
+
+	// TODO: 14.01.20 Remove runner directly if it disconnects cleanly?
 
 	private final Collection<ActiveRunnerInformation> activeRunners;
 	private final Queue queue;
 	private final RepoAccess repoAccess;
 	private final BenchmarkAccess benchmarkAccess;
+	private final Duration allowedRunnerDisconnectTime;
 	private final java.util.Queue<ActiveRunnerInformation> freeRunners;
-	private final ExecutorService dispatcherWorkerPool;
+	private final ScheduledExecutorService watchdogPool;
 
 	/**
 	 * Creates a new dispatcher.
@@ -51,18 +58,47 @@ public class DispatcherImpl implements Dispatcher {
 	 * @param queue the queue to register to
 	 * @param repoAccess the repo access to use for fetching repositories
 	 * @param benchmarkAccess the benchmark access to store results in
+	 * @param allowedRunnerDisconnectTime the duration runners might be disconnected for before
+	 * 	they are given up on (removed and commit rescheduled)
 	 */
-	public DispatcherImpl(Queue queue, RepoAccess repoAccess, BenchmarkAccess benchmarkAccess) {
+	public DispatcherImpl(Queue queue, RepoAccess repoAccess, BenchmarkAccess benchmarkAccess,
+		Duration allowedRunnerDisconnectTime) {
 		this.queue = queue;
 		this.repoAccess = repoAccess;
 		this.benchmarkAccess = benchmarkAccess;
+		this.allowedRunnerDisconnectTime = allowedRunnerDisconnectTime;
 		this.activeRunners = Collections.newSetFromMap(new ConcurrentHashMap<>());
 		this.freeRunners = new LinkedBlockingDeque<>();
-		// TODO: 12.01.20 cached? Fixed size?
-		this.dispatcherWorkerPool = Executors.newFixedThreadPool(5);
+		this.watchdogPool = Executors.newSingleThreadScheduledExecutor();
 
 		queue.onSomethingAborted(task -> abort(task.getSecond(), task.getFirst()));
-		queue.onSomethingAdded(task -> dispatcherWorkerPool.submit(this::updateDispatching));
+		queue.onSomethingAdded(it -> updateDispatching());
+
+		watchdogPool.scheduleAtFixedRate(
+			this::cleanupCrashedRunners,
+			Math.max(allowedRunnerDisconnectTime.toSeconds() / 4, 1),
+			Math.max(allowedRunnerDisconnectTime.toSeconds() / 4, 1),
+			TimeUnit.SECONDS
+		);
+	}
+
+	private void cleanupCrashedRunners() {
+		for (ActiveRunnerInformation runner : activeRunners) {
+			if (runner.getState() != RunnerStatusEnum.DISCONNECTED) {
+				continue;
+			}
+			Duration timeSinceLastMessage = Duration.between(
+				runner.getLastReceivedMessage(),
+				Instant.now()
+			);
+			if (timeSinceLastMessage.compareTo(allowedRunnerDisconnectTime) > 0) {
+				LOGGER.info(
+					"Kicking inactive runner (Time since last message: {}) with information {}",
+					timeSinceLastMessage, runner.getRunnerInformation()
+				);
+				removeRunner(runner).ifPresent(queue::addCommit);
+			}
+		}
 	}
 
 	@Override
@@ -71,28 +107,32 @@ public class DispatcherImpl implements Dispatcher {
 
 		AtomicBoolean initialConnect = new AtomicBoolean(true);
 
-		runnerInformation.addStatusListener(status -> {
-			// Runner reconnected while working
-			if (initialConnect.getAndSet(false) && status == RunnerStatusEnum.WORKING) {
-				// It should not be doing anything right now!
-				if (lastCommit.isEmpty()) {
-					resetRunner(runnerInformation);
-				}
-			}
+		runnerInformation.setOnRunnerInformation(newInformation -> {
+			boolean isWorking = newInformation.getRunnerState() == RunnerStatusEnum.WORKING;
 
-			// TODO: 12.01.20 What to do with disconnected runners?
-			// This listener here might be called from the websocket listener's
-			// setState method if the connection is closed in onError while it is writing.
-			if (status == RunnerStatusEnum.IDLE) {
-				freeRunners.add(runnerInformation);
-				dispatcherWorkerPool.submit(this::updateDispatching);
+			// the initialConnect is not needed atm, as the information is only transmitted at
+			// startup. But that might change in the future and people will not look in this class
+			// to fix it.
+			if (initialConnect.getAndSet(false) && isWorking && lastCommit.isEmpty()) {
+				resetRunner(runnerInformation);
+			}
+			LOGGER.info("Finished adding a runner {}.", newInformation);
+		});
+		runnerInformation.setOnIdle(() -> {
+			freeRunners.add(runnerInformation);
+			updateDispatching();
+		});
+		runnerInformation.setOnDisconnected(value -> {
+			if (value == StatusCodeMappings.CLIENT_ORDERLY_DISCONNECT) {
+				LOGGER.debug("Runner exited properly. Removing it without grace period.");
+				removeRunner(runnerInformation).ifPresent(queue::addCommit);
 			}
 		});
-		runnerInformation.addResultListener(
+		runnerInformation.setResultListener(
 			results -> this.onResultsReceived(runnerInformation, results)
 		);
 		activeRunners.add(runnerInformation);
-		System.out.println("Added a runner " + runnerInformation);
+		LOGGER.debug("Added a runner {}", runnerInformation);
 	}
 
 	/**
@@ -109,7 +149,8 @@ public class DispatcherImpl implements Dispatcher {
 			return Optional.empty();
 		}
 		String name = activeRunner.getRunnerInformation().get().getName();
-		System.out.println("Removing runner with name " + name);
+		LOGGER.info("Removing running '{}'", name);
+
 		List<ActiveRunnerInformation> matchingRunners = activeRunners.stream()
 			.filter(runner ->
 				runner.getRunnerInformation()
@@ -136,7 +177,8 @@ public class DispatcherImpl implements Dispatcher {
 
 	@Override
 	public boolean abort(CommitHash commitHash, RepoId repoId) {
-		System.out.println("Aborting " + commitHash + " " + repoId);
+		LOGGER.debug("Aborting commit {} for repo {}!", commitHash, repoId);
+
 		for (ActiveRunnerInformation runner : activeRunners) {
 			Optional<Commit> currentCommit = runner.getCurrentCommit();
 			if (currentCommit.isEmpty()) {
@@ -148,11 +190,13 @@ public class DispatcherImpl implements Dispatcher {
 			if (!currentCommit.get().getRepoId().equals(repoId)) {
 				continue;
 			}
-			System.out.println("Found a runner for it!");
+			LOGGER.debug(
+				"Aborting {} for repo {} on runner {}",
+				commitHash, repoId, runner.getRunnerInformation()
+			);
 			if (runner.getState() == RunnerStatusEnum.WORKING) {
 				resetRunner(runner);
 			}
-			runner.setCurrentCommit(null);
 			return true;
 		}
 		return false;
@@ -170,40 +214,28 @@ public class DispatcherImpl implements Dispatcher {
 	}
 
 	private void updateDispatching() {
-		System.out.println("\n\nUpdating dispatching with runners:");
-		for (ActiveRunnerInformation runner : freeRunners) {
-			System.out.println("\t" + runner);
-		}
+		LOGGER.debug("Updating dispatching with {} free runners", freeRunners.size());
 
 		while (!freeRunners.isEmpty()) {
 			ActiveRunnerInformation runner = freeRunners.poll();
 			Optional<Commit> nextTask = queue.getNextTask();
 			if (nextTask.isEmpty()) {
-				nextTask = repoAccess.getAllRepos().stream()
-					.filter(it -> it.getName().equals("test-work"))
-					.findFirst()
-					.flatMap(it -> it.getBranches()
-						.stream()
-						.filter(b -> b.getName().getName().endsWith("master"))
-						.findFirst()
-					)
-					.map(Branch::getCommit);
-				// TODO: 12.01.20 Replace this with the following line
-				// return;
+				return;
 			}
+
 			Commit commitToBenchmark = nextTask.get();
 			if (!dispatchCommit(runner, commitToBenchmark)) {
-				// TODO: 12.01.20 Re-Add it to queue
+				queue.addCommit(commitToBenchmark);
 			}
 		}
 	}
 
 
 	private void resetRunner(ActiveRunnerInformation runner) {
-		System.out.println("Resetting runner " + runner);
+		LOGGER.debug("Resetting runner {}", runner.getRunnerInformation());
+
 		try {
 			runner.getRunnerStateMachine().resetRunner("Abort requested");
-			runner.setCurrentCommit(null);
 		} catch (IOException e) {
 			e.printStackTrace();
 			// It is already disconnected, so force it now
@@ -212,7 +244,7 @@ public class DispatcherImpl implements Dispatcher {
 	}
 
 	private void onResultsReceived(ActiveRunnerInformation runner, BenchmarkResults results) {
-		System.out.println("Got work " + results + " from " + runner);
+		LOGGER.debug("Received runner results from {}", runner.getRunnerInformation());
 
 		RepoId repoId = new RepoId(results.getWorkOrder().getRepoId());
 		CommitHash commitHash = new CommitHash(results.getWorkOrder().getCommitHash());
@@ -269,8 +301,10 @@ public class DispatcherImpl implements Dispatcher {
 	 * @return true if the commit was dispatched, false otherwise
 	 */
 	private boolean dispatchCommit(ActiveRunnerInformation runner, Commit commit) {
+		LOGGER.info("Dispatching {} on {}", commit, runner.getRunnerInformation());
+
 		if (runner.getRunnerInformation().isEmpty()) {
-			System.err.println("Did not get any information about an active runner!");
+			LOGGER.warn("Tried to dispatch a commit to a runner without information! ({})", commit);
 			runner.getConnectionManager().disconnect();
 			return false;
 		}
@@ -301,7 +335,7 @@ public class DispatcherImpl implements Dispatcher {
 			);
 			return true;
 		} catch (IOException e) {
-			System.err.println("Dispatching commit not possible :/ " + e.getMessage());
+			LOGGER.debug("Dispatching commit not possible", e);
 			return false;
 		}
 	}

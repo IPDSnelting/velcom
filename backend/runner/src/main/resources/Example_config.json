@@ -1,0 +1,10 @@
+{
+  "_comment": {
+    "runnerName": "The name of the runner. Must be unique.",
+    "runnerToken": "The access token used to authenticate runners with the server",
+    "serverUrl": "The url of the server. Must be of the form 'ws://<server>[:<port>]/runner-connector'"
+  },
+  "runnerName": "Test runner",
+  "runnerToken": "Correct-Horse_Battery Staple",
+  "serverUrl": "ws://localhost:3546/runner-connector"
+}

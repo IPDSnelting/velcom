@@ -4,30 +4,30 @@ import de.aaaaaaah.velcom.backend.runner.single.ActiveRunnerInformation;
 import de.aaaaaaah.velcom.runner.shared.RunnerStatusEnum;
 import de.aaaaaaah.velcom.runner.shared.protocol.SentEntity;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkResults;
-import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.RunnerInformation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The runner is currently idle or getting work.
  */
 public class RunnerIdleState implements RunnerState {
 
+	private static final Logger LOGGER = LoggerFactory.getLogger(RunnerWorkingState.class);
+
+	@Override
+	public RunnerStatusEnum getStatus() {
+		return RunnerStatusEnum.IDLE;
+	}
+
 	@Override
 	public void onSelected(ActiveRunnerInformation information) {
-		information.setState(RunnerStatusEnum.IDLE);
+		information.setIdle();
 	}
 
 	@Override
 	public RunnerState onMessage(String type, SentEntity entity,
 		ActiveRunnerInformation information) {
 		switch (type) {
-			case "RunnerInformation":
-				RunnerInformation runnerInformation = (RunnerInformation) entity;
-				information.setRunnerInformation(runnerInformation);
-				information.setState(runnerInformation.getRunnerState());
-				if (runnerInformation.getRunnerState() == RunnerStatusEnum.WORKING) {
-					return new RunnerWorkingState();
-				}
-				return this;
 			case "WorkReceived":
 				return new RunnerWorkingState();
 			case "BenchmarkResults":
@@ -35,7 +35,11 @@ public class RunnerIdleState implements RunnerState {
 					.onWorkDone((BenchmarkResults) entity);
 				return this;
 			default:
-				System.err.println("Unknown message received: " + type + " " + entity);
+				LOGGER.info(
+					"Runner sent invalid message of type {} with data {}, kicking {}",
+					type, entity, information.getRunnerInformation()
+				);
+				information.getConnectionManager().disconnect();
 				return this;
 		}
 

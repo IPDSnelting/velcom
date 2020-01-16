@@ -3,11 +3,15 @@ package de.aaaaaaah.velcom.runner.shared.protocol;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.atomic.AtomicReference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Sends and receives heartbeats, calling a timeout handler if appropriate.
  */
 public class HeartbeatHandler {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(HeartbeatHandler.class);
 
 	private static final int TIMEOUT_SECONDS = 20;
 
@@ -32,9 +36,9 @@ public class HeartbeatHandler {
 				if (!run) {
 					break;
 				}
-				System.out.println("Sending ping...");
+				LOGGER.debug("Sending ping!");
 				if (!socketConnection.sendPing()) {
-					System.out.println("Sending failed!");
+					LOGGER.warn("Ping to runner/server failed!");
 					continue;
 				}
 				long secondsSinceLastPing = Duration.between(lastTime.get(), Instant.now())
@@ -52,7 +56,7 @@ public class HeartbeatHandler {
 	 * Should be called when a pong was received.
 	 */
 	public void onPong() {
-		System.out.println("Got pong!");
+		LOGGER.debug("Got pong!");
 		lastTime.set(Instant.now());
 	}
 

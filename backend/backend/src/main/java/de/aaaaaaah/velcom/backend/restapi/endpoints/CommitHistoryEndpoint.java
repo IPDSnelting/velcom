@@ -1,5 +1,6 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
+import de.aaaaaaah.velcom.backend.access.commit.Commit;
 import de.aaaaaaah.velcom.backend.access.repo.Repo;
 import de.aaaaaaah.velcom.backend.access.repo.RepoAccess;
 import de.aaaaaaah.velcom.backend.access.repo.RepoId;
@@ -9,6 +10,7 @@ import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonCommit;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.DefaultValue;
@@ -54,13 +56,15 @@ public class CommitHistoryEndpoint {
 		throws LinearLogException {
 
 		Repo repo = repoAccess.getRepo(new RepoId(repoUuid));
-		List<JsonCommit> commits = linearLog.walkBranches(repo, repo.getTrackedBranches())
-			.skip(skip)
-			.limit(amount)
-			.map(JsonCommit::new)
-			.collect(Collectors.toUnmodifiableList());
 
-		return new GetReply(commits);
+		try (Stream<Commit> stream = linearLog.walkBranches(repo, repo.getTrackedBranches())) {
+			List<JsonCommit> commits = stream.skip(skip)
+				.limit(amount)
+				.map(JsonCommit::new)
+				.collect(Collectors.toUnmodifiableList());
+
+			return new GetReply(commits);
+		}
 	}
 
 	private static class GetReply {

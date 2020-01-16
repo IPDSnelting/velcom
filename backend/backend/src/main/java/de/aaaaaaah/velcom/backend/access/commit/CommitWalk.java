@@ -41,8 +41,9 @@ public class CommitWalk implements AutoCloseable {
 	 *
 	 * @param child the child commit whose parents are loaded
 	 * @return a collection of parent commits of the specified child commit
+	 * @throws IOException if an exception occurs trying to load the parents
 	 */
-	Collection<Commit> getParents(Commit child) throws IOException {
+	public Collection<Commit> getParents(Commit child) throws IOException {
 		Collection<CommitHash> parentHashes = child.getParentHashes();
 		Collection<Commit> parents = new ArrayList<>(parentHashes.size());
 

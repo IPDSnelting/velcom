@@ -2,10 +2,10 @@ package de.aaaaaaah.velcom.backend.runner.single.protocol;
 
 import de.aaaaaaah.velcom.backend.runner.single.ActiveRunnerInformation;
 import de.aaaaaaah.velcom.backend.runner.single.RunnerConnectionManager;
-import de.aaaaaaah.velcom.runner.shared.RunnerStatusEnum;
 import de.aaaaaaah.velcom.runner.shared.protocol.HeartbeatHandler;
 import de.aaaaaaah.velcom.runner.shared.protocol.HeartbeatHandler.HeartbeatWebsocket;
 import de.aaaaaaah.velcom.runner.shared.protocol.SentEntity;
+import de.aaaaaaah.velcom.runner.shared.protocol.StatusCodeMappings;
 import de.aaaaaaah.velcom.runner.shared.protocol.serialization.Serializer;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkResults;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.RunnerInformation;
@@ -13,13 +13,14 @@ import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.WorkReceiv
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
+import java.time.Instant;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.WebSocketFrameListener;
 import org.eclipse.jetty.websocket.api.WebSocketListener;
 import org.eclipse.jetty.websocket.api.extensions.Frame;
 import org.eclipse.jetty.websocket.api.extensions.Frame.Type;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Listens to websocket messages from the runner and keeps the connection alive.
@@ -27,11 +28,13 @@ import org.eclipse.jetty.websocket.api.extensions.Frame.Type;
 public class RunnerServerWebsocketListener implements WebSocketListener, WebSocketFrameListener,
 	HeartbeatWebsocket, RunnerConnectionManager {
 
+	private static final Logger LOGGER = LoggerFactory.getLogger(
+		RunnerServerWebsocketListener.class);
+
 	private HeartbeatHandler heartbeatHandler;
 	private Session session;
 	private ActiveRunnerInformation runnerInformation;
 	private Serializer serializer;
-	private List<ConnectionStateListener> connectionStateListener;
 
 	/**
 	 * Creates a new websocket listener.
@@ -41,7 +44,6 @@ public class RunnerServerWebsocketListener implements WebSocketListener, WebSock
 	public RunnerServerWebsocketListener(Serializer serializer) {
 		this.serializer = serializer;
 		this.heartbeatHandler = new HeartbeatHandler(this);
-		this.connectionStateListener = new ArrayList<>();
 	}
 
 	/**
@@ -55,11 +57,16 @@ public class RunnerServerWebsocketListener implements WebSocketListener, WebSock
 
 	@Override
 	public void onWebSocketBinary(byte[] payload, int offset, int len) {
-		System.err.println("Received a binary transmission");
+		LOGGER.warn(
+			"Runner sent us a binary transmission, kicking it! [{}]",
+			runnerInformation.getRunnerInformation()
+		);
+		disconnect();
 	}
 
 	@Override
 	public void onWebSocketText(String message) {
+		runnerInformation.setLastReceivedMessage(Instant.now());
 		SentEntity entity;
 		String type = serializer.peekType(message);
 		switch (type) {
@@ -73,7 +80,10 @@ public class RunnerServerWebsocketListener implements WebSocketListener, WebSock
 				entity = serializer.deserialize(message, RunnerInformation.class);
 				break;
 			default:
-				System.err.println("Unknwon type received: " + message);
+				LOGGER.warn(
+					"Runner send an invalid packet type ({}) from {}",
+					type, runnerInformation.getRunnerInformation()
+				);
 				return;
 		}
 		runnerInformation.getRunnerStateMachine().onMessageReceived(type, entity);
@@ -81,17 +91,18 @@ public class RunnerServerWebsocketListener implements WebSocketListener, WebSock
 
 	@Override
 	public void onWebSocketClose(int statusCode, String reason) {
-		System.out.println("Closing: statusCode = " + statusCode + ", reason = " + reason);
+		LOGGER.info(
+			"Closed connection with {} - {} for {}",
+			statusCode, reason, runnerInformation.getRunnerInformation()
+		);
 		heartbeatHandler.shutdown();
-		connectionStateListener.forEach(it -> it.onStateChanged(ConnectionState.DISCONNECTED));
-		runnerInformation.setState(RunnerStatusEnum.DISCONNECTED);
+		runnerInformation.setDisconnected(statusCode);
 	}
 
 	@Override
 	public void onWebSocketConnect(Session session) {
 		this.session = session;
 		this.runnerInformation.getRunnerStateMachine().onConnectionOpened(runnerInformation);
-		this.connectionStateListener.forEach(it -> it.onStateChanged(ConnectionState.CONNECTED));
 	}
 
 	@Override
@@ -102,7 +113,7 @@ public class RunnerServerWebsocketListener implements WebSocketListener, WebSock
 
 	@Override
 	public void onTimeoutDetected() {
-		System.out.println("Timeout detected :(");
+		LOGGER.info("Runner timed out [{}]", runnerInformation.getRunnerInformation());
 		disconnect();
 	}
 
@@ -123,6 +134,7 @@ public class RunnerServerWebsocketListener implements WebSocketListener, WebSock
 	public void onWebSocketFrame(Frame frame) {
 		if (frame.getType() == Type.PONG) {
 			heartbeatHandler.onPong();
+			runnerInformation.setLastReceivedMessage(Instant.now());
 		}
 	}
 
@@ -141,23 +153,12 @@ public class RunnerServerWebsocketListener implements WebSocketListener, WebSock
 		return ProtocolHelper.createBinaryOutputStream(session);
 	}
 
-	@Override
-	public void addConnectionStateListener(ConnectionStateListener listener) {
-		connectionStateListener.add(listener);
-	}
-
-	@Override
-	public void removeConnectionStateListener(ConnectionStateListener listener) {
-		connectionStateListener.remove(listener);
-	}
-
 	private void disconnectImpl() {
 		if (session != null && session.isOpen()) {
 			// calls onClose which can call the state listeners
-			session.close(4002, "Server initiated close");
+			session.close(StatusCodeMappings.SERVER_INITIATED_DISCONNECT, "Server initiated close");
 		} else {
-			connectionStateListener.forEach(it -> it.onStateChanged(ConnectionState.DISCONNECTED));
-			runnerInformation.setState(RunnerStatusEnum.DISCONNECTED);
+			runnerInformation.setDisconnected(StatusCodeMappings.SERVER_INITIATED_DISCONNECT);
 		}
 		if (heartbeatHandler != null) {
 			heartbeatHandler.shutdown();

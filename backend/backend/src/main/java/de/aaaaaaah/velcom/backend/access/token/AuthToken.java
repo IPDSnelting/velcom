@@ -27,6 +27,7 @@ public class AuthToken {
 
 	@Override
 	public String toString() {
+		// TODO maybe censor the token itself so it doesn't appear in the logs
 		return "AuthToken{" +
 			"token='" + token + '\'' +
 			'}';

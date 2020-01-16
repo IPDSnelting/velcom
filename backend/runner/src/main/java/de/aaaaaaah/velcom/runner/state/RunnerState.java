@@ -1,6 +1,7 @@
 package de.aaaaaaah.velcom.runner.state;
 
 import de.aaaaaaah.velcom.runner.entity.RunnerConfiguration;
+import de.aaaaaaah.velcom.runner.shared.RunnerStatusEnum;
 import de.aaaaaaah.velcom.runner.shared.protocol.runnerbound.entities.RunnerWorkOrder;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -11,16 +12,9 @@ import java.nio.file.Path;
 public interface RunnerState {
 
 	/**
-	 * Called when this stage is selected.
-	 *
-	 * @param configuration the runner configuration
-	 * @return the new state. If this returns this, onSelected will	not be called
-	 * @throws IOException if an error occurs
-	 * @implNote The default implementation returns this.
+	 * @return the status of the runner if it is in that state
 	 */
-	default RunnerState onSelected(RunnerConfiguration configuration) throws IOException {
-		return this;
-	}
+	RunnerStatusEnum getStatus();
 
 	/**
 	 * Called with the saved path when a file was received.
@@ -49,27 +43,5 @@ public interface RunnerState {
 	default RunnerState onWorkArrived(RunnerWorkOrder workOrder, RunnerConfiguration configuration)
 		throws IOException {
 		return this;
-	}
-
-	/**
-	 * The different states the runner can be in.
-	 */
-	enum State {
-		/**
-		 * The runner is initializing itself and or the connection to the remote server.
-		 */
-		INITIALIZING,
-		/**
-		 * The runner is connected and ready to serve requests.
-		 */
-		IDLE,
-		/**
-		 * The runner is waiting for a work binary.
-		 */
-		WAITING_FOR_WORK_BINARY,
-		/**
-		 * The runner is executing the sent work.
-		 */
-		EXECUTING
 	}
 }

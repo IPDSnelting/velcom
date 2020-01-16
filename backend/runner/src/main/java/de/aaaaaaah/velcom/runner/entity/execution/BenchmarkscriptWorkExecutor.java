@@ -1,9 +1,5 @@
 package de.aaaaaaah.velcom.runner.entity.execution;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategy;
-import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import de.aaaaaaah.velcom.runner.entity.BenchmarkRepoOrganizer;
 import de.aaaaaaah.velcom.runner.entity.RunnerConfiguration;
 import de.aaaaaaah.velcom.runner.entity.WorkExecutor;
@@ -22,21 +18,21 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Executes work based on the benchmark script specification.
  */
 public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 
+	private static final Logger LOGGER = LoggerFactory.getLogger(BenchmarkscriptWorkExecutor.class);
+
 	private final BenchmarkScriptOutputParser benchmarkScriptOutputParser;
 	private Future<ProgramResult> programResult;
-	private final ObjectMapper objectMapper;
 
 	public BenchmarkscriptWorkExecutor() {
 		benchmarkScriptOutputParser = new BenchmarkScriptOutputParser();
-		objectMapper = new ObjectMapper()
-			.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE)
-			.registerModule(new ParameterNamesModule());
 	}
 
 	@Override
@@ -52,6 +48,9 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 		Instant startTime = Instant.now();
 
 		try (var execEnv = new ExecutionEnv(workPath, configuration.getBenchmarkRepoOrganizer())) {
+			// Delay a bit for testing
+			Thread.sleep(5000);
+
 			programResult = new ProgramExecutor().execute(
 				execEnv.getExecutablePath().toAbsolutePath().toString(),
 				execEnv.unpack(workOrder).toAbsolutePath().toString()
@@ -65,9 +64,9 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 					new BenchmarkResults(
 						workOrder,
 						"Non-zero exit code: " + result.getExitCode()
-							+ "\nOutput       : " + result.getStdOut()
-							+ "\nError Output : " + result.getStdErr()
-							+ "\nRan for      : " + result.getRuntime(),
+							+ "\n\nOutput       : " + result.getStdOut()
+							+ "\n\nError Output : " + result.getStdErr()
+							+ "\n\nRan for      : " + result.getRuntime(),
 						startTime,
 						endTime
 					),
@@ -76,9 +75,7 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 				return;
 			}
 
-			JsonNode resultTree = objectMapper.readTree(result.getStdOut());
-
-			BareResult bareResult = benchmarkScriptOutputParser.parse(resultTree);
+			BareResult bareResult = benchmarkScriptOutputParser.parse(result.getStdOut());
 
 			BenchmarkResults results = new BenchmarkResults(
 				workOrder,
@@ -87,15 +84,10 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 				startTime, endTime
 			);
 
-			// Delay a bit for testing
-			Thread.sleep(5000);
-
 			configuration.getRunnerStateMachine().onWorkDone(results, configuration);
 		} catch (IOException | ExecutionException | InterruptedException e) {
-			System.err.println("Error executing some work (" + workOrder + ")");
-			System.err.println("Message is: " + e.getMessage());
-			System.err.println("Stacktrace:");
-			e.printStackTrace();
+			LOGGER.info("Error executing some work for {}", workOrder);
+			LOGGER.info("Stacktrace:", e);
 			configuration.getRunnerStateMachine().onWorkDone(
 				new BenchmarkResults(workOrder, ExceptionHelper.getStackTrace(e),
 					startTime,
@@ -104,8 +96,7 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 				configuration
 			);
 		} catch (OutputParseException e) {
-			System.err.println("Benchmark script returned invalid data: " + e.getMessage());
-			e.printStackTrace();
+			LOGGER.info("Benchmark script returned invalid data: '{}'", e.getMessage());
 			configuration.getRunnerStateMachine().onWorkDone(
 				new BenchmarkResults(
 					workOrder,

@@ -6,7 +6,7 @@ import de.aaaaaaah.velcom.backend.runner.single.ActiveRunnerInformation;
 import java.util.List;
 
 /**
- * The dispatcher.
+ * The dispatcher that distributes commits to runners.
  */
 public interface Dispatcher {
 

@@ -1,6 +1,9 @@
 package de.aaaaaaah.velcom.runner.cli;
 
-import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.function.Function;
 import net.jbock.Command;
 import net.jbock.Param;
 
@@ -14,20 +17,35 @@ import net.jbock.Param;
 public abstract class RunnerCliSpec {
 
 	/**
-	 * The name of the runner
+	 * The location to the config file
 	 */
-	@Param(value = 1)
-	public abstract String runnerName();
+	@Param(value = 1, mappedBy = ConfigFilePathMapper.class)
+	public abstract Path configFileLocation();
 
 	/**
-	 * The access token to use
+	 * A mapper for the config file location.
 	 */
-	@Param(value = 2)
-	public abstract String accessToken();
+	public static class ConfigFilePathMapper implements Function<String, Path> {
 
-	/**
-	 * The URL of the server to connect to
-	 */
-	@Param(value = 3)
-	public abstract URI serverUrl();
+		@Override
+		public Path apply(String name) {
+			Path path = Paths.get(name);
+			if (Files.notExists(path)) {
+				throw new IllegalArgumentException(
+					"The given path (" + path.toAbsolutePath() + ") does not exist!"
+				);
+			}
+			if (!Files.isRegularFile(path)) {
+				throw new IllegalArgumentException(
+					"The given path (" + path.toAbsolutePath() + ") is no regular file!"
+				);
+			}
+			if (!Files.isReadable(path)) {
+				throw new IllegalArgumentException(
+					"The given path (" + path.toAbsolutePath() + ") is not readable by me!"
+				);
+			}
+			return path.toAbsolutePath();
+		}
+	}
 }

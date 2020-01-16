@@ -2,13 +2,21 @@ package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import de.aaaaaaah.velcom.backend.access.benchmark.MeasurementName;
+import de.aaaaaaah.velcom.backend.access.commit.Commit;
+import de.aaaaaaah.velcom.backend.access.commit.CommitAccess;
+import de.aaaaaaah.velcom.backend.access.repo.RepoAccess;
+import de.aaaaaaah.velcom.backend.access.repo.RepoId;
+import de.aaaaaaah.velcom.backend.data.reducedlog.ReducedLog;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRepo;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRun;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
@@ -25,6 +33,18 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 public class RepoComparisonGraphEndpoint {
 
+	private final CommitAccess commitAccess;
+	private final RepoAccess repoAccess;
+	private final ReducedLog reducedLog;
+
+	public RepoComparisonGraphEndpoint(CommitAccess commitAccess, RepoAccess repoAccess,
+		ReducedLog reducedLog) {
+
+		this.commitAccess = commitAccess;
+		this.repoAccess = repoAccess;
+		this.reducedLog = reducedLog;
+	}
+
 	/**
 	 * Returns all measurements that are needed to build a repository comparison graph between the
 	 * given time intervals and repositories.
@@ -34,7 +54,33 @@ public class RepoComparisonGraphEndpoint {
 	 */
 	@POST
 	public PostReply post(@NotNull PostRequest request) {
-		return null;
+		@Nullable Instant startTime = request.getStartTime()
+			.map(Instant::ofEpochSecond)
+			.orElse(null);
+		@Nullable Instant stopTime = request.getStopTime().
+			map(Instant::ofEpochSecond).
+			orElse(null);
+		MeasurementName measurementName = new MeasurementName(request.getBenchmark(),
+			request.getMetric());
+
+		final List<RepoInfo> repoInfos = request.getRepos().stream()
+			.map(branchSpec -> {
+				final RepoId repoId = new RepoId(branchSpec.getRepoId());
+				final JsonRepo repo = new JsonRepo(repoAccess.getRepo(repoId));
+
+				final Collection<Commit> commits = commitAccess.getCommitsBetween(repoId,
+					branchSpec.getBranches(), startTime, stopTime);
+
+				final List<JsonRun> reducedRuns = reducedLog.reduce(commits, measurementName)
+					.stream()
+					.map(JsonRun::new)
+					.collect(Collectors.toUnmodifiableList());
+
+				return new RepoInfo(repo, reducedRuns);
+			})
+			.collect(Collectors.toUnmodifiableList());
+
+		return new PostReply(repoInfos);
 	}
 
 	private static class PostRequest {
@@ -44,30 +90,42 @@ public class RepoComparisonGraphEndpoint {
 		private final Long startTime;
 		@Nullable
 		private final Long stopTime;
+		private final String benchmark;
+		private final String metric;
 
 		@JsonCreator
 		public PostRequest(
 			@JsonProperty(value = "repos", required = true) Collection<BranchSpec> repos,
 			@Nullable @JsonProperty("start_time") Long startTime,
-			@Nullable @JsonProperty("stop_time") Long stopTime) {
+			@Nullable @JsonProperty("stop_time") Long stopTime,
+			@JsonProperty("benchmark") String benchmark,
+			@JsonProperty("metric") String metric) {
 
 			this.repos = Objects.requireNonNull(repos);
 			this.startTime = startTime;
 			this.stopTime = stopTime;
+			this.benchmark = benchmark;
+			this.metric = metric;
 		}
 
 		public Collection<BranchSpec> getRepos() {
 			return repos;
 		}
 
-		@Nullable
 		public Optional<Long> getStartTime() {
 			return Optional.ofNullable(startTime);
 		}
 
-		@Nullable
 		public Optional<Long> getStopTime() {
 			return Optional.ofNullable(stopTime);
+		}
+
+		public String getBenchmark() {
+			return benchmark;
+		}
+
+		public String getMetric() {
+			return metric;
 		}
 	}
 

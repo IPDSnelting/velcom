@@ -7,12 +7,17 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Tries to reestablish a connection if the connection is lost.
  */
 public class ReestablishConnectionListener implements
 	SocketConnectionManager.ConnectionStateListener {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(
+		ReestablishConnectionListener.class);
 
 	private ScheduledExecutorService scheduler;
 	private SocketConnectionManager connectionManager;
@@ -75,14 +80,21 @@ public class ReestablishConnectionListener implements
 			nextCheckTime = Instant.now().plusSeconds(getSleepTime());
 
 			long sleepTime = getSleepTime();
-			System.out.println("Trying to reconnect in " + sleepTime + "s");
-			scheduledFuture = scheduler.schedule(() -> this.reconnect(currentBackoffTry), sleepTime,
-				TimeUnit.SECONDS);
+			LOGGER.info("Trying to reconnect in {}s", sleepTime);
+			scheduledFuture = scheduler.schedule(
+				() -> this.reconnect(currentBackoffTry),
+				sleepTime,
+				TimeUnit.SECONDS
+			);
 		}
 	}
 
+	/**
+	 * @return the time in seconds to sleep before reconnecting
+	 */
 	private long getSleepTime() {
-		return (long) Math.exp(currentBackoffTry);
+		// TODO: 14.01.20 One minute too low? 
+		return Math.min((long) Math.exp(currentBackoffTry), TimeUnit.MINUTES.toSeconds(1));
 	}
 
 	/**

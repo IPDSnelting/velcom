@@ -1,6 +1,7 @@
 package de.aaaaaaah.velcom.backend.data.reducedlog;
 
 import de.aaaaaaah.velcom.backend.access.benchmark.MeasurementName;
+import de.aaaaaaah.velcom.backend.access.benchmark.Run;
 import de.aaaaaaah.velcom.backend.access.commit.Commit;
 import java.util.Collection;
 import java.util.List;
@@ -19,5 +20,5 @@ public interface ReducedLog {
 	 * @param measurementName what measurement to use for linearizing
 	 * @return a linearized form of the input commits (not necessarily all of them though)
 	 */
-	List<Commit> reduce(Collection<Commit> commits, MeasurementName measurementName);
+	List<Run> reduce(Collection<Commit> commits, MeasurementName measurementName);
 }

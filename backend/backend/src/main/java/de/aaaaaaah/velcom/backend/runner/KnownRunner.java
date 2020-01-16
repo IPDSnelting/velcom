@@ -6,7 +6,7 @@ import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.RunnerInfo
 import java.util.Optional;
 
 /**
- * A runner the dispatcher knows.
+ * A runner the dispatcher knows something about.
  */
 public class KnownRunner {
 

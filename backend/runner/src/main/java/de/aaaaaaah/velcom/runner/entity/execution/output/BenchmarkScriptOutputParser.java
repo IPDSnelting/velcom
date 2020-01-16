@@ -1,7 +1,11 @@
 package de.aaaaaaah.velcom.runner.entity.execution.output;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkResults;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkResults.Benchmark;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkResults.Metric;
@@ -11,23 +15,37 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The pojo for the output of the benchmark script.
  */
 public class BenchmarkScriptOutputParser {
 
+	private static final Logger LOGGER = LoggerFactory.getLogger(BenchmarkScriptOutputParser.class);
+
+	private ObjectMapper objectMapper = new ObjectMapper()
+		.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE)
+		.registerModule(new ParameterNamesModule());
+
 	/**
 	 * Parses the benchmark output node to a {@link BenchmarkResults} object.
 	 *
-	 * @param root the root node of the script output
+	 * @param data the textual data
 	 * @return the parsed benchmark results
 	 * @throws OutputParseException if an error occurs
 	 */
-	public BareResult parse(JsonNode root)
-		throws OutputParseException {
-		System.err.println("Parsing: ");
-		System.err.println(root);
+	public BareResult parse(String data) throws OutputParseException {
+		LOGGER.debug("Parsing message '{}'", data);
+
+		JsonNode root;
+		try {
+			root = objectMapper.readTree(data);
+		} catch (JsonProcessingException e) {
+			throw new OutputParseException(e.getMessage(), e);
+		}
+
 		if (!root.isObject()) {
 			throw new OutputParseException("Root is no object");
 		}
@@ -116,7 +134,7 @@ public class BenchmarkScriptOutputParser {
 			JsonNode element = arrayNode.get(i);
 			if (!element.isNumber()) {
 				throw new OutputParseException(
-					"Exepected a number in: " + node + " at position " + i
+					"Expected a number in: " + node + " at position " + i
 				);
 			}
 			results.add(element.asDouble());

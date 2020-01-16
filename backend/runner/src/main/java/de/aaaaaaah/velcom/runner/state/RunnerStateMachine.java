@@ -1,28 +1,29 @@
 package de.aaaaaaah.velcom.runner.state;
 
 import de.aaaaaaah.velcom.runner.entity.RunnerConfiguration;
-import de.aaaaaaah.velcom.runner.shared.RunnerStatusEnum;
 import de.aaaaaaah.velcom.runner.shared.protocol.runnerbound.entities.RunnerWorkOrder;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkResults;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.RunnerInformation;
 import java.io.IOException;
 import java.nio.file.Path;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The main state machine for the runner.
  */
 public class RunnerStateMachine {
 
+	private static final Logger LOGGER = LoggerFactory.getLogger(RunnerStateMachine.class);
+
 	private RunnerState state;
 	private BenchmarkResults lastResults;
-	private RunnerStatusEnum currentState;
 
 	/**
 	 * Creates a new state machine.
 	 */
 	public RunnerStateMachine() {
 		this.state = new IdleState();
-		this.currentState = RunnerStatusEnum.IDLE;
 	}
 
 	/**
@@ -33,7 +34,7 @@ public class RunnerStateMachine {
 	public void onConnectionEstablished(RunnerConfiguration configuration) {
 		doWithErrorAndSwitch(
 			() -> {
-				System.out.println("Established with " + currentState);
+				LOGGER.info("Established connection with status {}", state.getStatus());
 				configuration.getConnectionManager().sendEntity(new RunnerInformation(
 					"Test name",
 					System.getProperty("os.name")
@@ -41,7 +42,7 @@ public class RunnerStateMachine {
 						+ " " + System.getProperty("os.version"),
 					Runtime.getRuntime().availableProcessors(),
 					Runtime.getRuntime().maxMemory(),
-					currentState,
+					state.getStatus(),
 					configuration.getBenchmarkRepoOrganizer().getHeadHash().orElse(null)
 				));
 				sendResultsIfAny(configuration);
@@ -49,16 +50,6 @@ public class RunnerStateMachine {
 			},
 			configuration
 		);
-	}
-
-	/**
-	 * Sets the current runner state enum.
-	 *
-	 * @param currentState the runner state e num
-	 */
-	public void setCurrentRunnerStateEnum(RunnerStatusEnum currentState) {
-		System.out.println("Set state from " + this.currentState + " to " + currentState);
-		this.currentState = currentState;
 	}
 
 	/**
@@ -97,7 +88,7 @@ public class RunnerStateMachine {
 	public void onResetRequested(String reason, RunnerConfiguration configuration) {
 		doWithErrorAndSwitch(
 			() -> {
-				System.out.println("Aborting due to " + reason + "...");
+				LOGGER.info("Aborting current benchmark ('{}')", reason);
 				configuration.getWorkExecutor().abortExecution();
 				return new IdleState();
 			},
@@ -135,7 +126,7 @@ public class RunnerStateMachine {
 
 	private void sendResultsIfAny(RunnerConfiguration configuration) throws IOException {
 		if (lastResults != null && configuration.getConnectionManager().isConnected()) {
-			System.out.println("Sending results...");
+			LOGGER.info("Sending results...");
 			configuration.getConnectionManager().sendEntity(lastResults);
 			lastResults = null;
 		}
@@ -145,9 +136,8 @@ public class RunnerStateMachine {
 		try {
 			RunnerState newState = action.run();
 			if (newState != state) {
-				System.out.println("Switching from " + state + " to " + newState);
+				LOGGER.debug("Switching from {} to {}", state, newState);
 				this.state = newState;
-				newState.onSelected(configuration);
 			}
 		} catch (IOException e) {
 			e.printStackTrace();

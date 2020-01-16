@@ -8,19 +8,29 @@ import de.aaaaaaah.velcom.backend.access.benchmark.MeasurementName;
 public class CommitDifference {
 
 	private final MeasurementName measurementName;
-	private final double difference;
+	private final double first;
+	private final double second;
 
-	public CommitDifference(MeasurementName measurementName, double difference) {
+	CommitDifference(MeasurementName measurementName, double first, double second) {
 		this.measurementName = measurementName;
-		this.difference = difference;
+		this.first = first;
+		this.second = second;
 	}
 
 	public MeasurementName getMeasurementName() {
 		return measurementName;
 	}
 
+	public double getFirst() {
+		return first;
+	}
+
+	public double getSecond() {
+		return second;
+	}
+
 	public double getDifference() {
-		return difference;
+		return second - first;
 	}
 
 }

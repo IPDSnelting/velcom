@@ -21,6 +21,9 @@ import java.util.function.Consumer;
  * benchmarked as well as the manual commits need to be added one by one again. The queue does
  * <em>>not</em> do this itself.
  *
+ * <p> All publicly available functions in the queue are synchronized, which should make the queue
+ * threadsafe to use.
+ *
  * <p> The policy must follow these rules:
  * <ul>
  *     <li>There is always at most one task per commit.</li>
@@ -46,29 +49,47 @@ public class Queue {
 	}
 
 	/**
-	 * Add a new task to the queue.
+	 * Add a new non-manual task to the queue. This ignores and overwrites any existing {@link
+	 * BenchmarkStatus}.
 	 *
 	 * @param commit the commit that should be added as task
 	 */
-	public void addTask(Commit commit) {
+	public synchronized void addTask(Commit commit) {
 		queuePolicy.addTask(commit);
 		callAllAddedListeners(commit);
 	}
 
 	/**
 	 * Add a new manual task to the queue. Usually, manual tasks have a higher priority than other
-	 * tasks, though this is up to the queue policy.
+	 * tasks, though this is up to the queue policy. This ignores and overwrites any existing {@link
+	 * BenchmarkStatus}.
 	 *
 	 * @param commit the commit that should be added as task
 	 */
-	public void addManualTask(Commit commit) {
+	public synchronized void addManualTask(Commit commit) {
 		commitAccess.setBenchmarkStatus(commit.getRepoId(), commit.getHash(),
 			BenchmarkStatus.BENCHMARK_REQUIRED_MANUAL_PRIORITY);
 		queuePolicy.addManualTask(commit);
 		callAllAddedListeners(commit);
 	}
 
-	public Optional<Commit> getNextTask() {
+	/**
+	 * Add a commit either as a task or a manual task, based on its {@link
+	 * Commit#getBenchmarkStatus()}.
+	 *
+	 * @param commit the commit that should be added as a task
+	 */
+	public synchronized void addCommit(Commit commit) {
+		if (commit.getBenchmarkStatus()
+			.equals(BenchmarkStatus.BENCHMARK_REQUIRED_MANUAL_PRIORITY)) {
+
+			addManualTask(commit);
+		} else {
+			addTask(commit);
+		}
+	}
+
+	public synchronized Optional<Commit> getNextTask() {
 		return queuePolicy.getNextTask();
 	}
 
@@ -77,7 +98,7 @@ public class Queue {
 	 *
 	 * @param commit the commit that was completed
 	 */
-	public void finishTask(Commit commit) {
+	public synchronized void finishTask(Commit commit) {
 		commitAccess.setBenchmarkStatus(commit.getRepoId(), commit.getHash(),
 			BenchmarkStatus.NO_BENCHMARK_REQUIRED);
 	}
@@ -89,7 +110,7 @@ public class Queue {
 	 *
 	 * @return the list of tasks in the order they will be executed
 	 */
-	public List<Commit> viewAllCurrentTasks() {
+	public synchronized List<Commit> viewAllCurrentTasks() {
 		return queuePolicy.viewAllCurrentTasks();
 	}
 
@@ -99,7 +120,7 @@ public class Queue {
 	 * @param repoId the repo the commit is in
 	 * @param commitHash the commit's hash
 	 */
-	public void abortTask(RepoId repoId, CommitHash commitHash) {
+	public synchronized void abortTask(RepoId repoId, CommitHash commitHash) {
 		queuePolicy.abortTask(repoId, commitHash);
 		commitAccess.setBenchmarkStatus(repoId, commitHash, BenchmarkStatus.NO_BENCHMARK_REQUIRED);
 		callAllAbortedListeners(repoId, commitHash);
@@ -110,7 +131,7 @@ public class Queue {
 	 *
 	 * @param listener the listener to call if something is added to the queue
 	 */
-	public void onSomethingAdded(Consumer<Commit> listener) {
+	public synchronized void onSomethingAdded(Consumer<Commit> listener) {
 		somethingAddedListeners.add(listener);
 	}
 
@@ -123,7 +144,7 @@ public class Queue {
 	 *
 	 * @param listener the listener to call if a task is aborted
 	 */
-	public void onSomethingAborted(Consumer<Pair<RepoId, CommitHash>> listener) {
+	public synchronized void onSomethingAborted(Consumer<Pair<RepoId, CommitHash>> listener) {
 		somethingAbortedListeners.add(listener);
 	}
 

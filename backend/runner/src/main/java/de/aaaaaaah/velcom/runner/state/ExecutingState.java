@@ -10,9 +10,8 @@ import de.aaaaaaah.velcom.runner.shared.protocol.runnerbound.entities.RunnerWork
 public class ExecutingState implements RunnerState {
 
 	@Override
-	public RunnerState onSelected(RunnerConfiguration configuration) {
-		configuration.getRunnerStateMachine().setCurrentRunnerStateEnum(RunnerStatusEnum.WORKING);
-		return this;
+	public RunnerStatusEnum getStatus() {
+		return RunnerStatusEnum.WORKING;
 	}
 
 	@Override

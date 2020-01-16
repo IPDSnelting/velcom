@@ -5,6 +5,7 @@ import static de.aaaaaaah.velcom.backend.access.commit.BenchmarkStatus.BENCHMARK
 import static org.jooq.codegen.db.tables.KnownCommit.KNOWN_COMMIT;
 
 import de.aaaaaaah.velcom.backend.access.AccessLayer;
+import de.aaaaaaah.velcom.backend.access.commit.filter.AuthorTimeRevFilter;
 import de.aaaaaaah.velcom.backend.access.repo.Branch;
 import de.aaaaaaah.velcom.backend.access.repo.BranchName;
 import de.aaaaaaah.velcom.backend.access.repo.Repo;
@@ -24,12 +25,14 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+import javax.annotation.Nullable;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.LogCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.AnyObjectId;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.PersonIdent;
+import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
@@ -297,7 +300,7 @@ public class CommitAccess {
 
 			for (BranchName branchName : branches) {
 
-				ObjectId branchId = jgitRepo.resolve(branchName.getName());
+				ObjectId branchId = jgitRepo.resolve(branchName.getFullName());
 
 				logCommand.add(branchId);
 			}
@@ -340,4 +343,40 @@ public class CommitAccess {
 		);
 	}
 
+	public Collection<Commit> getCommitsBetween(RepoId repoId, Collection<String> branches,
+		@Nullable Instant startTime, @Nullable Instant stopTime) {
+
+		try (Repository repo = repoStorage.acquireRepository(repoId.getDirectoryName())) {
+			final RevWalk walk = new RevWalk(repo);
+			final Git git = new Git(repo);
+
+			// Start the walk from the specified branches
+			List<RevCommit> commitsFromBranches = new ArrayList<>();
+			for (Ref branch : git.branchList().call()) {
+				if (branches.contains(branch.getName())) {
+					commitsFromBranches.add(walk.parseCommit(branch.getObjectId()));
+				}
+			}
+			walk.markStart(commitsFromBranches);
+
+			// Restrict the search results
+			if (startTime != null && stopTime != null) {
+				walk.setRevFilter(AuthorTimeRevFilter.between(startTime, stopTime));
+			} else if (startTime != null) {
+				walk.setRevFilter(AuthorTimeRevFilter.after(startTime));
+			} else if (stopTime != null) {
+				walk.setRevFilter(AuthorTimeRevFilter.before(stopTime));
+			}
+
+			// And wrap the results
+			final ArrayList<Commit> commits = new ArrayList<>();
+			for (RevCommit revCommit : walk) {
+				commits.add(commitFromRevCommit(repoId, revCommit));
+			}
+			return commits;
+
+		} catch (RepositoryAcquisitionException | GitAPIException | IOException e) {
+			throw new CommitAccessException();
+		}
+	}
 }

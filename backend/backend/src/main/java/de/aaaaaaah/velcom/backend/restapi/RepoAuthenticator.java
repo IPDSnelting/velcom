@@ -24,7 +24,7 @@ public class RepoAuthenticator implements Authenticator<BasicCredentials, RepoUs
 
 		@Nullable RepoId repoId;
 		String username = basicCredentials.getUsername();
-		if (username.isEmpty()) {
+		if (username.equals("admin")) {
 			repoId = null;
 		} else {
 			repoId = new RepoId(UUID.fromString(username));

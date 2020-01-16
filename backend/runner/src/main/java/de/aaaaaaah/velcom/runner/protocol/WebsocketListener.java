@@ -6,6 +6,7 @@ import de.aaaaaaah.velcom.runner.exceptions.HandshakeFailureException;
 import de.aaaaaaah.velcom.runner.shared.protocol.HeartbeatHandler;
 import de.aaaaaaah.velcom.runner.shared.protocol.HeartbeatHandler.HeartbeatWebsocket;
 import de.aaaaaaah.velcom.runner.shared.protocol.SentEntity;
+import de.aaaaaaah.velcom.runner.shared.protocol.StatusCodeMappings;
 import de.aaaaaaah.velcom.runner.shared.protocol.exceptions.SerializationException;
 import de.aaaaaaah.velcom.runner.shared.protocol.runnerbound.entities.ResetOrder;
 import de.aaaaaaah.velcom.runner.shared.protocol.runnerbound.entities.RunnerWorkOrder;
@@ -26,12 +27,16 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The listener for thr websocket connection.
  */
 public class WebsocketListener implements WebSocket.Listener, SocketConnectionManager,
 	HeartbeatWebsocket {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(WebsocketListener.class);
 
 	private final Object binaryLock;
 	private final Object textLock;
@@ -84,7 +89,6 @@ public class WebsocketListener implements WebSocket.Listener, SocketConnectionMa
 
 			if (last) {
 				String request = textBuilder.toString();
-				System.out.println("Got: " + request);
 				textBuilder = new StringBuilder();
 				try {
 					switch (configuration.getSerializer().peekType(request)) {
@@ -112,8 +116,7 @@ public class WebsocketListener implements WebSocket.Listener, SocketConnectionMa
 							break;
 					}
 				} catch (SerializationException e) {
-					System.err.println("Unknown message received!");
-					e.printStackTrace();
+					LOGGER.warn("Unknwon message received", e);
 				}
 			}
 		}
@@ -163,14 +166,14 @@ public class WebsocketListener implements WebSocket.Listener, SocketConnectionMa
 
 	@Override
 	public CompletionStage<?> onClose(WebSocket webSocket, int statusCode, String reason) {
-		System.out.println("Closing...");
+		LOGGER.info("Closing connection with status {} and reason '{}'", statusCode, reason);
 		disconnectImpl();
 		return null;
 	}
 
 	@Override
 	public void onError(WebSocket webSocket, Throwable error) {
-		error.printStackTrace();
+		LOGGER.warn("Error in Websockets", error);
 		disconnectImpl();
 	}
 	//</editor-fold>
@@ -185,7 +188,7 @@ public class WebsocketListener implements WebSocket.Listener, SocketConnectionMa
 
 	@Override
 	public void disconnect() {
-		System.out.println("Disconnecting...");
+		LOGGER.info("Disconnecting...");
 		disconnectImpl();
 	}
 
@@ -237,7 +240,7 @@ public class WebsocketListener implements WebSocket.Listener, SocketConnectionMa
 
 	@Override
 	public void onTimeoutDetected() {
-		System.out.println("Timeout detected");
+		LOGGER.info("Server connection timed out.");
 		disconnect();
 	}
 
@@ -245,7 +248,6 @@ public class WebsocketListener implements WebSocket.Listener, SocketConnectionMa
 	public boolean sendPing() {
 		if (!isConnected()) {
 			disconnectImpl();
-			System.out.println("Not!");
 			return false;
 		}
 		websocket.sendPing(ByteBuffer.allocate(Long.SIZE).putLong(System.currentTimeMillis()));
@@ -254,7 +256,9 @@ public class WebsocketListener implements WebSocket.Listener, SocketConnectionMa
 
 	private void disconnectImpl() {
 		if (websocket != null) {
-			websocket.sendClose(4000, "Client initiated close")
+			websocket.sendClose(
+				StatusCodeMappings.CLIENT_ORDERLY_DISCONNECT, "Client initiated close"
+			)
 				.thenAccept(WebSocket::abort)
 				.thenRun(
 					() -> stateListeners.forEach(

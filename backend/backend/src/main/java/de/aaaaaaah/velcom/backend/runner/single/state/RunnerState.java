@@ -1,6 +1,7 @@
 package de.aaaaaaah.velcom.backend.runner.single.state;
 
 import de.aaaaaaah.velcom.backend.runner.single.ActiveRunnerInformation;
+import de.aaaaaaah.velcom.runner.shared.RunnerStatusEnum;
 import de.aaaaaaah.velcom.runner.shared.protocol.SentEntity;
 
 /**
@@ -16,6 +17,11 @@ public interface RunnerState {
 	 */
 	default void onSelected(ActiveRunnerInformation information) {
 	}
+
+	/**
+	 * @return the status of this state
+	 */
+	RunnerStatusEnum getStatus();
 
 	/**
 	 * Called when the runner sent a message.
