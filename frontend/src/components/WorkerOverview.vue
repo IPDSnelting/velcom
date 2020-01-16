@@ -2,12 +2,18 @@
   <v-container>
     <v-row>
       <v-col v-for="worker in workers" :key="worker.name" cols="auto">
-        <v-card>
+        <v-card v-if="!dense">
           <v-card-title>{{ worker.name }}</v-card-title>
           <v-card-text>
             <span class="worker-description">{{ formatWorkerInformation(worker) }}</span>
           </v-card-text>
         </v-card>
+        <v-tooltip bottom>
+          <template #activator="{ on }">
+            <v-chip outlined label color="accent" v-on="on" v-if="dense">{{ worker.name }}</v-chip>
+          </template>
+          <span class="worker-description">{{ formatWorkerInformation(worker) }}</span>
+        </v-tooltip>
       </v-col>
     </v-row>
   </v-container>
@@ -39,6 +45,9 @@ export default class WorkerOverview extends Vue {
     ]
   })
   private workers!: Worker[]
+
+  @Prop({ default: false })
+  private dense!: boolean
 
   formatWorkerInformation(worker: Worker) {
     if (!worker.osData) {
