@@ -3,11 +3,6 @@
     <v-content>
       <nav-bar></nav-bar>
       <snackbar ref="global-snackbar"></snackbar>
-      <repo-update>
-        <template #activator="{ on }">
-          <v-btn v-on="on">Test update</v-btn>
-        </template>
-      </repo-update>
       <router-view></router-view>
     </v-content>
   </v-app>
@@ -20,13 +15,11 @@ import NavigationBar from './components/NavigationBar.vue'
 import Snackbar from './components/Snackbar.vue'
 import { Store } from 'vuex'
 import { RootState, Worker } from './store/types'
-import RepoUpdateDialog from './components/RepoUpdateDialog.vue'
 
 @Component({
   components: {
     'nav-bar': NavigationBar,
-    snackbar: Snackbar,
-    'repo-update': RepoUpdateDialog
+    snackbar: Snackbar
   }
 })
 export default class App extends Vue {
