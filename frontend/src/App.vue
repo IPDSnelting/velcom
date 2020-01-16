@@ -5,9 +5,14 @@
       <snackbar ref="global-snackbar"></snackbar>
       <repo-add>
         <template #activator="{ on }">
-          <v-btn v-on="on">Test</v-btn>
+          <v-btn v-on="on">Test add</v-btn>
         </template>
       </repo-add>
+      <repo-update>
+        <template #activator="{ on }">
+          <v-btn v-on="on">Test update</v-btn>
+        </template>
+      </repo-update>
       <worker-overview></worker-overview>
       <router-view></router-view>
       <color-module-tester></color-module-tester>
@@ -27,6 +32,7 @@ import WorkerOverview from './components/WorkerOverview.vue'
 import Snackbar from './components/Snackbar.vue'
 import { Store } from 'vuex'
 import { RootState, Worker } from './store/types'
+import RepoUpdateDialog from './components/RepoUpdateDialog.vue'
 
 @Component({
   components: {
@@ -35,7 +41,8 @@ import { RootState, Worker } from './store/types'
     'nav-bar': NavigationBar,
     'repo-add': RepoAddDialog,
     'worker-overview': WorkerOverview,
-    snackbar: Snackbar
+    snackbar: Snackbar,
+    'repo-update': RepoUpdateDialog
   }
 })
 export default class App extends Vue {
