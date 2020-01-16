@@ -15,12 +15,10 @@ export interface ColorState {
   colors: Array<string>
 }
 
-export class RepoState {
+export interface RepoState {
   repos: any
 
-  getRepo(id: string): Repo {
-    return this.repos[id] as Repo
-  }
+  getRepo(id: string): Repo
 }
 
 export interface RepoComparisonState {
