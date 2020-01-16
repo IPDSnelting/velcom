@@ -1,14 +1,14 @@
 export interface RootState {
   apiBaseURL: string
 
-  colorState: ColorState
-  repoState: RepoState
-  repoComparisonState: RepoComparisonState
-  repoDetailState: RepoDetailState
-  newsState: NewsState
-  commitComparisonState: CommitComparisonState
-  queueState: QueueState
-  userState: UserState
+  colorModule: ColorState
+  repoModule: RepoState
+  repoComparisonModule: RepoComparisonState
+  repoDetailModule: RepoDetailState
+  newsModule: NewsState
+  commitComparisonModule: CommitComparisonState
+  queueModule: QueueState
+  userModule: UserState
 }
 
 export interface ColorState {
