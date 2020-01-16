@@ -129,7 +129,7 @@ public class ServerMain extends Application<GlobalConfig> {
 		filter.setInitParameter(CrossOriginFilter.ACCESS_CONTROL_ALLOW_ORIGIN_HEADER, "*");
 		filter.setInitParameter(
 			"allowedHeaders",
-			"Content-Type,Authorization,X-Requested-With,Content-Length,Accept,Origin"
+			"Content-Type,Authorization,X-Requested-With,Content-Length,Accept-Encoding,Origin"
 		);
 		filter.setInitParameter("allowCredentials", "true");
 	}
