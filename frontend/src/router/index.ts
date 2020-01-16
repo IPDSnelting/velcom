@@ -19,9 +19,15 @@ Vue.use(VueRouter)
 
 const routes = [
   {
-    // Redirect / to /home
-    redirect: '/home',
     path: '/',
+    redirect: '/home',
+    meta: {
+      navigable: false
+    }
+  },
+  {
+    // Redirect / to /home
+    path: '/home',
     name: 'home',
     component: Home,
     meta: {
