@@ -18,8 +18,8 @@ compile-frontend:
   image: velcom-frontend:latest
   stage: build
   script:
-    - cd frontend
-    - yarn install
-    - yarn build
+    - apt update
+    - apt install make
+    - make frontend
   tags:
     - keep

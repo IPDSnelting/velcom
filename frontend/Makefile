@@ -1,5 +1,7 @@
 .PHONY: clean
 
+all: build
+
 node_modules:
 	yarn install
 

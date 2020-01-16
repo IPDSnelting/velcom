@@ -6,7 +6,7 @@ frontend:
 	@echo '#######################'
 	@echo '## Building frontend ##'
 	@echo '#######################'
-	@echo '  Nothing to see here (yet)'
+	make -C frontend/
 
 backend:
 	@echo '######################'
@@ -18,7 +18,7 @@ clean:
 	@echo '#######################'
 	@echo '## Cleaning frontend ##'
 	@echo '#######################'
-	@echo '  Nothing to see here (yet)'
+	make -C frontend/ clean
 	@echo '######################'
 	@echo '## Cleaning backend ##'
 	@echo '######################'
