@@ -1,12 +1,24 @@
 default:
   image: maven:3-jdk-11
 
+cache:
+  key: "${CI_JOB_NAME}" # cache per job:
+
 stages:
   - build
   - test
 
 compile-backend:
   stage: build
+
+  # Cache maven deps
+  cache:
+    paths:
+      - backend/.repository/
+  # Tell maven to use the cache
+  variables:
+    MAVEN_OPTS: "-Dmaven.repo.local=${CI_PROJECT_DIR}/.repository/"
+
   script:
     - apt update
     - apt install make
@@ -16,6 +28,12 @@ compile-backend:
 
 compile-frontend:
   image: velcom-frontend:latest
+
+  # cache node modules
+  cache:
+    paths:
+    - frontend/node_modules/
+
   stage: build
   script:
     - apk update
