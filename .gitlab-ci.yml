@@ -18,8 +18,8 @@ compile-frontend:
   image: velcom-frontend:latest
   stage: build
   script:
-    - apt update
-    - apt install make
+    - apk update
+    - apk add make
     - make frontend
   tags:
     - keep
