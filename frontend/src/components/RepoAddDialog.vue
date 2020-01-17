@@ -21,7 +21,6 @@
           <v-btn color="primary" :disabled="!formValid" @click="addRepository">Add Repository</v-btn>
           <v-spacer></v-spacer>
         </v-card-actions>
-        <v-alert class="mb-1" type="error" :value="error.length > 0">{{ error }}</v-alert>
       </v-card>
     </v-dialog>
   </div>
@@ -43,8 +42,6 @@ export default class RepoAddDialog extends Vue {
   private formValid: boolean = false
   private dialogOpen: boolean = false
 
-  private error: string = ''
-
   private notEmpty(input: string): boolean | string {
     return input.trim().length > 0 ? true : 'This field must not be empty!'
   }
@@ -52,17 +49,11 @@ export default class RepoAddDialog extends Vue {
   private addRepository() {
     this.$store
       .dispatch('repoModule/addRepo', {
-        name: this.repoName,
-        remote_url: this.remoteUrl,
-        token: this.repoToken
+        repoName: this.repoName,
+        remoteUrl: this.remoteUrl,
+        repoToken: this.repoToken
       })
-      .then(it => {
-        this.$emit('value', it)
-        this.error = ''
-      })
-      .catch(it => {
-        this.error = extractErrorMessage(it)
-      })
+      .then(it => this.$emit('value', it))
   }
 }
 </script>

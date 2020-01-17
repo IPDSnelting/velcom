@@ -24,7 +24,9 @@ axios.interceptors.request.use(
     return config
   },
   function(error) {
-    vue.$globalSnackbar.setError(extractErrorMessage(error))
+    if (!error.response) {
+      vue.$globalSnackbar.setError(extractErrorMessage(error))
+    }
     return Promise.reject(error)
   }
 )
