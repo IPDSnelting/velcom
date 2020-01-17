@@ -5,7 +5,7 @@
         <v-flex mb-5 xs12>
           <h1 class="headline font-weight-bold mb-3">Testing the ColorModule</h1>
           <v-layout justify-center>
-            <v-btn @click="addColor(1)">add color</v-btn>
+            <v-btn @click="addColors(1)">add color</v-btn>
           </v-layout>
           <div v-for="(color, index) in allColors" :key="index">
             <v-card :color="color">color no. {{ index }}</v-card>
