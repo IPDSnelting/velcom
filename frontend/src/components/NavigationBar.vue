@@ -20,6 +20,14 @@
         {{ item.label }}
         <v-icon right dark :size="iconFontSize">{{ item.icon }}</v-icon>
       </v-btn>
+
+      <login>
+        <template #activator="{ on }">
+          <v-btn v-on="on" text>
+            Login
+          </v-btn>
+        </template>
+      </login>
     </v-toolbar>
 
     <!-- Navigation drawer -->
@@ -64,6 +72,7 @@ import Component from 'vue-class-component'
 import { VuetifyIcon } from 'vuetify/types/services/icons'
 import VueRouterEx, { RouteConfig } from 'vue-router/types/router'
 import router from '../router'
+import LoginDialog from '../components/LoginDialog.vue'
 
 class NavigationItem {
   readonly routeName: String
@@ -77,7 +86,11 @@ class NavigationItem {
   }
 }
 
-@Component
+@Component({
+  components: {
+    login: LoginDialog
+  }
+})
 export default class NavigationBar extends Vue {
   private iconFontSize = 22
   private title = 'VelCom'
