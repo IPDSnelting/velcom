@@ -3,7 +3,6 @@
 all: build
 
 node_modules:
-	ls node_modules || echo ":("
 	yarn install
 	touch node_modules
 
