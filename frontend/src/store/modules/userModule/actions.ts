@@ -7,7 +7,7 @@ export const actions: ActionTree<UserState, RootState> = {
     axios
       .get('/test-token', {
         auth: {
-          username: (payload.repoID && payload.repoID) || '',
+          username: payload.username,
           password: payload.token
         },
         params: {

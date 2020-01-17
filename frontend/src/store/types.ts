@@ -16,7 +16,9 @@ export interface ColorState {
 }
 
 export interface RepoState {
-  repos: Map<string, Repo>
+  repos: any
+
+  getRepo(id: string): Repo
 }
 
 export interface RepoComparisonState {
@@ -24,7 +26,7 @@ export interface RepoComparisonState {
 }
 
 export interface RepoDetailState {
-  comparisonsByRepoID: { [repoID: string]: Array<CommitComparison> }
+  comparisonsByRepoID: Map<string, Array<CommitComparison>>
 }
 
 export interface NewsState {
@@ -49,11 +51,11 @@ export interface UserState {
 
 export class Repo {
   id: string
-  name: string | null
+  name: string
   branches: Array<string>
   trackedBranches: Array<string>
   measurements: Array<MeasurementID>
-  remoteURL: string | null
+  remoteURL: string
 
   constructor(
     id: string,
@@ -73,8 +75,8 @@ export class Repo {
 }
 
 export class Measurement {
-  id: MeasurementID | null
-  successful: boolean | null
+  id: MeasurementID
+  successful: boolean
   unit: string | null
   interpretation: string | null
   values: Array<number> | null
@@ -100,8 +102,8 @@ export class Measurement {
 }
 
 export class MeasurementID {
-  benchmark: string | null
-  metric: string | null
+  benchmark: string
+  metric: string
 
   constructor(benchmark: string, metric: string) {
     this.benchmark = benchmark
@@ -142,8 +144,8 @@ export class Commit {
 
 export class Run {
   commit: Commit
-  startTime: number | null
-  stopTime: number | null
+  startTime: number
+  stopTime: number
   measurements: Array<Measurement> | null
   errorMessage: string | null
 
@@ -163,8 +165,8 @@ export class Run {
 }
 
 export class Difference {
-  measurement: MeasurementID | null
-  difference: number | null
+  measurement: MeasurementID
+  difference: number
 
   constructor(measurement: MeasurementID, difference: number) {
     this.measurement = measurement
@@ -185,12 +187,14 @@ export class CommitComparison {
 }
 
 export class Worker {
-  name: string | null
+  name: string
   osData: string | null
+  currentTask: Commit
 
-  constructor(name: string, osData: string) {
+  constructor(name: string, osData: string, currentTask: Commit) {
     this.name = name
     this.osData = osData
+    this.currentTask = currentTask
   }
 }
 

@@ -2,26 +2,33 @@
   <v-app>
     <v-content>
       <nav-bar></nav-bar>
+      <snackbar ref="global-snackbar"></snackbar>
       <router-view></router-view>
-      <color-module-tester></color-module-tester>
-      <repo-module-tester></repo-module-tester>
     </v-content>
   </v-app>
 </template>
 
 <script lang="ts">
 import Vue from 'vue'
-import ColorModuleTester from './testComponents/ColorModuleTester.vue'
-import RepoModuleTester from './testComponents/RepoModuleTester.vue'
 import Component from 'vue-class-component'
 import NavigationBar from './components/NavigationBar.vue'
+import Snackbar from './components/Snackbar.vue'
+import { Store } from 'vuex'
+import { RootState, Worker } from './store/types'
 
 @Component({
   components: {
-    'color-module-tester': ColorModuleTester,
-    'repo-module-tester': RepoModuleTester,
-    'nav-bar': NavigationBar
+    'nav-bar': NavigationBar,
+    snackbar: Snackbar
   }
 })
-export default class App extends Vue {}
+export default class App extends Vue {
+  get store() {
+    return this.$store as Store<RootState>
+  }
+
+  get workers(): Worker[] {
+    return this.store.state.queueModule.workers
+  }
+}
 </script>

@@ -1,14 +1,15 @@
 import { MutationTree } from 'vuex'
 import { RepoState, Repo } from '../../types'
+import Vue from 'vue'
 
 export const mutations: MutationTree<RepoState> = {
   SET_REPO: (state: RepoState, payload: Repo) => {
-    state.repos.set(payload.id, payload)
+    Vue.set(state.repos, payload.id, { ...payload })
   },
 
   SET_REPOS: (state: RepoState, payload: Array<Repo>) => {
     payload.forEach(repo => {
-      state.repos.set(repo.id, repo)
+      Vue.set(state.repos, repo.id, { ...repo })
     })
   },
 

@@ -5,7 +5,11 @@ import { actions } from './actions'
 import { getters } from './getters'
 
 export const state: RepoState = {
-  repos: new Map<string, Repo>()
+  repos: {},
+
+  getRepo(id: string) {
+    return this.repos[id]
+  }
 }
 
 const namespaced: boolean = true

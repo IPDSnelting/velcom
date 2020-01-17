@@ -54,7 +54,7 @@ export const actions: ActionTree<RepoState, RootState> = {
     return repo
   },
 
-  addRepo({ commit, rootGetters }, payload: AddRepoRequest): Promise<Repo> {
+  addRepo({ commit, rootGetters }, payload): Promise<Repo> {
     return axios
       .post('/repo', {
         auth: {
@@ -67,11 +67,27 @@ export const actions: ActionTree<RepoState, RootState> = {
           token: payload.repoToken
         }
       })
-      .then(response => {
-        const repo: Repo = response.data
-        commit('SET_REPO', repo)
-        return repo
-      })
+      .then(
+        response => {
+          let repo = response.data.map((item: any) => {
+            new Repo(
+              item.id,
+              item.name,
+              item.branches,
+              item.tracked_branches,
+              item.measurements,
+              item.remote_url
+            )
+          })
+
+          commit('SET_REPO', repo)
+          return repo
+        },
+        error => {
+          console.log('error: could not add new repo ' + payload.name)
+          console.log(error)
+        }
+      )
   },
 
   deleteRepo({ commit, rootGetters }, repoID: string) {
