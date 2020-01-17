@@ -1,10 +1,7 @@
 <template>
   <nav>
     <v-toolbar dark color="primary darken-1">
-      <v-app-bar-nav-icon
-        class="hidden-md-and-up"
-        @click="drawerShown = !drawerShown"
-      ></v-app-bar-nav-icon>
+      <v-app-bar-nav-icon class="hidden-md-and-up" @click="drawerShown = !drawerShown"></v-app-bar-nav-icon>
       <v-toolbar-title>{{ title }}</v-toolbar-title>
 
       <v-spacer></v-spacer>
@@ -25,18 +22,14 @@
         <template #activator="{ on }">
           <v-btn v-on="on" text>
             Login
+            <v-icon right dark :size="iconFontSize">{{ loginIcon }}</v-icon>
           </v-btn>
         </template>
       </login>
     </v-toolbar>
 
     <!-- Navigation drawer -->
-    <v-navigation-drawer
-      class="hidden-md-and-up"
-      v-model="drawerShown"
-      app
-      temporary
-    >
+    <v-navigation-drawer class="hidden-md-and-up" v-model="drawerShown" app temporary>
       <v-toolbar dark color="primary darken-1">
         <v-list>
           <v-list-item>
@@ -73,6 +66,7 @@ import { VuetifyIcon } from 'vuetify/types/services/icons'
 import VueRouterEx, { RouteConfig } from 'vue-router/types/router'
 import router from '../router'
 import LoginDialog from '../components/LoginDialog.vue'
+import { mdiAccountCircleOutline } from '@mdi/js'
 
 class NavigationItem {
   readonly routeName: String
@@ -105,6 +99,10 @@ export default class NavigationBar extends Vue {
           new NavigationItem(route.name!, route.meta.icon, route.meta.label)
       )
   }
+
+  // ============== ICONS ==============
+  private loginIcon = mdiAccountCircleOutline
+  // ==============       ==============
 }
 </script>
 
