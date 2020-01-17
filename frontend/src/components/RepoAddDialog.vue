@@ -46,6 +46,15 @@ export default class RepoAddDialog extends Vue {
     return input.trim().length > 0 ? true : 'This field must not be empty!'
   }
 
+  @Watch('dialogOpen')
+  clearDialogOnOpen(opened: boolean) {
+    if (opened) {
+      this.remoteUrl = ''
+      this.repoName = ''
+      this.repoToken = ''
+    }
+  }
+
   private addRepository() {
     this.$store
       .dispatch('repoModule/addRepo', {
@@ -53,7 +62,10 @@ export default class RepoAddDialog extends Vue {
         remoteUrl: this.remoteUrl,
         repoToken: this.repoToken
       })
-      .then(it => this.$emit('value', it))
+      .then(it => {
+        this.$emit('value', it)
+        this.dialogOpen = false
+      })
   }
 }
 </script>

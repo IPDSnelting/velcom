@@ -91,28 +91,21 @@ export class RepoStore extends StoreModule {
   }) {
     return axios
       .post('/repo', {
-        /* auth: {
-          username: rootGetters['userModule/repoID'],
-          password: rootGetters['userModule/token']
-        }, */
-        params: {
-          name: payload.repoName,
-          remote_url: payload.remoteUrl,
-          token: payload.repoToken
-        }
+        name: payload.repoName,
+        remote_url: payload.remoteUrl,
+        token: payload.repoToken
       })
       .then(
         response => {
-          let repo = response.data.map((item: any) => {
-            new Repo(
-              item.id,
-              item.name,
-              item.branches,
-              item.tracked_branches,
-              item.measurements,
-              item.remote_url
-            )
-          })
+          let item = response.data
+          let repo = new Repo(
+            item.id,
+            item.name,
+            item.branches,
+            item.tracked_branches,
+            item.measurements,
+            item.remote_url
+          )
 
           this.setRepo(repo)
           return repo
