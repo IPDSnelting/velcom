@@ -103,7 +103,17 @@ export default class RepoUpdateDialog extends Vue {
     }
   }
 
-  updateRepo() {}
+  updateRepo() {
+    let newRepo = new Repo(
+      this.repo.id,
+      this.repoName,
+      this.repo.branches,
+      this.newTrackedBranches,
+      this.repo.measurements,
+      this.remoteUrl
+    )
+    this.$store.dispatch('repoModule/updateRepo', newRepo)
+  }
 
   mounted() {
     Vue.nextTick(() => this.watchIdUpdates())
