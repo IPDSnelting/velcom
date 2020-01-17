@@ -14,6 +14,6 @@ export const mutations: MutationTree<RepoState> = {
   },
 
   REMOVE_REPO: (state: RepoState, payload: string) => {
-    state.repos.delete(payload)
+    Vue.delete(state.repos, payload)
   }
 }
