@@ -5,7 +5,6 @@ import de.aaaaaaah.velcom.backend.access.commit.Commit;
 import de.aaaaaaah.velcom.backend.access.commit.CommitAccess;
 import de.aaaaaaah.velcom.backend.access.commit.CommitHash;
 import de.aaaaaaah.velcom.backend.access.repo.RepoId;
-import de.aaaaaaah.velcom.backend.listener.Listener;
 import de.aaaaaaah.velcom.backend.util.Pair;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -37,7 +36,7 @@ import org.slf4j.LoggerFactory;
  */
 public class Queue {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(Listener.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(Queue.class);
 
 	private final CommitAccess commitAccess;
 	private final QueuePolicy queuePolicy;
@@ -113,12 +112,15 @@ public class Queue {
 	/**
 	 * This function must be called once a task was completed and should not be benchmarked again.
 	 *
-	 * @param commit the commit that was completed
+	 * @param repoId the repo the commit is in
+	 * @param commitHash the commit's hash
 	 */
-	public synchronized void finishTask(Commit commit) {
-		commitAccess.setBenchmarkStatus(commit.getRepoId(), commit.getHash(),
+	public synchronized void finishTask(RepoId repoId, CommitHash commitHash) {
+		commitAccess.setBenchmarkStatus(repoId, commitHash,
 			BenchmarkStatus.NO_BENCHMARK_REQUIRED);
-		LOGGER.info("Task " + commit + " was successfully finished");
+		LOGGER.info(
+			"Task with repoId " + repoId + " and commitHash " + commitHash
+				+ " was successfully finished");
 	}
 
 	/**

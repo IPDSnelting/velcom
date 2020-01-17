@@ -267,6 +267,8 @@ public class DispatcherImpl implements Dispatcher {
 				}
 			}
 		}
+
+		queue.finishTask(repoId, commitHash);
 	}
 
 	private void addMeasurementToRun(Run run, Benchmark benchmark, Metric metric) {
