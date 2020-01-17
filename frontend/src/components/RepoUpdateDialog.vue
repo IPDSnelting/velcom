@@ -76,7 +76,7 @@ export default class RepoUpdateDialog extends Vue {
   }
 
   get repo(): Repo {
-    return this.repoState.repos.get(this.repoId)!
+    return this.repoState.repos[this.repoId]!
   }
 
   private notEmpty(input: string): boolean | string {
@@ -114,8 +114,8 @@ export default class RepoUpdateDialog extends Vue {
     for (let i = 0; i < 3; i++) {
       branches.push(String.fromCharCode('a'.charCodeAt(0) + i))
     }
-    this.repoState.repos.set(
-      'test',
+    this.$store.commit(
+      'repoModule/SET_REPO',
       new Repo('test', 'Test repo', branches, ['a', 'b'], [], 'test url')
     )
   }
