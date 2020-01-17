@@ -123,7 +123,7 @@ public class ServerMain extends Application<GlobalConfig> {
 		filter.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");
 		filter.setInitParameter(
 			CrossOriginFilter.ALLOWED_METHODS_PARAM,
-			"GET,PUT,POST,DELETE,OPTIONS"
+			"GET,PUT,POST,DELETE,OPTIONS,PATCH"
 		);
 		filter.setInitParameter(CrossOriginFilter.ALLOWED_ORIGINS_PARAM, "*");
 		filter.setInitParameter(CrossOriginFilter.ACCESS_CONTROL_ALLOW_ORIGIN_HEADER, "*");
