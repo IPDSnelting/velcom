@@ -1,9 +1,6 @@
 default:
   image: maven:3-jdk-11
 
-cache:
-  key: "${CI_JOB_NAME}" # cache per job:
-
 stages:
   - build
   - test
@@ -13,6 +10,7 @@ compile-backend:
 
   # Cache maven deps
   cache:
+    key: "backend_cache"
     paths:
       - backend/.repository/
   # Tell maven to use the cache
@@ -31,6 +29,7 @@ compile-frontend:
 
   # cache node modules
   cache:
+    key: "frontend_cache"
     paths:
     - frontend/node_modules/
 
