@@ -3,8 +3,7 @@
 all: build
 
 node_modules:
-	@echo "Node modules..."
-	@echo "$(file node_modules) - $(ls node_modules)"
+	ls node_modules || echo ":("
 	yarn install
 	touch node_modules
 
