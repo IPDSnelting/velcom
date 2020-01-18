@@ -33,7 +33,7 @@ export class RepoDetailStore extends VxModule {
     })
 
     this.setRepoComparisons({ repoId: id, comparisons: comparisons })
-    return comparisons
+    return this.repoDatapoints(id)
   }
 
   /**
