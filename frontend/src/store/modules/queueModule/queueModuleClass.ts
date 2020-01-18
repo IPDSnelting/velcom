@@ -170,7 +170,7 @@ export class QueueModuleStore extends VxModule {
    * @memberof QueueModuleStore
    */
   get openTasks(): Commit[] {
-    return this.openTasks
+    return this._openTasks
   }
 
   /**
@@ -181,7 +181,7 @@ export class QueueModuleStore extends VxModule {
    * @memberof QueueModuleStore
    */
   get workers(): Worker[] {
-    return this.workers
+    return this._workers
   }
 
   /**
@@ -196,7 +196,7 @@ export class QueueModuleStore extends VxModule {
   }
 
   /**
-   * Returns a single open task.
+   * Returns the open task with the given repo id and commit hash.
    *
    * @readonly
    * @memberof QueueModuleStore
