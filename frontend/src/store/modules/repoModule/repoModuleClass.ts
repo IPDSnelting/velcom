@@ -11,23 +11,6 @@ const VxModule = createModule({
 export class RepoStore extends VxModule {
   private repos: { [key: string]: Repo } = {}
 
-  @mutation
-  setRepo(payload: Repo) {
-    Vue.set(this.repos, payload.id, { ...payload })
-  }
-
-  @mutation
-  setRepos(payload: Array<Repo>) {
-    payload.forEach(repo => {
-      Vue.set(this.repos, repo.id, { ...repo })
-    })
-  }
-
-  @mutation
-  removeRepo(payload: string) {
-    Vue.delete(this.repos, payload)
-  }
-
   @action
   async fetchRepos() {
     const response = await axios.get('/all-repos')
@@ -136,6 +119,23 @@ export class RepoStore extends VxModule {
       .then(response => {
         this.fetchRepoByID(payload.id)
       })
+  }
+
+  @mutation
+  setRepo(payload: Repo) {
+    Vue.set(this.repos, payload.id, { ...payload })
+  }
+
+  @mutation
+  setRepos(payload: Array<Repo>) {
+    payload.forEach(repo => {
+      Vue.set(this.repos, repo.id, { ...repo })
+    })
+  }
+
+  @mutation
+  removeRepo(payload: string) {
+    Vue.delete(this.repos, payload)
   }
 
   get allRepos() {
