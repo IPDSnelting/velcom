@@ -26,8 +26,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -68,7 +68,7 @@ public class DispatcherImpl implements Dispatcher {
 		this.benchmarkAccess = benchmarkAccess;
 		this.allowedRunnerDisconnectTime = allowedRunnerDisconnectTime;
 		this.activeRunners = Collections.newSetFromMap(new ConcurrentHashMap<>());
-		this.freeRunners = new LinkedBlockingDeque<>();
+		this.freeRunners = new ConcurrentLinkedQueue<>();
 		this.watchdogPool = Executors.newSingleThreadScheduledExecutor();
 
 		queue.onSomethingAborted(task -> abort(task.getSecond(), task.getFirst()));
@@ -220,6 +220,8 @@ public class DispatcherImpl implements Dispatcher {
 			ActiveRunnerInformation runner = freeRunners.poll();
 			Optional<Commit> nextTask = queue.getNextTask();
 			if (nextTask.isEmpty()) {
+				// no task for runner available, add it back to freeRunners
+				freeRunners.add(runner);
 				return;
 			}
 
