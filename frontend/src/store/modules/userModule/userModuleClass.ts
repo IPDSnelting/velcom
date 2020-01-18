@@ -18,7 +18,7 @@ export class UserStore extends VxModule {
         password: payload.token
       },
       params: {
-        repo_id: payload.asRepoAdmin && payload.role
+        repo_id: payload.asRepoAdmin ? payload.role : undefined
       }
     })
 

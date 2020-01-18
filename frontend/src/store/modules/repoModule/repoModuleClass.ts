@@ -82,10 +82,6 @@ export class RepoStore extends VxModule {
   async deleteRepo(payload: string) {
     return axios
       .delete('/repo', {
-        auth: {
-          username: 'admin', // rootGetters['userModule/repoID'],
-          password: '12345' // rootGetters['userModule/token']
-        },
         params: {
           repo_id: payload
         }

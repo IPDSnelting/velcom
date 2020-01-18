@@ -23,8 +23,6 @@ axios.interceptors.request.use(function(config) {
       username: vxm.userModule.role!,
       password: vxm.userModule.token!
     }
-  } else {
-    config.auth = undefined
   }
   return config
 })
