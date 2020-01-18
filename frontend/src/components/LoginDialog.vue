@@ -23,9 +23,9 @@
               ></v-radio>
             </v-radio-group>
             <v-text-field
-              :disabled="!this.idRequired()"
+              :disabled="!this.idRequired"
               :rules="[nonEmptyID]"
-              label="*Repository ID"
+              label="*Repository name"
               v-model="repoID"
             ></v-text-field>
             <v-text-field
@@ -76,12 +76,12 @@ export default class LoginDialog extends Vue {
     ;(this.$refs.form as any).validate()
   }
 
-  private idRequired(): boolean {
+  get idRequired(): boolean {
     return this.role !== 'Web-Admin'
   }
 
   private nonEmptyID(input: string): boolean | string {
-    return !this.idRequired() || input.trim().length > 0
+    return !this.idRequired || input.trim().length > 0
       ? true
       : 'This field must not be empty!'
   }
@@ -111,6 +111,7 @@ export default class LoginDialog extends Vue {
       }
     }
     vxm.userModule.logIn(payload)
+    this.dialogOpen = false
   }
 }
 </script>
