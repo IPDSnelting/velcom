@@ -1,10 +1,10 @@
 import { createModule, mutation, action } from 'vuex-class-component'
-import { Repo, CommitComparison } from '@/store/types'
+import { CommitComparison } from '@/store/types'
 import Vue from 'vue'
 import axios from 'axios'
 
 const VxModule = createModule({
-  namespaced: 'repoModule',
+  namespaced: 'repoDetailModule',
   strict: false
 })
 

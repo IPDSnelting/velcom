@@ -1,11 +1,9 @@
 import { createModule, mutation, action } from 'vuex-class-component'
-import { Repo, CommitComparison, Run, Worker, Commit } from '@/store/types'
-import Vue from 'vue'
+import { Worker, Commit } from '@/store/types'
 import axios from 'axios'
-import { mdiThermometerMinus } from '@mdi/js'
 
 const VxModule = createModule({
-  namespaced: 'repoModule',
+  namespaced: 'queueModule',
   strict: false
 })
 
