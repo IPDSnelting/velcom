@@ -57,7 +57,7 @@ public class AddRepoTest {
 			.start();
 
 		Runtime.getRuntime()
-			.addShutdownHook(new Thread(process::destroyForcibly, "KillRunnerHook"));
+			.addShutdownHook(new Thread(process::destroy, "KillRunnerHook"));
 	}
 
 	private static void startBackend() throws Exception {
