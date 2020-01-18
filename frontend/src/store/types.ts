@@ -189,9 +189,9 @@ export class CommitComparison {
 export class Worker {
   name: string
   osData: string | null
-  currentTask: Commit
+  currentTask: Commit | null
 
-  constructor(name: string, osData: string, currentTask: Commit) {
+  constructor(name: string, osData: string, currentTask: Commit | null) {
     this.name = name
     this.osData = osData
     this.currentTask = currentTask

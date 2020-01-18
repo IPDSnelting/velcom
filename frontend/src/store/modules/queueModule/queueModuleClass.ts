@@ -19,7 +19,7 @@ export class QueueStore extends VxModule {
    */
   @action
   async fetchQueue(): Promise<Commit[]> {
-    const response = await axios.get('/all-repos')
+    const response = await axios.get('/queue')
 
     let tasks: Commit[] = []
     let jsonTasks: any[] = response.data.tasks
@@ -43,16 +43,19 @@ export class QueueStore extends VxModule {
     let jsonWorkers: any[] = response.data.tasks
 
     jsonWorkers.forEach((item: any) => {
-      var currentTask = new Commit(
-        item.working_on.repo_id,
-        item.working_on.hash,
-        item.working_on.author,
-        item.working_on.authorDate,
-        item.working_on.committer,
-        item.working_on.committer_date,
-        item.working_on.message,
-        item.working_on.parents
-      )
+      let currentTask = null
+      if (item.working_on) {
+        currentTask = new Commit(
+          item.working_on.repo_id,
+          item.working_on.hash,
+          item.working_on.author,
+          item.working_on.author_date,
+          item.working_on.committer,
+          item.working_on.committer_date,
+          item.working_on.message,
+          item.working_on.parents
+        )
+      }
 
       workers.push(new Worker(item.name, item.hash, currentTask))
     })
