@@ -5,6 +5,7 @@ import store from './store'
 import axios from 'axios'
 import vuetify from './plugins/vuetify'
 import { extractErrorMessage } from './util/ErrorUtils'
+import { vxm } from './store/classIndex'
 
 Vue.config.productionTip = false
 
@@ -15,6 +16,18 @@ const vue = new Vue({
   store,
   vuetify,
   render: h => h(App)
+})
+
+axios.interceptors.request.use(function(config) {
+  if (vxm.userModule.loggedIn) {
+    config.auth = {
+      username: vxm.userModule.getRole!,
+      password: vxm.userModule.getToken!
+    }
+  } else {
+    config.auth = undefined
+  }
+  return config
 })
 
 // Intercepts requests and show a loading indicator / errors

@@ -7,8 +7,8 @@ const VxModule = createModule({
 })
 
 export class UserStore extends VxModule {
-  private role: string | null = ''
-  private token: string | null = ''
+  private role: string | null = null
+  private token: string | null = null
 
   @mutation
   setRole(payload: string | null) {
@@ -43,8 +43,28 @@ export class UserStore extends VxModule {
     this.setToken(null)
   }
 
+  get getToken(): string | null {
+    return this.token
+  }
+
+  get getRole(): string | null {
+    return this.role
+  }
+
+  /**
+   * Returns whether the user is logged in. True if `getRole` and `getToken` return a string.
+   *
+   * @readonly
+   * @type {boolean} true if the user is logged in
+   * @memberof UserStore
+   */
   get loggedIn(): boolean {
-    return this.role === null
+    return (
+      this.role !== null &&
+      this.role.length > 0 &&
+      this.token !== null &&
+      this.token.length > 0
+    )
   }
 
   get authorized(): (payload: string) => boolean {
