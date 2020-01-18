@@ -92,4 +92,12 @@ public class Commit {
 	public BenchmarkStatus getBenchmarkStatus() {
 		return commitAccess.getBenchmarkStatus(repoId, hash);
 	}
+
+	@Override
+	public String toString() {
+		return "Commit{" +
+			"repoId=" + repoId +
+			", hash=" + hash +
+			'}';
+	}
 }
