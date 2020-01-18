@@ -1,26 +1,80 @@
 <template>
   <div class="repo-comparison">
-    <h1>This is the repo comparison page</h1>
-    <repo-add>
-      <template #activator="{ on }">
-        <v-btn v-on="on">Test</v-btn>
-      </template>
-    </repo-add>
-    <repo-module-tester></repo-module-tester>
+    <v-container fluid>
+      <v-col>
+        <v-row align="baseline" justify="center">
+          <h1>Repository Comparison</h1>
+        </v-row>
+      </v-col>
+      <v-col>
+        <v-row align="start" justify="start">
+          <v-card max-width="400">
+            <div v-for="(repo, index) in allRepos" :key="index">
+              <repo-selector
+                :repoID="repo.id"
+                :index="index"
+                @updateSelect="updateSelectedRepos"
+              ></repo-selector>
+            </div>
+            <v-spacer></v-spacer>
+            <repo-add>
+              <template #activator="{ on }">
+                <v-btn v-on="on">add a new repository</v-btn>
+              </template>
+            </repo-add>
+          </v-card>
+        </v-row>
+      </v-col>
+    </v-container>
   </div>
 </template>
 
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
+import { Watch } from 'vue-property-decorator'
+import { vxm } from '../store/classIndex'
 import RepoAddDialog from '../components/RepoAddDialog.vue'
-import RepoModuleTester from '../testComponents/RepoModuleTester.vue'
+import RepoSelector from '../components/RepoSelector.vue'
+import { Repo } from '../store/types'
 
 @Component({
   components: {
     'repo-add': RepoAddDialog,
-    'repo-module-tester': RepoModuleTester
+    'repo-selector': RepoSelector
   }
 })
-export default class RepoComparison extends Vue {}
+export default class RepoComparison extends Vue {
+  private selectedRepos: string[] = []
+
+  get allRepos(): Repo[] {
+    return vxm.repoModule.allRepos
+  }
+
+  get allColors(): string[] {
+    return vxm.colorModule.allColors
+  }
+
+  updateSelectedRepos(repoID: string, selected: boolean) {
+    if (selected) {
+      this.selectedRepos.push(repoID)
+    } else {
+      const index: number = this.selectedRepos.indexOf(repoID)
+      this.selectedRepos.splice(index, 1)
+    }
+    console.log(this.selectedRepos)
+  }
+
+  @Watch('allRepos')
+  addMissingColors() {
+    if (this.allColors.length < this.allRepos.length) {
+      let diff = this.allRepos.length - this.allColors.length
+      vxm.colorModule.addColors(diff)
+    }
+  }
+
+  mounted() {
+    vxm.repoModule.fetchRepos()
+  }
+}
 </script>
