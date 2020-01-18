@@ -21,8 +21,8 @@ const vue = new Vue({
 axios.interceptors.request.use(function(config) {
   if (vxm.userModule.loggedIn) {
     config.auth = {
-      username: vxm.userModule.getRole!,
-      password: vxm.userModule.getToken!
+      username: vxm.userModule.role!,
+      password: vxm.userModule.token!
     }
   } else {
     config.auth = undefined

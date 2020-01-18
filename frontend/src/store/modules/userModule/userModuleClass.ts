@@ -7,18 +7,8 @@ const VxModule = createModule({
 })
 
 export class UserStore extends VxModule {
-  private role: string | null = null
-  private token: string | null = null
-
-  @mutation
-  setRole(payload: string | null) {
-    this.role = payload
-  }
-
-  @mutation
-  setToken(payload: string | null) {
-    this.token = payload
-  }
+  private _role: string | null = null
+  private _token: string | null = null
 
   @action
   async logIn(payload: { role: string; asRepoAdmin: boolean; token: string }) {
@@ -33,8 +23,8 @@ export class UserStore extends VxModule {
     })
 
     // was a 200
-    this.role = payload.role
-    this.token = payload.token
+    this._role = payload.role
+    this._token = payload.token
   }
 
   @action
@@ -43,12 +33,22 @@ export class UserStore extends VxModule {
     this.setToken(null)
   }
 
-  get getToken(): string | null {
-    return this.token
+  @mutation
+  setRole(payload: string | null) {
+    this._role = payload
   }
 
-  get getRole(): string | null {
-    return this.role
+  @mutation
+  setToken(payload: string | null) {
+    this._token = payload
+  }
+
+  get token(): string | null {
+    return this._token
+  }
+
+  get role(): string | null {
+    return this._role
   }
 
   /**
@@ -68,6 +68,6 @@ export class UserStore extends VxModule {
   }
 
   get authorized(): (payload: string) => boolean {
-    return (payload: string) => this.role === 'ADMIN' || this.role === payload
+    return (payload: string) => this._role === 'ADMIN' || this._role === payload
   }
 }
