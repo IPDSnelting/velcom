@@ -13,10 +13,12 @@ export function extractErrorMessage(error: AxiosError): string {
     } else if (error.response.data.error) {
       errorMessage = error.response.data.error
     }
-    return (
-      `${errorMessage} (${error.response.status})` ||
-      `Received error ${error.response.status}`
-    )
+    if (errorMessage) {
+      return `${errorMessage} (${error.response.status})`
+    } else if (error.response.status === 401 || error.response.status === 403) {
+      return `Unauthorzized! Please log in (${error.response.status})`
+    }
+    return `Received error ${error.response.status}`
   }
   return error.message || 'Unknown error'
 }
