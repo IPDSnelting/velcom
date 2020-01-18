@@ -46,7 +46,12 @@ public class AddRepoTest {
 
 		String jar = runnerDir.resolve("target").resolve("runner.jar").toAbsolutePath().toString();
 
-		Process process = new ProcessBuilder("java", "-jar", jar, config)
+		Process process = new ProcessBuilder(
+			ProcessHandle.current().info().command().orElseThrow(),
+			"-jar",
+			jar,
+			config
+		)
 			.directory(runnerDir.resolve("target").toFile())
 			.inheritIO()
 			.start();
