@@ -32,6 +32,7 @@ import { Component, Watch } from 'vue-property-decorator'
 import { Store } from 'vuex'
 import { RootState } from '../store/types'
 import { extractErrorMessage } from '../util/ErrorUtils'
+import { store, vxm } from '../store/classIndex'
 
 @Component
 export default class RepoAddDialog extends Vue {
@@ -56,8 +57,8 @@ export default class RepoAddDialog extends Vue {
   }
 
   private addRepository() {
-    this.$store
-      .dispatch('repoModule/addRepo', {
+    vxm.repoModule
+      .addRepo({
         repoName: this.repoName,
         remoteUrl: this.remoteUrl,
         repoToken: this.repoToken
