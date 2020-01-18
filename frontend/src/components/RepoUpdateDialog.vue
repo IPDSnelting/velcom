@@ -54,9 +54,9 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { Store } from 'vuex'
 import { RootState, RepoState, Repo } from '../store/types'
 import { Prop, Watch } from 'vue-property-decorator'
+import { vxm } from '../store/classIndex'
 
 @Component
 export default class RepoUpdateDialog extends Vue {
@@ -72,12 +72,8 @@ export default class RepoUpdateDialog extends Vue {
   @Prop({ default: 'test' })
   private repoId!: string
 
-  get repoState(): RepoState {
-    return (this.$store as Store<RootState>).state.repoModule
-  }
-
   get repo(): Repo {
-    return this.repoState.repos[this.repoId]!
+    return vxm.repoModule.repoByID(this.repoId)
   }
 
   private notEmpty(input: string): boolean | string {
@@ -113,7 +109,13 @@ export default class RepoUpdateDialog extends Vue {
       this.repo.measurements,
       this.remoteUrl
     )
-    this.$store.dispatch('repoModule/updateRepo', newRepo)
+    // TODO: How do we get the token??
+    vxm.repoModule.updateRepo({
+      repoToken: '12345',
+      id: this.repoId,
+      name: this.repoName,
+      remoteUrl: this.remoteUrl
+    })
   }
 
   mounted() {
@@ -125,8 +127,7 @@ export default class RepoUpdateDialog extends Vue {
     for (let i = 0; i < 3; i++) {
       branches.push(String.fromCharCode('a'.charCodeAt(0) + i))
     }
-    this.$store.commit(
-      'repoModule/SET_REPO',
+    vxm.repoModule.setRepo(
       new Repo('test', 'Test repo', branches, ['a', 'b'], [], 'test url')
     )
   }
