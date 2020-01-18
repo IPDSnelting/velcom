@@ -60,16 +60,7 @@ export class RepoStore extends VxModule {
       }
     })
 
-    let repo = response.data.map((item: any) => {
-      new Repo(
-        item.id,
-        item.name,
-        item.branches,
-        item.tracked_branches,
-        item.measurements,
-        item.remote_url
-      )
-    })
+    let repo = response.data as Repo
 
     this.setRepo(repo)
     return repo
@@ -87,31 +78,25 @@ export class RepoStore extends VxModule {
         remote_url: payload.remoteUrl,
         token: payload.repoToken
       })
-      .then(
-        response => {
-          let item = response.data
-          let repo = new Repo(
-            item.id,
-            item.name,
-            item.branches,
-            item.tracked_branches,
-            item.measurements,
-            item.remote_url
-          )
+      .then(response => {
+        let item = response.data
+        let repo = new Repo(
+          item.id,
+          item.name,
+          item.branches,
+          item.tracked_branches,
+          item.measurements,
+          item.remote_url
+        )
 
-          this.setRepo(repo)
-          return repo
-        },
-        error => {
-          console.log('error: could not add new repo ' + payload.repoName)
-          console.log(error)
-        }
-      )
+        this.setRepo(repo)
+        return repo
+      })
   }
 
   @action
   async deleteRepo(payload: string) {
-    axios
+    return axios
       .delete('/repo', {
         auth: {
           username: 'admin', // rootGetters['userModule/repoID'],
@@ -121,15 +106,9 @@ export class RepoStore extends VxModule {
           repo_id: payload
         }
       })
-      .then(
-        response => {
-          this.removeRepo(payload)
-        },
-        error => {
-          console.log('error: could not remove repo ' + payload)
-          console.log(error)
-        }
-      )
+      .then(response => {
+        this.removeRepo(payload)
+      })
   }
 
   @action
@@ -139,7 +118,7 @@ export class RepoStore extends VxModule {
     repoToken: string
     remoteUrl: string
   }) {
-    axios
+    return axios
       .patch('/repo', {
         auth: {
           /*
@@ -153,15 +132,9 @@ export class RepoStore extends VxModule {
           remote_url: payload.remoteUrl
         }
       })
-      .then(
-        response => {
-          this.fetchRepoByID(payload.id)
-        },
-        error => {
-          console.log('error: could not change repo ' + payload.name)
-          console.log(error)
-        }
-      )
+      .then(response => {
+        this.fetchRepoByID(payload.id)
+      })
   }
 
   get allRepos() {

@@ -22,20 +22,19 @@ export class UserStore extends VxModule {
 
   @action
   async logIn(payload: { role: string; asRepoAdmin: boolean; token: string }) {
-    axios
-      .get('/test-token', {
-        auth: {
-          username: payload.role,
-          password: payload.token
-        },
-        params: {
-          repo_id: payload.asRepoAdmin && payload.role
-        }
-      })
-      .then(response => {
-        this.role = payload.role
-        this.token = payload.token
-      })
+    const response = await axios.get('/test-token', {
+      auth: {
+        username: payload.role,
+        password: payload.token
+      },
+      params: {
+        repo_id: payload.asRepoAdmin && payload.role
+      }
+    })
+
+    // was a 200
+    this.role = payload.role
+    this.token = payload.token
   }
 
   @action
