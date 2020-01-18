@@ -105,7 +105,7 @@ public class Queue {
 
 	public synchronized Optional<Commit> getNextTask() {
 		final Optional<Commit> nextTask = queuePolicy.getNextTask();
-		LOGGER.info("Task " + nextTask + " has been started");
+		nextTask.ifPresent(commit -> LOGGER.info("Task " + commit + " has been started"));
 		return nextTask;
 	}
 
