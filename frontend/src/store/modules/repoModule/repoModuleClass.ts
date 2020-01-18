@@ -79,7 +79,8 @@ export class RepoStore extends VxModule {
         token: payload.repoToken
       })
       .then(response => {
-        let item = response.data
+        let item = response.data['repo']
+
         let repo = new Repo(
           item.id,
           item.name,
