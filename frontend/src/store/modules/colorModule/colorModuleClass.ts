@@ -1,11 +1,5 @@
 import { createModule, mutation, action } from 'vuex-class-component'
-<<<<<<< HEAD
-import { CommitComparison, ColorConverter } from '@/store/types'
-=======
-import { Repo, CommitComparison, Run, ColorConverter } from '@/store/types'
-import Vue from 'vue'
-import axios from 'axios'
->>>>>>> convert colorModule to new class syntax
+import { ColorConverter } from '@/store/types'
 
 const VxModule = createModule({
   namespaced: 'colorModule',
@@ -13,12 +7,9 @@ const VxModule = createModule({
 })
 
 export class ColorStore extends VxModule {
-<<<<<<< HEAD
   /* see the muted qualitative colour scheme on
    * https://personal.sron.nl/~pault/#sec:qualitative
    */
-=======
->>>>>>> convert colorModule to new class syntax
   private colors: string[] = [
     '#332288',
     '#88CCEE',
