@@ -1,22 +1,14 @@
-import Vuex from 'vuex'
-import {
-  createModule,
-  mutation,
-  action,
-  extractVuexModule,
-  VuexModule,
-  createProxy
-} from 'vuex-class-component'
+import { createModule, mutation, action } from 'vuex-class-component'
 import { Repo } from '@/store/types'
 import Vue from 'vue'
 import axios from 'axios'
 
-const StoreModule = createModule({
+const VxModule = createModule({
   namespaced: 'repoModule',
   strict: false
 })
 
-export class RepoStore extends StoreModule {
+export class RepoStore extends VxModule {
   private repos: { [key: string]: Repo } = {}
 
   @mutation
@@ -176,19 +168,7 @@ export class RepoStore extends StoreModule {
     return Array.from(Object.values(this.repos))
   }
 
-  /* get repoByID(payload: string) {
-    return this.repos[payload]
-  } */
-}
-
-Vue.use(Vuex)
-
-export const store = new Vuex.Store({
-  modules: {
-    ...extractVuexModule(RepoStore)
+  get repoByID(): (payload: string) => Repo {
+    return (payload: string) => this.repos[payload]
   }
-})
-
-export const vxm = {
-  repoModule: createProxy(store, RepoStore)
 }

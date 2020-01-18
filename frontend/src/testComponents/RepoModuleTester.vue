@@ -19,7 +19,7 @@
 <script lang="ts">
 import Vue from 'vue'
 // import { mapState, mapActions, mapGetters } from 'vuex'
-import { store, vxm } from '../store/modules/repoModule/repoModuleClass'
+import { vxm } from '../store/classIndex'
 
 export default Vue.extend({
   name: 'RepoModuleTester',

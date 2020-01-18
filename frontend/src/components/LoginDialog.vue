@@ -56,6 +56,7 @@ import { Component, Watch } from 'vue-property-decorator'
 import { Store } from 'vuex'
 import { RootState } from '../store/types'
 import { extractErrorMessage } from '../util/ErrorUtils'
+import { store, vxm } from '../store/classIndex'
 
 @Component
 export default class LoginDialog extends Vue {
@@ -89,7 +90,28 @@ export default class LoginDialog extends Vue {
     return input.length > 0 ? true : 'This field must not be empty!'
   }
 
-  private login() {}
+  private login() {
+    var payload: {
+      role: string
+      asRepoAdmin: boolean
+      token: string
+    }
+
+    if (this.role === 'Web-Admin') {
+      payload = {
+        role: 'ADMIN',
+        asRepoAdmin: false,
+        token: this.token
+      }
+    } else {
+      payload = {
+        role: this.repoID,
+        asRepoAdmin: true,
+        token: this.token
+      }
+    }
+    vxm.userModule.logIn(payload)
+  }
 }
 </script>
 
