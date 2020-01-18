@@ -18,7 +18,7 @@
         <v-icon right dark :size="iconFontSize">{{ item.icon }}</v-icon>
       </v-btn>
 
-      <login>
+      <login v-if="!loggedIn">
         <template #activator="{ on }">
           <v-btn v-on="on" text>
             Login
@@ -26,6 +26,10 @@
           </v-btn>
         </template>
       </login>
+      <v-btn v-if="loggedIn" text @click="logout">
+        Logout
+        <v-icon right dark :size="iconFontSize">{{ logoutIcon }}</v-icon>
+      </v-btn>
     </v-toolbar>
 
     <!-- Navigation drawer -->
@@ -66,7 +70,8 @@ import { VuetifyIcon } from 'vuetify/types/services/icons'
 import VueRouterEx, { RouteConfig } from 'vue-router/types/router'
 import router from '../router'
 import LoginDialog from '../components/LoginDialog.vue'
-import { mdiAccountCircleOutline } from '@mdi/js'
+import { mdiAccountCircleOutline, mdiLogout } from '@mdi/js'
+import { vxm } from '../store/classIndex'
 
 class NavigationItem {
   readonly routeName: String
@@ -100,8 +105,17 @@ export default class NavigationBar extends Vue {
       )
   }
 
+  get loggedIn() {
+    return vxm.userModule.loggedIn
+  }
+
+  logout() {
+    vxm.userModule.logOut()
+  }
+
   // ============== ICONS ==============
   private loginIcon = mdiAccountCircleOutline
+  private logoutIcon = mdiLogout
   // ==============       ==============
 }
 </script>
