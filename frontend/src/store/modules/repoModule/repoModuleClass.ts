@@ -104,17 +104,10 @@ export class RepoStore extends VxModule {
   }) {
     return axios
       .patch('/repo', {
-        auth: {
-          /*
-          username: rootGetters['userModule/repoID'],
-          password: rootGetters['userModule/token'] */
-        },
-        params: {
-          repo_id: payload.id,
-          name: payload.name,
-          token: payload.repoToken,
-          remote_url: payload.remoteUrl
-        }
+        repo_id: payload.id,
+        name: payload.name,
+        token: payload.repoToken,
+        remote_url: payload.remoteUrl
       })
       .then(response => {
         this.fetchRepoByID(payload.id)
