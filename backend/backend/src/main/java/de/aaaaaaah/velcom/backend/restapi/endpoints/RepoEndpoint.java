@@ -92,7 +92,7 @@ public class RepoEndpoint {
 			.map(AuthToken::new)
 			.ifPresent(token -> tokenAccess.setToken(repo.getId(), token));
 
-		// Run listener on this repo on a seperate thread
+		// Run listener on this repo on a separate thread
 		new Thread(() -> {
 			try {
 				listener.checkForUnknownCommits(repo.getId());
