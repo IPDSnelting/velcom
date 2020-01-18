@@ -9,6 +9,7 @@ import de.aaaaaaah.velcom.backend.access.repo.RepoAccess;
 import de.aaaaaaah.velcom.backend.access.repo.RepoId;
 import de.aaaaaaah.velcom.backend.access.token.AuthToken;
 import de.aaaaaaah.velcom.backend.access.token.TokenAccess;
+import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.listener.CommitSearchException;
 import de.aaaaaaah.velcom.backend.listener.Listener;
 import de.aaaaaaah.velcom.backend.restapi.RepoUser;
@@ -47,12 +48,16 @@ public class RepoEndpoint {
 	private final RepoAccess repoAccess;
 	private final TokenAccess tokenAccess;
 
+	private final Queue queue;
 	private final Listener listener;
 
-	public RepoEndpoint(RepoAccess repoAccess, TokenAccess tokenAccess, Listener listener) {
+	public RepoEndpoint(RepoAccess repoAccess, TokenAccess tokenAccess, Queue queue,
+		Listener listener) {
 
 		this.repoAccess = repoAccess;
 		this.tokenAccess = tokenAccess;
+
+		this.queue = queue;
 		this.listener = listener;
 	}
 
@@ -87,7 +92,7 @@ public class RepoEndpoint {
 			.map(AuthToken::new)
 			.ifPresent(token -> tokenAccess.setToken(repo.getId(), token));
 
-		// Run listener on this repo on a seperate thread
+		// Run listener on this repo on a separate thread
 		new Thread(() -> {
 			try {
 				listener.checkForUnknownCommits(repo.getId());
@@ -143,6 +148,7 @@ public class RepoEndpoint {
 
 		repoAccess.deleteRepo(repoId);
 		tokenAccess.deleteAllUnused();
+		queue.abortAllTasksOfRepo(repoId);
 	}
 
 	private static class GetReply {

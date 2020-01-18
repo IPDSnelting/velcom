@@ -5,12 +5,14 @@ import de.aaaaaaah.velcom.backend.access.commit.CommitHash;
 import de.aaaaaaah.velcom.backend.access.repo.RepoId;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.Stack;
+import java.util.stream.Collectors;
 
 /**
  * A policy where manual tasks are ordered with a FiLo principle.
@@ -36,6 +38,12 @@ public class PolicyManualFilo implements QueuePolicy {
 		this.manualTasks = manualTasks;
 		this.tasks = tasks;
 		this.repoIdQueue = repoIdQueue;
+	}
+
+	private static <T> Stack<T> copyStack(Stack<T> stack) {
+		Stack<T> newStack = new Stack<>();
+		stack.forEach(newStack::push);
+		return newStack;
 	}
 
 	private Optional<Stack<Commit>> getRepoStack(RepoId repoId) {
@@ -64,12 +72,33 @@ public class PolicyManualFilo implements QueuePolicy {
 			commit -> commit.getRepoId().equals(repoId) && commit.getHash().equals(hash));
 	}
 
+	private Collection<Commit> removeTaskFromStack(Stack<Commit> stack, RepoId repoId) {
+		final List<Commit> removedTasks = stack.stream()
+			.filter(commit -> commit.getRepoId().equals(repoId))
+			.collect(Collectors.toUnmodifiableList());
+		stack.removeIf(commit -> commit.getRepoId().equals(repoId));
+		return removedTasks;
+	}
+
 	private void removeTask(RepoId repoId, CommitHash hash) {
 		getRepoStack(repoId).ifPresent(stack -> removeTaskFromStack(stack, repoId, hash));
 	}
 
+	private Collection<Commit> removeTask(RepoId repoId) {
+		final Optional<Stack<Commit>> stack = getRepoStack(repoId);
+		if (stack.isEmpty()) {
+			return List.of();
+		}
+
+		return removeTaskFromStack(stack.get(), repoId);
+	}
+
 	private void removeManualTask(RepoId repoId, CommitHash hash) {
 		removeTaskFromStack(manualTasks, repoId, hash);
+	}
+
+	private Collection<Commit> removeManualTask(RepoId repoId) {
+		return removeTaskFromStack(manualTasks, repoId);
 	}
 
 	/**
@@ -78,10 +107,10 @@ public class PolicyManualFilo implements QueuePolicy {
 	 * @param commit the commit that has been added as task
 	 */
 	@Override
-	public void addTask(Commit commit) {
+	public boolean addTask(Commit commit) {
 		if (findManualTask(commit.getRepoId(), commit.getHash()).isPresent()
 			|| findTask(commit.getRepoId(), commit.getHash()).isPresent()) {
-			return;
+			return false;
 		}
 
 		Stack<Commit> stack = tasks.get(commit.getRepoId());
@@ -91,6 +120,7 @@ public class PolicyManualFilo implements QueuePolicy {
 			repoIdQueue.add(commit.getRepoId());
 		}
 		stack.push(commit);
+		return true;
 	}
 
 	/**
@@ -99,11 +129,11 @@ public class PolicyManualFilo implements QueuePolicy {
 	 * @param commit the commit that has been added as task
 	 */
 	@Override
-	public void addManualTask(Commit commit) {
+	public boolean addManualTask(Commit commit) {
 		abortTask(commit.getRepoId(), commit.getHash());
 		manualTasks.push(commit);
+		return true;
 	}
-
 
 	/**
 	 * Returns next commit.
@@ -169,13 +199,21 @@ public class PolicyManualFilo implements QueuePolicy {
 	}
 
 	private PolicyManualFilo copy() {
-		Stack<Commit> newManualTasks = new Stack<>();
-		manualTasks.forEach(newManualTasks::push);
+		Stack<Commit> newManualTasks = copyStack(manualTasks);
 
-		Map<RepoId, Stack<Commit>> newTasks = new HashMap<>(tasks);
+		Map<RepoId, Stack<Commit>> newTasks = new HashMap<>();
+		tasks.forEach((repoId, stack) -> newTasks.put(repoId, copyStack(stack)));
+
 		Queue<RepoId> newRepoIdQueue = new ArrayDeque<>(repoIdQueue);
 
 		return new PolicyManualFilo(newManualTasks, newTasks, newRepoIdQueue);
 	}
 
+	@Override
+	public Collection<Commit> abortAllTasksOfRepo(RepoId repoId) {
+		List<Commit> abortedTasks = new ArrayList<>();
+		abortedTasks.addAll(removeTask(repoId));
+		abortedTasks.addAll(removeManualTask(repoId));
+		return abortedTasks;
+	}
 }

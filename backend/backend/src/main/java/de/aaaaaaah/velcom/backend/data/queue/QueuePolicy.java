@@ -3,6 +3,7 @@ package de.aaaaaaah.velcom.backend.data.queue;
 import de.aaaaaaah.velcom.backend.access.commit.Commit;
 import de.aaaaaaah.velcom.backend.access.commit.CommitHash;
 import de.aaaaaaah.velcom.backend.access.repo.RepoId;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,15 +17,19 @@ public interface QueuePolicy {
 	 * A new task has been added to the queue.
 	 *
 	 * @param commit the commit that has been added as task
+	 * @return true if the commit was added, false if it was ignored because it is already contained
+	 * 	in the policy
 	 */
-	void addTask(Commit commit);
+	boolean addTask(Commit commit);
 
 	/**
 	 * A new task has been manually added to the queue.
 	 *
 	 * @param commit the commit that has been added as task
+	 * @return true if the commit was added, false if it was ignored because it is already contained
+	 * 	in the policy
 	 */
-	void addManualTask(Commit commit);
+	boolean addManualTask(Commit commit);
 
 	Optional<Commit> getNextTask();
 
@@ -41,4 +46,12 @@ public interface QueuePolicy {
 	 * @param commitHash the commit the task is for
 	 */
 	void abortTask(RepoId repoId, CommitHash commitHash);
+
+	/**
+	 * Abort all tasks of a specific repo.
+	 *
+	 * @param repoId the repo whose tasks to abort
+	 * @return the list of tasks that were aborted
+	 */
+	Collection<Commit> abortAllTasksOfRepo(RepoId repoId);
 }

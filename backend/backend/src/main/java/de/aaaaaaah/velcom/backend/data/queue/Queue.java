@@ -11,6 +11,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The queue is passed tasks from various sources. It keeps track of all tasks and updates their
@@ -34,6 +36,8 @@ import java.util.function.Consumer;
  */
 public class Queue {
 
+	private static final Logger LOGGER = LoggerFactory.getLogger(Queue.class);
+
 	private final CommitAccess commitAccess;
 	private final QueuePolicy queuePolicy;
 
@@ -55,10 +59,14 @@ public class Queue {
 	 * @param commit the commit that should be added as task
 	 */
 	public synchronized void addTask(Commit commit) {
-		commitAccess.setBenchmarkStatus(commit.getRepoId(), commit.getHash(),
-			BenchmarkStatus.BENCHMARK_REQUIRED);
-		queuePolicy.addTask(commit);
-		callAllAddedListeners(commit);
+		if (queuePolicy.addTask(commit)) {
+			commitAccess.setBenchmarkStatus(commit.getRepoId(), commit.getHash(),
+				BenchmarkStatus.BENCHMARK_REQUIRED);
+			callAllAddedListeners(commit);
+			LOGGER.info("Added task " + commit + " to queue and notified all listeners");
+		} else {
+			LOGGER.debug("Didn't add task " + commit + " as it was already added earlier");
+		}
 	}
 
 	/**
@@ -69,10 +77,14 @@ public class Queue {
 	 * @param commit the commit that should be added as task
 	 */
 	public synchronized void addManualTask(Commit commit) {
-		commitAccess.setBenchmarkStatus(commit.getRepoId(), commit.getHash(),
-			BenchmarkStatus.BENCHMARK_REQUIRED_MANUAL_PRIORITY);
-		queuePolicy.addManualTask(commit);
-		callAllAddedListeners(commit);
+		if (queuePolicy.addManualTask(commit)) {
+			commitAccess.setBenchmarkStatus(commit.getRepoId(), commit.getHash(),
+				BenchmarkStatus.BENCHMARK_REQUIRED_MANUAL_PRIORITY);
+			callAllAddedListeners(commit);
+			LOGGER.info("Added manual task " + commit + " to queue and notified all listeners");
+		} else {
+			LOGGER.debug("Didn't add manual task " + commit + " as it was already added earlier");
+		}
 	}
 
 	/**
@@ -92,17 +104,23 @@ public class Queue {
 	}
 
 	public synchronized Optional<Commit> getNextTask() {
-		return queuePolicy.getNextTask();
+		final Optional<Commit> nextTask = queuePolicy.getNextTask();
+		nextTask.ifPresent(commit -> LOGGER.info("Task " + commit + " has been started"));
+		return nextTask;
 	}
 
 	/**
 	 * This function must be called once a task was completed and should not be benchmarked again.
 	 *
-	 * @param commit the commit that was completed
+	 * @param repoId the repo the commit is in
+	 * @param commitHash the commit's hash
 	 */
-	public synchronized void finishTask(Commit commit) {
-		commitAccess.setBenchmarkStatus(commit.getRepoId(), commit.getHash(),
+	public synchronized void finishTask(RepoId repoId, CommitHash commitHash) {
+		commitAccess.setBenchmarkStatus(repoId, commitHash,
 			BenchmarkStatus.NO_BENCHMARK_REQUIRED);
+		LOGGER.info(
+			"Task with repoId " + repoId + " and commitHash " + commitHash
+				+ " was successfully finished");
 	}
 
 	/**
@@ -126,6 +144,17 @@ public class Queue {
 		queuePolicy.abortTask(repoId, commitHash);
 		commitAccess.setBenchmarkStatus(repoId, commitHash, BenchmarkStatus.NO_BENCHMARK_REQUIRED);
 		callAllAbortedListeners(repoId, commitHash);
+		LOGGER.info("Task with repoId " + repoId + " and hash " + commitHash + " was aborted");
+	}
+
+	public synchronized void abortAllTasksOfRepo(RepoId repoId) {
+		final Collection<Commit> abortedTasks = queuePolicy.abortAllTasksOfRepo(repoId);
+		for (Commit abortedTask : abortedTasks) {
+			commitAccess.setBenchmarkStatus(repoId, abortedTask.getHash(),
+				BenchmarkStatus.NO_BENCHMARK_REQUIRED);
+			callAllAbortedListeners(repoId, abortedTask.getHash());
+		}
+		LOGGER.info("All tasks with repoId " + repoId + " were aborted");
 	}
 
 	/**

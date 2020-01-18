@@ -114,8 +114,8 @@ public class ServerMain extends Application<GlobalConfig> {
 			new RecentlyBenchmarkedCommitsEndpoint(benchmarkAccess, commitComparer, linearLog));
 		environment.jersey().register(
 			new RepoComparisonGraphEndpoint(commitAccess, repoAccess, reducedLog));
-		environment.jersey().register(new RepoEndpoint(repoAccess, tokenAccess, listener));
-		environment.jersey().register(new TestTokenEndpoint(tokenAccess));
+		environment.jersey().register(new RepoEndpoint(repoAccess, tokenAccess, queue, listener));
+		environment.jersey().register(new TestTokenEndpoint());
 	}
 
 	private void configureCors(Environment environment) {
