@@ -69,6 +69,15 @@ public class CommitAccess {
 
 	// Commit operations
 
+	private static String formatPersonIdent(PersonIdent ident) {
+		final String name = ident.getName();
+		if (name.isEmpty()) {
+			return "<" + ident.getEmailAddress() + ">";
+		} else {
+			return name + " <" + ident.getEmailAddress() + ">";
+		}
+	}
+
 	public Commit getCommit(RepoId repoId, CommitHash commitHash) throws CommitAccessException {
 		try (Repository repo = repoStorage.acquireRepository(repoId.getDirectoryName())) {
 			try (RevWalk walk = new RevWalk(repo)) {
@@ -82,6 +91,8 @@ public class CommitAccess {
 				+ " in repository " + repoId, e);
 		}
 	}
+
+	// Mutable properties
 
 	public Collection<Commit> getCommits(RepoId repoId, Collection<CommitHash> commitHashes)
 		throws CommitAccessException {
@@ -105,8 +116,6 @@ public class CommitAccess {
 
 		return commitList;
 	}
-
-	// Mutable properties
 
 	/**
 	 * See {@link Commit#isKnown()}. To make an unknown commit known, use {@link
@@ -182,6 +191,8 @@ public class CommitAccess {
 		}
 	}
 
+	// Advanced operations
+
 	public Collection<Commit> getAllTasksOfStatus(RepoId repoId, BenchmarkStatus status)
 		throws CommitAccessException {
 
@@ -215,7 +226,8 @@ public class CommitAccess {
 		}
 	}
 
-	// Advanced operations
+	// TODO find out more about jgit's commit order
+	// TODO What about the RepoStorage lock? Is the CommitAccessException enough?
 
 	public Collection<Commit> getAllCommitsRequiringBenchmark() {
 		try (DSLContext db = databaseStorage.acquireContext()) {
@@ -229,9 +241,6 @@ public class CommitAccess {
 				));
 		}
 	}
-
-	// TODO find out more about jgit's commit order
-	// TODO What about the RepoStorage lock? Is the CommitAccessException enough?
 
 	/**
 	 * Constructs a new commit walk instance starting at the commit that the given branch points
@@ -318,7 +327,7 @@ public class CommitAccess {
 		}
 	}
 
-	Commit commitFromRevCommit(RepoId repoId, RevCommit revCommit) {
+	private Commit commitFromRevCommit(RepoId repoId, RevCommit revCommit) {
 		CommitHash ownHash = new CommitHash(revCommit.getId().getName());
 		List<CommitHash> parentHashes = List.of(revCommit.getParents()).stream()
 			.map(RevCommit::getId)
@@ -335,9 +344,9 @@ public class CommitAccess {
 			repoId,
 			ownHash,
 			parentHashes,
-			author.toExternalString(),
+			formatPersonIdent(author),
 			author.getWhen().toInstant(),
-			committer.toExternalString(),
+			formatPersonIdent(committer),
 			committer.getWhen().toInstant(),
 			revCommit.getFullMessage()
 		);
