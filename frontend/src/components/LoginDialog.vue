@@ -15,12 +15,7 @@
               <template>
                 <div>Log in as...</div>
               </template>
-              <v-radio
-                v-for="role in roles"
-                :key="role"
-                :label="role"
-                :value="role"
-              ></v-radio>
+              <v-radio v-for="role in roles" :key="role" :label="role" :value="role"></v-radio>
             </v-radio-group>
             <v-text-field
               :disabled="!this.idRequired"
@@ -28,23 +23,14 @@
               label="*Repository name"
               v-model="repoID"
             ></v-text-field>
-            <v-text-field
-              :rules="[nonEmptyToken]"
-              label="Access token"
-              v-model="token"
-            ></v-text-field>
+            <v-text-field :rules="[nonEmptyToken]" label="Access token" v-model="token"></v-text-field>
           </v-form>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="primary" :disabled="!formValid" @click="login"
-            >Login</v-btn
-          >
+          <v-btn color="primary" :disabled="!formValid" @click="login">Login</v-btn>
           <v-spacer></v-spacer>
         </v-card-actions>
-        <v-alert class="mb-1" type="error" :value="error.length > 0">{{
-          error
-        }}</v-alert>
       </v-card>
     </v-dialog>
   </div>
@@ -99,7 +85,7 @@ export default class LoginDialog extends Vue {
 
     if (this.role === 'Web-Admin') {
       payload = {
-        role: 'ADMIN',
+        role: 'admin',
         asRepoAdmin: false,
         token: this.token
       }
@@ -110,8 +96,7 @@ export default class LoginDialog extends Vue {
         token: this.token
       }
     }
-    vxm.userModule.logIn(payload)
-    this.dialogOpen = false
+    vxm.userModule.logIn(payload).then(() => (this.dialogOpen = false))
   }
 }
 </script>
