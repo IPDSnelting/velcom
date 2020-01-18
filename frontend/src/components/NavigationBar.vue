@@ -1,10 +1,7 @@
 <template>
   <nav>
     <v-toolbar dark color="primary darken-1">
-      <v-app-bar-nav-icon
-        class="hidden-md-and-up"
-        @click="drawerShown = !drawerShown"
-      ></v-app-bar-nav-icon>
+      <v-app-bar-nav-icon class="hidden-md-and-up" @click="drawerShown = !drawerShown"></v-app-bar-nav-icon>
       <v-toolbar-title>{{ title }}</v-toolbar-title>
 
       <v-spacer></v-spacer>
@@ -20,15 +17,23 @@
         {{ item.label }}
         <v-icon right dark :size="iconFontSize">{{ item.icon }}</v-icon>
       </v-btn>
+
+      <login v-if="!loggedIn">
+        <template #activator="{ on }">
+          <v-btn v-on="on" text>
+            Login
+            <v-icon right dark :size="iconFontSize">{{ loginIcon }}</v-icon>
+          </v-btn>
+        </template>
+      </login>
+      <v-btn v-if="loggedIn" text @click="logout">
+        Logout
+        <v-icon right dark :size="iconFontSize">{{ logoutIcon }}</v-icon>
+      </v-btn>
     </v-toolbar>
 
     <!-- Navigation drawer -->
-    <v-navigation-drawer
-      class="hidden-md-and-up"
-      v-model="drawerShown"
-      app
-      temporary
-    >
+    <v-navigation-drawer class="hidden-md-and-up" v-model="drawerShown" app temporary>
       <v-toolbar dark color="primary darken-1">
         <v-list>
           <v-list-item>
@@ -64,6 +69,9 @@ import Component from 'vue-class-component'
 import { VuetifyIcon } from 'vuetify/types/services/icons'
 import VueRouterEx, { RouteConfig } from 'vue-router/types/router'
 import router from '../router'
+import LoginDialog from '../components/LoginDialog.vue'
+import { mdiAccountCircleOutline, mdiLogout } from '@mdi/js'
+import { vxm } from '../store/classIndex'
 
 class NavigationItem {
   readonly routeName: String
@@ -77,7 +85,11 @@ class NavigationItem {
   }
 }
 
-@Component
+@Component({
+  components: {
+    login: LoginDialog
+  }
+})
 export default class NavigationBar extends Vue {
   private iconFontSize = 22
   private title = 'VelCom'
@@ -92,6 +104,19 @@ export default class NavigationBar extends Vue {
           new NavigationItem(route.name!, route.meta.icon, route.meta.label)
       )
   }
+
+  get loggedIn() {
+    return vxm.userModule.loggedIn
+  }
+
+  logout() {
+    vxm.userModule.logOut()
+  }
+
+  // ============== ICONS ==============
+  private loginIcon = mdiAccountCircleOutline
+  private logoutIcon = mdiLogout
+  // ==============       ==============
 }
 </script>
 

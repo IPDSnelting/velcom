@@ -20,8 +20,8 @@
           <v-spacer></v-spacer>
           <v-btn color="primary" :disabled="!formValid" @click="addRepository">Add Repository</v-btn>
           <v-spacer></v-spacer>
+          <v-btn color="error" @click="dialogOpen = false">Close</v-btn>
         </v-card-actions>
-        <v-alert class="mb-1" type="error" :value="error.length > 0">{{ error }}</v-alert>
       </v-card>
     </v-dialog>
   </div>
@@ -33,6 +33,7 @@ import { Component, Watch } from 'vue-property-decorator'
 import { Store } from 'vuex'
 import { RootState } from '../store/types'
 import { extractErrorMessage } from '../util/ErrorUtils'
+import { store, vxm } from '../store/classIndex'
 
 @Component
 export default class RepoAddDialog extends Vue {
@@ -43,25 +44,29 @@ export default class RepoAddDialog extends Vue {
   private formValid: boolean = false
   private dialogOpen: boolean = false
 
-  private error: string = ''
-
   private notEmpty(input: string): boolean | string {
     return input.trim().length > 0 ? true : 'This field must not be empty!'
   }
 
+  @Watch('dialogOpen')
+  clearDialogOnOpen(opened: boolean) {
+    if (opened) {
+      this.remoteUrl = ''
+      this.repoName = ''
+      this.repoToken = ''
+    }
+  }
+
   private addRepository() {
-    this.$store
-      .dispatch('repoModule/addRepo', {
-        name: this.repoName,
-        remote_url: this.remoteUrl,
-        token: this.repoToken
+    vxm.repoModule
+      .addRepo({
+        repoName: this.repoName,
+        remoteUrl: this.remoteUrl,
+        repoToken: this.repoToken
       })
       .then(it => {
         this.$emit('value', it)
-        this.error = ''
-      })
-      .catch(it => {
-        this.error = extractErrorMessage(it)
+        this.dialogOpen = false
       })
   }
 }
