@@ -40,6 +40,12 @@ public class PolicyManualFilo implements QueuePolicy {
 		this.repoIdQueue = repoIdQueue;
 	}
 
+	private static <T> Stack<T> copyStack(Stack<T> stack) {
+		Stack<T> newStack = new Stack<>();
+		stack.forEach(newStack::push);
+		return newStack;
+	}
+
 	private Optional<Stack<Commit>> getRepoStack(RepoId repoId) {
 		return Optional.ofNullable(tasks.get(repoId));
 	}
@@ -129,7 +135,6 @@ public class PolicyManualFilo implements QueuePolicy {
 		return true;
 	}
 
-
 	/**
 	 * Returns next commit.
 	 * <ol>
@@ -194,10 +199,11 @@ public class PolicyManualFilo implements QueuePolicy {
 	}
 
 	private PolicyManualFilo copy() {
-		Stack<Commit> newManualTasks = new Stack<>();
-		manualTasks.forEach(newManualTasks::push);
+		Stack<Commit> newManualTasks = copyStack(manualTasks);
 
-		Map<RepoId, Stack<Commit>> newTasks = new HashMap<>(tasks);
+		Map<RepoId, Stack<Commit>> newTasks = new HashMap<>();
+		tasks.forEach((repoId, stack) -> newTasks.put(repoId, copyStack(stack)));
+
 		Queue<RepoId> newRepoIdQueue = new ArrayDeque<>(repoIdQueue);
 
 		return new PolicyManualFilo(newManualTasks, newTasks, newRepoIdQueue);
