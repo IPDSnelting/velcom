@@ -8,7 +8,7 @@ const VxModule = createModule({
   strict: false
 })
 
-export class CommitComparisonModuleStore extends VxModule {
+export class CommitComparisonStore extends VxModule {
   private comparisons: { [key: string]: CommitComparison[] } = {}
 
   /**

@@ -3,10 +3,10 @@ import { extractVuexModule, createProxy } from 'vuex-class-component'
 import Vue from 'vue'
 import { RepoStore } from '../store/modules/repoModule/repoModuleClass'
 import { UserStore } from '../store/modules/userModule/userModuleClass'
-import { ColorModuleStore } from './modules/colorModule/colorModuleClass'
-import { CommitComparisonModuleStore } from './modules/commitComparisonModule/commitComparisonModuleClass'
-import { NewsModuleStore } from './modules/newsModule/newsModuleClass'
-import { QueueModuleStore } from './modules/queueModule/queueModuleClass'
+import { ColorStore } from './modules/colorModule/colorModuleClass'
+import { CommitComparisonStore } from './modules/commitComparisonModule/commitComparisonModuleClass'
+import { NewsStore } from './modules/newsModule/newsModuleClass'
+import { QueueStore } from './modules/queueModule/queueModuleClass'
 import { RepoComparisonStore } from './modules/repoComparisonModule/repoComparisonModuleClass'
 import { RepoDetailStore } from './modules/repoDetailModule/repoDetailModuleClass'
 
@@ -14,10 +14,10 @@ Vue.use(Vuex)
 
 export const store = new Vuex.Store({
   modules: {
-    ...extractVuexModule(ColorModuleStore),
-    ...extractVuexModule(CommitComparisonModuleStore),
-    ...extractVuexModule(NewsModuleStore),
-    ...extractVuexModule(QueueModuleStore),
+    ...extractVuexModule(ColorStore),
+    ...extractVuexModule(CommitComparisonStore),
+    ...extractVuexModule(NewsStore),
+    ...extractVuexModule(QueueStore),
     ...extractVuexModule(RepoComparisonStore),
     ...extractVuexModule(RepoDetailStore),
     ...extractVuexModule(RepoStore),
@@ -26,10 +26,10 @@ export const store = new Vuex.Store({
 })
 
 export const vxm = {
-  colorModule: createProxy(store, ColorModuleStore),
-  commitComparisonModule: createProxy(store, CommitComparisonModuleStore),
-  newsModule: createProxy(store, NewsModuleStore),
-  queueModule: createProxy(store, QueueModuleStore),
+  colorModule: createProxy(store, ColorStore),
+  commitComparisonModule: createProxy(store, CommitComparisonStore),
+  newsModule: createProxy(store, NewsStore),
+  queueModule: createProxy(store, QueueStore),
   repoComparisonModule: createProxy(store, RepoComparisonStore),
   repoModule: createProxy(store, RepoStore),
   userModule: createProxy(store, UserStore)

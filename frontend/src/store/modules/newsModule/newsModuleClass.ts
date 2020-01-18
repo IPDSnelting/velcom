@@ -7,7 +7,7 @@ const VxModule = createModule({
   strict: false
 })
 
-export class NewsModuleStore extends VxModule {
+export class NewsStore extends VxModule {
   private _recentRuns: CommitComparison[] = []
   private _recentSignificantRuns: CommitComparison[] = []
 

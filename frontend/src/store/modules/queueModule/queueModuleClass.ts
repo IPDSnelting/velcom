@@ -7,7 +7,7 @@ const VxModule = createModule({
   strict: false
 })
 
-export class QueueModuleStore extends VxModule {
+export class QueueStore extends VxModule {
   private _openTasks: Commit[] = []
   private _workers: Worker[] = []
 

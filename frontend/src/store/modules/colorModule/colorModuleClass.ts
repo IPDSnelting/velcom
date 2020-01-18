@@ -6,7 +6,7 @@ const VxModule = createModule({
   strict: false
 })
 
-export class ColorModuleStore extends VxModule {
+export class ColorStore extends VxModule {
   /* see the muted qualitative colour scheme on
    * https://personal.sron.nl/~pault/#sec:qualitative
    */
