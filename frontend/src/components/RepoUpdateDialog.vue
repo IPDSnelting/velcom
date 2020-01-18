@@ -44,6 +44,7 @@
           <v-spacer></v-spacer>
           <v-btn color="primary" :disabled="!formValid" @click="updateRepo">Update Repository</v-btn>
           <v-spacer></v-spacer>
+          <v-btn color="error" @click="dialogOpen = false">Close</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
