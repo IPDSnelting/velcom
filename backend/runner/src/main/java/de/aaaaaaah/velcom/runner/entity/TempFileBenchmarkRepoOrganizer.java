@@ -33,11 +33,8 @@ public class TempFileBenchmarkRepoOrganizer implements BenchmarkRepoOrganizer {
 	}
 
 	@Override
-	public Path getBenchmarkScript() throws IOException {
-		return Files.walk(getPathToRepo())
-			.filter(it -> it.getFileName().toString().equals("bench"))
-			.findFirst()
-			.orElseThrow();
+	public Path getBenchmarkScript() {
+		return getPathToRepo().resolve("bench");
 	}
 
 	@Override
