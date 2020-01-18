@@ -1,11 +1,10 @@
 import Vue from 'vue'
 import App from './App.vue'
 import router from './router'
-import store from './store'
+import { store, vxm } from './store/classIndex'
 import axios from 'axios'
 import vuetify from './plugins/vuetify'
 import { extractErrorMessage } from './util/ErrorUtils'
-import { vxm } from './store/classIndex'
 
 Vue.config.productionTip = false
 
