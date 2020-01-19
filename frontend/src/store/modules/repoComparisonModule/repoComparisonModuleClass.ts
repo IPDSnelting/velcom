@@ -38,8 +38,8 @@ export class RepoComparisonStore extends VxModule {
     console.log(repos)
     const response = await axios.post('/repo-comparison-graph', {
       repos: repos,
-      start_time: payload.startTime + '',
-      end_time: payload.endTime + '',
+      start_time: payload.startTime,
+      end_time: payload.endTime,
       benchmark: payload.benchmark,
       metric: payload.metric
     })
