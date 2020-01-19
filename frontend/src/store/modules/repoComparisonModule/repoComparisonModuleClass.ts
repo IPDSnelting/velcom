@@ -30,22 +30,18 @@ export class RepoComparisonStore extends VxModule {
     benchmark: string
     metric: string
   }): Promise<{ [key: string]: Run[] }> {
-    let repos: string[] = []
+    let repos: any[] = []
     const repoIDs: string[] = Object.keys(payload.repos)
     repoIDs.forEach(repoID => {
-      repos.push(
-        JSON.stringify({ repo_id: repoID, branches: payload.repos[repoID] })
-      )
+      repos.push({ repo_id: repoID, branches: payload.repos[repoID] })
     })
     console.log(repos)
     const response = await axios.post('/repo-comparison-graph', {
-      params: {
-        repos: repos,
-        start_time: payload.startTime,
-        end_time: payload.endTime,
-        benchmark: payload.benchmark,
-        metric: payload.metric
-      }
+      repos: repos,
+      start_time: payload.startTime + '',
+      end_time: payload.endTime + '',
+      benchmark: payload.benchmark,
+      metric: payload.metric
     })
 
     let datapoints: { [key: string]: Run[] } = {}
