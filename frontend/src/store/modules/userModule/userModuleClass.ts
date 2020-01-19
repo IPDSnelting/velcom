@@ -67,6 +67,10 @@ export class UserStore extends VxModule {
     )
   }
 
+  get isAdmin(): boolean {
+    return this._role === 'ADMIN'
+  }
+
   get authorized(): (payload: string) => boolean {
     return (payload: string) => this._role === 'ADMIN' || this._role === payload
   }
