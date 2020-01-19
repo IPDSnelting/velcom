@@ -9,13 +9,9 @@
       <v-col>
         <v-row align="start" justify="start">
           <v-card max-width="400">
-            <div v-for="(repo, index) in allRepos" :key="index">
-              <repo-selector
-                :repoID="repo.id"
-                :index="index"
-                @updateSelect="updateSelectedRepos"
-              ></repo-selector>
-            </div>
+            <v-expansion-panels v-for="(repo, index) in allRepos" :key="index">
+              <repo-selector :repoID="repo.id" :index="index" @updateSelect="updateSelectedRepos"></repo-selector>
+            </v-expansion-panels>
             <v-spacer></v-spacer>
             <repo-add>
               <template #activator="{ on }">
@@ -46,6 +42,7 @@ import { Repo } from '../store/types'
 })
 export default class RepoComparison extends Vue {
   private selectedRepos: string[] = []
+  private selectedBranchesByRepo: {[key: string]: string[]} = {}
 
   get allRepos(): Repo[] {
     return vxm.repoModule.allRepos
@@ -55,14 +52,14 @@ export default class RepoComparison extends Vue {
     return vxm.colorModule.allColors
   }
 
-  updateSelectedRepos(repoID: string, selected: boolean) {
+  updateSelectedRepos(repoID: string, selected: boolean, selectedBranches: string[]) {
     if (selected) {
       this.selectedRepos.push(repoID)
+      this.selectedBranchesByRepo[repoID] = selectedBranches
     } else {
       const index: number = this.selectedRepos.indexOf(repoID)
       this.selectedRepos.splice(index, 1)
     }
-    console.log(this.selectedRepos)
   }
 
   @Watch('allRepos')

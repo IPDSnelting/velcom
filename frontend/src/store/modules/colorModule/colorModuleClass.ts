@@ -47,7 +47,7 @@ export class ColorStore extends VxModule {
       hue %= 1
       const newColor = converter.hslToHex(hue, saturation, lightness)
 
-      this.addColor(newColor)
+      this.colors.push(newColor)
     }
   }
 

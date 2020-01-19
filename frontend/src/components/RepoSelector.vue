@@ -1,47 +1,36 @@
 <template>
-  <v-card outlined tile max-width="400">
-    <v-card-actions>
-      <v-card-title>
+  <v-expansion-panel>
+    <v-expansion-panel-header>
+      <v-checkbox
+        class="shrink mt-0"
+        hide-details
+        v-model="repoSelected"
+        :color="color"
+        @click.native.stop
+        @change="updateSelected"
+      ></v-checkbox>
+      <router-link
+        class="ml-3 mx-auto"
+        :to="{ name: 'repo-detail', params: { id: repo.id } }"
+        tag="button"
+      >
+        <span class="worker-description">{{ repo.name }}</span>
+      </router-link>
+    </v-expansion-panel-header>
+    <v-expansion-panel-content>
+      <div v-for="branch in this.repo.trackedBranches" :key="branch">
         <v-checkbox
-          v-model="repoSelected"
+          hide-details
+          class="shrink mt-0 ml-5"
+          v-model="selectedBranches"
+          :label="branch"
+          :value="branch"
+          :disabled="!repoSelected"
           :color="color"
-          @change="updateSelected"
-        ></v-checkbox>
-        <router-link
-          class="ml-3 mx-auto"
-          :to="{ name: 'repo-detail', params: { id: repo.id } }"
-          tag="button"
-        >
-          <span>{{ repo.name }}</span>
-        </router-link>
-      </v-card-title>
-
-      <v-spacer></v-spacer>
-      <v-btn icon @click="showBranches = !showBranches">
-        <v-icon>{{
-          showBranches ? 'mdi-chevron-up' : 'mdi-chevron-down'
-        }}</v-icon>
-      </v-btn>
-    </v-card-actions>
-    <v-expand-transition>
-      <div v-show="showBranches">
-        <v-divider></v-divider>
-
-        <v-card-text>
-          <div v-for="branch in this.repo.trackedBranches" :key="branch">
-            <v-checkbox
-              v-model="selectedBranches"
-              :label="branch"
-              :value="branch"
-              :disabled="!repoSelected"
-              :color="color"
-              hide-details
-            />
-          </div>
-        </v-card-text>
+        />
       </div>
-    </v-expand-transition>
-  </v-card>
+    </v-expansion-panel-content>
+  </v-expansion-panel>
 </template>
 
 <script lang="ts">
@@ -61,6 +50,8 @@ export default class RepoSelector extends Vue {
   @Prop({})
   private index!: number
 
+  private selectedBranches: string[] = []
+
   get repo(): Repo {
     return vxm.repoModule.repoByID(this.$props.repoID)
   }
@@ -68,26 +59,23 @@ export default class RepoSelector extends Vue {
   get color(): string {
     return vxm.colorModule.colorByIndex(this.$props.index)
   }
-
-  get selectedBranches(): string[] {
-    return this.repo.trackedBranches
-  }
-
   private repoSelected: boolean = true
   private showBranches: boolean = false
 
   updateSelected() {
-    this.$emit('updateSelect', this.$props.repoID, this.repoSelected)
-  }
-
-  created() {
-    console.log('hallo')
+    this.$emit('updateSelect', this.$props.repoID, this.repoSelected, this.selectedBranches)
   }
 
   @Model('updateSelect')
-
   mounted() {
     this.updateSelected()
+    this.selectedBranches = this.repo.trackedBranches
   }
 }
 </script>
+
+<style scoped>
+.worker-description {
+  font-size: large
+}
+</style>
