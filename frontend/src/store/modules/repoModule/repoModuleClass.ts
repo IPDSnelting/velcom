@@ -134,4 +134,39 @@ export class RepoStore extends VxModule {
   get repoByID(): (payload: string) => Repo {
     return (payload: string) => this.repos[payload]
   }
+
+  get occuringBenchmarks() {
+    var benchmarks: string[] = []
+    const repos = Object.keys(this.repos).map(key => this.repos[key])
+
+    repos.forEach(repo => {
+      var measurements = repo.measurements
+      measurements.forEach(measurement => {
+        if (!benchmarks.includes(measurement.benchmark)) {
+          benchmarks.push(measurement.benchmark)
+        }
+      })
+    })
+    return benchmarks
+  }
+
+  get metricsForBenchmark(): (payload: string) => string[] {
+    return (payload: string) => {
+      var metrics: string[] = []
+      const repos = Object.keys(this.repos).map(key => this.repos[key])
+
+      repos.forEach(repo => {
+        var measurements = repo.measurements
+        measurements.forEach(measurement => {
+          if (
+            measurement.benchmark === payload &&
+            !metrics.includes(measurement.metric)
+          ) {
+            metrics.push(measurement.metric)
+          }
+        })
+      })
+      return metrics
+    }
+  }
 }

@@ -1,26 +1,101 @@
 <template>
   <div class="repo-comparison">
     <v-container fluid>
-      <v-col>
-        <v-row align="baseline" justify="center">
-          <h1>Repository Comparison</h1>
-        </v-row>
-      </v-col>
-      <v-col>
-        <v-row align="start" justify="start">
-          <v-card max-width="400">
-            <v-expansion-panels v-for="(repo, index) in allRepos" :key="index">
-              <repo-selector :repoID="repo.id" :index="index" @updateSelect="updateSelectedRepos"></repo-selector>
-            </v-expansion-panels>
-            <v-spacer></v-spacer>
-            <repo-add>
-              <template #activator="{ on }">
-                <v-btn v-on="on">add a new repository</v-btn>
-              </template>
-            </repo-add>
-          </v-card>
-        </v-row>
-      </v-col>
+      <v-row align="baseline" justify="center">
+        <h1>Repository Comparison</h1>
+      </v-row>
+      <v-row align="start" justify="space-around">
+        <v-col md="5" sm="12" xs="12" class="d-flex">
+          <v-select :items="occuringBenchmarks" v-model="selectedBenchmark" label="benchmark"></v-select>
+          <v-select
+            :items="metricsForBenchmark(this.selectedBenchmark)"
+            v-model="selectedMetric"
+            label="metric"
+          ></v-select>
+        </v-col>
+        <v-col md="5" sm="12" xs="12" class="d-flex">
+          <v-menu
+            ref="startDateMenu"
+            v-model="startDateMenuOpen"
+            :close-on-content-click="false"
+            :return-value.sync="startDate"
+            transition="scale-transition"
+            offset-y
+            min-width="290px"
+          >
+            <template v-slot:activator="{ on }">
+              <v-text-field
+                v-model="startDate"
+                label="from:"
+                :prepend-icon="dateIcon"
+                readonly
+                v-on="on"
+              ></v-text-field>
+            </template>
+            <v-date-picker v-model="startDate" no-title scrollable>
+              <v-spacer></v-spacer>
+              <v-btn text color="primary" @click="startDateMenuOpen = false">Cancel</v-btn>
+              <v-btn text color="primary" @click="$refs.startDateMenu.save(startDate)">OK</v-btn>
+            </v-date-picker>
+          </v-menu>
+          <v-menu
+            ref="endDateMenu"
+            v-model="endDateMenuOpen"
+            :close-on-content-click="false"
+            :return-value.sync="endDate"
+            transition="scale-transition"
+            offset-y
+            min-width="290px"
+          >
+            <template v-slot:activator="{ on }">
+              <v-text-field
+                v-model="endDate"
+                label="to:"
+                :prepend-icon="dateIcon"
+                readonly
+                v-on="on"
+              ></v-text-field>
+            </template>
+            <v-date-picker v-model="endDate" no-title scrollable>
+              <v-spacer></v-spacer>
+              <v-btn text color="primary" @click="endDateMenuOpen = false">Cancel</v-btn>
+              <v-btn text color="primary" @click="$refs.endDateMenu.save(endDate)">OK</v-btn>
+            </v-date-picker>
+          </v-menu>
+        </v-col>
+      </v-row>
+      <v-row align="start" justify="space-between">
+        <v-col>
+          <v-row>
+            <v-col class="d-flex">
+              <v-card flat outlined>
+                <v-expansion-panels
+                  v-for="(repo, index) in allRepos"
+                  :key="index"
+                  multiple
+                  accordion
+                  flat
+                >
+                  <repo-selector
+                    :repoID="repo.id"
+                    :index="index"
+                    @updateSelect="updateSelectedRepos"
+                  ></repo-selector>
+                </v-expansion-panels>
+              </v-card>
+            </v-col>
+          </v-row>
+          <v-row align="center">
+            <v-col>
+              <repo-add>
+                <template #activator="{ on }">
+                  <v-btn v-on="on" v-show="isAdmin">add a new repository</v-btn>
+                </template>
+              </repo-add>
+            </v-col>
+          </v-row>
+        </v-col>
+      </v-row>
     </v-container>
   </div>
 </template>
@@ -33,6 +108,7 @@ import { vxm } from '../store/classIndex'
 import RepoAddDialog from '../components/RepoAddDialog.vue'
 import RepoSelector from '../components/RepoSelector.vue'
 import { Repo } from '../store/types'
+import { mdiCalendar } from '@mdi/js'
 
 @Component({
   components: {
@@ -42,7 +118,20 @@ import { Repo } from '../store/types'
 })
 export default class RepoComparison extends Vue {
   private selectedRepos: string[] = []
-  private selectedBranchesByRepo: {[key: string]: string[]} = {}
+  private selectedBranchesByRepo: { [key: string]: string[] } = {}
+
+  private selectedBenchmark: string = ''
+  private selectedMetric: string = ''
+
+  private startDateMenuOpen: boolean = false
+  private startDate = new Date().toISOString().substr(0, 10)
+
+  private endDateMenuOpen: boolean = false
+  private endDate = new Date().toISOString().substr(0, 10)
+
+  // ============== ICONS ==============
+  private dateIcon = mdiCalendar
+  // ==============       ==============
 
   get allRepos(): Repo[] {
     return vxm.repoModule.allRepos
@@ -52,7 +141,23 @@ export default class RepoComparison extends Vue {
     return vxm.colorModule.allColors
   }
 
-  updateSelectedRepos(repoID: string, selected: boolean, selectedBranches: string[]) {
+  get occuringBenchmarks(): string[] {
+    return vxm.repoModule.occuringBenchmarks
+  }
+
+  get metricsForBenchmark(): (benchmark: string) => string[] {
+    return (benchmark: string) => vxm.repoModule.metricsForBenchmark(benchmark)
+  }
+
+  get isAdmin(): boolean {
+    return vxm.userModule.isAdmin
+  }
+
+  updateSelectedRepos(
+    repoID: string,
+    selected: boolean,
+    selectedBranches: string[]
+  ) {
     if (selected) {
       this.selectedRepos.push(repoID)
       this.selectedBranchesByRepo[repoID] = selectedBranches
