@@ -14,11 +14,12 @@
         :to="{ name: 'repo-detail', params: { id: repo.id } }"
         tag="button"
       >
-        <span class="worker-description">{{ repo.name }}</span>
+        <span class="panel-header">{{ repo.name }}</span>
       </router-link>
     </v-expansion-panel-header>
+
     <v-expansion-panel-content>
-      <div v-for="branch in this.repo.trackedBranches" :key="branch">
+      <div v-for="(branch, index) in this.repo.trackedBranches" :key="index">
         <v-checkbox
           hide-details
           class="shrink mt-0 ml-5"
@@ -27,6 +28,7 @@
           :value="branch"
           :disabled="!repoSelected"
           :color="color"
+          @change="updateSelected"
         />
       </div>
     </v-expansion-panel-content>
@@ -60,22 +62,28 @@ export default class RepoSelector extends Vue {
     return vxm.colorModule.colorByIndex(this.$props.index)
   }
   private repoSelected: boolean = true
-  private showBranches: boolean = false
 
   updateSelected() {
-    this.$emit('updateSelect', this.$props.repoID, this.repoSelected, this.selectedBranches)
+    this.$emit(
+      'updateSelect',
+      this.repo.id,
+      this.repoSelected,
+      this.selectedBranches
+    )
   }
 
   @Model('updateSelect')
   mounted() {
+    this.repo.trackedBranches.forEach(branch => {
+      this.selectedBranches.push(branch)
+    })
     this.updateSelected()
-    this.selectedBranches = this.repo.trackedBranches
   }
 }
 </script>
 
 <style scoped>
-.worker-description {
-  font-size: large
+.panel-header {
+  font-size: large;
 }
 </style>

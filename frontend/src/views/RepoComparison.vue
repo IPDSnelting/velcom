@@ -68,7 +68,7 @@
         <v-col>
           <v-row>
             <v-col class="d-flex">
-              <v-card flat outlined>
+              <v-card flat outlined max-width="300">
                 <v-expansion-panels
                   v-for="(repo, index) in allRepos"
                   :key="index"
@@ -95,6 +95,9 @@
             </v-col>
           </v-row>
         </v-col>
+        <v-col>
+          <p>{{this.payloadBranchesByRepo}}</p>
+        </v-col>
       </v-row>
     </v-container>
   </div>
@@ -117,8 +120,9 @@ import { mdiCalendar } from '@mdi/js'
   }
 })
 export default class RepoComparison extends Vue {
-  private selectedRepos: string[] = []
+  private reposSelected: { [key: string]: boolean } = {}
   private selectedBranchesByRepo: { [key: string]: string[] } = {}
+  private payloadBranchesByRepo: { [key: string]: string[] } = {}
 
   private selectedBenchmark: string = ''
   private selectedMetric: string = ''
@@ -126,7 +130,11 @@ export default class RepoComparison extends Vue {
   private today = new Date().toISOString().substr(0, 10)
 
   private startDateMenuOpen: boolean = false
-  private startDate = new Date().toISOString().substr(0, 10)
+
+  // get the date one week ago in a quite clumsy way
+  private startDate = new Date(new Date().setDate(new Date().getDate() - 7))
+    .toISOString()
+    .substr(0, 10)
 
   private endDateMenuOpen: boolean = false
   private endDate = new Date().toISOString().substr(0, 10)
@@ -155,18 +163,54 @@ export default class RepoComparison extends Vue {
     return vxm.userModule.isAdmin
   }
 
+  get startUnixTimestamp(): number {
+    return new Date(this.startDate).getTime() / 1000
+  }
+
+  get endUnixTimestamp(): number {
+    return new Date(this.endDate).getTime() / 1000
+  }
+
+  get payload(): {
+    repos: { [key: string]: string[] }
+    startTime: number
+    endTime: number
+    benchmark: string
+    metric: string
+    } {
+    return {
+      repos: this.payloadBranchesByRepo,
+      startTime: this.startUnixTimestamp,
+      endTime: this.endUnixTimestamp,
+      benchmark: this.selectedBenchmark,
+      metric: this.selectedMetric
+    }
+  }
+
   updateSelectedRepos(
     repoID: string,
     selected: boolean,
     selectedBranches: string[]
   ) {
+    this.reposSelected[repoID] = selected
     if (selected) {
-      this.selectedRepos.push(repoID)
       this.selectedBranchesByRepo[repoID] = selectedBranches
-    } else {
-      const index: number = this.selectedRepos.indexOf(repoID)
-      this.selectedRepos.splice(index, 1)
     }
+    this.upadtePayloadBranches()
+    vxm.repoComparisonModule.fetchDatapoints(this.payload)
+  }
+
+  upadtePayloadBranches() {
+    var payloadBranches: { [key: string]: string[] } = {}
+    this.allRepos.forEach(repo => {
+      if (
+        this.reposSelected[repo.id] &&
+        this.selectedBranchesByRepo[repo.id].length > 0
+      ) {
+        payloadBranches[repo.id] = this.selectedBranchesByRepo[repo.id]
+      }
+    })
+    this.payloadBranchesByRepo = payloadBranches
   }
 
   @Watch('allRepos')
