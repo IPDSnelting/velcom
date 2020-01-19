@@ -32,7 +32,7 @@
                 v-on="on"
               ></v-text-field>
             </template>
-            <v-date-picker v-model="startDate" no-title scrollable>
+            <v-date-picker v-model="startDate" :max="today" no-title scrollable>
               <v-spacer></v-spacer>
               <v-btn text color="primary" @click="startDateMenuOpen = false">Cancel</v-btn>
               <v-btn text color="primary" @click="$refs.startDateMenu.save(startDate)">OK</v-btn>
@@ -56,7 +56,7 @@
                 v-on="on"
               ></v-text-field>
             </template>
-            <v-date-picker v-model="endDate" no-title scrollable>
+            <v-date-picker v-model="endDate" :min="startDate" :max="today" no-title scrollable>
               <v-spacer></v-spacer>
               <v-btn text color="primary" @click="endDateMenuOpen = false">Cancel</v-btn>
               <v-btn text color="primary" @click="$refs.endDateMenu.save(endDate)">OK</v-btn>
@@ -122,6 +122,8 @@ export default class RepoComparison extends Vue {
 
   private selectedBenchmark: string = ''
   private selectedMetric: string = ''
+
+  private today = new Date().toISOString().substr(0, 10)
 
   private startDateMenuOpen: boolean = false
   private startDate = new Date().toISOString().substr(0, 10)
