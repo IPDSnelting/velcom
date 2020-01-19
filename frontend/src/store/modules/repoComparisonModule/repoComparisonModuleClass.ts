@@ -35,7 +35,6 @@ export class RepoComparisonStore extends VxModule {
     repoIDs.forEach(repoID => {
       repos.push({ repo_id: repoID, branches: payload.repos[repoID] })
     })
-    console.log(repos)
     const response = await axios.post('/repo-comparison-graph', {
       repos: repos,
       start_time: payload.startTime,

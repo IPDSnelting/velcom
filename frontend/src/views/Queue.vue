@@ -1,8 +1,20 @@
 <template>
   <div class="queue">
-    <h1>This is the queue view ( that sort of rhymes...)</h1>
-    <worker-overview></worker-overview>
-    <queue-overview></queue-overview>
+    <v-container>
+      <v-row align="baseline" justify="center">
+        <h1>Queue Overview</h1>
+      </v-row>
+      <v-row align="start" justify="center">
+        <v-col>
+          <worker-overview></worker-overview>
+        </v-col>
+      </v-row>
+      <v-row align="baseline" justify="center">
+        <v-col>
+          <queue-overview></queue-overview>
+        </v-col>
+      </v-row>
+    </v-container>
   </div>
 </template>
 

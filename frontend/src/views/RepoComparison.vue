@@ -124,8 +124,8 @@ export default class RepoComparison extends Vue {
   private selectedBranchesByRepo: { [key: string]: string[] } = {}
   private payloadBranchesByRepo: { [key: string]: string[] } = {}
 
-  private selectedBenchmark: string = ''
-  private selectedMetric: string = ''
+  private selectedBenchmark: string = this.occuringBenchmarks[0]
+  private selectedMetric: string = this.metricsForBenchmark(this.selectedBenchmark)[0]
 
   private today = new Date().toISOString().substr(0, 10)
 

@@ -1,17 +1,53 @@
 <template>
   <div class="repo-detail-frame">
-    <h1>This is the repo detail frame</h1>
-    <v-btn :to="repoRoute">navigate to detail page</v-btn>
-    <router-view></router-view>
+    <v-container>
+      <v-row align="baseline" justify="center">
+        <h1>Repository details</h1>
+      </v-row>
+      <v-row align="baseline" justify="center">
+        <v-col class="d-flex">
+          <v-select
+            v-model="selectedRepo"
+            :items="allRepos"
+            item-text="name"
+            label="repository"
+            return-object
+          ></v-select>
+          <v-spacer></v-spacer>
+          <v-btn :to="route" :disabled="!repoSelected" text color="primary" class="mt-4">GO!</v-btn>
+        </v-col>
+      </v-row>
+      <router-view></router-view>
+    </v-container>
   </div>
 </template>
 
 <script lang="ts">
 import Vue from 'vue'
-import Component from 'vue-class-component'
+import { Component, Watch } from 'vue-property-decorator'
+import { vxm } from '../store/classIndex'
+import { Repo } from '../store/types'
 
 @Component
 export default class RepoDetailFrame extends Vue {
-  private repoRoute = '/repo-detail/0'
+  private selectedRepo: Repo | null = null
+
+  get allRepos(): Repo[] {
+    return vxm.repoModule.allRepos
+  }
+
+  get route(): string | null {
+    return this.selectedRepo === null
+      ? null
+      : '/repo-detail/' + this.selectedRepo.id
+  }
+
+  get repoSelected(): boolean {
+    return this.selectedRepo !== null
+  }
+
+  mounted() {
+    vxm.repoModule.fetchRepos()
+  }
 }
 </script>

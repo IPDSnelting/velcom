@@ -1,9 +1,8 @@
 <template>
   <div class="repo-detail">
-    <h1>This is the detail page of repo {{ id() }}</h1>
     <repo-update>
       <template #activator="{ on }">
-        <v-btn v-on="on">Test update</v-btn>
+        <v-btn v-on="on">update</v-btn>
       </template>
     </repo-update>
   </div>
@@ -21,7 +20,7 @@ import RepoUpdateDialog from '../components/RepoUpdateDialog.vue'
   }
 })
 export default class RepoComparison extends Vue {
-  id() {
+  get id() {
     return this.$route.params.id
   }
 }
