@@ -110,7 +110,7 @@ export default class LoginDialog extends Vue {
 
     if (this.role === 'Web-Admin') {
       payload = {
-        role: 'admin',
+        role: 'ADMIN',
         asRepoAdmin: false,
         token: this.token
       }
