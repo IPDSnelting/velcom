@@ -23,6 +23,7 @@
         <v-expansion-panel-content>
           <div v-for="(branch, j) in repo.trackedBranches" :key="j">
             <v-checkbox
+              multiple
               hide-details
               class="shrink mt-0 ml-5"
               v-model="selectedBranchesByRepoID[repo.id]"
