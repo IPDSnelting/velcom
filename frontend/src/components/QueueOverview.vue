@@ -1,6 +1,6 @@
 <template>
   <v-container>
-    <v-data-iterator :items="queueItems" hide-default-footer>
+    <v-data-iterator :items="queueItems" hide-default-footer :items-per-page="1e20">
       <template v-slot:header>
         <v-toolbar class="mb-2" color="indigo darken-5" dark flat>
           <v-toolbar-title>Queued commits (in planned execution order)</v-toolbar-title>
