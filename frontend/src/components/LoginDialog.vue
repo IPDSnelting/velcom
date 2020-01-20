@@ -17,25 +17,12 @@
               </template>
               <v-radio v-for="role in roles" :key="role" :label="role" :value="role"></v-radio>
             </v-radio-group>
-            <v-autocomplete
+            <repo-selection
               :disabled="!idRequired"
-              :items="allRepos"
+              :repos="allRepos"
               :rules="[nonEmptyID]"
               v-model="repoID"
-              item-text="name"
-              item-value="id"
-              label="*Repository name"
-            >
-              <template v-slot:item="data">
-                <v-list-item-avatar>
-                  <v-icon small>{{ repoIcon }}</v-icon>
-                </v-list-item-avatar>
-                <v-list-item-content>
-                  <v-list-item-title>{{ data.item.name }}</v-list-item-title>
-                  <v-list-item-subtitle>{{ data.item.id }}</v-list-item-subtitle>
-                </v-list-item-content>
-              </template>
-            </v-autocomplete>
+            ></repo-selection>
             <v-text-field :rules="[nonEmptyToken]" label="Access token" v-model="token"></v-text-field>
           </v-form>
         </v-card-text>
@@ -57,9 +44,13 @@ import { Store } from 'vuex'
 import { Repo } from '../store/types'
 import { extractErrorMessage } from '../util/ErrorUtils'
 import { store, vxm } from '../store/classIndex'
-import { mdiSourceBranch } from '@mdi/js'
+import RepoSelectionComponent from './RepoSelectionComponent.vue'
 
-@Component
+@Component({
+  components: {
+    'repo-selection': RepoSelectionComponent
+  }
+})
 export default class LoginDialog extends Vue {
   private repoID: string = ''
   private token: string = ''
@@ -123,10 +114,6 @@ export default class LoginDialog extends Vue {
     }
     vxm.userModule.logIn(payload).then(() => (this.dialogOpen = false))
   }
-
-  // ============== ICONS ==============
-  private repoIcon = mdiSourceBranch
-  // ==============       ==============
 }
 </script>
 
