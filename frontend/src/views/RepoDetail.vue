@@ -1,6 +1,6 @@
 <template>
   <div class="repo-detail">
-    <repo-update>
+    <repo-update :repoId="id">
       <template #activator="{ on }">
         <v-btn v-on="on">update</v-btn>
       </template>

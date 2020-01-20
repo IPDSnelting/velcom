@@ -69,7 +69,7 @@ export default class RepoUpdateDialog extends Vue {
 
   private newTrackedBranches: string[] = []
 
-  @Prop({ default: 'test' })
+  @Prop()
   private repoId!: string
 
   get repo(): Repo {
@@ -120,16 +120,6 @@ export default class RepoUpdateDialog extends Vue {
 
   mounted() {
     Vue.nextTick(() => this.watchIdUpdates())
-  }
-
-  created() {
-    let branches = []
-    for (let i = 0; i < 3; i++) {
-      branches.push(String.fromCharCode('a'.charCodeAt(0) + i))
-    }
-    vxm.repoModule.setRepo(
-      new Repo('test', 'Test repo', branches, ['a', 'b'], [], 'test url')
-    )
   }
 }
 </script>
