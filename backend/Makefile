@@ -16,7 +16,7 @@ clean:
 	mvn clean
 
 start-runner:
-	cd runner/target/ && java -jar runner.jar ../src/main/resources/Example_config.json
+	cd runner/target/ && java -jar runner.jar ../src/main/resources/example_config.json
 
 start-backend:
-	cd backend/target && java -jar backend.jar server ../src/main/resources/SampleConfig.yml
+	cd backend/target && java -jar backend.jar server ../src/main/resources/example_config.yml

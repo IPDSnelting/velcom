@@ -42,7 +42,7 @@ public class AddRepoTest {
 		Path runnerDir = curDir.getParent().resolve("runner");
 
 		String config = runnerDir.resolve("src").resolve("main").resolve("resources")
-			.resolve("Example_config.json").toAbsolutePath().toString();
+			.resolve("example_config.json").toAbsolutePath().toString();
 
 		String jar = runnerDir.resolve("target").resolve("runner.jar").toAbsolutePath().toString();
 
@@ -62,7 +62,7 @@ public class AddRepoTest {
 
 	private static void startBackend() throws Exception {
 		Path configPath = Paths.get("src", "main",
-			"resources", "SampleConfig.yml");
+			"resources", "example_config.yml");
 
 		ServerMain.main(new String[]{
 			"server", configPath.toString()
