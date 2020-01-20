@@ -19,7 +19,7 @@
                 <v-list-item-avatar class="index-indicator">{{ index + 1 }}</v-list-item-avatar>
                 <v-list-item-content>
                   <v-container fluid>
-                    <v-row justify="space-around" align="center">
+                    <v-row no-gutters align="center">
                       <v-col cols="8">
                         <v-list-item-title>
                           <repo-display :repoId="commit.repoID"></repo-display>
@@ -34,22 +34,28 @@
                           >{{ formatDate(commit.authorDate) }}</span>
                         </v-list-item-subtitle>
                       </v-col>
-                      <v-col class="d-flex my-row">
-                        <v-chip
-                          outlined
-                          label
-                          color="accent"
-                          class="commit-hash-chip"
-                          @click="copyToClipboard(commit.hash)"
-                        >{{ commit.hash }}</v-chip>
-                        <span>
-                          <v-btn icon @click="liftToFront(commit, $event)">
-                            <v-icon class="rocket">{{ liftToFrontIcon }}</v-icon>
-                          </v-btn>
-                          <v-btn icon @click="deleteCommit(commit)">
-                            <v-icon color="red">{{ deleteIcon }}</v-icon>
-                          </v-btn>
-                        </span>
+                      <v-col>
+                        <v-container fluid>
+                          <v-row no-gutters align="center" justify="space-between">
+                            <v-col>
+                              <v-chip
+                                outlined
+                                label
+                                color="accent"
+                                class="commit-hash-chip"
+                                @click="copyToClipboard(commit.hash)"
+                              >{{ commit.hash }}</v-chip>
+                            </v-col>
+                            <span>
+                              <v-btn icon @click="liftToFront(commit, $event)">
+                                <v-icon class="rocket">{{ liftToFrontIcon }}</v-icon>
+                              </v-btn>
+                              <v-btn icon @click="deleteCommit(commit)">
+                                <v-icon color="red">{{ deleteIcon }}</v-icon>
+                              </v-btn>
+                            </span>
+                          </v-row>
+                        </v-container>
                       </v-col>
                     </v-row>
                   </v-container>
@@ -196,7 +202,7 @@ export default class QueueOverview extends Vue {
   animation-delay: 0;
 }
 
-.my-row {
+.my-row-col {
   justify-content: space-between;
 }
 
