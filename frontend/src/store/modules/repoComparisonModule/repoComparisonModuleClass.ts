@@ -55,7 +55,7 @@ export class RepoComparisonStore extends VxModule {
           )
         )
       })
-      datapoints[item.repo] = item.runs
+      datapoints[item.repo.id] = item.runs
     })
 
     this.setDataPoints(datapoints)
@@ -83,6 +83,7 @@ export class RepoComparisonStore extends VxModule {
    */
   @mutation
   setDataPoints(payload: { [key: string]: Run[] }) {
+    this.runsByRepoId = {} // reset it
     Array.from(Object.keys(payload)).forEach(key => {
       Vue.set(this.runsByRepoId, key, payload[key])
     })
