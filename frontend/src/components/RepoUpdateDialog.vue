@@ -97,32 +97,7 @@ export default class RepoUpdateDialog extends Vue {
   }
 
   get repo(): Repo {
-    // return vxm.repoModule.repoByID(this.repoId)!
-    return new Repo(
-      'test',
-      'name',
-      [
-        'a',
-        'hello world how are you',
-        'b',
-        'c',
-        'c11',
-        'c10',
-        'c9',
-        'c8',
-        'c7',
-        'c6',
-        'c5',
-        'c4',
-        'c3',
-        'c2',
-        'c1',
-        'This field must not be empty!'
-      ],
-      ['a', 'c'],
-      [],
-      'loow'
-    )
+    return vxm.repoModule.repoByID(this.repoId)!
   }
 
   private filterName(items: { lowerCased: string }[], search: string) {
