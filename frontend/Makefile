@@ -16,3 +16,6 @@ build: dist
 
 clean:
 	rm -rf dist
+
+start-frontend:
+	yarn serve

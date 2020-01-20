@@ -15,8 +15,10 @@ clean:
 	@echo 'Removing maven files'
 	mvn clean
 
-start-runner:
+start-runner: build
+	@echo 'Starting runner'
 	cd runner/target/ && java -jar runner.jar ../src/main/resources/example_config.json
 
-start-backend:
-	cd backend/target && java -jar backend.jar server ../src/main/resources/example_config.yml
+start-backend: build
+	@echo 'Starting backend'
+	cd backend/target/ && java -jar backend.jar server ../src/main/resources/example_config.yml
