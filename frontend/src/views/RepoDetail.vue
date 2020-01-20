@@ -48,6 +48,7 @@
               </template>
             </repo-update>
             <v-spacer></v-spacer>
+            <v-btn color="error" class="mr-5 mb-2" @click="deleteRepository">Delete Repository</v-btn>
           </v-card-actions>
         </v-card>
       </v-col>
@@ -78,6 +79,18 @@ export default class RepoDetail extends Vue {
 
   private isBranchTracked(branch: string): boolean {
     return this.repo.trackedBranches.indexOf(branch) >= 0
+  }
+
+  private deleteRepository() {
+    let confirmed = window.confirm(
+      `Do you really want to delete ${this.repo.name} (${this.id})?`
+    )
+    if (!confirmed) {
+      return
+    }
+    vxm.repoModule
+      .deleteRepo(this.id)
+      .then(() => this.$router.push({ name: 'repo-detail-frame' }))
   }
 
   private get branches() {

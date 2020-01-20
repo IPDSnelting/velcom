@@ -78,8 +78,15 @@ export class RepoStore extends VxModule {
       })
   }
 
+  /**
+   * Deletes the repo with the given id.
+   *
+   * @param {string} payload the repo id
+   * @returns a promise completing when the repo was deleted.
+   * @memberof RepoStore
+   */
   @action
-  async deleteRepo(payload: string) {
+  async deleteRepo(payload: string): Promise<void> {
     return axios
       .delete('/repo', {
         params: {
