@@ -12,7 +12,7 @@ export class UserStore extends VxModule {
 
   @action
   async logIn(payload: { role: string; asRepoAdmin: boolean; token: string }) {
-    const response = await axios.get('/test-token', {
+    const response = await axios.post('/test-token', {
       auth: {
         username: payload.role,
         password: payload.token
