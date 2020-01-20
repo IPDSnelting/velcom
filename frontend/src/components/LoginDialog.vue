@@ -23,7 +23,12 @@
               :rules="[nonEmptyID]"
               v-model="repoID"
             ></repo-selection>
-            <v-text-field :rules="[nonEmptyToken]" label="Access token" v-model="token"></v-text-field>
+            <v-text-field
+              :rules="[nonEmptyToken]"
+              label="Access token"
+              v-model="token"
+              @keyup.enter="login"
+            ></v-text-field>
           </v-form>
         </v-card-text>
         <v-card-actions>
@@ -93,6 +98,10 @@ export default class LoginDialog extends Vue {
   }
 
   private login() {
+    if (!this.formValid) {
+      return
+    }
+
     let payload: {
       role: string
       asRepoAdmin: boolean
