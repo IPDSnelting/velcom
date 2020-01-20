@@ -115,8 +115,20 @@ export default class QueueOverview extends Vue {
   private liftToFront(commit: Commit, event: Event) {
     let srcElement: HTMLElement = event.srcElement as HTMLElement
 
+    // No animation possible
+    if (!srcElement) {
+      vxm.queueModule.dispatchPrioritizeOpenTask(commit)
+      return
+    }
+
     while (!srcElement.classList.contains('v-icon')) {
       srcElement = srcElement.parentElement!
+
+      // found no parent :/
+      if (!srcElement) {
+        vxm.queueModule.dispatchPrioritizeOpenTask(commit)
+        return
+      }
     }
 
     let offsetTop = srcElement.getBoundingClientRect().top
