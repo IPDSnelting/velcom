@@ -42,7 +42,7 @@
                         @click="copyToClipboard(commit.hash)"
                       >{{ commit.hash }}</v-chip>
                       <span>
-                        <v-btn icon @click="liftToFront(commit)">
+                        <v-btn icon @click="liftToFront(commit, $event)">
                           <v-icon class="rocket">{{ liftToFrontIcon }}</v-icon>
                         </v-btn>
                         <v-btn icon @click="deleteCommit(commit)">
@@ -93,6 +93,7 @@ export default class QueueOverview extends Vue {
 
   private getDate(date: number): Date {
     let myDate = new Date()
+    // TODO: remove clamping
     myDate.setTime((Math.abs(date) % 1.8934156e9) * 1000)
     return myDate
   }
@@ -111,8 +112,34 @@ export default class QueueOverview extends Vue {
       )
   }
 
-  private liftToFront(commit: Commit) {
-    vxm.queueModule.dispatchPrioritizeOpenTask(commit)
+  private liftToFront(commit: Commit, event: Event) {
+    let srcElement: HTMLElement = event.srcElement as HTMLElement
+
+    while (!srcElement.classList.contains('v-icon')) {
+      srcElement = srcElement.parentElement!
+    }
+
+    let offsetTop = srcElement.getBoundingClientRect().top
+    let offsetLeft = srcElement.getBoundingClientRect().left
+    let parent = srcElement.parentElement!
+    srcElement = srcElement.cloneNode(true) as HTMLElement
+
+    vxm.queueModule.dispatchPrioritizeOpenTask(commit).then(() => {
+      parent.appendChild(srcElement)
+
+      srcElement.style.top = Math.round(offsetTop) + 'px'
+      srcElement.style.left = Math.round(offsetLeft) + 'px'
+      srcElement.classList.add('shoot-off')
+
+      setTimeout(() => {
+        srcElement.style.top = '0px'
+        srcElement.style.left =
+          Math.round(Math.random() * window.innerWidth) + 'px'
+
+        const animationDuration = 1000
+        setTimeout(() => srcElement.remove(), animationDuration)
+      }, 1)
+    })
   }
 
   private deleteCommit(commit: Commit) {
@@ -157,6 +184,24 @@ export default class QueueOverview extends Vue {
 
 .my-row {
   justify-content: space-between;
+}
+
+.shoot-off {
+  transition: all 1s ease-in;
+  position: fixed;
+  z-index: 200;
+  animation: shake 1s linear, rotate 1s linear;
+  animation-delay: 0;
+  animation-iteration-count: infinite;
+}
+
+@keyframes rotate {
+  0% {
+    rotate: 0deg;
+  }
+  100% {
+    rotate: 360deg;
+  }
 }
 
 @keyframes shake {
