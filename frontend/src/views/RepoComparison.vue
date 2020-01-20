@@ -35,7 +35,11 @@
             <v-date-picker v-model="startDate" :max="today" no-title scrollable>
               <v-spacer></v-spacer>
               <v-btn text color="primary" @click="startDateMenuOpen = false">Cancel</v-btn>
-              <v-btn text color="primary" @click="$refs.startDateMenu.save(startDate)">OK</v-btn>
+              <v-btn
+                text
+                color="primary"
+                @click="$refs.startDateMenu.save(startDate); payloadChanged()"
+              >OK</v-btn>
             </v-date-picker>
           </v-menu>
           <v-menu
@@ -59,7 +63,11 @@
             <v-date-picker v-model="endDate" :min="startDate" :max="today" no-title scrollable>
               <v-spacer></v-spacer>
               <v-btn text color="primary" @click="endDateMenuOpen = false">Cancel</v-btn>
-              <v-btn text color="primary" @click="$refs.endDateMenu.save(endDate)">OK</v-btn>
+              <v-btn
+                text
+                color="primary"
+                @click="$refs.endDateMenu.save(endDate); payloadChanged()"
+              >OK</v-btn>
             </v-date-picker>
           </v-menu>
         </v-col>
@@ -68,21 +76,7 @@
         <v-col>
           <v-row>
             <v-col class="d-flex">
-              <v-card flat outlined max-width="300">
-                <v-expansion-panels
-                  v-for="(repo, index) in allRepos"
-                  :key="index"
-                  multiple
-                  accordion
-                  flat
-                >
-                  <repo-selector
-                    :repoID="repo.id"
-                    :index="index"
-                    @updateSelect="updateSelectedRepos"
-                  ></repo-selector>
-                </v-expansion-panels>
-              </v-card>
+              <repo-selector></repo-selector>
             </v-col>
           </v-row>
           <v-row align="center">
@@ -96,7 +90,10 @@
           </v-row>
         </v-col>
         <v-col>
-          <p>{{this.payloadBranchesByRepo}}</p>
+          <h2>repos and their selected branches:</h2>
+          <p>{{this.branches}}</p>
+          <h2>graph data:</h2>
+          <p>{{this.graphData}}</p>
         </v-col>
       </v-row>
     </v-container>
@@ -120,12 +117,8 @@ import { mdiCalendar } from '@mdi/js'
   }
 })
 export default class RepoComparison extends Vue {
-  private reposSelected: { [key: string]: boolean } = {}
-  private selectedBranchesByRepo: { [key: string]: string[] } = {}
-  private payloadBranchesByRepo: { [key: string]: string[] } = {}
-
-  private selectedBenchmark: string = this.occuringBenchmarks[0]
-  private selectedMetric: string = this.metricsForBenchmark(this.selectedBenchmark)[0]
+  private selectedBenchmark: string = ''
+  private selectedMetric: string = ''
 
   private today = new Date().toISOString().substr(0, 10)
 
@@ -171,15 +164,8 @@ export default class RepoComparison extends Vue {
     return new Date(this.endDate).getTime() / 1000
   }
 
-  get payload(): {
-    repos: { [key: string]: string[] }
-    startTime: number
-    endTime: number
-    benchmark: string
-    metric: string
-    } {
+  get payload(): {startTime: number, endTime: number, benchmark: string, metric: string } {
     return {
-      repos: this.payloadBranchesByRepo,
       startTime: this.startUnixTimestamp,
       endTime: this.endUnixTimestamp,
       benchmark: this.selectedBenchmark,
@@ -187,38 +173,22 @@ export default class RepoComparison extends Vue {
     }
   }
 
-  updateSelectedRepos(
-    repoID: string,
-    selected: boolean,
-    selectedBranches: string[]
-  ) {
-    this.reposSelected[repoID] = selected
-    if (selected) {
-      this.selectedBranchesByRepo[repoID] = selectedBranches
-    }
-    this.upadtePayloadBranches()
+  @Watch('selectedMetric')
+  payloadChanged() {
     vxm.repoComparisonModule.fetchDatapoints(this.payload)
+    console.log('make api call to retrieve datapoints')
   }
 
-  upadtePayloadBranches() {
-    var payloadBranches: { [key: string]: string[] } = {}
-    this.allRepos.forEach(repo => {
-      if (
-        this.reposSelected[repo.id] &&
-        this.selectedBranchesByRepo[repo.id].length > 0
-      ) {
-        payloadBranches[repo.id] = this.selectedBranchesByRepo[repo.id]
-      }
-    })
-    this.payloadBranchesByRepo = payloadBranches
+  get repos() {
+    return vxm.repoComparisonModule.selectedRepos
   }
 
-  @Watch('allRepos')
-  addMissingColors() {
-    if (this.allColors.length < this.allRepos.length) {
-      let diff = this.allRepos.length - this.allColors.length
-      vxm.colorModule.addColors(diff)
-    }
+  get branches() {
+    return vxm.repoComparisonModule.selectedBranchesByRepoID
+  }
+
+  get graphData() {
+    return vxm.repoComparisonModule.allRuns
   }
 
   mounted() {

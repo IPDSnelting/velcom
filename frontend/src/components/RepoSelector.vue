@@ -1,44 +1,48 @@
 <template>
-  <v-expansion-panel>
-    <v-expansion-panel-header>
-      <v-checkbox
-        class="shrink mt-0"
-        hide-details
-        v-model="repoSelected"
-        :color="color"
-        @click.native.stop
-        @change="updateSelected"
-      ></v-checkbox>
-      <router-link
-        class="ml-3 mx-auto"
-        :to="{ name: 'repo-detail', params: { id: repo.id } }"
-        tag="button"
-      >
-        <span class="panel-header">{{ repo.name }}</span>
-      </router-link>
-    </v-expansion-panel-header>
-
-    <v-expansion-panel-content>
-      <div v-for="(branch, index) in this.repo.trackedBranches" :key="index">
-        <v-checkbox
-          hide-details
-          class="shrink mt-0 ml-5"
-          v-model="selectedBranches"
-          :label="branch"
-          :value="branch"
-          :disabled="!repoSelected"
-          :color="color"
-          @change="updateSelected"
-        />
-      </div>
-    </v-expansion-panel-content>
-  </v-expansion-panel>
+  <v-card flat outlined max-width="300">
+    <v-expansion-panels v-for="(repo, i) in allRepos" :key="i" multiple accordion flat>
+      <v-expansion-panel>
+        <v-expansion-panel-header>
+          <v-checkbox
+            class="shrink mt-0"
+            hide-details
+            v-model="selectedRepos"
+            :value="repo.id"
+            :color="colorByIndex(i)"
+            @click.native.stop
+            @change="updateSelectedRepos()"
+          ></v-checkbox>
+          <router-link
+            class="ml-3 mx-auto"
+            :to="{ name: 'repo-detail', params: { id: repo.id } }"
+            tag="button"
+          >
+            <span class="panel-header">{{ repo.name }}</span>
+          </router-link>
+        </v-expansion-panel-header>
+        <v-expansion-panel-content>
+          <div v-for="(branch, j) in repo.trackedBranches" :key="j">
+            <v-checkbox
+              hide-details
+              class="shrink mt-0 ml-5"
+              v-model="selectedBranchesByRepoID[repo.id]"
+              :label="branch"
+              :value="branch"
+              :disabled="!repoSelected(repo.id)"
+              :color="colorByIndex(i)"
+              @change="updateSelectedBranchesForRepo(repo.id)"
+            />
+          </div>
+        </v-expansion-panel-content>
+      </v-expansion-panel>
+    </v-expansion-panels>
+  </v-card>
 </template>
 
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { Prop, Model } from 'vue-property-decorator'
+import { Prop, Model, Watch } from 'vue-property-decorator'
 import { Store } from 'vuex'
 
 import { vxm } from '../store/classIndex'
@@ -52,32 +56,49 @@ export default class RepoSelector extends Vue {
   @Prop({})
   private index!: number
 
-  private selectedBranches: string[] = []
+  private selectedRepos: string[] = vxm.repoComparisonModule.selectedRepos
+  private selectedBranchesByRepoID: { [key: string]: string[] } = {}
 
-  get repo(): Repo {
-    return vxm.repoModule.repoByID(this.$props.repoID)!
+  get allRepos(): Repo[] {
+    return vxm.repoModule.allRepos
   }
 
-  get color(): string {
-    return vxm.colorModule.colorByIndex(this.$props.index)
-  }
-  private repoSelected: boolean = true
-
-  updateSelected() {
-    this.$emit(
-      'updateSelect',
-      this.repo.id,
-      this.repoSelected,
-      this.selectedBranches
-    )
+  get repoSelected(): (repoID: string) => boolean {
+    return (repoID: string) => this.selectedRepos.indexOf(repoID) > -1
   }
 
-  @Model('updateSelect')
-  mounted() {
-    this.repo.trackedBranches.forEach(branch => {
-      this.selectedBranches.push(branch)
+  get allColors() {
+    return vxm.colorModule.allColors
+  }
+
+  get colorByIndex(): (index: number) => string {
+    return (index: number) => vxm.colorModule.colorByIndex(index)
+  }
+
+  updateSelectedRepos() {
+    vxm.repoComparisonModule.selectedRepos = this.selectedRepos
+  }
+
+  updateSelectedBranchesForRepo(repoID: string) {
+    vxm.repoComparisonModule.setSelectedBranchesForRepo({
+      repoID: repoID,
+      selectedBranches: this.selectedBranchesByRepoID[repoID]
     })
-    this.updateSelected()
+  }
+
+  @Watch('allRepos')
+  addMissingColors() {
+    if (this.allColors.length < this.allRepos.length) {
+      let diff = this.allRepos.length - this.allColors.length
+      vxm.colorModule.addColors(diff)
+    }
+  }
+
+  created() {
+    vxm.repoModule.fetchRepos()
+    vxm.repoModule.allRepos.forEach(repo => {
+      this.selectedBranchesByRepoID[repo.id] = repo.trackedBranches
+    })
   }
 }
 </script>

@@ -1,14 +1,16 @@
 import { createModule, mutation, action } from 'vuex-class-component'
-import { Run } from '@/store/types'
+import { Run, Repo } from '@/store/types'
 import Vue from 'vue'
 import axios from 'axios'
-
+import { vxm } from '../../classIndex'
 const VxModule = createModule({
   namespaced: 'repoComparisonModule',
   strict: false
 })
 
 export class RepoComparisonStore extends VxModule {
+  private _selectedRepos: string[] = []
+  private _selectedBranchesByRepoID: { [key: string]: string[] } = {}
   private runsByRepoId: { [key: string]: Run[] } = {}
 
   /**
@@ -24,19 +26,13 @@ export class RepoComparisonStore extends VxModule {
    */
   @action
   async fetchDatapoints(payload: {
-    repos: { [key: string]: string[] }
     startTime: number
     endTime: number
     benchmark: string
     metric: string
   }): Promise<{ [key: string]: Run[] }> {
-    let repos: any[] = []
-    const repoIDs: string[] = Object.keys(payload.repos)
-    repoIDs.forEach(repoID => {
-      repos.push({ repo_id: repoID, branches: payload.repos[repoID] })
-    })
     const response = await axios.post('/repo-comparison-graph', {
-      repos: repos,
+      repos: this.selectedReposWithBranches,
       start_time: payload.startTime,
       end_time: payload.endTime,
       benchmark: payload.benchmark,
@@ -66,6 +62,18 @@ export class RepoComparisonStore extends VxModule {
     return this.allRuns
   }
 
+  @mutation
+  setSelectedBranchesForRepo(payload: {
+    repoID: string
+    selectedBranches: string[]
+  }) {
+    Vue.set(
+      this._selectedBranchesByRepoID,
+      payload.repoID,
+      payload.selectedBranches
+    )
+  }
+
   /**
    * Sets all data points.
    *
@@ -89,5 +97,33 @@ export class RepoComparisonStore extends VxModule {
    */
   get allRuns(): { [key: string]: Run[] } {
     return this.runsByRepoId
+  }
+
+  get selectedRepos(): string[] {
+    return this._selectedRepos
+  }
+
+  set selectedRepos(selectedRepos: string[]) {
+    this._selectedRepos = selectedRepos
+  }
+
+  get selectedBranchesByRepoID(): { [key: string]: string[] } {
+    return this._selectedBranchesByRepoID
+  }
+
+  get selectedReposWithBranches(): string[] {
+    let repos: any[] = []
+    Object.keys(this._selectedBranchesByRepoID).forEach(repoID => {
+      if (
+        this.selectedRepos.indexOf(repoID) > -1 &&
+        this._selectedBranchesByRepoID[repoID].length !== 0
+      ) {
+        repos.push({
+          repo_id: repoID,
+          branches: this._selectedBranchesByRepoID[repoID]
+        })
+      }
+    })
+    return repos
   }
 }

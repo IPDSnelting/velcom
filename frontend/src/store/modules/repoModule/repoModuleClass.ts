@@ -135,6 +135,14 @@ export class RepoStore extends VxModule {
     return (payload: string) => this.repos[payload]
   }
 
+  get branchesByRepoID(): { [key: string]: string[] } {
+    var branchesByRepoID: { [key: string]: string[] } = {}
+    this.allRepos.forEach(repo => {
+      branchesByRepoID[repo.id] = repo.trackedBranches
+    })
+    return branchesByRepoID
+  }
+
   get occuringBenchmarks() {
     var benchmarks: string[] = []
     const repos = Object.keys(this.repos).map(key => this.repos[key])
