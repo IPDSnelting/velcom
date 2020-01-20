@@ -6,13 +6,7 @@
       </v-row>
       <v-row align="baseline" justify="center">
         <v-col class="d-flex">
-          <v-select
-            v-model="selectedRepo"
-            :items="allRepos"
-            item-text="name"
-            label="repository"
-            return-object
-          ></v-select>
+          <repo-select v-model="selectedRepoId" :repos="allRepos"></repo-select>
         </v-col>
       </v-row>
       <router-view></router-view>
@@ -25,10 +19,21 @@ import Vue from 'vue'
 import { Component, Watch } from 'vue-property-decorator'
 import { vxm } from '../store/classIndex'
 import { Repo } from '../store/types'
+import RepoSelectionComponent from '../components/RepoSelectionComponent.vue'
 
-@Component
+@Component({
+  components: {
+    'repo-select': RepoSelectionComponent
+  }
+})
 export default class RepoDetailFrame extends Vue {
-  private selectedRepo: Repo | null = null
+  private selectedRepoId: string | null = null
+
+  get selectedRepo() {
+    return this.selectedRepoId == null
+      ? null
+      : vxm.repoModule.repoByID(this.selectedRepoId)!
+  }
 
   get allRepos(): Repo[] {
     return vxm.repoModule.allRepos
