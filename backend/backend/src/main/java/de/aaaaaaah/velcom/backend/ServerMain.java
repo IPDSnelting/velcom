@@ -79,7 +79,9 @@ public class ServerMain extends Application<GlobalConfig> {
 		CommitComparer commitComparer = new CommitComparer(configuration.getSignificantFactor());
 		LinearLog linearLog = new CommitAccessBasedLinearLog(commitAccess);
 		ReducedLog reducedLog = new TimeSliceBasedReducedLog(benchmarkAccess, new GroupByHour());
+
 		Queue queue = new Queue(commitAccess, new PolicyManualFilo());
+		commitAccess.getAllCommitsRequiringBenchmark().forEach(queue::addCommit);
 
 		// Listener
 		Listener listener = new Listener(configuration, accessLayer, queue);
