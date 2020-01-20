@@ -131,7 +131,7 @@ export class RepoStore extends VxModule {
     return Array.from(Object.values(this.repos))
   }
 
-  get repoByID(): (payload: string) => Repo {
+  get repoByID(): (payload: string) => Repo | undefined {
     return (payload: string) => this.repos[payload]
   }
 
