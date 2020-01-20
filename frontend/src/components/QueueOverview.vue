@@ -18,7 +18,7 @@
               <v-list-item>
                 <v-list-item-avatar class="index-indicator">{{ index + 1 }}</v-list-item-avatar>
                 <v-list-item-content>
-                  <v-row>
+                  <v-row justify="space-around">
                     <v-col cols="8">
                       <v-list-item-title>
                         <repo-display :repoId="commit.repoID"></repo-display>
@@ -33,7 +33,7 @@
                         >{{ formatDate(commit.authorDate) }}</span>
                       </v-list-item-subtitle>
                     </v-col>
-                    <v-col cols="4">
+                    <v-col class="d-flex my-row">
                       <v-chip
                         outlined
                         label
@@ -41,6 +41,14 @@
                         class="commit-hash-chip"
                         @click="copyToClipboard(commit.hash)"
                       >{{ commit.hash }}</v-chip>
+                      <span>
+                        <v-btn icon @click="liftToFront(commit)">
+                          <v-icon class="rocket">{{ liftToFrontIcon }}</v-icon>
+                        </v-btn>
+                        <v-btn icon @click="deleteCommit(commit)">
+                          <v-icon color="red">{{ deleteIcon }}</v-icon>
+                        </v-btn>
+                      </span>
                     </v-col>
                   </v-row>
                 </v-list-item-content>
@@ -59,6 +67,7 @@ import Component from 'vue-class-component'
 import { vxm } from '../store/classIndex'
 import { Commit } from '../store/types'
 import InlineMinimalRepoNameDisplay from './InlineMinimalRepoDisplay.vue'
+import { mdiRocket, mdiDelete } from '@mdi/js'
 
 @Component({
   components: {
@@ -102,9 +111,22 @@ export default class QueueOverview extends Vue {
       )
   }
 
+  private liftToFront(commit: Commit) {
+    vxm.queueModule.dispatchPrioritizeOpenTask(commit)
+  }
+
+  private deleteCommit(commit: Commit) {
+    vxm.queueModule.dispatchDeleteOpenTask(commit)
+  }
+
   mounted() {
     vxm.queueModule.fetchQueue()
   }
+
+  // ============== ICONS ==============
+  private liftToFrontIcon = mdiRocket
+  private deleteIcon = mdiDelete
+  // ==============       ==============
 }
 </script>
 
@@ -124,5 +146,319 @@ export default class QueueOverview extends Vue {
 
 .commit-hash-chip {
   font-size: 0.8em;
+}
+
+.rocket:hover {
+  animation: shake 4s linear;
+  transform: translate3d(0, 0, 0);
+  animation-iteration-count: infinite;
+  animation-delay: 0;
+}
+
+.my-row {
+  justify-content: space-between;
+}
+
+@keyframes shake {
+  0% {
+    transform: translate3d(-1px, 1px, 0);
+  }
+  1% {
+    transform: translate3d(2px, -2px, 0);
+  }
+  2% {
+    transform: translate3d(2px, -2px, 0);
+  }
+  3% {
+    transform: translate3d(1px, -1px, 0);
+  }
+  4% {
+    transform: translate3d(1px, -1px, 0);
+  }
+  5% {
+    transform: translate3d(0px, 0px, 0);
+  }
+  6% {
+    transform: translate3d(2px, -2px, 0);
+  }
+  7% {
+    transform: translate3d(-2px, 2px, 0);
+  }
+  8% {
+    transform: translate3d(-2px, 2px, 0);
+  }
+  9% {
+    transform: translate3d(2px, -2px, 0);
+  }
+  10% {
+    transform: translate3d(-1px, 1px, 0);
+  }
+  11% {
+    transform: translate3d(0px, 0px, 0);
+  }
+  12% {
+    transform: translate3d(0px, 0px, 0);
+  }
+  13% {
+    transform: translate3d(-2px, 2px, 0);
+  }
+  14% {
+    transform: translate3d(0px, 0px, 0);
+  }
+  15% {
+    transform: translate3d(0px, 0px, 0);
+  }
+  16% {
+    transform: translate3d(2px, -2px, 0);
+  }
+  17% {
+    transform: translate3d(2px, -2px, 0);
+  }
+  18% {
+    transform: translate3d(1px, -1px, 0);
+  }
+  19% {
+    transform: translate3d(-2px, 2px, 0);
+  }
+  20% {
+    transform: translate3d(-1px, 1px, 0);
+  }
+  21% {
+    transform: translate3d(0px, 0px, 0);
+  }
+  22% {
+    transform: translate3d(-1px, 1px, 0);
+  }
+  23% {
+    transform: translate3d(0px, 0px, 0);
+  }
+  24% {
+    transform: translate3d(1px, -1px, 0);
+  }
+  25% {
+    transform: translate3d(1px, -1px, 0);
+  }
+  26% {
+    transform: translate3d(-2px, 2px, 0);
+  }
+  27% {
+    transform: translate3d(-1px, 1px, 0);
+  }
+  28% {
+    transform: translate3d(-1px, 1px, 0);
+  }
+  29% {
+    transform: translate3d(0px, 0px, 0);
+  }
+  30% {
+    transform: translate3d(1px, -1px, 0);
+  }
+  31% {
+    transform: translate3d(-1px, 1px, 0);
+  }
+  32% {
+    transform: translate3d(0px, 0px, 0);
+  }
+  33% {
+    transform: translate3d(1px, -1px, 0);
+  }
+  34% {
+    transform: translate3d(-1px, 1px, 0);
+  }
+  35% {
+    transform: translate3d(0px, 0px, 0);
+  }
+  36% {
+    transform: translate3d(2px, -2px, 0);
+  }
+  37% {
+    transform: translate3d(2px, -2px, 0);
+  }
+  38% {
+    transform: translate3d(2px, -2px, 0);
+  }
+  39% {
+    transform: translate3d(0px, 0px, 0);
+  }
+  40% {
+    transform: translate3d(-2px, 2px, 0);
+  }
+  41% {
+    transform: translate3d(0px, 0px, 0);
+  }
+  42% {
+    transform: translate3d(-2px, 2px, 0);
+  }
+  43% {
+    transform: translate3d(0px, 0px, 0);
+  }
+  44% {
+    transform: translate3d(-2px, 2px, 0);
+  }
+  45% {
+    transform: translate3d(2px, -2px, 0);
+  }
+  46% {
+    transform: translate3d(-1px, 1px, 0);
+  }
+  47% {
+    transform: translate3d(-2px, 2px, 0);
+  }
+  48% {
+    transform: translate3d(0px, 0px, 0);
+  }
+  49% {
+    transform: translate3d(-2px, 2px, 0);
+  }
+  50% {
+    transform: translate3d(-2px, 2px, 0);
+  }
+  51% {
+    transform: translate3d(2px, -2px, 0);
+  }
+  52% {
+    transform: translate3d(-2px, 2px, 0);
+  }
+  53% {
+    transform: translate3d(2px, -2px, 0);
+  }
+  54% {
+    transform: translate3d(-2px, 2px, 0);
+  }
+  55% {
+    transform: translate3d(1px, -1px, 0);
+  }
+  56% {
+    transform: translate3d(1px, -1px, 0);
+  }
+  57% {
+    transform: translate3d(2px, -2px, 0);
+  }
+  58% {
+    transform: translate3d(2px, -2px, 0);
+  }
+  59% {
+    transform: translate3d(1px, -1px, 0);
+  }
+  60% {
+    transform: translate3d(-2px, 2px, 0);
+  }
+  61% {
+    transform: translate3d(2px, -2px, 0);
+  }
+  62% {
+    transform: translate3d(0px, 0px, 0);
+  }
+  63% {
+    transform: translate3d(-2px, 2px, 0);
+  }
+  64% {
+    transform: translate3d(-2px, 2px, 0);
+  }
+  65% {
+    transform: translate3d(-2px, 2px, 0);
+  }
+  66% {
+    transform: translate3d(2px, -2px, 0);
+  }
+  67% {
+    transform: translate3d(0px, 0px, 0);
+  }
+  68% {
+    transform: translate3d(2px, -2px, 0);
+  }
+  69% {
+    transform: translate3d(0px, 0px, 0);
+  }
+  70% {
+    transform: translate3d(1px, -1px, 0);
+  }
+  71% {
+    transform: translate3d(-2px, 2px, 0);
+  }
+  72% {
+    transform: translate3d(0px, 0px, 0);
+  }
+  73% {
+    transform: translate3d(2px, -2px, 0);
+  }
+  74% {
+    transform: translate3d(0px, 0px, 0);
+  }
+  75% {
+    transform: translate3d(1px, -1px, 0);
+  }
+  76% {
+    transform: translate3d(1px, -1px, 0);
+  }
+  77% {
+    transform: translate3d(2px, -2px, 0);
+  }
+  78% {
+    transform: translate3d(-1px, 1px, 0);
+  }
+  79% {
+    transform: translate3d(-2px, 2px, 0);
+  }
+  80% {
+    transform: translate3d(2px, -2px, 0);
+  }
+  81% {
+    transform: translate3d(-2px, 2px, 0);
+  }
+  82% {
+    transform: translate3d(0px, 0px, 0);
+  }
+  83% {
+    transform: translate3d(0px, 0px, 0);
+  }
+  84% {
+    transform: translate3d(1px, -1px, 0);
+  }
+  85% {
+    transform: translate3d(1px, -1px, 0);
+  }
+  86% {
+    transform: translate3d(1px, -1px, 0);
+  }
+  87% {
+    transform: translate3d(2px, -2px, 0);
+  }
+  88% {
+    transform: translate3d(-1px, 1px, 0);
+  }
+  89% {
+    transform: translate3d(0px, 0px, 0);
+  }
+  90% {
+    transform: translate3d(2px, -2px, 0);
+  }
+  91% {
+    transform: translate3d(-2px, 2px, 0);
+  }
+  92% {
+    transform: translate3d(1px, -1px, 0);
+  }
+  93% {
+    transform: translate3d(-2px, 2px, 0);
+  }
+  94% {
+    transform: translate3d(-2px, 2px, 0);
+  }
+  95% {
+    transform: translate3d(-2px, 2px, 0);
+  }
+  96% {
+    transform: translate3d(-2px, 2px, 0);
+  }
+  97% {
+    transform: translate3d(-2px, 2px, 0);
+  }
+  98% {
+    transform: translate3d(-2px, 2px, 0);
+  }
+  99% {
+    transform: translate3d(-2px, 2px, 0);
+  }
 }
 </style>

@@ -77,10 +77,8 @@ export class QueueStore extends VxModule {
   dispatchPrioritizeOpenTask(payload: Commit): Promise<void> {
     return axios
       .post('/queue', {
-        params: {
-          repo_id: payload.repoID,
-          commit_hash: payload.hash
-        }
+        repo_id: payload.repoID,
+        commit_hash: payload.hash
       })
       .then(() => {
         this.prioritizeOpenTask(payload)
@@ -132,10 +130,9 @@ export class QueueStore extends VxModule {
     })
     if (oldIndex !== -1) {
       // TODO: Does this get reactive wrapped?
-      this._openTasks.splice(0, 0, this._openTasks.splice(oldIndex)[0])
-    } else {
-      this._openTasks.splice(0, 0, payload)
+      this._openTasks.splice(oldIndex, 1)
     }
+    this._openTasks.unshift(payload)
   }
 
   /**
