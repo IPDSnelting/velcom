@@ -79,8 +79,8 @@ public class ServerMain extends Application<GlobalConfig> {
 		CommitComparer commitComparer = new CommitComparer(configuration.getSignificantFactor());
 		LinearLog linearLog = new CommitAccessBasedLinearLog(commitAccess);
 		ReducedLog reducedLog = new TimeSliceBasedReducedLog(benchmarkAccess, new GroupByHour());
+
 		Queue queue = new Queue(commitAccess, new PolicyManualFilo());
-		// TODO ensure that no commit from a deleted repo can be added
 		commitAccess.getAllCommitsRequiringBenchmark().forEach(queue::addCommit);
 
 		// Listener
