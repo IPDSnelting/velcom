@@ -5,20 +5,14 @@
         <v-card v-if="!dense">
           <v-card-title>{{ worker.name }}</v-card-title>
           <v-card-text>
-            <span class="worker-description">{{
-              formatWorkerInformation(worker)
-            }}</span>
+            <span class="worker-description">{{ formatWorkerInformation(worker) }}</span>
           </v-card-text>
         </v-card>
         <v-tooltip bottom>
           <template #activator="{ on }">
-            <v-chip outlined label color="accent" v-on="on" v-if="dense">{{
-              worker.name
-            }}</v-chip>
+            <v-chip outlined label color="accent" v-on="on" v-if="dense">{{ worker.name }}</v-chip>
           </template>
-          <span class="worker-description">{{
-            formatWorkerInformation(worker)
-          }}</span>
+          <span class="worker-description">{{ formatWorkerInformation(worker) }}</span>
         </v-tooltip>
       </v-col>
     </v-row>
@@ -28,7 +22,7 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { Worker, Commit, RootState, QueueState } from '../store/types'
+import { Worker, Commit } from '../store/types'
 import { Prop } from 'vue-property-decorator'
 import { Store } from 'vuex'
 

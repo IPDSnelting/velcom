@@ -14,7 +14,6 @@ import Component from 'vue-class-component'
 import NavigationBar from './components/NavigationBar.vue'
 import Snackbar from './components/Snackbar.vue'
 import { Store } from 'vuex'
-import { RootState, Worker } from './store/types'
 
 @Component({
   components: {
@@ -22,13 +21,5 @@ import { RootState, Worker } from './store/types'
     snackbar: Snackbar
   }
 })
-export default class App extends Vue {
-  get store() {
-    return this.$store as Store<RootState>
-  }
-
-  get workers(): Worker[] {
-    return this.store.state.queueModule.workers
-  }
-}
+export default class App extends Vue {}
 </script>

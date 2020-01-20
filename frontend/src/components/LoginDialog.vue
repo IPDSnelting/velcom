@@ -54,7 +54,7 @@
 import Vue from 'vue'
 import { Component, Watch } from 'vue-property-decorator'
 import { Store } from 'vuex'
-import { RootState, Repo } from '../store/types'
+import { Repo } from '../store/types'
 import { extractErrorMessage } from '../util/ErrorUtils'
 import { store, vxm } from '../store/classIndex'
 import { mdiSourceBranch } from '@mdi/js'
@@ -110,7 +110,7 @@ export default class LoginDialog extends Vue {
 
     if (this.role === 'Web-Admin') {
       payload = {
-        role: 'ADMIN',
+        role: 'admin',
         asRepoAdmin: false,
         token: this.token
       }

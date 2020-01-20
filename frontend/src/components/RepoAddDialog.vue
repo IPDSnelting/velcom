@@ -31,7 +31,6 @@
 import Vue from 'vue'
 import { Component, Watch } from 'vue-property-decorator'
 import { Store } from 'vuex'
-import { RootState } from '../store/types'
 import { extractErrorMessage } from '../util/ErrorUtils'
 import { store, vxm } from '../store/classIndex'
 

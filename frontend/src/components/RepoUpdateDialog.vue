@@ -54,7 +54,7 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { RootState, RepoState, Repo } from '../store/types'
+import { Repo } from '../store/types'
 import { Prop, Watch } from 'vue-property-decorator'
 import { vxm } from '../store/classIndex'
 
