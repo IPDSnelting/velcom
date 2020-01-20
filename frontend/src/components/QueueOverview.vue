@@ -18,39 +18,41 @@
               <v-list-item>
                 <v-list-item-avatar class="index-indicator">{{ index + 1 }}</v-list-item-avatar>
                 <v-list-item-content>
-                  <v-row justify="space-around">
-                    <v-col cols="8">
-                      <v-list-item-title>
-                        <repo-display :repoId="commit.repoID"></repo-display>
-                        <span class="mx-2">—</span>
-                        <span class="commit-message">{{ commit.message }}</span>
-                      </v-list-item-title>
-                      <v-list-item-subtitle>
-                        <span class="author">{{ commit.author }}</span> authored on
-                        <span
-                          class="time"
-                          :title="formatDateUTC(commit.authorDate)"
-                        >{{ formatDate(commit.authorDate) }}</span>
-                      </v-list-item-subtitle>
-                    </v-col>
-                    <v-col class="d-flex my-row">
-                      <v-chip
-                        outlined
-                        label
-                        color="accent"
-                        class="commit-hash-chip"
-                        @click="copyToClipboard(commit.hash)"
-                      >{{ commit.hash }}</v-chip>
-                      <span>
-                        <v-btn icon @click="liftToFront(commit, $event)">
-                          <v-icon class="rocket">{{ liftToFrontIcon }}</v-icon>
-                        </v-btn>
-                        <v-btn icon @click="deleteCommit(commit)">
-                          <v-icon color="red">{{ deleteIcon }}</v-icon>
-                        </v-btn>
-                      </span>
-                    </v-col>
-                  </v-row>
+                  <v-container fluid>
+                    <v-row justify="space-around" align="center">
+                      <v-col cols="8">
+                        <v-list-item-title>
+                          <repo-display :repoId="commit.repoID"></repo-display>
+                          <span class="mx-2">—</span>
+                          <span class="commit-message">{{ commit.message }}</span>
+                        </v-list-item-title>
+                        <v-list-item-subtitle>
+                          <span class="author">{{ commit.author }}</span> authored on
+                          <span
+                            class="time"
+                            :title="formatDateUTC(commit.authorDate)"
+                          >{{ formatDate(commit.authorDate) }}</span>
+                        </v-list-item-subtitle>
+                      </v-col>
+                      <v-col class="d-flex my-row">
+                        <v-chip
+                          outlined
+                          label
+                          color="accent"
+                          class="commit-hash-chip"
+                          @click="copyToClipboard(commit.hash)"
+                        >{{ commit.hash }}</v-chip>
+                        <span>
+                          <v-btn icon @click="liftToFront(commit, $event)">
+                            <v-icon class="rocket">{{ liftToFrontIcon }}</v-icon>
+                          </v-btn>
+                          <v-btn icon @click="deleteCommit(commit)">
+                            <v-icon color="red">{{ deleteIcon }}</v-icon>
+                          </v-btn>
+                        </span>
+                      </v-col>
+                    </v-row>
+                  </v-container>
                 </v-list-item-content>
               </v-list-item>
             </v-card>
