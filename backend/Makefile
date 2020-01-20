@@ -14,3 +14,9 @@ clean:
 	rm -rf backend/data/repos
 	@echo 'Removing maven files'
 	mvn clean
+
+start-runner:
+	cd runner/target/ && java -jar runner.jar ../src/main/resources/Example_config.json
+
+start-backend:
+	cd backend/target && java -jar backend.jar server ../src/main/resources/SampleConfig.yml
