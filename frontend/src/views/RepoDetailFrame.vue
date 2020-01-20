@@ -13,8 +13,6 @@
             label="repository"
             return-object
           ></v-select>
-          <v-spacer></v-spacer>
-          <v-btn :to="route" :disabled="!repoSelected" text color="primary" class="mt-4">GO!</v-btn>
         </v-col>
       </v-row>
       <router-view></router-view>
@@ -44,6 +42,14 @@ export default class RepoDetailFrame extends Vue {
 
   get repoSelected(): boolean {
     return this.selectedRepo !== null
+  }
+
+  @Watch('selectedRepo')
+  selectedRepoChanged() {
+    this.$router.push({
+      name: 'repo-detail',
+      params: { id: this.selectedRepo ? this.selectedRepo.id : '' }
+    })
   }
 
   mounted() {

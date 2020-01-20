@@ -55,7 +55,7 @@ export default class RepoSelector extends Vue {
   private selectedBranches: string[] = []
 
   get repo(): Repo {
-    return vxm.repoModule.repoByID(this.$props.repoID)
+    return vxm.repoModule.repoByID(this.$props.repoID)!
   }
 
   get color(): string {

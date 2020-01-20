@@ -73,7 +73,7 @@ export default class RepoUpdateDialog extends Vue {
   private repoId!: string
 
   get repo(): Repo {
-    return vxm.repoModule.repoByID(this.repoId)
+    return vxm.repoModule.repoByID(this.repoId)!
   }
 
   private notEmpty(input: string): boolean | string {
