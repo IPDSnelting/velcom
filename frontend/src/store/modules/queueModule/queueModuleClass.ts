@@ -40,7 +40,7 @@ export class QueueStore extends VxModule {
     })
 
     let workers: Worker[] = []
-    let jsonWorkers: any[] = response.data.tasks
+    let jsonWorkers: any[] = response.data.workers
 
     jsonWorkers.forEach((item: any) => {
       let currentTask = null
