@@ -11,33 +11,47 @@
         </v-toolbar>
         <v-card-text>
           <v-form v-model="formValid" ref="form">
+            <div class="section-header mt-3 mb-2">GENERAL SETTINGS</div>
+
             <v-text-field :rules="[notEmpty]" label="*Remote URL" v-model="remoteUrl"></v-text-field>
             <v-text-field :rules="[notEmpty]" label="*Repository name" v-model="repoName"></v-text-field>
-            <div class="section-header mt-3 mb-2">TRACKED BRANCHES</div>
-            <v-container>
-              <v-row>
-                <v-col cols="12">
-                  <v-checkbox
-                    dense
-                    class="my-0 py-0"
-                    label="Check all"
-                    :input-value="newTrackedBranches.length == repo.branches.length"
-                    @change="toggleAll"
-                  ></v-checkbox>
-                </v-col>
-              </v-row>
-              <v-row>
-                <v-col cols="2" :key="branch" v-for="branch in repo.branches">
-                  <v-checkbox
-                    class="my-0 py-0"
-                    v-model="newTrackedBranches"
-                    dense
-                    :label="branch"
-                    :value="branch"
-                  ></v-checkbox>
-                </v-col>
-              </v-row>
-            </v-container>
+            <div class="section-header mt-3 mb-2">BRANCHES</div>
+            <v-data-iterator
+              :items="branchObjects"
+              :custom-filter="filterName"
+              :search="searchValue"
+              sort-by="lowerCased"
+            >
+              <template v-slot:header>
+                <v-text-field :prepend-icon="searchIcon" label="Search..." v-model="searchValue"></v-text-field>
+                <v-checkbox
+                  dense
+                  class="my-0 py-0"
+                  label="Track all branches"
+                  :input-value="newTrackedBranches.length == repo.branches.length"
+                  @change="toggleAll"
+                ></v-checkbox>
+                <div class="section-header mt-3 mb-2">TRACKED BRANCHES</div>
+              </template>
+              <template v-slot:default="props">
+                <v-row>
+                  <v-col
+                    cols="4"
+                    class="my-1 py-0"
+                    v-for="branch in props.items"
+                    :key="branch.name"
+                  >
+                    <v-checkbox
+                      class="my-0 py-0"
+                      v-model="newTrackedBranches"
+                      dense
+                      :label="branch.name"
+                      :value="branch.name"
+                    ></v-checkbox>
+                  </v-col>
+                </v-row>
+              </template>
+            </v-data-iterator>
           </v-form>
         </v-card-text>
         <v-card-actions>
@@ -57,6 +71,7 @@ import Component from 'vue-class-component'
 import { Repo } from '../store/types'
 import { Prop, Watch } from 'vue-property-decorator'
 import { vxm } from '../store/classIndex'
+import { mdiMagnify } from '@mdi/js'
 
 @Component
 export default class RepoUpdateDialog extends Vue {
@@ -69,11 +84,51 @@ export default class RepoUpdateDialog extends Vue {
 
   private newTrackedBranches: string[] = []
 
+  private searchValue: string = ''
+
   @Prop()
   private repoId!: string
 
+  get branchObjects(): { name: string; lowerCased: string }[] {
+    return this.repo.branches.map(it => ({
+      name: it,
+      lowerCased: it.toLowerCase()
+    }))
+  }
+
   get repo(): Repo {
-    return vxm.repoModule.repoByID(this.repoId)!
+    // return vxm.repoModule.repoByID(this.repoId)!
+    return new Repo(
+      'test',
+      'name',
+      [
+        'a',
+        'hello world how are you',
+        'b',
+        'c',
+        'c11',
+        'c10',
+        'c9',
+        'c8',
+        'c7',
+        'c6',
+        'c5',
+        'c4',
+        'c3',
+        'c2',
+        'c1',
+        'This field must not be empty!'
+      ],
+      ['a', 'c'],
+      [],
+      'loow'
+    )
+  }
+
+  private filterName(items: { lowerCased: string }[], search: string) {
+    return items.filter(
+      input => input.lowerCased.indexOf(this.searchValue.toLowerCase()) >= 0
+    )
   }
 
   private notEmpty(input: string): boolean | string {
@@ -85,6 +140,7 @@ export default class RepoUpdateDialog extends Vue {
   watchIdUpdates() {
     this.remoteUrl = this.repo.remoteURL
     this.repoName = this.repo.name
+    this.searchValue = ''
 
     this.newTrackedBranches = Object.assign([], this.repo.trackedBranches)
   }
@@ -121,6 +177,10 @@ export default class RepoUpdateDialog extends Vue {
   mounted() {
     Vue.nextTick(() => this.watchIdUpdates())
   }
+
+  // ============== ICONS ==============
+  private searchIcon = mdiMagnify
+  // ==============       ==============
 }
 </script>
 
