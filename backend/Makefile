@@ -8,12 +8,14 @@ backend/target/backend.jar: $(find -name '*.java' -o -name pom.xml)
 	@echo 'Building backend'
 	mvn package
 
-clean:
-	@echo 'Removing backend files'
-	rm -f backend/data/data.db
-	rm -rf backend/data/repos
-	@echo 'Removing maven files'
+clean: clean-backend-data
 	mvn clean
+
+clean-backend-data:
+	rm -f backend/data/data.db
+	rm -rf backend/data/repos/
+	rm -rf backend/data/archives/
+	rm -rf backend/target/data/
 
 start-runner: build
 	@echo 'Starting runner'

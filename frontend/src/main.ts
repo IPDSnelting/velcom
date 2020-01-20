@@ -8,7 +8,7 @@ import { extractErrorMessage } from './util/ErrorUtils'
 
 Vue.config.productionTip = false
 
-axios.defaults.baseURL = 'https://aaaaaaah.de:8667' // store.state.apiBaseURL
+axios.defaults.baseURL = 'http://localhost:8080' // store.state.apiBaseURL
 
 const vue = new Vue({
   router,
