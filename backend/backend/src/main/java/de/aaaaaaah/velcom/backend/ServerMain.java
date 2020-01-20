@@ -63,8 +63,8 @@ public class ServerMain extends Application<GlobalConfig> {
 		configureCors(environment);
 
 		// Storage layer
-		DatabaseStorage databaseStorage = new DatabaseStorage(configuration);
 		RepoStorage repoStorage = new RepoStorage();
+		DatabaseStorage databaseStorage = new DatabaseStorage(configuration);
 
 		// Access layer
 		AccessLayer accessLayer = new AccessLayer();
