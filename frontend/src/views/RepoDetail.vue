@@ -40,7 +40,7 @@
               </v-row>
             </v-container>
           </v-card-text>
-          <v-card-actions>
+          <v-card-actions v-if="canEdit">
             <v-spacer></v-spacer>
             <repo-update :repoId="id">
               <template #activator="{ on }">
@@ -71,6 +71,10 @@ import { vxm } from '../store/classIndex'
 export default class RepoDetail extends Vue {
   private get id() {
     return this.$route.params.id
+  }
+
+  private get canEdit() {
+    return vxm.userModule.authorized(this.repoId)
   }
 
   private repoExists(id: string): boolean {
