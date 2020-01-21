@@ -160,8 +160,9 @@ export default class QueueOverview extends Vue {
 
       setTimeout(() => {
         srcElement.style.top = '0px'
-        srcElement.style.left =
-          Math.round(Math.random() * window.innerWidth) + 'px'
+        let targetX = Math.round(Math.random() * (window.innerWidth / 2))
+        targetX += window.innerWidth / 2
+        srcElement.style.left = targetX + 'px'
 
         const animationDuration = 1000
         setTimeout(() => srcElement.remove(), animationDuration)
