@@ -16,12 +16,7 @@
             <v-text-field :rules="[notEmpty]" label="*Remote URL" v-model="remoteUrl"></v-text-field>
             <v-text-field :rules="[notEmpty]" label="*Repository name" v-model="repoName"></v-text-field>
             <transition name="fade">
-              <v-text-field
-                v-if="tokenState == 'modify'"
-                :rules="[notEmpty]"
-                label="*New token"
-                v-model="newToken"
-              ></v-text-field>
+              <span v-if="tokenState == 'delete'" class="section-header mr-4">TOKEN WILL BE DELETED</span>
             </transition>
             <transition name="fade">
               <span>
@@ -47,8 +42,16 @@
                   text
                   outlined
                   color="error"
-                >Reset</v-btn>
+                >{{ tokenState == 'modify' ? "DON'T CHANGE TOKEN" : "UNDO"}}</v-btn>
               </span>
+            </transition>
+            <transition name="fade">
+              <v-text-field
+                v-if="tokenState == 'modify'"
+                :rules="[notEmpty]"
+                label="*New token"
+                v-model="newToken"
+              ></v-text-field>
             </transition>
             <div class="section-header mt-3 mb-2">BRANCHES</div>
             <v-data-iterator
