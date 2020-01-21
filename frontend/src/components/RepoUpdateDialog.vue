@@ -144,7 +144,8 @@ export default class RepoUpdateDialog extends Vue {
       repoToken: undefined,
       id: this.repoId,
       name: this.repoName,
-      remoteUrl: this.remoteUrl
+      remoteUrl: this.remoteUrl,
+      trackedBranches: this.newTrackedBranches
     })
   }
 
