@@ -96,6 +96,7 @@ public class BenchmarkAccess {
 				.where(RUN.REPO_ID.eq(repoId.getId().toString()))
 				.and(RUN.COMMIT_HASH.eq(commitHash.getHash()))
 				.orderBy(RUN.START_TIME.desc())
+				.limit(1)
 				.fetchOptional();
 
 			return runRecord.map(this::runFromRecord);
