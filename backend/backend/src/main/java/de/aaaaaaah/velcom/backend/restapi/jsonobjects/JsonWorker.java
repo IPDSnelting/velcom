@@ -27,4 +27,9 @@ public class JsonWorker {
 	public JsonCommit getWorkingOn() {
 		return workingOn;
 	}
+
+	@Nullable
+	public String getMachineInfo() {
+		return machineInfo;
+	}
 }

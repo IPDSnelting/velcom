@@ -57,7 +57,7 @@ export class QueueStore extends VxModule {
         )
       }
 
-      workers.push(new Worker(item.name, item.hash, currentTask))
+      workers.push(new Worker(item.name, item.machine_info, currentTask))
     })
 
     this.setOpenTasks(tasks)

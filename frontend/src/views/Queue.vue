@@ -6,7 +6,7 @@
       </v-row>
       <v-row align="start" justify="center">
         <v-col>
-          <worker-overview></worker-overview>
+          <worker-overview :workers="workers"></worker-overview>
         </v-col>
       </v-row>
       <v-row align="baseline" justify="center">
@@ -23,6 +23,7 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import WorkerOverview from '../components/WorkerOverview.vue'
 import QueueOverview from '../components/QueueOverview.vue'
+import { vxm } from '../store/classIndex'
 
 @Component({
   components: {
@@ -30,5 +31,9 @@ import QueueOverview from '../components/QueueOverview.vue'
     'queue-overview': QueueOverview
   }
 })
-export default class Queue extends Vue {}
+export default class Queue extends Vue {
+  private get workers() {
+    return vxm.queueModule.workers
+  }
+}
 </script>
