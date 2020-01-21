@@ -13,7 +13,7 @@ Vue.use(Vuex)
 
 export const store = new Vuex.Store({
   state: {
-    baseUrl: 'http://localhost:8080/'
+    baseUrl: 'http://aaaaaaah:8667/'
   },
   modules: {
     ...extractVuexModule(ColorStore),
