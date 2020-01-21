@@ -36,7 +36,7 @@ public class RunnerStateMachine {
 			() -> {
 				LOGGER.info("Established connection with status {}", state.getStatus());
 				configuration.getConnectionManager().sendEntity(new RunnerInformation(
-					"Test name",
+					configuration.getRunnerName(),
 					System.getProperty("os.name")
 						+ " " + System.getProperty("os.arch")
 						+ " " + System.getProperty("os.version"),
