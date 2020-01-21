@@ -33,9 +33,26 @@
                             :title="formatDateUTC(commit.authorDate)"
                           >{{ formatDate(commit.authorDate) }}</span>
                         </v-list-item-subtitle>
+                        <v-list-item-content>
+                          <v-tooltip top>
+                            <template #activator="{ on }">
+                              <span style="flex: 0 0;">
+                                <v-chip
+                                  v-on="on"
+                                  outlined
+                                  label
+                                  v-if="getWorker(commit)"
+                                >{{ getWorker(commit).name }}</v-chip>
+                              </span>
+                            </template>
+                            <span
+                              style="white-space: pre; font-family: monospace;"
+                            >{{ getWorker(commit).osData }}</span>
+                          </v-tooltip>
+                        </v-list-item-content>
                       </v-col>
                       <v-col>
-                        <v-container fluid>
+                        <v-container fluid class="ma-0 pa-0">
                           <v-row no-gutters align="center" justify="space-between">
                             <v-col>
                               <v-chip
@@ -73,7 +90,7 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { vxm } from '../store/classIndex'
-import { Commit } from '../store/types'
+import { Commit, Worker } from '../store/types'
 import InlineMinimalRepoNameDisplay from './InlineMinimalRepoDisplay.vue'
 import { mdiRocket, mdiDelete } from '@mdi/js'
 
@@ -164,6 +181,16 @@ export default class QueueOverview extends Vue {
 
   private deleteCommit(commit: Commit) {
     vxm.queueModule.dispatchDeleteOpenTask(commit)
+  }
+
+  private getWorker(commit: Commit): Worker | undefined {
+    return vxm.queueModule.workers
+      .filter(it => it.currentTask)
+      .find(
+        it =>
+          it.currentTask!.repoID === commit.repoID &&
+          it.currentTask!.hash === commit.hash
+      )
   }
 
   mounted() {
