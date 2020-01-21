@@ -74,7 +74,7 @@ export default class RepoDetail extends Vue {
   }
 
   private get canEdit() {
-    return vxm.userModule.authorized(this.repoId)
+    return vxm.userModule.authorized(this.id)
   }
 
   private repoExists(id: string): boolean {
