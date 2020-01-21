@@ -47,8 +47,13 @@
                 <v-btn v-on="on" color="primary">update</v-btn>
               </template>
             </repo-update>
-            <v-spacer></v-spacer>
-            <v-btn color="error" class="mr-5 mb-2" @click="deleteRepository">Delete Repository</v-btn>
+            <v-btn
+              color="error"
+              class="mr-5 ml-3"
+              outlined
+              text
+              @click="deleteRepository"
+            >Delete Repository</v-btn>
           </v-card-actions>
         </v-card>
       </v-col>
