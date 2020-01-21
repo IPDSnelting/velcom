@@ -26,12 +26,12 @@
               multiple
               hide-details
               class="shrink mt-0 ml-5"
-              v-model="selectedBranchesByRepoID[repo.id]"
+              :input-value="selectedBranchesByRepo(repo.id)"
               :label="branch"
               :value="branch"
               :disabled="!repoSelected(repo.id)"
               :color="colorByIndex(i)"
-              @change="updateSelectedBranchesForRepo(repo.id)"
+              @change="updateSelectedBranchesForRepo(repo.id, branch, $event)"
             />
           </div>
         </v-expansion-panel-content>
@@ -58,7 +58,6 @@ export default class RepoSelector extends Vue {
   private index!: number
 
   private selectedRepos: string[] = vxm.repoComparisonModule.selectedRepos
-  private selectedBranchesByRepoID: { [key: string]: string[] } = {}
 
   get allRepos(): Repo[] {
     return vxm.repoModule.allRepos
@@ -66,6 +65,11 @@ export default class RepoSelector extends Vue {
 
   get repoSelected(): (repoID: string) => boolean {
     return (repoID: string) => this.selectedRepos.indexOf(repoID) > -1
+  }
+
+  get selectedBranchesByRepo(): (repoId: string) => string[] {
+    return (repoId: string) =>
+      vxm.repoComparisonModule.selectedBranchesByRepoID[repoId]
   }
 
   get allColors() {
@@ -80,10 +84,14 @@ export default class RepoSelector extends Vue {
     vxm.repoComparisonModule.selectedRepos = this.selectedRepos
   }
 
-  updateSelectedBranchesForRepo(repoID: string) {
+  updateSelectedBranchesForRepo(
+    repoID: string,
+    branch: string,
+    checkedValues: string[]
+  ) {
     vxm.repoComparisonModule.setSelectedBranchesForRepo({
       repoID: repoID,
-      selectedBranches: this.selectedBranchesByRepoID[repoID]
+      selectedBranches: checkedValues
     })
   }
 
@@ -95,11 +103,8 @@ export default class RepoSelector extends Vue {
     }
   }
 
-  created() {
-    vxm.repoModule.fetchRepos()
-    vxm.repoModule.allRepos.forEach(repo => {
-      this.selectedBranchesByRepoID[repo.id] = repo.trackedBranches
-    })
+  async created() {
+    await vxm.repoModule.fetchRepos()
   }
 }
 </script>
