@@ -140,9 +140,8 @@ export default class RepoUpdateDialog extends Vue {
       this.repo.measurements,
       this.remoteUrl
     )
-    // TODO: How do we get the token??
     vxm.repoModule.updateRepo({
-      repoToken: '12345',
+      repoToken: undefined,
       id: this.repoId,
       name: this.repoName,
       remoteUrl: this.remoteUrl

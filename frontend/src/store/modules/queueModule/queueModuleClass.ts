@@ -129,7 +129,6 @@ export class QueueStore extends VxModule {
       return task.repoID === payload.repoID && task.hash === payload.hash
     })
     if (oldIndex !== -1) {
-      // TODO: Does this get reactive wrapped?
       this._openTasks.splice(oldIndex, 1)
     }
     this._openTasks.unshift(payload)

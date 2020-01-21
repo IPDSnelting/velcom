@@ -101,9 +101,9 @@ export class RepoStore extends VxModule {
   @action
   async updateRepo(payload: {
     id: string
-    name: string
-    repoToken: string
-    remoteUrl: string
+    name: string | undefined
+    repoToken: string | undefined
+    remoteUrl: string | undefined
   }) {
     return axios
       .patch('/repo', {
