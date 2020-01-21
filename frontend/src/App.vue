@@ -14,6 +14,7 @@ import Component from 'vue-class-component'
 import NavigationBar from './components/NavigationBar.vue'
 import Snackbar from './components/Snackbar.vue'
 import { Store } from 'vuex'
+import { vxm } from './store'
 
 @Component({
   components: {
@@ -21,5 +22,9 @@ import { Store } from 'vuex'
     snackbar: Snackbar
   }
 })
-export default class App extends Vue {}
+export default class App extends Vue {
+  created() {
+    vxm.repoModule.fetchRepos()
+  }
+}
 </script>

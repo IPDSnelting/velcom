@@ -111,10 +111,6 @@ export default class RepoSelector extends Vue {
       vxm.colorModule.addColors(diff)
     }
   }
-
-  async created() {
-    await vxm.repoModule.fetchRepos()
-  }
 }
 </script>
 

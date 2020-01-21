@@ -69,10 +69,6 @@ export default class RepoDetailFrame extends Vue {
     })
   }
 
-  mounted() {
-    vxm.repoModule.fetchRepos()
-  }
-
   // ============== ICONS ==============
   private plusIcon = mdiPlusCircleOutline
   // ==============       ==============

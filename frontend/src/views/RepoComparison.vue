@@ -219,9 +219,5 @@ export default class RepoComparison extends Vue {
   get graphData() {
     return vxm.repoComparisonModule.allRuns
   }
-
-  mounted() {
-    vxm.repoModule.fetchRepos()
-  }
 }
 </script>
