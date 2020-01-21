@@ -94,7 +94,40 @@ export default class RepoDetail extends Vue {
   }
 
   private get branches() {
-    return this.repo.branches.sort((a, b) => a.localeCompare(b))
+    return this.repo.branches
+      .slice()
+      .sort(
+        this.chainComparators(this.comparatorTrackStatus, (a, b) =>
+          a.localeCompare(b)
+        )
+      )
+  }
+
+  private comparatorTrackStatus(branchA: string, branchB: string) {
+    const aTracked = this.isBranchTracked(branchA)
+    const bTracked = this.isBranchTracked(branchB)
+    if (aTracked && bTracked) {
+      return 0
+    }
+    if (aTracked) {
+      return -1
+    }
+    if (bTracked) {
+      return 1
+    }
+    return 0
+  }
+
+  private chainComparators(
+    a: (a: string, b: string) => number,
+    b: (a: string, b: string) => number
+  ): (a: string, b: string) => number {
+    return (x, y) => {
+      if (a(x, y) !== 0) {
+        return a(x, y)
+      }
+      return b(x, y)
+    }
   }
 
   private get repo(): Repo {
