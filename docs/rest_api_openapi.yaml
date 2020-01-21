@@ -160,6 +160,7 @@ paths:
                   description: "a repo's remote url"
                 token:
                   type: string
+                  minLength: 1
               required:
                 - name
                 - remote_url

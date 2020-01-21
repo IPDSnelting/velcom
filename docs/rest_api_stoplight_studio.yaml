@@ -63,6 +63,7 @@ paths:
                   $ref: '#/components/schemas/RemoteUrl'
                 token:
                   type: string
+                  minLength: 1
               required:
                 - name
                 - remote_url
