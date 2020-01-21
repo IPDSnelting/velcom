@@ -140,13 +140,15 @@ export default class RepoUpdateDialog extends Vue {
       this.repo.measurements,
       this.remoteUrl
     )
-    vxm.repoModule.updateRepo({
-      repoToken: undefined,
-      id: this.repoId,
-      name: this.repoName,
-      remoteUrl: this.remoteUrl,
-      trackedBranches: this.newTrackedBranches
-    })
+    vxm.repoModule
+      .updateRepo({
+        repoToken: undefined,
+        id: this.repoId,
+        name: this.repoName,
+        remoteUrl: this.remoteUrl,
+        trackedBranches: this.newTrackedBranches
+      })
+      .then(() => (this.dialogOpen = false))
   }
 
   mounted() {

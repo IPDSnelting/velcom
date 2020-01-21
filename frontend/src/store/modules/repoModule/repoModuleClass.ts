@@ -105,7 +105,7 @@ export class RepoStore extends VxModule {
     repoToken: string | undefined
     remoteUrl: string | undefined
     trackedBranches: string[] | undefined
-  }) {
+  }): Promise<void> {
     return axios
       .patch('/repo', {
         repo_id: payload.id,
