@@ -37,6 +37,8 @@ public interface LinearLog {
 	 * A helper function for {@link #walk(Repo, Collection)} that takes {@link Branch}es instead of
 	 * {@link BranchName}s.
 	 *
+	 * <p>Note that the returned stream must be closed after it is no longer being used.</p>
+	 *
 	 * @param repo the repo to take the commits from
 	 * @param branches the branches to restrict the commits to
 	 * @return a stream representing a linear log of commits. The stream must be closed manually
@@ -44,7 +46,6 @@ public interface LinearLog {
 	 * @throws LinearLogException if anything goes wrong (for example, the underlying jgit repo may
 	 * 	close unexpectedly)
 	 */
-	// TODO mention that the stream needs to be closed manually
 	default Stream<Commit> walkBranches(Repo repo, Collection<Branch> branches)
 		throws LinearLogException {
 
