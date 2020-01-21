@@ -210,6 +210,7 @@ export default class QueueOverview extends Vue {
 }
 
 .commit-hash-chip {
+  font-family: monospace;
   font-size: 0.8em;
 }
 
