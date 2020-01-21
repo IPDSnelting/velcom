@@ -117,7 +117,7 @@
             :disabled="!formValid"
             @click="updateRepo"
           >Update Repository</v-btn>
-          <v-btn color="error" text outlined click="dialogOpen = false">Close</v-btn>
+          <v-btn color="error" text outlined @click="dialogOpen = false">Close</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
