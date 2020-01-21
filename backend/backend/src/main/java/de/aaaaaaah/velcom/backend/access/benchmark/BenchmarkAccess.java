@@ -235,8 +235,6 @@ public class BenchmarkAccess {
 		}
 	}
 
-	// TODO mention that the stream needs to be closed after use
-
 	/**
 	 * Streams all runs sorted by their start time where run with the most recent start time is the
 	 * first element in the stream.
