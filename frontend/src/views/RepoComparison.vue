@@ -51,7 +51,7 @@
                         <v-btn
                           text
                           color="primary"
-                          @click="$refs.startDateMenu.save(startDate); payloadChanged()"
+                          @click="$refs.startDateMenu.save(startDate); retrieveGraphData()"
                         >OK</v-btn>
                       </v-date-picker>
                     </v-menu>
@@ -85,7 +85,7 @@
                         <v-btn
                           text
                           color="primary"
-                          @click="$refs.stopDateMenu.save(stopDate); payloadChanged()"
+                          @click="$refs.stopDateMenu.save(stopDate); retrieveGraphData()"
                         >OK</v-btn>
                       </v-date-picker>
                     </v-menu>
@@ -101,7 +101,7 @@
         <v-col>
           <v-row>
             <v-col class="d-flex">
-              <repo-selector></repo-selector>
+              <repo-selector v-on:selectionChanged="retrieveGraphData()"></repo-selector>
             </v-col>
           </v-row>
           <v-row align="center">
@@ -204,9 +204,8 @@ export default class RepoComparison extends Vue {
   }
 
   @Watch('selectedMetric')
-  payloadChanged() {
+  retrieveGraphData() {
     vxm.repoComparisonModule.fetchDatapoints(this.payload)
-    console.log('make api call to retrieve datapoints')
   }
 
   get repos() {

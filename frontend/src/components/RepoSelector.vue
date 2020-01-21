@@ -91,6 +91,7 @@ export default class RepoSelector extends Vue {
 
   updateSelectedRepos() {
     vxm.repoComparisonModule.selectedRepos = this.selectedRepos
+    this.notifySelectionChanged()
   }
 
   updateSelectedBranchesForRepo(
@@ -102,6 +103,11 @@ export default class RepoSelector extends Vue {
       repoID: repoID,
       selectedBranches: checkedValues
     })
+    this.notifySelectionChanged()
+  }
+
+  notifySelectionChanged() {
+    this.$emit('selectionChanged')
   }
 
   @Watch('allRepos')
