@@ -43,10 +43,18 @@ export class RepoStore extends VxModule {
       }
     })
 
-    let repo = response.data as Repo
+    let item = response.data.repo
+    let repo = new Repo(
+      item.id,
+      item.name,
+      item.branches,
+      item.tracked_branches,
+      item.measurements,
+      item.remote_url
+    )
 
     this.setRepo(repo)
-    return repo
+    return this.repoByID(repo.id)!
   }
 
   @action
@@ -121,13 +129,26 @@ export class RepoStore extends VxModule {
 
   @mutation
   setRepo(payload: Repo) {
-    Vue.set(this.repos, payload.id, { ...payload })
+    if (this.repos[payload.id]) {
+      const existing = this.repos[payload.id]
+      existing.branches = payload.branches.slice()
+      existing.trackedBranches = payload.trackedBranches.slice()
+      existing.name = payload.name
+      existing.remoteURL = payload.remoteURL
+      existing.measurements = payload.measurements.slice()
+    } else {
+      Vue.set(this.repos, payload.id, { ...payload })
+    }
   }
 
   @mutation
-  setRepos(payload: Array<Repo>) {
-    payload.forEach(repo => {
-      Vue.set(this.repos, repo.id, { ...repo })
+  setRepos(repos: Repo[]) {
+    repos.forEach(repo => {
+      if (this.repos[repo.id]) {
+        Object.assign(this.repos[repo.id], repo)
+      } else {
+        Vue.set(this.repos, repo.id, { ...repo })
+      }
     })
   }
 
