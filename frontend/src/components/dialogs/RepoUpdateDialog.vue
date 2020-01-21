@@ -15,8 +15,8 @@
 
             <v-text-field :rules="[notEmpty]" label="*Remote URL" v-model="remoteUrl"></v-text-field>
             <v-text-field :rules="[notEmpty]" label="*Repository name" v-model="repoName"></v-text-field>
-            <v-container>
-              <v-row align="center">
+            <v-container class="pa-0">
+              <v-row align="top" no-gutters>
                 <transition name="fade">
                   <span
                     v-if="tokenState == 'delete'"
@@ -56,7 +56,9 @@
                     :rules="[notEmpty]"
                     label="*New token"
                     v-model="newToken"
-                    class="ml-4"
+                    dense
+                    hide-details="auto"
+                    class="ml-4 mt-0 pt-0"
                   ></v-text-field>
                 </transition>
               </v-row>
