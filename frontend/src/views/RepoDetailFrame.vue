@@ -69,6 +69,10 @@ export default class RepoDetailFrame extends Vue {
     })
   }
 
+  mounted() {
+    this.selectedRepoId = this.$route.params.id
+  }
+
   // ============== ICONS ==============
   private plusIcon = mdiPlusCircleOutline
   // ==============       ==============
