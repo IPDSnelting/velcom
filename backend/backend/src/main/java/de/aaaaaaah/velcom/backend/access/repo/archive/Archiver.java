@@ -119,7 +119,6 @@ public class Archiver {
 			// Create cloneDir
 			Path cloneDir = repoArchivesDir.resolve(commitHash.getHash());
 
-			// FIXME: 27.12.19 But you still need to checkout, no?
 			if (Files.exists(cloneDir)) {
 				// clone already exists, no need to clone again
 				return cloneDir;
@@ -130,7 +129,6 @@ public class Archiver {
 
 			Path originalRepoPath = repoStorage.getRepoDir(dirName);
 
-			// TODO: 27.12.19 Does this also clone our commit if it is on another branch?
 			try (Git clone = Git.cloneRepository()
 				.setBare(false)
 				.setCloneSubmodules(true)

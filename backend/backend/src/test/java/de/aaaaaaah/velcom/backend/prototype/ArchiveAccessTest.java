@@ -2,7 +2,6 @@ package de.aaaaaaah.velcom.backend.prototype;
 
 import de.aaaaaaah.velcom.backend.access.commit.CommitHash;
 import de.aaaaaaah.velcom.backend.access.repo.RepoId;
-import de.aaaaaaah.velcom.backend.access.repo.archive.ArchiveException;
 import de.aaaaaaah.velcom.backend.access.repo.archive.Archiver;
 import de.aaaaaaah.velcom.backend.storage.repo.RepoStorage;
 import de.aaaaaaah.velcom.backend.storage.repo.exception.AddRepositoryException;
@@ -44,7 +43,7 @@ class ArchiveAccessTest {
 
 	@Test
 	@Disabled
-	void testArchive() throws IOException, AddRepositoryException, ArchiveException {
+	void testArchive() throws IOException, AddRepositoryException {
 		String url = "https://github.com/leanprover/lean.git";
 		CommitHash commitHash = new CommitHash("72a965986fa5aeae54062e98efb3140b2c4e79fd");
 
@@ -58,6 +57,31 @@ class ArchiveAccessTest {
 			long start = System.currentTimeMillis();
 
 			archiveAccess.archive(dirName, commitHash, out, false);
+
+			long end = System.currentTimeMillis();
+
+			System.err.println("Archive process took " + (end - start) + " milliseconds!");
+		}
+	}
+
+	@Test
+	@Disabled
+	public void testArchiveOnOtherBranch() throws AddRepositoryException, IOException {
+		String url = "https://github.com/kwerber/tiny_repo.git";
+
+		CommitHash commitHash = new CommitHash("30ca3b15ef3b37f77ff034d897f6d4b26bc34120");
+		// ^ commit is not on master
+
+		RepoId repoId = new RepoId();
+		String dirName = repoId.getDirectoryName();
+		repoStorage.addRepository(dirName, url);
+
+		Path archiveFilePath = STORAGE_DIR.resolve("archive_result.tar");
+
+		try (OutputStream out = Files.newOutputStream(archiveFilePath)) {
+			long start = System.currentTimeMillis();
+
+			archiveAccess.archive(dirName, commitHash, out, true);
 
 			long end = System.currentTimeMillis();
 
