@@ -14,10 +14,8 @@ import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -54,12 +52,8 @@ public class RepoComparisonGraphEndpoint {
 	 */
 	@POST
 	public PostReply post(@NotNull PostRequest request) {
-		@Nullable Instant startTime = request.getStartTime()
-			.map(Instant::ofEpochSecond)
-			.orElse(null);
-		@Nullable Instant stopTime = request.getStopTime().
-			map(Instant::ofEpochSecond).
-			orElse(null);
+		Instant startTime = Instant.ofEpochSecond(request.getStartTime());
+		Instant stopTime = Instant.ofEpochSecond(request.getStopTime());
 		MeasurementName measurementName = new MeasurementName(request.getBenchmark(),
 			request.getMetric());
 
@@ -86,18 +80,16 @@ public class RepoComparisonGraphEndpoint {
 	private static class PostRequest {
 
 		private final Collection<BranchSpec> repos;
-		@Nullable
-		private final Long startTime;
-		@Nullable
-		private final Long stopTime;
+		private final long startTime;
+		private final long stopTime;
 		private final String benchmark;
 		private final String metric;
 
 		@JsonCreator
 		public PostRequest(
 			@JsonProperty(value = "repos", required = true) Collection<BranchSpec> repos,
-			@Nullable @JsonProperty("start_time") Long startTime,
-			@Nullable @JsonProperty("stop_time") Long stopTime,
+			@JsonProperty(value = "start_time", required = true) long startTime,
+			@JsonProperty(value = "stop_time", required = true) long stopTime,
 			@JsonProperty(value = "benchmark", required = true) String benchmark,
 			@JsonProperty(value = "metric", required = true) String metric) {
 
@@ -112,12 +104,12 @@ public class RepoComparisonGraphEndpoint {
 			return repos;
 		}
 
-		public Optional<Long> getStartTime() {
-			return Optional.ofNullable(startTime);
+		public long getStartTime() {
+			return startTime;
 		}
 
-		public Optional<Long> getStopTime() {
-			return Optional.ofNullable(stopTime);
+		public long getStopTime() {
+			return stopTime;
 		}
 
 		public String getBenchmark() {
