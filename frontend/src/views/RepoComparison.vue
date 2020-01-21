@@ -4,74 +4,98 @@
       <v-row align="baseline" justify="center">
         <h1>Repository Comparison</h1>
       </v-row>
-      <v-row align="start" justify="space-around">
-        <v-col md="5" sm="12" xs="12" class="d-flex">
-          <v-select :items="occuringBenchmarks" v-model="selectedBenchmark" label="benchmark"></v-select>
-          <v-select
-            :items="metricsForBenchmark(this.selectedBenchmark)"
-            v-model="selectedMetric"
-            label="metric"
-          ></v-select>
-        </v-col>
-        <v-col md="5" sm="12" xs="12" class="d-flex">
-          <v-menu
-            ref="startDateMenu"
-            v-model="startDateMenuOpen"
-            :close-on-content-click="false"
-            :return-value.sync="startDate"
-            transition="scale-transition"
-            offset-y
-            min-width="290px"
-          >
-            <template v-slot:activator="{ on }">
-              <v-text-field
-                v-model="startDate"
-                label="from:"
-                :prepend-icon="dateIcon"
-                readonly
-                v-on="on"
-              ></v-text-field>
-            </template>
-            <v-date-picker v-model="startDate" :max="today" no-title scrollable>
-              <v-spacer></v-spacer>
-              <v-btn text color="primary" @click="startDateMenuOpen = false">Cancel</v-btn>
-              <v-btn
-                text
-                color="primary"
-                @click="$refs.startDateMenu.save(startDate); payloadChanged()"
-              >OK</v-btn>
-            </v-date-picker>
-          </v-menu>
-          <v-menu
-            ref="endDateMenu"
-            v-model="endDateMenuOpen"
-            :close-on-content-click="false"
-            :return-value.sync="endDate"
-            transition="scale-transition"
-            offset-y
-            min-width="290px"
-          >
-            <template v-slot:activator="{ on }">
-              <v-text-field
-                v-model="endDate"
-                label="to:"
-                :prepend-icon="dateIcon"
-                readonly
-                v-on="on"
-              ></v-text-field>
-            </template>
-            <v-date-picker v-model="endDate" :min="startDate" :max="today" no-title scrollable>
-              <v-spacer></v-spacer>
-              <v-btn text color="primary" @click="endDateMenuOpen = false">Cancel</v-btn>
-              <v-btn
-                text
-                color="primary"
-                @click="$refs.endDateMenu.save(endDate); payloadChanged()"
-              >OK</v-btn>
-            </v-date-picker>
-          </v-menu>
+      <v-row align="baseline" justify="center">
+        <v-col>
+          <v-card>
+            <v-card-title>
+              <v-toolbar color="primary" dark>Filter Data</v-toolbar>
+            </v-card-title>
+            <v-card-text>
+              <v-container fluid>
+                <v-row align="start" justify="space-around">
+                  <v-col md="5" sm="12" xs="12" class="d-flex">
+                    <v-select
+                      :items="occuringBenchmarks"
+                      v-model="selectedBenchmark"
+                      label="benchmark"
+                    ></v-select>
+                    <v-select
+                      :items="metricsForBenchmark(this.selectedBenchmark)"
+                      v-model="selectedMetric"
+                      label="metric"
+                    ></v-select>
+                  </v-col>
+                  <v-col md="5" sm="12" xs="12" class="d-flex">
+                    <v-menu
+                      ref="startDateMenu"
+                      v-model="startDateMenuOpen"
+                      :close-on-content-click="false"
+                      :return-value.sync="startDate"
+                      transition="scale-transition"
+                      offset-y
+                      min-width="290px"
+                    >
+                      <template v-slot:activator="{ on }">
+                        <v-text-field
+                          v-model="startDate"
+                          label="from:"
+                          :prepend-icon="dateIcon"
+                          readonly
+                          v-on="on"
+                        ></v-text-field>
+                      </template>
+                      <v-date-picker v-model="startDate" :max="today" no-title scrollable>
+                        <v-spacer></v-spacer>
+                        <v-btn text color="primary" @click="startDateMenuOpen = false">Cancel</v-btn>
+                        <v-btn
+                          text
+                          color="primary"
+                          @click="$refs.startDateMenu.save(startDate); payloadChanged()"
+                        >OK</v-btn>
+                      </v-date-picker>
+                    </v-menu>
+                    <v-menu
+                      ref="endDateMenu"
+                      v-model="endDateMenuOpen"
+                      :close-on-content-click="false"
+                      :return-value.sync="endDate"
+                      transition="scale-transition"
+                      offset-y
+                      min-width="290px"
+                    >
+                      <template v-slot:activator="{ on }">
+                        <v-text-field
+                          v-model="endDate"
+                          label="to:"
+                          :prepend-icon="dateIcon"
+                          readonly
+                          v-on="on"
+                        ></v-text-field>
+                      </template>
+                      <v-date-picker
+                        v-model="endDate"
+                        :min="startDate"
+                        :max="today"
+                        no-title
+                        scrollable
+                      >
+                        <v-spacer></v-spacer>
+                        <v-btn text color="primary" @click="endDateMenuOpen = false">Cancel</v-btn>
+                        <v-btn
+                          text
+                          color="primary"
+                          @click="$refs.endDateMenu.save(endDate); payloadChanged()"
+                        >OK</v-btn>
+                      </v-date-picker>
+                    </v-menu>
+                  </v-col>
+                </v-row>
+              </v-container>
+            </v-card-text>
+          </v-card>
         </v-col>
       </v-row>
+
       <v-row align="start" justify="space-between">
         <v-col>
           <v-row>
@@ -164,7 +188,12 @@ export default class RepoComparison extends Vue {
     return new Date(this.endDate).getTime() / 1000
   }
 
-  get payload(): {startTime: number, endTime: number, benchmark: string, metric: string } {
+  get payload(): {
+    startTime: number
+    endTime: number
+    benchmark: string
+    metric: string
+    } {
     return {
       startTime: this.startUnixTimestamp,
       endTime: this.endUnixTimestamp,

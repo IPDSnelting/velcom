@@ -4,14 +4,36 @@
       <v-row align="baseline" justify="center">
         <h1>Queue Overview</h1>
       </v-row>
-      <v-row align="start" justify="center">
+      <v-row align="baseline" justify="center">
         <v-col>
-          <worker-overview :workers="workers"></worker-overview>
+          <v-card>
+            <v-card-title>
+              <v-toolbar color="primary" dark>Available Runners</v-toolbar>
+            </v-card-title>
+            <v-card-text>
+              <v-container fluid>
+                <v-row align="center">
+                  <worker-overview :workers="workers"></worker-overview>
+                </v-row>
+              </v-container>
+            </v-card-text>
+          </v-card>
         </v-col>
       </v-row>
       <v-row align="baseline" justify="center">
         <v-col>
-          <queue-overview></queue-overview>
+          <v-card>
+            <v-card-title>
+              <v-toolbar color="primary" dark>Queued commits (in planned execution order)</v-toolbar>
+            </v-card-title>
+            <v-card-text>
+              <v-container fluid>
+                <v-row align="center">
+                  <queue-overview></queue-overview>
+                </v-row>
+              </v-container>
+            </v-card-text>
+          </v-card>
         </v-col>
       </v-row>
     </v-container>

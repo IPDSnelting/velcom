@@ -1,43 +1,52 @@
 <template>
-  <v-card flat outlined max-width="300">
-    <v-expansion-panels v-for="(repo, i) in allRepos" :key="i" multiple accordion flat>
-      <v-expansion-panel>
-        <v-expansion-panel-header>
-          <v-checkbox
-            class="shrink mt-0"
-            hide-details
-            v-model="selectedRepos"
-            :value="repo.id"
-            :color="colorByIndex(i)"
-            @click.native.stop
-            @change="updateSelectedRepos()"
-          ></v-checkbox>
-          <router-link
-            class="ml-3 mx-auto"
-            :to="{ name: 'repo-detail', params: { id: repo.id } }"
-            tag="button"
-          >
-            <span class="panel-header">{{ repo.name }}</span>
-          </router-link>
-        </v-expansion-panel-header>
-        <v-expansion-panel-content>
-          <div v-for="(branch, j) in repo.trackedBranches" :key="j">
-            <v-checkbox
-              multiple
-              hide-details
-              class="shrink mt-0 ml-5"
-              :input-value="selectedBranchesByRepo(repo.id)"
-              :label="branch"
-              :value="branch"
-              :disabled="!repoSelected(repo.id)"
-              :color="colorByIndex(i)"
-              @change="updateSelectedBranchesForRepo(repo.id, branch, $event)"
-            />
-          </div>
-        </v-expansion-panel-content>
-      </v-expansion-panel>
-    </v-expansion-panels>
-  </v-card>
+  <div class="repo-selector">
+    <v-container fluid>
+      <v-card flat outlined max-width="380">
+        <v-card-title>
+          <v-toolbar color="primary" dark>Repositories</v-toolbar>
+        </v-card-title>
+        <v-card-text>
+          <v-expansion-panels v-for="(repo, i) in allRepos" :key="i" multiple accordion flat>
+            <v-expansion-panel>
+              <v-expansion-panel-header>
+                <v-checkbox
+                  class="shrink mt-0"
+                  hide-details
+                  v-model="selectedRepos"
+                  :value="repo.id"
+                  :color="colorByIndex(i)"
+                  @click.native.stop
+                  @change="updateSelectedRepos()"
+                ></v-checkbox>
+                <router-link
+                  class="ml-3 mx-auto"
+                  :to="{ name: 'repo-detail', params: { id: repo.id } }"
+                  tag="button"
+                >
+                  <span class="panel-header">{{ repo.name }}</span>
+                </router-link>
+              </v-expansion-panel-header>
+              <v-expansion-panel-content>
+                <div v-for="(branch, j) in repo.trackedBranches" :key="j">
+                  <v-checkbox
+                    multiple
+                    hide-details
+                    class="shrink mt-0 ml-5"
+                    :input-value="selectedBranchesByRepo(repo.id)"
+                    :label="branch"
+                    :value="branch"
+                    :disabled="!repoSelected(repo.id)"
+                    :color="colorByIndex(i)"
+                    @change="updateSelectedBranchesForRepo(repo.id, branch, $event)"
+                  />
+                </div>
+              </v-expansion-panel-content>
+            </v-expansion-panel>
+          </v-expansion-panels>
+        </v-card-text>
+      </v-card>
+    </v-container>
+  </div>
 </template>
 
 <script lang="ts">
