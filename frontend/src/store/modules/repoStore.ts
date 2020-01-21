@@ -110,7 +110,7 @@ export class RepoStore extends VxModule {
   async updateRepo(payload: {
     id: string
     name: string | undefined
-    repoToken: string | undefined
+    repoToken: string | undefined | null
     remoteUrl: string | undefined
     trackedBranches: string[] | undefined
   }): Promise<void> {

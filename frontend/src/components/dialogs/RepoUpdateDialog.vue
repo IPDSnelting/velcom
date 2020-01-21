@@ -15,6 +15,41 @@
 
             <v-text-field :rules="[notEmpty]" label="*Remote URL" v-model="remoteUrl"></v-text-field>
             <v-text-field :rules="[notEmpty]" label="*Repository name" v-model="repoName"></v-text-field>
+            <transition name="fade">
+              <v-text-field
+                v-if="tokenState == 'modify'"
+                :rules="[notEmpty]"
+                label="*New token"
+                v-model="newToken"
+              ></v-text-field>
+            </transition>
+            <transition name="fade">
+              <span>
+                <v-btn
+                  v-if="tokenState == 'unchanged'"
+                  @click="tokenState = 'modify'"
+                  text
+                  outlined
+                  class="mr-2"
+                  color="primary"
+                >Change token</v-btn>
+                <v-btn
+                  v-if="tokenState == 'unchanged'"
+                  @click="tokenState = 'delete'"
+                  text
+                  outlined
+                  class="mr-2"
+                  color="error"
+                >Delete token</v-btn>
+                <v-btn
+                  v-if="tokenState == 'modify' || tokenState == 'delete'"
+                  @click="tokenState = 'unchanged'"
+                  text
+                  outlined
+                  color="error"
+                >Reset</v-btn>
+              </span>
+            </transition>
             <div class="section-header mt-3 mb-2">BRANCHES</div>
             <v-data-iterator
               :items="branchObjects"
@@ -79,6 +114,9 @@ export default class RepoUpdateDialog extends Vue {
 
   private remoteUrl: string = ''
   private repoName: string = ''
+  private newToken: string = ''
+
+  private tokenState: 'delete' | 'modify' | 'unchanged' = 'unchanged'
 
   private formValid: boolean = false
 
@@ -116,6 +154,7 @@ export default class RepoUpdateDialog extends Vue {
     this.remoteUrl = this.repo.remoteURL
     this.repoName = this.repo.name
     this.searchValue = ''
+    this.tokenState = 'unchanged'
 
     this.newTrackedBranches = Object.assign([], this.repo.trackedBranches)
   }
@@ -140,9 +179,15 @@ export default class RepoUpdateDialog extends Vue {
       this.repo.measurements,
       this.remoteUrl
     )
+    let newToken
+    if (this.tokenState === 'modify') {
+      newToken = this.newToken
+    } else if (this.tokenState === 'delete') {
+      newToken = null
+    }
     vxm.repoModule
       .updateRepo({
-        repoToken: undefined,
+        repoToken: newToken,
         id: this.repoId,
         name: this.repoName,
         remoteUrl: this.remoteUrl,
