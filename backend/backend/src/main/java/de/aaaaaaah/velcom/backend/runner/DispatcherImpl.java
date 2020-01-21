@@ -339,7 +339,7 @@ public class DispatcherImpl implements Dispatcher {
 			);
 			return true;
 		} catch (IOException e) {
-			LOGGER.debug("Dispatching commit not possible", e);
+			LOGGER.info("Dispatching commit not possible", e);
 			return false;
 		}
 	}
