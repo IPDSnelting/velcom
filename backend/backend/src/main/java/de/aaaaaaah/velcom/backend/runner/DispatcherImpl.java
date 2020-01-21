@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -51,6 +52,7 @@ public class DispatcherImpl implements Dispatcher {
 	private final Duration allowedRunnerDisconnectTime;
 	private final java.util.Queue<ActiveRunnerInformation> freeRunners;
 	private final ScheduledExecutorService watchdogPool;
+	private final ExecutorService dispatcherExecutorPool;
 
 	/**
 	 * Creates a new dispatcher.
@@ -70,9 +72,10 @@ public class DispatcherImpl implements Dispatcher {
 		this.activeRunners = Collections.newSetFromMap(new ConcurrentHashMap<>());
 		this.freeRunners = new ConcurrentLinkedQueue<>();
 		this.watchdogPool = Executors.newSingleThreadScheduledExecutor();
+		this.dispatcherExecutorPool = Executors.newFixedThreadPool(5);
 
 		queue.onSomethingAborted(task -> abort(task.getSecond(), task.getFirst()));
-		queue.onSomethingAdded(it -> updateDispatching());
+		queue.onSomethingAdded(it -> dispatcherExecutorPool.submit(this::updateDispatching));
 
 		watchdogPool.scheduleAtFixedRate(
 			this::cleanupCrashedRunners,
@@ -126,7 +129,7 @@ public class DispatcherImpl implements Dispatcher {
 		});
 		runnerInformation.setOnIdle(() -> {
 			freeRunners.add(runnerInformation);
-			updateDispatching();
+			dispatcherExecutorPool.submit(this::updateDispatching);
 		});
 		runnerInformation.setOnDisconnected(value -> {
 			if (value == StatusCodeMappings.CLIENT_ORDERLY_DISCONNECT) {
@@ -219,7 +222,10 @@ public class DispatcherImpl implements Dispatcher {
 	}
 
 	private void updateDispatching() {
-		LOGGER.debug("Updating dispatching with {} free runners", freeRunners.size());
+		LOGGER.debug(
+			"Updating dispatching with {} free runners and a total of {}",
+			freeRunners.size(), getKnownRunners().size()
+		);
 
 		while (!freeRunners.isEmpty()) {
 			ActiveRunnerInformation runner = freeRunners.poll();
