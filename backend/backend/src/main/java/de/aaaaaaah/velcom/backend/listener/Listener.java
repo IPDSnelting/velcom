@@ -88,6 +88,8 @@ public class Listener {
 
 			Repo repo = repoAccess.getRepo(repoId);
 
+			repoAccess.fetchOrClone(repoId);
+
 			if (!commitAccess.hasKnownCommits(repoId)) {
 				// this repository does not have any known commits which means that it must be new
 				// therefore only the first commit of each tracked branch is inserted into the queue
