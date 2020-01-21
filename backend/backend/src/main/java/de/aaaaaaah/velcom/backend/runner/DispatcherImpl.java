@@ -103,8 +103,6 @@ public class DispatcherImpl implements Dispatcher {
 
 	@Override
 	public void addRunner(ActiveRunnerInformation runnerInformation) {
-		Optional<Commit> lastCommit = removeRunner(runnerInformation);
-
 		AtomicBoolean initialConnect = new AtomicBoolean(true);
 
 		runnerInformation.setOnRunnerInformation(newInformation -> {
@@ -113,9 +111,17 @@ public class DispatcherImpl implements Dispatcher {
 			// the initialConnect is not needed atm, as the information is only transmitted at
 			// startup. But that might change in the future and people will not look in this class
 			// to fix it.
-			if (initialConnect.getAndSet(false) && isWorking && lastCommit.isEmpty()) {
-				resetRunner(runnerInformation);
+			boolean isInitialConnect = initialConnect.getAndSet(false);
+
+			if (isInitialConnect) {
+				Optional<Commit> lastCommit = removeRunner(runnerInformation);
+
+				if (isWorking && lastCommit.isEmpty()) {
+					resetRunner(runnerInformation);
+				}
+				activeRunners.add(runnerInformation);
 			}
+
 			LOGGER.info("Finished adding a runner {}.", newInformation);
 		});
 		runnerInformation.setOnIdle(() -> {
@@ -131,8 +137,7 @@ public class DispatcherImpl implements Dispatcher {
 		runnerInformation.setResultListener(
 			results -> this.onResultsReceived(runnerInformation, results)
 		);
-		activeRunners.add(runnerInformation);
-		LOGGER.debug("Added a runner {}", runnerInformation);
+		LOGGER.debug("Got add request for a runner {}", runnerInformation);
 	}
 
 	/**
@@ -149,7 +154,7 @@ public class DispatcherImpl implements Dispatcher {
 			return Optional.empty();
 		}
 		String name = activeRunner.getRunnerInformation().get().getName();
-		LOGGER.info("Removing running '{}'", name);
+		LOGGER.info("Removing runners with name '{}'", name);
 
 		List<ActiveRunnerInformation> matchingRunners = activeRunners.stream()
 			.filter(runner ->
