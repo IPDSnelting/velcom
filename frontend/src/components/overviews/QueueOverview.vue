@@ -100,11 +100,13 @@ import { mdiRocket, mdiDelete } from '@mdi/js'
   }
 })
 export default class QueueOverview extends Vue {
+  private timerId: number | undefined = undefined
+
   private get queueItems(): Commit[] {
     let openTasks = vxm.queueModule.openTasks.slice()
     vxm.queueModule.workers
       .map(it => it.currentTask)
-      .filter(it => it !== undefined)
+      .filter(it => it)
       .sort((a, b) => a!.message!.localeCompare(b!.message!))
       .forEach(it => openTasks.unshift(it!))
     return openTasks
@@ -204,8 +206,15 @@ export default class QueueOverview extends Vue {
       )
   }
 
-  mounted() {
+  created() {
     vxm.queueModule.fetchQueue()
+    this.timerId = setInterval(() => vxm.queueModule.fetchQueue(), 10 * 1000)
+  }
+
+  beforeDestroy() {
+    if (this.timerId) {
+      clearInterval(this.timerId)
+    }
   }
 
   // ============== ICONS ==============
