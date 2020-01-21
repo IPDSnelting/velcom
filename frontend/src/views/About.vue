@@ -56,7 +56,32 @@
             </v-card-title>
             <v-card-text>
               <v-container fluid>
-                <v-row align="baseline" justify="center">...</v-row>
+                <v-row align="baseline" justify="center">
+                  <div v-if="htmlImpressum" v-html="htmlImpressum"></div>
+                  <div v-else class="title">
+                    <strong>
+                      Hey, this is the default impressum.
+                      Not much to see here.
+                      <p>
+                        You can change me by providing a file called "Impressum.html"
+                        at the root of this domain (which is
+                        <a
+                          :href="impressumLocation"
+                        >{{ impressumLocation }}</a>).
+                      </p>
+                      <p>
+                        This should be quite easy, as you can place it into the "dist" folder
+                        this frontend is currently being served from.
+                      </p>
+                      <p>
+                        You can use
+                        <a
+                          href="https://vuetifyjs.com/en/styles/typography#typography"
+                        >Vuetify html classes</a> for formatting me, or just plain HTML with style tags.
+                      </p>
+                    </strong>
+                  </div>
+                </v-row>
               </v-container>
             </v-card-text>
           </v-card>
@@ -69,7 +94,27 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
+import axios from 'axios'
 
 @Component
-export default class About extends Vue {}
+export default class About extends Vue {
+  private htmlImpressum: string | null = null
+
+  get impressumLocation() {
+    return (
+      document.location.protocol +
+      '//' +
+      document.location.host +
+      '/Impressum.html'
+    )
+  }
+
+  async mounted() {
+    let response = await axios.get(this.impressumLocation)
+
+    if (response.status === 200) {
+      this.htmlImpressum = response.data
+    }
+  }
+}
 </script>
