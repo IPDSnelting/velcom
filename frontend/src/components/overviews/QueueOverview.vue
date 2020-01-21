@@ -1,6 +1,11 @@
 <template>
   <v-container>
-    <v-data-iterator :items="queueItems" hide-default-footer :items-per-page="1e20">
+    <v-data-iterator
+      :items="queueItems"
+      :hide-default-footer="queueItems.length < defaultItemsPerPage"
+      :items-per-page="defaultItemsPerPage"
+      :footer-props="{ itemsPerPageOptions: itemsPerPageOptions }"
+    >
       <template v-slot:default="props">
         <v-row>
           <v-col
@@ -101,6 +106,8 @@ import { mdiRocket, mdiDelete } from '@mdi/js'
 })
 export default class QueueOverview extends Vue {
   private timerId: number | undefined = undefined
+  private itemsPerPageOptions: number[] = [10, 20, 50, 100, 200, -1]
+  private defaultItemsPerPage: number = 20
 
   private get queueItems(): Commit[] {
     let openTasks = vxm.queueModule.openTasks.slice()
