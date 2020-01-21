@@ -9,7 +9,7 @@ import de.aaaaaaah.velcom.backend.access.benchmark.Run;
 import de.aaaaaaah.velcom.backend.access.commit.Commit;
 import de.aaaaaaah.velcom.backend.data.reducedlog.ReducedLog;
 import de.aaaaaaah.velcom.backend.util.Either;
-import java.time.LocalTime;
+import java.time.ZoneOffset;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -80,8 +80,9 @@ public class TimeSliceBasedReducedLog implements ReducedLog {
 	@Override
 	public List<Run> reduce(Collection<Commit> originalCommits, MeasurementName measurementName) {
 		final Map<Long, List<Commit>> grouped = originalCommits.stream()
-			.collect(Collectors.groupingBy(
-				commit -> commitGrouper.getGroup(LocalTime.from(commit.getAuthorDate()))));
+			.collect(Collectors.groupingBy(commit -> commitGrouper.getGroup(
+				commit.getAuthorDate().atZone(ZoneOffset.UTC)
+			)));
 
 		return grouped.keySet().stream()
 			.sorted()

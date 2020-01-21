@@ -94,6 +94,7 @@ public class BenchmarkAccess {
 		try (DSLContext db = databaseStorage.acquireContext()) {
 			final Optional<RunRecord> runRecord = db.selectFrom(RUN)
 				.where(RUN.REPO_ID.eq(repoId.getId().toString()))
+				.and(RUN.COMMIT_HASH.eq(commitHash.getHash()))
 				.orderBy(RUN.START_TIME.desc())
 				.fetchOptional();
 

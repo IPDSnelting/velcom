@@ -24,6 +24,7 @@ public class JsonWorker {
 		return name;
 	}
 
+	@Nullable
 	public JsonCommit getWorkingOn() {
 		return workingOn;
 	}

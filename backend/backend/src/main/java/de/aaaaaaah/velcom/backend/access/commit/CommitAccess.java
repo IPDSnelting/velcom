@@ -366,7 +366,8 @@ public class CommitAccess {
 			// Start the walk from the specified branches
 			List<RevCommit> commitsFromBranches = new ArrayList<>();
 			for (Ref branch : git.branchList().call()) {
-				if (branches.contains(branch.getName())) {
+				final String branchName = BranchName.fromFullName(branch.getName()).getName();
+				if (branches.contains(branchName)) {
 					commitsFromBranches.add(walk.parseCommit(branch.getObjectId()));
 				}
 			}
