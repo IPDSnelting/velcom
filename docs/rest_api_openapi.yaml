@@ -310,11 +310,15 @@ paths:
                       - repo_id
                       - branches
                 start_time:
-                  type: string
-                  format: date-time
+                  type: integer
+                  title: Time
+                  description: unix/epoch time (seconds since 1970-01-01)
+                  format: int64
                 end_time:
-                  type: string
-                  format: date-time
+                  type: integer
+                  title: Time
+                  description: unix/epoch time (seconds since 1970-01-01)
+                  format: int64
                 benchmark:
                   type: string
                 metric:
@@ -409,15 +413,15 @@ paths:
                                       author_date:
                                         type: integer
                                         title: Time
-                                        format: int64
                                         description: unix/epoch time (seconds since 1970-01-01)
+                                        format: int64
                                       committer:
                                         type: string
                                       committer_date:
                                         type: integer
                                         title: Time
-                                        format: int64
                                         description: unix/epoch time (seconds since 1970-01-01)
+                                        format: int64
                                       message:
                                         type: string
                                       parents:
@@ -438,13 +442,13 @@ paths:
                                   start_time:
                                     type: integer
                                     title: Time
-                                    format: int64
                                     description: unix/epoch time (seconds since 1970-01-01)
+                                    format: int64
                                   stop_time:
                                     type: integer
                                     title: Time
-                                    format: int64
                                     description: unix/epoch time (seconds since 1970-01-01)
+                                    format: int64
                                   measurements:
                                     type: array
                                     items:
@@ -506,15 +510,15 @@ paths:
                                       author_date:
                                         type: integer
                                         title: Time
-                                        format: int64
                                         description: unix/epoch time (seconds since 1970-01-01)
+                                        format: int64
                                       committer:
                                         type: string
                                       committer_date:
                                         type: integer
                                         title: Time
-                                        format: int64
                                         description: unix/epoch time (seconds since 1970-01-01)
+                                        format: int64
                                       message:
                                         type: string
                                       parents:
@@ -535,13 +539,13 @@ paths:
                                   start_time:
                                     type: integer
                                     title: Time
-                                    format: int64
                                     description: unix/epoch time (seconds since 1970-01-01)
+                                    format: int64
                                   stop_time:
                                     type: integer
                                     title: Time
-                                    format: int64
                                     description: unix/epoch time (seconds since 1970-01-01)
+                                    format: int64
                                   error_message:
                                     type: string
                                 required:
@@ -595,15 +599,15 @@ paths:
                                     author_date:
                                       type: integer
                                       title: Time
-                                      format: int64
                                       description: unix/epoch time (seconds since 1970-01-01)
+                                      format: int64
                                     committer:
                                       type: string
                                     committer_date:
                                       type: integer
                                       title: Time
-                                      format: int64
                                       description: unix/epoch time (seconds since 1970-01-01)
+                                      format: int64
                                     message:
                                       type: string
                                     parents:
@@ -624,13 +628,13 @@ paths:
                                 start_time:
                                   type: integer
                                   title: Time
-                                  format: int64
                                   description: unix/epoch time (seconds since 1970-01-01)
+                                  format: int64
                                 stop_time:
                                   type: integer
                                   title: Time
-                                  format: int64
                                   description: unix/epoch time (seconds since 1970-01-01)
+                                  format: int64
                                 measurements:
                                   type: array
                                   items:
@@ -692,15 +696,15 @@ paths:
                                     author_date:
                                       type: integer
                                       title: Time
-                                      format: int64
                                       description: unix/epoch time (seconds since 1970-01-01)
+                                      format: int64
                                     committer:
                                       type: string
                                     committer_date:
                                       type: integer
                                       title: Time
-                                      format: int64
                                       description: unix/epoch time (seconds since 1970-01-01)
+                                      format: int64
                                     message:
                                       type: string
                                     parents:
@@ -721,13 +725,13 @@ paths:
                                 start_time:
                                   type: integer
                                   title: Time
-                                  format: int64
                                   description: unix/epoch time (seconds since 1970-01-01)
+                                  format: int64
                                 stop_time:
                                   type: integer
                                   title: Time
-                                  format: int64
                                   description: unix/epoch time (seconds since 1970-01-01)
+                                  format: int64
                                 error_message:
                                   type: string
                               required:
@@ -758,15 +762,15 @@ paths:
                                     author_date:
                                       type: integer
                                       title: Time
-                                      format: int64
                                       description: unix/epoch time (seconds since 1970-01-01)
+                                      format: int64
                                     committer:
                                       type: string
                                     committer_date:
                                       type: integer
                                       title: Time
-                                      format: int64
                                       description: unix/epoch time (seconds since 1970-01-01)
+                                      format: int64
                                     message:
                                       type: string
                                     parents:
@@ -787,13 +791,13 @@ paths:
                                 start_time:
                                   type: integer
                                   title: Time
-                                  format: int64
                                   description: unix/epoch time (seconds since 1970-01-01)
+                                  format: int64
                                 stop_time:
                                   type: integer
                                   title: Time
-                                  format: int64
                                   description: unix/epoch time (seconds since 1970-01-01)
+                                  format: int64
                                 measurements:
                                   type: array
                                   items:
@@ -855,15 +859,15 @@ paths:
                                     author_date:
                                       type: integer
                                       title: Time
-                                      format: int64
                                       description: unix/epoch time (seconds since 1970-01-01)
+                                      format: int64
                                     committer:
                                       type: string
                                     committer_date:
                                       type: integer
                                       title: Time
-                                      format: int64
                                       description: unix/epoch time (seconds since 1970-01-01)
+                                      format: int64
                                     message:
                                       type: string
                                     parents:
@@ -884,13 +888,13 @@ paths:
                                 start_time:
                                   type: integer
                                   title: Time
-                                  format: int64
                                   description: unix/epoch time (seconds since 1970-01-01)
+                                  format: int64
                                 stop_time:
                                   type: integer
                                   title: Time
-                                  format: int64
                                   description: unix/epoch time (seconds since 1970-01-01)
+                                  format: int64
                                 error_message:
                                   type: string
                               required:
@@ -995,15 +999,15 @@ paths:
                                   author_date:
                                     type: integer
                                     title: Time
-                                    format: int64
                                     description: unix/epoch time (seconds since 1970-01-01)
+                                    format: int64
                                   committer:
                                     type: string
                                   committer_date:
                                     type: integer
                                     title: Time
-                                    format: int64
                                     description: unix/epoch time (seconds since 1970-01-01)
+                                    format: int64
                                   message:
                                     type: string
                                   parents:
@@ -1024,13 +1028,13 @@ paths:
                               start_time:
                                 type: integer
                                 title: Time
-                                format: int64
                                 description: unix/epoch time (seconds since 1970-01-01)
+                                format: int64
                               stop_time:
                                 type: integer
                                 title: Time
-                                format: int64
                                 description: unix/epoch time (seconds since 1970-01-01)
+                                format: int64
                               measurements:
                                 type: array
                                 items:
@@ -1092,15 +1096,15 @@ paths:
                                   author_date:
                                     type: integer
                                     title: Time
-                                    format: int64
                                     description: unix/epoch time (seconds since 1970-01-01)
+                                    format: int64
                                   committer:
                                     type: string
                                   committer_date:
                                     type: integer
                                     title: Time
-                                    format: int64
                                     description: unix/epoch time (seconds since 1970-01-01)
+                                    format: int64
                                   message:
                                     type: string
                                   parents:
@@ -1121,13 +1125,13 @@ paths:
                               start_time:
                                 type: integer
                                 title: Time
-                                format: int64
                                 description: unix/epoch time (seconds since 1970-01-01)
+                                format: int64
                               stop_time:
                                 type: integer
                                 title: Time
-                                format: int64
                                 description: unix/epoch time (seconds since 1970-01-01)
+                                format: int64
                               error_message:
                                 type: string
                             required:
@@ -1158,15 +1162,15 @@ paths:
                                   author_date:
                                     type: integer
                                     title: Time
-                                    format: int64
                                     description: unix/epoch time (seconds since 1970-01-01)
+                                    format: int64
                                   committer:
                                     type: string
                                   committer_date:
                                     type: integer
                                     title: Time
-                                    format: int64
                                     description: unix/epoch time (seconds since 1970-01-01)
+                                    format: int64
                                   message:
                                     type: string
                                   parents:
@@ -1187,13 +1191,13 @@ paths:
                               start_time:
                                 type: integer
                                 title: Time
-                                format: int64
                                 description: unix/epoch time (seconds since 1970-01-01)
+                                format: int64
                               stop_time:
                                 type: integer
                                 title: Time
-                                format: int64
                                 description: unix/epoch time (seconds since 1970-01-01)
+                                format: int64
                               measurements:
                                 type: array
                                 items:
@@ -1255,15 +1259,15 @@ paths:
                                   author_date:
                                     type: integer
                                     title: Time
-                                    format: int64
                                     description: unix/epoch time (seconds since 1970-01-01)
+                                    format: int64
                                   committer:
                                     type: string
                                   committer_date:
                                     type: integer
                                     title: Time
-                                    format: int64
                                     description: unix/epoch time (seconds since 1970-01-01)
+                                    format: int64
                                   message:
                                     type: string
                                   parents:
@@ -1284,13 +1288,13 @@ paths:
                               start_time:
                                 type: integer
                                 title: Time
-                                format: int64
                                 description: unix/epoch time (seconds since 1970-01-01)
+                                format: int64
                               stop_time:
                                 type: integer
                                 title: Time
-                                format: int64
                                 description: unix/epoch time (seconds since 1970-01-01)
+                                format: int64
                               error_message:
                                 type: string
                             required:
@@ -1373,15 +1377,15 @@ paths:
                                     author_date:
                                       type: integer
                                       title: Time
-                                      format: int64
                                       description: unix/epoch time (seconds since 1970-01-01)
+                                      format: int64
                                     committer:
                                       type: string
                                     committer_date:
                                       type: integer
                                       title: Time
-                                      format: int64
                                       description: unix/epoch time (seconds since 1970-01-01)
+                                      format: int64
                                     message:
                                       type: string
                                     parents:
@@ -1402,13 +1406,13 @@ paths:
                                 start_time:
                                   type: integer
                                   title: Time
-                                  format: int64
                                   description: unix/epoch time (seconds since 1970-01-01)
+                                  format: int64
                                 stop_time:
                                   type: integer
                                   title: Time
-                                  format: int64
                                   description: unix/epoch time (seconds since 1970-01-01)
+                                  format: int64
                                 measurements:
                                   type: array
                                   items:
@@ -1470,15 +1474,15 @@ paths:
                                     author_date:
                                       type: integer
                                       title: Time
-                                      format: int64
                                       description: unix/epoch time (seconds since 1970-01-01)
+                                      format: int64
                                     committer:
                                       type: string
                                     committer_date:
                                       type: integer
                                       title: Time
-                                      format: int64
                                       description: unix/epoch time (seconds since 1970-01-01)
+                                      format: int64
                                     message:
                                       type: string
                                     parents:
@@ -1499,13 +1503,13 @@ paths:
                                 start_time:
                                   type: integer
                                   title: Time
-                                  format: int64
                                   description: unix/epoch time (seconds since 1970-01-01)
+                                  format: int64
                                 stop_time:
                                   type: integer
                                   title: Time
-                                  format: int64
                                   description: unix/epoch time (seconds since 1970-01-01)
+                                  format: int64
                                 error_message:
                                   type: string
                               required:
@@ -1536,15 +1540,15 @@ paths:
                                     author_date:
                                       type: integer
                                       title: Time
-                                      format: int64
                                       description: unix/epoch time (seconds since 1970-01-01)
+                                      format: int64
                                     committer:
                                       type: string
                                     committer_date:
                                       type: integer
                                       title: Time
-                                      format: int64
                                       description: unix/epoch time (seconds since 1970-01-01)
+                                      format: int64
                                     message:
                                       type: string
                                     parents:
@@ -1565,13 +1569,13 @@ paths:
                                 start_time:
                                   type: integer
                                   title: Time
-                                  format: int64
                                   description: unix/epoch time (seconds since 1970-01-01)
+                                  format: int64
                                 stop_time:
                                   type: integer
                                   title: Time
-                                  format: int64
                                   description: unix/epoch time (seconds since 1970-01-01)
+                                  format: int64
                                 measurements:
                                   type: array
                                   items:
@@ -1633,15 +1637,15 @@ paths:
                                     author_date:
                                       type: integer
                                       title: Time
-                                      format: int64
                                       description: unix/epoch time (seconds since 1970-01-01)
+                                      format: int64
                                     committer:
                                       type: string
                                     committer_date:
                                       type: integer
                                       title: Time
-                                      format: int64
                                       description: unix/epoch time (seconds since 1970-01-01)
+                                      format: int64
                                     message:
                                       type: string
                                     parents:
@@ -1662,13 +1666,13 @@ paths:
                                 start_time:
                                   type: integer
                                   title: Time
-                                  format: int64
                                   description: unix/epoch time (seconds since 1970-01-01)
+                                  format: int64
                                 stop_time:
                                   type: integer
                                   title: Time
-                                  format: int64
                                   description: unix/epoch time (seconds since 1970-01-01)
+                                  format: int64
                                 error_message:
                                   type: string
                               required:
@@ -1742,15 +1746,15 @@ paths:
                         author_date:
                           type: integer
                           title: Time
-                          format: int64
                           description: unix/epoch time (seconds since 1970-01-01)
+                          format: int64
                         committer:
                           type: string
                         committer_date:
                           type: integer
                           title: Time
-                          format: int64
                           description: unix/epoch time (seconds since 1970-01-01)
+                          format: int64
                         message:
                           type: string
                         parents:
@@ -1793,15 +1797,15 @@ paths:
                             author_date:
                               type: integer
                               title: Time
-                              format: int64
                               description: unix/epoch time (seconds since 1970-01-01)
+                              format: int64
                             committer:
                               type: string
                             committer_date:
                               type: integer
                               title: Time
-                              format: int64
                               description: unix/epoch time (seconds since 1970-01-01)
+                              format: int64
                             message:
                               type: string
                             parents:
@@ -1931,15 +1935,15 @@ components:
         author_date:
           type: integer
           title: Time
-          format: int64
           description: unix/epoch time (seconds since 1970-01-01)
+          format: int64
         committer:
           type: string
         committer_date:
           type: integer
           title: Time
-          format: int64
           description: unix/epoch time (seconds since 1970-01-01)
+          format: int64
         message:
           type: string
         parents:
@@ -2086,15 +2090,15 @@ components:
                     author_date:
                       type: integer
                       title: Time
-                      format: int64
                       description: unix/epoch time (seconds since 1970-01-01)
+                      format: int64
                     committer:
                       type: string
                     committer_date:
                       type: integer
                       title: Time
-                      format: int64
                       description: unix/epoch time (seconds since 1970-01-01)
+                      format: int64
                     message:
                       type: string
                     parents:
@@ -2115,13 +2119,13 @@ components:
                 start_time:
                   type: integer
                   title: Time
-                  format: int64
                   description: unix/epoch time (seconds since 1970-01-01)
+                  format: int64
                 stop_time:
                   type: integer
                   title: Time
-                  format: int64
                   description: unix/epoch time (seconds since 1970-01-01)
+                  format: int64
                 measurements:
                   type: array
                   items:
@@ -2183,15 +2187,15 @@ components:
                     author_date:
                       type: integer
                       title: Time
-                      format: int64
                       description: unix/epoch time (seconds since 1970-01-01)
+                      format: int64
                     committer:
                       type: string
                     committer_date:
                       type: integer
                       title: Time
-                      format: int64
                       description: unix/epoch time (seconds since 1970-01-01)
+                      format: int64
                     message:
                       type: string
                     parents:
@@ -2212,13 +2216,13 @@ components:
                 start_time:
                   type: integer
                   title: Time
-                  format: int64
                   description: unix/epoch time (seconds since 1970-01-01)
+                  format: int64
                 stop_time:
                   type: integer
                   title: Time
-                  format: int64
                   description: unix/epoch time (seconds since 1970-01-01)
+                  format: int64
                 error_message:
                   type: string
               required:
@@ -2249,15 +2253,15 @@ components:
                     author_date:
                       type: integer
                       title: Time
-                      format: int64
                       description: unix/epoch time (seconds since 1970-01-01)
+                      format: int64
                     committer:
                       type: string
                     committer_date:
                       type: integer
                       title: Time
-                      format: int64
                       description: unix/epoch time (seconds since 1970-01-01)
+                      format: int64
                     message:
                       type: string
                     parents:
@@ -2278,13 +2282,13 @@ components:
                 start_time:
                   type: integer
                   title: Time
-                  format: int64
                   description: unix/epoch time (seconds since 1970-01-01)
+                  format: int64
                 stop_time:
                   type: integer
                   title: Time
-                  format: int64
                   description: unix/epoch time (seconds since 1970-01-01)
+                  format: int64
                 measurements:
                   type: array
                   items:
@@ -2346,15 +2350,15 @@ components:
                     author_date:
                       type: integer
                       title: Time
-                      format: int64
                       description: unix/epoch time (seconds since 1970-01-01)
+                      format: int64
                     committer:
                       type: string
                     committer_date:
                       type: integer
                       title: Time
-                      format: int64
                       description: unix/epoch time (seconds since 1970-01-01)
+                      format: int64
                     message:
                       type: string
                     parents:
@@ -2375,13 +2379,13 @@ components:
                 start_time:
                   type: integer
                   title: Time
-                  format: int64
                   description: unix/epoch time (seconds since 1970-01-01)
+                  format: int64
                 stop_time:
                   type: integer
                   title: Time
-                  format: int64
                   description: unix/epoch time (seconds since 1970-01-01)
+                  format: int64
                 error_message:
                   type: string
               required:
@@ -2430,15 +2434,15 @@ components:
                 author_date:
                   type: integer
                   title: Time
-                  format: int64
                   description: unix/epoch time (seconds since 1970-01-01)
+                  format: int64
                 committer:
                   type: string
                 committer_date:
                   type: integer
                   title: Time
-                  format: int64
                   description: unix/epoch time (seconds since 1970-01-01)
+                  format: int64
                 message:
                   type: string
                 parents:
@@ -2459,13 +2463,13 @@ components:
             start_time:
               type: integer
               title: Time
-              format: int64
               description: unix/epoch time (seconds since 1970-01-01)
+              format: int64
             stop_time:
               type: integer
               title: Time
-              format: int64
               description: unix/epoch time (seconds since 1970-01-01)
+              format: int64
             measurements:
               type: array
               items:
@@ -2527,15 +2531,15 @@ components:
                 author_date:
                   type: integer
                   title: Time
-                  format: int64
                   description: unix/epoch time (seconds since 1970-01-01)
+                  format: int64
                 committer:
                   type: string
                 committer_date:
                   type: integer
                   title: Time
-                  format: int64
                   description: unix/epoch time (seconds since 1970-01-01)
+                  format: int64
                 message:
                   type: string
                 parents:
@@ -2556,13 +2560,13 @@ components:
             start_time:
               type: integer
               title: Time
-              format: int64
               description: unix/epoch time (seconds since 1970-01-01)
+              format: int64
             stop_time:
               type: integer
               title: Time
-              format: int64
               description: unix/epoch time (seconds since 1970-01-01)
+              format: int64
             error_message:
               type: string
           required:
@@ -2574,8 +2578,8 @@ components:
     Time:
       type: integer
       title: Time
-      format: int64
       description: unix/epoch time (seconds since 1970-01-01)
+      format: int64
     RemoteUrl:
       type: string
       title: RemoteUrl
