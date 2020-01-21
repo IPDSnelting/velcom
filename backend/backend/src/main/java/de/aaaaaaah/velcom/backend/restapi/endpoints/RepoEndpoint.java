@@ -68,9 +68,7 @@ public class RepoEndpoint {
 	 * @return the repo
 	 */
 	@GET
-	public GetReply get(
-		@NotNull @QueryParam("repo_id") UUID repoUuid) {
-
+	public GetReply get(@NotNull @QueryParam("repo_id") UUID repoUuid) {
 		RepoId repoId = new RepoId(repoUuid);
 		Repo repo = repoAccess.getRepo(repoId);
 		return new GetReply(new JsonRepo(repo));
@@ -217,7 +215,7 @@ public class RepoEndpoint {
 		) {
 			this.repoId = Objects.requireNonNull(repoId);
 			this.name = name;
-			this.remoteUrl = new RemoteUrl(remoteUrl);
+			this.remoteUrl = (remoteUrl == null) ? null : new RemoteUrl(remoteUrl);
 			this.token = token;
 			this.trackedBranches = trackedBranches;
 		}

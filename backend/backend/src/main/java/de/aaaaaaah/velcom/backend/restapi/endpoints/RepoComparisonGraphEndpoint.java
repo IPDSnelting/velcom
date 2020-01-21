@@ -98,8 +98,8 @@ public class RepoComparisonGraphEndpoint {
 			@JsonProperty(value = "repos", required = true) Collection<BranchSpec> repos,
 			@Nullable @JsonProperty("start_time") Long startTime,
 			@Nullable @JsonProperty("stop_time") Long stopTime,
-			@JsonProperty("benchmark") String benchmark,
-			@JsonProperty("metric") String metric) {
+			@JsonProperty(value = "benchmark", required = true) String benchmark,
+			@JsonProperty(value = "metric", required = true) String metric) {
 
 			this.repos = Objects.requireNonNull(repos);
 			this.startTime = startTime;
