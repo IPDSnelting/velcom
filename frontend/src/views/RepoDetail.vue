@@ -135,15 +135,7 @@ export default class RepoDetail extends Vue {
   }
 
   private get repo(): Repo {
-    let repo = vxm.repoModule.repoByID(this.id)!
-    if (repo.branches.length < 15) {
-      let branchNumber: number = repo.branches.length
-      repo.branches.push('Hello world ' + branchNumber)
-      if (Math.random() < 0.5) {
-        repo.trackedBranches.push('Hello world ' + branchNumber)
-      }
-    }
-    return repo
+    return vxm.repoModule.repoByID(this.id)!
   }
 }
 </script>
