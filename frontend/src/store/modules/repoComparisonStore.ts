@@ -18,7 +18,7 @@ export class RepoComparisonStore extends VxModule {
    * @param {{
    *     repos: string[]
    *     startTime: string
-   *     endTime: string
+   *     stopTime: string
    *   }} payload the payload with the parameters to pass to the server
    * @returns {Promise<{ [key: string]: Run[] }>} a promise containing all runs
    * @memberof RepoComparisonStore
@@ -26,14 +26,14 @@ export class RepoComparisonStore extends VxModule {
   @action
   async fetchDatapoints(payload: {
     startTime: number
-    endTime: number
+    stopTime: number
     benchmark: string
     metric: string
   }): Promise<{ [key: string]: Run[] }> {
     const response = await axios.post('/repo-comparison-graph', {
       repos: this.selectedReposWithBranches,
       start_time: payload.startTime,
-      end_time: payload.endTime,
+      stop_time: payload.stopTime,
       benchmark: payload.benchmark,
       metric: payload.metric
     })

@@ -56,17 +56,17 @@
                       </v-date-picker>
                     </v-menu>
                     <v-menu
-                      ref="endDateMenu"
-                      v-model="endDateMenuOpen"
+                      ref="stopDateMenu"
+                      v-model="stopDateMenuOpen"
                       :close-on-content-click="false"
-                      :return-value.sync="endDate"
+                      :return-value.sync="stopDate"
                       transition="scale-transition"
                       offset-y
                       min-width="290px"
                     >
                       <template v-slot:activator="{ on }">
                         <v-text-field
-                          v-model="endDate"
+                          v-model="stopDate"
                           label="to:"
                           :prepend-icon="dateIcon"
                           readonly
@@ -74,18 +74,18 @@
                         ></v-text-field>
                       </template>
                       <v-date-picker
-                        v-model="endDate"
+                        v-model="stopDate"
                         :min="startDate"
                         :max="today"
                         no-title
                         scrollable
                       >
                         <v-spacer></v-spacer>
-                        <v-btn text color="primary" @click="endDateMenuOpen = false">Cancel</v-btn>
+                        <v-btn text color="primary" @click="stopDateMenuOpen = false">Cancel</v-btn>
                         <v-btn
                           text
                           color="primary"
-                          @click="$refs.endDateMenu.save(endDate); payloadChanged()"
+                          @click="$refs.stopDateMenu.save(stopDate); payloadChanged()"
                         >OK</v-btn>
                       </v-date-picker>
                     </v-menu>
@@ -154,8 +154,8 @@ export default class RepoComparison extends Vue {
     .toISOString()
     .substr(0, 10)
 
-  private endDateMenuOpen: boolean = false
-  private endDate = new Date().toISOString().substr(0, 10)
+  private stopDateMenuOpen: boolean = false
+  private stopDate = new Date().toISOString().substr(0, 10)
 
   // ============== ICONS ==============
   private dateIcon = mdiCalendar
@@ -185,19 +185,19 @@ export default class RepoComparison extends Vue {
     return new Date(this.startDate).getTime() / 1000
   }
 
-  get endUnixTimestamp(): number {
-    return new Date(this.endDate).getTime() / 1000
+  get stopUnixTimestamp(): number {
+    return new Date(this.stopDate).getTime() / 1000
   }
 
   get payload(): {
     startTime: number
-    endTime: number
+    stopTime: number
     benchmark: string
     metric: string
     } {
     return {
       startTime: this.startUnixTimestamp,
-      endTime: this.endUnixTimestamp,
+      stopTime: this.stopUnixTimestamp,
       benchmark: this.selectedBenchmark,
       metric: this.selectedMetric
     }
