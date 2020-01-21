@@ -6,6 +6,7 @@ import static org.jooq.codegen.db.tables.RunMeasurement.RUN_MEASUREMENT;
 import static org.jooq.codegen.db.tables.RunMeasurementValue.RUN_MEASUREMENT_VALUE;
 import static org.jooq.impl.DSL.exists;
 import static org.jooq.impl.DSL.notExists;
+import static org.jooq.impl.DSL.selectFrom;
 
 import de.aaaaaaah.velcom.backend.access.AccessLayer;
 import de.aaaaaaah.velcom.backend.access.commit.Commit;
@@ -392,6 +393,10 @@ public class BenchmarkAccess {
 		try (DSLContext db = databaseStorage.acquireContext()) {
 			return db.selectDistinct(RUN_MEASUREMENT.BENCHMARK, RUN_MEASUREMENT.METRIC)
 				.from(RUN_MEASUREMENT)
+				.where(exists(selectFrom(RUN)
+					.where(RUN.REPO_ID.eq(repoId.getId().toString()))
+					.and(RUN.ID.eq(RUN_MEASUREMENT.RUN_ID))
+				))
 				.stream()
 				.map(record -> new MeasurementName(record.value1(), record.value2()))
 				.collect(Collectors.toUnmodifiableSet());
