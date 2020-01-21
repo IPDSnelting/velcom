@@ -63,7 +63,7 @@
                 </transition>
               </v-row>
             </v-container>
-            <div class="section-header mt-3 mb-2">BRANCHES</div>
+            <div class="section-header mt-8 mb-2">BRANCHES</div>
             <v-data-iterator
               :custom-filter="filterName"
               :search="searchValue"
