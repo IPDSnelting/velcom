@@ -16,7 +16,7 @@
             <v-text-field :rules="[notEmpty]" label="*Remote URL" v-model="remoteUrl"></v-text-field>
             <v-text-field :rules="[notEmpty]" label="*Repository name" v-model="repoName"></v-text-field>
             <v-container class="pa-0">
-              <v-row align="top" no-gutters>
+              <v-row no-gutters>
                 <transition name="fade">
                   <span
                     v-if="tokenState == 'delete'"
@@ -66,20 +66,19 @@
             <div class="section-header mt-3 mb-2">BRANCHES</div>
             <v-data-iterator
               :items="branchObjects"
-              :custom-filter="filterName"
-              :search="searchValue"
+              :items-per-page="itemsPerPage"
+              :footer-props="{ itemsPerPageOptions: itemsPerPageOptions }"
               sort-by="lowerCased"
+              :hide-default-footer="branchObjects.length < itemsPerPage"
             >
               <template v-slot:header>
-                <v-text-field :prepend-icon="searchIcon" label="Search..." v-model="searchValue"></v-text-field>
                 <v-checkbox
                   dense
-                  class="my-0 py-0"
+                  class="my-0 pt-0 font-italic"
                   label="Track all branches"
                   :input-value="newTrackedBranches.length == repo.branches.length"
                   @change="toggleAll"
                 ></v-checkbox>
-                <div class="section-header mt-3 mb-2">TRACKED BRANCHES</div>
               </template>
               <template v-slot:default="props">
                 <v-row>
@@ -130,12 +129,12 @@ export default class RepoUpdateDialog extends Vue {
   private newToken: string = ''
 
   private tokenState: 'delete' | 'modify' | 'unchanged' = 'unchanged'
+  private itemsPerPage: number = 30
+  private itemsPerPageOptions: number[] = [1, 10, 20, 30, 50, 100, -1]
 
   private formValid: boolean = false
 
   private newTrackedBranches: string[] = []
-
-  private searchValue: string = ''
 
   @Prop()
   private repoId!: string
@@ -151,12 +150,6 @@ export default class RepoUpdateDialog extends Vue {
     return vxm.repoModule.repoByID(this.repoId)!
   }
 
-  private filterName(items: { lowerCased: string }[], search: string) {
-    return items.filter(
-      input => input.lowerCased.indexOf(this.searchValue.toLowerCase()) >= 0
-    )
-  }
-
   private notEmpty(input: string): boolean | string {
     return input.trim().length > 0 ? true : 'This field must not be empty!'
   }
@@ -166,7 +159,6 @@ export default class RepoUpdateDialog extends Vue {
   watchIdUpdates() {
     this.remoteUrl = this.repo.remoteURL
     this.repoName = this.repo.name
-    this.searchValue = ''
     this.tokenState = 'unchanged'
 
     this.newTrackedBranches = Object.assign([], this.repo.trackedBranches)
