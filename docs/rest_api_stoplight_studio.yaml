@@ -1,0 +1,626 @@
+openapi: 3.0.0
+info:
+  title: rest-api
+  version: '1.0'
+servers:
+  - url: 'http://localhost:3000'
+paths:
+  /repo:
+    get:
+      summary: Query a single repo
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  repo:
+                    $ref: '#/components/schemas/Repo'
+                required:
+                  - repo
+      operationId: get-repo
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: repo_id
+          required: true
+          description: of type RepoId
+    post:
+      operationId: post-repo
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  repo:
+                    $ref: '#/components/schemas/Repo'
+                required:
+                  - repo
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                remote_url:
+                  $ref: '#/components/schemas/RemoteUrl'
+                token:
+                  type: string
+              required:
+                - name
+                - remote_url
+      security:
+        - auth: []
+      summary: Create a new repo
+    patch:
+      summary: Modify an existing repo
+      operationId: patch-repo
+      responses:
+        '200':
+          description: OK
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                repo_id:
+                  type: string
+                  title: RepoId
+                  format: uuid
+                name:
+                  type: string
+                token:
+                  type: string
+                remote_url:
+                  $ref: '#/components/schemas/RemoteUrl'
+                tracked_branches:
+                  type: array
+                  uniqueItems: true
+                  items:
+                    type: string
+              required:
+                - repo_id
+        description: 'If token is the empty string, the token for this repo is disabled.'
+      security:
+        - auth: []
+    delete:
+      summary: Delete an existing repo
+      operationId: delete-repo
+      responses:
+        '200':
+          description: OK
+      security:
+        - auth: []
+      requestBody: {}
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: repo_id
+          description: of type RepoId
+          required: true
+  /all-repos:
+    get:
+      summary: An overview of all known repos
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  repos:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Repo'
+                required:
+                  - repos
+      operationId: get-all-repos
+  /repo-comparison-graph:
+    post:
+      summary: Get data for the repo comparison graph
+      operationId: post-repo-comparison-graph
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                repos:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      repo_id:
+                        type: string
+                        title: RepoId
+                        format: uuid
+                      branches:
+                        type: array
+                        uniqueItems: true
+                        items:
+                          type: string
+                    required:
+                      - repo_id
+                      - branches
+                start_time:
+                  type: string
+                  format: date-time
+                end_time:
+                  type: string
+                  format: date-time
+                benchmark:
+                  type: string
+                metric:
+                  type: string
+              required:
+                - repos
+                - benchmark
+                - metric
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  repos:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        repo:
+                          $ref: '#/components/schemas/Repo'
+                        runs:
+                          type: array
+                          items:
+                            $ref: '#/components/schemas/Run'
+                      required:
+                        - repo
+                        - runs
+                required:
+                  - repos
+      description: This operation uses POST instead of GET because the parameter structure is too unwieldy to be passed via query parameters.
+  /commit-history:
+    get:
+      summary: Get data for the repo detail graph
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  commits:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CommitComparison'
+                required:
+                  - commits
+      operationId: get-repo-detail-graph
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: repo_id
+          required: true
+        - schema:
+            type: integer
+          in: query
+          name: amount
+          description: maximum number of commits to return
+        - schema:
+            type: integer
+          in: query
+          name: skip
+          description: number of commits to skip over (starting at the newest commit)
+  /test-token:
+    post:
+      summary: Test whether an auth token is valid
+      operationId: post-test-token
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Bad Request
+      security:
+        - auth: []
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: repo_id
+          description: of type RepoId
+      description: |-
+        Test whether an auth token is valid.
+
+        If a repo id is specified, checks whether the auth token allows access to that repo.
+        If no repo id is specified, checks whether the auth token is valid as admin auth token.
+  /commit-compare:
+    get:
+      summary: Compare two commits against each other
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  comparison:
+                    $ref: '#/components/schemas/CommitComparison'
+                required:
+                  - comparison
+      operationId: get-commit-compare
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: repo_id
+          required: true
+        - schema:
+            type: string
+          in: query
+          name: first_commit_hash
+        - schema:
+            type: string
+          in: query
+          name: second_commit_hash
+  /recently-benchmarked-commits:
+    get:
+      summary: Get the commits that were most recently benchmarked
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  commits:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CommitComparison'
+                required:
+                  - commits
+      operationId: get-news
+      parameters:
+        - schema:
+            type: number
+          in: query
+          name: amount
+          description: maximum number of commits
+          required: true
+        - schema:
+            type: boolean
+          in: query
+          name: significant_only
+          description: 'default: false'
+  /queue:
+    get:
+      summary: "Get the queue's current state"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tasks:
+                    type: array
+                    description: 'tasks that have not yet been benchmarked and are not currently being benchmarked, in the order they are going to be executed'
+                    items:
+                      $ref: '#/components/schemas/Commit'
+                  workers:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        working_on:
+                          $ref: '#/components/schemas/Commit'
+                        operating_system:
+                          type: string
+                        nachine_info:
+                          type: string
+                      required:
+                        - name
+                required:
+                  - tasks
+                  - workers
+      operationId: get-queue
+      description: ''
+    post:
+      summary: Add (or move) a task to the top of the queue
+      operationId: post-queue
+      responses:
+        '200':
+          description: OK
+      security:
+        - auth: []
+      description: 'Only works with web admin auth, not with repo admin auth.'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                repo_id:
+                  $ref: '#/components/schemas/RepoId'
+                commit_hash:
+                  $ref: '#/components/schemas/CommitHash'
+              required:
+                - repo_id
+                - commit_hash
+    delete:
+      summary: Remove a task from the queue
+      operationId: delete-queue
+      responses:
+        '200':
+          description: OK
+      requestBody: {}
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: repo_id
+          required: true
+          description: of type RepoId
+        - schema:
+            type: string
+          in: query
+          name: commit_hash
+          required: true
+          description: of type CommitHash
+      security:
+        - auth: []
+  /measurements:
+    delete:
+      summary: Delete measurements by benchmark and metric
+      operationId: delete-measurements
+      responses:
+        '200':
+          description: OK
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: repo_id
+          required: true
+          description: of type RepoId
+        - schema:
+            type: string
+          in: query
+          name: benchmark
+          required: true
+          description: name of benchmark
+        - schema:
+            type: string
+          in: query
+          name: metric
+          required: true
+          description: name of metric
+      security:
+        - auth: []
+components:
+  schemas:
+    CommitHash:
+      title: CommitHash
+      type: string
+      description: commit hash
+    Commit:
+      title: Commit
+      type: object
+      properties:
+        repo_id:
+          $ref: '#/components/schemas/RepoId'
+        hash:
+          $ref: '#/components/schemas/CommitHash'
+        author:
+          type: string
+        author_date:
+          $ref: '#/components/schemas/Time'
+        committer:
+          type: string
+        committer_date:
+          $ref: '#/components/schemas/Time'
+        message:
+          type: string
+        parents:
+          type: array
+          items:
+            $ref: '#/components/schemas/CommitHash'
+      required:
+        - repo_id
+        - hash
+        - author
+        - author_date
+        - committer
+        - committer_date
+        - message
+        - parents
+    RepoId:
+      type: string
+      title: RepoId
+      format: uuid
+      description: repo id
+    Repo:
+      title: Repo
+      type: object
+      properties:
+        id:
+          type: string
+          title: RepoId
+          format: uuid
+        name:
+          type: string
+        branches:
+          type: array
+          uniqueItems: true
+          items:
+            type: string
+        tracked_branches:
+          type: array
+          uniqueItems: true
+          items:
+            type: string
+        measurements:
+          type: array
+          items:
+            title: MeasurementId
+            type: object
+            properties:
+              benchmark:
+                type: string
+              metric:
+                type: string
+            required:
+              - benchmark
+              - metric
+        remote_url:
+          $ref: '#/components/schemas/RemoteUrl'
+        has_token:
+          type: boolean
+          description: ''
+      required:
+        - id
+        - name
+        - branches
+        - tracked_branches
+        - measurements
+        - remote_url
+        - has_token
+    Measurement:
+      title: Measurement
+      oneOf:
+        - properties:
+            benchmark:
+              type: string
+            metric:
+              type: string
+            unit:
+              type: string
+            interpretation:
+              type: string
+            values:
+              type: array
+              items:
+                type: number
+            value:
+              type: number
+          required:
+            - benchmark
+            - metric
+            - values
+            - value
+        - properties:
+            benchmark:
+              type: string
+            metric:
+              type: string
+            error_message:
+              type: string
+          required:
+            - benchmark
+            - metric
+            - error_message
+      type: object
+    Difference:
+      title: Difference
+      type: object
+      properties:
+        benchmark:
+          type: string
+        metric:
+          type: string
+        difference:
+          type: number
+      required:
+        - benchmark
+        - metric
+        - difference
+    CommitComparison:
+      title: CommitComparison
+      type: object
+      properties:
+        first:
+          $ref: '#/components/schemas/Run'
+        second:
+          $ref: '#/components/schemas/Run'
+        differences:
+          type: array
+          items:
+            $ref: '#/components/schemas/Difference'
+      required:
+        - differences
+    Run:
+      title: Run
+      oneOf:
+        - properties:
+            commit:
+              $ref: '#/components/schemas/Commit'
+            start_time:
+              $ref: '#/components/schemas/Time'
+            stop_time:
+              $ref: '#/components/schemas/Time'
+            measurements:
+              type: array
+              items:
+                $ref: '#/components/schemas/Measurement'
+          required:
+            - commit
+            - start_time
+            - stop_time
+            - measurements
+        - properties:
+            commit:
+              $ref: '#/components/schemas/Commit'
+            start_time:
+              $ref: '#/components/schemas/Time'
+            stop_time:
+              $ref: '#/components/schemas/Time'
+            error_message:
+              type: string
+          required:
+            - commit
+            - start_time
+            - stop_time
+            - error_message
+      type: object
+    Time:
+      type: integer
+      title: Time
+      format: int64
+      description: unix/epoch time (seconds since 1970-01-01)
+    RemoteUrl:
+      type: string
+      title: RemoteUrl
+      format: uri
+      description: "a repo's remote url"
+  securitySchemes:
+    auth:
+      type: http
+      scheme: Basic
