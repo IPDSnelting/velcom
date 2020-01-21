@@ -177,6 +177,10 @@ public class RepoEndpoint {
 
 			this.name = Objects.requireNonNull(name);
 			this.remoteUrl = new RemoteUrl(remoteUrl);
+
+			if (token != null && token.isEmpty()) {
+				throw new IllegalArgumentException("token must not be the empty string");
+			}
 			this.token = token;
 		}
 
