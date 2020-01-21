@@ -31,7 +31,7 @@
                         outlined
                         label
                         v-on="on"
-                        :color="isBranchTracked(branch) ? 'accent' : 'error'"
+                        :color="isBranchTracked(branch) ? 'primary' : 'accent'"
                       >{{ branch }}</v-chip>
                     </template>
                     {{ isBranchTracked(branch) ? 'Tracked' : 'Not Tracked' }}
@@ -64,7 +64,7 @@
               <v-row align="start" justify="space-around">
                 <v-col md="5" sm="12" xs="12" class="d-flex">
                   <v-select
-                  class="mr-5"
+                    class="mr-5"
                     :items="occuringBenchmarks"
                     v-model="selectedBenchmark"
                     label="benchmark"
