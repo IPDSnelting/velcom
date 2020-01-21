@@ -28,16 +28,11 @@
                             :title="formatDateUTC(commit.authorDate)"
                           >{{ formatDate(commit.authorDate) }}</span>
                         </v-list-item-subtitle>
-                        <v-list-item-content>
+                        <v-list-item-content v-if="getWorker(commit)">
                           <v-tooltip top>
                             <template #activator="{ on }">
                               <span style="flex: 0 0;">
-                                <v-chip
-                                  v-on="on"
-                                  outlined
-                                  label
-                                  v-if="getWorker(commit)"
-                                >{{ getWorker(commit).name }}</v-chip>
+                                <v-chip v-on="on" outlined label>{{ getWorker(commit).name }}</v-chip>
                               </span>
                             </template>
                             <span
