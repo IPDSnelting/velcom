@@ -2,6 +2,7 @@ package de.aaaaaaah.velcom.backend.access.token;
 
 import static org.jooq.codegen.db.tables.RepoToken.REPO_TOKEN;
 import static org.jooq.codegen.db.tables.Repository.REPOSITORY;
+import static org.jooq.impl.DSL.selectFrom;
 
 import de.aaaaaaah.velcom.backend.access.AccessLayer;
 import de.aaaaaaah.velcom.backend.access.commit.CommitAccess;
@@ -123,4 +124,15 @@ public class TokenAccess {
 		}
 	}
 
+	/**
+	 * @param id a repo's id
+	 * @return whether the repo has a token associated with it
+	 */
+	public boolean hasToken(RepoId id) {
+		try (DSLContext db = databaseStorage.acquireContext()) {
+			return db.fetchExists(selectFrom(REPO_TOKEN)
+				.where(REPO_TOKEN.REPO_ID.eq(id.getId().toString()))
+			);
+		}
+	}
 }

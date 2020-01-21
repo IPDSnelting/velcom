@@ -66,6 +66,13 @@ public class Repo {
 		return tokenAccess.isValidToken(id, token);
 	}
 
+	/**
+	 * @return whether the repo has an active token or not
+	 */
+	public boolean hasToken() {
+		return tokenAccess.hasToken(id);
+	}
+
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) {

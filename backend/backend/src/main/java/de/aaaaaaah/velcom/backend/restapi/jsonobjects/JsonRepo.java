@@ -18,6 +18,7 @@ public class JsonRepo {
 	private final Collection<String> trackedBranches;
 	private final Collection<JsonMeasurementName> measurements;
 	private final String remoteUrl;
+	private final boolean hasToken;
 
 	public JsonRepo(Repo repo) {
 		id = repo.getId().getId();
@@ -39,6 +40,7 @@ public class JsonRepo {
 			.collect(Collectors.toUnmodifiableList());
 
 		remoteUrl = repo.getRemoteUrl().getUrl();
+		hasToken = repo.hasToken();
 	}
 
 	public UUID getId() {
@@ -63,5 +65,9 @@ public class JsonRepo {
 
 	public String getRemoteUrl() {
 		return remoteUrl;
+	}
+
+	public boolean isHasToken() {
+		return hasToken;
 	}
 }
