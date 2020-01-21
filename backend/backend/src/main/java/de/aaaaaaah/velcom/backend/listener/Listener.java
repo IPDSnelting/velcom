@@ -66,6 +66,8 @@ public class Listener {
 	}
 
 	private void update() {
+		repoAccess.fetchOrCloneBenchmarkRepo();
+
 		for (Repo repo : repoAccess.getAllRepos()) {
 			try {
 				checkForUnknownCommits(repo.getId());
