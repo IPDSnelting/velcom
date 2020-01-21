@@ -53,6 +53,38 @@
         </v-card>
       </v-col>
     </v-row>
+    <v-row align="baseline" justify="center">
+      <v-col>
+        <v-card>
+          <v-card-title>
+            <v-toolbar color="primary" dark>Filter Data</v-toolbar>
+          </v-card-title>
+          <v-card-text>
+            <v-container fluid>
+              <v-row align="start" justify="space-around">
+                <v-col md="5" sm="12" xs="12" class="d-flex">
+                  <v-select
+                  class="mr-5"
+                    :items="occuringBenchmarks"
+                    v-model="selectedBenchmark"
+                    label="benchmark"
+                  ></v-select>
+                  <v-select
+                    :items="metricsForBenchmark(this.selectedBenchmark)"
+                    v-model="selectedMetric"
+                    label="metric"
+                  ></v-select>
+                </v-col>
+                <v-col md="5" sm="12" xs="12" class="d-flex">
+                  <v-text-field v-model="amount" label="number of commits to fetch" class="mr-5"></v-text-field>
+                  <v-text-field v-model="skip" label="number of commits to skip"></v-text-field>
+                </v-col>
+              </v-row>
+            </v-container>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
   </v-container>
 </template>
 
@@ -69,8 +101,22 @@ import { vxm } from '../store/index'
   }
 })
 export default class RepoDetail extends Vue {
+  private selectedBenchmark: string = ''
+  private selectedMetric: string = ''
+
+  private amount: number = 10
+  private skip: number = 0
+
   private get id() {
     return this.$route.params.id
+  }
+
+  get occuringBenchmarks(): string[] {
+    return vxm.repoModule.occuringBenchmarks
+  }
+
+  get metricsForBenchmark(): (benchmark: string) => string[] {
+    return (benchmark: string) => vxm.repoModule.metricsForBenchmark(benchmark)
   }
 
   private get canEdit() {

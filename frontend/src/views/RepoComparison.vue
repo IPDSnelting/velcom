@@ -18,6 +18,7 @@
                       :items="occuringBenchmarks"
                       v-model="selectedBenchmark"
                       label="benchmark"
+                      class="mr-5"
                     ></v-select>
                     <v-select
                       :items="metricsForBenchmark(this.selectedBenchmark)"
@@ -35,7 +36,7 @@
                       offset-y
                       min-width="290px"
                     >
-                      <template v-slot:activator="{ on }">
+                      <template v-slot:activator="{ on }" class="mr-5">
                         <v-text-field
                           v-model="startDate"
                           label="from:"
