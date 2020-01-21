@@ -12,6 +12,9 @@ import { RepoDetailStore } from './modules/repoDetailStore'
 Vue.use(Vuex)
 
 export const store = new Vuex.Store({
+  state: {
+    baseUrl: 'https://aaaaaaah.de:8667/'
+  },
   modules: {
     ...extractVuexModule(ColorStore),
     ...extractVuexModule(CommitComparisonStore),
