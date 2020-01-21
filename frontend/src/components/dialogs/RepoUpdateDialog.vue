@@ -65,6 +65,8 @@
             </v-container>
             <div class="section-header mt-3 mb-2">BRANCHES</div>
             <v-data-iterator
+              :custom-filter="filterName"
+              :search="searchValue"
               :items="branchObjects"
               :items-per-page="itemsPerPage"
               :footer-props="{ itemsPerPageOptions: itemsPerPageOptions }"
@@ -72,6 +74,11 @@
               :hide-default-footer="branchObjects.length < itemsPerPage"
             >
               <template v-slot:header>
+                <v-text-field
+                  :prepend-icon="searchIcon"
+                  label="Search for a branch..."
+                  v-model="searchValue"
+                ></v-text-field>
                 <v-checkbox
                   dense
                   class="my-0 pt-0 font-italic"
@@ -104,9 +111,13 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="primary" :disabled="!formValid" @click="updateRepo">Update Repository</v-btn>
-          <v-spacer></v-spacer>
-          <v-btn color="error" @click="dialogOpen = false">Close</v-btn>
+          <v-btn
+            color="primary"
+            class="mr-3"
+            :disabled="!formValid"
+            @click="updateRepo"
+          >Update Repository</v-btn>
+          <v-btn color="error" text outlined click="dialogOpen = false">Close</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -134,6 +145,7 @@ export default class RepoUpdateDialog extends Vue {
   private itemsPerPageOptions: number[] = [1, 10, 20, 30, 50, 100, -1]
 
   private formValid: boolean = false
+  private searchValue: string = ''
 
   private newTrackedBranches: string[] = []
 
@@ -151,6 +163,12 @@ export default class RepoUpdateDialog extends Vue {
     return vxm.repoModule.repoByID(this.repoId)!
   }
 
+  private filterName(items: { lowerCased: string }[], search: string) {
+    return items.filter(
+      input => input.lowerCased.indexOf(this.searchValue.toLowerCase()) >= 0
+    )
+  }
+
   private notEmpty(input: string): boolean | string {
     return input.trim().length > 0 ? true : 'This field must not be empty!'
   }
@@ -161,6 +179,7 @@ export default class RepoUpdateDialog extends Vue {
     this.remoteUrl = this.repo.remoteURL
     this.repoName = this.repo.name
     this.tokenState = 'unchanged'
+    this.searchValue = ''
 
     this.newTrackedBranches = Object.assign([], this.repo.trackedBranches)
   }
