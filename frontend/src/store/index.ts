@@ -9,12 +9,41 @@ import { NewsStore } from './modules/newsStore'
 import { QueueStore } from './modules/queueStore'
 import { RepoComparisonStore } from './modules/repoComparisonStore'
 import { RepoDetailStore } from './modules/repoDetailStore'
+import VuexPersistence from 'vuex-persist'
+
+interface RootState {
+  baseUrl: string
+  colorModule: ColorStore
+  commitComparisonModule: CommitComparisonStore
+  newsModule: NewsStore
+  queueModule: QueueStore
+  repoComparisonModule: RepoComparisonStore
+  repoModule: RepoStore
+  userModule: UserStore
+}
+
+const vuexLocal = new VuexPersistence<RootState>({
+  storage: window.localStorage,
+  reducer: state => {
+    return {
+      userModule: state.userModule,
+      colorModule: state.colorModule,
+      repoComparisonModule: {
+        // Dirty hack as those states are private but still need to be persisted...
+        _selectedRepos: (state.repoComparisonModule as any)._selectedRepos,
+        _selectedBranchesByRepoID: (state.repoComparisonModule as any)
+          ._selectedBranchesByRepoID
+      }
+    }
+  }
+})
+
 Vue.use(Vuex)
 
 export const store = new Vuex.Store({
   state: {
-    baseUrl: 'http://aaaaaaah:8667/'
-  },
+    baseUrl: 'https://aaaaaaah.de:8667/'
+  } as RootState,
   modules: {
     ...extractVuexModule(ColorStore),
     ...extractVuexModule(CommitComparisonStore),
@@ -24,7 +53,8 @@ export const store = new Vuex.Store({
     ...extractVuexModule(RepoDetailStore),
     ...extractVuexModule(RepoStore),
     ...extractVuexModule(UserStore)
-  }
+  },
+  plugins: [vuexLocal.plugin]
 })
 
 export const vxm = {
