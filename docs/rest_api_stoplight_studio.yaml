@@ -165,7 +165,7 @@ paths:
                       - branches
                 start_time:
                   $ref: '#/components/schemas/Time'
-                end_time:
+                stop_time:
                   $ref: '#/components/schemas/Time'
                 benchmark:
                   type: string
@@ -173,6 +173,8 @@ paths:
                   type: string
               required:
                 - repos
+                - start_time
+                - stop_time
                 - benchmark
                 - metric
       responses:

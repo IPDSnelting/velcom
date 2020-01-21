@@ -315,7 +315,7 @@ paths:
                   title: Time
                   description: unix/epoch time (seconds since 1970-01-01)
                   format: int64
-                end_time:
+                stop_time:
                   type: integer
                   title: Time
                   description: unix/epoch time (seconds since 1970-01-01)
@@ -326,6 +326,8 @@ paths:
                   type: string
               required:
                 - repos
+                - start_time
+                - stop_time
                 - benchmark
                 - metric
       responses:
