@@ -15,44 +15,52 @@
 
             <v-text-field :rules="[notEmpty]" label="*Remote URL" v-model="remoteUrl"></v-text-field>
             <v-text-field :rules="[notEmpty]" label="*Repository name" v-model="repoName"></v-text-field>
-            <transition name="fade">
-              <span v-if="tokenState == 'delete'" class="section-header mr-4">TOKEN WILL BE DELETED</span>
-            </transition>
-            <transition name="fade">
-              <span>
-                <v-btn
-                  v-if="tokenState == 'unchanged'"
-                  @click="tokenState = 'modify'"
-                  text
-                  outlined
-                  class="mr-2"
-                  color="primary"
-                >Change token</v-btn>
-                <v-btn
-                  v-if="tokenState == 'unchanged'"
-                  @click="tokenState = 'delete'"
-                  text
-                  outlined
-                  class="mr-2"
-                  color="error"
-                >Delete token</v-btn>
-                <v-btn
-                  v-if="tokenState == 'modify' || tokenState == 'delete'"
-                  @click="tokenState = 'unchanged'"
-                  text
-                  outlined
-                  color="error"
-                >{{ tokenState == 'modify' ? "DON'T CHANGE TOKEN" : "UNDO"}}</v-btn>
-              </span>
-            </transition>
-            <transition name="fade">
-              <v-text-field
-                v-if="tokenState == 'modify'"
-                :rules="[notEmpty]"
-                label="*New token"
-                v-model="newToken"
-              ></v-text-field>
-            </transition>
+            <v-container>
+              <v-row align="center">
+                <transition name="fade">
+                  <span
+                    v-if="tokenState == 'delete'"
+                    class="section-header mr-4"
+                  >TOKEN WILL BE DELETED</span>
+                </transition>
+                <transition name="fade">
+                  <span>
+                    <v-btn
+                      v-if="tokenState == 'unchanged'"
+                      @click="tokenState = 'modify'"
+                      text
+                      outlined
+                      class="mr-2"
+                      color="primary"
+                    >Change token</v-btn>
+                    <v-btn
+                      v-if="tokenState == 'unchanged'"
+                      @click="tokenState = 'delete'"
+                      text
+                      outlined
+                      class="mr-2"
+                      color="error"
+                    >Delete token</v-btn>
+                    <v-btn
+                      v-if="tokenState == 'modify' || tokenState == 'delete'"
+                      @click="tokenState = 'unchanged'"
+                      text
+                      outlined
+                      color="error"
+                    >{{ tokenState == 'modify' ? "KEEP OLD TOKEN" : "UNDO"}}</v-btn>
+                  </span>
+                </transition>
+                <transition name="fade">
+                  <v-text-field
+                    v-if="tokenState == 'modify'"
+                    :rules="[notEmpty]"
+                    label="*New token"
+                    v-model="newToken"
+                    class="ml-4"
+                  ></v-text-field>
+                </transition>
+              </v-row>
+            </v-container>
             <div class="section-header mt-3 mb-2">BRANCHES</div>
             <v-data-iterator
               :items="branchObjects"
