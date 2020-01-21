@@ -10,6 +10,7 @@
             :key="commit.repoID + commit.hash"
           >
             <v-card>
+              <v-progress-linear indeterminate v-if="inProgress(commit)" color="accent"></v-progress-linear>
               <v-list-item>
                 <v-list-item-avatar class="index-indicator">{{ index + 1 }}</v-list-item-avatar>
                 <v-list-item-content>
@@ -32,7 +33,11 @@
                           <v-tooltip top>
                             <template #activator="{ on }">
                               <span style="flex: 0 0;">
-                                <v-chip v-on="on" outlined label>{{ getWorker(commit).name }}</v-chip>
+                                <v-chip
+                                  v-on="on"
+                                  outlined
+                                  label
+                                >Running on » {{ getWorker(commit).name }} «</v-chip>
                               </span>
                             </template>
                             <span
@@ -54,9 +59,14 @@
                               >{{ commit.hash }}</v-chip>
                             </v-col>
                             <span>
-                              <v-btn icon @click="liftToFront(commit, $event)">
+                              <v-btn
+                                icon
+                                v-if="!inProgress(commit)"
+                                @click="liftToFront(commit, $event)"
+                              >
                                 <v-icon class="rocket">{{ liftToFrontIcon }}</v-icon>
                               </v-btn>
+                              <v-progress-circular indeterminate color="accent" v-else></v-progress-circular>
                               <v-btn icon @click="deleteCommit(commit)">
                                 <v-icon color="red">{{ deleteIcon }}</v-icon>
                               </v-btn>
@@ -91,7 +101,17 @@ import { mdiRocket, mdiDelete } from '@mdi/js'
 })
 export default class QueueOverview extends Vue {
   private get queueItems(): Commit[] {
-    return vxm.queueModule.openTasks
+    let openTasks = vxm.queueModule.openTasks.slice()
+    vxm.queueModule.workers
+      .map(it => it.currentTask)
+      .filter(it => it !== undefined)
+      .sort((a, b) => a!.message!.localeCompare(b!.message!))
+      .forEach(it => openTasks.unshift(it!))
+    return openTasks
+  }
+
+  private inProgress(commit: Commit) {
+    return vxm.queueModule.openTasks.indexOf(commit) < 0
   }
 
   private formatDate(date: number): string {
