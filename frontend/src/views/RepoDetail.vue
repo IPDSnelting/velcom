@@ -44,7 +44,7 @@
             <v-spacer></v-spacer>
             <repo-update :repoId="id">
               <template #activator="{ on }">
-                <v-btn v-on="on">update</v-btn>
+                <v-btn v-on="on" color="primary">update</v-btn>
               </template>
             </repo-update>
             <v-spacer></v-spacer>

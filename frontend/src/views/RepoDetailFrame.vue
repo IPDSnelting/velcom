@@ -4,9 +4,18 @@
       <v-row align="baseline" justify="center">
         <h1>Repository details</h1>
       </v-row>
-      <v-row align="baseline" justify="center">
+      <v-row align="center" justify="center">
         <v-col class="d-flex">
           <repo-select v-model="selectedRepoId" :repos="allRepos"></repo-select>
+        </v-col>
+        <v-col cols="auto">
+          <repo-add>
+            <template #activator="{ on }">
+              <v-btn color="success" v-on="on">
+                <v-icon left>{{ plusIcon }}</v-icon>Add Repo
+              </v-btn>
+            </template>
+          </repo-add>
         </v-col>
       </v-row>
       <router-view></router-view>
@@ -20,10 +29,13 @@ import { Component, Watch } from 'vue-property-decorator'
 import { vxm } from '../store/index'
 import { Repo } from '../store/types'
 import RepoSelectionComponent from '../components/RepoSelectionComponent.vue'
+import { mdiPlusCircleOutline } from '@mdi/js'
+import RepoAddDialog from '../components/dialogs/RepoAddDialog.vue'
 
 @Component({
   components: {
-    'repo-select': RepoSelectionComponent
+    'repo-select': RepoSelectionComponent,
+    'repo-add': RepoAddDialog
   }
 })
 export default class RepoDetailFrame extends Vue {
@@ -60,5 +72,9 @@ export default class RepoDetailFrame extends Vue {
   mounted() {
     vxm.repoModule.fetchRepos()
   }
+
+  // ============== ICONS ==============
+  private plusIcon = mdiPlusCircleOutline
+  // ==============       ==============
 }
 </script>
