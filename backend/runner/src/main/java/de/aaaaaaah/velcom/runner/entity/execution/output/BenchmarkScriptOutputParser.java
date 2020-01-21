@@ -103,7 +103,7 @@ public class BenchmarkScriptOutputParser {
 		if (!node.get("unit").isTextual()) {
 			throw new OutputParseException("Unit is no string: " + node);
 		}
-		if (!node.hasNonNull("result_interpretation")) {
+		if (!node.hasNonNull("resultInterpretation")) {
 			throw new OutputParseException("Metric has no interpretation: " + node);
 		}
 		if (!node.hasNonNull("results")) {
@@ -112,7 +112,7 @@ public class BenchmarkScriptOutputParser {
 
 		String unit = node.get("unit").asText();
 		MetricInterpretation interpretation = parseInterpretation(
-			node.get("result_interpretation")
+			node.get("resultInterpretation")
 		);
 
 		return new Metric(
