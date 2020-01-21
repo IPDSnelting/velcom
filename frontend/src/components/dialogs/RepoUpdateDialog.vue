@@ -15,7 +15,7 @@
 
             <v-text-field :rules="[notEmpty]" label="*Remote URL" v-model="remoteUrl"></v-text-field>
             <v-text-field :rules="[notEmpty]" label="*Repository name" v-model="repoName"></v-text-field>
-            <v-container class="pa-0">
+            <v-container class="pa-0" fluid>
               <v-row no-gutters align="center">
                 <transition name="fade">
                   <span
@@ -81,15 +81,16 @@
                 ></v-checkbox>
               </template>
               <template v-slot:default="props">
-                <v-row>
+                <v-row align="center">
                   <v-col
                     cols="4"
                     class="my-1 py-0"
+                    style="word-wrap: anywhere;"
                     v-for="branch in props.items"
                     :key="branch.name"
                   >
                     <v-checkbox
-                      class="my-0 py-0"
+                      class="my-0 py-0 full-height-label-checkbox"
                       v-model="newTrackedBranches"
                       dense
                       :label="branch.name"
@@ -214,5 +215,12 @@ export default class RepoUpdateDialog extends Vue {
 <style scoped>
 .section-header {
   font-variant: small-caps;
+}
+</style>
+
+<style>
+/* Not scoped, as the v-label does not get any data attribute */
+.full-height-label-checkbox .v-label {
+  height: 100% !important;
 }
 </style>
