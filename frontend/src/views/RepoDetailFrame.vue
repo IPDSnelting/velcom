@@ -9,7 +9,7 @@
           <repo-select v-model="selectedRepoId" :repos="allRepos"></repo-select>
         </v-col>
         <v-col cols="auto">
-          <repo-add>
+          <repo-add v-if="isAdmin">
             <template #activator="{ on }">
               <v-btn color="success" v-on="on">
                 <v-icon left>{{ plusIcon }}</v-icon>Add Repo
@@ -55,6 +55,10 @@ export default class RepoDetailFrame extends Vue {
     return this.selectedRepo === null
       ? null
       : '/repo-detail/' + this.selectedRepo.id
+  }
+
+  get isAdmin() {
+    return vxm.userModule.isAdmin
   }
 
   get repoSelected(): boolean {
