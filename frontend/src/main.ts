@@ -1,7 +1,7 @@
 import Vue from 'vue'
 import App from './App.vue'
 import router from './router'
-import { store, vxm } from './store/classIndex'
+import { store, vxm } from './store'
 import axios from 'axios'
 import vuetify from './plugins/vuetify'
 import { extractErrorMessage } from './util/ErrorUtils'
@@ -9,7 +9,6 @@ import { extractErrorMessage } from './util/ErrorUtils'
 Vue.config.productionTip = false
 
 axios.defaults.baseURL = 'https://aaaaaaah.de:8667/' // store.state.apiBaseURL
-// axios.defaults.baseURL = 'http://localhost:8080' // store.state.apiBaseURL
 
 const vue = new Vue({
   router,

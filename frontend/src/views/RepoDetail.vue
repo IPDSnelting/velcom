@@ -60,8 +60,8 @@
 import Vue from 'vue'
 import { Repo } from '@/store/types'
 import Component from 'vue-class-component'
-import RepoUpdateDialog from '../components/RepoUpdateDialog.vue'
-import { vxm } from '../store/classIndex'
+import RepoUpdateDialog from '../components/dialogs/RepoUpdateDialog.vue'
+import { vxm } from '../store/index'
 
 @Component({
   components: {

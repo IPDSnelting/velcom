@@ -22,7 +22,7 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { Worker, Commit } from '../store/types'
+import { Worker, Commit } from '@/store/types'
 import { Prop } from 'vue-property-decorator'
 import { Store } from 'vuex'
 

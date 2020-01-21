@@ -17,7 +17,7 @@
 <script lang="ts">
 import Vue from 'vue'
 import { Component, Watch } from 'vue-property-decorator'
-import { vxm } from '../store/classIndex'
+import { vxm } from '../store/index'
 import { Repo } from '../store/types'
 import RepoSelectionComponent from '../components/RepoSelectionComponent.vue'
 

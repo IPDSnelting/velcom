@@ -31,8 +31,8 @@
 import Vue from 'vue'
 import { Component, Watch } from 'vue-property-decorator'
 import { Store } from 'vuex'
-import { extractErrorMessage } from '../util/ErrorUtils'
-import { store, vxm } from '../store/classIndex'
+import { extractErrorMessage } from '@/util/ErrorUtils'
+import { store, vxm } from '@/store/index'
 
 @Component
 export default class RepoAddDialog extends Vue {

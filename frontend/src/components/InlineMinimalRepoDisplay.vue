@@ -6,7 +6,7 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
-import { vxm } from '../store/classIndex'
+import { vxm } from '../store/index'
 import { Repo } from '../store/types'
 
 @Component

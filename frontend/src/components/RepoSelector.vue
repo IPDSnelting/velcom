@@ -55,7 +55,7 @@ import Component from 'vue-class-component'
 import { Prop, Model, Watch } from 'vue-property-decorator'
 import { Store } from 'vuex'
 
-import { vxm } from '../store/classIndex'
+import { vxm } from '../store/index'
 import { Repo } from '../store/types'
 
 @Component

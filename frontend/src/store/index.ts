@@ -1,14 +1,14 @@
 import Vuex from 'vuex'
 import { extractVuexModule, createProxy } from 'vuex-class-component'
 import Vue from 'vue'
-import { RepoStore } from '../store/modules/repoModule/repoModuleClass'
-import { UserStore } from '../store/modules/userModule/userModuleClass'
-import { ColorStore } from './modules/colorModule/colorModuleClass'
-import { CommitComparisonStore } from './modules/commitComparisonModule/commitComparisonModuleClass'
-import { NewsStore } from './modules/newsModule/newsModuleClass'
-import { QueueStore } from './modules/queueModule/queueModuleClass'
-import { RepoComparisonStore } from './modules/repoComparisonModule/repoComparisonModuleClass'
-import { RepoDetailStore } from './modules/repoDetailModule/repoDetailModuleClass'
+import { RepoStore } from './modules/repoStore'
+import { UserStore } from './modules/userStore'
+import { ColorStore } from './modules/colorStore'
+import { CommitComparisonStore } from './modules/commitComparisonStore'
+import { NewsStore } from './modules/newsStore'
+import { QueueStore } from './modules/queueStore'
+import { RepoComparisonStore } from './modules/repoComparisonStore'
+import { RepoDetailStore } from './modules/repoDetailStore'
 Vue.use(Vuex)
 
 export const store = new Vuex.Store({

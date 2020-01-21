@@ -46,10 +46,10 @@
 import Vue from 'vue'
 import { Component, Watch } from 'vue-property-decorator'
 import { Store } from 'vuex'
-import { Repo } from '../store/types'
-import { extractErrorMessage } from '../util/ErrorUtils'
-import { store, vxm } from '../store/classIndex'
-import RepoSelectionComponent from './RepoSelectionComponent.vue'
+import { Repo } from '@/store/types'
+import { extractErrorMessage } from '@/util/ErrorUtils'
+import { store, vxm } from '@/store/index'
+import RepoSelectionComponent from '../RepoSelectionComponent.vue'
 
 @Component({
   components: {

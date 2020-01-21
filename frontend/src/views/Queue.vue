@@ -43,9 +43,9 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import WorkerOverview from '../components/WorkerOverview.vue'
-import QueueOverview from '../components/QueueOverview.vue'
-import { vxm } from '../store/classIndex'
+import WorkerOverview from '../components/overviews/WorkerOverview.vue'
+import QueueOverview from '../components/overviews/QueueOverview.vue'
+import { vxm } from '../store/index'
 
 @Component({
   components: {

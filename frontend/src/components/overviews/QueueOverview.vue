@@ -79,9 +79,9 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { vxm } from '../store/classIndex'
-import { Commit, Worker } from '../store/types'
-import InlineMinimalRepoNameDisplay from './InlineMinimalRepoDisplay.vue'
+import { vxm } from '@/store/index'
+import { Commit, Worker } from '@/store/types'
+import InlineMinimalRepoNameDisplay from '../InlineMinimalRepoDisplay.vue'
 import { mdiRocket, mdiDelete } from '@mdi/js'
 
 @Component({

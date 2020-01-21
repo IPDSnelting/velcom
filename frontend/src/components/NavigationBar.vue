@@ -69,9 +69,9 @@ import Component from 'vue-class-component'
 import { VuetifyIcon } from 'vuetify/types/services/icons'
 import VueRouterEx, { RouteConfig } from 'vue-router/types/router'
 import router from '../router'
-import LoginDialog from '../components/LoginDialog.vue'
+import LoginDialog from '../components/dialogs/LoginDialog.vue'
 import { mdiAccountCircleOutline, mdiLogout } from '@mdi/js'
-import { vxm } from '../store/classIndex'
+import { vxm } from '../store/index'
 
 class NavigationItem {
   readonly routeName: String

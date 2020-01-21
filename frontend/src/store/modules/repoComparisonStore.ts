@@ -2,7 +2,6 @@ import { createModule, mutation, action } from 'vuex-class-component'
 import { Run, Repo } from '@/store/types'
 import Vue from 'vue'
 import axios from 'axios'
-import { vxm } from '../../classIndex'
 const VxModule = createModule({
   namespaced: 'repoComparisonModule',
   strict: false
