@@ -15,6 +15,7 @@ function executeOnServer() {
 
 DOCKER_SERVER_DIR="/home/pse_test/velcom/.docker"
 
+executeOnServer "rm -rf $DOCKER_SERVER_DIR"
 executeOnServer "mkdir -p $DOCKER_SERVER_DIR"
 
 copyToServer "backend/backend/target/backend.jar" "$DOCKER_SERVER_DIR"
@@ -26,5 +27,6 @@ copyToServer "docs/nginx.conf" "$DOCKER_SERVER_DIR"
 tar -cf dist.tar "frontend/dist"
 copyToServer "dist.tar" "$DOCKER_SERVER_DIR"
 
-executeOnServer "tar -xf $DOCKER_SERVER_DIR/dist.tar"
+executeOnServer "tar -xf $DOCKER_SERVER_DIR/dist.tar --directory $DOCKER_SERVER_DIR"
 executeOnServer "mv $DOCKER_SERVER_DIR/frontend/dist $DOCKER_SERVER_DIR/dist"
+executeOnServer "rmdir $DOCKER_SERVER_DIR/frontend"
