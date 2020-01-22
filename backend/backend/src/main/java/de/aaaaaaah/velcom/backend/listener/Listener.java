@@ -85,6 +85,8 @@ public class Listener {
 	 * @param repoId the id of the repository to check for
 	 */
 	public void checkForUnknownCommits(RepoId repoId) throws CommitSearchException {
+		long start = System.currentTimeMillis();
+
 		try {
 			this.lock.lock();
 
@@ -150,6 +152,9 @@ public class Listener {
 			throw new CommitSearchException(repoId, e);
 		} finally {
 			this.lock.unlock();
+
+			long end = System.currentTimeMillis();
+			LOGGER.debug("checkForUnknownCommits({}) took {} ms", repoId.getId(), (end - start));
 		}
 	}
 
