@@ -8,14 +8,19 @@ function copyToServer() {
     scp -P "$CD_PORT" "$1" "$CD_USER@$CD_URL:$2"
 }
 
-function makeDirOnServer() {
-    echo "Making dir $1"
-    ssh -p "$CD_PORT" "$CD_USER@$CD_URL" "mkdir -p $1"
+function executeOnServer() {
+    echo "Executing on server: '$1'"
+    ssh -p "$CD_PORT" "$CD_USER@$CD_URL" "$1"
 }
 
-makeDirOnServer "/home/pse_test/velcom"
+DOCKER_SERVER_DIR="/home/pse_test/velcom/.docker"
 
-copyToServer "backend/backend/target/backend.jar" "/home/pse_test/velcom"
-copyToServer "backend/runner/target/runner.jar" "/home/pse_test/velcom"
+executeOnServer "mkdir -p $DOCKER_SERVER_DIR"
+
+copyToServer "backend/backend/target/backend.jar" "$DOCKER_SERVER_DIR"
+copyToServer "backend/runner/target/runner.jar" "$DOCKER_SERVER_DIR"
 tar -cf dist.tar "frontend/dist"
-copyToServer "dist.tar" "/home/pse_test/velcom"
+copyToServer "dist.tar" "$DOCKER_SERVER_DIR"
+
+executeOnServer "tar -xf $DOCKER_SERVER_DIR/dist.tar"
+executeOnServer "mv $DOCKER_SERVER_DIR/frontend/dist $DOCKER_SERVER_DIR/dist"
