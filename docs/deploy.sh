@@ -9,6 +9,13 @@ function makeDirOnServer() {
     ssh -p "$CD_PORT" "$CD_USER@$CD_URL" "mkdir -p $0"
 }
 
+ls .
+ls -lah .
+for file in *; do
+    echo "$file:"
+    ls -lah $file
+done
+
 makeDirOnServer "/home/pse_test/velcom"
 
 copyToServer "backend/backend/target/backend.jar" "/home/pse_test/velcom"
