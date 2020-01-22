@@ -121,6 +121,9 @@ public class DispatcherImpl implements Dispatcher {
 
 				if (isWorking && lastCommit.isEmpty()) {
 					resetRunner(runnerInformation);
+				} else if (!isWorking && lastCommit.isPresent()) {
+					// Runner forget it should be working, re-add to queue
+					queue.addCommit(lastCommit.get());
 				}
 				activeRunners.add(runnerInformation);
 			}
