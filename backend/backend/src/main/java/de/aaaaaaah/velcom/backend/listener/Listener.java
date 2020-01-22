@@ -7,6 +7,7 @@ import de.aaaaaaah.velcom.backend.access.AccessLayer;
 import de.aaaaaaah.velcom.backend.access.commit.BenchmarkStatus;
 import de.aaaaaaah.velcom.backend.access.commit.Commit;
 import de.aaaaaaah.velcom.backend.access.commit.CommitAccess;
+import de.aaaaaaah.velcom.backend.access.commit.CommitHash;
 import de.aaaaaaah.velcom.backend.access.repo.Branch;
 import de.aaaaaaah.velcom.backend.access.repo.BranchName;
 import de.aaaaaaah.velcom.backend.access.repo.Repo;
@@ -23,6 +24,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -103,11 +105,15 @@ public class Listener {
 					.map(Branch::getName)
 					.collect(toList());
 
-				try (Stream<Commit> commits = commitAccess.getCommitLog(repo, branches)) {
-					commits.map(Commit::getHash).forEach(hash -> commitAccess.setBenchmarkStatus(
-						repoId, hash, BenchmarkStatus.NO_BENCHMARK_REQUIRED
-					));
+				Collection<CommitHash> commits;
+				try (Stream<Commit> commitStream = commitAccess.getCommitLog(repo, branches)) {
+					commits = commitStream
+						.map(Commit::getHash)
+						.collect(Collectors.toUnmodifiableList());
 				}
+
+				commitAccess.setBenchmarkStatus(repoId, commits,
+					BenchmarkStatus.NO_BENCHMARK_REQUIRED);
 
 				// (2): Set last commit of each tracked branch to BENCHMARK_REQUIRED
 				repo.getTrackedBranches()

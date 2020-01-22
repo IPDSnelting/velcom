@@ -40,6 +40,7 @@ import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.jooq.DSLContext;
+import org.jooq.InsertValuesStep5;
 import org.jooq.Record1;
 import org.jooq.Result;
 import org.jooq.codegen.db.tables.records.KnownCommitRecord;
@@ -181,15 +182,39 @@ public class CommitAccess {
 
 	public void setBenchmarkStatus(RepoId repoId, CommitHash commitHash, BenchmarkStatus status) {
 		try (DSLContext db = databaseStorage.acquireContext()) {
+			final Timestamp now = Timestamp.from(Instant.now());
 			db.insertInto(KNOWN_COMMIT)
 				.set(KNOWN_COMMIT.REPO_ID, repoId.getId().toString())
 				.set(KNOWN_COMMIT.HASH, commitHash.getHash())
 				.set(KNOWN_COMMIT.STATUS, status.getNumericalValue())
-				.set(KNOWN_COMMIT.UPDATE_TIME, Timestamp.from(Instant.now()))
-				.set(KNOWN_COMMIT.INSERT_TIME, Timestamp.from(Instant.now()))
+				.set(KNOWN_COMMIT.UPDATE_TIME, now)
+				.set(KNOWN_COMMIT.INSERT_TIME, now)
 				.onDuplicateKeyUpdate()
 				.set(KNOWN_COMMIT.STATUS, status.getNumericalValue())
-				.set(KNOWN_COMMIT.UPDATE_TIME, Timestamp.from(Instant.now()))
+				.set(KNOWN_COMMIT.UPDATE_TIME, now)
+				.execute();
+		}
+	}
+
+	public void setBenchmarkStatus(RepoId repoId, Collection<CommitHash> commitHashes,
+		BenchmarkStatus status) {
+
+		try (DSLContext db = databaseStorage.acquireContext()) {
+			final InsertValuesStep5<KnownCommitRecord, String, String, Integer, Timestamp, Timestamp> step = db
+				.insertInto(KNOWN_COMMIT, KNOWN_COMMIT.REPO_ID, KNOWN_COMMIT.HASH,
+					KNOWN_COMMIT.STATUS, KNOWN_COMMIT.UPDATE_TIME, KNOWN_COMMIT.INSERT_TIME);
+
+			final int statusInteger = status.getNumericalValue();
+			final Timestamp now = Timestamp.from(Instant.now());
+
+			for (CommitHash hash : commitHashes) {
+				step.values(repoId.getId().toString(), hash.getHash(), statusInteger,
+					now, now);
+			}
+
+			step.onDuplicateKeyUpdate()
+				.set(KNOWN_COMMIT.STATUS, statusInteger)
+				.set(KNOWN_COMMIT.UPDATE_TIME, now)
 				.execute();
 		}
 	}
