@@ -18,9 +18,9 @@ public enum HashAlgorithm {
 		private final int memoryInKiB = 488281; // = 500MB
 		private final int parallelism = Runtime.getRuntime().availableProcessors();
 		private final long maxMillis = 750;
-		private final int iterations = Argon2Helper.findIterations(
+		private final int iterations = Math.max(1, Argon2Helper.findIterations(
 			argon, maxMillis, memoryInKiB, parallelism
-		);
+		));
 
 		@Override
 		public String generateHash(AuthToken token) {
