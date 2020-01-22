@@ -31,3 +31,9 @@ copyToServer "dist.tar" "$DOCKER_SERVER_DIR"
 executeOnServer "tar -xf $DOCKER_SERVER_DIR/dist.tar --directory $DOCKER_SERVER_DIR"
 executeOnServer "mv $DOCKER_SERVER_DIR/frontend/dist $DOCKER_SERVER_DIR/dist"
 executeOnServer "rmdir $DOCKER_SERVER_DIR/frontend"
+
+# Build it
+executeOnServer "sudo /home/pse_test/velcom/deploy_from_docker.sh"
+
+# Restart the server :)
+executeOnServer "sudo systemctl restart pse-test-velcom.service"
