@@ -51,3 +51,11 @@ compile-frontend:
     - make frontend
   tags:
     - keep
+
+deploy:
+  environment: "Keep"
+  script:
+    - docs/deploy.sh
+  dependencies:
+    - "compile-backend"
+    - "compile-frontend"
