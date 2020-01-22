@@ -1,10 +1,12 @@
 package de.aaaaaaah.velcom.backend.access.repo.archive;
 
+import de.aaaaaaah.velcom.backend.access.commit.Commit;
 import de.aaaaaaah.velcom.backend.access.commit.CommitHash;
 import de.aaaaaaah.velcom.backend.storage.repo.RepoStorage;
 import de.aaaaaaah.velcom.backend.storage.repo.exception.RepositoryAcquisitionException;
 import de.aaaaaaah.velcom.backend.util.CheckedConsumer;
 import de.aaaaaaah.velcom.backend.util.DirectoryRemover;
+import de.aaaaaaah.velcom.runner.shared.util.OSCheck;
 import de.aaaaaaah.velcom.runner.shared.util.compression.PermissionsHelper;
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,6 +28,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Provides the functionality to archive local repositories.
+ * <p>This class is thread safe.</p>
  */
 public class Archiver {
 
@@ -79,103 +82,116 @@ public class Archiver {
 	public synchronized void archive(String dirName, CommitHash commitHash, OutputStream out,
 		boolean keepDeepClone) throws ArchiveException {
 
-		try (out) {
-			Path cloneDir = cloneRepo(dirName, commitHash);
+		LOGGER.info("Creating archive for: {}/{} (keepDeepClone = {})", dirName,
+			commitHash.getHash(), keepDeepClone);
 
+		Path cloneDir = ARCHIVES_ROOT_DIR.resolve(dirName).resolve(commitHash.getHash());
+
+		try {
+			// (1): Clone repository
+			cloneRepo(dirName, cloneDir, commitHash);
+
+			// (2): Tar repository
 			tarDirectory(cloneDir, out);
-
-			if (!keepDeepClone) {
-				DirectoryRemover.deleteDirectoryRecursive(cloneDir);
-			}
 		} catch (Exception e) {
 			throw new ArchiveException(e, dirName, commitHash);
+		} finally {
+			if (!keepDeepClone) {
+				// Regardless of whether or not the tar process failed,
+				// delete cloneDir if keepDeepClone is false
+				try {
+					DirectoryRemover.deleteDirectoryRecursive(cloneDir);
+				} catch (IOException ignore) {
+				}
+			}
 		}
 	}
 
 	private void tarDirectory(Path cloneDir, OutputStream out) throws IOException {
-		var tarOut = new TarArchiveOutputStream(out);
+		long start = System.currentTimeMillis();
 
-		tarOut.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
-		tarOut.setBigNumberMode(TarArchiveOutputStream.BIGNUMBER_POSIX);
+		try (out) {
+			var tarOut = new TarArchiveOutputStream(out);
 
-		Files.walk(cloneDir)
-			.filter(Files::isRegularFile)
-			.forEach(handleError(file -> {
-					String relativePath = cloneDir.relativize(file).toString();
+			tarOut.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
+			tarOut.setBigNumberMode(TarArchiveOutputStream.BIGNUMBER_POSIX);
 
-					TarArchiveEntry entry = new TarArchiveEntry(file.toFile(), relativePath);
-					entry.setMode(PermissionsHelper.toOctal(Files.getPosixFilePermissions(file)));
+			Files.walk(cloneDir)
+				.filter(Files::isRegularFile)
+				.forEach(handleError(file -> {
+						String relativePath = cloneDir.relativize(file).toString();
 
-					try (InputStream in = Files.newInputStream(file)) {
-						tarOut.putArchiveEntry(entry);
+						TarArchiveEntry entry = new TarArchiveEntry(file.toFile(), relativePath);
+						if (!OSCheck.isStupidWindows()) {
+							entry.setMode(
+								PermissionsHelper.toOctal(Files.getPosixFilePermissions(file))
+							);
+						}
 
-						IOUtils.copy(in, tarOut);
+						try (InputStream in = Files.newInputStream(file)) {
+							tarOut.putArchiveEntry(entry);
 
-						tarOut.closeArchiveEntry();
+							IOUtils.copy(in, tarOut);
+
+							tarOut.closeArchiveEntry();
+						}
 					}
-				}
-			));
+				));
+		} finally {
+			long end = System.currentTimeMillis();
+			LOGGER.info("Tar operation took {} ms... ({})", (end - start), cloneDir);
+		}
 	}
 
-	private Path cloneRepo(String dirName, CommitHash commitHash)
+	private void cloneRepo(String originalRepoDirName, Path destinationCloneDir, CommitHash hash)
 		throws IOException, GitAPIException, RepositoryAcquisitionException {
 
-		try (Repository repository = repoStorage.acquireRepository(dirName)) {
+		long start = System.currentTimeMillis();
+
+		try (Repository repository = repoStorage.acquireRepository(originalRepoDirName)) {
 			// Make sure that the commit actually exists before doing anything else
-			ObjectId commitId = repository.resolve(commitHash.getHash());
+			ObjectId commitId = repository.resolve(hash.getHash());
 			Objects.requireNonNull(commitId, "unknown commit hash "
-				+ commitHash + " for local repo " + dirName);
+				+ hash + " for local repo " + originalRepoDirName);
 
-			// Create archives root dir
-			if (!Files.exists(ARCHIVES_ROOT_DIR)) {
-				Files.createDirectories(ARCHIVES_ROOT_DIR);
-			}
-
-			// Create repo archives dir
-			Path repoArchivesDir = ARCHIVES_ROOT_DIR.resolve(dirName);
-			if (!Files.exists(repoArchivesDir)) {
-				Files.createDirectory(repoArchivesDir);
-			}
-
-			// Create cloneDir
-			Path cloneDir = repoArchivesDir.resolve(commitHash.getHash());
-
-			if (Files.exists(cloneDir)) {
+			// Check destinationCloneDir
+			if (Files.exists(destinationCloneDir)) {
 				// clone already exists, no need to clone again
-				return cloneDir;
+				return;
 			}
 
 			// Clone does not yet exist => clone original local repo to cloneDir
-			Files.createDirectory(cloneDir);
+			Files.createDirectories(destinationCloneDir);
 
-			Path originalRepoPath = repoStorage.getRepoDir(dirName);
+			Path originalRepoPath = repoStorage.getRepoDir(originalRepoDirName);
 
 			try (Git clone = Git.cloneRepository()
 				.setBare(false)
 				.setCloneSubmodules(true)
 				.setCloneAllBranches(false)
 				.setURI(originalRepoPath.toUri().toString())
-				.setDirectory(cloneDir.toFile())
+				.setDirectory(destinationCloneDir.toFile())
 				.call()) {
 
-				clone.checkout().setName(commitHash.getHash()).call();
+				clone.checkout().setName(hash.getHash()).call();
 
 				// Use git clean to remove untracked submodules
 				clone.clean()
 					.setCleanDirectories(true)
 					.setForce(true)
 					.call();
-			} catch (Exception e) {
-				// clone operation failed => try to delete clone directory
-				try {
-					DirectoryRemover.deleteDirectoryRecursive(cloneDir);
-				} catch (Exception ignore) {
-				}
-
-				throw e;
+			}
+		} catch (Exception e) {
+			// clone operation failed => try to delete clone directory
+			try {
+				DirectoryRemover.deleteDirectoryRecursive(destinationCloneDir);
+			} catch (Exception ignore) {
 			}
 
-			return cloneDir;
+			throw e;
+		} finally {
+			long end = System.currentTimeMillis();
+			LOGGER.info("Clone operation took {} ms... ({})", (end - start), originalRepoDirName);
 		}
 	}
 
