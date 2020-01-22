@@ -8,6 +8,12 @@ stages:
 compile-backend:
   stage: build
 
+  artifacts:
+    expire_in: "1 day"
+    paths:
+      - "backend/backend/target/backend.jar"
+      - "backend/runner/target/backend.jar"
+
   # Cache maven deps
   cache:
     key: "backend_cache"
@@ -26,6 +32,11 @@ compile-backend:
 
 compile-frontend:
   image: velcom-frontend:latest
+
+  artifacts:
+    expire_in: "1 day"
+    paths:
+      - "frontend/dist"
 
   # cache node modules
   cache:
