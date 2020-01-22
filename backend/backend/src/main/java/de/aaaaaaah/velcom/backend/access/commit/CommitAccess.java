@@ -22,6 +22,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.UUID;
@@ -251,6 +252,30 @@ public class CommitAccess {
 		} catch (RepositoryAcquisitionException | IOException e) {
 			throw new CommitAccessException("Failed to get all tasks of status " + status
 				+ " from repo " + repoId);
+		}
+	}
+
+	/**
+	 * Checks which of the commits from the given {@code commits} collection are known and returns
+	 * those as a set.
+	 *
+	 * @param repoId the repository where all the commits are from
+	 * @param commits the commits to check
+	 * @return returns a set of all commits that are known and reside in the {@code commits}
+	 * 	collection.
+	 */
+	public Set<CommitHash> getKnownCommits(RepoId repoId, Collection<Commit> commits) {
+		List<String> hashes = commits.stream()
+			.map(Commit::getHash)
+			.map(CommitHash::getHash)
+			.collect(Collectors.toList());
+
+		try (DSLContext db = databaseStorage.acquireContext()) {
+			return db.selectFrom(KNOWN_COMMIT)
+				.where(KNOWN_COMMIT.REPO_ID.eq(repoId.getId().toString()))
+				.and(KNOWN_COMMIT.HASH.in(hashes))
+				.fetch()
+				.intoSet(r -> new CommitHash(r.getHash()));
 		}
 	}
 
