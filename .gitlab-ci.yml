@@ -12,7 +12,7 @@ compile-backend:
     expire_in: "1 day"
     paths:
       - "backend/backend/target/backend.jar"
-      - "backend/runner/target/backend.jar"
+      - "backend/runner/target/runner.jar"
 
   # Cache maven deps
   cache:
