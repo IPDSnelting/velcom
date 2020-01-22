@@ -61,7 +61,7 @@ export class RepoStore extends VxModule {
   async addRepo(payload: {
     repoName: string
     remoteUrl: string
-    repoToken: string
+    repoToken: string | undefined
   }) {
     return axios
       .post('/repo', {

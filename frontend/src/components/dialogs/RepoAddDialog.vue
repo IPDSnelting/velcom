@@ -61,7 +61,7 @@ export default class RepoAddDialog extends Vue {
       .addRepo({
         repoName: this.repoName,
         remoteUrl: this.remoteUrl,
-        repoToken: this.repoToken
+        repoToken: this.repoToken.length === 0 ? undefined : this.repoToken
       })
       .then(it => {
         this.$emit('value', it)
