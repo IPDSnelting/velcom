@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+
+# Fail if any command inside fails
+set -e
+
 function copyToServer() {
     echo "Copying $1 to $CD_URL at location $2"
     scp -P "$CD_PORT" "$1" "$CD_USER@$CD_URL:$2"
