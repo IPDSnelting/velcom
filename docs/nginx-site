@@ -1,3 +1,8 @@
+# This config listens on higher ports so nginx can be run without root
+# This is helpful as a root docker container with kinda breached credentials
+# (gitlab CI/CD) on my VPS sends the wrong kind of shivers down my spine.
+# Now it is at least somewhat harder to escape and take over my VPS...
+
 # Frontend
 server {
    server_name "aaaaaaah.de";
@@ -12,7 +17,7 @@ server {
    }
 
    # Base entry for the browser so on port 80
-   listen 80;
+   listen 9080;
 }
 
 # Backend
@@ -32,7 +37,7 @@ server {
       proxy_pass              http://127.0.0.1:8080;
    }
 
-   listen 81;
+   listen 9081;
 }
 
 # Runner connection port
@@ -52,5 +57,5 @@ server {
       proxy_pass              http://127.0.0.1:3546;
    }
 
-   listen 82;
+   listen 9082;
 }
