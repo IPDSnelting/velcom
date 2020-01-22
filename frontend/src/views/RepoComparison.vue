@@ -132,7 +132,7 @@ import { Watch } from 'vue-property-decorator'
 import { vxm } from '../store/index'
 import RepoAddDialog from '../components/dialogs/RepoAddDialog.vue'
 import RepoSelector from '../components/RepoSelector.vue'
-import { Repo } from '../store/types'
+import { Repo, MeasurementID } from '../store/types'
 import { mdiCalendar } from '@mdi/js'
 
 @Component({
@@ -170,11 +170,40 @@ export default class RepoComparison extends Vue {
   }
 
   get occuringBenchmarks(): string[] {
-    return vxm.repoModule.occuringBenchmarks
+    var benchmarks: string[] = []
+    vxm.repoComparisonModule.selectedRepos.forEach(repoId => {
+      let repo: Repo | undefined = vxm.repoModule.repoByID(repoId)
+      if (repo) {
+        var measurements: MeasurementID[] = repo.measurements
+        measurements.forEach(measurement => {
+          if (!benchmarks.includes(measurement.benchmark)) {
+            benchmarks.push(measurement.benchmark)
+          }
+        })
+      }
+    })
+    return benchmarks
   }
 
   get metricsForBenchmark(): (benchmark: string) => string[] {
-    return (benchmark: string) => vxm.repoModule.metricsForBenchmark(benchmark)
+    return (benchmark: string) => {
+      var metrics: string[] = []
+      vxm.repoComparisonModule.selectedRepos.forEach(repoId => {
+        let repo: Repo | undefined = vxm.repoModule.repoByID(repoId)
+        if (repo) {
+          var measurements = repo.measurements
+          measurements.forEach(measurement => {
+            if (
+              measurement.benchmark === benchmark &&
+              !metrics.includes(measurement.metric)
+            ) {
+              metrics.push(measurement.metric)
+            }
+          })
+        }
+      })
+      return metrics
+    }
   }
 
   get isAdmin(): boolean {
