@@ -1,5 +1,8 @@
 # Frontend
 server {
+   root "/home/velcom/frontend";
+   index index.html;
+
    location / {
       # Ensure index.html is served for all requests, as
       # vue-router is in history mode
