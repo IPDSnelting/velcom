@@ -7,6 +7,7 @@ import de.aaaaaaah.velcom.backend.access.repo.exception.NoSuchRepoException;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * A git commit.
@@ -100,4 +101,23 @@ public class Commit {
 			", hash=" + hash +
 			'}';
 	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) {
+			return true;
+		}
+		if (o == null || getClass() != o.getClass()) {
+			return false;
+		}
+		Commit commit = (Commit) o;
+		return repoId.equals(commit.repoId) &&
+			hash.equals(commit.hash);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(repoId, hash);
+	}
+
 }

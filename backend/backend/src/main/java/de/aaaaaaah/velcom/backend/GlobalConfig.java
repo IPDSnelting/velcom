@@ -45,6 +45,9 @@ public class GlobalConfig extends Configuration {
 
 	private double significantFactor;
 
+	@NotEmpty
+	private String repoDir;
+
 	public GlobalConfig() {
 		RunnerAwareServerFactory.getInstance().setConfig(this);
 		RunnerAwareServerFactory.getInstance().setServerFactory(super.getServerFactory());
@@ -135,6 +138,13 @@ public class GlobalConfig extends Configuration {
 	 */
 	public double getSignificantFactor() {
 		return significantFactor;
+	}
+
+	/**
+	 * @return the path to the directory where all local repositories will be placed in
+	 */
+	public String getRepoDir() {
+		return repoDir;
 	}
 
 	@Override
