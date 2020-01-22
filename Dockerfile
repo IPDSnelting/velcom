@@ -5,17 +5,17 @@ FROM openjdk:11-slim
 RUN apt update && apt install nginx -y
 
 # Preconfigured nginx configs for development on aaaaaaah.de
-COPY docs/nginx-site /etc/nginx/sites-available
-COPY docs/nginx.conf /etc/nginx/nginx.conf
+COPY nginx-site /etc/nginx/sites-available
+COPY nginx.conf /etc/nginx/nginx.conf
 
 RUN ["ln", "-s", "/etc/nginx/sites-available/nginx-site", "/etc/nginx/sites-enabled"]
 RUN ["rm", "/etc/nginx/sites-enabled/default"]
 
-COPY docs/start-backend-docker.sh /home/velcom/start.sh
+COPY start-backend-docker.sh /home/velcom/start.sh
 
 # Include backend files
-COPY backend/backend/target/backend.jar /home/velcom/velcom.jar
-COPY frontend/dist /home/velcom/frontend
+COPY backend.jar /home/velcom/velcom.jar
+COPY dist /home/velcom/frontend
 
 # Expose the config dir
 VOLUME ["/home/velcom/config"]
