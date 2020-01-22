@@ -67,23 +67,58 @@
           <v-card-text>
             <v-container fluid>
               <v-row align="start" justify="space-around">
-                <v-col md="5" sm="12" xs="12" class="d-flex">
-                  <v-select
-                    class="mr-5"
-                    :items="occuringBenchmarks"
-                    v-model="selectedBenchmark"
-                    label="benchmark"
-                  ></v-select>
-                  <v-select
-                    :items="metricsForBenchmark(this.selectedBenchmark)"
-                    v-model="selectedMetric"
-                    label="metric"
-                  ></v-select>
+                <v-col md="5" sm="12" xs="12">
+                  <v-row>
+                    <v-select
+                      class="mr-5"
+                      :items="occuringBenchmarks"
+                      v-model="selectedBenchmark"
+                      label="benchmark"
+                    ></v-select>
+                    <v-select
+                      class="mr-5"
+                      :items="metricsForBenchmark(this.selectedBenchmark)"
+                      v-model="selectedMetric"
+                      label="metric"
+                    ></v-select>
+                  </v-row>
                 </v-col>
-                <v-col md="5" sm="12" xs="12" class="d-flex">
-                  <v-text-field v-model="amount" label="number of commits to fetch" class="mr-5"></v-text-field>
-                  <v-text-field v-model="skip" label="number of commits to skip"></v-text-field>
+                <v-col md="5" sm="12" xs="12">
+                  <v-form v-model="formValid" ref="form">
+                    <template>
+                      <v-row>
+                        <v-text-field
+                          v-model="amount"
+                          :rules="[nonEmptyRunAmount, nonNegativeRunAmount, onlyNumericInput]"
+                          label="number of commits to fetch"
+                          class="mr-5"
+                        ></v-text-field>
+                        <v-text-field
+                          v-model="skip"
+                          :rules="[nonEmptyRunAmount, nonNegativeRunAmount, onlyNumericInput]"
+                          label="number of commits to skip"
+                          class="mr-5"
+                        ></v-text-field>
+                      </v-row>
+                    </template>
+                  </v-form>
                 </v-col>
+              </v-row>
+            </v-container>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+    <v-row align="baseline" justify="center">
+      <v-col>
+        <v-card>
+          <v-card-title>
+            <v-toolbar color="primary" dark>Benchmarked commits</v-toolbar>
+          </v-card-title>
+          <v-card-text>
+            <v-container fluid>
+              <v-row align="center">
+                <run-overview :runs="repoRuns"></run-overview>
               </v-row>
             </v-container>
           </v-card-text>
@@ -97,20 +132,25 @@
 import Vue from 'vue'
 import { Repo } from '@/store/types'
 import Component from 'vue-class-component'
+import { Watch } from 'vue-property-decorator'
 import RepoUpdateDialog from '../components/dialogs/RepoUpdateDialog.vue'
+import RunOverview from '../components/overviews/RunOverview.vue'
 import { vxm } from '../store/index'
 
 @Component({
   components: {
-    'repo-update': RepoUpdateDialog
+    'repo-update': RepoUpdateDialog,
+    'run-overview': RunOverview
   }
 })
 export default class RepoDetail extends Vue {
   private selectedBenchmark: string = ''
   private selectedMetric: string = ''
 
-  private amount: number = 10
-  private skip: number = 0
+  private formValid: boolean = true
+
+  private amount: string = '10'
+  private skip: string = '0'
 
   private get id() {
     return this.$route.params.id
@@ -158,6 +198,10 @@ export default class RepoDetail extends Vue {
       )
   }
 
+  private get repoRuns() {
+    return vxm.repoDetailModule.repoRuns(this.id)
+  }
+
   private comparatorTrackStatus(branchA: string, branchB: string) {
     const aTracked = this.isBranchTracked(branchA)
     const bTracked = this.isBranchTracked(branchB)
@@ -185,8 +229,41 @@ export default class RepoDetail extends Vue {
     }
   }
 
+  private get payload(): { id: string; amount: number; skip: number } {
+    return {
+      id: this.id,
+      amount: Number(this.amount),
+      skip: Number(this.skip)
+    }
+  }
+
+  private nonEmptyRunAmount(input: string): boolean | string {
+    return input.length > 0 ? true : 'This field must not be empty!'
+  }
+
+  private nonNegativeRunAmount(input: string): boolean | string {
+    return Number(input) >= 0 ? true : 'Input must be a non negative number!'
+  }
+
+  private onlyNumericInput(input: string): boolean | string {
+    return !isNaN(Number(input)) ? true : 'Input must be a number!'
+  }
+
+  @Watch('id')
+  @Watch('amount')
+  @Watch('skip')
+  retrieveRuns() {
+    if (this.formValid) {
+      vxm.repoDetailModule.fetchRepoDatapoints(this.payload)
+    }
+  }
+
   private get repo(): Repo {
     return vxm.repoModule.repoByID(this.id)!
+  }
+
+  created() {
+    vxm.repoDetailModule.fetchRepoDatapoints(this.payload)
   }
 }
 </script>
