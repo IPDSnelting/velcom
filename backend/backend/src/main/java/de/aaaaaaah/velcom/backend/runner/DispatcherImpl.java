@@ -227,8 +227,8 @@ public class DispatcherImpl implements Dispatcher {
 			freeRunners.size(), getKnownRunners().size()
 		);
 
-		while (!freeRunners.isEmpty()) {
-			ActiveRunnerInformation runner = freeRunners.poll();
+		ActiveRunnerInformation runner;
+		while ((runner = freeRunners.poll()) != null) {
 			Optional<Commit> nextTask = queue.getNextTask();
 			if (nextTask.isEmpty()) {
 				// no task for runner available, add it back to freeRunners
