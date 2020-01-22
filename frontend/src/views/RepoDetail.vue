@@ -89,6 +89,7 @@
                       <v-row>
                         <v-text-field
                           v-model="amount"
+                          validate-on-blur
                           :rules="[nonEmptyRunAmount, nonNegativeRunAmount, onlyNumericInput]"
                           label="number of commits to fetch"
                           class="mr-5"
@@ -117,9 +118,6 @@
           </v-card-title>
           <v-card-text>
             <v-container fluid>
-              <v-row align="center">
-                <run-overview :runs="repoRuns"></run-overview>
-              </v-row>
             </v-container>
           </v-card-text>
         </v-card>
@@ -139,8 +137,7 @@ import { vxm } from '../store/index'
 
 @Component({
   components: {
-    'repo-update': RepoUpdateDialog,
-    'run-overview': RunOverview
+    'repo-update': RepoUpdateDialog
   }
 })
 export default class RepoDetail extends Vue {
