@@ -7,6 +7,7 @@
     - [Installation guide](#installation-guide)
     - [Starting VelCom](#starting-velcom)
     - [Configuring the web server](#configuring-the-web-server)
+    - [Using the REST-API manually](#using-the-rest-api-manually)
 
 <!-- markdown-toc end -->
 
