@@ -21,12 +21,15 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Repository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Provides the functionality to archive local repositories.
  */
 public class Archiver {
 
+	private static final Logger LOGGER = LoggerFactory.getLogger(Archiver.class);
 	private static final Path ARCHIVES_ROOT_DIR = Paths.get("data/archives/");
 
 	private final RepoStorage repoStorage;
@@ -38,6 +41,24 @@ public class Archiver {
 	 */
 	public Archiver(RepoStorage repoStorage) {
 		this.repoStorage = repoStorage;
+	}
+
+	/**
+	 * Tries to delete all local clones that were created for the archival of the local repository
+	 * referenced under {@code dirName} which were not automatically deleted because {@code
+	 * keepDeepClone} was set to {@code true} in {@link #archive(String, CommitHash, OutputStream,
+	 * boolean)}.
+	 *
+	 * @param dirName the directory name of the repository
+	 */
+	public synchronized void deleteArchives(String dirName) {
+		Path archivesDir = ARCHIVES_ROOT_DIR.resolve(dirName);
+
+		try {
+			DirectoryRemover.deleteDirectoryRecursive(archivesDir);
+		} catch (IOException e) {
+			LOGGER.warn("Failed to delete archives in: {}", archivesDir);
+		}
 	}
 
 	/**
@@ -55,7 +76,7 @@ public class Archiver {
 	 * 	archive process is finished
 	 * @throws ArchiveException if an error occurs while archiving or cloning the repository
 	 */
-	public void archive(String dirName, CommitHash commitHash, OutputStream out,
+	public synchronized void archive(String dirName, CommitHash commitHash, OutputStream out,
 		boolean keepDeepClone) throws ArchiveException {
 
 		try (out) {

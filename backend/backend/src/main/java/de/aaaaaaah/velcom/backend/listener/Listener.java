@@ -66,7 +66,7 @@ public class Listener {
 	}
 
 	private void update() {
-		repoAccess.fetchOrCloneBenchmarkRepo();
+		repoAccess.updateBenchmarkRepo();
 
 		for (Repo repo : repoAccess.getAllRepos()) {
 			try {

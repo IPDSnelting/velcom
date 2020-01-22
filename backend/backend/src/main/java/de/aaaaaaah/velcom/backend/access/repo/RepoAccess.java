@@ -194,9 +194,17 @@ public class RepoAccess {
 	 *
 	 * @throws RepoAccessException if an error occurs during the fetch/clone operation
 	 */
-	public void fetchOrCloneBenchmarkRepo() throws RepoAccessException {
+	public void updateBenchmarkRepo() throws RepoAccessException {
 		try {
+			final CommitHash oldHash = getLatestBenchmarkRepoHash();
 			fetchOrCloneLocalRepo(benchRepoDirName, benchRepoRemoteUrl);
+			final CommitHash newHash = getLatestBenchmarkRepoHash();
+
+			if (!oldHash.equals(newHash)) {
+				// benchmark repo was updated => remove old cloned archives since a new clone
+				// will be created with the newest hash once it is required.
+				archiver.deleteArchives(benchRepoDirName);
+			}
 		} catch (GitAPIException | RepositoryAcquisitionException | AddRepositoryException e) {
 			throw new RepoAccessException("failed to fetch/clone benchmark repo with remote url: "
 				+ benchRepoRemoteUrl, e);
