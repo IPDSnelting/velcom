@@ -39,6 +39,9 @@ Copy the `runner.jar` and `example_config.json` files to the location where the
 runner should run, modify the config file and start the runner. These commands
 assume you are in the base directory of the `velcom` repo.
 
+Each runner must have a unique name! If not, the server will disconnect the old
+runner as soon as a new runner with the same name connects.
+
 ```
 $ cp backend/runner/target/runner.jar install/dir/
 $ cp backend/runner/src/main/resources/example_config.json install/dir/config.json
@@ -89,3 +92,21 @@ The frontend loads an impressum from `/Impressum.html`, as well as CSS and
 scripts from the paths `/css` and `/js`, respectively. Those should direct to
 the files and directories `dist/Impressum.html`, `dist/css` and `dist/js`
 respectively.
+
+An example config for nginx that implements these rules can be found
+[in the `docs` directory](docs/nginx-site).
+
+## Using the REST-API manually
+
+The backend provides a REST-API for communication with the frontend. This setup
+makes it easy to write small scripts to interact with the backend using tools
+like `curl`. For a complete overview of the available endpoints, see the API's
+[openapi documentation](docs/rest_api_openapi.yaml). It was created using
+[Stoplight Studio](https://stoplight.io/studio/), so if you want to import and
+view the API there, use the [stoplight studio
+version](docs/rest_api_stoplight.yaml).
+
+The API uses JSON bodies and HTTP Basic authentication. To authenticate as web
+admin, use username `admin` and the web admin token as password. To authenticate
+as repo admin, use the repo id as username and the repo token as password. The
+web admin and repo tokens must have a length of at least 1.
