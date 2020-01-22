@@ -205,7 +205,9 @@ export default class RepoComparison extends Vue {
 
   @Watch('selectedMetric')
   retrieveGraphData() {
-    vxm.repoComparisonModule.fetchDatapoints(this.payload)
+    if (this.selectedMetric !== '') {
+      vxm.repoComparisonModule.fetchDatapoints(this.payload)
+    }
   }
 
   get repos() {

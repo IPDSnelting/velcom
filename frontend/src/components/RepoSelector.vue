@@ -66,6 +66,8 @@ export default class RepoSelector extends Vue {
   @Prop({})
   private index!: number
 
+  private notifyTimeout: number | undefined
+
   private selectedRepos: string[] = vxm.repoComparisonModule.selectedRepos
 
   get allRepos(): Repo[] {
@@ -91,7 +93,7 @@ export default class RepoSelector extends Vue {
 
   updateSelectedRepos() {
     vxm.repoComparisonModule.selectedRepos = this.selectedRepos
-    this.notifySelectionChanged()
+    this.debounce(this.notifySelectionChanged, 1000)()
   }
 
   updateSelectedBranchesForRepo(
@@ -103,10 +105,26 @@ export default class RepoSelector extends Vue {
       repoID: repoID,
       selectedBranches: checkedValues
     })
-    this.notifySelectionChanged()
+    this.debounce(this.notifySelectionChanged, 1000)()
+  }
+
+  debounce(func: Function, wait: number) {
+    return () => {
+      if (this.notifyTimeout) {
+        return
+      }
+      let context = this
+      let args = arguments
+      clearTimeout(this.notifyTimeout)
+      this.notifyTimeout = setTimeout(() => {
+        this.notifyTimeout = undefined
+        func.apply(context, args)
+      }, wait)
+    }
   }
 
   notifySelectionChanged() {
+    console.log('I changed :)')
     this.$emit('selectionChanged')
   }
 
