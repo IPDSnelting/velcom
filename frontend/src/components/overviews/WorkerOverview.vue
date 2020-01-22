@@ -1,5 +1,5 @@
 <template>
-  <v-container>
+  <v-container fluid class="pa-0">
     <v-row>
       <v-col v-for="worker in workers" :key="worker.name" cols="auto">
         <v-card v-if="!dense">
@@ -14,6 +14,11 @@
           </template>
           <span class="worker-description">{{ formatWorkerInformation(worker) }}</span>
         </v-tooltip>
+      </v-col>
+      <v-col class="subtitle-1 text-center" v-if="workers.length === 0">
+        <div class="font-weight-bold">No worker registered :(</div>
+        <span>I will not be able to benchmark anything!</span>
+        <br />I'd be grateful if you could spare a worker, I promise I will take good care of it!
       </v-col>
     </v-row>
   </v-container>

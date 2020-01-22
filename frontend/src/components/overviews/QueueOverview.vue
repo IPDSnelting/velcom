@@ -5,6 +5,7 @@
       :hide-default-footer="queueItems.length < defaultItemsPerPage"
       :items-per-page="defaultItemsPerPage"
       :footer-props="{ itemsPerPageOptions: itemsPerPageOptions }"
+      no-data-text="No commits are currently enqueued."
     >
       <template v-slot:default="props">
         <v-row>
