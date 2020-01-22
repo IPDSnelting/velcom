@@ -9,7 +9,7 @@ compile-backend:
   stage: build
 
   artifacts:
-    expire_in: "1 day"
+    expire_in: "1 hour"
     paths:
       - "backend/backend/target/backend.jar"
       - "backend/runner/target/runner.jar"
@@ -34,7 +34,7 @@ compile-frontend:
   image: velcom-frontend:latest
 
   artifacts:
-    expire_in: "1 day"
+    expire_in: "1 hour"
     paths:
       - "frontend/dist"
 
