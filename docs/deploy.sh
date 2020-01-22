@@ -23,6 +23,7 @@ copyToServer "backend/runner/target/runner.jar" "$DOCKER_SERVER_DIR"
 
 copyToServer "docs/nginx-site" "$DOCKER_SERVER_DIR"
 copyToServer "docs/nginx.conf" "$DOCKER_SERVER_DIR"
+copyToServer "docs/start-backend-docker.sh" "$DOCKER_SERVER_DIR"
 
 tar -cf dist.tar "frontend/dist"
 copyToServer "dist.tar" "$DOCKER_SERVER_DIR"
