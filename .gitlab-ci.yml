@@ -74,6 +74,10 @@ deploy:
     ##
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
 
+    ## Setup host key verification
+    - echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+
     ##
     ## Create the SSH directory and give it the right permissions
     ##
