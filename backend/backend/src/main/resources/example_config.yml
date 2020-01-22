@@ -23,3 +23,6 @@ disconnectedRunnerGracePeriodSeconds: 600
 # A commit becomes significant if it differs by more than significantFactor * previousValue from
 # the previous value
 significantFactor: 0.05 # A difference of 5%
+# The path to the directory where all local repositories will be placed in.
+# Can either be relative to the working directory or absolute.
+repoDir: "data/repos"

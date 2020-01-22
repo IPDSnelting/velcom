@@ -48,6 +48,15 @@ public class RepoStorage {
 	/**
 	 * Initializes a new repo storage.
 	 *
+	 * @param rootDirStr the directory where all repositories will be stored in
+	 */
+	public RepoStorage(String rootDirStr) throws IOException {
+		this(Paths.get(rootDirStr));
+	}
+
+	/**
+	 * Initializes a new repo storage.
+	 *
 	 * @param rootDir the directory where all repositories will be stored in
 	 */
 	public RepoStorage(Path rootDir) throws IOException {
