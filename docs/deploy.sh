@@ -6,7 +6,7 @@ function copyToServer() {
 
 function makeDirOnServer() {
     echo "Making dir $1"
-    ssh -p "$CD_PORT" "$CD_USER@$CD_URL" "mkdir -p $1"
+    echo "ssh -p $CD_PORT $CD_USER@$CD_URL mkdir -p $1"
 }
 
 makeDirOnServer "/home/pse_test/velcom"
