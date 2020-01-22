@@ -15,6 +15,8 @@ for file in *; do
     echo "$file:"
     ls -lah $file
 done
+ls -lah backend/backend || ls -lah backend
+ls -lah backend/backend/target
 
 makeDirOnServer "/home/pse_test/velcom"
 
