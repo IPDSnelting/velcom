@@ -25,6 +25,9 @@ import { vxm } from './store'
 export default class App extends Vue {
   created() {
     vxm.repoModule.fetchRepos()
+    this.$router.afterEach((from, to) => {
+      vxm.repoModule.fetchRepos()
+    })
   }
 }
 </script>
