@@ -326,6 +326,7 @@ public class DispatcherImpl implements Dispatcher {
 			runner.getConnectionManager().disconnect();
 			return false;
 		}
+		runner.getRunnerStateMachine().markAsMyCommit(commit);
 
 		String runnerBenchmarkCommitHash = runner.getRunnerInformation()
 			.get()
@@ -352,7 +353,7 @@ public class DispatcherImpl implements Dispatcher {
 				outputStream -> repoAccess.streamNormalRepoArchive(commit, outputStream)
 			);
 			return true;
-		} catch (IOException e) {
+		} catch (Throwable e) {
 			LOGGER.info("Dispatching commit not possible", e);
 			return false;
 		}

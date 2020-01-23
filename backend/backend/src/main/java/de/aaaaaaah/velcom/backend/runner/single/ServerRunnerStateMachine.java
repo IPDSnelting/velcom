@@ -79,7 +79,7 @@ public class ServerRunnerStateMachine {
 	 */
 	public void onWorkDone(BenchmarkResults results) {
 		runnerInformation.setResults(results);
-		runnerInformation.setCurrentCommit(null);
+		markAsMyCommit(null);
 	}
 
 	/**
@@ -90,7 +90,7 @@ public class ServerRunnerStateMachine {
 	 */
 	public void resetRunner(String reason) throws IOException {
 		runnerInformation.getConnectionManager().sendEntity(new ResetOrder(reason));
-		runnerInformation.setCurrentCommit(null);
+		markAsMyCommit(null);
 		switchState(new RunnerIdleState());
 	}
 
@@ -111,7 +111,7 @@ public class ServerRunnerStateMachine {
 			);
 		}
 		LOGGER.debug("Sending work {} to {}", workOrder, runnerInformation.getRunnerInformation());
-		runnerInformation.setCurrentCommit(commit);
+		markAsMyCommit(commit);
 		runnerInformation.getConnectionManager().sendEntity(workOrder);
 		try (var out = runnerInformation.getConnectionManager().createBinaryOutputStream()) {
 			writer.accept(out);
@@ -119,6 +119,15 @@ public class ServerRunnerStateMachine {
 			// TODO: 12.01.20 Make nicer catch
 			throw new IOException(e);
 		}
+	}
+
+	/**
+	 * Marks a given commit as the one this runner is working on.
+	 *
+	 * @param commit the commit or null if none
+	 */
+	public void markAsMyCommit(Commit commit) {
+		runnerInformation.setCurrentCommit(commit);
 	}
 
 	/**
