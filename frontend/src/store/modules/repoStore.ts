@@ -13,7 +13,9 @@ export class RepoStore extends VxModule {
 
   @action
   async fetchRepos() {
-    const response = await axios.get('/all-repos')
+    const response = await axios.get('/all-repos', {
+      snackbarTag: 'all repos'
+    })
 
     let repos: Array<Repo> = []
     let jsonData: Array<any> = response.data.repos

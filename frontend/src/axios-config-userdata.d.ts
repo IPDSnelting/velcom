@@ -35,11 +35,11 @@ declare module 'axios' {
     hideErrorFromSnackbar?: boolean
 
     /**
-     * Whether to hide the loading *AND* success snackbar message.
+     * The tag to append/prepend to messages for this request.
      *
      * @type {boolean}
      * @memberof AxiosRequestConfig
      */
-    snackbarMessage?: string
+    snackbarTag?: string
   }
 }

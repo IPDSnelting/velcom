@@ -31,14 +31,16 @@ axios.interceptors.request.use(function(config) {
 axios.interceptors.request.use(
   function(config) {
     if (!config.hideLoadingSnackbar && !config.hideFromSnackbar) {
-      vue.$globalSnackbar.setLoading()
+      let prefix = config.snackbarTag || ''
+      vue.$globalSnackbar.setLoading(prefix)
     }
     return config
   },
   function(error) {
     // Always display network errors
     if (!error.response) {
-      vue.$globalSnackbar.setError(extractErrorMessage(error))
+      let prefix = error.config.snackbarTag || ''
+      vue.$globalSnackbar.setError(prefix, extractErrorMessage(error))
     }
     return Promise.reject(error)
   }
@@ -51,13 +53,15 @@ axios.interceptors.response.use(
       !response.config.hideSuccessSnackbar &&
       !response.config.hideFromSnackbar
     ) {
-      vue.$globalSnackbar.finishedLoading()
+      let prefix = response.config.snackbarTag || ''
+      vue.$globalSnackbar.finishedLoading(prefix)
     }
     return response
   },
   function(error) {
-    if (!error.hideFromSnackbar && !error.hideFromSnackbar) {
-      vue.$globalSnackbar.setError(extractErrorMessage(error))
+    if (!error.config.hideFromSnackbar && !error.config.hideErrorSnackbar) {
+      let prefix = error.config.snackbarTag || ''
+      vue.$globalSnackbar.setError(prefix, extractErrorMessage(error))
     }
     return Promise.reject(error)
   }

@@ -22,21 +22,40 @@ export default class Snackbar extends Vue implements ISnackbar {
   private color: Color = 'error'
   private loading: boolean = false
 
-  setError(error: string) {
-    this.displayNormalText(error, 'error')
+  setError(tag: string, error: string) {
+    this.displayNormalText(this.appendTag(error, `'${tag}'`, ' for '), 'error')
   }
 
-  setSuccess(message: string) {
-    this.displayNormalText(message, 'success', 2 * 1000)
+  setSuccess(tag: string, message: string) {
+    this.displayNormalText(
+      this.appendTag(message, `(${tag})`),
+      'success',
+      2 * 1000
+    )
   }
 
-  setLoading() {
-    this.displayNormalText('Please stand by...', 'info')
+  setLoading(tag: string) {
+    this.displayNormalText(
+      this.appendTag('Please stand by, loading', `'${tag}'`) + '...',
+      'info',
+      60 * 60 * 1000
+    )
     this.loading = true
   }
 
-  finishedLoading() {
-    this.displayNormalText('Success!', 'success', 2 * 1000)
+  finishedLoading(tag: string) {
+    this.displayNormalText(
+      this.appendTag('Success', `'${tag}'`, ' for ') + '!',
+      'success',
+      2 * 1000
+    )
+  }
+
+  private appendTag(text: string, tag: string, interpolation?: string): string {
+    if (tag && tag.replace('()', '')) {
+      return text + (interpolation || ' ') + tag
+    }
+    return text
   }
 
   private displayNormalText(

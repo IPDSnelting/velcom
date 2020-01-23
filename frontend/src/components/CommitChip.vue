@@ -38,9 +38,12 @@ export default class CommitChip extends Vue {
     }
     navigator.clipboard
       .writeText(hash)
-      .then(it => this.$globalSnackbar.setSuccess('Copied!'))
+      .then(it => this.$globalSnackbar.setSuccess('', 'Copied!'))
       .catch(error =>
-        this.$globalSnackbar.setError('Could not copy to clipboard :( ' + error)
+        this.$globalSnackbar.setError(
+          '',
+          'Could not copy to clipboard :( ' + error
+        )
       )
   }
 }
