@@ -117,7 +117,7 @@ like `curl`. For a complete overview of the available endpoints, see the API's
 [openapi documentation](docs/rest_api_openapi.yaml). It was created using
 [Stoplight Studio](https://stoplight.io/studio/), so if you want to import and
 view the API there, use the
-[stoplight studio version](docs/rest_api_stoplight.yaml).
+[stoplight studio version](docs/rest_api_stoplight_studio.yaml).
 
 The API uses JSON bodies and HTTP Basic authentication. To authenticate as web
 admin, use username `admin` and the web admin token as password. To authenticate
