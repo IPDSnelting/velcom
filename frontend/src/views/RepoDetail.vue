@@ -31,7 +31,7 @@
                         outlined
                         label
                         v-on="on"
-                        :color="isBranchTracked(branch) ? 'primary' : 'accent'"
+                        :color="isBranchTracked(branch) ? 'success' : 'error'"
                       >{{ branch }}</v-chip>
                     </template>
                     {{ isBranchTracked(branch) ? 'Tracked' : 'Not Tracked' }}
