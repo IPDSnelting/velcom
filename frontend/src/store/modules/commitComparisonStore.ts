@@ -18,7 +18,7 @@ export class CommitComparisonStore extends VxModule {
    * @param {{
    *     repoId: string
    *     first: string
-   *     second: string
+   *     second: string | undefined
    *   }} payload the playload to fetch
    * @returns {Promise<CommitComparison>} a promise resolving to
    * the comparison
@@ -28,9 +28,9 @@ export class CommitComparisonStore extends VxModule {
   async fetchCommitComparison(payload: {
     repoId: string
     first: string
-    second: string
+    second: string | undefined
   }): Promise<CommitComparison> {
-    const response = await axios.get('/all-repos', {
+    const response = await axios.get('/commit-compare', {
       params: {
         repo_id: payload.repoId,
         first_commit_hash: payload.first,
@@ -97,11 +97,15 @@ export class CommitComparisonStore extends VxModule {
       if (!comparisons) {
         return null
       }
-      let comparison = comparisons.find(
-        comparison =>
+      let comparison = comparisons.find(comparison => {
+        if (!comparison.first || !comparison.second) {
+          return false
+        }
+        return (
           comparison.first.commit.hash === first &&
           comparison.second.commit.hash === second
-      )
+        )
+      })
       return comparison || null
     }
   }

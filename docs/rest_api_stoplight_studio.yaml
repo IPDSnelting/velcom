@@ -214,15 +214,14 @@ paths:
                 type: object
                 properties:
                   commits:
-                    type: object
-                    required:
-                      - commit
-                      - comparison
-                    properties:
-                      commit:
-                        $ref: '#/components/schemas/Commit'
-                      comparison:
-                        $ref: '#/components/schemas/CommitComparison'
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        commit:
+                          $ref: '#/components/schemas/Commit'
+                        comparison:
+                          $ref: '#/components/schemas/CommitComparison'
                 required:
                   - commits
       operationId: get-repo-detail-graph

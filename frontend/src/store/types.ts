@@ -124,11 +124,15 @@ export class Difference {
 }
 
 export class CommitComparison {
-  first: Run
-  second: Run
-  differences: Array<Difference>
+  first: Run | null
+  second: Run | null
+  differences: Difference[]
 
-  constructor(first: Run, second: Run, differences: Array<Difference>) {
+  constructor(
+    first: Run | null,
+    second: Run | null,
+    differences: Array<Difference>
+  ) {
     this.first = first
     this.second = second
     this.differences = differences

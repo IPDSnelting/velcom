@@ -191,8 +191,8 @@ export class NewsStore extends VxModule {
   get recentRuns(): Run[] {
     let runs: Run[] = []
     this._recentRuns.forEach(comparison => {
-      if (runs.indexOf(comparison.first) === -1) {
-        runs.push(comparison.first)
+      if (runs.indexOf(comparison.second!) === -1) {
+        runs.push(comparison.second!)
       }
     })
     return runs
@@ -208,8 +208,8 @@ export class NewsStore extends VxModule {
   get recentSignificantRuns(): Run[] {
     let runs: Run[] = []
     this._recentSignificantRuns.forEach(comparison => {
-      if (runs.indexOf(comparison.first) === -1) {
-        runs.push(comparison.first)
+      if (runs.indexOf(comparison.second!) === -1) {
+        runs.push(comparison.second!)
       }
     })
     return runs

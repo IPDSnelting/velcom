@@ -122,7 +122,26 @@
           <v-card-text>
             <v-container fluid>
               <v-row align="center">
-                <run-overview :runs="repoRuns"></run-overview>
+                <v-data-iterator
+                  :items="commitHistory"
+                  :hide-default-footer="commitHistory.length < defaultItemsPerPage"
+                  :items-per-page="defaultItemsPerPage"
+                  :footer-props="{ itemsPerPageOptions: itemsPerPageOptions }"
+                >
+                  <template v-slot:default="props">
+                    <v-row>
+                      <v-col
+                        cols="12"
+                        class="my-1 py-0"
+                        v-for="([commit, commitComparison], index) in props.items"
+                        :key="index"
+                      >
+                        <run-overview v-if="commitComparison.second" :run="commitComparison.second"></run-overview>
+                        <!-- <run-overview v-else :run="run"></run-overview> -->
+                      </v-col>
+                    </v-row>
+                  </template>
+                </v-data-iterator>
               </v-row>
             </v-container>
           </v-card-text>
@@ -155,6 +174,9 @@ export default class RepoDetail extends Vue {
 
   private amount: string = '10'
   private skip: string = '0'
+
+  private itemsPerPageOptions: number[] = [10, 20, 50, 100, 200, -1]
+  private defaultItemsPerPage: number = 20
 
   private get id() {
     return this.$route.params.id
@@ -202,8 +224,8 @@ export default class RepoDetail extends Vue {
       )
   }
 
-  private get repoRuns() {
-    return vxm.repoDetailModule.repoRuns(this.id)
+  private get commitHistory() {
+    return vxm.repoDetailModule.historyForRepoId(this.id)
   }
 
   private comparatorTrackStatus(branchA: string, branchB: string) {
@@ -233,9 +255,9 @@ export default class RepoDetail extends Vue {
     }
   }
 
-  private get payload(): { id: string; amount: number; skip: number } {
+  private get payload(): { repoId: string; amount: number; skip: number } {
     return {
-      id: this.id,
+      repoId: this.id,
       amount: Number(this.amount),
       skip: Number(this.skip)
     }
@@ -256,7 +278,7 @@ export default class RepoDetail extends Vue {
   @Watch('id')
   retrieveRuns() {
     if (this.$refs.form && (this.$refs.form as any).validate()) {
-      vxm.repoDetailModule.fetchRepoDatapoints(this.payload)
+      vxm.repoDetailModule.fetchHistoryForRepo(this.payload)
     }
   }
 
@@ -265,7 +287,7 @@ export default class RepoDetail extends Vue {
   }
 
   created() {
-    vxm.repoDetailModule.fetchRepoDatapoints(this.payload)
+    vxm.repoDetailModule.fetchHistoryForRepo(this.payload)
   }
 }
 </script>

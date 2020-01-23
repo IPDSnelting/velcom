@@ -8,7 +8,7 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { Commit } from '../store/types'
+import { Commit, CommitComparison } from '../store/types'
 import { vxm } from '../store'
 import CommitInformation from '../components/CommitInformation.vue'
 
@@ -24,6 +24,16 @@ export default class CommitDetail extends Vue {
 
   get hash() {
     return this.$route.params.hash
+  }
+
+  async fetchRun() {
+    let comparison: CommitComparison = await vxm.commitComparisonModule.fetchCommitComparison(
+      {
+        repoId: this.repoID,
+        first: this.hash,
+        second: undefined
+      }
+    )
   }
 
   get commit(): Commit {

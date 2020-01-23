@@ -54,7 +54,7 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { Commit } from '../store/types'
+import { Commit, Run } from '../store/types'
 import { Prop } from 'vue-property-decorator'
 import InlineMinimalRepoNameDisplay from './InlineMinimalRepoDisplay.vue'
 import CommitChip from './CommitChip.vue'
@@ -67,7 +67,11 @@ import CommitChip from './CommitChip.vue'
 })
 export default class CommitInformation extends Vue {
   @Prop()
-  private commit!: Commit
+  private run!: Run
+
+  private get commit(): Commit {
+    return this.run.commit
+  }
 
   private formatDate(date: number): string {
     let myDate = this.getDate(date)
