@@ -88,12 +88,16 @@
                     <template>
                       <v-row>
                         <v-text-field
+                          @blur="retrieveRuns"
+                          @keyup.enter="retrieveRuns"
                           v-model="amount"
                           :rules="[nonEmptyRunAmount, nonNegativeRunAmount, onlyNumericInput]"
                           label="number of commits to fetch"
                           class="mr-5"
                         ></v-text-field>
                         <v-text-field
+                          @blur="retrieveRuns"
+                          @keyup.enter="retrieveRuns"
                           v-model="skip"
                           :rules="[nonEmptyRunAmount, nonNegativeRunAmount, onlyNumericInput]"
                           label="number of commits to skip"
@@ -250,10 +254,8 @@ export default class RepoDetail extends Vue {
   }
 
   @Watch('id')
-  @Watch('amount')
-  @Watch('skip')
   retrieveRuns() {
-    if (this.formValid) {
+    if (this.$refs.form && (this.$refs.form as any).validate()) {
       vxm.repoDetailModule.fetchRepoDatapoints(this.payload)
     }
   }
