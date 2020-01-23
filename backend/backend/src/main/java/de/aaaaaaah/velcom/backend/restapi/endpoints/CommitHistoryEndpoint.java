@@ -7,15 +7,14 @@ import de.aaaaaaah.velcom.backend.access.repo.Repo;
 import de.aaaaaaah.velcom.backend.access.repo.RepoAccess;
 import de.aaaaaaah.velcom.backend.access.repo.RepoId;
 import de.aaaaaaah.velcom.backend.data.commitcomparison.CommitComparer;
-import de.aaaaaaah.velcom.backend.data.commitcomparison.CommitComparison;
 import de.aaaaaaah.velcom.backend.data.linearlog.LinearLog;
 import de.aaaaaaah.velcom.backend.data.linearlog.LinearLogException;
-import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonCommitComparison;
+import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonCommitHistoryEntry;
+import de.aaaaaaah.velcom.backend.util.Pair;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
@@ -72,34 +71,41 @@ public class CommitHistoryEndpoint {
 		Repo repo = repoAccess.getRepo(new RepoId(repoUuid));
 
 		try (Stream<Commit> stream = linearLog.walkBranches(repo, repo.getTrackedBranches())) {
-			List<CommitComparison> commitComparisons = new ArrayList<>();
+			List<JsonCommitHistoryEntry> commitComparisons = new ArrayList<>();
 
-			Optional<Run> nextRun = Optional.empty();
+			Optional<Pair<Commit, Optional<Run>>> nextCommit = Optional.empty();
 
 			final Stream<Commit> limitedStream = stream.skip(skip).limit(amount + 1);
 			for (Commit commit : (Iterable<Commit>) limitedStream::iterator) {
 				final Optional<Run> run = benchmarkAccess.getLatestRunOf(commit);
-				nextRun.ifPresent(
-					value -> commitComparisons.add(comparer.compare(run.orElse(null), value)));
-				nextRun = run;
+				// Building pyramids...
+				nextCommit.ifPresent(
+					commitOptionalPair -> commitComparisons.add(
+						new JsonCommitHistoryEntry(
+							commitOptionalPair.getFirst(),
+							comparer.compare(
+								run.orElse(null),
+								commitOptionalPair.getSecond().orElse(null)
+							)
+						)
+					)
+				);
+				nextCommit = Optional.of(new Pair<>(commit, run));
 			}
 
-			final List<JsonCommitComparison> jsonComparisons = commitComparisons.stream()
-				.map(JsonCommitComparison::new)
-				.collect(Collectors.toUnmodifiableList());
-			return new GetReply(jsonComparisons);
+			return new GetReply(commitComparisons);
 		}
 	}
 
 	private static class GetReply {
 
-		private final List<JsonCommitComparison> commits;
+		private final List<JsonCommitHistoryEntry> commits;
 
-		public GetReply(List<JsonCommitComparison> commits) {
+		public GetReply(List<JsonCommitHistoryEntry> commits) {
 			this.commits = commits;
 		}
 
-		public List<JsonCommitComparison> getCommits() {
+		public List<JsonCommitHistoryEntry> getCommits() {
 			return commits;
 		}
 
