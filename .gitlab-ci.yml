@@ -3,7 +3,7 @@ default:
 
 stages:
   - build
-  - test
+  - deploy
 
 compile-backend:
   stage: build
@@ -53,6 +53,7 @@ compile-frontend:
     - keep
 
 deploy:
+  stage: deploy
   environment: "Keep"
   script:
     ##
