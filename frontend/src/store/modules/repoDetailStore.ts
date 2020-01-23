@@ -80,8 +80,6 @@ export class RepoDetailStore extends VxModule {
    * @memberof RepoDetailStore
    */
   get historyForRepoId(): (repoId: string) => [Commit, CommitComparison][] {
-    console.log(JSON.stringify(this.historyByRepoId))
-
     return (repoId: string) =>
       this.historyByRepoId[repoId] ? this.historyByRepoId[repoId] : []
   }

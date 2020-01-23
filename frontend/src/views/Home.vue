@@ -13,7 +13,7 @@
             <v-card-text>
               <v-container fluid>
                 <v-row align="baseline" justify="center">
-                  <run-overview :runs="recentSignificant"></run-overview>
+                  <multiple-run-overview :runs="recentSignificant"></multiple-run-overview>
                 </v-row>
                 <v-row align="baseline" justify="end">
                   <v-btn text color="primary" @click="recentSignificantAmount+=5">load more</v-btn>
@@ -32,7 +32,7 @@
             <v-card-text>
               <v-container fluid>
                 <v-row align="baseline" justify="center">
-                  <run-overview :runs="recent"></run-overview>
+                  <multiple-run-overview :runs="recent"></multiple-run-overview>
                 </v-row>
                 <v-row align="baseline" justify="end">
                   <v-btn text color="primary" @click="recentAmount+=10">load more</v-btn>
@@ -50,13 +50,13 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Watch } from 'vue-property-decorator'
-import RunOverview from '../components/overviews/RunOverview.vue'
 import { vxm } from '../store/index'
 import { Run } from '@/store/types'
+import MultipleRunOverview from '../components/overviews/MultipleRunOverview.vue'
 
 @Component({
   components: {
-    'run-overview': RunOverview
+    'multiple-run-overview': MultipleRunOverview
   }
 })
 export default class Home extends Vue {
