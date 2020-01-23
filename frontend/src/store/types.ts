@@ -68,7 +68,7 @@ export class Commit {
   committer: string | null
   committerDate: number | number
   message: string | null
-  parents: Array<string>
+  parents: string[]
 
   constructor(
     repoID: string,

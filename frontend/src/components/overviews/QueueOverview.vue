@@ -56,13 +56,7 @@
                         <v-container fluid class="ma-0 pa-0">
                           <v-row no-gutters align="center" justify="space-between">
                             <v-col>
-                              <v-chip
-                                outlined
-                                label
-                                color="accent"
-                                class="commit-hash-chip"
-                                @click="copyToClipboard(commit.hash)"
-                              >{{ commit.hash }}</v-chip>
+                              <commit-chip :commit="commit"></commit-chip>
                             </v-col>
                             <span>
                               <v-btn
@@ -99,10 +93,12 @@ import { vxm } from '@/store/index'
 import { Commit, Worker } from '@/store/types'
 import InlineMinimalRepoNameDisplay from '../InlineMinimalRepoDisplay.vue'
 import { mdiRocket, mdiDelete } from '@mdi/js'
+import CommitChip from '../CommitChip.vue'
 
 @Component({
   components: {
-    'repo-display': InlineMinimalRepoNameDisplay
+    'repo-display': InlineMinimalRepoNameDisplay,
+    'commit-chip': CommitChip
   }
 })
 export default class QueueOverview extends Vue {
@@ -141,20 +137,6 @@ export default class QueueOverview extends Vue {
     // TODO: remove clamping
     myDate.setTime((Math.abs(date) % 1.8934156e9) * 1000)
     return myDate
-  }
-
-  private copyToClipboard(hash: string) {
-    let selection = window.getSelection()
-    if (selection && selection.toString() !== '') {
-      // Do not overwrite user text selection
-      return
-    }
-    navigator.clipboard
-      .writeText(hash)
-      .then(it => this.$globalSnackbar.setSuccess('Copied!'))
-      .catch(error =>
-        this.$globalSnackbar.setError('Could not copy to clipboard :( ' + error)
-      )
   }
 
   private liftToFront(commit: Commit, event: Event) {
