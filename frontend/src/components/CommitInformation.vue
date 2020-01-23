@@ -21,13 +21,13 @@
             <v-card-text class="body-1">
               <span class="font-weight-bold">{{ commit.author }}</span> authored at
               <span
-                :title="formatDateUTC(commit.authorDate)"
-              >{{ formatDate(commit.authorDate) }}</span>
+                :title="formattedDateUTC(commit.authorDate)"
+              >{{ formattedDate(commit.authorDate) }}</span>
               <br />
               <span class="font-weight-bold">{{ commit.committer }}</span> committed at
               <span
-                :title="formatDateUTC(commit.committerDate)"
-              >{{ formatDate(commit.committerDate) }}</span>
+                :title="formattedDateUTC(commit.commiterDate)"
+              >{{ formattedDate(commit.commiterDate) }}</span>
               <br />
               <div class="mt-5 commit-detail-message">{{ restOfCommitMessage.trim() }}</div>
 
@@ -58,6 +58,7 @@ import { Commit, Run } from '../store/types'
 import { Prop } from 'vue-property-decorator'
 import InlineMinimalRepoNameDisplay from './InlineMinimalRepoDisplay.vue'
 import CommitChip from './CommitChip.vue'
+import { formatDate, formatDateUTC } from '@/util/TimeUtil'
 
 @Component({
   components: {
@@ -69,27 +70,16 @@ export default class CommitInformation extends Vue {
   @Prop()
   private run!: Run
 
+  private formattedDate(date: number) {
+    return formatDate(date)
+  }
+
+  private formattedDateUTC(date: number) {
+    return formatDateUTC(date)
+  }
+
   private get commit(): Commit {
     return this.run.commit
-  }
-
-  private formatDate(date: number): string {
-    let myDate = this.getDate(date)
-
-    return myDate.toLocaleString()
-  }
-
-  private formatDateUTC(date: number): string {
-    let myDate = this.getDate(date)
-
-    return myDate.toUTCString()
-  }
-
-  private getDate(date: number): Date {
-    let myDate = new Date()
-    // TODO: remove clamping
-    myDate.setTime((Math.abs(date) % 1.8934156e9) * 1000)
-    return myDate
   }
 
   private get commitSummary(): string {

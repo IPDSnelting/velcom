@@ -32,8 +32,8 @@
                           <span class="author">{{ commit.author }}</span> authored on
                           <span
                             class="time"
-                            :title="formatDateUTC(commit.authorDate)"
-                          >{{ formatDate(commit.authorDate) }}</span>
+                            :title="formattedDateUTC(commit.authorDate)"
+                          >{{ formattedDate(commit.authorDate) }}</span>
                         </v-list-item-subtitle>
                         <v-list-item-content v-if="getWorker(commit)">
                           <v-tooltip top>
@@ -94,6 +94,7 @@ import { Commit, Worker } from '@/store/types'
 import InlineMinimalRepoNameDisplay from '../InlineMinimalRepoDisplay.vue'
 import { mdiRocket, mdiDelete } from '@mdi/js'
 import CommitChip from '../CommitChip.vue'
+import { formatDateUTC, formatDate } from '../../util/TimeUtil'
 
 @Component({
   components: {
@@ -116,27 +117,16 @@ export default class QueueOverview extends Vue {
     return openTasks
   }
 
+  private formattedDateUTC(date: number) {
+    return formatDateUTC(date)
+  }
+
+  private formattedDate(date: number) {
+    return formatDate(date)
+  }
+
   private inProgress(commit: Commit) {
     return vxm.queueModule.openTasks.indexOf(commit) < 0
-  }
-
-  private formatDate(date: number): string {
-    let myDate = this.getDate(date)
-
-    return myDate.toLocaleString()
-  }
-
-  private formatDateUTC(date: number): string {
-    let myDate = this.getDate(date)
-
-    return myDate.toUTCString()
-  }
-
-  private getDate(date: number): Date {
-    let myDate = new Date()
-    // TODO: remove clamping
-    myDate.setTime((Math.abs(date) % 1.8934156e9) * 1000)
-    return myDate
   }
 
   private liftToFront(commit: Commit, event: Event) {

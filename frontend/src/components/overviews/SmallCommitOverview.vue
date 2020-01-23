@@ -12,10 +12,7 @@
               </v-list-item-title>
               <v-list-item-subtitle>
                 <span class="author">{{ commit.author }}</span> authored on
-                <span
-                  class="time"
-                  :title="formatDateUTC(commit.authorDate)"
-                >{{ formatDate(commit.authorDate) }}</span>
+                <span class="time" :title="formattedDateUTC">{{ formattedDate }}</span>
               </v-list-item-subtitle>
             </v-col>
             <v-col>
@@ -38,9 +35,10 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
-import { Commit } from 'vuex'
 import InlineMinimalRepoNameDisplay from '../InlineMinimalRepoDisplay.vue'
 import CommitChip from '../CommitChip.vue'
+import { formatDate, formatDateUTC } from '@/util/TimeUtil'
+import { Commit } from '../../store/types'
 
 @Component({
   components: {
@@ -52,23 +50,12 @@ export default class SmallCommitOverview extends Vue {
   @Prop()
   private commit!: Commit
 
-  private formatDate(date: number): string {
-    let myDate = this.getDate(date)
-
-    return myDate.toLocaleString()
+  get formattedDate() {
+    return formatDate(this.commit.authorDate || 0)
   }
 
-  private formatDateUTC(date: number): string {
-    let myDate = this.getDate(date)
-
-    return myDate.toUTCString()
-  }
-
-  private getDate(date: number): Date {
-    let myDate = new Date()
-    // TODO: remove clamping
-    myDate.setTime((Math.abs(date) % 1.8934156e9) * 1000)
-    return myDate
+  get formattedDateUTC() {
+    return formatDateUTC(this.commit.authorDate || 0)
   }
 }
 </script>

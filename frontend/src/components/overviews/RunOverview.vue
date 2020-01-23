@@ -9,7 +9,7 @@
                 <repo-display :repoId="run.commit.repoID"></repo-display>
                 <span class="mx-2">—</span>
                 <router-link
-                  class="ml-3 mx-auto"
+                  class="mx-auto"
                   :to="{ name: 'commit-detail', params: { repoID: run.commit.repoID, hash: run.commit.hash } }"
                   tag="button"
                 >
@@ -18,10 +18,7 @@
               </v-list-item-title>
               <v-list-item-subtitle>
                 <span class="author">{{ run.commit.author }}</span> authored on
-                <span
-                  class="time"
-                  :title="formatDateUTC(run.commit.authorDate)"
-                >{{ formatDate(run.commit.authorDate) }}</span>
+                <span class="time" :title="formattedDateUTC">{{ formattedDate }}</span>
               </v-list-item-subtitle>
             </v-col>
             <v-col>
@@ -49,6 +46,7 @@ import { vxm } from '@/store/index'
 import { Commit, Run } from '@/store/types'
 import InlineMinimalRepoNameDisplay from '../InlineMinimalRepoDisplay.vue'
 import CommitChip from '../CommitChip.vue'
+import { formatDate, formatDateUTC } from '@/util/TimeUtil'
 
 @Component({
   components: {
@@ -60,23 +58,12 @@ export default class RunOverview extends Vue {
   @Prop({})
   private run!: Run
 
-  private formatDate(date: number): string {
-    let myDate = this.getDate(date)
-
-    return myDate.toLocaleString()
+  get formattedDate() {
+    return formatDate(this.run.commit.authorDate || 0)
   }
 
-  private formatDateUTC(date: number): string {
-    let myDate = this.getDate(date)
-
-    return myDate.toUTCString()
-  }
-
-  private getDate(date: number): Date {
-    let myDate = new Date()
-    // TODO: remove clamping
-    myDate.setTime((Math.abs(date) % 1.8934156e9) * 1000)
-    return myDate
+  get formattedDateUTC() {
+    return formatDateUTC(this.run.commit.authorDate || 0)
   }
 }
 </script>
