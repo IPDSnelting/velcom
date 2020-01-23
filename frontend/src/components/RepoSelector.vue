@@ -124,7 +124,6 @@ export default class RepoSelector extends Vue {
   }
 
   notifySelectionChanged() {
-    console.log('I changed :)')
     this.$emit('selectionChanged')
   }
 
