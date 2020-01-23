@@ -27,7 +27,7 @@
                     </v-row>
                     <v-row align="center" justify="center">
                       <ul>
-                        <li>benchmarks software in the long trem</li>
+                        <li>benchmarks software in the long term</li>
                         <li>manages repositories and commits in an intelligent manner</li>
                         <li>provides appealing visualisations of benchmarks</li>
                         <li>is easy to set up</li>
