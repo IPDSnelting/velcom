@@ -110,11 +110,19 @@ export default class About extends Vue {
   }
 
   async mounted() {
-    let response = await axios.get(this.impressumLocation)
-
-    if (response.status === 200) {
-      this.htmlImpressum = response.data
-    }
+    axios.get(this.impressumLocation).then(response => {
+      axios
+        .get(this.impressumLocation + 'random')
+        .then(randomResponse => {
+          if (
+            response.status === 200 &&
+            response.data !== randomResponse.data
+          ) {
+            this.htmlImpressum = response.data
+          }
+        })
+        .catch(() => (this.htmlImpressum = response.data))
+    })
   }
 }
 </script>
