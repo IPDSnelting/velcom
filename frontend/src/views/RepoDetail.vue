@@ -137,7 +137,7 @@
                         :key="index"
                       >
                         <run-overview v-if="commitComparison.second" :run="commitComparison.second"></run-overview>
-                        <!-- <run-overview v-else :run="run"></run-overview> -->
+                        <commit-overview v-else :commit="commit"></commit-overview>
                       </v-col>
                     </v-row>
                   </template>
@@ -159,11 +159,13 @@ import { Watch } from 'vue-property-decorator'
 import RepoUpdateDialog from '../components/dialogs/RepoUpdateDialog.vue'
 import RunOverview from '../components/overviews/RunOverview.vue'
 import { vxm } from '../store/index'
+import SmallCommitOverview from '../components/overviews/SmallCommitOverview.vue'
 
 @Component({
   components: {
     'repo-update': RepoUpdateDialog,
-    'run-overview': RunOverview
+    'run-overview': RunOverview,
+    'commit-overview': SmallCommitOverview
   }
 })
 export default class RepoDetail extends Vue {
