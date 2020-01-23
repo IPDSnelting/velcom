@@ -47,4 +47,8 @@ export default class CommitChip extends Vue {
 </script>
 
 <style scoped>
+.commit-hash-chip {
+  font-family: monospace;
+  font-size: 0.8em;
+}
 </style>

@@ -228,11 +228,6 @@ export default class QueueOverview extends Vue {
   font-style: italic;
 }
 
-.commit-hash-chip {
-  font-family: monospace;
-  font-size: 0.8em;
-}
-
 .rocket:hover {
   animation: shake 4s linear;
   transform: translate3d(0, 0, 0);
