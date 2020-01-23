@@ -5,7 +5,7 @@
         <v-col>
           <v-card>
             <v-card-title>
-              <v-toolbar color="primary" dark>About VelCom</v-toolbar>
+              <v-toolbar color="darkPrim" dark>About VelCom</v-toolbar>
             </v-card-title>
             <v-card-text>
               <v-container fluid>
@@ -52,7 +52,7 @@
         <v-col>
           <v-card>
             <v-card-title>
-              <v-toolbar color="primary" dark>Impressum</v-toolbar>
+              <v-toolbar color="darkPrim" dark>Impressum</v-toolbar>
             </v-card-title>
             <v-card-text>
               <v-container fluid>

@@ -4,7 +4,7 @@
       <v-col>
         <v-card>
           <v-card-title>
-            <v-toolbar color="primary" dark>
+            <v-toolbar color="darkPrim" dark>
               {{ repo.name }}
               <span class="ml-5 subtitle-1">{{ repo.id }}</span>
             </v-toolbar>
@@ -62,7 +62,7 @@
       <v-col>
         <v-card>
           <v-card-title>
-            <v-toolbar color="primary" dark>Filter Data</v-toolbar>
+            <v-toolbar color="darkPrim" dark>Filter Data</v-toolbar>
           </v-card-title>
           <v-card-text>
             <v-container fluid>
@@ -113,7 +113,7 @@
       <v-col>
         <v-card>
           <v-card-title>
-            <v-toolbar color="primary" dark>Benchmarked commits</v-toolbar>
+            <v-toolbar color="darkPrim" dark>Benchmarked commits</v-toolbar>
           </v-card-title>
           <v-card-text>
             <v-container fluid>
