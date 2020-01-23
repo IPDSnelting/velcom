@@ -52,7 +52,7 @@ export default class Snackbar extends Vue implements ISnackbar {
   }
 
   private appendTag(text: string, tag: string, interpolation?: string): string {
-    if (tag && tag.replace('()', '')) {
+    if (tag && tag.replace('()', '').replace("''", '')) {
       return text + (interpolation || ' ') + tag
     }
     return text
