@@ -5,6 +5,8 @@
 
 - [VelCom](#velcom)
     - [Installation guide](#installation-guide)
+        - [The easy way™](#the-easy-way)
+        - [The hard way™](#the-hard-way)
     - [Starting VelCom](#starting-velcom)
     - [Configuring the web server](#configuring-the-web-server)
     - [Using the REST-API manually](#using-the-rest-api-manually)
@@ -17,6 +19,12 @@ Ensure that the following tools are installed on your system:
 - `make`
 - `maven`
 - `yarn`
+
+### The easy way™
+
+Run the `guided_install.py` script and follow its instructions.
+
+### The hard way™
 
 Configure the url and port the frontend uses for calling the backend's API. This
 command assumes you are in the base directory of the `velcom` repo.
