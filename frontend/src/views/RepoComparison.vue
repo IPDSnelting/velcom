@@ -8,7 +8,7 @@
         <v-col>
           <v-card>
             <v-card-title>
-              <v-toolbar color="darkPrim" dark>Filter Data</v-toolbar>
+              <v-toolbar color="primary darken-1" dark>Filter Data</v-toolbar>
             </v-card-title>
             <v-card-text>
               <v-container fluid>

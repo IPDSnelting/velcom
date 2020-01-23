@@ -5,12 +5,16 @@
         <v-col>
           <v-card>
             <v-card-title>
-              <v-toolbar color="darkPrim" dark>About VelCom</v-toolbar>
+              <v-toolbar color="primary darken-1" dark>About VelCom</v-toolbar>
             </v-card-title>
             <v-card-text>
-              <v-container fluid>
-                <v-row align="baseline" justify="center">
+              <v-container fluid class="ma-0 pa-0">
+                <v-row align="baseline" justify="center" no-gutters>
                   <v-col>
+                    <v-row no-gutters align="baseline" justify="center">
+                      <img src="@/assets/mini-logo.png" alt="logo" class="mb-5" />
+                      <img src="@/assets/logo.png" alt="logo" class="mb-5" />
+                    </v-row>
                     <v-row align="center" justify="center">
                       <p class="text-center">
                         "The name stands for 'Velocity Commit', and velocity is related to speed and
@@ -35,7 +39,7 @@
                     </v-row>
                     <v-row align="center" justify="center" class="mt-10">
                       <p>
-                        If you are interested in learning more about the people behind VelCom, please visit
+                        If you are interested in learning more about the maniacs behind VelCom, please visit
                         <a
                           href="https://www.aaaaaaah.de/"
                         >AAAAAAAH!</a>
@@ -52,7 +56,7 @@
         <v-col>
           <v-card>
             <v-card-title>
-              <v-toolbar color="darkPrim" dark>Impressum</v-toolbar>
+              <v-toolbar color="primary darken-1" dark>Impressum</v-toolbar>
             </v-card-title>
             <v-card-text>
               <v-container fluid>

@@ -3,7 +3,7 @@
     <v-container fluid>
       <v-card flat outlined max-width="380">
         <v-card-title>
-          <v-toolbar color="darkPrim" dark>Repositories</v-toolbar>
+          <v-toolbar color="primary darken-1" dark>Repositories</v-toolbar>
         </v-card-title>
         <v-card-text>
           <v-expansion-panels v-for="(repo, i) in allRepos" :key="i" multiple accordion flat>

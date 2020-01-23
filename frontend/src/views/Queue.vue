@@ -8,7 +8,7 @@
         <v-col>
           <v-card>
             <v-card-title>
-              <v-toolbar color="darkPrim" dark>Available Runners</v-toolbar>
+              <v-toolbar color="primary darken-1" dark>Available Runners</v-toolbar>
             </v-card-title>
             <v-card-text>
               <v-container fluid>
@@ -24,7 +24,7 @@
         <v-col>
           <v-card>
             <v-card-title>
-              <v-toolbar color="darkPrim" dark>Queued commits (in planned execution order)</v-toolbar>
+              <v-toolbar color="primary darken-1" dark>Queued commits (in planned execution order)</v-toolbar>
             </v-card-title>
             <v-card-text>
               <v-container fluid>

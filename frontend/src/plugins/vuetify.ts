@@ -7,17 +7,13 @@ export default new Vuetify({
   theme: {
     themes: {
       light: {
-        primary: '#7986cb',
+        primary: '#3f51b5',
         secondary: '#c51162', // '#8C9Eff',
         accent: '#1faa00',
         error: '#e53935',
         info: '#aab6fe',
         success: '#1faa00',
-        warning: '#e53935',
-        lightPrim: '#aab6fe',
-        lightSec: '#fd558f',
-        darkPrim: '#49599a',
-        darkSec: '#8e0038'
+        warning: '#e53935'
       }
     }
   },

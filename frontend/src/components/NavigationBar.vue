@@ -1,7 +1,20 @@
 <template>
   <nav>
-    <v-toolbar dark color="primary darken-1">
+    <v-toolbar dark color="primary">
       <v-app-bar-nav-icon class="hidden-md-and-up" @click="drawerShown = !drawerShown"></v-app-bar-nav-icon>
+      <v-tooltip bottom color="rgba(0,0,0,0)" class="logoTooltip">
+        <template #activator="{ on }">
+          <img
+            v-on="on"
+            width="45px"
+            height="45px"
+            src="@/assets/mini-logo.png"
+            alt="logo"
+            class="mx-4"
+          />
+        </template>
+        <img src="@/assets/mini-logo.png" alt="logo" class="mx-4" id="logo" />
+      </v-tooltip>
       <v-toolbar-title>{{ title }}</v-toolbar-title>
 
       <v-spacer></v-spacer>
@@ -120,4 +133,8 @@ export default class NavigationBar extends Vue {
 }
 </script>
 
-<style scoped></style>
+<style>
+.v-tooltip__content {
+  opacity: 1 !important;
+}
+</style>

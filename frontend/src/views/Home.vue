@@ -8,7 +8,7 @@
         <v-col>
           <v-card>
             <v-card-title>
-              <v-toolbar color="darkPrim" dark>Recent Significant Commits</v-toolbar>
+              <v-toolbar color="primary darken-1" dark>Recent Significant Commits</v-toolbar>
             </v-card-title>
             <v-card-text>
               <v-container fluid>
@@ -27,7 +27,7 @@
         <v-col>
           <v-card>
             <v-card-title>
-              <v-toolbar color="darkPrim" dark>Recently Benchmarked Commits</v-toolbar>
+              <v-toolbar color="primary darken-1" dark>Recently Benchmarked Commits</v-toolbar>
             </v-card-title>
             <v-card-text>
               <v-container fluid>
