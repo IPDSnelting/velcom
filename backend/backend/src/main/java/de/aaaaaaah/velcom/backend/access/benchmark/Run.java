@@ -34,7 +34,7 @@ public class Run {
 	@Nullable
 	private final String errorMessage;
 
-	public Run(BenchmarkAccess benchmarkAccess, CommitAccess commitAccess, RepoAccess repoAccess,
+	Run(BenchmarkAccess benchmarkAccess, CommitAccess commitAccess, RepoAccess repoAccess,
 		RunId id, RepoId repoId, CommitHash commitHash, Instant startTime, Instant stopTime,
 		@Nullable String errorMessage) {
 
