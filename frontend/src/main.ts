@@ -30,10 +30,13 @@ axios.interceptors.request.use(function(config) {
 // Intercepts requests and show a loading indicator / errors
 axios.interceptors.request.use(
   function(config) {
-    vue.$globalSnackbar.setLoading()
+    if (!config.hideLoadingSnackbar && !config.hideFromSnackbar) {
+      vue.$globalSnackbar.setLoading()
+    }
     return config
   },
   function(error) {
+    // Always display network errors
     if (!error.response) {
       vue.$globalSnackbar.setError(extractErrorMessage(error))
     }
@@ -44,11 +47,18 @@ axios.interceptors.request.use(
 // Intercept responses to show errors
 axios.interceptors.response.use(
   function(response) {
-    vue.$globalSnackbar.finishedLoading()
+    if (
+      !response.config.hideSuccessSnackbar &&
+      !response.config.hideFromSnackbar
+    ) {
+      vue.$globalSnackbar.finishedLoading()
+    }
     return response
   },
   function(error) {
-    vue.$globalSnackbar.setError(extractErrorMessage(error))
+    if (!error.hideFromSnackbar && !error.hideFromSnackbar) {
+      vue.$globalSnackbar.setError(extractErrorMessage(error))
+    }
     return Promise.reject(error)
   }
 )

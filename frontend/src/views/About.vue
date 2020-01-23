@@ -110,19 +110,21 @@ export default class About extends Vue {
   }
 
   async mounted() {
-    axios.get(this.impressumLocation).then(response => {
-      axios
-        .get(this.impressumLocation + 'random')
-        .then(randomResponse => {
-          if (
-            response.status === 200 &&
-            response.data !== randomResponse.data
-          ) {
-            this.htmlImpressum = response.data
-          }
-        })
-        .catch(() => (this.htmlImpressum = response.data))
-    })
+    axios
+      .get(this.impressumLocation, { hideFromSnackbar: true })
+      .then(response => {
+        axios
+          .get(this.impressumLocation + 'random', { hideFromSnackbar: true })
+          .then(randomResponse => {
+            if (
+              response.status === 200 &&
+              response.data !== randomResponse.data
+            ) {
+              this.htmlImpressum = response.data
+            }
+          })
+          .catch(() => (this.htmlImpressum = response.data))
+      })
   }
 }
 </script>
