@@ -19,6 +19,8 @@ import java.util.Set;
  */
 public class BreadthFirstSearchFinder implements UnknownCommitFinder {
 
+	private static final int MAX_COMMITS = 1000;
+
 	@Override
 	public Collection<Commit> find(CommitAccess commitAccess, Branch branch) throws IOException {
 		try (CommitWalk walk = commitAccess.getCommitWalk(branch)) {
@@ -29,6 +31,10 @@ public class BreadthFirstSearchFinder implements UnknownCommitFinder {
 			commitQueue.add(walk.getStart());
 
 			while (!commitQueue.isEmpty()) {
+				if (unknownCommits.size() >= MAX_COMMITS) {
+					break;
+				}
+
 				Commit current = commitQueue.poll();
 
 				if (!visitedCommits.add(current.getHash())) {

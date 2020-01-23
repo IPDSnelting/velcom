@@ -19,6 +19,7 @@ import java.util.Set;
 public class BatchedBreadthFirstSearchFinder implements UnknownCommitFinder {
 
 	private static final int BATCH_SIZE = 100;
+	private static final int MAX_COMMITS = 1000;
 
 	@Override
 	public Collection<Commit> find(CommitAccess commitAccess, Branch branch) throws IOException {
@@ -33,6 +34,10 @@ public class BatchedBreadthFirstSearchFinder implements UnknownCommitFinder {
 			Set<Commit> unknownCommits = new HashSet<>();
 
 			while (!commitQueue.isEmpty()) {
+				if (unknownCommits.size() >= MAX_COMMITS) {
+					break;
+				}
+
 				Commit current = commitQueue.poll();
 
 				if (!visitedCommits.add(current.getHash())) {
