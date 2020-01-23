@@ -5,8 +5,8 @@ import subprocess
 from pathlib import Path
 
 PORT_REGEX = r"\d{1,5}"
-LONG_ADDRESS_REGEX = r"https?://(\w+.)+(\w+)/?"
-SHORT_ADDRESS_REGEX = r"(\w+.)+(\w+)/?"
+LONG_ADDRESS_REGEX = r"https?://(\w+\.)+(\w+)/?"
+SHORT_ADDRESS_REGEX = r"(\w+\.)+(\w+)/?"
 
 def request(prompt, regex=".*"):
     while True:
