@@ -18,6 +18,13 @@ Ensure that the following tools are installed on your system:
 - `maven`
 - `yarn`
 
+Configure the url and port the frontend uses for calling the backend's API. This
+command assumes you are in the base directory of the `velcom` repo.
+
+```
+$ echo 'VUE_APP_BASE_URL="https://domain.com:8080"' > frontend/.env.production.local
+```
+
 Clone the repo and use `make` to build the backend and frontend.
 
 ```
@@ -54,9 +61,6 @@ web server and add the impressum. For more details on how the impressum can be
 formatted, visit the frontend's "About" tab before adding the impressum. For
 more details on how the web server needs to be configured, see the the section
 on [configuring the web server](#configuring-the-web-server) below.
-
-<!-- TODO: What about the server URL? -->
-<!-- TODO: Instructions on how to set up nginx/how the webserver needs to behave -->
 
 ```
 $ cp -r frontend/dist/ path/to/install/dir/
@@ -104,8 +108,8 @@ makes it easy to write small scripts to interact with the backend using tools
 like `curl`. For a complete overview of the available endpoints, see the API's
 [openapi documentation](docs/rest_api_openapi.yaml). It was created using
 [Stoplight Studio](https://stoplight.io/studio/), so if you want to import and
-view the API there, use the [stoplight studio
-version](docs/rest_api_stoplight.yaml).
+view the API there, use the
+[stoplight studio version](docs/rest_api_stoplight.yaml).
 
 The API uses JSON bodies and HTTP Basic authentication. To authenticate as web
 admin, use username `admin` and the web admin token as password. To authenticate
