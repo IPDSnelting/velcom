@@ -1,37 +1,40 @@
 <template>
   <div class="repo-selector">
     <v-container fluid>
-      <v-card flat outlined max-width="380">
+      <v-card flat outlined>
         <v-card-title>
           <v-toolbar color="primary darken-1" dark>Repositories</v-toolbar>
         </v-card-title>
         <v-card-text>
-          <v-expansion-panels v-for="repo in allRepos" :key="repo.id" multiple accordion flat>
-            <v-expansion-panel>
-              <v-expansion-panel-header>
+          <v-list>
+            <v-list-group v-for="repo in allRepos" :key="repo.id">
+              <template v-slot:activator>
                 <v-checkbox
-                  class="shrink mt-0"
-                  hide-details
                   v-model="selectedRepos"
                   :value="repo.id"
                   :color="colorById(repo.id)"
                   @click.native.stop
                   @change="updateSelectedRepos()"
                 ></v-checkbox>
-                <router-link
-                  class="ml-3 mx-auto"
-                  :to="{ name: 'repo-detail', params: { id: repo.id } }"
-                  tag="button"
-                >
-                  <span class="panel-header">{{ repo.name }}</span>
-                </router-link>
-              </v-expansion-panel-header>
-              <v-expansion-panel-content>
-                <div v-for="(branch, j) in repo.trackedBranches" :key="j">
+                <v-tooltip bottom>
+                  <template #activator="{ on }">
+                    <router-link
+                      class="ml-3 mx-auto"
+                      :to="{ name: 'repo-detail', params: { id: repo.id } }"
+                      tag="button"
+                    >
+                      <v-list-item-title v-on="on">{{ repo.name }}</v-list-item-title>
+                      <v-list-item-subtitle>{{ repo.id }}</v-list-item-subtitle>
+                    </router-link>
+                  </template>
+                  <span>go to detail page of {{ repo.name }}</span>
+                </v-tooltip>
+              </template>
+              <v-list-item v-for="(branch, index) in repo.trackedBranches" :key="index">
+                <v-list-item-title>
                   <v-checkbox
                     multiple
-                    hide-details
-                    class="shrink mt-0 ml-5"
+                    class="ml-5"
                     :input-value="selectedBranchesByRepo(repo.id)"
                     :label="branch"
                     :value="branch"
@@ -39,10 +42,10 @@
                     :color="colorById(repo.id)"
                     @change="updateSelectedBranchesForRepo(repo.id, branch, $event)"
                   />
-                </div>
-              </v-expansion-panel-content>
-            </v-expansion-panel>
-          </v-expansion-panels>
+                </v-list-item-title>
+              </v-list-item>
+            </v-list-group>
+          </v-list>
         </v-card-text>
       </v-card>
     </v-container>

@@ -98,7 +98,7 @@
       </v-row>
 
       <v-row align="start" justify="space-between">
-        <v-col>
+        <v-col cols="auto">
           <repo-selector v-on:selectionChanged="retrieveGraphData()"></repo-selector>
         </v-col>
         <v-col>
