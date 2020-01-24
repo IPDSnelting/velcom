@@ -249,6 +249,7 @@ public class BenchmarkAccess {
 
 		try {
 			return db.selectFrom(RUN)
+				.where(exists(selectFrom(REPOSITORY).where(REPOSITORY.ID.eq(RUN.REPO_ID))))
 				.orderBy(RUN.START_TIME)
 				.fetchStream()
 				.map(this::runFromRecord)
