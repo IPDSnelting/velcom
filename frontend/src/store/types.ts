@@ -65,8 +65,8 @@ export class MeasurementID {
 }
 
 export class Commit {
-  repoID: string | null
-  hash: string | null
+  repoID: string
+  hash: string
   author: string
   authorDate: number | null
   committer: string | null

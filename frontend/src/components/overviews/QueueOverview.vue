@@ -106,6 +106,7 @@ export default class QueueOverview extends Vue {
   private timerId: number | undefined = undefined
   private itemsPerPageOptions: number[] = [10, 20, 50, 100, 200, -1]
   private defaultItemsPerPage: number = 20
+  private liftsInProgress: { [repoId: string]: string[] } = {}
 
   private get queueItems(): Commit[] {
     let openTasks = vxm.queueModule.openTasks.slice()
@@ -130,6 +131,15 @@ export default class QueueOverview extends Vue {
   }
 
   private liftToFront(commit: Commit, event: Event) {
+    if (!this.liftsInProgress[commit.repoID]) {
+      this.liftsInProgress[commit.repoID] = []
+    }
+    let liftsForRepo = this.liftsInProgress[commit.repoID]
+    if (liftsForRepo.indexOf(commit.hash) >= 0) {
+      return
+    }
+    liftsForRepo.push(commit.hash)
+
     let srcElement: HTMLElement = event.srcElement as HTMLElement
 
     // No animation possible
@@ -199,6 +209,8 @@ export default class QueueOverview extends Vue {
       })
       .finally(() => {
         srcElement.style.rotate = '0deg'
+        let index = this.liftsInProgress[commit.repoID].indexOf(commit.hash)
+        this.liftsInProgress[commit.repoID].splice(index, 1)
       })
   }
 
