@@ -1,6 +1,6 @@
 <template>
-  <v-container>
-    <v-data-table :headers="headers" :items="entries" item-key="key"/>
+  <v-container fluid>
+    <v-data-table :headers="headers" :items="entries" item-key="key" />
   </v-container>
 </template>
 
@@ -30,7 +30,7 @@ export default class CommitInfoTable extends Vue {
 
   private get entries() {
     if (this.run.measurements == null) {
-      return null
+      throw new Error('I was given a run with no measurements!')
     }
 
     return this.run.measurements.map(measurement => ({
@@ -41,21 +41,20 @@ export default class CommitInfoTable extends Vue {
   }
 
   private changeByItem(item: Measurement) {
-    if (this.previousRun == null || this.previousRun.measurements == null ||
-      item.value == null) {
+    if (
+      this.previousRun == null ||
+      this.previousRun.measurements == null ||
+      item.value == null
+    ) {
       return '-'
     }
 
-    // find same measurement in previous run
-    for (let prevMeasurement of this.previousRun.measurements) {
-      if (!item.id.equals(prevMeasurement.id)) { continue }
+    let previousMeasurement = this.previousRun.measurements.find(measurement =>
+      item.id.equals(measurement.id)
+    )
 
-      // found the measurement
-      if (prevMeasurement.value == null) {
-        return '-'
-      } else {
-        return item.value - prevMeasurement.value
-      }
+    if (previousMeasurement && previousMeasurement.value) {
+      return item.value - previousMeasurement.value
     }
 
     return '-'

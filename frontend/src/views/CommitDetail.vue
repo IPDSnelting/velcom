@@ -1,8 +1,43 @@
 <template>
-  <div class="commit-detail">
-    <commit-information v-if="myRun" :run="myRun"></commit-information>
-    <!-- <commit-info-table v-if="myRun" :run="myRun" :previousRun="previousRun"></commit-info-table> -->
-  </div>
+  <v-container>
+    <v-row>
+      <commit-information v-if="myRun" :run="myRun"></commit-information>
+    </v-row>
+    <v-row v-if="isError">
+      <v-col>
+        <v-card>
+          <v-card-title>
+            <v-toolbar dark color="error">
+              <v-toolbar-title>Benchmarking this commit resulted in an error</v-toolbar-title>
+            </v-toolbar>
+          </v-card-title>
+          <v-card-text v-if="myRun">
+            <div class="title">Error message:</div>
+            <span class="mx-1">{{ myRun.errorMessage }}</span>
+          </v-card-text>
+          <v-card-text v-else>
+            No data
+            <em>and</em> no error message found :/
+            Maybe the page hasn't fully loaded yet?
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+    <v-row v-if="!isError">
+      <v-col>
+        <v-card>
+          <v-card-title>
+            <v-toolbar dark color="primary">
+              <v-toolbar-title>Benchmark results</v-toolbar-title>
+            </v-toolbar>
+          </v-card-title>
+          <v-card-text>
+            <commit-info-table v-if="!isError" :run="myRun" :previousRun="previousRun"></commit-info-table>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+  </v-container>
 </template>
 
 <script lang="ts">
@@ -37,8 +72,11 @@ export default class CommitDetail extends Vue {
     return this.$route.params.hash
   }
 
+  get isError() {
+    return !this.myRun || this.myRun.errorMessage
+  }
+
   get commit(): Commit | null {
-    // TODO: Fetch real data
     return this.myRun ? this.myRun.commit : null
   }
 
@@ -48,7 +86,6 @@ export default class CommitDetail extends Vue {
       first: undefined,
       second: this.hash
     })
-    console.log(comparison)
 
     if (comparison.first) {
       this.previousRun = comparison.first
