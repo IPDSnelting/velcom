@@ -99,20 +99,7 @@
 
       <v-row align="start" justify="space-between">
         <v-col>
-          <v-row>
-            <v-col class="d-flex">
-              <repo-selector v-on:selectionChanged="retrieveGraphData()"></repo-selector>
-            </v-col>
-          </v-row>
-          <v-row align="center">
-            <v-col>
-              <repo-add>
-                <template #activator="{ on }">
-                  <v-btn v-on="on" v-show="isAdmin">add a new repository</v-btn>
-                </template>
-              </repo-add>
-            </v-col>
-          </v-row>
+          <repo-selector v-on:selectionChanged="retrieveGraphData()"></repo-selector>
         </v-col>
         <v-col>
           <h2>repos and their selected branches:</h2>
