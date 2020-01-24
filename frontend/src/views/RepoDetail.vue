@@ -117,7 +117,7 @@
       <v-col>
         <v-card>
           <v-card-title>
-            <v-toolbar color="primary darken-1" dark>Benchmarked commits</v-toolbar>
+            <v-toolbar color="primary darken-1" dark>Recent commits in this repo</v-toolbar>
           </v-card-title>
           <v-card-text>
             <v-container fluid>
