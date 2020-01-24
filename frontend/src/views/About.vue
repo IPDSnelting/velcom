@@ -106,13 +106,12 @@ import axios from 'axios'
 export default class About extends Vue {
   private htmlImpressum: string | null = null
 
+  private relativeUrlToBase(path: string) {
+    return document.location.protocol + '//' + document.location.host + path
+  }
+
   get impressumLocation() {
-    return (
-      document.location.protocol +
-      '//' +
-      document.location.host +
-      '/Impressum.html'
-    )
+    return this.relativeUrlToBase('/Impressum.html')
   }
 
   async mounted() {
@@ -120,7 +119,12 @@ export default class About extends Vue {
       .get(this.impressumLocation, { hideFromSnackbar: true })
       .then(response => {
         axios
-          .get(this.impressumLocation + 'random', { hideFromSnackbar: true })
+          .get(
+            this.relativeUrlToBase(
+              '/hello I am a random url that is hopefully not mapped'
+            ),
+            { hideFromSnackbar: true }
+          )
           .then(randomResponse => {
             if (
               response.status === 200 &&
