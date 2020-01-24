@@ -15,6 +15,7 @@
                       <img src="@/assets/mini-logo.png" alt="logo" class="mb-5" />
                       <img src="@/assets/logo.png" alt="logo" class="mb-5" />
                       <img src="@/assets/circle-icon.png" alt="logo" class="mb-5" />
+                      <img src="@/assets/other-circle-icon.png" alt="logo" class="mb-5" />
                     </v-row>
                     <v-row align="center" justify="center">
                       <p class="text-center">
