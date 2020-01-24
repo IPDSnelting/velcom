@@ -138,7 +138,22 @@
                         :key="index"
                       >
                         <run-overview v-if="commitComparison.second" :run="commitComparison.second"></run-overview>
-                        <commit-overview v-else :commit="commit"></commit-overview>
+                        <commit-overview v-else :commit="commit">
+                          <template #avatar>
+                            <v-list-item-avatar>
+                              <v-tooltip top>
+                                <template #activator="{ on }">
+                                  <v-icon
+                                    v-on="on"
+                                    size="32px"
+                                    color="gray"
+                                  >{{ notBenchmarkedIcon }}</v-icon>
+                                </template>
+                                This commit was never benchmarked!
+                              </v-tooltip>
+                            </v-list-item-avatar>
+                          </template>
+                        </commit-overview>
                       </v-col>
                     </v-row>
                   </template>
@@ -161,6 +176,7 @@ import RepoUpdateDialog from '../components/dialogs/RepoUpdateDialog.vue'
 import RunOverview from '../components/overviews/RunOverview.vue'
 import { vxm } from '../store/index'
 import SmallCommitOverview from '../components/overviews/SmallCommitOverview.vue'
+import { mdiHelpCircleOutline } from '@mdi/js'
 
 @Component({
   components: {
@@ -292,5 +308,9 @@ export default class RepoDetail extends Vue {
   created() {
     vxm.repoDetailModule.fetchHistoryForRepo(this.payload)
   }
+
+  // ============== ICONS ==============
+  private notBenchmarkedIcon = mdiHelpCircleOutline
+  // ==============       ==============
 }
 </script>
