@@ -9,7 +9,9 @@ import static org.jooq.codegen.db.Tables.RUN_MEASUREMENT_VALUE;
 import static org.jooq.codegen.db.Tables.TRACKED_BRANCH;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.when;
 
+import de.aaaaaaah.velcom.backend.GlobalConfig;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import de.mkammerer.argon2.Argon2;
 import de.mkammerer.argon2.Argon2Factory;
@@ -20,6 +22,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 import org.jooq.DSLContext;
 import org.jooq.SQLDialect;
@@ -35,6 +38,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 class DatabaseStorageTest {
 
@@ -45,7 +49,11 @@ class DatabaseStorageTest {
 
 	@BeforeEach
 	void setUp() {
-		databaseStorage = new DatabaseStorage(JDBC_URL);
+		GlobalConfig config = Mockito.mock(GlobalConfig.class);
+		when(config.getJdbcUrl()).thenReturn(JDBC_URL);
+		when(config.getJdbcUsername()).thenReturn(Optional.empty());
+		when(config.getJdbcPassword()).thenReturn(Optional.empty());
+		databaseStorage = new DatabaseStorage(config);
 	}
 
 	@AfterEach

@@ -9,6 +9,7 @@ import org.jooq.DSLContext;
 import org.jooq.SQLDialect;
 import org.jooq.impl.DSL;
 import org.sqlite.SQLiteConfig;
+import org.sqlite.SQLiteConfig.JournalMode;
 import org.sqlite.SQLiteDataSource;
 
 /**
@@ -29,32 +30,16 @@ public class DatabaseStorage {
 	public DatabaseStorage(GlobalConfig config) {
 		SQLiteConfig sqliteConfig = new SQLiteConfig();
 		sqliteConfig.enforceForeignKeys(true);
+		sqliteConfig.setJournalMode(JournalMode.WAL);
+
 		SQLiteDataSource sqliteDataSource = new SQLiteDataSource(sqliteConfig);
 		sqliteDataSource.setUrl(config.getJdbcUrl());
 
 		HikariConfig hikariConfig = new HikariConfig();
 		hikariConfig.setDataSource(sqliteDataSource);
-		hikariConfig.setMaximumPoolSize(1);
 
 		config.getJdbcUsername().ifPresent(hikariConfig::setUsername);
 		config.getJdbcPassword().ifPresent(hikariConfig::setPassword);
-
-		dataSource = new HikariDataSource(hikariConfig);
-
-		migrate();
-	}
-
-	/**
-	 * Initializes the database storage.
-	 *
-	 * <p>
-	 * Also performs database migrations, if necessary.
-	 *
-	 * @param jdbcUrl the jdbc url used to connect to the database
-	 */
-	public DatabaseStorage(String jdbcUrl) {
-		HikariConfig hikariConfig = new HikariConfig();
-		hikariConfig.setJdbcUrl(jdbcUrl);
 
 		dataSource = new HikariDataSource(hikariConfig);
 
