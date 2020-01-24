@@ -9,7 +9,9 @@ const VxModule = createModule({
 })
 
 export class RepoStore extends VxModule {
-  private repos: { [key: string]: Repo } = {}
+  private repos: { [repoID: string]: Repo } = {}
+  private currentRepoIndex: number = 0
+  private repoIndices: { [repoID: string]: number } = {}
 
   @action
   async fetchRepos() {
@@ -31,6 +33,7 @@ export class RepoStore extends VxModule {
           item.remote_url
         )
       )
+      this.setIndexForRepo(item.id)
     })
 
     this.setRepos(repos)
@@ -130,6 +133,11 @@ export class RepoStore extends VxModule {
   }
 
   @mutation
+  setIndexForRepo(repoID: string) {
+    this.repoIndices[repoID] = this.currentRepoIndex++
+  }
+
+  @mutation
   setRepo(payload: Repo) {
     if (this.repos[payload.id]) {
       const existing = this.repos[payload.id]
@@ -173,6 +181,10 @@ export class RepoStore extends VxModule {
       branchesByRepoID[repo.id] = repo.trackedBranches
     })
     return branchesByRepoID
+  }
+
+  get repoIndex(): (repoID: string) => number {
+    return (repoID: string) => this.repoIndices[repoID]
   }
 
   get occuringBenchmarks() {

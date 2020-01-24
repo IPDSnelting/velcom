@@ -6,7 +6,7 @@
           <v-toolbar color="primary darken-1" dark>Repositories</v-toolbar>
         </v-card-title>
         <v-card-text>
-          <v-expansion-panels v-for="(repo, i) in allRepos" :key="i" multiple accordion flat>
+          <v-expansion-panels v-for="repo in allRepos" :key="repo.id" multiple accordion flat>
             <v-expansion-panel>
               <v-expansion-panel-header>
                 <v-checkbox
@@ -14,7 +14,7 @@
                   hide-details
                   v-model="selectedRepos"
                   :value="repo.id"
-                  :color="colorByIndex(i)"
+                  :color="colorById(repo.id)"
                   @click.native.stop
                   @change="updateSelectedRepos()"
                 ></v-checkbox>
@@ -36,7 +36,7 @@
                     :label="branch"
                     :value="branch"
                     :disabled="!repoSelected(repo.id)"
-                    :color="colorByIndex(i)"
+                    :color="colorById(repo.id)"
                     @change="updateSelectedBranchesForRepo(repo.id, branch, $event)"
                   />
                 </div>
@@ -53,8 +53,6 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop, Model, Watch } from 'vue-property-decorator'
-import { Store } from 'vuex'
-
 import { vxm } from '../store/index'
 import { Repo } from '../store/types'
 
@@ -87,8 +85,11 @@ export default class RepoSelector extends Vue {
     return vxm.colorModule.allColors
   }
 
-  get colorByIndex(): (index: number) => string {
-    return (index: number) => vxm.colorModule.colorByIndex(index)
+  get colorById(): (repoID: string) => string {
+    return (repoID: string) => {
+      let repoIndex = vxm.repoModule.repoIndex(repoID)
+      return vxm.colorModule.colorByIndex(repoIndex)
+    }
   }
 
   updateSelectedRepos() {
