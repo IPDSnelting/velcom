@@ -1,6 +1,20 @@
 <template>
   <v-card>
     <v-list-item>
+      <v-list-item-avatar>
+        <v-tooltip top>
+          <template #activator="{ on }">
+            <v-icon v-if="isSuccessful" v-on="on" size="32px" color="success">{{ successIcon }}</v-icon>
+          </template>
+          This run was successfull!
+        </v-tooltip>
+        <v-tooltip top>
+          <template #activator="{ on }">
+            <v-icon v-if="!isSuccessful" color="error" v-on="on" size="32px">{{ errorIcon }}</v-icon>
+          </template>
+          This run suffered at least one failure :(
+        </v-tooltip>
+      </v-list-item-avatar>
       <v-list-item-content>
         <v-container fluid>
           <v-row no-gutters align="center">
@@ -46,6 +60,7 @@ import { Commit, Run } from '@/store/types'
 import InlineMinimalRepoNameDisplay from '../InlineMinimalRepoDisplay.vue'
 import CommitChip from '../CommitChip.vue'
 import { formatDate, formatDateUTC } from '@/util/TimeUtil'
+import { mdiCheckboxMarkedCircleOutline, mdiCloseCircleOutline } from '@mdi/js'
 
 @Component({
   components: {
@@ -57,13 +72,22 @@ export default class RunOverview extends Vue {
   @Prop({})
   private run!: Run
 
-  get formattedDate() {
+  private get isSuccessful(): boolean {
+    return !this.run.errorMessage && !!this.run.measurements
+  }
+
+  private get formattedDate() {
     return formatDate(this.run.commit.authorDate || 0)
   }
 
-  get formattedDateUTC() {
+  private get formattedDateUTC() {
     return formatDateUTC(this.run.commit.authorDate || 0)
   }
+
+  // ============== ICONS ==============
+  private successIcon = mdiCheckboxMarkedCircleOutline
+  private errorIcon = mdiCloseCircleOutline
+  // ==============       ==============
 }
 </script>
 
