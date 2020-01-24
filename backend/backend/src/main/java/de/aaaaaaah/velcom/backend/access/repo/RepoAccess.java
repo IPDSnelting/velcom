@@ -35,11 +35,15 @@ import org.jooq.Record1;
 import org.jooq.codegen.db.tables.records.RepositoryRecord;
 import org.jooq.codegen.db.tables.records.TrackedBranchRecord;
 import org.jooq.impl.DSL;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class is an abstraction for accessing the {@link Repo}s in the db.
  */
 public class RepoAccess {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(RepoAccess.class);
 
 	private final AccessLayer accessLayer;
 	private final DatabaseStorage databaseStorage;
@@ -75,6 +79,11 @@ public class RepoAccess {
 			} catch (AddRepositoryException e) {
 				throw new AddRepoException(e);
 			}
+		}
+
+		// Clone all repos if needed
+		for (Repo repo : getAllRepos()) {
+			fetchOrClone(repo.getId());
 		}
 
 		accessLayer.registerRepoAccess(this);
@@ -216,11 +225,14 @@ public class RepoAccess {
 
 		if (repoStorage.containsRepository(dirName)) {
 			// local repo exists => just fetch
+			LOGGER.info("fetching from {} into {}", remoteUrl, dirName);
+
 			try (Repository repo = repoStorage.acquireRepository(dirName)) {
 				Git.wrap(repo).fetch().call();
 			}
 		} else {
 			// local repo does not exist => clone
+			LOGGER.info("local repository {} is missing! cloning it from: {}", dirName, remoteUrl);
 			repoStorage.addRepository(dirName, remoteUrl);
 		}
 	}
