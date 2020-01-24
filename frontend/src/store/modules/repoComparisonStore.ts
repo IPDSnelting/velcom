@@ -11,29 +11,23 @@ export class RepoComparisonStore extends VxModule {
   private _selectedRepos: string[] = []
   private _selectedBranchesByRepoID: { [key: string]: string[] } = {}
   private runsByRepoId: { [key: string]: Run[] } = {}
+  // One week in the past
+  private startTime: string = new Date(
+    new Date().setDate(new Date().getDate() - 7)
+  )
+    .toISOString()
+    .substring(0, 10)
+  private stopTime: string = new Date().toISOString().substring(0, 10)
 
-  /**
-   * Fetches all data points.
-   *
-   * @param {{
-   *     repos: string[]
-   *     startTime: string
-   *     stopTime: string
-   *   }} payload the payload with the parameters to pass to the server
-   * @returns {Promise<{ [key: string]: Run[] }>} a promise containing all runs
-   * @memberof RepoComparisonStore
-   */
   @action
   async fetchDatapoints(payload: {
-    startTime: number
-    stopTime: number
     benchmark: string
     metric: string
   }): Promise<{ [key: string]: Run[] }> {
     const response = await axios.post('/repo-comparison-graph', {
       repos: this.selectedReposWithBranches,
-      start_time: payload.startTime,
-      stop_time: payload.stopTime,
+      start_time: this.startDate.getTime() / 1000,
+      stop_time: this.stopDate.getTime() / 1000,
       benchmark: payload.benchmark,
       metric: payload.metric
     })
@@ -86,6 +80,22 @@ export class RepoComparisonStore extends VxModule {
     Array.from(Object.keys(payload)).forEach(key => {
       Vue.set(this.runsByRepoId, key, payload[key])
     })
+  }
+
+  get startDate(): Date {
+    return new Date(this.startTime)
+  }
+
+  set startDate(start: Date) {
+    this.startTime = start.toISOString().substring(0, 10)
+  }
+
+  get stopDate(): Date {
+    return new Date(this.stopTime)
+  }
+
+  set stopDate(stop: Date) {
+    this.stopTime = stop.toISOString().substring(0, 10)
   }
 
   /**

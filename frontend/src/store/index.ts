@@ -32,7 +32,9 @@ const vuexLocal = new VuexPersistence<RootState>({
         // Dirty hack as those states are private but still need to be persisted...
         _selectedRepos: (state.repoComparisonModule as any)._selectedRepos,
         _selectedBranchesByRepoID: (state.repoComparisonModule as any)
-          ._selectedBranchesByRepoID
+          ._selectedBranchesByRepoID,
+        startTime: (state.repoComparisonModule as any).startTime,
+        stopTime: (state.repoComparisonModule as any).stopTime
       }
     }
   }

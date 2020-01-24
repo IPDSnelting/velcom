@@ -31,27 +31,27 @@
                       ref="startDateMenu"
                       v-model="startDateMenuOpen"
                       :close-on-content-click="false"
-                      :return-value.sync="startDate"
+                      :return-value.sync="startTimeString"
                       transition="scale-transition"
                       offset-y
                       min-width="290px"
                     >
                       <template v-slot:activator="{ on }" class="mr-5">
                         <v-text-field
-                          v-model="startDate"
+                          v-model="startTimeString"
                           label="from:"
                           :prepend-icon="dateIcon"
                           readonly
                           v-on="on"
                         ></v-text-field>
                       </template>
-                      <v-date-picker v-model="startDate" :max="today" no-title scrollable>
+                      <v-date-picker v-model="startTimeString" :max="today" no-title scrollable>
                         <v-spacer></v-spacer>
                         <v-btn text color="primary" @click="startDateMenuOpen = false">Cancel</v-btn>
                         <v-btn
                           text
                           color="primary"
-                          @click="$refs.startDateMenu.save(startDate); retrieveGraphData()"
+                          @click="$refs.startDateMenu.save(startTimeString); retrieveGraphData()"
                         >OK</v-btn>
                       </v-date-picker>
                     </v-menu>
@@ -59,14 +59,14 @@
                       ref="stopDateMenu"
                       v-model="stopDateMenuOpen"
                       :close-on-content-click="false"
-                      :return-value.sync="stopDate"
+                      :return-value.sync="stopTimeString"
                       transition="scale-transition"
                       offset-y
                       min-width="290px"
                     >
                       <template v-slot:activator="{ on }">
                         <v-text-field
-                          v-model="stopDate"
+                          v-model="stopTimeString"
                           label="to:"
                           :prepend-icon="dateIcon"
                           readonly
@@ -74,8 +74,8 @@
                         ></v-text-field>
                       </template>
                       <v-date-picker
-                        v-model="stopDate"
-                        :min="startDate"
+                        v-model="stopTimeString"
+                        :min="startTimeString"
                         :max="today"
                         no-title
                         scrollable
@@ -85,7 +85,7 @@
                         <v-btn
                           text
                           color="primary"
-                          @click="$refs.stopDateMenu.save(stopDate); retrieveGraphData()"
+                          @click="$refs.stopDateMenu.save(stopTimeString); retrieveGraphData()"
                         >OK</v-btn>
                       </v-date-picker>
                     </v-menu>
@@ -135,14 +135,7 @@ export default class RepoComparison extends Vue {
   private today = new Date().toISOString().substr(0, 10)
 
   private startDateMenuOpen: boolean = false
-
-  // get the date one week ago in a quite clumsy way
-  private startDate = new Date(new Date().setDate(new Date().getDate() - 7))
-    .toISOString()
-    .substr(0, 10)
-
   private stopDateMenuOpen: boolean = false
-  private stopDate = new Date().toISOString().substr(0, 10)
 
   // ============== ICONS ==============
   private dateIcon = mdiCalendar
@@ -197,26 +190,27 @@ export default class RepoComparison extends Vue {
     return vxm.userModule.isAdmin
   }
 
-  get startUnixTimestamp(): number {
-    return new Date(this.startDate).getTime() / 1000
-  }
-
-  get stopUnixTimestamp(): number {
-    return new Date(this.stopDate).getTime() / 1000
-  }
-
-  get payload(): {
-    startTime: number
-    stopTime: number
-    benchmark: string
-    metric: string
-    } {
+  get payload(): { benchmark: string; metric: string } {
     return {
-      startTime: this.startUnixTimestamp,
-      stopTime: this.stopUnixTimestamp,
       benchmark: this.selectedBenchmark,
       metric: this.selectedMetric
     }
+  }
+
+  get startTimeString() {
+    return vxm.repoComparisonModule.startDate.toISOString().substring(0, 10)
+  }
+
+  set startTimeString(value: string) {
+    vxm.repoComparisonModule.startDate = new Date(value)
+  }
+
+  get stopTimeString() {
+    return vxm.repoComparisonModule.stopDate.toISOString().substring(0, 10)
+  }
+
+  set stopTimeString(value: string) {
+    vxm.repoComparisonModule.stopDate = new Date(value)
   }
 
   @Watch('selectedMetric')
