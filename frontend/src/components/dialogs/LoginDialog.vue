@@ -24,6 +24,7 @@
               v-model="repoID"
             ></repo-selection>
             <v-text-field
+              type="password"
               :rules="[nonEmptyToken]"
               label="Access token"
               v-model="token"
