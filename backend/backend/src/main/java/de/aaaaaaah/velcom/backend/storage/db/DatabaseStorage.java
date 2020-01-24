@@ -81,7 +81,7 @@ public class DatabaseStorage {
 	 * 	the database
 	 */
 	public DSLContext acquireContext() {
-		return DSL.using(dataSource, SQLDialect.SQLITE);
+		return new TrackedDSLContext(DSL.using(dataSource, SQLDialect.SQLITE));
 	}
 
 	/**
