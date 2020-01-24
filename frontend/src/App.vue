@@ -31,3 +31,14 @@ export default class App extends Vue {
   }
 }
 </script>
+
+<style>
+.v-toolbar > .v-toolbar__content {
+  height: auto !important;
+  min-height: 64px;
+}
+.v-toolbar {
+  height: auto !important;
+  min-height: 64px;
+}
+</style>

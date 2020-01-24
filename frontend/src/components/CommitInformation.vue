@@ -117,15 +117,4 @@ export default class CommitInformation extends Vue {
 .commit-detail-message {
   white-space: pre-wrap;
 }
-.wrapping-toolbar {
-  height: auto !important;
-  min-height: 64px;
-}
-</style>
-
-<style>
-.wrapping-toolbar > .v-toolbar__content {
-  height: auto !important;
-  min-height: 64px;
-}
 </style>
