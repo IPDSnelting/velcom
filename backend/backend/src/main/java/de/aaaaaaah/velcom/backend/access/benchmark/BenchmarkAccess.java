@@ -31,7 +31,6 @@ import org.jooq.Result;
 import org.jooq.codegen.db.tables.records.RunMeasurementRecord;
 import org.jooq.codegen.db.tables.records.RunMeasurementValueRecord;
 import org.jooq.codegen.db.tables.records.RunRecord;
-import org.jooq.exception.DataAccessException;
 
 /**
  * This class abstracts away access to the benchmark results such as runs and measurements.
@@ -254,9 +253,9 @@ public class BenchmarkAccess {
 				.fetchStream()
 				.map(this::runFromRecord)
 				.onClose(db::close);
-		} catch (DataAccessException e) {
+		} catch (Exception e) {
 			db.close();
-			throw e;
+			throw e; // Thanketh the gods who taketh away the compiler exceptions.
 		}
 	}
 

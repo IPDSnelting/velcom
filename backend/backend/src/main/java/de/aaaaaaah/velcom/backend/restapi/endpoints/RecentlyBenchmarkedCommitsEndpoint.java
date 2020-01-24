@@ -48,22 +48,20 @@ public class RecentlyBenchmarkedCommitsEndpoint {
 		@NotNull @QueryParam("amount") Integer amount,
 		@DefaultValue("false") @QueryParam("significant_only") boolean significantOnly) {
 
-		Stream<Run> recentRuns = benchmarkAccess.getRecentRuns();
+		try (Stream<Run> recentRuns = benchmarkAccess.getRecentRuns()) {
+			List<JsonCommitComparison> interestingCommits = recentRuns
+				.map(run -> {
+					Optional<Run> previousRun = linearLog.getPreviousCommit(run.getCommit())
+						.flatMap(benchmarkAccess::getLatestRunOf);
+					return commitComparer.compare(previousRun.orElse(null), run);
+				})
+				.filter(comparison -> !significantOnly || comparison.isSignificant())
+				.limit(amount)
+				.map(JsonCommitComparison::new)
+				.collect(Collectors.toUnmodifiableList());
 
-		List<JsonCommitComparison> interestingCommits = recentRuns
-			.map(run -> {
-				Optional<Run> previousRun = linearLog.getPreviousCommit(run.getCommit())
-					.flatMap(benchmarkAccess::getLatestRunOf);
-				return commitComparer.compare(previousRun.orElse(null), run);
-			})
-			.filter(comparison -> !significantOnly || comparison.isSignificant())
-			.limit(amount)
-			.map(JsonCommitComparison::new)
-			.collect(Collectors.toUnmodifiableList());
-
-		recentRuns.close();
-
-		return new GetReply(interestingCommits);
+			return new GetReply(interestingCommits);
+		}
 	}
 
 	private static class GetReply {
