@@ -36,6 +36,7 @@ import io.dropwizard.Application;
 import io.dropwizard.auth.AuthDynamicFeature;
 import io.dropwizard.auth.AuthValueFactoryProvider;
 import io.dropwizard.auth.basic.BasicCredentialAuthFilter;
+import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import java.util.EnumSet;
 import javax.servlet.DispatcherType;
@@ -54,6 +55,11 @@ public class ServerMain extends Application<GlobalConfig> {
 	 */
 	public static void main(String[] args) throws Exception {
 		new ServerMain().run(args);
+	}
+
+	@Override
+	public void initialize(Bootstrap<GlobalConfig> bootstrap) {
+		bootstrap.addCommand(new HashPerformanceTestCommand());
 	}
 
 	@Override
