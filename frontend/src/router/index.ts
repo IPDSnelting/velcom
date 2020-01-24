@@ -22,7 +22,8 @@ const routes = [
     path: '/',
     redirect: '/home',
     meta: {
-      navigable: false
+      navigable: false,
+      label: 'Home'
     }
   },
   {
@@ -78,7 +79,8 @@ const routes = [
     name: 'commit-comparison',
     component: CommitComparison,
     meta: {
-      navigable: false
+      navigable: false,
+      label: 'Commit Comparison'
     }
   },
   {
@@ -86,7 +88,8 @@ const routes = [
     name: 'commit-detail',
     component: CommitDetail,
     meta: {
-      navigable: false
+      navigable: false,
+      label: 'Commit Detail'
     }
   },
   {
@@ -130,6 +133,12 @@ const router = new VueRouterEx({
   mode: 'history',
   base: process.env.BASE_URL,
   routes
+})
+
+router.afterEach((to, from) => {
+  Vue.nextTick(() => {
+    document.title = to.meta.label ? 'VelCom - ' + to.meta.label : 'VelCom'
+  })
 })
 
 export default router
