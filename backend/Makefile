@@ -4,7 +4,7 @@ all: build
 
 build: backend/target/backend.jar
 
-backend/target/backend.jar: $(shell find -name '*.java' -o -name pom.xml)
+backend/target/backend.jar: $(shell find -name '*.java' -o -name '*.sql' -o -name pom.xml)
 	@echo 'Building backend'
 	mvn package
 
