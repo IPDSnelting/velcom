@@ -40,7 +40,7 @@ import RepoAddDialog from '../components/dialogs/RepoAddDialog.vue'
 })
 export default class RepoDetailFrame extends Vue {
   get selectedRepoId(): string {
-    return this.$route.params.id || ''
+    return this.$route.params.id
   }
 
   set selectedRepoId(repoId: string) {
@@ -71,12 +71,10 @@ export default class RepoDetailFrame extends Vue {
     return this.selectedRepo !== null
   }
 
-  @Watch('selectedRepo')
-  selectedRepoChanged() {
-    this.$router.push({
-      name: 'repo-detail',
-      params: { id: this.selectedRepo ? this.selectedRepo.id : '' }
-    })
+  mounted() {
+    if (!this.selectedRepoId && vxm.repoDetailModule.selectedRepoId) {
+      this.selectedRepoId = vxm.repoDetailModule.selectedRepoId
+    }
   }
 
   // ============== ICONS ==============

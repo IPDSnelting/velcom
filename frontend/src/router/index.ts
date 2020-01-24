@@ -14,6 +14,7 @@ import {
   mdiInformationOutline,
   mdiCircleSlice6
 } from '@mdi/js'
+import { vxm } from '@/store'
 
 Vue.use(VueRouter)
 
@@ -139,6 +140,13 @@ router.afterEach((to, from) => {
   Vue.nextTick(() => {
     document.title = to.meta.label ? 'VelCom - ' + to.meta.label : 'VelCom'
   })
+})
+
+router.beforeEach((to, from, next) => {
+  if (to.name === 'repo-detail') {
+    vxm.repoDetailModule.selectedRepoId = to.params.id
+  }
+  next()
 })
 
 export default router
