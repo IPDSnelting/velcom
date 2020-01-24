@@ -2,19 +2,22 @@
   <div class="commit-detail">
     <h1>This is the detail page of commit {{ hash }} in repo {{ repoID }}</h1>
     <commit-information :commit="commit"></commit-information>
+    <commit-info-table :run="run" :previousRun="prevRun"></commit-info-table>
   </div>
 </template>
 
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { Commit, CommitComparison } from '../store/types'
+import { Commit, CommitComparison, Run, Measurement, MeasurementID } from '../store/types'
 import { vxm } from '../store'
 import CommitInformation from '../components/CommitInformation.vue'
+import CommitInfoTable from '../components/CommitInfoTable.vue'
 
 @Component({
   components: {
-    'commit-information': CommitInformation
+    'commit-information': CommitInformation,
+    'commit-info-table': CommitInfoTable
   }
 })
 export default class CommitDetail extends Vue {
@@ -33,6 +36,56 @@ export default class CommitDetail extends Vue {
         first: this.hash,
         second: undefined
       }
+    )
+  }
+
+  get run(): Run {
+    // TODO: Fetch real data
+    return new Run(
+      this.commit,
+      1579768184,
+      1579768194,
+      [
+        new Measurement(
+          new MeasurementID('a', 'b'),
+          'cm',
+          'LESS_IS_BETTER',
+          [1, 2, 3, 4, 5],
+          3
+        ),
+        new Measurement(
+          new MeasurementID('c', 'd'),
+          'cm',
+          'LESS_IS_BETTER',
+          [1, 2, 3, 4, 5],
+          2
+        )
+      ]
+    )
+  }
+
+  get prevRun(): Run {
+    // TODO: Fetch real data
+    return new Run(
+      this.commit,
+      1579768184,
+      1579768194,
+      [
+        new Measurement(
+          new MeasurementID('a', 'b'),
+          'cm',
+          'LESS_IS_BETTER',
+          [1, 2, 3, 4, 5],
+          2
+        ),
+        new Measurement(
+          new MeasurementID('c', 'd'),
+          'cm',
+          'LESS_IS_BETTER',
+          [1, 2, 3, 4, 5],
+          10
+        )
+      ]
     )
   }
 

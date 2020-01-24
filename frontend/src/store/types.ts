@@ -58,6 +58,10 @@ export class MeasurementID {
     this.benchmark = benchmark
     this.metric = metric
   }
+
+  equals(other: MeasurementID): boolean {
+    return other.benchmark === this.benchmark && other.metric === this.metric
+  }
 }
 
 export class Commit {
