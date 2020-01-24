@@ -8,6 +8,8 @@ import org.flywaydb.core.Flyway;
 import org.jooq.DSLContext;
 import org.jooq.SQLDialect;
 import org.jooq.impl.DSL;
+import org.sqlite.SQLiteConfig;
+import org.sqlite.SQLiteDataSource;
 
 /**
  * Provides access to a database.
@@ -25,8 +27,13 @@ public class DatabaseStorage {
 	 * @param config the config used to get the connection information for the database from
 	 */
 	public DatabaseStorage(GlobalConfig config) {
+		SQLiteConfig sqliteConfig = new SQLiteConfig();
+		sqliteConfig.enforceForeignKeys(true);
+		SQLiteDataSource sqliteDataSource = new SQLiteDataSource(sqliteConfig);
+		sqliteDataSource.setUrl(config.getJdbcUrl());
+
 		HikariConfig hikariConfig = new HikariConfig();
-		hikariConfig.setJdbcUrl(config.getJdbcUrl());
+		hikariConfig.setDataSource(sqliteDataSource);
 		hikariConfig.setMaximumPoolSize(1);
 
 		config.getJdbcUsername().ifPresent(hikariConfig::setUsername);
