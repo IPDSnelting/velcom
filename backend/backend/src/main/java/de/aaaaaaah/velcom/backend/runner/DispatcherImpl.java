@@ -21,6 +21,7 @@ import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.RunnerInfo
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -42,8 +43,6 @@ import org.slf4j.LoggerFactory;
 public class DispatcherImpl implements Dispatcher {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(DispatcherImpl.class);
-
-	// TODO: 14.01.20 Remove runner directly if it disconnects cleanly?
 
 	private final Collection<ActiveRunnerInformation> activeRunners;
 	private final Queue queue;
@@ -99,7 +98,7 @@ public class DispatcherImpl implements Dispatcher {
 					"Kicking inactive runner (Time since last message: {}) with information {}",
 					timeSinceLastMessage, runner.getRunnerInformation()
 				);
-				removeRunner(runner).ifPresent(queue::addCommit);
+				disconnectRemoveRunnerByInformation(runner);
 			}
 		}
 	}
@@ -117,13 +116,17 @@ public class DispatcherImpl implements Dispatcher {
 			boolean isInitialConnect = initialConnect.getAndSet(false);
 
 			if (isInitialConnect) {
-				Optional<Commit> lastCommit = removeRunner(runnerInformation);
+				// 1. Kick runners with same name, re-adding their commits to the queue
+				// 2. Check if the runner says it is working but no commits were leftover from
+				//    the previous runner incarnation (after a hard disconnect)
+				// 3. If that was the case, reset the runner as the commit was probably aborted
+				//    as the dispatcher does not know about it
+				// 4. Add the runner to the managed activeRunners list
 
-				if (isWorking && lastCommit.isEmpty()) {
+				List<Commit> lastCommits = disconnectRemoveRunnerByName(newInformation.getName());
+
+				if (isWorking && lastCommits.isEmpty()) {
 					resetRunner(runnerInformation);
-				} else if (!isWorking && lastCommit.isPresent()) {
-					// Runner forget it should be working, re-add to queue
-					queue.addCommit(lastCommit.get());
 				}
 				activeRunners.add(runnerInformation);
 			}
@@ -137,7 +140,7 @@ public class DispatcherImpl implements Dispatcher {
 		runnerInformation.setOnDisconnected(value -> {
 			if (value == StatusCodeMappings.CLIENT_ORDERLY_DISCONNECT) {
 				LOGGER.debug("Runner exited properly. Removing it without grace period.");
-				removeRunner(runnerInformation).ifPresent(queue::addCommit);
+				disconnectRemoveRunnerByInformation(runnerInformation);
 			}
 		});
 		runnerInformation.setResultListener(
@@ -147,21 +150,25 @@ public class DispatcherImpl implements Dispatcher {
 	}
 
 	/**
-	 * Removes a runner, returning the commit it is working on.
+	 * Removes the given runner and kicks it, re-adding the commits it was working on to the queue.
 	 *
-	 * @param activeRunner the runner to remove
-	 * @return the last commit it should be working on or an empty commit if the runner should be in
-	 * 	idle mode
+	 * @param information the runner information
 	 */
-	private Optional<Commit> removeRunner(ActiveRunnerInformation activeRunner) {
-		if (activeRunner.getRunnerInformation().isEmpty()) {
-			// Can not do anything else
-			activeRunners.remove(activeRunner);
-			return Optional.empty();
-		}
-		String name = activeRunner.getRunnerInformation().get().getName();
-		LOGGER.info("Removing runners with name '{}'", name);
+	private void disconnectRemoveRunnerByInformation(ActiveRunnerInformation information) {
+		information.getConnectionManager().disconnect();
+		activeRunners.remove(information);
 
+		information.getCurrentCommit().ifPresent(queue::addCommit);
+	}
+
+	/**
+	 * Removes all runners with a given name and kicks them, re-adding the commits they were working
+	 * on to the queue.
+	 *
+	 * @param name the name if the runner
+	 * @return the commits that were assigned to removed runners
+	 */
+	private List<Commit> disconnectRemoveRunnerByName(String name) {
 		List<ActiveRunnerInformation> matchingRunners = activeRunners.stream()
 			.filter(runner ->
 				runner.getRunnerInformation()
@@ -171,19 +178,23 @@ public class DispatcherImpl implements Dispatcher {
 			)
 			.collect(Collectors.toList());
 
+		freeRunners.removeAll(matchingRunners);
 		// Delete them
 		activeRunners.removeAll(matchingRunners);
 
-		// This is confusing, two runners had the same name. Should not happen, so reset the new one
-		if (matchingRunners.size() > 1) {
-			return Optional.empty();
-		}
-		// Runner is new
-		if (matchingRunners.isEmpty()) {
-			return Optional.empty();
+		List<Commit> commits = new ArrayList<>();
+		for (ActiveRunnerInformation runner : matchingRunners) {
+			if (runner.getCurrentCommit().isPresent()) {
+				commits.add(runner.getCurrentCommit().get());
+			}
+			LOGGER.info("Kicking runner as name '{}' was already taken!", name);
+			runner.getConnectionManager().disconnect(
+				StatusCodeMappings.NAME_ALREADY_TAKEN,
+				"Name already taken!"
+			);
 		}
 
-		return matchingRunners.get(0).getCurrentCommit();
+		return commits;
 	}
 
 	@Override

@@ -144,6 +144,11 @@ public class RunnerServerWebsocketListener implements WebSocketListener, WebSock
 	}
 
 	@Override
+	public void disconnect(int status, String message) {
+		disconnectImpl(status, message);
+	}
+
+	@Override
 	public void sendEntity(SentEntity entity) throws IOException {
 		ProtocolHelper.sendObject(session, entity, serializer);
 	}
@@ -154,11 +159,17 @@ public class RunnerServerWebsocketListener implements WebSocketListener, WebSock
 	}
 
 	private void disconnectImpl() {
+		disconnectImpl(
+			StatusCodeMappings.SERVER_INITIATED_DISCONNECT, "Server initiated close"
+		);
+	}
+
+	private void disconnectImpl(int statusCode, String reason) {
 		if (session != null && session.isOpen()) {
 			// calls onClose which can call the state listeners
-			session.close(StatusCodeMappings.SERVER_INITIATED_DISCONNECT, "Server initiated close");
+			session.close(statusCode, reason);
 		} else {
-			runnerInformation.setDisconnected(StatusCodeMappings.SERVER_INITIATED_DISCONNECT);
+			runnerInformation.setDisconnected(statusCode);
 		}
 		if (heartbeatHandler != null) {
 			heartbeatHandler.shutdown();

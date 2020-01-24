@@ -167,6 +167,14 @@ public class WebsocketListener implements WebSocket.Listener, SocketConnectionMa
 	@Override
 	public CompletionStage<?> onClose(WebSocket webSocket, int statusCode, String reason) {
 		LOGGER.info("Closing connection with status {} and reason '{}'", statusCode, reason);
+		if (statusCode == StatusCodeMappings.NAME_ALREADY_TAKEN) {
+			LOGGER.error(
+				"Name already taken by a newly connected runner! "
+					+ "This runner will exist now to prevent an infinite connecting"
+					+ " ping-pong battle with the other runner."
+			);
+			System.exit(1);
+		}
 		disconnectImpl();
 		return null;
 	}

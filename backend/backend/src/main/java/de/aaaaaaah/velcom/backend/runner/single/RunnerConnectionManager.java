@@ -15,6 +15,14 @@ public interface RunnerConnectionManager {
 	void disconnect();
 
 	/**
+	 * Disconnects the runner with a given status and message.
+	 *
+	 * @param status the exit status code
+	 * @param message the message to deliver
+	 */
+	void disconnect(int status, String message);
+
+	/**
 	 * Sends an entity.
 	 *
 	 * @param entity the entity to send
