@@ -4,14 +4,13 @@
       <v-list-item-content>
         <v-container fluid>
           <v-row no-gutters align="center">
-            <v-col cols="8">
+            <v-col cols="9">
               <v-list-item-title>
                 <repo-display :repoId="run.commit.repoID"></repo-display>
                 <span class="mx-2">—</span>
                 <router-link
-                  class="mx-auto"
+                  class="router-link"
                   :to="{ name: 'commit-detail', params: { repoID: run.commit.repoID, hash: run.commit.hash } }"
-                  tag="button"
                 >
                   <span class="commit-message">{{ run.commit.message }}</span>
                 </router-link>
@@ -67,3 +66,14 @@ export default class RunOverview extends Vue {
   }
 }
 </script>
+
+<style scoped>
+.commit-message {
+  font-style: italic;
+}
+
+.router-link {
+  text-decoration: none;
+  color: rgba(0, 0, 0, 0.9);
+}
+</style>

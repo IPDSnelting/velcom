@@ -127,6 +127,7 @@
                   :hide-default-footer="commitHistory.length < defaultItemsPerPage"
                   :items-per-page="defaultItemsPerPage"
                   :footer-props="{ itemsPerPageOptions: itemsPerPageOptions }"
+                  style="width: 100%"
                 >
                   <template v-slot:default="props">
                     <v-row>

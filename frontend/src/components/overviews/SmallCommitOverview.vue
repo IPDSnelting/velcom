@@ -65,4 +65,7 @@ export default class SmallCommitOverview extends Vue {
 </script>
 
 <style scoped>
+.commit-message {
+  font-style: italic;
+}
 </style>
