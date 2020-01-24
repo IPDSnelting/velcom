@@ -39,7 +39,13 @@ import RepoAddDialog from '../components/dialogs/RepoAddDialog.vue'
   }
 })
 export default class RepoDetailFrame extends Vue {
-  private selectedRepoId: string | null = null
+  get selectedRepoId(): string {
+    return this.$route.params.id || ''
+  }
+
+  set selectedRepoId(repoId: string) {
+    this.$router.push({ name: 'repo-detail', params: { id: repoId } })
+  }
 
   get selectedRepo() {
     return this.selectedRepoId == null
@@ -71,10 +77,6 @@ export default class RepoDetailFrame extends Vue {
       name: 'repo-detail',
       params: { id: this.selectedRepo ? this.selectedRepo.id : '' }
     })
-  }
-
-  mounted() {
-    this.selectedRepoId = this.$route.params.id
   }
 
   // ============== ICONS ==============
