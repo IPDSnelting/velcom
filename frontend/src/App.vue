@@ -43,4 +43,9 @@ export default class App extends Vue {
   height: auto !important;
   min-height: 64px;
 }
+
+.concealed-link {
+  text-decoration: none;
+  color: rgba(0, 0, 0, 0.9) !important;
+}
 </style>

@@ -9,7 +9,7 @@
                 <repo-display :repoId="run.commit.repoID"></repo-display>
                 <span class="mx-2">—</span>
                 <router-link
-                  class="router-link"
+                  class="concealed-link"
                   :to="{ name: 'commit-detail', params: { repoID: run.commit.repoID, hash: run.commit.hash } }"
                 >
                   <span class="commit-message">{{ run.commit.message }}</span>
@@ -70,10 +70,5 @@ export default class RunOverview extends Vue {
 <style scoped>
 .commit-message {
   font-style: italic;
-}
-
-.router-link {
-  text-decoration: none;
-  color: rgba(0, 0, 0, 0.9);
 }
 </style>
