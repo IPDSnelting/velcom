@@ -26,8 +26,8 @@
               <br />
               <span class="font-weight-bold">{{ commit.committer }}</span> committed at
               <span
-                :title="formattedDateUTC(commit.commiterDate)"
-              >{{ formattedDate(commit.commiterDate) }}</span>
+                :title="formattedDateUTC(commit.committerDate)"
+              >{{ formattedDate(commit.committerDate) }}</span>
               <br />
               <div class="mt-5 commit-detail-message">{{ restOfCommitMessage.trim() }}</div>
 
