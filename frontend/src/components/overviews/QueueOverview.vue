@@ -161,9 +161,15 @@ export default class QueueOverview extends Vue {
       srcElement.classList.add('shoot-off')
 
       setTimeout(() => {
-        srcElement.style.top = '0px'
-        let targetX = Math.round(Math.random() * (window.innerWidth / 2))
-        targetX += window.innerWidth / 2
+        let alpha = (Math.random() * Math.PI) / 2
+        let sinAlpha = Math.sin(alpha)
+
+        let hypotenuseLength = offsetTop / sinAlpha
+
+        let targetX = hypotenuseLength * Math.cos(alpha) + offsetLeft
+        let targetY = offsetTop - hypotenuseLength * Math.sin(alpha)
+
+        srcElement.style.top = targetY + 'px'
         srcElement.style.left = targetX + 'px'
 
         const animationDuration = 1000
