@@ -375,7 +375,7 @@ public class CommitAccess {
 			return StreamSupport.stream(commitSpliterator, false)
 				.map(revCommit -> commitFromRevCommit(repo.getId(), revCommit))
 				.onClose(jgitRepo::close);
-		} catch (IOException | GitAPIException e) {
+		} catch (Exception e) {
 			jgitRepo.close(); // Release repo storage lock if this fails
 			throw new CommitAccessException(e);
 		}
