@@ -151,31 +151,55 @@ export default class QueueOverview extends Vue {
     let offsetTop = srcElement.getBoundingClientRect().top
     let offsetLeft = srcElement.getBoundingClientRect().left
     let parent = srcElement.parentElement!
-    srcElement = srcElement.cloneNode(true) as HTMLElement
 
-    vxm.queueModule.dispatchPrioritizeOpenTask(commit).then(() => {
-      parent.appendChild(srcElement)
+    let startAngle = Math.random() * 2 * Math.PI
+    srcElement.style.rotate = startAngle + 'rad'
 
-      srcElement.style.top = Math.round(offsetTop) + 'px'
-      srcElement.style.left = Math.round(offsetLeft) + 'px'
-      srcElement.classList.add('shoot-off')
+    let clonedElement = srcElement.cloneNode(true) as HTMLElement
 
-      setTimeout(() => {
-        let alpha = (Math.random() * Math.PI) / 2
-        let sinAlpha = Math.sin(alpha)
+    vxm.queueModule
+      .dispatchPrioritizeOpenTask(commit)
+      .then(() => {
+        parent.appendChild(clonedElement)
 
-        let hypotenuseLength = offsetTop / sinAlpha
+        clonedElement.style.top = Math.round(offsetTop) + 'px'
+        clonedElement.style.left = Math.round(offsetLeft) + 'px'
+        clonedElement.classList.add('shoot-off')
 
-        let targetX = hypotenuseLength * Math.cos(alpha) + offsetLeft
-        let targetY = offsetTop - hypotenuseLength * Math.sin(alpha)
+        setTimeout(() => {
+          let alpha = (Math.random() * Math.PI) / 4
+          if (Math.random() < 0.5) {
+            alpha *= -1
+          }
+          let rocketTilt = Math.PI / 4
+          alpha += -startAngle + rocketTilt
 
-        srcElement.style.top = targetY + 'px'
-        srcElement.style.left = targetX + 'px'
+          let direction = [Math.cos(alpha), Math.sin(alpha)]
 
-        const animationDuration = 1000
-        setTimeout(() => srcElement.remove(), animationDuration)
-      }, 1)
-    })
+          let targetX = offsetLeft
+          let targetY = offsetTop
+
+          while (
+            targetY > 0 &&
+            targetY < window.innerHeight &&
+            targetX > 0 &&
+            targetX < window.innerWidth
+          ) {
+            targetX += direction[0]
+            targetY -= direction[1]
+          }
+
+          clonedElement.style.top = targetY + 'px'
+          clonedElement.style.left = targetX + 'px'
+          clonedElement.style.rotate = -alpha + Math.PI / 4 + 'rad'
+
+          const animationDuration = 6000
+          setTimeout(() => clonedElement.remove(), animationDuration)
+        }, 1)
+      })
+      .finally(() => {
+        srcElement.style.rotate = '0deg'
+      })
   }
 
   private deleteCommit(commit: Commit) {
@@ -236,10 +260,10 @@ export default class QueueOverview extends Vue {
 }
 
 .shoot-off {
-  transition: all 1s ease-in;
+  transition: top 1s ease-in, left 1s ease-in;
   position: fixed;
   z-index: 200;
-  animation: shake 1s linear, rotate 1s linear;
+  animation: shake 1s linear;
   animation-delay: 0;
   animation-iteration-count: infinite;
 }
