@@ -4,16 +4,17 @@
       <v-col>
         <v-card>
           <v-card-title>
-            <v-toolbar dark color="primary darken-1" class="wrapping-toolbar">
+            <v-toolbar dark color="primary" class="wrapping-toolbar">
               <v-container fluid>
                 <v-row no-gutters align="center" justify="space-between">
                   <v-col style="flex: 1 1 60%;">
                     <span class="mx-2 message font-weight-regular">{{ commitSummary }}</span>
                   </v-col>
-                  <v-col cols="auto">
+                  <v-col cols="4" class="ml-3 body-1">
                     <v-spacer></v-spacer>
-                    <inline-repo-display class="px-2" :repoId="commit.repoID"></inline-repo-display>—
-                    <span class="mx-2 hash">{{ commit.hash }}</span>
+                    <inline-repo-display :repoId="commit.repoID"></inline-repo-display>
+                    <br />
+                    <span class="mr-2 hash">{{ commit.hash }}</span>
                   </v-col>
                 </v-row>
               </v-container>

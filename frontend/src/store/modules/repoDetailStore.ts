@@ -12,7 +12,8 @@ import axios from 'axios'
 import {
   commitFromJson,
   runFromJson,
-  differenceFromJson
+  differenceFromJson,
+  comparisonFromJson
 } from '@/util/CommitComparisonJsonHelper'
 
 const VxModule = createModule({
@@ -44,15 +45,8 @@ export class RepoDetailStore extends VxModule {
     let resultArray: [Commit, CommitComparison][] = commitPairArray.map(
       ({ commit: jsonCommit, comparison: jsonComparison }) => {
         let commit: Commit = commitFromJson(jsonCommit)
-        let firstRun: Run = runFromJson(jsonComparison.first)
-        let secondRun: Run = runFromJson(jsonComparison.second)
-        let differences: Difference[] = jsonComparison.differences.map(
-          (it: any) => differenceFromJson(it)
-        )
-        const commitComparison = new CommitComparison(
-          firstRun,
-          secondRun,
-          differences
+        const commitComparison: CommitComparison = comparisonFromJson(
+          jsonComparison
         )
         return [commit, commitComparison]
       }

@@ -3,9 +3,17 @@ import {
   MeasurementID,
   Run,
   Measurement,
-  Commit
+  Commit,
+  CommitComparison
 } from '@/store/types'
 
+/**
+ * Parses a json commit to a Commit object.
+ *
+ * @export
+ * @param {*} jsonCommit the json commit
+ * @returns {Commit} the commit object
+ */
 export function commitFromJson(jsonCommit: any): Commit {
   return new Commit(
     jsonCommit.repo_id,
@@ -17,6 +25,19 @@ export function commitFromJson(jsonCommit: any): Commit {
     jsonCommit.message,
     jsonCommit.parents
   )
+}
+
+export function comparisonFromJson(jsonComparison: any): CommitComparison {
+  let firstRun: Run | null = jsonComparison.first
+    ? runFromJson(jsonComparison.first)
+    : null
+  let secondRun: Run | null = jsonComparison.second
+    ? runFromJson(jsonComparison.second)
+    : null
+  let differences: Difference[] = jsonComparison.differences.map((it: any) =>
+    differenceFromJson(it)
+  )
+  return new CommitComparison(firstRun, secondRun, differences)
 }
 
 /**

@@ -2,6 +2,7 @@ import { createModule, mutation, action } from 'vuex-class-component'
 import { CommitComparison } from '@/store/types'
 import axios from 'axios'
 import Vue from 'vue'
+import { comparisonFromJson } from '@/util/CommitComparisonJsonHelper'
 
 const VxModule = createModule({
   namespaced: 'commitComparisonModule',
@@ -27,7 +28,7 @@ export class CommitComparisonStore extends VxModule {
   @action
   async fetchCommitComparison(payload: {
     repoId: string
-    first: string
+    first: string | undefined
     second: string | undefined
   }): Promise<CommitComparison> {
     const response = await axios.get('/commit-compare', {
@@ -38,9 +39,7 @@ export class CommitComparisonStore extends VxModule {
       }
     })
 
-    let comparison = response.data.comparison.map((item: any) => {
-      new CommitComparison(item.first, item.second, item.differences)
-    })
+    let comparison = comparisonFromJson(response.data.comparison)
 
     const mutationPayload = { repoId: payload.repoId, comparison: comparison }
     this.setCommitComparison(mutationPayload)
@@ -63,7 +62,7 @@ export class CommitComparisonStore extends VxModule {
   }) {
     let comparisons = this.comparisons[payload.repoId]
     if (!comparisons) {
-      Vue.set(this.comparisons, payload.repoId, payload.comparison)
+      Vue.set(this.comparisons, payload.repoId, [payload.comparison])
     } else {
       let current = comparisons.findIndex(comparison => {
         return (
