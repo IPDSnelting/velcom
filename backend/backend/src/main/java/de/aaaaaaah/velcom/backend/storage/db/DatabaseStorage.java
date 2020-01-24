@@ -27,6 +27,7 @@ public class DatabaseStorage {
 	public DatabaseStorage(GlobalConfig config) {
 		HikariConfig hikariConfig = new HikariConfig();
 		hikariConfig.setJdbcUrl(config.getJdbcUrl());
+		hikariConfig.setMaximumPoolSize(1);
 
 		config.getJdbcUsername().ifPresent(hikariConfig::setUsername);
 		config.getJdbcPassword().ifPresent(hikariConfig::setPassword);
