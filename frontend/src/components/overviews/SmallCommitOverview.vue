@@ -24,7 +24,7 @@
             <v-col>
               <v-container fluid class="ma-0 pa-0">
                 <v-row no-gutters align="center" justify="space-between">
-                  <v-col>
+                  <v-col cols="auto">
                     <commit-chip :commit="commit"></commit-chip>
                   </v-col>
                   <span>

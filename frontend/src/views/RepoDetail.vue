@@ -139,10 +139,7 @@
                       >
                         <run-overview v-if="commitComparison.second" :run="commitComparison.second">
                           <template #actions v-if="isAdmin">
-                            <commit-benchmark-actions
-                              @reBenchmark="reBenchmark(commit)"
-                              @deleteBenchmarks="deleteBenchmarks(commit)"
-                            ></commit-benchmark-actions>
+                            <commit-benchmark-actions @reBenchmark="reBenchmark(commit)"></commit-benchmark-actions>
                           </template>
                         </run-overview>
                         <commit-overview v-else :commit="commit">
@@ -161,10 +158,7 @@
                             </v-list-item-avatar>
                           </template>
                           <template #actions v-if="isAdmin">
-                            <commit-benchmark-actions
-                              @reBenchmark="reBenchmark(commit)"
-                              @deleteBenchmarks="deleteBenchmarks(commit)"
-                            ></commit-benchmark-actions>
+                            <commit-benchmark-actions @reBenchmark="reBenchmark(commit)"></commit-benchmark-actions>
                           </template>
                         </commit-overview>
                       </v-col>
@@ -322,10 +316,6 @@ export default class RepoDetail extends Vue {
 
   private get repo(): Repo {
     return vxm.repoModule.repoByID(this.id)!
-  }
-
-  private deleteBenchmarks(commit: Commit) {
-    this.$globalSnackbar.setError('delete', 'I am sadly not implemented')
   }
 
   private reBenchmark(commit: Commit) {
