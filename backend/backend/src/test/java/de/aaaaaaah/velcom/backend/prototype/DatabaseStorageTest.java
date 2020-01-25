@@ -1,3 +1,4 @@
+/*
 package de.aaaaaaah.velcom.backend.prototype;
 
 import static org.jooq.codegen.db.Tables.KNOWN_COMMIT;
@@ -176,3 +177,4 @@ class DatabaseStorageTest {
 	}
 
 }
+*/
