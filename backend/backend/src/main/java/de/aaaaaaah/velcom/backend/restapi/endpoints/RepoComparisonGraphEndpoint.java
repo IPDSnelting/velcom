@@ -7,7 +7,7 @@ import de.aaaaaaah.velcom.backend.access.commit.Commit;
 import de.aaaaaaah.velcom.backend.access.commit.CommitAccess;
 import de.aaaaaaah.velcom.backend.access.repo.RepoAccess;
 import de.aaaaaaah.velcom.backend.access.repo.RepoId;
-import de.aaaaaaah.velcom.backend.data.reducedlog.ReducedLog;
+import de.aaaaaaah.velcom.backend.access.repocomparison.RepoComparisonAccess;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRepo;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRun;
 import java.time.Instant;
@@ -33,14 +33,14 @@ public class RepoComparisonGraphEndpoint {
 
 	private final CommitAccess commitAccess;
 	private final RepoAccess repoAccess;
-	private final ReducedLog reducedLog;
+	private final RepoComparisonAccess repoComparisonAccess;
 
 	public RepoComparisonGraphEndpoint(CommitAccess commitAccess, RepoAccess repoAccess,
-		ReducedLog reducedLog) {
+		RepoComparisonAccess repoComparisonAccess) {
 
 		this.commitAccess = commitAccess;
 		this.repoAccess = repoAccess;
-		this.reducedLog = reducedLog;
+		this.repoComparisonAccess = repoComparisonAccess;
 	}
 
 	/**
@@ -65,10 +65,8 @@ public class RepoComparisonGraphEndpoint {
 				final Collection<Commit> commits = commitAccess.getCommitsBetween(repoId,
 					branchSpec.getBranches(), startTime, stopTime);
 
-				final List<JsonRun> reducedRuns = reducedLog.reduce(commits, measurementName)
-					.stream()
-					.map(JsonRun::new)
-					.collect(Collectors.toUnmodifiableList());
+				final List<JsonRun> reducedRuns = repoComparisonAccess.getRelevantRuns(repoId,
+					commits, measurementName);
 
 				return new RepoInfo(repo, reducedRuns);
 			})

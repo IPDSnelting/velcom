@@ -18,6 +18,15 @@ public class MeasurementValues {
 		this.interpretation = interpretation;
 	}
 
+	public static double getValue(List<Double> values) {
+		double sum = 0;
+		for (Double value : values) {
+			sum += value;
+		}
+
+		return sum / values.size();
+	}
+
 	public List<Double> getValues() {
 		return values;
 	}
@@ -30,15 +39,7 @@ public class MeasurementValues {
 		return interpretation;
 	}
 
-	/**
-	 * @return the algebraic mean of all values
-	 */
 	public double getValue() {
-		double sum = 0;
-		for (Double value : values) {
-			sum += value;
-		}
-
-		return sum / values.size();
+		return getValue(values);
 	}
 }

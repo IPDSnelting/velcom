@@ -68,4 +68,8 @@ CREATE TABLE repo_token
     FOREIGN KEY (repo_id) REFERENCES repository (id) ON DELETE CASCADE
 );
 
+CREATE INDEX idx_rm_rid ON run_measurement (run_id);
+
+CREATE INDEX idx_rm_id_rid ON run_measurement (id, run_id);
+
 CREATE INDEX idx_rmv_mid ON run_measurement_value (measurement_id);

@@ -1,4 +1,4 @@
-package de.aaaaaaah.velcom.backend.data.reducedlog.timeslice;
+package de.aaaaaaah.velcom.backend.access.repocomparison.timeslice;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.JulianFields;

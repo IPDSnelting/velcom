@@ -6,6 +6,8 @@ import de.aaaaaaah.velcom.backend.access.benchmark.BenchmarkAccess;
 import de.aaaaaaah.velcom.backend.access.commit.CommitAccess;
 import de.aaaaaaah.velcom.backend.access.repo.RemoteUrl;
 import de.aaaaaaah.velcom.backend.access.repo.RepoAccess;
+import de.aaaaaaah.velcom.backend.access.repocomparison.RepoComparisonAccess;
+import de.aaaaaaah.velcom.backend.access.repocomparison.timeslice.GroupByHour;
 import de.aaaaaaah.velcom.backend.access.token.AuthToken;
 import de.aaaaaaah.velcom.backend.access.token.TokenAccess;
 import de.aaaaaaah.velcom.backend.data.commitcomparison.CommitComparer;
@@ -13,9 +15,6 @@ import de.aaaaaaah.velcom.backend.data.linearlog.CommitAccessBasedLinearLog;
 import de.aaaaaaah.velcom.backend.data.linearlog.LinearLog;
 import de.aaaaaaah.velcom.backend.data.queue.PolicyManualFilo;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
-import de.aaaaaaah.velcom.backend.data.reducedlog.ReducedLog;
-import de.aaaaaaah.velcom.backend.data.reducedlog.timeslice.GroupByHour;
-import de.aaaaaaah.velcom.backend.data.reducedlog.timeslice.TimeSliceBasedReducedLog;
 import de.aaaaaaah.velcom.backend.listener.Listener;
 import de.aaaaaaah.velcom.backend.restapi.RepoAuthenticator;
 import de.aaaaaaah.velcom.backend.restapi.RepoUser;
@@ -78,13 +77,14 @@ public class ServerMain extends Application<GlobalConfig> {
 		CommitAccess commitAccess = new CommitAccess(accessLayer, databaseStorage, repoStorage);
 		RepoAccess repoAccess = new RepoAccess(accessLayer, databaseStorage, repoStorage,
 			new RemoteUrl(configuration.getBenchmarkRepoRemoteUrl()));
+		RepoComparisonAccess repoComparisonAccess =
+			new RepoComparisonAccess(databaseStorage, new GroupByHour());
 		TokenAccess tokenAccess = new TokenAccess(accessLayer, databaseStorage,
 			new AuthToken(configuration.getWebAdminToken()));
 
 		// Data layer
 		CommitComparer commitComparer = new CommitComparer(configuration.getSignificantFactor());
 		LinearLog linearLog = new CommitAccessBasedLinearLog(commitAccess);
-		ReducedLog reducedLog = new TimeSliceBasedReducedLog(benchmarkAccess, new GroupByHour());
 
 		Queue queue = new Queue(commitAccess, new PolicyManualFilo());
 		commitAccess.getAllCommitsRequiringBenchmark().forEach(queue::addCommit);
@@ -122,7 +122,7 @@ public class ServerMain extends Application<GlobalConfig> {
 		environment.jersey().register(
 			new RecentlyBenchmarkedCommitsEndpoint(benchmarkAccess, commitComparer, linearLog));
 		environment.jersey().register(
-			new RepoComparisonGraphEndpoint(commitAccess, repoAccess, reducedLog));
+			new RepoComparisonGraphEndpoint(commitAccess, repoAccess, repoComparisonAccess));
 		environment.jersey().register(new RepoEndpoint(repoAccess, tokenAccess, queue, listener));
 		environment.jersey().register(new TestTokenEndpoint());
 	}

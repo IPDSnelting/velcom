@@ -2,6 +2,7 @@ package de.aaaaaaah.velcom.backend.restapi.jsonobjects;
 
 import de.aaaaaaah.velcom.backend.access.benchmark.Run;
 import de.aaaaaaah.velcom.backend.access.commit.CommitAccessException;
+import de.aaaaaaah.velcom.backend.access.repocomparison.TmpCommit;
 import java.util.Collection;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -18,6 +19,18 @@ public class JsonRun {
 	private final Collection<JsonMeasurement> measurements;
 	@Nullable
 	private final String errorMessage;
+
+	public JsonRun(TmpCommit tmpCommit) {
+		commit = new JsonCommit(tmpCommit.getCommit());
+		start_time = 0; // TODO retrieve this too
+		stop_time = 0; // TODO retrieve this too
+
+		measurements = tmpCommit.getMeasurements().values().stream()
+			.map(JsonMeasurement::new)
+			.collect(Collectors.toUnmodifiableList());
+
+		errorMessage = null;
+	}
 
 	public JsonRun(Run run) throws CommitAccessException {
 		commit = new JsonCommit(run.getCommit());
