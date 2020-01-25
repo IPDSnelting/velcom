@@ -17,11 +17,13 @@ public class Measurement {
 
 	public Measurement(BenchmarkAccess benchmarkAccess, RunId runId,
 		MeasurementName measurementName, MeasurementError error) {
+
 		this(benchmarkAccess, runId, measurementName, Either.ofLeft(error));
 	}
 
 	public Measurement(BenchmarkAccess benchmarkAccess, RunId runId,
 		MeasurementName measurementName, MeasurementValues values) {
+
 		this(benchmarkAccess, runId, measurementName, Either.ofRight(values));
 	}
 
