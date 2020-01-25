@@ -1,7 +1,13 @@
-import { createModule, mutation, action } from 'vuex-class-component'
+import {
+  createModule,
+  mutation,
+  action,
+  getRawActionContext
+} from 'vuex-class-component'
 import { Run, Repo } from '@/store/types'
 import Vue from 'vue'
 import axios from 'axios'
+import { vxm } from '..'
 const VxModule = createModule({
   namespaced: 'repoComparisonModule',
   strict: false
@@ -24,6 +30,8 @@ export class RepoComparisonStore extends VxModule {
     benchmark: string
     metric: string
   }): Promise<{ [key: string]: Run[] }> {
+    this.cleanupSelectedBranches()
+
     const response = await axios.post('/repo-comparison-graph', {
       repos: this.selectedReposWithBranches,
       start_time: this.startDate.getTime() / 1000,
@@ -53,6 +61,27 @@ export class RepoComparisonStore extends VxModule {
 
     this.setDataPoints(datapoints)
     return this.allRuns
+  }
+
+  /**
+   * Deletes all selected repositories that are no longer found in repoModule.allRepos.
+   *
+   * @memberof RepoComparisonStore
+   */
+  @mutation
+  cleanupSelectedBranches() {
+    // cleanup selected branches
+    let allRepos = vxm.repoModule.allRepos
+    let keysToRemove = Object.keys(this._selectedBranchesByRepoID)
+    allRepos.forEach(repo => {
+      let index = keysToRemove.findIndex(it => it === repo.id)
+      if (index >= 0) {
+        keysToRemove.splice(index, 1)
+      }
+    })
+    keysToRemove.forEach(key => {
+      Vue.delete(this._selectedBranchesByRepoID, key)
+    })
   }
 
   @mutation
