@@ -97,15 +97,12 @@
         </v-col>
       </v-row>
 
-      <v-row align="start" justify="space-between">
+      <v-row align="start" justify="start">
         <v-col cols="auto">
           <repo-selector v-on:selectionChanged="retrieveGraphData()"></repo-selector>
         </v-col>
         <v-col>
-          <h2>repos and their selected branches:</h2>
-          <p>{{this.branches}}</p>
-          <h2>graph data:</h2>
-          <p>{{this.graphData}}</p>
+          <comparison-graph :measurement="selectedMeasurement"></comparison-graph>
         </v-col>
       </v-row>
     </v-container>
@@ -119,13 +116,15 @@ import { Watch } from 'vue-property-decorator'
 import { vxm } from '../store/index'
 import RepoAddDialog from '../components/dialogs/RepoAddDialog.vue'
 import RepoSelector from '../components/RepoSelector.vue'
+import ComparisonGraph from '../components/graphs/ComparisonGraph.vue'
 import { Repo, MeasurementID } from '../store/types'
 import { mdiCalendar } from '@mdi/js'
 
 @Component({
   components: {
     'repo-add': RepoAddDialog,
-    'repo-selector': RepoSelector
+    'repo-selector': RepoSelector,
+    'comparison-graph': ComparisonGraph
   }
 })
 export default class RepoComparison extends Vue {
@@ -140,6 +139,10 @@ export default class RepoComparison extends Vue {
   // ============== ICONS ==============
   private dateIcon = mdiCalendar
   // ==============       ==============
+
+  get selectedMeasurement() {
+    return new MeasurementID(this.selectedBenchmark, this.selectedMetric)
+  }
 
   get allRepos(): Repo[] {
     return vxm.repoModule.allRepos

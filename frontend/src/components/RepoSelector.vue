@@ -7,7 +7,7 @@
         </v-card-title>
         <v-card-text>
           <v-list>
-            <v-list-group v-for="repo in allRepos" :key="repo.id">
+            <v-list-group v-for="repo in allRepos" :key="repo.index">
               <template v-slot:activator>
                 <v-checkbox
                   v-model="selectedRepos"
