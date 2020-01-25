@@ -53,8 +53,7 @@ export function runFromJson(jsonRun: any): Run {
     commitFromJson(jsonRun.commit),
     jsonRun.start_time,
     jsonRun.stop_time,
-    jsonRun.measurements
-      ? measurementsFromJson(jsonRun.measurements)
+    jsonRun.measurements ? measurementsFromJson(jsonRun.measurements)
       : undefined,
     jsonRun.error_message
   )
@@ -73,7 +72,6 @@ export function measurementsFromJson(jsonMeasurements: any[]): Measurement[] {
         next.error_message
       )
     )
-
     return accumulated
   }, [])
 }

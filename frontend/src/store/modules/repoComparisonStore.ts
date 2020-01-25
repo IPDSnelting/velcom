@@ -8,6 +8,7 @@ import { Run, Repo } from '@/store/types'
 import Vue from 'vue'
 import axios from 'axios'
 import { vxm } from '..'
+
 const VxModule = createModule({
   namespaced: 'repoComparisonModule',
   strict: false
@@ -16,7 +17,7 @@ const VxModule = createModule({
 export class RepoComparisonStore extends VxModule {
   private _selectedRepos: string[] = []
   private _selectedBranchesByRepoID: { [key: string]: string[] } = {}
-  private runsByRepoId: { [key: string]: Run[] } = {}
+  private _runsByRepoId: { [key: string]: Run[] } = {}
   // One week in the past
   private startTime: string = new Date(
     new Date().setDate(new Date().getDate() - 7)
@@ -44,19 +45,7 @@ export class RepoComparisonStore extends VxModule {
     let jsonData: any[] = response.data.repos
 
     jsonData.forEach((item: any) => {
-      var runs: Run[] = []
-      item.runs.forEach((run: any) => {
-        runs.push(
-          new Run(
-            run.commit,
-            run.start_time,
-            run.stop_time,
-            run.measurements,
-            run.error_mesage
-          )
-        )
-      })
-      datapoints[item.repo.id] = item.runs
+      datapoints[item.repo.id] = item.runs.map((run: any) => runFromJson(run))
     })
 
     this.setDataPoints(datapoints)
@@ -105,9 +94,9 @@ export class RepoComparisonStore extends VxModule {
    */
   @mutation
   setDataPoints(payload: { [key: string]: Run[] }) {
-    this.runsByRepoId = {} // reset it
+    this._runsByRepoId = {} // reset it
     Array.from(Object.keys(payload)).forEach(key => {
-      Vue.set(this.runsByRepoId, key, payload[key])
+      Vue.set(this._runsByRepoId, key, payload[key])
     })
   }
 
@@ -135,7 +124,11 @@ export class RepoComparisonStore extends VxModule {
    * @memberof RepoComparisonStore
    */
   get allRuns(): { [key: string]: Run[] } {
-    return this.runsByRepoId
+    return this._runsByRepoId
+  }
+
+  get runsByRepoID(): (repoID: string) => Run[] {
+    return (repoID: string) => this._runsByRepoId[repoID]
   }
 
   get selectedRepos(): string[] {
