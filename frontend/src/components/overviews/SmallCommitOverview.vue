@@ -5,7 +5,7 @@
       <v-list-item-content>
         <v-container fluid>
           <v-row no-gutters align="center">
-            <v-col cols="9">
+            <v-col :cols="$scopedSlots['actions'] ? 8 : 9">
               <v-list-item-title>
                 <repo-display :repoId="commit.repoID"></repo-display>
                 <span class="mx-2">—</span>
@@ -27,6 +27,9 @@
                   <v-col>
                     <commit-chip :commit="commit"></commit-chip>
                   </v-col>
+                  <span>
+                    <slot name="actions"></slot>
+                  </span>
                 </v-row>
               </v-container>
             </v-col>

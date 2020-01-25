@@ -137,7 +137,14 @@
                         v-for="([commit, commitComparison], index) in props.items"
                         :key="index"
                       >
-                        <run-overview v-if="commitComparison.second" :run="commitComparison.second"></run-overview>
+                        <run-overview v-if="commitComparison.second" :run="commitComparison.second">
+                          <template #actions v-if="isAdmin">
+                            <commit-benchmark-actions
+                              @reBenchmark="reBenchmark(commit)"
+                              @deleteBenchmarks="deleteBenchmarks(commit)"
+                            ></commit-benchmark-actions>
+                          </template>
+                        </run-overview>
                         <commit-overview v-else :commit="commit">
                           <template #avatar>
                             <v-list-item-avatar>
@@ -152,6 +159,12 @@
                                 This commit was never benchmarked!
                               </v-tooltip>
                             </v-list-item-avatar>
+                          </template>
+                          <template #actions v-if="isAdmin">
+                            <commit-benchmark-actions
+                              @reBenchmark="reBenchmark(commit)"
+                              @deleteBenchmarks="deleteBenchmarks(commit)"
+                            ></commit-benchmark-actions>
                           </template>
                         </commit-overview>
                       </v-col>
@@ -169,7 +182,7 @@
 
 <script lang="ts">
 import Vue from 'vue'
-import { Repo } from '@/store/types'
+import { Repo, Commit } from '@/store/types'
 import Component from 'vue-class-component'
 import { Watch } from 'vue-property-decorator'
 import RepoUpdateDialog from '../components/dialogs/RepoUpdateDialog.vue'
@@ -177,12 +190,14 @@ import RunOverview from '../components/overviews/RunOverview.vue'
 import { vxm } from '../store/index'
 import SmallCommitOverview from '../components/overviews/SmallCommitOverview.vue'
 import { mdiHelpCircleOutline } from '@mdi/js'
+import CommitBenchmarkActions from '../components/CommitBenchmarkActions.vue'
 
 @Component({
   components: {
     'repo-update': RepoUpdateDialog,
     'run-overview': RunOverview,
-    'commit-overview': SmallCommitOverview
+    'commit-overview': SmallCommitOverview,
+    'commit-benchmark-actions': CommitBenchmarkActions
   }
 })
 export default class RepoDetail extends Vue {
@@ -211,6 +226,10 @@ export default class RepoDetail extends Vue {
 
   private get canEdit() {
     return vxm.userModule.authorized(this.id)
+  }
+
+  private get isAdmin() {
+    return vxm.userModule.isAdmin
   }
 
   private repoExists(id: string): boolean {
@@ -303,6 +322,14 @@ export default class RepoDetail extends Vue {
 
   private get repo(): Repo {
     return vxm.repoModule.repoByID(this.id)!
+  }
+
+  private deleteBenchmarks(commit: Commit) {
+    this.$globalSnackbar.setError('delete', 'I am sadly not implemented')
+  }
+
+  private reBenchmark(commit: Commit) {
+    vxm.queueModule.dispatchPrioritizeOpenTask(commit)
   }
 
   created() {
