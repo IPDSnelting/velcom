@@ -8,6 +8,7 @@ import { Run, Repo } from '@/store/types'
 import Vue from 'vue'
 import axios from 'axios'
 import { vxm } from '..'
+import { runFromJson } from '@/util/CommitComparisonJsonHelper'
 
 const VxModule = createModule({
   namespaced: 'repoComparisonModule',
