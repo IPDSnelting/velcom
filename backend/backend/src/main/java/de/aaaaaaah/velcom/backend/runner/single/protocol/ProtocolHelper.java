@@ -12,7 +12,7 @@ import org.eclipse.jetty.websocket.api.Session;
  */
 public class ProtocolHelper {
 
-	private static final int DEFAULT_BUFFER_SIZE = 10 * 1024; // 10 MB
+	private static final int DEFAULT_BUFFER_SIZE = 1024; // 1 MB
 
 	/**
 	 * Sends an object to the runner.
