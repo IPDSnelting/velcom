@@ -139,7 +139,7 @@
                       >
                         <run-overview v-if="commitComparison.second" :run="commitComparison.second">
                           <template #actions v-if="isAdmin">
-                            <commit-benchmark-actions @reBenchmark="reBenchmark(commit)"></commit-benchmark-actions>
+                            <commit-benchmark-actions @benchmark="benchmark(commit)"></commit-benchmark-actions>
                           </template>
                         </run-overview>
                         <commit-overview v-else :commit="commit">
@@ -158,7 +158,10 @@
                             </v-list-item-avatar>
                           </template>
                           <template #actions v-if="isAdmin">
-                            <commit-benchmark-actions @reBenchmark="reBenchmark(commit)"></commit-benchmark-actions>
+                            <commit-benchmark-actions
+                              :hasExistingBenchmark="false"
+                              @benchmark="benchmark(commit)"
+                            ></commit-benchmark-actions>
                           </template>
                         </commit-overview>
                       </v-col>
@@ -318,7 +321,7 @@ export default class RepoDetail extends Vue {
     return vxm.repoModule.repoByID(this.id)!
   }
 
-  private reBenchmark(commit: Commit) {
+  private benchmark(commit: Commit) {
     vxm.queueModule.dispatchPrioritizeOpenTask(commit)
   }
 

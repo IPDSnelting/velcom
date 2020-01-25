@@ -2,11 +2,12 @@
   <span>
     <v-tooltip top>
       <template #activator="{ on }">
-        <v-btn v-on="on" icon @click="$emit('reBenchmark', true)">
-          <v-icon class="rocket">{{ rebenchmarkIcon }}</v-icon>
+        <v-btn v-on="on" icon @click="$emit('benchmark', true)">
+          <v-icon class="rocket">{{ hasExistingBenchmark ? rebenchmarkIcon : benchmarkIcon }}</v-icon>
         </v-btn>
       </template>
-      Re-runs the benchmarks for this commit
+      <span v-if="hasExistingBenchmark">Re-runs all benchmarks for this commit</span>
+      <span v-else>Runs all benchmarks for this commit</span>
     </v-tooltip>
   </span>
 </template>
@@ -14,15 +15,20 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { mdiHistory } from '@mdi/js'
+import { mdiHistory, mdiFlash } from '@mdi/js'
+import { Prop } from 'vue-property-decorator'
 
 /**
- * @events 'reBenchmark' and 'deleteBenchmarks'
+ * @events 'benchmark' and 'deleteBenchmarks'
  */
 @Component
 export default class CommitBenchmarkActions extends Vue {
+  @Prop({ default: true })
+  private hasExistingBenchmark!: boolean
+
   // ============== ICONS ==============
   private rebenchmarkIcon = mdiHistory
+  private benchmarkIcon = mdiFlash
   // ==============       ==============
 }
 </script>
