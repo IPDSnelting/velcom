@@ -1,5 +1,5 @@
-import { createModule, mutation, action } from 'vuex-class-component'
-import { ColorConverter } from '@/store/types'
+import { createModule, mutation } from 'vuex-class-component'
+import { hexToHsl, hslToHex } from '@/util/ColorUtil'
 
 const VxModule = createModule({
   namespaced: 'colorModule',
@@ -32,7 +32,6 @@ export class ColorStore extends VxModule {
   @mutation
   addColors(amount: number) {
     // generating new colors in hsl color space using golden ratio to maximize difference
-    var converter = new ColorConverter()
     const colors = this.colors
 
     const phi = 1.6180339887
@@ -41,11 +40,11 @@ export class ColorStore extends VxModule {
 
     for (let i = 0; i < amount; i++) {
       const lastColor = colors[colors.length - 1]
-      var hue = converter.hexToHsl(lastColor)[0]
+      var hue = hexToHsl(lastColor)[0]
 
       hue += phi
       hue %= 1
-      const newColor = converter.hslToHex(hue, saturation, lightness)
+      const newColor = hslToHex(hue, saturation, lightness)
 
       this.colors.push(newColor)
     }
