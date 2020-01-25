@@ -67,3 +67,5 @@ CREATE TABLE repo_token
 
     FOREIGN KEY (repo_id) REFERENCES repository (id) ON DELETE CASCADE
 );
+
+CREATE INDEX idx_rmv_mid ON run_measurement_value (measurement_id);

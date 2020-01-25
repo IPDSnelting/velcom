@@ -281,7 +281,7 @@ public class BenchmarkAccess {
 
 	public Collection<Measurement> getMeasurements(RunId runId) {
 		Map<String, RunMeasurementRecord> measurementRecordMap; // key: run_measurement_id
-		 Map<String, Result<Record2<String, Double>>> valueMap; // key: run_measurement_id
+		Map<String, Result<Record2<String, Double>>> valueMap; // key: run_measurement_id
 
 		try (DSLContext db = databaseStorage.acquireContext()) {
 			// 1.) Load measurement records
