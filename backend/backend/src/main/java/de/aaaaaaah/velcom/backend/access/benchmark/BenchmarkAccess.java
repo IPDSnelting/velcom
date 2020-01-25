@@ -1,11 +1,9 @@
 package de.aaaaaaah.velcom.backend.access.benchmark;
 
-import static org.jooq.codegen.db.tables.Repository.REPOSITORY;
 import static org.jooq.codegen.db.tables.Run.RUN;
 import static org.jooq.codegen.db.tables.RunMeasurement.RUN_MEASUREMENT;
 import static org.jooq.codegen.db.tables.RunMeasurementValue.RUN_MEASUREMENT_VALUE;
 import static org.jooq.impl.DSL.exists;
-import static org.jooq.impl.DSL.notExists;
 import static org.jooq.impl.DSL.selectFrom;
 
 import de.aaaaaaah.velcom.backend.access.AccessLayer;
@@ -27,6 +25,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.jooq.DSLContext;
 import org.jooq.InsertValuesStep2;
+import org.jooq.Record2;
 import org.jooq.Result;
 import org.jooq.codegen.db.tables.records.RunMeasurementRecord;
 import org.jooq.codegen.db.tables.records.RunMeasurementValueRecord;
@@ -282,8 +281,7 @@ public class BenchmarkAccess {
 
 	public Collection<Measurement> getMeasurements(RunId runId) {
 		Map<String, RunMeasurementRecord> measurementRecordMap; // key: run_measurement_id
-		Collection<String> measurementIds;
-		Map<String, Result<RunMeasurementValueRecord>> valueMap; // key: run_measurement_id
+		 Map<String, Result<Record2<String, Double>>> valueMap; // key: run_measurement_id
 
 		try (DSLContext db = databaseStorage.acquireContext()) {
 			// 1.) Load measurement records
@@ -292,12 +290,14 @@ public class BenchmarkAccess {
 				.fetch()
 				.intoMap(RUN_MEASUREMENT.ID);
 
-			measurementIds = measurementRecordMap.keySet();
-
 			// 2.) Load measurement values
-			valueMap = db.selectFrom(
-				RUN_MEASUREMENT_VALUE)
-				.where(RUN_MEASUREMENT_VALUE.MEASUREMENT_ID.in(measurementIds))
+			valueMap = db.select(
+				RUN_MEASUREMENT_VALUE.MEASUREMENT_ID, RUN_MEASUREMENT_VALUE.VALUE)
+				.from(RUN_MEASUREMENT_VALUE
+					.join(RUN_MEASUREMENT)
+					.on(RUN_MEASUREMENT_VALUE.MEASUREMENT_ID.eq(RUN_MEASUREMENT.ID))
+				)
+				.where(RUN_MEASUREMENT.RUN_ID.eq(runId.getId().toString()))
 				.fetch()
 				.intoGroups(RUN_MEASUREMENT_VALUE.MEASUREMENT_ID);
 		}
@@ -328,7 +328,7 @@ public class BenchmarkAccess {
 
 				if (valueMap.containsKey(measureRecord.getId())) {
 					valueList = valueMap.get(measureRecord.getId())
-						.map(RunMeasurementValueRecord::getValue);
+						.map(Record2::value2);
 				} else {
 					valueList = Collections.emptyList();
 				}
