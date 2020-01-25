@@ -140,7 +140,8 @@ public class RunnerStateMachine {
 				this.state = newState;
 			}
 		} catch (IOException e) {
-			e.printStackTrace();
+			LOGGER.warn("Got an exception while switching stages. Disconnecting myself!", e);
+			configuration.getConnectionManager().disconnect();
 		}
 	}
 
