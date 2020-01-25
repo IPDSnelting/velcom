@@ -18,7 +18,7 @@
       <v-list-item-content>
         <v-container fluid>
           <v-row no-gutters align="center">
-            <v-col :cols="$scopedSlots['actions'] ? 8 : 9">
+            <v-col :cols="!hideActions ? 8 : 9">
               <v-list-item-title>
                 <repo-display :repoId="run.commit.repoID"></repo-display>
                 <span class="mx-2">—</span>
@@ -40,8 +40,11 @@
                   <v-col cols="auto">
                     <commit-chip :commit="run.commit"></commit-chip>
                   </v-col>
-                  <span>
-                    <slot name="actions"></slot>
+                  <span v-if="!hideActions">
+                    <commit-benchmark-actions
+                      :hasExistingBenchmark="true"
+                      @benchmark="benchmark(run.commit)"
+                    ></commit-benchmark-actions>
                   </span>
                 </v-row>
               </v-container>
@@ -63,16 +66,21 @@ import InlineMinimalRepoNameDisplay from '../InlineMinimalRepoDisplay.vue'
 import CommitChip from '../CommitChip.vue'
 import { formatDate, formatDateUTC } from '@/util/TimeUtil'
 import { mdiCheckboxMarkedCircleOutline, mdiCloseCircleOutline } from '@mdi/js'
+import CommitBenchmarkActions from '../CommitBenchmarkActions.vue'
 
 @Component({
   components: {
     'repo-display': InlineMinimalRepoNameDisplay,
-    'commit-chip': CommitChip
+    'commit-chip': CommitChip,
+    'commit-benchmark-actions': CommitBenchmarkActions
   }
 })
 export default class RunOverview extends Vue {
   @Prop({})
   private run!: Run
+
+  @Prop({ default: false })
+  private hideActions!: boolean
 
   private get isSuccessful(): boolean {
     return !this.run.errorMessage && !!this.run.measurements
@@ -84,6 +92,10 @@ export default class RunOverview extends Vue {
 
   private get formattedDateUTC() {
     return formatDateUTC(this.run.commit.authorDate || 0)
+  }
+
+  private benchmark(commit: Commit) {
+    vxm.queueModule.dispatchPrioritizeOpenTask(commit)
   }
 
   // ============== ICONS ==============

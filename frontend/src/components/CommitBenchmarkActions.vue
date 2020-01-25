@@ -1,5 +1,5 @@
 <template>
-  <span>
+  <span v-if="isAdmin">
     <v-tooltip top>
       <template #activator="{ on }">
         <v-btn v-on="on" icon @click="$emit('benchmark', true)">
@@ -17,6 +17,7 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { mdiHistory, mdiFlash } from '@mdi/js'
 import { Prop } from 'vue-property-decorator'
+import { vxm } from '../store'
 
 /**
  * @events 'benchmark' and 'deleteBenchmarks'
@@ -25,6 +26,10 @@ import { Prop } from 'vue-property-decorator'
 export default class CommitBenchmarkActions extends Vue {
   @Prop({ default: true })
   private hasExistingBenchmark!: boolean
+
+  get isAdmin() {
+    return vxm.userModule.isAdmin
+  }
 
   // ============== ICONS ==============
   private rebenchmarkIcon = mdiHistory

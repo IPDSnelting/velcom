@@ -137,11 +137,7 @@
                         v-for="([commit, commitComparison], index) in props.items"
                         :key="index"
                       >
-                        <run-overview v-if="commitComparison.second" :run="commitComparison.second">
-                          <template #actions v-if="isAdmin">
-                            <commit-benchmark-actions @benchmark="benchmark(commit)"></commit-benchmark-actions>
-                          </template>
-                        </run-overview>
+                        <run-overview v-if="commitComparison.second" :run="commitComparison.second"></run-overview>
                         <commit-overview v-else :commit="commit">
                           <template #avatar>
                             <v-list-item-avatar>
