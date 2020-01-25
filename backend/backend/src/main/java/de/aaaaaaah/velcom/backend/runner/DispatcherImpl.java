@@ -26,6 +26,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.StringJoiner;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
@@ -85,6 +86,7 @@ public class DispatcherImpl implements Dispatcher {
 	}
 
 	private void cleanupCrashedRunners() {
+		StringJoiner checkedRunners = new StringJoiner(", ");
 		for (ActiveRunnerInformation runner : activeRunners) {
 			if (runner.getState() != RunnerStatusEnum.DISCONNECTED) {
 				continue;
@@ -92,6 +94,10 @@ public class DispatcherImpl implements Dispatcher {
 			Duration timeSinceLastMessage = Duration.between(
 				runner.getLastReceivedMessage(),
 				Instant.now()
+			);
+			checkedRunners.add(
+				runner.getRunnerInformation().map(RunnerInformation::getName).orElse(" ") + " with "
+					+ timeSinceLastMessage
 			);
 			if (timeSinceLastMessage.compareTo(allowedRunnerDisconnectTime) > 0) {
 				LOGGER.info(
@@ -101,6 +107,7 @@ public class DispatcherImpl implements Dispatcher {
 				disconnectRemoveRunnerByInformation(runner);
 			}
 		}
+		LOGGER.info("Checked runners: {}", checkedRunners);
 	}
 
 	@Override
