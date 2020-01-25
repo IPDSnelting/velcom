@@ -145,7 +145,6 @@ public class RepoEndpoint {
 		Repo repo = repoAccess.getRepo(repoId);
 
 		repoAccess.deleteRepo(repoId);
-		tokenAccess.deleteAllUnused();
 		queue.abortAllTasksOfRepo(repoId);
 	}
 

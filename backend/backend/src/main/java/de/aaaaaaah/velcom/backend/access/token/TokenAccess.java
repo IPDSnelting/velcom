@@ -112,18 +112,6 @@ public class TokenAccess {
 		}
 	}
 
-	// Cleanup
-
-	/**
-	 * Delete all tokens whose corresponding repo doesn't exist (any more).
-	 */
-	public void deleteAllUnused() {
-		try (DSLContext db = databaseStorage.acquireContext()) {
-			db.deleteFrom(REPO_TOKEN)
-				.where(REPO_TOKEN.REPO_ID.notIn(db.select(REPOSITORY.ID).from(REPOSITORY)));
-		}
-	}
-
 	/**
 	 * @param id a repo's id
 	 * @return whether the repo has a token associated with it

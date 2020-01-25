@@ -248,7 +248,6 @@ public class BenchmarkAccess {
 
 		try {
 			return db.selectFrom(RUN)
-				.where(exists(selectFrom(REPOSITORY).where(REPOSITORY.ID.eq(RUN.REPO_ID))))
 				.orderBy(RUN.START_TIME)
 				.fetchStream()
 				.map(this::runFromRecord)
@@ -278,47 +277,6 @@ public class BenchmarkAccess {
 						.and(RUN_MEASUREMENT.BENCHMARK.eq(measurementName.getBenchmark()))
 						.and(RUN_MEASUREMENT.METRIC.eq(measurementName.getMetric())))
 				.execute();
-		}
-	}
-
-	/**
-	 * Delete all measurements and runs that don't need to be kept any more. These are:
-	 * <ol>
-	 *     <li>runs whose repo doesn't exist any more</li>
-	 *     <li>non-failed runs without measurements</li>
-	 *     <li>measurements whose run doesn't exist any more (after 1. was applied)</li>
-	 * </ol>
-	 */
-	public void deleteAllUnused() {
-		try (DSLContext db = databaseStorage.acquireContext()) {
-			db.transaction(() -> {
-				// Delete all runs that don't have a corresponding repo
-				db.deleteFrom(RUN)
-					.where(notExists(
-						db.selectOne()
-							.from(REPOSITORY)
-							.where(REPOSITORY.ID.eq(RUN.REPO_ID))
-					))
-					.execute();
-
-				// Delete all runs that don't have any corresponding measurements
-				db.deleteFrom(RUN)
-					.where(notExists(
-						db.selectOne()
-							.from(RUN_MEASUREMENT)
-							.where(RUN_MEASUREMENT.RUN_ID.eq(RUN.ID))
-					))
-					.execute();
-
-				// Delete all measurements that don't have any corresponding runs
-				db.deleteFrom(RUN_MEASUREMENT)
-					.where(notExists(
-						db.selectOne()
-							.from(RUN)
-							.where(RUN.ID.eq(RUN_MEASUREMENT.RUN_ID))
-					))
-					.execute();
-			});
 		}
 	}
 

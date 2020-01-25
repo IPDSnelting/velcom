@@ -285,8 +285,7 @@ public class CommitAccess {
 	public Collection<Commit> getAllCommitsRequiringBenchmark() {
 		try (DSLContext db = databaseStorage.acquireContext()) {
 			return db.selectFrom(KNOWN_COMMIT)
-				.where(exists(selectFrom(REPOSITORY).where(REPOSITORY.ID.eq(KNOWN_COMMIT.REPO_ID))))
-				.and(KNOWN_COMMIT.STATUS.eq(BENCHMARK_REQUIRED_MANUAL_PRIORITY.getNumericalValue())
+				.where(KNOWN_COMMIT.STATUS.eq(BENCHMARK_REQUIRED_MANUAL_PRIORITY.getNumericalValue())
 					.or(KNOWN_COMMIT.STATUS.eq(BENCHMARK_REQUIRED.getNumericalValue())))
 				.fetch()
 				.map(record -> getCommit(
