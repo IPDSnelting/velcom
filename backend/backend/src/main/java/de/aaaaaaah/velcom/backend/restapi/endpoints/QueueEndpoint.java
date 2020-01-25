@@ -69,7 +69,7 @@ public class QueueEndpoint {
 	@POST
 	public void post(@Auth RepoUser user, @NotNull PostRequest postRequest) {
 		RepoId repoId = new RepoId(postRequest.getRepoId());
-		user.guardRepoAccess(repoId);
+		user.guardAdminAccess();
 
 		CommitHash commitHash = new CommitHash(postRequest.getCommitHash());
 
