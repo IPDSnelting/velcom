@@ -15,9 +15,9 @@ public enum HashAlgorithm {
 	ARGON2ID(1) {
 		private final Argon2 argon = Argon2Factory.create(Argon2Factory.Argon2Types.ARGON2id);
 
-		private final int memoryInKiB = 488281; // = 500MB
+		private final int memoryInKiB = 5 * 1024; // = 5MiB
 		private final int parallelism = Runtime.getRuntime().availableProcessors();
-		private final long maxMillis = 750;
+		private final long maxMillis = 500;
 		private final int iterations = Math.max(1, Argon2Helper.findIterations(
 			argon, maxMillis, memoryInKiB, parallelism
 		));
