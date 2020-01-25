@@ -268,10 +268,18 @@ public class WebsocketListener implements WebSocket.Listener, SocketConnectionMa
 				StatusCodeMappings.CLIENT_ORDERLY_DISCONNECT, "Client initiated close"
 			)
 				.thenAccept(WebSocket::abort)
-				.thenRun(
-					() -> stateListeners.forEach(
-						it -> it.onStateChange(ConnectionState.DISCONNECTED))
-				);
+				.whenComplete((success, error) -> {
+					if (error != null) {
+						LOGGER.info("Graceful disconnect not possible", error);
+					}
+					stateListeners.forEach(
+						it -> it.onStateChange(ConnectionState.DISCONNECTED)
+					);
+				});
+		} else {
+			stateListeners.forEach(
+				it -> it.onStateChange(ConnectionState.DISCONNECTED)
+			);
 		}
 		if (heartbeatHandler != null) {
 			heartbeatHandler.shutdown();
