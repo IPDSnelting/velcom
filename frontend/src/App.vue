@@ -46,6 +46,6 @@ export default class App extends Vue {
 
 .concealed-link {
   text-decoration: none;
-  color: rgba(0, 0, 0, 0.9) !important;
+  cursor: pointer;
 }
 </style>

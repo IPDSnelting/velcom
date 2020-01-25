@@ -1,5 +1,9 @@
 <template>
-  <router-link class="concealed-link" :to="{ name: 'repo-detail', params: { id: repo.id } }">
+  <router-link
+    class="concealed-link"
+    tag="span"
+    :to="{ name: 'repo-detail', params: { id: repo.id } }"
+  >
     <span class="repo-name" :title="'Repo-ID: ' + repo.id">{{ repo.name }}</span>
   </router-link>
 </template>
