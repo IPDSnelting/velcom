@@ -1,8 +1,8 @@
 package de.aaaaaaah.velcom.backend.storage.db;
 
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
 import de.aaaaaaah.velcom.backend.GlobalConfig;
+import java.sql.Connection;
+import java.sql.SQLException;
 import javax.sql.DataSource;
 import org.flywaydb.core.Flyway;
 import org.jooq.DSLContext;
@@ -17,7 +17,8 @@ import org.sqlite.SQLiteDataSource;
  */
 public class DatabaseStorage {
 
-	private final HikariDataSource dataSource;
+	private final Connection connection;
+	private final DSLContext context;
 
 	/**
 	 * Initializes the database storage.
@@ -27,38 +28,39 @@ public class DatabaseStorage {
 	 *
 	 * @param config the config used to get the connection information for the database from
 	 */
-	public DatabaseStorage(GlobalConfig config) {
+	public DatabaseStorage(GlobalConfig config) throws SQLException {
+		this(config.getJdbcUrl());
+	}
+
+	/**
+	 * Initializes the database storage.
+	 *
+	 * <p>
+	 * Also performs database migrations, if necessary.
+	 *
+	 * @param jdbcUrl the jdbc url used to connect to the database
+	 */
+	public DatabaseStorage(String jdbcUrl) throws SQLException {
 		SQLiteConfig sqliteConfig = new SQLiteConfig();
 		sqliteConfig.enforceForeignKeys(true);
 		sqliteConfig.setJournalMode(JournalMode.WAL);
 
-		SQLiteDataSource sqliteDataSource = new SQLiteDataSource(sqliteConfig);
-		sqliteDataSource.setUrl(config.getJdbcUrl());
+		SQLiteDataSource dataSource = new SQLiteDataSource(sqliteConfig);
+		dataSource.setUrl(jdbcUrl);
 
-		HikariConfig hikariConfig = new HikariConfig();
-		hikariConfig.setDataSource(sqliteDataSource);
+		this.connection = dataSource.getConnection();
 
-		config.getJdbcUsername().ifPresent(hikariConfig::setUsername);
-		config.getJdbcPassword().ifPresent(hikariConfig::setPassword);
+		this.context = DSL.using(this.connection, SQLDialect.SQLITE);
 
-		dataSource = new HikariDataSource(hikariConfig);
-
-		migrate();
+		migrate(dataSource);
 	}
 
-	private void migrate() {
+	private void migrate(DataSource dataSource) {
 		Flyway flyway = Flyway.configure()
-			.dataSource(this.dataSource)
+			.dataSource(dataSource)
 			.load();
 
 		flyway.migrate();
-	}
-
-	/**
-	 * @return a {@link DataSource} instance providing access to the database
-	 */
-	public DataSource getDataSource() {
-		return dataSource;
 	}
 
 	/**
@@ -66,14 +68,17 @@ public class DatabaseStorage {
 	 * 	the database
 	 */
 	public DSLContext acquireContext() {
-		return new TrackedDSLContext(DSL.using(dataSource, SQLDialect.SQLITE));
+		return this.context;
 	}
 
 	/**
 	 * Closes the database storage.
 	 */
 	public void close() {
-		this.dataSource.close();
+		try {
+			this.connection.close();
+		} catch (SQLException ignore) {
+		}
 	}
 
 }
