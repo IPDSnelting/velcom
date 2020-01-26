@@ -253,9 +253,10 @@ export default class RepoDetail extends Vue {
     if (!confirmed) {
       return
     }
-    vxm.repoModule
-      .deleteRepo(this.id)
-      .then(() => this.$router.push({ name: 'repo-detail-frame' }))
+    vxm.repoModule.deleteRepo(this.id).then(() => {
+      vxm.repoDetailModule.selectedRepoId = ''
+      this.$router.push({ name: 'repo-detail-frame', params: { id: '' } })
+    })
   }
 
   private get branches() {
