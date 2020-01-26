@@ -48,4 +48,8 @@ export default class App extends Vue {
   text-decoration: none;
   cursor: pointer;
 }
+
+.concealed-link:hover {
+  text-decoration: underline;
+}
 </style>
