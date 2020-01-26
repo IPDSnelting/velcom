@@ -6,6 +6,7 @@
 - [VelCom](#velcom)
     - [Installation guide](#installation-guide)
         - [The easy way™](#the-easy-way)
+        - [The docker way™](#the-docker-way)
         - [The hard way™](#the-hard-way)
     - [Starting VelCom](#starting-velcom)
     - [Configuring the web server](#configuring-the-web-server)
@@ -23,6 +24,61 @@ Ensure that the following tools are installed on your system:
 ### The easy way™
 
 Run the `guided_install.py` script and follow its instructions.
+
+### The docker way™
+
+Go to the root directory of this project and build the docker image using the
+makefile.
+
+```
+$ make docker-build-server
+```
+
+This will build the backend and the frontend, copy all relevant files into a
+temporary folder called `.docker` and execute `sudo docker build` in it.
+The tag of the image is `velcom-server:latest`.
+
+Now you need to actually configure and launch the server.
+
+1. Create a config directory to mount in the docker image
+2. Create a data directory to mount in the docker image
+3. Set up a configuration file by copying the `example_config.yml` to the
+   created config directory
+4. Adjust the `jdbcUrl` field to point to wherever you mounted the data
+   directory when running the container.
+5. Optionally create a SSH folder containing a private key the backend should
+   use for cloning repositories
+6. Start the container
+
+```sh
+$ mkdir /install/dir/configs
+$ mkdir /install/dir/data
+$ cp backend/backend/src/main/resources/example_config.yml /install/dir/configs
+$ vi /install/dir/configs # Adjust JDBC url to point to whereever you mounted
+                          # the config dir in the docker image
+                          # This example uses
+                          # "jdbc:sqlite:file:/home/velcom/data/data.db"
+$ mkdir /install/dir/ssh  # Add a private ssh key the backend should use here
+$ docker run                                                  \
+        # Delete container on exit if you want
+        --rm                                                  \
+        # Mount the directory containing the server config
+        -v /install/dir/configs:/home/velcom/config           \
+        # Mount the data directory to persist it across container restarts
+        -v /install/dir/data:/home/velcom/data                \
+        # Expose the frontend port (80) to port 9080 (decide for yourself)
+        -p 127.0.0.1:9080:80                                  \
+        # Expose the backend api port (81) to port 9081 (decide for yourself)
+        -p 127.0.0.1:9081:81                                  \
+        # Expose the runner port (82) to port 9082 (decide for yourself)
+        -p 127.0.0.1:9666:82                                  \
+        # Give it read access to an SSH key you added to the relevant repositories
+        -v /install/dir/ssh:/root/.ssh:ro                     \
+        # Start the image
+        velcom-server                                         \
+        # Pass it the path to the server config file
+        /home/velcom/config/example_config.yml
+```
 
 ### The hard way™
 
