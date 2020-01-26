@@ -432,6 +432,16 @@ paths:
                             required:
                               - commit
                               - value
+                        interpretation:
+                          type: string
+                          title: Interpretation
+                          enum:
+                            - LESS_IS_BETTER
+                            - MORE_IS_BETTER
+                            - NEUTRAL
+                        unit:
+                          title: Unit
+                          type: string
                       required:
                         - repo_id
                         - commits
@@ -493,9 +503,15 @@ paths:
                                           metric:
                                             type: string
                                           unit:
+                                            title: Unit
                                             type: string
                                           interpretation:
                                             type: string
+                                            title: Interpretation
+                                            enum:
+                                              - LESS_IS_BETTER
+                                              - MORE_IS_BETTER
+                                              - NEUTRAL
                                           values:
                                             type: array
                                             items:
@@ -566,9 +582,15 @@ paths:
                                           metric:
                                             type: string
                                           unit:
+                                            title: Unit
                                             type: string
                                           interpretation:
                                             type: string
+                                            title: Interpretation
+                                            enum:
+                                              - LESS_IS_BETTER
+                                              - MORE_IS_BETTER
+                                              - NEUTRAL
                                           values:
                                             type: array
                                             items:
@@ -815,9 +837,15 @@ paths:
                                         metric:
                                           type: string
                                         unit:
+                                          title: Unit
                                           type: string
                                         interpretation:
                                           type: string
+                                          title: Interpretation
+                                          enum:
+                                            - LESS_IS_BETTER
+                                            - MORE_IS_BETTER
+                                            - NEUTRAL
                                         values:
                                           type: array
                                           items:
@@ -888,9 +916,15 @@ paths:
                                         metric:
                                           type: string
                                         unit:
+                                          title: Unit
                                           type: string
                                         interpretation:
                                           type: string
+                                          title: Interpretation
+                                          enum:
+                                            - LESS_IS_BETTER
+                                            - MORE_IS_BETTER
+                                            - NEUTRAL
                                         values:
                                           type: array
                                           items:
@@ -1115,9 +1149,15 @@ paths:
                                           metric:
                                             type: string
                                           unit:
+                                            title: Unit
                                             type: string
                                           interpretation:
                                             type: string
+                                            title: Interpretation
+                                            enum:
+                                              - LESS_IS_BETTER
+                                              - MORE_IS_BETTER
+                                              - NEUTRAL
                                           values:
                                             type: array
                                             items:
@@ -1188,9 +1228,15 @@ paths:
                                           metric:
                                             type: string
                                           unit:
+                                            title: Unit
                                             type: string
                                           interpretation:
                                             type: string
+                                            title: Interpretation
+                                            enum:
+                                              - LESS_IS_BETTER
+                                              - MORE_IS_BETTER
+                                              - NEUTRAL
                                           values:
                                             type: array
                                             items:
@@ -1668,9 +1714,15 @@ components:
             metric:
               type: string
             unit:
+              title: Unit
               type: string
             interpretation:
               type: string
+              title: Interpretation
+              enum:
+                - LESS_IS_BETTER
+                - MORE_IS_BETTER
+                - NEUTRAL
             values:
               type: array
               items:
@@ -1737,9 +1789,15 @@ components:
                           metric:
                             type: string
                           unit:
+                            title: Unit
                             type: string
                           interpretation:
                             type: string
+                            title: Interpretation
+                            enum:
+                              - LESS_IS_BETTER
+                              - MORE_IS_BETTER
+                              - NEUTRAL
                           values:
                             type: array
                             items:
@@ -1810,9 +1868,15 @@ components:
                           metric:
                             type: string
                           unit:
+                            title: Unit
                             type: string
                           interpretation:
                             type: string
+                            title: Interpretation
+                            enum:
+                              - LESS_IS_BETTER
+                              - MORE_IS_BETTER
+                              - NEUTRAL
                           values:
                             type: array
                             items:
@@ -1990,9 +2054,15 @@ components:
                       metric:
                         type: string
                       unit:
+                        title: Unit
                         type: string
                       interpretation:
                         type: string
+                        title: Interpretation
+                        enum:
+                          - LESS_IS_BETTER
+                          - MORE_IS_BETTER
+                          - NEUTRAL
                       values:
                         type: array
                         items:
@@ -2057,6 +2127,16 @@ components:
       required:
         - error
       description: An error message returned when something goes wrong
+    Interpretation:
+      type: string
+      title: Interpretation
+      enum:
+        - LESS_IS_BETTER
+        - MORE_IS_BETTER
+        - NEUTRAL
+    Unit:
+      title: Unit
+      type: string
   securitySchemes:
     auth:
       type: http

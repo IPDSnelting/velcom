@@ -213,6 +213,10 @@ paths:
                             required:
                               - commit
                               - value
+                        interpretation:
+                          $ref: '#/components/schemas/Interpretation'
+                        unit:
+                          $ref: '#/components/schemas/Unit'
                       required:
                         - repo_id
                         - commits
@@ -558,9 +562,9 @@ components:
             metric:
               type: string
             unit:
-              type: string
+              $ref: '#/components/schemas/Unit'
             interpretation:
-              type: string
+              $ref: '#/components/schemas/Interpretation'
             values:
               type: array
               items:
@@ -664,6 +668,16 @@ components:
       required:
         - error
       description: An error message returned when something goes wrong
+    Interpretation:
+      type: string
+      title: Interpretation
+      enum:
+        - LESS_IS_BETTER
+        - MORE_IS_BETTER
+        - NEUTRAL
+    Unit:
+      title: Unit
+      type: string
   securitySchemes:
     auth:
       type: http
