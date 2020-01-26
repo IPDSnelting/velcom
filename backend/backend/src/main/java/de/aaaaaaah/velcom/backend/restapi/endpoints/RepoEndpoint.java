@@ -7,6 +7,7 @@ import de.aaaaaaah.velcom.backend.access.repo.RemoteUrl;
 import de.aaaaaaah.velcom.backend.access.repo.Repo;
 import de.aaaaaaah.velcom.backend.access.repo.RepoAccess;
 import de.aaaaaaah.velcom.backend.access.repo.RepoId;
+import de.aaaaaaah.velcom.backend.access.repo.exception.AddRepoException;
 import de.aaaaaaah.velcom.backend.access.token.AuthToken;
 import de.aaaaaaah.velcom.backend.access.token.TokenAccess;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
@@ -14,6 +15,7 @@ import de.aaaaaaah.velcom.backend.listener.CommitSearchException;
 import de.aaaaaaah.velcom.backend.listener.Listener;
 import de.aaaaaaah.velcom.backend.restapi.RepoUser;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRepo;
+import de.aaaaaaah.velcom.backend.restapi.util.ErrorResponseUtil;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.PATCH;
 import java.util.Collection;
@@ -32,6 +34,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,7 +87,14 @@ public class RepoEndpoint {
 	public GetReply post(@Auth RepoUser user, @NotNull PostRequest request) {
 		user.guardAdminAccess();
 
-		Repo repo = repoAccess.addRepo(request.getName(), request.getRemoteUrl());
+		Repo repo;
+		try {
+			repo = repoAccess.addRepo(request.getName(), request.getRemoteUrl());
+		} catch (AddRepoException e) {
+			ErrorResponseUtil.throwErrorResponse(Status.BAD_REQUEST,
+				"Could not clone url " + request.getRemoteUrl());
+			return null; // To make intellij happy
+		}
 
 		request.getToken()
 			.map(AuthToken::new)

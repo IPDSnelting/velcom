@@ -10,6 +10,7 @@ import de.aaaaaaah.velcom.backend.data.commitcomparison.CommitComparer;
 import de.aaaaaaah.velcom.backend.data.commitcomparison.CommitComparison;
 import de.aaaaaaah.velcom.backend.data.linearlog.LinearLog;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonCommitComparison;
+import de.aaaaaaah.velcom.backend.restapi.util.ErrorResponseUtil;
 import java.util.Optional;
 import java.util.UUID;
 import javax.validation.constraints.NotNull;
@@ -18,6 +19,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response.Status;
 
 /**
  * The REST API endpoint comparing commits.
@@ -61,7 +63,8 @@ public class CommitCompareEndpoint {
 			.map(hash -> commitAccess.getCommit(repoId, hash));
 
 		if (secondCommit.isEmpty()) {
-			throw new RuntimeException(); // TODO do proper error handling
+			ErrorResponseUtil.throwErrorResponse(Status.NOT_FOUND,
+				"No commit with hash " + secondHashString + " found");
 		}
 
 		Optional<Commit> firstCommit = Optional.ofNullable(firstHashString)
