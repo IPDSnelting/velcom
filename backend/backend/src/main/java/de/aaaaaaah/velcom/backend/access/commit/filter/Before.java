@@ -10,16 +10,16 @@ import org.eclipse.jgit.revwalk.RevWalk;
 
 class Before extends AuthorTimeRevFilter {
 
-	private final Instant start;
+	private final Instant time;
 
-	public Before(Instant start) {
-		this.start = start;
+	public Before(Instant time) {
+		this.time = time;
 	}
 
 	@Override
 	public boolean include(RevWalk walker, RevCommit cmit)
-		throws StopWalkException, MissingObjectException, IncorrectObjectTypeException, IOException {
+		throws StopWalkException {
 
-		return cmit.getAuthorIdent().getWhen().toInstant().isAfter(start);
+		return cmit.getAuthorIdent().getWhen().toInstant().isBefore(time);
 	}
 }
