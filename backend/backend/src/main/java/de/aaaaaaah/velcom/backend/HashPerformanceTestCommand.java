@@ -1,5 +1,6 @@
 package de.aaaaaaah.velcom.backend;
 
+import de.aaaaaaah.velcom.backend.access.token.hashalgorithm.Argon2Algorithm;
 import de.mkammerer.argon2.Argon2Factory;
 import de.mkammerer.argon2.Argon2Helper;
 import io.dropwizard.cli.Command;
@@ -37,13 +38,14 @@ public class HashPerformanceTestCommand extends Command {
 	public void run(Bootstrap<?> bootstrap, Namespace namespace) {
 		long maxMillis = namespace.getLong("maxMillis");
 		int maxMemoryKiB = namespace.getInt("maxMemory");
+
 		int iterations = Argon2Helper.findIterations(
 			Argon2Factory.create(),
 			maxMillis,
 			maxMemoryKiB,
-			1
+			Argon2Algorithm.parallelism
 		);
-		System.err.println(
+		System.out.println(
 			Math.max(1, iterations) + " iteration(s) seem to fit into " + maxMillis
 				+ " milliseconds!"
 		);

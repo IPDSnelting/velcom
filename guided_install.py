@@ -28,8 +28,8 @@ def main():
 
     cur_dir = Path(__file__).parent.resolve()
     tmp_dir = cur_dir / "tmp"
-    print("Running in directory " + str(cur_dir))
-    print("Creating temporary directory " + str(tmp_dir))
+    print("- Running in directory " + str(cur_dir))
+    print("- Creating temporary directory " + str(tmp_dir))
     tmp_dir.mkdir(parents=True, exist_ok=True)
 
     print()
@@ -38,21 +38,24 @@ def main():
     print("##################################")
     print()
 
-    api_port = request("Port the frontend should use to contact the backend (e. g. 8080)", PORT_REGEX)
-    api_address = request ("Address the frontend should use to contact the backend (requires http or https, e. g. https://example.com/)", LONG_ADDRESS_REGEX)
+    api_port = request("- Port the frontend should use to contact the backend (e. g. 8080)", PORT_REGEX)
+    api_address = request ("- Address the frontend should use to contact the backend (requires http or https, e. g. https://example.com/)", LONG_ADDRESS_REGEX)
     if api_address.endswith("/"): api_address = api_address[:-1]
 
-    runner_port = request("Port the runner should use to contact the backend (e. g. 8081)", PORT_REGEX)
-    runner_address = request("Address the runner should use to contact the backend (just the address without http or https, e. g. 192.168.0.74)", SHORT_ADDRESS_REGEX)
+    runner_port = request("- Port the runner should use to contact the backend (e. g. 8081)", PORT_REGEX)
+    runner_address = request("- Address the runner should use to contact the backend (just the address without http or https, e. g. 192.168.0.74)", SHORT_ADDRESS_REGEX)
     if runner_address.endswith("/"): runner_address = runner_address[:-1]
-    runner_ssl = request ("Should the runner use ssl? (yes/no)", r"y(es)?|no?")
+    runner_ssl = request("- Should the runner use ssl? (yes/no)", r"y(es)?|no?")
     runner_ssl = "wss://" if runner_ssl.startswith("y") else "ws://"
 
-    bench_repo_url = request("URL of the benchmark repo (e. g. git@git.scc.kit.edu:aaaaaaah/pseubench.git)")
-    web_admin_token = request("Web admin token", ".+")
+    bench_repo_url = request("- URL of the benchmark repo (e. g. git@git.scc.kit.edu:aaaaaaah/pseubench.git)")
+    web_admin_token = request("- Web admin token", ".+")
     web_admin_token = escape_quotes(web_admin_token)
-    runner_token = request("Runner token", ".+")
+    runner_token = request("- Runner token", ".+")
     runner_token = escape_quotes(runner_token)
+
+    hash_memory = request("- Memory in KiB that the hash algorithm should use (e. g. 5120)", r"\d+")
+    hash_time = request("- Time in milliseconds that the hash algorithm should take (e. g. 500)", r"\d+")
 
     print()
     print("###############################################################")
@@ -60,11 +63,19 @@ def main():
     print("###############################################################")
     print()
 
-    print("Preparing frontend/.env.production.local")
+    print("- Preparing frontend/.env.production.local")
     with open(cur_dir / "frontend" / ".env.production.local", "w") as f:
         f.write('VUE_APP_BASE_URL="' + api_address + ":" + api_port + '/"')
 
-    print("Preparing tmp/backend_config.yaml")
+    print("- Running make")
+    subprocess.run(["make", "-C", cur_dir])
+
+    print("- Figuring out the amount of hash iterations... ", end="", flush=True)
+    result = subprocess.run(["java", "-jar", cur_dir / "backend" / "backend" / "target" / "backend.jar", "hashPerformance", hash_time, hash_memory], stdout=subprocess.PIPE)
+    hash_iterations = re.match(r"^(\d+)\s", result.stdout.decode("utf-8")).group(1)
+    print("It's " + hash_iterations)
+
+    print("- Preparing tmp/backend_config.yaml")
     with open(cur_dir / "backend" / "backend" / "src" / "main" / "resources" / "example_config.yml") as f:
         backend_config = f.read()
     backend_config = backend_config.replace(
@@ -82,11 +93,17 @@ def main():
     ).replace(
         'runnerToken: "Correct-Horse_Battery Staple"',
         'runnerToken: "' + runner_token + '"'
+    ).replace(
+        'hashMemory: 5120',
+        'hashMemory: ' + hash_memory
+    ).replace(
+        'hashIterations: 50',
+        'hashIterations: ' + hash_iterations
     )
     with open(tmp_dir / "backend_config.yaml", "w") as f:
         f.write(backend_config)
 
-    print("Preparing tmp/runner_config.json")
+    print("- Preparing tmp/runner_config.json")
     with open(cur_dir / "backend" / "runner" / "src" / "main" / "resources" / "example_config.json") as f:
         runner_config = f.read()
     runner_config = runner_config.replace(
@@ -99,10 +116,7 @@ def main():
     with open(tmp_dir / "runner_config.json", "w") as f:
         f.write(runner_config)
 
-    print("Running make")
-    subprocess.run(["make", "-C", cur_dir])
-
-    print("Copying tmp/backend.jar and tmp/runner.jar")
+    print("- Copying tmp/backend.jar and tmp/runner.jar")
     shutil.copyfile(cur_dir / "backend" / "backend" / "target" / "backend.jar", tmp_dir / "backend.jar")
     shutil.copyfile(cur_dir / "backend" / "runner" / "target" / "runner.jar", tmp_dir / "runner.jar")
 

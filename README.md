@@ -98,18 +98,26 @@ $ make
 ```
 
 Copy the `backend.jar` and `example_config.yml` files to the location where the
-backend should run, modify the config file and start the backend. These commands
-assume you are in the base directory of the `velcom` repo.
+backend should run. These commands assume you are in the base directory of the
+`velcom` repo.
 
 ```
 $ cp backend/backend/target/backend.jar install/dir/
 $ cp backend/backend/src/main/resources/example_config.yml install/dir/config.yml
+```
+
+Choose the amount of memory and milliseconds that you want the hashing algorithm
+to take, and then edit the backend config file. These commands assume you're in
+the backend install dir.
+
+```
+$ java -jar backend hashPerformance <milliseconds> <memory in kib>
 $ vi install/dir/config.yml
 ```
 
 Copy the `runner.jar` and `example_config.json` files to the location where the
-runner should run, modify the config file and start the runner. These commands
-assume you are in the base directory of the `velcom` repo.
+runner should run and modify the config file. These commands assume you are in
+the base directory of the `velcom` repo.
 
 Each runner must have a unique name! If not, the server will disconnect the old
 runner as soon as a new runner with the same name connects.

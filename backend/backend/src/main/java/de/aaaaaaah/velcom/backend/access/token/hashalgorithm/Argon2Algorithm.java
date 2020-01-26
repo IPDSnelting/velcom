@@ -6,8 +6,8 @@ import de.mkammerer.argon2.Argon2Factory;
 
 public class Argon2Algorithm implements HashAlgorithm {
 
-	private static final Argon2 argon = Argon2Factory.create(Argon2Factory.Argon2Types.ARGON2id);
-	private static final int parallelism = Runtime.getRuntime().availableProcessors();
+	public static final Argon2 argon = Argon2Factory.create(Argon2Factory.Argon2Types.ARGON2id);
+	public static final int parallelism = Runtime.getRuntime().availableProcessors();
 
 	private final int memoryInKiB;
 	private final int iterations;
