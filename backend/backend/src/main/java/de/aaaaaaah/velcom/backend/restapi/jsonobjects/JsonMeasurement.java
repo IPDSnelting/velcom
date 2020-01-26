@@ -3,7 +3,6 @@ package de.aaaaaaah.velcom.backend.restapi.jsonobjects;
 import de.aaaaaaah.velcom.backend.access.benchmark.Measurement;
 import de.aaaaaaah.velcom.backend.access.benchmark.MeasurementError;
 import de.aaaaaaah.velcom.backend.access.benchmark.MeasurementValues;
-import de.aaaaaaah.velcom.backend.access.repocomparison.TmpMeasurement;
 import de.aaaaaaah.velcom.backend.util.Either;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -49,16 +48,6 @@ public class JsonMeasurement {
 			value = null;
 			errorMessage = measurementError.getErrorMessage();
 		}
-	}
-
-	public JsonMeasurement(TmpMeasurement tmpMeasurement) {
-		benchmark = tmpMeasurement.getMeasurementName().getBenchmark();
-		metric = tmpMeasurement.getMeasurementName().getMetric();
-		unit = tmpMeasurement.getUnit().getName();
-		interpretation = tmpMeasurement.getInterpretation().getTextualRepresentation();
-		values = tmpMeasurement.getValues();
-		value = tmpMeasurement.getValue();
-		errorMessage = null;
 	}
 
 	public String getBenchmark() {

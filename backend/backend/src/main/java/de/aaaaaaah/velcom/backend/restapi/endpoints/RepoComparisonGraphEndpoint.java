@@ -8,8 +8,8 @@ import de.aaaaaaah.velcom.backend.access.commit.CommitAccess;
 import de.aaaaaaah.velcom.backend.access.repo.RepoAccess;
 import de.aaaaaaah.velcom.backend.access.repo.RepoId;
 import de.aaaaaaah.velcom.backend.access.repocomparison.RepoComparisonAccess;
+import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonGraphRepoInfo;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRepo;
-import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRun;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
@@ -57,7 +57,7 @@ public class RepoComparisonGraphEndpoint {
 		MeasurementName measurementName = new MeasurementName(request.getBenchmark(),
 			request.getMetric());
 
-		final List<RepoInfo> repoInfos = request.getRepos().stream()
+		final List<JsonGraphRepoInfo> repoInfos = request.getRepos().stream()
 			.map(branchSpec -> {
 				final RepoId repoId = new RepoId(branchSpec.getRepoId());
 				final JsonRepo repo = new JsonRepo(repoAccess.getRepo(repoId));
@@ -65,10 +65,7 @@ public class RepoComparisonGraphEndpoint {
 				final Collection<Commit> commits = commitAccess.getCommitsBetween(repoId,
 					branchSpec.getBranches(), startTime, stopTime);
 
-				final List<JsonRun> reducedRuns = repoComparisonAccess.getRelevantRuns(repoId,
-					commits, measurementName);
-
-				return new RepoInfo(repo, reducedRuns);
+				return repoComparisonAccess.getRepoInfo(repoId, commits, measurementName);
 			})
 			.collect(Collectors.toUnmodifiableList());
 
@@ -144,33 +141,14 @@ public class RepoComparisonGraphEndpoint {
 
 	private static class PostReply {
 
-		private final Collection<RepoInfo> repos;
+		private final Collection<JsonGraphRepoInfo> repos;
 
-		public PostReply(Collection<RepoInfo> repos) {
+		public PostReply(Collection<JsonGraphRepoInfo> repos) {
 			this.repos = repos;
 		}
 
-		public Collection<RepoInfo> getRepos() {
+		public Collection<JsonGraphRepoInfo> getRepos() {
 			return repos;
-		}
-	}
-
-	private static class RepoInfo {
-
-		private final JsonRepo repo;
-		private final List<JsonRun> runs;
-
-		public RepoInfo(JsonRepo repo, List<JsonRun> runs) {
-			this.repo = repo;
-			this.runs = runs;
-		}
-
-		public JsonRepo getRepo() {
-			return repo;
-		}
-
-		public List<JsonRun> getRuns() {
-			return runs;
 		}
 	}
 
