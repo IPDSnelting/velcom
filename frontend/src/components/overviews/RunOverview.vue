@@ -6,7 +6,7 @@
           <template #activator="{ on }">
             <v-icon v-if="isSuccessful" v-on="on" size="32px" color="success">{{ successIcon }}</v-icon>
           </template>
-          This run was successfull!
+          This run was successful!
         </v-tooltip>
         <v-tooltip top>
           <template #activator="{ on }">
