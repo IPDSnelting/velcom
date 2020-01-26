@@ -147,7 +147,7 @@ public class RepoAccess {
 		// (3): Track branch that head points to
 		try (Repository repo = repoStorage.acquireRepository(repoId.getDirectoryName())) {
 			String defaultBranchStr = repo.getBranch();
-			BranchName branchName = BranchName.fromFullName(defaultBranchStr);
+			BranchName branchName = BranchName.fromName(defaultBranchStr);
 			setTrackedBranches(repoId, List.of(branchName));
 		} catch (RepositoryAcquisitionException | IOException e) {
 			throw new AddRepoException(e);
@@ -424,7 +424,7 @@ public class RepoAccess {
 					this,
 					accessLayer.getCommitAccess(),
 					repoId,
-					BranchName.fromFullName(record.getBranchName())
+					BranchName.fromName(record.getBranchName())
 				))
 				.collect(toList());
 		}
