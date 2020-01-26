@@ -6,7 +6,7 @@ from pathlib import Path
 
 PORT_REGEX = r"\d{1,5}"
 API_ADDRESS_REGEX = r"https?://(\w+\.)+(\w+)/?"
-RUNNER_ADDRESS_REGEX = r"(\w+\.)+(\w+)(/.*)?"
+RUNNER_ADDRESS_REGEX = r"(\w+\.)+(\w+)/?"
 NUMBER_REGEX = r"\d+"
 
 def request(prompt, regex=".*"):
@@ -40,13 +40,25 @@ def main():
     print()
 
     api_port = request("- Port the frontend should use to contact the backend (e. g. 8080)", PORT_REGEX)
-    api_address = request ("- Address the frontend should use to contact the backend (requires http or https, e. g. https://example.com/)", API_ADDRESS_REGEX)
+    api_address = request (
+        "- Address the frontend should use to contact the backend (requires http or\n"
+        "  https, e. g. https://example.com/)"
+        , API_ADDRESS_REGEX)
     if api_address.endswith("/"): api_address = api_address[:-1]
 
-    runner_port = request("- Port the runner should use to contact the backend (e. g. 8081)", PORT_REGEX)
-    runner_address = request("- Address the runner should use to contact the backend (just the address without http or https, e. g. 192.168.0.74)", RUNNER_ADDRESS_REGEX)
+    runner_port = request(
+        "- Port the runner should use to contact the backend (e. g. 8081)"
+        , PORT_REGEX)
+    runner_address = request(
+        "- Address the runner should use to contact the backend (just the domain without\n"
+        "  http or https, e. g. 192.168.0.74 or example.com). If you want a runner\n"
+        "  address like wss://example.com/runner-endpoint, edit tmp/runner_config.json\n"
+        "  once this script has completed. Anyways, the address"
+        , RUNNER_ADDRESS_REGEX)
     if runner_address.endswith("/"): runner_address = runner_address[:-1]
-    runner_ssl = request("- Should the runner use ssl? (yes/no)", r"y(es)?|no?")
+    runner_ssl = request(
+        "- Should the runner use ssl? (yes/no)"
+        , r"y(es)?|no?")
     runner_ssl = "wss://" if runner_ssl.startswith("y") else "ws://"
 
     bench_repo_url = request("- URL of the benchmark repo (e. g. git@git.scc.kit.edu:aaaaaaah/pseubench.git)")
@@ -57,6 +69,9 @@ def main():
 
     hash_memory = request("- Memory in KiB that the hash algorithm should use (e. g. 5120)", NUMBER_REGEX)
     hash_time = request("- Time in milliseconds that the hash algorithm should take (e. g. 500)", NUMBER_REGEX)
+
+    print()
+    input("Press enter to continue.")
 
     print()
     print("###############################################################")
