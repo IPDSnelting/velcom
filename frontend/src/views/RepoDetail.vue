@@ -67,42 +67,50 @@
           <v-card-text>
             <v-container fluid>
               <v-row align="start" justify="space-around">
-                <v-col md="5" sm="12" xs="12">
+                <v-col md="5" sm="12" cols="12">
                   <v-row>
-                    <v-select
-                      class="mr-5"
-                      :items="occuringBenchmarks"
-                      v-model="selectedBenchmark"
-                      label="benchmark"
-                    ></v-select>
-                    <v-select
-                      class="mr-5"
-                      :items="metricsForBenchmark(this.selectedBenchmark)"
-                      v-model="selectedMetric"
-                      label="metric"
-                    ></v-select>
+                    <v-col>
+                      <v-select
+                        class="mr-5"
+                        :items="occuringBenchmarks"
+                        v-model="selectedBenchmark"
+                        label="benchmark"
+                      ></v-select>
+                    </v-col>
+                    <v-col>
+                      <v-select
+                        class="mr-5"
+                        :items="metricsForBenchmark(this.selectedBenchmark)"
+                        v-model="selectedMetric"
+                        label="metric"
+                      ></v-select>
+                    </v-col>
                   </v-row>
                 </v-col>
-                <v-col md="5" sm="12" xs="12">
+                <v-col md="5" sm="12" cols="12">
                   <v-form v-model="formValid" ref="form">
                     <template>
                       <v-row>
-                        <v-text-field
-                          @blur="retrieveRuns"
-                          @keyup.enter="retrieveRuns"
-                          v-model="amount"
-                          :rules="[nonEmptyRunAmount, nonNegativeRunAmount, onlyNumericInput]"
-                          label="number of commits to fetch"
-                          class="mr-5"
-                        ></v-text-field>
-                        <v-text-field
-                          @blur="retrieveRuns"
-                          @keyup.enter="retrieveRuns"
-                          v-model="skip"
-                          :rules="[nonEmptyRunAmount, nonNegativeRunAmount, onlyNumericInput]"
-                          label="number of commits to skip"
-                          class="mr-5"
-                        ></v-text-field>
+                        <v-col>
+                          <v-text-field
+                            @blur="retrieveRuns"
+                            @keyup.enter="retrieveRuns"
+                            v-model="amount"
+                            :rules="[nonEmptyRunAmount, nonNegativeRunAmount, onlyNumericInput]"
+                            label="number of commits to fetch"
+                            class="mr-5"
+                          ></v-text-field>
+                        </v-col>
+                        <v-col>
+                          <v-text-field
+                            @blur="retrieveRuns"
+                            @keyup.enter="retrieveRuns"
+                            v-model="skip"
+                            :rules="[nonEmptyRunAmount, nonNegativeRunAmount, onlyNumericInput]"
+                            label="number of commits to skip"
+                            class="mr-5"
+                          ></v-text-field>
+                        </v-col>
                       </v-row>
                     </template>
                   </v-form>

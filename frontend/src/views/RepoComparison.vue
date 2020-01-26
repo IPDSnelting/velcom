@@ -13,82 +13,94 @@
             <v-card-text>
               <v-container fluid>
                 <v-row align="start" justify="space-around">
-                  <v-col md="5" sm="12" xs="12" class="d-flex">
-                    <v-select
-                      :items="occuringBenchmarks"
-                      v-model="selectedBenchmark"
-                      label="benchmark"
-                      class="mr-5"
-                    ></v-select>
-                    <v-select
-                      :items="metricsForBenchmark(this.selectedBenchmark)"
-                      v-model="selectedMetric"
-                      label="metric"
-                    ></v-select>
+                  <v-col md="5" sm="12" cols="12">
+                    <v-row>
+                      <v-col>
+                        <v-select
+                          :items="occuringBenchmarks"
+                          v-model="selectedBenchmark"
+                          label="benchmark"
+                          class="mr-5"
+                        ></v-select>
+                      </v-col>
+                      <v-col>
+                        <v-select
+                          :items="metricsForBenchmark(this.selectedBenchmark)"
+                          v-model="selectedMetric"
+                          label="metric"
+                        ></v-select>
+                      </v-col>
+                    </v-row>
                   </v-col>
-                  <v-col md="5" sm="12" xs="12" class="d-flex">
-                    <v-menu
-                      ref="startDateMenu"
-                      v-model="startDateMenuOpen"
-                      :close-on-content-click="false"
-                      :return-value.sync="startTimeString"
-                      transition="scale-transition"
-                      offset-y
-                      min-width="290px"
-                    >
-                      <template v-slot:activator="{ on }" class="mr-5">
-                        <v-text-field
-                          v-model="startTimeString"
-                          label="from:"
-                          :prepend-icon="dateIcon"
-                          readonly
-                          v-on="on"
-                        ></v-text-field>
-                      </template>
-                      <v-date-picker v-model="startTimeString" :max="today" no-title scrollable>
-                        <v-spacer></v-spacer>
-                        <v-btn text color="primary" @click="startDateMenuOpen = false">Cancel</v-btn>
-                        <v-btn
-                          text
-                          color="primary"
-                          @click="$refs.startDateMenu.save(startTimeString); retrieveGraphData()"
-                        >OK</v-btn>
-                      </v-date-picker>
-                    </v-menu>
-                    <v-menu
-                      ref="stopDateMenu"
-                      v-model="stopDateMenuOpen"
-                      :close-on-content-click="false"
-                      :return-value.sync="stopTimeString"
-                      transition="scale-transition"
-                      offset-y
-                      min-width="290px"
-                    >
-                      <template v-slot:activator="{ on }">
-                        <v-text-field
-                          v-model="stopTimeString"
-                          label="to:"
-                          :prepend-icon="dateIcon"
-                          readonly
-                          v-on="on"
-                        ></v-text-field>
-                      </template>
-                      <v-date-picker
-                        v-model="stopTimeString"
-                        :min="startTimeString"
-                        :max="today"
-                        no-title
-                        scrollable
-                      >
-                        <v-spacer></v-spacer>
-                        <v-btn text color="primary" @click="stopDateMenuOpen = false">Cancel</v-btn>
-                        <v-btn
-                          text
-                          color="primary"
-                          @click="$refs.stopDateMenu.save(stopTimeString); retrieveGraphData()"
-                        >OK</v-btn>
-                      </v-date-picker>
-                    </v-menu>
+                  <v-col md="5" sm="12" cols="12">
+                    <v-row>
+                      <v-col>
+                        <v-menu
+                          ref="startDateMenu"
+                          v-model="startDateMenuOpen"
+                          :close-on-content-click="false"
+                          :return-value.sync="startTimeString"
+                          transition="scale-transition"
+                          offset-y
+                          min-width="290px"
+                        >
+                          <template v-slot:activator="{ on }" class="mr-5">
+                            <v-text-field
+                              v-model="startTimeString"
+                              label="from:"
+                              :prepend-icon="dateIcon"
+                              readonly
+                              v-on="on"
+                            ></v-text-field>
+                          </template>
+                          <v-date-picker v-model="startTimeString" :max="today" no-title scrollable>
+                            <v-spacer></v-spacer>
+                            <v-btn text color="primary" @click="startDateMenuOpen = false">Cancel</v-btn>
+                            <v-btn
+                              text
+                              color="primary"
+                              @click="$refs.startDateMenu.save(startTimeString); retrieveGraphData()"
+                            >OK</v-btn>
+                          </v-date-picker>
+                        </v-menu>
+                      </v-col>
+                      <v-col>
+                        <v-menu
+                          ref="stopDateMenu"
+                          v-model="stopDateMenuOpen"
+                          :close-on-content-click="false"
+                          :return-value.sync="stopTimeString"
+                          transition="scale-transition"
+                          offset-y
+                          min-width="290px"
+                        >
+                          <template v-slot:activator="{ on }">
+                            <v-text-field
+                              v-model="stopTimeString"
+                              label="to:"
+                              :prepend-icon="dateIcon"
+                              readonly
+                              v-on="on"
+                            ></v-text-field>
+                          </template>
+                          <v-date-picker
+                            v-model="stopTimeString"
+                            :min="startTimeString"
+                            :max="today"
+                            no-title
+                            scrollable
+                          >
+                            <v-spacer></v-spacer>
+                            <v-btn text color="primary" @click="stopDateMenuOpen = false">Cancel</v-btn>
+                            <v-btn
+                              text
+                              color="primary"
+                              @click="$refs.stopDateMenu.save(stopTimeString); retrieveGraphData()"
+                            >OK</v-btn>
+                          </v-date-picker>
+                        </v-menu>
+                      </v-col>
+                    </v-row>
                   </v-col>
                 </v-row>
               </v-container>
