@@ -69,7 +69,7 @@ import { formatDate, formatDateUTC } from '@/util/TimeUtil'
 })
 export default class CommitInformation extends Vue {
   @Prop()
-  private run!: Run
+  private commit!: Commit
 
   private formattedDate(date: number) {
     return formatDate(date)
@@ -77,10 +77,6 @@ export default class CommitInformation extends Vue {
 
   private formattedDateUTC(date: number) {
     return formatDateUTC(date)
-  }
-
-  private get commit(): Commit {
-    return this.run.commit
   }
 
   private get commitSummary(): string {
