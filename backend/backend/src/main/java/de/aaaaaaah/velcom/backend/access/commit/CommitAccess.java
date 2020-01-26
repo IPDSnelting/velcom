@@ -18,6 +18,7 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.Spliterator;
@@ -342,6 +343,9 @@ public class CommitAccess {
 	 */
 	public Stream<Commit> getCommitLog(Repo repo, Collection<BranchName> branches)
 		throws CommitAccessException {
+		// Step 0: Sort branches so that the outcome is deterministic
+		List<BranchName> sortedBranches = new ArrayList<>(branches);
+		Collections.sort(sortedBranches);
 
 		// Step 1: Acquire repository
 		Repository jgitRepo;
@@ -357,10 +361,8 @@ public class CommitAccess {
 			// Step 2: Run log command
 			LogCommand logCommand = Git.wrap(jgitRepo).log();
 
-			for (BranchName branchName : branches) {
-
+			for (BranchName branchName : sortedBranches) {
 				ObjectId branchId = jgitRepo.resolve(branchName.getFullName());
-
 				logCommand.add(branchId);
 			}
 

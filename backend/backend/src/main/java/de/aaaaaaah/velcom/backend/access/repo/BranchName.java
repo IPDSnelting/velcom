@@ -5,7 +5,7 @@ import java.util.Objects;
 /**
  * The name of a branch.
  */
-public class BranchName {
+public class BranchName implements Comparable<BranchName> {
 
 	private final String name;
 
@@ -35,6 +35,11 @@ public class BranchName {
 	}
 
 	@Override
+	public int compareTo(BranchName o) {
+		return name.compareTo(o.name);
+	}
+
+	@Override
 	public boolean equals(Object o) {
 		if (this == o) {
 			return true;
@@ -57,4 +62,5 @@ public class BranchName {
 			"name='" + name + '\'' +
 			'}';
 	}
+
 }
