@@ -26,15 +26,21 @@ public class HashPerformanceTestCommand extends Command {
 			.type(Long.class)
 			.required(true)
 			.help("The amount of milliseconds hashing is allowed to take");
+		subparser.addArgument("maxMemory")
+			.dest("maxMemory")
+			.type(Integer.class)
+			.required(true)
+			.help("The maximum amount of memory in Kibibytes the hash function might use");
 	}
 
 	@Override
 	public void run(Bootstrap<?> bootstrap, Namespace namespace) {
 		long maxMillis = namespace.getLong("maxMillis");
+		int maxMemoryKiB = namespace.getInt("maxMemory");
 		int iterations = Argon2Helper.findIterations(
 			Argon2Factory.create(),
 			maxMillis,
-			488281, // = 500MB
+			maxMemoryKiB,
 			1
 		);
 		System.err.println(
