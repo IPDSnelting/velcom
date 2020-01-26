@@ -1,9 +1,5 @@
 # The JDBC (Java database connectivity) url used to connect to the database
 jdbcUrl: "jdbc:sqlite:file:data/data.db"
-# The username to use for the database connection. Optional.
-jdbcUsername: ""
-# The password to use for the database connection. Optional.
-jdbcPassword: ""
 # The interval between listener updates. (in seconds)
 pollInterval: 600
 # The token for the web administrator
@@ -26,3 +22,8 @@ significantFactor: 0.05 # A difference of 5%
 # The path to the directory where all local repositories will be placed in.
 # Can either be relative to the working directory or absolute.
 repoDir: "data/repos"
+# The hashing algorithm's memory usage in KiB
+hashMemory: 5120
+# How many iterations the hashing algorithm should make. See the readme for more details on how to
+# set this value.
+hashIterations: 50

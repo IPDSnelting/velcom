@@ -84,7 +84,7 @@ public class ServerMain extends Application<GlobalConfig> {
 			new RemoteUrl(configuration.getBenchmarkRepoRemoteUrl()));
 		RepoComparisonAccess repoComparisonAccess =
 			new RepoComparisonAccess(databaseStorage, new GroupByHour());
-		TokenAccess tokenAccess = new TokenAccess(accessLayer, databaseStorage,
+		TokenAccess tokenAccess = new TokenAccess(configuration, accessLayer, databaseStorage,
 			new AuthToken(configuration.getWebAdminToken()));
 
 		// Data layer

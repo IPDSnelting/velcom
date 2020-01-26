@@ -1,13 +1,18 @@
 package de.aaaaaaah.velcom.backend.access.token;
 
 import static org.jooq.codegen.db.tables.RepoToken.REPO_TOKEN;
-import static org.jooq.codegen.db.tables.Repository.REPOSITORY;
 import static org.jooq.impl.DSL.selectFrom;
 
+import de.aaaaaaah.velcom.backend.GlobalConfig;
 import de.aaaaaaah.velcom.backend.access.AccessLayer;
 import de.aaaaaaah.velcom.backend.access.commit.CommitAccess;
 import de.aaaaaaah.velcom.backend.access.repo.RepoId;
+import de.aaaaaaah.velcom.backend.access.token.hashalgorithm.Argon2Algorithm;
+import de.aaaaaaah.velcom.backend.access.token.hashalgorithm.HashAlgorithm;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 import javax.annotation.Nullable;
 import org.jooq.DSLContext;
 import org.jooq.codegen.db.tables.records.RepoTokenRecord;
@@ -19,7 +24,9 @@ import org.jooq.codegen.db.tables.records.RepoTokenRecord;
  */
 public class TokenAccess {
 
-	private static final HashAlgorithm HASH_ALGORITHM = HashAlgorithm.ARGON2ID;
+	private final HashAlgorithm currentHashAlgorithm;
+	private final int currentHashAlgorithmId;
+	private final Map<Integer, HashAlgorithm> hashAlgorithms;
 
 	private final AccessLayer accessLayer;
 	private final DatabaseStorage databaseStorage;
@@ -33,14 +40,26 @@ public class TokenAccess {
 	 * @param databaseStorage a database storage
 	 * @param adminToken the admin token from the config
 	 */
-	public TokenAccess(AccessLayer accessLayer, DatabaseStorage databaseStorage,
-		AuthToken adminToken) {
+	public TokenAccess(GlobalConfig config, AccessLayer accessLayer,
+		DatabaseStorage databaseStorage, AuthToken adminToken) {
+
+		// Argon2
+		currentHashAlgorithmId = 1;
+		currentHashAlgorithm =
+			new Argon2Algorithm(config.getHashMemory(), config.getHashIterations());
+
+		hashAlgorithms = new HashMap<>();
+		hashAlgorithms.put(currentHashAlgorithmId, currentHashAlgorithm);
 
 		this.accessLayer = accessLayer;
 		this.databaseStorage = databaseStorage;
-		this.adminTokenHash = HASH_ALGORITHM.generateHash(adminToken);
+		this.adminTokenHash = currentHashAlgorithm.generateHash(adminToken);
 
 		accessLayer.registerTokenAccess(this);
+	}
+
+	private HashAlgorithm getAlgorithmById(int id) {
+		return Objects.requireNonNull(hashAlgorithms.get(id));
 	}
 
 	// Querying tokens
@@ -65,9 +84,9 @@ public class TokenAccess {
 			String hash = tokenRecord.getToken();
 			int usedAlgoId = tokenRecord.getHashAlgo();
 
-			if (usedAlgoId != HASH_ALGORITHM.getId()) {
+			if (usedAlgoId != currentHashAlgorithmId) {
 				// Older hash algorithm was used for this token
-				HashAlgorithm usedHashAlgo = HashAlgorithm.fromId(usedAlgoId);
+				HashAlgorithm usedHashAlgo = getAlgorithmById(usedAlgoId);
 
 				// Check if provided token is even correct
 				if (!usedHashAlgo.matches(hash, token)) {
@@ -81,7 +100,7 @@ public class TokenAccess {
 				return true;
 			} else {
 				// Current hash algorithm is used
-				return HASH_ALGORITHM.matches(hash, token);
+				return currentHashAlgorithm.matches(hash, token);
 			}
 		}
 	}
@@ -91,22 +110,22 @@ public class TokenAccess {
 	 * @return whether the token should give admin powers
 	 */
 	public boolean isValidAdminToken(AuthToken token) {
-		return HASH_ALGORITHM.matches(adminTokenHash, token);
+		return currentHashAlgorithm.matches(adminTokenHash, token);
 	}
 
 	// Modifying tokens
 
 	public void setToken(RepoId id, @Nullable AuthToken authToken) {
-		String hash = HASH_ALGORITHM.generateHash(authToken);
+		String hash = currentHashAlgorithm.generateHash(authToken);
 
 		// Insert hash into database
 		try (DSLContext db = databaseStorage.acquireContext()) {
 			db.insertInto(REPO_TOKEN)
 				.set(REPO_TOKEN.REPO_ID, id.getId().toString())
-				.set(REPO_TOKEN.HASH_ALGO, HASH_ALGORITHM.getId())
+				.set(REPO_TOKEN.HASH_ALGO, currentHashAlgorithmId)
 				.set(REPO_TOKEN.TOKEN, hash)
 				.onDuplicateKeyUpdate()
-				.set(REPO_TOKEN.HASH_ALGO, HASH_ALGORITHM.getId())
+				.set(REPO_TOKEN.HASH_ALGO, currentHashAlgorithmId)
 				.set(REPO_TOKEN.TOKEN, hash)
 				.execute();
 		}

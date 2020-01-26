@@ -3,7 +3,6 @@ package de.aaaaaaah.velcom.backend;
 import io.dropwizard.Configuration;
 import io.dropwizard.server.ServerFactory;
 import java.time.Duration;
-import java.util.Optional;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
@@ -16,8 +15,6 @@ public class GlobalConfig extends Configuration {
 
 	@NotEmpty
 	private String jdbcUrl;
-	private String jdbcUsername;
-	private String jdbcPassword;
 
 	@NotNull
 	private long pollInterval;
@@ -48,6 +45,14 @@ public class GlobalConfig extends Configuration {
 	@NotEmpty
 	private String repoDir;
 
+	@NotNull
+	@Min(1)
+	private int hashMemory;
+
+	@NotNull
+	@Min(1)
+	private int hashIterations;
+
 	public GlobalConfig() {
 		RunnerAwareServerFactory.getInstance().setConfig(this);
 		RunnerAwareServerFactory.getInstance().setServerFactory(super.getServerFactory());
@@ -58,20 +63,6 @@ public class GlobalConfig extends Configuration {
 	 */
 	public String getJdbcUrl() {
 		return jdbcUrl;
-	}
-
-	/**
-	 * @return the username to use for the database connection. Optional.
-	 */
-	public Optional<String> getJdbcUsername() {
-		return Optional.ofNullable(jdbcUsername);
-	}
-
-	/**
-	 * @return the password to use for the database connection. Optional.
-	 */
-	public Optional<String> getJdbcPassword() {
-		return Optional.ofNullable(jdbcPassword);
 	}
 
 	/**
@@ -145,6 +136,14 @@ public class GlobalConfig extends Configuration {
 	 */
 	public String getRepoDir() {
 		return repoDir;
+	}
+
+	public int getHashMemory() {
+		return hashMemory;
+	}
+
+	public int getHashIterations() {
+		return hashIterations;
 	}
 
 	@Override
