@@ -26,7 +26,13 @@
                         <v-list-item-title>
                           <repo-display :repoId="commit.repoID"></repo-display>
                           <span class="mx-2">—</span>
-                          <span class="commit-message">{{ commit.message }}</span>
+                          <router-link
+                            class="concealed-link"
+                            tag="span"
+                            :to="{ name: 'commit-detail', params: { repoID: commit.repoID, hash: commit.hash } }"
+                          >
+                            <span class="commit-message">{{ commit.summary }}</span>
+                          </router-link>
                         </v-list-item-title>
                         <v-list-item-subtitle>
                           <span class="author">{{ commit.author }}</span> authored on

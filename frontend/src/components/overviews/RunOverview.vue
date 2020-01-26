@@ -27,7 +27,7 @@
                   tag="span"
                   :to="{ name: 'commit-detail', params: { repoID: run.commit.repoID, hash: run.commit.hash } }"
                 >
-                  <span class="commit-message">{{ run.commit.message }}</span>
+                  <span class="commit-message">{{ run.commit.summary }}</span>
                 </router-link>
               </v-list-item-title>
               <v-list-item-subtitle>

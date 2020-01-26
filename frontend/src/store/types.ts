@@ -93,6 +93,28 @@ export class Commit {
     this.message = message
     this.parents = parents
   }
+
+  get summary(): string | null {
+    if (!this.message) {
+      return null
+    }
+    let firstNewline = this.message.indexOf('\n')
+    if (firstNewline < 0) {
+      return this.message
+    }
+    return this.message.substring(0, firstNewline).trim()
+  }
+
+  get bodyWithoutSummary(): string | null {
+    if (!this.summary) {
+      return null
+    }
+    let summaryLength = this.summary.length
+    if (summaryLength === this.message!.length) {
+      return ''
+    }
+    return this.message!.substring(summaryLength, this.message!.length)
+  }
 }
 
 export class Run {

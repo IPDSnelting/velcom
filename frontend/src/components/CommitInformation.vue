@@ -84,28 +84,17 @@ export default class CommitInformation extends Vue {
   }
 
   private get commitSummary(): string {
-    if (!this.commit.message) {
+    if (!this.commit.summary) {
       return 'Commit has no message :('
     }
-    return this.commit.message.substring(0, this.commitSummaryEndIndex)
-  }
-
-  private get commitSummaryEndIndex(): number {
-    if (!this.commit.message) {
-      return 0
-    }
-    let firstNewline = this.commit.message.indexOf('\n')
-    return firstNewline < 0 ? this.commit.message.length : firstNewline
+    return this.commit.summary
   }
 
   private get restOfCommitMessage() {
     if (!this.commit.message) {
       return ''
     }
-    if (this.commitSummaryEndIndex >= this.commit.message.length) {
-      return ''
-    }
-    return this.commit.message.substring(this.commitSummaryEndIndex)
+    return this.commit.bodyWithoutSummary
   }
 }
 </script>
