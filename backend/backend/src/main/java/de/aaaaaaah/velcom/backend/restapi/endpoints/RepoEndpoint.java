@@ -92,7 +92,7 @@ public class RepoEndpoint {
 			repo = repoAccess.addRepo(request.getName(), request.getRemoteUrl());
 		} catch (AddRepoException e) {
 			ErrorResponseUtil.throwErrorResponse(Status.BAD_REQUEST,
-				"Could not clone url " + request.getRemoteUrl());
+				"Could not clone url " + request.getRemoteUrl().getUrl());
 			return null; // To make intellij happy
 		}
 
