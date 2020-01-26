@@ -27,6 +27,7 @@ import de.aaaaaaah.velcom.backend.restapi.endpoints.RecentlyBenchmarkedCommitsEn
 import de.aaaaaaah.velcom.backend.restapi.endpoints.RepoComparisonGraphEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.RepoEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.TestTokenEndpoint;
+import de.aaaaaaah.velcom.backend.restapi.exception.NoSuchCommitExceptionMapper;
 import de.aaaaaaah.velcom.backend.restapi.exception.NoSuchRepoExceptionMapper;
 import de.aaaaaaah.velcom.backend.runner.Dispatcher;
 import de.aaaaaaah.velcom.backend.runner.DispatcherImpl;
@@ -65,10 +66,11 @@ public class ServerMain extends Application<GlobalConfig> {
 	@Override
 	public void run(GlobalConfig configuration, Environment environment) throws Exception {
 		environment.getObjectMapper().setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
-
 		configureCors(environment);
 
+		// Exception mappers
 		environment.jersey().register(new NoSuchRepoExceptionMapper());
+		environment.jersey().register(new NoSuchCommitExceptionMapper());
 
 		// Storage layer
 		RepoStorage repoStorage = new RepoStorage(configuration.getRepoDir());
