@@ -147,13 +147,15 @@ public class Queue {
 		LOGGER.info("Task with repoId " + repoId + " and hash " + commitHash + " was aborted");
 	}
 
+	/**
+	 * Remove all tasks of a repo from the queue. This function should only be called <em>after</em>
+	 * the repo has already been deleted from the db.
+	 *
+	 * <p> <b>Warning</b>: This function does <em>not</em> update the database! It only removes
+	 * commits from the queue.
+	 */
 	public synchronized void abortAllTasksOfRepo(RepoId repoId) {
-		final Collection<Commit> abortedTasks = queuePolicy.abortAllTasksOfRepo(repoId);
-		for (Commit abortedTask : abortedTasks) {
-			commitAccess.setBenchmarkStatus(repoId, abortedTask.getHash(),
-				BenchmarkStatus.NO_BENCHMARK_REQUIRED);
-			callAllAbortedListeners(repoId, abortedTask.getHash());
-		}
+		queuePolicy.abortAllTasksOfRepo(repoId);
 		LOGGER.info("All tasks with repoId " + repoId + " were aborted");
 	}
 
