@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+# This is our Continous Deployment deploy script. You may use it as a baseline,
+# but it is likely
+#  a) Way too specific
+#  b) Full of »totally best practices«™
+
 # Fail if any command inside fails
 set -e
 
@@ -35,5 +40,5 @@ executeOnServer "rmdir $DOCKER_SERVER_DIR/frontend"
 # Build it
 executeOnServer "sudo /home/pse_test/velcom/deploy_from_docker.sh"
 
-# Restart the server :)
+# Restart the docker container :)
 executeOnServer "sudo systemctl restart pse-test-velcom.service"
