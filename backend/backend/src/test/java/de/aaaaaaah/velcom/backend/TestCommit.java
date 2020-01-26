@@ -13,6 +13,10 @@ public class TestCommit {
 		this(message, "afile.txt", String.valueOf(System.currentTimeMillis()));
 	}
 
+	public TestCommit(String message, String branch) {
+		this(message, "afile.txt", String.valueOf(System.currentTimeMillis()), branch);
+	}
+
 	public TestCommit(String message, String file, String content) {
 		this(message, file, content, null);
 	}
