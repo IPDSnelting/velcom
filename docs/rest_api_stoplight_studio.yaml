@@ -20,6 +20,12 @@ paths:
                     $ref: '#/components/schemas/Repo'
                 required:
                   - repo
+        '404':
+          description: On invalid repo id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       operationId: get-repo
       parameters:
         - schema:
@@ -43,14 +49,11 @@ paths:
                 required:
                   - repo
         '400':
-          description: Bad Request
+          description: When repo could not be added
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
+                $ref: '#/components/schemas/Error'
       requestBody:
         content:
           application/json:
@@ -76,6 +79,12 @@ paths:
       responses:
         '200':
           description: OK
+        '404':
+          description: On invalid repo id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       requestBody:
         content:
           application/json:
@@ -190,17 +199,31 @@ paths:
                     items:
                       type: object
                       properties:
-                        repo:
-                          $ref: '#/components/schemas/Repo'
-                        runs:
+                        repo_id:
+                          $ref: '#/components/schemas/RepoId'
+                        commits:
                           type: array
                           items:
-                            $ref: '#/components/schemas/Run'
+                            type: object
+                            properties:
+                              commit:
+                                $ref: '#/components/schemas/Commit'
+                              value:
+                                type: number
+                            required:
+                              - commit
+                              - value
                       required:
-                        - repo
-                        - runs
+                        - repo_id
+                        - commits
                 required:
                   - repos
+        '404':
+          description: On invalid repo id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       description: This operation uses POST instead of GET because the parameter structure is too unwieldy to be passed via query parameters.
   /commit-history:
     get:
@@ -214,16 +237,23 @@ paths:
                 type: object
                 properties:
                   commits:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        commit:
-                          $ref: '#/components/schemas/Commit'
-                        comparison:
-                          $ref: '#/components/schemas/CommitComparison'
+                    type: object
+                    required:
+                      - commit
+                      - comparison
+                    properties:
+                      commit:
+                        $ref: '#/components/schemas/Commit'
+                      comparison:
+                        $ref: '#/components/schemas/CommitComparison'
                 required:
                   - commits
+        '404':
+          description: On invalid repo id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       operationId: get-repo-detail-graph
       parameters:
         - schema:
@@ -278,6 +308,12 @@ paths:
                     $ref: '#/components/schemas/CommitComparison'
                 required:
                   - comparison
+        '404':
+          description: On invalid repo or commit id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       operationId: get-commit-compare
       parameters:
         - schema:
@@ -572,22 +608,25 @@ components:
       title: CommitComparison
       type: object
       properties:
-        first:
+        first_run:
           $ref: '#/components/schemas/Run'
-        second:
+        second_run:
           $ref: '#/components/schemas/Run'
         differences:
           type: array
           items:
             $ref: '#/components/schemas/Difference'
+        first_commit:
+          $ref: '#/components/schemas/Commit'
+        second_commit:
+          $ref: '#/components/schemas/Commit'
       required:
         - differences
+        - second_commit
     Run:
       title: Run
       oneOf:
         - properties:
-            commit:
-              $ref: '#/components/schemas/Commit'
             start_time:
               $ref: '#/components/schemas/Time'
             stop_time:
@@ -597,13 +636,10 @@ components:
               items:
                 $ref: '#/components/schemas/Measurement'
           required:
-            - commit
             - start_time
             - stop_time
             - measurements
         - properties:
-            commit:
-              $ref: '#/components/schemas/Commit'
             start_time:
               $ref: '#/components/schemas/Time'
             stop_time:
@@ -611,7 +647,6 @@ components:
             error_message:
               type: string
           required:
-            - commit
             - start_time
             - stop_time
             - error_message
@@ -626,6 +661,15 @@ components:
       title: RemoteUrl
       format: uri
       description: "a repo's remote url"
+    Error:
+      title: Error
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+      description: An error message returned when something goes wrong
   securitySchemes:
     auth:
       type: http

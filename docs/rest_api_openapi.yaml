@@ -67,6 +67,19 @@ paths:
                       - has_token
                 required:
                   - repo
+        '404':
+          description: On invalid repo id
+          content:
+            application/json:
+              schema:
+                title: Error
+                type: object
+                properties:
+                  error:
+                    type: string
+                required:
+                  - error
+                description: An error message returned when something goes wrong
       operationId: get-repo
       parameters:
         - schema:
@@ -137,14 +150,18 @@ paths:
                 required:
                   - repo
         '400':
-          description: Bad Request
+          description: When repo could not be added
           content:
             application/json:
               schema:
+                title: Error
                 type: object
                 properties:
                   error:
                     type: string
+                required:
+                  - error
+                description: An error message returned when something goes wrong
       requestBody:
         content:
           application/json:
@@ -173,6 +190,19 @@ paths:
       responses:
         '200':
           description: OK
+        '404':
+          description: On invalid repo id
+          content:
+            application/json:
+              schema:
+                title: Error
+                type: object
+                properties:
+                  error:
+                    type: string
+                required:
+                  - error
+                description: An error message returned when something goes wrong
       requestBody:
         content:
           application/json:
@@ -343,225 +373,83 @@ paths:
                     items:
                       type: object
                       properties:
-                        repo:
-                          title: Repo
-                          type: object
-                          properties:
-                            id:
-                              type: string
-                              title: RepoId
-                              format: uuid
-                            name:
-                              type: string
-                            branches:
-                              type: array
-                              uniqueItems: true
-                              items:
-                                type: string
-                            tracked_branches:
-                              type: array
-                              uniqueItems: true
-                              items:
-                                type: string
-                            measurements:
-                              type: array
-                              items:
-                                title: MeasurementId
-                                type: object
-                                properties:
-                                  benchmark:
-                                    type: string
-                                  metric:
-                                    type: string
-                                required:
-                                  - benchmark
-                                  - metric
-                            remote_url:
-                              type: string
-                              title: RemoteUrl
-                              format: uri
-                              description: "a repo's remote url"
-                            has_token:
-                              type: boolean
-                              description: ''
-                          required:
-                            - id
-                            - name
-                            - branches
-                            - tracked_branches
-                            - measurements
-                            - remote_url
-                            - has_token
-                        runs:
+                        repo_id:
+                          type: string
+                          title: RepoId
+                          format: uuid
+                          description: repo id
+                        commits:
                           type: array
                           items:
-                            title: Run
-                            oneOf:
-                              - properties:
-                                  commit:
-                                    title: Commit
-                                    type: object
-                                    properties:
-                                      repo_id:
-                                        type: string
-                                        title: RepoId
-                                        format: uuid
-                                        description: repo id
-                                      hash:
-                                        title: CommitHash
-                                        type: string
-                                        description: commit hash
-                                      author:
-                                        type: string
-                                      author_date:
-                                        type: integer
-                                        title: Time
-                                        description: unix/epoch time (seconds since 1970-01-01)
-                                        format: int64
-                                      committer:
-                                        type: string
-                                      committer_date:
-                                        type: integer
-                                        title: Time
-                                        description: unix/epoch time (seconds since 1970-01-01)
-                                        format: int64
-                                      message:
-                                        type: string
-                                      parents:
-                                        type: array
-                                        items:
-                                          title: CommitHash
-                                          type: string
-                                          description: commit hash
-                                    required:
-                                      - repo_id
-                                      - hash
-                                      - author
-                                      - author_date
-                                      - committer
-                                      - committer_date
-                                      - message
-                                      - parents
-                                  start_time:
+                            type: object
+                            properties:
+                              commit:
+                                title: Commit
+                                type: object
+                                properties:
+                                  repo_id:
+                                    type: string
+                                    title: RepoId
+                                    format: uuid
+                                    description: repo id
+                                  hash:
+                                    title: CommitHash
+                                    type: string
+                                    description: commit hash
+                                  author:
+                                    type: string
+                                  author_date:
                                     type: integer
                                     title: Time
                                     description: unix/epoch time (seconds since 1970-01-01)
                                     format: int64
-                                  stop_time:
+                                  committer:
+                                    type: string
+                                  committer_date:
                                     type: integer
                                     title: Time
                                     description: unix/epoch time (seconds since 1970-01-01)
                                     format: int64
-                                  measurements:
+                                  message:
+                                    type: string
+                                  parents:
                                     type: array
                                     items:
-                                      title: Measurement
-                                      oneOf:
-                                        - properties:
-                                            benchmark:
-                                              type: string
-                                            metric:
-                                              type: string
-                                            unit:
-                                              type: string
-                                            interpretation:
-                                              type: string
-                                            values:
-                                              type: array
-                                              items:
-                                                type: number
-                                            value:
-                                              type: number
-                                          required:
-                                            - benchmark
-                                            - metric
-                                            - values
-                                            - value
-                                        - properties:
-                                            benchmark:
-                                              type: string
-                                            metric:
-                                              type: string
-                                            error_message:
-                                              type: string
-                                          required:
-                                            - benchmark
-                                            - metric
-                                            - error_message
-                                      type: object
+                                      title: CommitHash
+                                      type: string
+                                      description: commit hash
                                 required:
-                                  - commit
-                                  - start_time
-                                  - stop_time
-                                  - measurements
-                              - properties:
-                                  commit:
-                                    title: Commit
-                                    type: object
-                                    properties:
-                                      repo_id:
-                                        type: string
-                                        title: RepoId
-                                        format: uuid
-                                        description: repo id
-                                      hash:
-                                        title: CommitHash
-                                        type: string
-                                        description: commit hash
-                                      author:
-                                        type: string
-                                      author_date:
-                                        type: integer
-                                        title: Time
-                                        description: unix/epoch time (seconds since 1970-01-01)
-                                        format: int64
-                                      committer:
-                                        type: string
-                                      committer_date:
-                                        type: integer
-                                        title: Time
-                                        description: unix/epoch time (seconds since 1970-01-01)
-                                        format: int64
-                                      message:
-                                        type: string
-                                      parents:
-                                        type: array
-                                        items:
-                                          title: CommitHash
-                                          type: string
-                                          description: commit hash
-                                    required:
-                                      - repo_id
-                                      - hash
-                                      - author
-                                      - author_date
-                                      - committer
-                                      - committer_date
-                                      - message
-                                      - parents
-                                  start_time:
-                                    type: integer
-                                    title: Time
-                                    description: unix/epoch time (seconds since 1970-01-01)
-                                    format: int64
-                                  stop_time:
-                                    type: integer
-                                    title: Time
-                                    description: unix/epoch time (seconds since 1970-01-01)
-                                    format: int64
-                                  error_message:
-                                    type: string
-                                required:
-                                  - commit
-                                  - start_time
-                                  - stop_time
-                                  - error_message
-                            type: object
+                                  - repo_id
+                                  - hash
+                                  - author
+                                  - author_date
+                                  - committer
+                                  - committer_date
+                                  - message
+                                  - parents
+                              value:
+                                type: number
+                            required:
+                              - commit
+                              - value
                       required:
-                        - repo
-                        - runs
+                        - repo_id
+                        - commits
                 required:
                   - repos
+        '404':
+          description: On invalid repo id
+          content:
+            application/json:
+              schema:
+                title: Error
+                type: object
+                properties:
+                  error:
+                    type: string
+                required:
+                  - error
+                description: An error message returned when something goes wrong
       description: This operation uses POST instead of GET because the parameter structure is too unwieldy to be passed via query parameters.
   /commit-history:
     get:
@@ -628,54 +516,10 @@ paths:
                         title: CommitComparison
                         type: object
                         properties:
-                          first:
+                          first_run:
                             title: Run
                             oneOf:
                               - properties:
-                                  commit:
-                                    title: Commit
-                                    type: object
-                                    properties:
-                                      repo_id:
-                                        type: string
-                                        title: RepoId
-                                        format: uuid
-                                        description: repo id
-                                      hash:
-                                        title: CommitHash
-                                        type: string
-                                        description: commit hash
-                                      author:
-                                        type: string
-                                      author_date:
-                                        type: integer
-                                        title: Time
-                                        description: unix/epoch time (seconds since 1970-01-01)
-                                        format: int64
-                                      committer:
-                                        type: string
-                                      committer_date:
-                                        type: integer
-                                        title: Time
-                                        description: unix/epoch time (seconds since 1970-01-01)
-                                        format: int64
-                                      message:
-                                        type: string
-                                      parents:
-                                        type: array
-                                        items:
-                                          title: CommitHash
-                                          type: string
-                                          description: commit hash
-                                    required:
-                                      - repo_id
-                                      - hash
-                                      - author
-                                      - author_date
-                                      - committer
-                                      - committer_date
-                                      - message
-                                      - parents
                                   start_time:
                                     type: integer
                                     title: Time
@@ -724,55 +568,10 @@ paths:
                                             - error_message
                                       type: object
                                 required:
-                                  - commit
                                   - start_time
                                   - stop_time
                                   - measurements
                               - properties:
-                                  commit:
-                                    title: Commit
-                                    type: object
-                                    properties:
-                                      repo_id:
-                                        type: string
-                                        title: RepoId
-                                        format: uuid
-                                        description: repo id
-                                      hash:
-                                        title: CommitHash
-                                        type: string
-                                        description: commit hash
-                                      author:
-                                        type: string
-                                      author_date:
-                                        type: integer
-                                        title: Time
-                                        description: unix/epoch time (seconds since 1970-01-01)
-                                        format: int64
-                                      committer:
-                                        type: string
-                                      committer_date:
-                                        type: integer
-                                        title: Time
-                                        description: unix/epoch time (seconds since 1970-01-01)
-                                        format: int64
-                                      message:
-                                        type: string
-                                      parents:
-                                        type: array
-                                        items:
-                                          title: CommitHash
-                                          type: string
-                                          description: commit hash
-                                    required:
-                                      - repo_id
-                                      - hash
-                                      - author
-                                      - author_date
-                                      - committer
-                                      - committer_date
-                                      - message
-                                      - parents
                                   start_time:
                                     type: integer
                                     title: Time
@@ -786,59 +585,14 @@ paths:
                                   error_message:
                                     type: string
                                 required:
-                                  - commit
                                   - start_time
                                   - stop_time
                                   - error_message
                             type: object
-                          second:
+                          second_run:
                             title: Run
                             oneOf:
                               - properties:
-                                  commit:
-                                    title: Commit
-                                    type: object
-                                    properties:
-                                      repo_id:
-                                        type: string
-                                        title: RepoId
-                                        format: uuid
-                                        description: repo id
-                                      hash:
-                                        title: CommitHash
-                                        type: string
-                                        description: commit hash
-                                      author:
-                                        type: string
-                                      author_date:
-                                        type: integer
-                                        title: Time
-                                        description: unix/epoch time (seconds since 1970-01-01)
-                                        format: int64
-                                      committer:
-                                        type: string
-                                      committer_date:
-                                        type: integer
-                                        title: Time
-                                        description: unix/epoch time (seconds since 1970-01-01)
-                                        format: int64
-                                      message:
-                                        type: string
-                                      parents:
-                                        type: array
-                                        items:
-                                          title: CommitHash
-                                          type: string
-                                          description: commit hash
-                                    required:
-                                      - repo_id
-                                      - hash
-                                      - author
-                                      - author_date
-                                      - committer
-                                      - committer_date
-                                      - message
-                                      - parents
                                   start_time:
                                     type: integer
                                     title: Time
@@ -887,55 +641,10 @@ paths:
                                             - error_message
                                       type: object
                                 required:
-                                  - commit
                                   - start_time
                                   - stop_time
                                   - measurements
                               - properties:
-                                  commit:
-                                    title: Commit
-                                    type: object
-                                    properties:
-                                      repo_id:
-                                        type: string
-                                        title: RepoId
-                                        format: uuid
-                                        description: repo id
-                                      hash:
-                                        title: CommitHash
-                                        type: string
-                                        description: commit hash
-                                      author:
-                                        type: string
-                                      author_date:
-                                        type: integer
-                                        title: Time
-                                        description: unix/epoch time (seconds since 1970-01-01)
-                                        format: int64
-                                      committer:
-                                        type: string
-                                      committer_date:
-                                        type: integer
-                                        title: Time
-                                        description: unix/epoch time (seconds since 1970-01-01)
-                                        format: int64
-                                      message:
-                                        type: string
-                                      parents:
-                                        type: array
-                                        items:
-                                          title: CommitHash
-                                          type: string
-                                          description: commit hash
-                                    required:
-                                      - repo_id
-                                      - hash
-                                      - author
-                                      - author_date
-                                      - committer
-                                      - committer_date
-                                      - message
-                                      - parents
                                   start_time:
                                     type: integer
                                     title: Time
@@ -949,7 +658,6 @@ paths:
                                   error_message:
                                     type: string
                                 required:
-                                  - commit
                                   - start_time
                                   - stop_time
                                   - error_message
@@ -970,10 +678,112 @@ paths:
                                 - benchmark
                                 - metric
                                 - difference
+                          first_commit:
+                            title: Commit
+                            type: object
+                            properties:
+                              repo_id:
+                                type: string
+                                title: RepoId
+                                format: uuid
+                                description: repo id
+                              hash:
+                                title: CommitHash
+                                type: string
+                                description: commit hash
+                              author:
+                                type: string
+                              author_date:
+                                type: integer
+                                title: Time
+                                description: unix/epoch time (seconds since 1970-01-01)
+                                format: int64
+                              committer:
+                                type: string
+                              committer_date:
+                                type: integer
+                                title: Time
+                                description: unix/epoch time (seconds since 1970-01-01)
+                                format: int64
+                              message:
+                                type: string
+                              parents:
+                                type: array
+                                items:
+                                  title: CommitHash
+                                  type: string
+                                  description: commit hash
+                            required:
+                              - repo_id
+                              - hash
+                              - author
+                              - author_date
+                              - committer
+                              - committer_date
+                              - message
+                              - parents
+                          second_commit:
+                            title: Commit
+                            type: object
+                            properties:
+                              repo_id:
+                                type: string
+                                title: RepoId
+                                format: uuid
+                                description: repo id
+                              hash:
+                                title: CommitHash
+                                type: string
+                                description: commit hash
+                              author:
+                                type: string
+                              author_date:
+                                type: integer
+                                title: Time
+                                description: unix/epoch time (seconds since 1970-01-01)
+                                format: int64
+                              committer:
+                                type: string
+                              committer_date:
+                                type: integer
+                                title: Time
+                                description: unix/epoch time (seconds since 1970-01-01)
+                                format: int64
+                              message:
+                                type: string
+                              parents:
+                                type: array
+                                items:
+                                  title: CommitHash
+                                  type: string
+                                  description: commit hash
+                            required:
+                              - repo_id
+                              - hash
+                              - author
+                              - author_date
+                              - committer
+                              - committer_date
+                              - message
+                              - parents
                         required:
                           - differences
+                          - second_commit
                 required:
                   - commits
+        '404':
+          description: On invalid repo id
+          content:
+            application/json:
+              schema:
+                title: Error
+                type: object
+                properties:
+                  error:
+                    type: string
+                required:
+                  - error
+                description: An error message returned when something goes wrong
       operationId: get-repo-detail-graph
       parameters:
         - schema:
@@ -1028,54 +838,10 @@ paths:
                     title: CommitComparison
                     type: object
                     properties:
-                      first:
+                      first_run:
                         title: Run
                         oneOf:
                           - properties:
-                              commit:
-                                title: Commit
-                                type: object
-                                properties:
-                                  repo_id:
-                                    type: string
-                                    title: RepoId
-                                    format: uuid
-                                    description: repo id
-                                  hash:
-                                    title: CommitHash
-                                    type: string
-                                    description: commit hash
-                                  author:
-                                    type: string
-                                  author_date:
-                                    type: integer
-                                    title: Time
-                                    description: unix/epoch time (seconds since 1970-01-01)
-                                    format: int64
-                                  committer:
-                                    type: string
-                                  committer_date:
-                                    type: integer
-                                    title: Time
-                                    description: unix/epoch time (seconds since 1970-01-01)
-                                    format: int64
-                                  message:
-                                    type: string
-                                  parents:
-                                    type: array
-                                    items:
-                                      title: CommitHash
-                                      type: string
-                                      description: commit hash
-                                required:
-                                  - repo_id
-                                  - hash
-                                  - author
-                                  - author_date
-                                  - committer
-                                  - committer_date
-                                  - message
-                                  - parents
                               start_time:
                                 type: integer
                                 title: Time
@@ -1124,55 +890,10 @@ paths:
                                         - error_message
                                   type: object
                             required:
-                              - commit
                               - start_time
                               - stop_time
                               - measurements
                           - properties:
-                              commit:
-                                title: Commit
-                                type: object
-                                properties:
-                                  repo_id:
-                                    type: string
-                                    title: RepoId
-                                    format: uuid
-                                    description: repo id
-                                  hash:
-                                    title: CommitHash
-                                    type: string
-                                    description: commit hash
-                                  author:
-                                    type: string
-                                  author_date:
-                                    type: integer
-                                    title: Time
-                                    description: unix/epoch time (seconds since 1970-01-01)
-                                    format: int64
-                                  committer:
-                                    type: string
-                                  committer_date:
-                                    type: integer
-                                    title: Time
-                                    description: unix/epoch time (seconds since 1970-01-01)
-                                    format: int64
-                                  message:
-                                    type: string
-                                  parents:
-                                    type: array
-                                    items:
-                                      title: CommitHash
-                                      type: string
-                                      description: commit hash
-                                required:
-                                  - repo_id
-                                  - hash
-                                  - author
-                                  - author_date
-                                  - committer
-                                  - committer_date
-                                  - message
-                                  - parents
                               start_time:
                                 type: integer
                                 title: Time
@@ -1186,59 +907,14 @@ paths:
                               error_message:
                                 type: string
                             required:
-                              - commit
                               - start_time
                               - stop_time
                               - error_message
                         type: object
-                      second:
+                      second_run:
                         title: Run
                         oneOf:
                           - properties:
-                              commit:
-                                title: Commit
-                                type: object
-                                properties:
-                                  repo_id:
-                                    type: string
-                                    title: RepoId
-                                    format: uuid
-                                    description: repo id
-                                  hash:
-                                    title: CommitHash
-                                    type: string
-                                    description: commit hash
-                                  author:
-                                    type: string
-                                  author_date:
-                                    type: integer
-                                    title: Time
-                                    description: unix/epoch time (seconds since 1970-01-01)
-                                    format: int64
-                                  committer:
-                                    type: string
-                                  committer_date:
-                                    type: integer
-                                    title: Time
-                                    description: unix/epoch time (seconds since 1970-01-01)
-                                    format: int64
-                                  message:
-                                    type: string
-                                  parents:
-                                    type: array
-                                    items:
-                                      title: CommitHash
-                                      type: string
-                                      description: commit hash
-                                required:
-                                  - repo_id
-                                  - hash
-                                  - author
-                                  - author_date
-                                  - committer
-                                  - committer_date
-                                  - message
-                                  - parents
                               start_time:
                                 type: integer
                                 title: Time
@@ -1287,55 +963,10 @@ paths:
                                         - error_message
                                   type: object
                             required:
-                              - commit
                               - start_time
                               - stop_time
                               - measurements
                           - properties:
-                              commit:
-                                title: Commit
-                                type: object
-                                properties:
-                                  repo_id:
-                                    type: string
-                                    title: RepoId
-                                    format: uuid
-                                    description: repo id
-                                  hash:
-                                    title: CommitHash
-                                    type: string
-                                    description: commit hash
-                                  author:
-                                    type: string
-                                  author_date:
-                                    type: integer
-                                    title: Time
-                                    description: unix/epoch time (seconds since 1970-01-01)
-                                    format: int64
-                                  committer:
-                                    type: string
-                                  committer_date:
-                                    type: integer
-                                    title: Time
-                                    description: unix/epoch time (seconds since 1970-01-01)
-                                    format: int64
-                                  message:
-                                    type: string
-                                  parents:
-                                    type: array
-                                    items:
-                                      title: CommitHash
-                                      type: string
-                                      description: commit hash
-                                required:
-                                  - repo_id
-                                  - hash
-                                  - author
-                                  - author_date
-                                  - committer
-                                  - committer_date
-                                  - message
-                                  - parents
                               start_time:
                                 type: integer
                                 title: Time
@@ -1349,7 +980,6 @@ paths:
                               error_message:
                                 type: string
                             required:
-                              - commit
                               - start_time
                               - stop_time
                               - error_message
@@ -1370,10 +1000,112 @@ paths:
                             - benchmark
                             - metric
                             - difference
+                      first_commit:
+                        title: Commit
+                        type: object
+                        properties:
+                          repo_id:
+                            type: string
+                            title: RepoId
+                            format: uuid
+                            description: repo id
+                          hash:
+                            title: CommitHash
+                            type: string
+                            description: commit hash
+                          author:
+                            type: string
+                          author_date:
+                            type: integer
+                            title: Time
+                            description: unix/epoch time (seconds since 1970-01-01)
+                            format: int64
+                          committer:
+                            type: string
+                          committer_date:
+                            type: integer
+                            title: Time
+                            description: unix/epoch time (seconds since 1970-01-01)
+                            format: int64
+                          message:
+                            type: string
+                          parents:
+                            type: array
+                            items:
+                              title: CommitHash
+                              type: string
+                              description: commit hash
+                        required:
+                          - repo_id
+                          - hash
+                          - author
+                          - author_date
+                          - committer
+                          - committer_date
+                          - message
+                          - parents
+                      second_commit:
+                        title: Commit
+                        type: object
+                        properties:
+                          repo_id:
+                            type: string
+                            title: RepoId
+                            format: uuid
+                            description: repo id
+                          hash:
+                            title: CommitHash
+                            type: string
+                            description: commit hash
+                          author:
+                            type: string
+                          author_date:
+                            type: integer
+                            title: Time
+                            description: unix/epoch time (seconds since 1970-01-01)
+                            format: int64
+                          committer:
+                            type: string
+                          committer_date:
+                            type: integer
+                            title: Time
+                            description: unix/epoch time (seconds since 1970-01-01)
+                            format: int64
+                          message:
+                            type: string
+                          parents:
+                            type: array
+                            items:
+                              title: CommitHash
+                              type: string
+                              description: commit hash
+                        required:
+                          - repo_id
+                          - hash
+                          - author
+                          - author_date
+                          - committer
+                          - committer_date
+                          - message
+                          - parents
                     required:
                       - differences
+                      - second_commit
                 required:
                   - comparison
+        '404':
+          description: On invalid repo or commit id
+          content:
+            application/json:
+              schema:
+                title: Error
+                type: object
+                properties:
+                  error:
+                    type: string
+                required:
+                  - error
+                description: An error message returned when something goes wrong
       operationId: get-commit-compare
       parameters:
         - schema:
@@ -1406,54 +1138,10 @@ paths:
                       title: CommitComparison
                       type: object
                       properties:
-                        first:
+                        first_run:
                           title: Run
                           oneOf:
                             - properties:
-                                commit:
-                                  title: Commit
-                                  type: object
-                                  properties:
-                                    repo_id:
-                                      type: string
-                                      title: RepoId
-                                      format: uuid
-                                      description: repo id
-                                    hash:
-                                      title: CommitHash
-                                      type: string
-                                      description: commit hash
-                                    author:
-                                      type: string
-                                    author_date:
-                                      type: integer
-                                      title: Time
-                                      description: unix/epoch time (seconds since 1970-01-01)
-                                      format: int64
-                                    committer:
-                                      type: string
-                                    committer_date:
-                                      type: integer
-                                      title: Time
-                                      description: unix/epoch time (seconds since 1970-01-01)
-                                      format: int64
-                                    message:
-                                      type: string
-                                    parents:
-                                      type: array
-                                      items:
-                                        title: CommitHash
-                                        type: string
-                                        description: commit hash
-                                  required:
-                                    - repo_id
-                                    - hash
-                                    - author
-                                    - author_date
-                                    - committer
-                                    - committer_date
-                                    - message
-                                    - parents
                                 start_time:
                                   type: integer
                                   title: Time
@@ -1502,55 +1190,10 @@ paths:
                                           - error_message
                                     type: object
                               required:
-                                - commit
                                 - start_time
                                 - stop_time
                                 - measurements
                             - properties:
-                                commit:
-                                  title: Commit
-                                  type: object
-                                  properties:
-                                    repo_id:
-                                      type: string
-                                      title: RepoId
-                                      format: uuid
-                                      description: repo id
-                                    hash:
-                                      title: CommitHash
-                                      type: string
-                                      description: commit hash
-                                    author:
-                                      type: string
-                                    author_date:
-                                      type: integer
-                                      title: Time
-                                      description: unix/epoch time (seconds since 1970-01-01)
-                                      format: int64
-                                    committer:
-                                      type: string
-                                    committer_date:
-                                      type: integer
-                                      title: Time
-                                      description: unix/epoch time (seconds since 1970-01-01)
-                                      format: int64
-                                    message:
-                                      type: string
-                                    parents:
-                                      type: array
-                                      items:
-                                        title: CommitHash
-                                        type: string
-                                        description: commit hash
-                                  required:
-                                    - repo_id
-                                    - hash
-                                    - author
-                                    - author_date
-                                    - committer
-                                    - committer_date
-                                    - message
-                                    - parents
                                 start_time:
                                   type: integer
                                   title: Time
@@ -1564,59 +1207,14 @@ paths:
                                 error_message:
                                   type: string
                               required:
-                                - commit
                                 - start_time
                                 - stop_time
                                 - error_message
                           type: object
-                        second:
+                        second_run:
                           title: Run
                           oneOf:
                             - properties:
-                                commit:
-                                  title: Commit
-                                  type: object
-                                  properties:
-                                    repo_id:
-                                      type: string
-                                      title: RepoId
-                                      format: uuid
-                                      description: repo id
-                                    hash:
-                                      title: CommitHash
-                                      type: string
-                                      description: commit hash
-                                    author:
-                                      type: string
-                                    author_date:
-                                      type: integer
-                                      title: Time
-                                      description: unix/epoch time (seconds since 1970-01-01)
-                                      format: int64
-                                    committer:
-                                      type: string
-                                    committer_date:
-                                      type: integer
-                                      title: Time
-                                      description: unix/epoch time (seconds since 1970-01-01)
-                                      format: int64
-                                    message:
-                                      type: string
-                                    parents:
-                                      type: array
-                                      items:
-                                        title: CommitHash
-                                        type: string
-                                        description: commit hash
-                                  required:
-                                    - repo_id
-                                    - hash
-                                    - author
-                                    - author_date
-                                    - committer
-                                    - committer_date
-                                    - message
-                                    - parents
                                 start_time:
                                   type: integer
                                   title: Time
@@ -1665,55 +1263,10 @@ paths:
                                           - error_message
                                     type: object
                               required:
-                                - commit
                                 - start_time
                                 - stop_time
                                 - measurements
                             - properties:
-                                commit:
-                                  title: Commit
-                                  type: object
-                                  properties:
-                                    repo_id:
-                                      type: string
-                                      title: RepoId
-                                      format: uuid
-                                      description: repo id
-                                    hash:
-                                      title: CommitHash
-                                      type: string
-                                      description: commit hash
-                                    author:
-                                      type: string
-                                    author_date:
-                                      type: integer
-                                      title: Time
-                                      description: unix/epoch time (seconds since 1970-01-01)
-                                      format: int64
-                                    committer:
-                                      type: string
-                                    committer_date:
-                                      type: integer
-                                      title: Time
-                                      description: unix/epoch time (seconds since 1970-01-01)
-                                      format: int64
-                                    message:
-                                      type: string
-                                    parents:
-                                      type: array
-                                      items:
-                                        title: CommitHash
-                                        type: string
-                                        description: commit hash
-                                  required:
-                                    - repo_id
-                                    - hash
-                                    - author
-                                    - author_date
-                                    - committer
-                                    - committer_date
-                                    - message
-                                    - parents
                                 start_time:
                                   type: integer
                                   title: Time
@@ -1727,7 +1280,6 @@ paths:
                                 error_message:
                                   type: string
                               required:
-                                - commit
                                 - start_time
                                 - stop_time
                                 - error_message
@@ -1748,8 +1300,97 @@ paths:
                               - benchmark
                               - metric
                               - difference
+                        first_commit:
+                          title: Commit
+                          type: object
+                          properties:
+                            repo_id:
+                              type: string
+                              title: RepoId
+                              format: uuid
+                              description: repo id
+                            hash:
+                              title: CommitHash
+                              type: string
+                              description: commit hash
+                            author:
+                              type: string
+                            author_date:
+                              type: integer
+                              title: Time
+                              description: unix/epoch time (seconds since 1970-01-01)
+                              format: int64
+                            committer:
+                              type: string
+                            committer_date:
+                              type: integer
+                              title: Time
+                              description: unix/epoch time (seconds since 1970-01-01)
+                              format: int64
+                            message:
+                              type: string
+                            parents:
+                              type: array
+                              items:
+                                title: CommitHash
+                                type: string
+                                description: commit hash
+                          required:
+                            - repo_id
+                            - hash
+                            - author
+                            - author_date
+                            - committer
+                            - committer_date
+                            - message
+                            - parents
+                        second_commit:
+                          title: Commit
+                          type: object
+                          properties:
+                            repo_id:
+                              type: string
+                              title: RepoId
+                              format: uuid
+                              description: repo id
+                            hash:
+                              title: CommitHash
+                              type: string
+                              description: commit hash
+                            author:
+                              type: string
+                            author_date:
+                              type: integer
+                              title: Time
+                              description: unix/epoch time (seconds since 1970-01-01)
+                              format: int64
+                            committer:
+                              type: string
+                            committer_date:
+                              type: integer
+                              title: Time
+                              description: unix/epoch time (seconds since 1970-01-01)
+                              format: int64
+                            message:
+                              type: string
+                            parents:
+                              type: array
+                              items:
+                                title: CommitHash
+                                type: string
+                                description: commit hash
+                          required:
+                            - repo_id
+                            - hash
+                            - author
+                            - author_date
+                            - committer
+                            - committer_date
+                            - message
+                            - parents
                       required:
                         - differences
+                        - second_commit
                 required:
                   - commits
       operationId: get-news
@@ -2119,54 +1760,10 @@ components:
       title: CommitComparison
       type: object
       properties:
-        first:
+        first_run:
           title: Run
           oneOf:
             - properties:
-                commit:
-                  title: Commit
-                  type: object
-                  properties:
-                    repo_id:
-                      type: string
-                      title: RepoId
-                      format: uuid
-                      description: repo id
-                    hash:
-                      title: CommitHash
-                      type: string
-                      description: commit hash
-                    author:
-                      type: string
-                    author_date:
-                      type: integer
-                      title: Time
-                      description: unix/epoch time (seconds since 1970-01-01)
-                      format: int64
-                    committer:
-                      type: string
-                    committer_date:
-                      type: integer
-                      title: Time
-                      description: unix/epoch time (seconds since 1970-01-01)
-                      format: int64
-                    message:
-                      type: string
-                    parents:
-                      type: array
-                      items:
-                        title: CommitHash
-                        type: string
-                        description: commit hash
-                  required:
-                    - repo_id
-                    - hash
-                    - author
-                    - author_date
-                    - committer
-                    - committer_date
-                    - message
-                    - parents
                 start_time:
                   type: integer
                   title: Time
@@ -2215,55 +1812,10 @@ components:
                           - error_message
                     type: object
               required:
-                - commit
                 - start_time
                 - stop_time
                 - measurements
             - properties:
-                commit:
-                  title: Commit
-                  type: object
-                  properties:
-                    repo_id:
-                      type: string
-                      title: RepoId
-                      format: uuid
-                      description: repo id
-                    hash:
-                      title: CommitHash
-                      type: string
-                      description: commit hash
-                    author:
-                      type: string
-                    author_date:
-                      type: integer
-                      title: Time
-                      description: unix/epoch time (seconds since 1970-01-01)
-                      format: int64
-                    committer:
-                      type: string
-                    committer_date:
-                      type: integer
-                      title: Time
-                      description: unix/epoch time (seconds since 1970-01-01)
-                      format: int64
-                    message:
-                      type: string
-                    parents:
-                      type: array
-                      items:
-                        title: CommitHash
-                        type: string
-                        description: commit hash
-                  required:
-                    - repo_id
-                    - hash
-                    - author
-                    - author_date
-                    - committer
-                    - committer_date
-                    - message
-                    - parents
                 start_time:
                   type: integer
                   title: Time
@@ -2277,59 +1829,14 @@ components:
                 error_message:
                   type: string
               required:
-                - commit
                 - start_time
                 - stop_time
                 - error_message
           type: object
-        second:
+        second_run:
           title: Run
           oneOf:
             - properties:
-                commit:
-                  title: Commit
-                  type: object
-                  properties:
-                    repo_id:
-                      type: string
-                      title: RepoId
-                      format: uuid
-                      description: repo id
-                    hash:
-                      title: CommitHash
-                      type: string
-                      description: commit hash
-                    author:
-                      type: string
-                    author_date:
-                      type: integer
-                      title: Time
-                      description: unix/epoch time (seconds since 1970-01-01)
-                      format: int64
-                    committer:
-                      type: string
-                    committer_date:
-                      type: integer
-                      title: Time
-                      description: unix/epoch time (seconds since 1970-01-01)
-                      format: int64
-                    message:
-                      type: string
-                    parents:
-                      type: array
-                      items:
-                        title: CommitHash
-                        type: string
-                        description: commit hash
-                  required:
-                    - repo_id
-                    - hash
-                    - author
-                    - author_date
-                    - committer
-                    - committer_date
-                    - message
-                    - parents
                 start_time:
                   type: integer
                   title: Time
@@ -2378,55 +1885,10 @@ components:
                           - error_message
                     type: object
               required:
-                - commit
                 - start_time
                 - stop_time
                 - measurements
             - properties:
-                commit:
-                  title: Commit
-                  type: object
-                  properties:
-                    repo_id:
-                      type: string
-                      title: RepoId
-                      format: uuid
-                      description: repo id
-                    hash:
-                      title: CommitHash
-                      type: string
-                      description: commit hash
-                    author:
-                      type: string
-                    author_date:
-                      type: integer
-                      title: Time
-                      description: unix/epoch time (seconds since 1970-01-01)
-                      format: int64
-                    committer:
-                      type: string
-                    committer_date:
-                      type: integer
-                      title: Time
-                      description: unix/epoch time (seconds since 1970-01-01)
-                      format: int64
-                    message:
-                      type: string
-                    parents:
-                      type: array
-                      items:
-                        title: CommitHash
-                        type: string
-                        description: commit hash
-                  required:
-                    - repo_id
-                    - hash
-                    - author
-                    - author_date
-                    - committer
-                    - committer_date
-                    - message
-                    - parents
                 start_time:
                   type: integer
                   title: Time
@@ -2440,7 +1902,6 @@ components:
                 error_message:
                   type: string
               required:
-                - commit
                 - start_time
                 - stop_time
                 - error_message
@@ -2461,56 +1922,101 @@ components:
               - benchmark
               - metric
               - difference
+        first_commit:
+          title: Commit
+          type: object
+          properties:
+            repo_id:
+              type: string
+              title: RepoId
+              format: uuid
+              description: repo id
+            hash:
+              title: CommitHash
+              type: string
+              description: commit hash
+            author:
+              type: string
+            author_date:
+              type: integer
+              title: Time
+              description: unix/epoch time (seconds since 1970-01-01)
+              format: int64
+            committer:
+              type: string
+            committer_date:
+              type: integer
+              title: Time
+              description: unix/epoch time (seconds since 1970-01-01)
+              format: int64
+            message:
+              type: string
+            parents:
+              type: array
+              items:
+                title: CommitHash
+                type: string
+                description: commit hash
+          required:
+            - repo_id
+            - hash
+            - author
+            - author_date
+            - committer
+            - committer_date
+            - message
+            - parents
+        second_commit:
+          title: Commit
+          type: object
+          properties:
+            repo_id:
+              type: string
+              title: RepoId
+              format: uuid
+              description: repo id
+            hash:
+              title: CommitHash
+              type: string
+              description: commit hash
+            author:
+              type: string
+            author_date:
+              type: integer
+              title: Time
+              description: unix/epoch time (seconds since 1970-01-01)
+              format: int64
+            committer:
+              type: string
+            committer_date:
+              type: integer
+              title: Time
+              description: unix/epoch time (seconds since 1970-01-01)
+              format: int64
+            message:
+              type: string
+            parents:
+              type: array
+              items:
+                title: CommitHash
+                type: string
+                description: commit hash
+          required:
+            - repo_id
+            - hash
+            - author
+            - author_date
+            - committer
+            - committer_date
+            - message
+            - parents
       required:
         - differences
+        - second_commit
     Run:
       title: Run
       oneOf:
         - properties:
-            commit:
-              title: Commit
-              type: object
-              properties:
-                repo_id:
-                  type: string
-                  title: RepoId
-                  format: uuid
-                  description: repo id
-                hash:
-                  title: CommitHash
-                  type: string
-                  description: commit hash
-                author:
-                  type: string
-                author_date:
-                  type: integer
-                  title: Time
-                  description: unix/epoch time (seconds since 1970-01-01)
-                  format: int64
-                committer:
-                  type: string
-                committer_date:
-                  type: integer
-                  title: Time
-                  description: unix/epoch time (seconds since 1970-01-01)
-                  format: int64
-                message:
-                  type: string
-                parents:
-                  type: array
-                  items:
-                    title: CommitHash
-                    type: string
-                    description: commit hash
-              required:
-                - repo_id
-                - hash
-                - author
-                - author_date
-                - committer
-                - committer_date
-                - message
-                - parents
             start_time:
               type: integer
               title: Time
@@ -2559,55 +2065,10 @@ components:
                       - error_message
                 type: object
           required:
-            - commit
             - start_time
             - stop_time
             - measurements
         - properties:
-            commit:
-              title: Commit
-              type: object
-              properties:
-                repo_id:
-                  type: string
-                  title: RepoId
-                  format: uuid
-                  description: repo id
-                hash:
-                  title: CommitHash
-                  type: string
-                  description: commit hash
-                author:
-                  type: string
-                author_date:
-                  type: integer
-                  title: Time
-                  description: unix/epoch time (seconds since 1970-01-01)
-                  format: int64
-                committer:
-                  type: string
-                committer_date:
-                  type: integer
-                  title: Time
-                  description: unix/epoch time (seconds since 1970-01-01)
-                  format: int64
-                message:
-                  type: string
-                parents:
-                  type: array
-                  items:
-                    title: CommitHash
-                    type: string
-                    description: commit hash
-              required:
-                - repo_id
-                - hash
-                - author
-                - author_date
-                - committer
-                - committer_date
-                - message
-                - parents
             start_time:
               type: integer
               title: Time
@@ -2621,7 +2082,6 @@ components:
             error_message:
               type: string
           required:
-            - commit
             - start_time
             - stop_time
             - error_message
@@ -2636,6 +2096,15 @@ components:
       title: RemoteUrl
       format: uri
       description: "a repo's remote url"
+    Error:
+      title: Error
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+      description: An error message returned when something goes wrong
   securitySchemes:
     auth:
       type: http
