@@ -111,7 +111,7 @@ to take, and then edit the backend config file. These commands assume you're in
 the backend install dir.
 
 ```
-$ java -jar backend hashPerformance <milliseconds> <memory in kib>
+$ java -jar backend.jar hashPerformance <milliseconds> <memory in kib>
 $ vi install/dir/config.yml
 ```
 
