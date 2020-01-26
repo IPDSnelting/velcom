@@ -5,8 +5,9 @@ import subprocess
 from pathlib import Path
 
 PORT_REGEX = r"\d{1,5}"
-LONG_ADDRESS_REGEX = r"https?://(\w+\.)+(\w+)/?"
-SHORT_ADDRESS_REGEX = r"(\w+\.)+(\w+)/?"
+API_ADDRESS_REGEX = r"https?://(\w+\.)+(\w+)/?"
+RUNNER_ADDRESS_REGEX = r"(\w+\.)+(\w+)(/.*)?"
+NUMBER_REGEX = r"\d+"
 
 def request(prompt, regex=".*"):
     while True:
@@ -39,11 +40,11 @@ def main():
     print()
 
     api_port = request("- Port the frontend should use to contact the backend (e. g. 8080)", PORT_REGEX)
-    api_address = request ("- Address the frontend should use to contact the backend (requires http or https, e. g. https://example.com/)", LONG_ADDRESS_REGEX)
+    api_address = request ("- Address the frontend should use to contact the backend (requires http or https, e. g. https://example.com/)", API_ADDRESS_REGEX)
     if api_address.endswith("/"): api_address = api_address[:-1]
 
     runner_port = request("- Port the runner should use to contact the backend (e. g. 8081)", PORT_REGEX)
-    runner_address = request("- Address the runner should use to contact the backend (just the address without http or https, e. g. 192.168.0.74)", SHORT_ADDRESS_REGEX)
+    runner_address = request("- Address the runner should use to contact the backend (just the address without http or https, e. g. 192.168.0.74)", RUNNER_ADDRESS_REGEX)
     if runner_address.endswith("/"): runner_address = runner_address[:-1]
     runner_ssl = request("- Should the runner use ssl? (yes/no)", r"y(es)?|no?")
     runner_ssl = "wss://" if runner_ssl.startswith("y") else "ws://"
@@ -54,8 +55,8 @@ def main():
     runner_token = request("- Runner token", ".+")
     runner_token = escape_quotes(runner_token)
 
-    hash_memory = request("- Memory in KiB that the hash algorithm should use (e. g. 5120)", r"\d+")
-    hash_time = request("- Time in milliseconds that the hash algorithm should take (e. g. 500)", r"\d+")
+    hash_memory = request("- Memory in KiB that the hash algorithm should use (e. g. 5120)", NUMBER_REGEX)
+    hash_time = request("- Time in milliseconds that the hash algorithm should take (e. g. 500)", NUMBER_REGEX)
 
     print()
     print("###############################################################")
