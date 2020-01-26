@@ -1,6 +1,7 @@
 package de.aaaaaaah.velcom.backend.data.commitcomparison;
 
 import de.aaaaaaah.velcom.backend.access.benchmark.Run;
+import de.aaaaaaah.velcom.backend.access.commit.Commit;
 import javax.annotation.Nullable;
 
 public class CommitComparer {
@@ -11,7 +12,10 @@ public class CommitComparer {
 		this.significantFactor = Math.abs(significantFactor);
 	}
 
-	public CommitComparison compare(@Nullable Run first, @Nullable Run second) {
-		return new CommitComparison(significantFactor, first, second);
+	public CommitComparison compare(@Nullable Commit firstCommit, @Nullable Run firstRun,
+		Commit secondCommit, @Nullable Run secondRun) {
+
+		return new CommitComparison(significantFactor, firstCommit, firstRun, secondCommit,
+			secondRun);
 	}
 }

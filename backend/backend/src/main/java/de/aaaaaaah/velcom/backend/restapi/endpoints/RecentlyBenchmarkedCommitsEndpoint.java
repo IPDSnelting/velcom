@@ -53,7 +53,12 @@ public class RecentlyBenchmarkedCommitsEndpoint {
 				.map(run -> {
 					Optional<Run> previousRun = linearLog.getPreviousCommit(run.getCommit())
 						.flatMap(benchmarkAccess::getLatestRunOf);
-					return commitComparer.compare(previousRun.orElse(null), run);
+					return commitComparer.compare(
+						previousRun.map(Run::getCommit).orElse(null),
+						previousRun.orElse(null),
+						run.getCommit(),
+						run
+					);
 				})
 				.filter(comparison -> !significantOnly || comparison.isSignificant())
 				.limit(amount)

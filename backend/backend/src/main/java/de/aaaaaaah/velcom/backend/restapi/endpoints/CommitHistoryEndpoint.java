@@ -84,8 +84,8 @@ public class CommitHistoryEndpoint {
 						new JsonCommitHistoryEntry(
 							commitOptionalPair.getFirst(),
 							comparer.compare(
-								run.orElse(null),
-								commitOptionalPair.getSecond().orElse(null)
+								commit, run.orElse(null),
+								commitOptionalPair.getFirst(), commitOptionalPair.getSecond().orElse(null)
 							)
 						)
 					)

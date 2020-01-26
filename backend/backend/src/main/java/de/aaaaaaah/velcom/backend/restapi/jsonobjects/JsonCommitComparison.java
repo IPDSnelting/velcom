@@ -12,14 +12,19 @@ import javax.annotation.Nullable;
 public class JsonCommitComparison {
 
 	@Nullable
-	private final JsonRun first;
+	private final JsonCommit firstCommit;
 	@Nullable
-	private final JsonRun second;
+	private final JsonRun firstRun;
+	private final JsonCommit secondCommit;
+	@Nullable
+	private final JsonRun secondRun;
 	private final Collection<JsonDifference> differences;
 
 	public JsonCommitComparison(CommitComparison commitComparison) {
-		first = commitComparison.getFirstRun().map(JsonRun::new).orElse(null);
-		second = commitComparison.getSecondRun().map(JsonRun::new).orElse(null);
+		firstCommit = commitComparison.getFirstCommit().map(JsonCommit::new).orElse(null);
+		firstRun = commitComparison.getFirstRun().map(JsonRun::new).orElse(null);
+		secondCommit = new JsonCommit(commitComparison.getSecondCommit());
+		secondRun = commitComparison.getSecondRun().map(JsonRun::new).orElse(null);
 
 		differences = commitComparison.getDifferences().stream()
 			.map(JsonDifference::new)
@@ -27,13 +32,22 @@ public class JsonCommitComparison {
 	}
 
 	@Nullable
-	public JsonRun getFirst() {
-		return first;
+	public JsonCommit getFirstCommit() {
+		return firstCommit;
 	}
 
 	@Nullable
-	public JsonRun getSecond() {
-		return second;
+	public JsonRun getFirstRun() {
+		return firstRun;
+	}
+
+	public JsonCommit getSecondCommit() {
+		return secondCommit;
+	}
+
+	@Nullable
+	public JsonRun getSecondRun() {
+		return secondRun;
 	}
 
 	public Collection<JsonDifference> getDifferences() {

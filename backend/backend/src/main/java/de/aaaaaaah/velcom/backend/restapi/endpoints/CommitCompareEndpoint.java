@@ -60,16 +60,22 @@ public class CommitCompareEndpoint {
 			.map(CommitHash::new)
 			.map(hash -> commitAccess.getCommit(repoId, hash));
 
+		if (secondCommit.isEmpty()) {
+			throw new RuntimeException(); // TODO do proper error handling
+		}
+
 		Optional<Commit> firstCommit = Optional.ofNullable(firstHashString)
 			.map(CommitHash::new)
 			.map(hash -> commitAccess.getCommit(repoId, hash))
 			.or(() -> secondCommit.flatMap(linearLog::getPreviousCommit));
 
-		Optional<Run> first = firstCommit.flatMap(benchmarkAccess::getLatestRunOf);
-		Optional<Run> second = secondCommit.flatMap(benchmarkAccess::getLatestRunOf);
+		Optional<Run> firstRun = firstCommit.flatMap(benchmarkAccess::getLatestRunOf);
+		Optional<Run> secondRun = secondCommit.flatMap(benchmarkAccess::getLatestRunOf);
 
-		CommitComparison comparison = commitComparer.compare(first.orElse(null),
-			second.orElse(null));
+		CommitComparison comparison = commitComparer.compare(
+			firstCommit.orElse(null), firstRun.orElse(null),
+			secondCommit.get(), secondRun.orElse(null)
+		);
 		return new GetReply(new JsonCommitComparison(comparison));
 	}
 

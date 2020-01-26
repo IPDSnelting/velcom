@@ -4,10 +4,12 @@ import de.aaaaaaah.velcom.backend.access.benchmark.Measurement;
 import de.aaaaaaah.velcom.backend.access.benchmark.MeasurementName;
 import de.aaaaaaah.velcom.backend.access.benchmark.MeasurementValues;
 import de.aaaaaaah.velcom.backend.access.benchmark.Run;
+import de.aaaaaaah.velcom.backend.access.commit.Commit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
@@ -21,20 +23,33 @@ public class CommitComparison {
 	private final double significantFactor;
 
 	@Nullable
+	private final Commit firstCommit;
+	@Nullable
 	private final Run firstRun;
+	private final Commit secondCommit;
 	@Nullable
 	private final Run secondRun;
 
-	CommitComparison(double significantFactor, @Nullable Run firstRun,
-		@Nullable Run secondRun) {
+	CommitComparison(double significantFactor, @Nullable Commit firstCommit, @Nullable Run firstRun,
+		Commit secondCommit, @Nullable Run secondRun) {
 
 		this.significantFactor = significantFactor;
+		this.firstCommit = firstCommit;
 		this.firstRun = firstRun;
+		this.secondCommit = Objects.requireNonNull(secondCommit);
 		this.secondRun = secondRun;
+	}
+
+	public Optional<Commit> getFirstCommit() {
+		return Optional.ofNullable(firstCommit);
 	}
 
 	public Optional<Run> getFirstRun() {
 		return Optional.ofNullable(firstRun);
+	}
+
+	public Commit getSecondCommit() {
+		return secondCommit;
 	}
 
 	public Optional<Run> getSecondRun() {
