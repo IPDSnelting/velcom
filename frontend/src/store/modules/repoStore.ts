@@ -199,7 +199,7 @@ export class RepoStore extends VxModule {
         }
       })
     })
-    return benchmarks
+    return benchmarks.sort()
   }
 
   get metricsForBenchmark(): (payload: string) => string[] {
@@ -218,7 +218,7 @@ export class RepoStore extends VxModule {
           }
         })
       })
-      return metrics
+      return metrics.sort()
     }
   }
 }

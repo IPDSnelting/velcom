@@ -165,40 +165,11 @@ export default class RepoComparison extends Vue {
   }
 
   get occuringBenchmarks(): string[] {
-    var benchmarks: string[] = []
-    vxm.repoComparisonModule.selectedRepos.forEach(repoId => {
-      let repo: Repo | undefined = vxm.repoModule.repoByID(repoId)
-      if (repo) {
-        var measurements: MeasurementID[] = repo.measurements
-        measurements.forEach(measurement => {
-          if (!benchmarks.includes(measurement.benchmark)) {
-            benchmarks.push(measurement.benchmark)
-          }
-        })
-      }
-    })
-    return benchmarks
+    return vxm.repoModule.occuringBenchmarks
   }
 
   get metricsForBenchmark(): (benchmark: string) => string[] {
-    return (benchmark: string) => {
-      var metrics: string[] = []
-      vxm.repoComparisonModule.selectedRepos.forEach(repoId => {
-        let repo: Repo | undefined = vxm.repoModule.repoByID(repoId)
-        if (repo) {
-          var measurements = repo.measurements
-          measurements.forEach(measurement => {
-            if (
-              measurement.benchmark === benchmark &&
-              !metrics.includes(measurement.metric)
-            ) {
-              metrics.push(measurement.metric)
-            }
-          })
-        }
-      })
-      return metrics
-    }
+    return (benchmark: string) => vxm.repoModule.metricsForBenchmark(benchmark)
   }
 
   get isAdmin(): boolean {
