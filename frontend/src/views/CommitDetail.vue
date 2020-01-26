@@ -1,7 +1,7 @@
 <template>
   <v-container>
     <v-row>
-      <commit-information v-if="commit" :commit="commit"></commit-information>
+      <commit-information v-if="commit" :commit="commit" :hasExistingBenchmark="hasRun"></commit-information>
     </v-row>
     <v-row v-if="hasRun && isError">
       <v-col>

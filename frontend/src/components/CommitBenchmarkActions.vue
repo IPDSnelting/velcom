@@ -20,7 +20,7 @@ import { Prop } from 'vue-property-decorator'
 import { vxm } from '../store'
 
 /**
- * @events 'benchmark' and 'deleteBenchmarks'
+ * @events 'benchmark'
  */
 @Component
 export default class CommitBenchmarkActions extends Vue {

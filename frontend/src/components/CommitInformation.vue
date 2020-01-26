@@ -16,34 +16,54 @@
                     <br />
                     <span class="mr-2 hash">{{ commit.hash }}</span>
                   </v-col>
+                  <v-col cols="auto">
+                    <commit-benchmark-actions
+                      @benchmark="benchmark()"
+                      :hasExistingBenchmark="hasExistingBenchmark"
+                    ></commit-benchmark-actions>
+                  </v-col>
                 </v-row>
               </v-container>
             </v-toolbar>
             <v-card-text class="body-1">
-              <span class="font-weight-bold">{{ commit.author }}</span> authored at
-              <span
-                :title="formattedDateUTC(commit.authorDate)"
-              >{{ formattedDate(commit.authorDate) }}</span>
-              <br />
-              <span class="font-weight-bold">{{ commit.committer }}</span> committed at
-              <span
-                :title="formattedDateUTC(commit.committerDate)"
-              >{{ formattedDate(commit.committerDate) }}</span>
-              <br />
-              <div class="mt-5 commit-detail-message">{{ restOfCommitMessage.trim() }}</div>
-
-              <div class="mt-5 mb-2 overline">Parents:</div>
-              <v-tooltip v-for="parent in commit.parents" :key="parent" right>
-                <template #activator="{ on }">
-                  <commit-chip
-                    :on="on"
-                    :to="{ name: 'commit-detail', params: { repoID: commit.repoID, hash: parent } }"
-                    :commit="commit"
-                    :copyOnClick="false"
-                  ></commit-chip>
-                </template>
-                Clicking me will navigate to the commit
-              </v-tooltip>
+              <v-container>
+                <v-row justify="space-between" align="center">
+                  <v-col>
+                    <span class="font-weight-bold">{{ commit.author }}</span> authored at
+                    <span
+                      :title="formattedDateUTC(commit.authorDate)"
+                    >{{ formattedDate(commit.authorDate) }}</span>
+                    <br />
+                    <span class="font-weight-bold">{{ commit.committer }}</span> committed at
+                    <span
+                      :title="formattedDateUTC(commit.committerDate)"
+                    >{{ formattedDate(commit.committerDate) }}</span>
+                    <br />
+                  </v-col>
+                </v-row>
+                <v-row>
+                  <v-col cols="12">
+                    <div class="mt-5 commit-detail-message">{{ restOfCommitMessage.trim() }}</div>
+                  </v-col>
+                </v-row>
+                <v-row>
+                  <v-col cols="12">
+                    <div class="mt-5 mb-2 overline">Parents:</div>
+                    <v-tooltip v-for="parent in commit.parents" :key="parent" right>
+                      <template #activator="{ on }">
+                        <commit-chip
+                          class="mr-2"
+                          :on="on"
+                          :to="{ name: 'commit-detail', params: { repoID: commit.repoID, hash: parent } }"
+                          :commit="commit"
+                          :copyOnClick="false"
+                        ></commit-chip>
+                      </template>
+                      Clicking me will navigate to the commit
+                    </v-tooltip>
+                  </v-col>
+                </v-row>
+              </v-container>
             </v-card-text>
           </v-card-title>
         </v-card>
@@ -60,16 +80,22 @@ import { Prop } from 'vue-property-decorator'
 import InlineMinimalRepoNameDisplay from './InlineMinimalRepoDisplay.vue'
 import CommitChip from './CommitChip.vue'
 import { formatDate, formatDateUTC } from '@/util/TimeUtil'
+import CommitBenchmarkActions from './CommitBenchmarkActions.vue'
+import { vxm } from '../store'
 
 @Component({
   components: {
     'inline-repo-display': InlineMinimalRepoNameDisplay,
-    'commit-chip': CommitChip
+    'commit-chip': CommitChip,
+    'commit-benchmark-actions': CommitBenchmarkActions
   }
 })
 export default class CommitInformation extends Vue {
   @Prop()
   private commit!: Commit
+
+  @Prop()
+  private hasExistingBenchmark!: boolean
 
   private formattedDate(date: number) {
     return formatDate(date)
@@ -91,6 +117,10 @@ export default class CommitInformation extends Vue {
       return ''
     }
     return this.commit.bodyWithoutSummary
+  }
+
+  private benchmark() {
+    vxm.queueModule.dispatchPrioritizeOpenTask(this.commit)
   }
 }
 </script>
