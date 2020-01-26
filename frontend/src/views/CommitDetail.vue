@@ -3,7 +3,7 @@
     <v-row>
       <commit-information v-if="commit" :commit="commit"></commit-information>
     </v-row>
-    <v-row v-if="isError">
+    <v-row v-if="hasRun && isError">
       <v-col>
         <v-card>
           <v-card-title>
@@ -11,9 +11,9 @@
               <v-toolbar-title>Benchmarking this commit resulted in an error</v-toolbar-title>
             </v-toolbar>
           </v-card-title>
-          <v-card-text v-if="myRun">
+          <v-card-text v-if="comparison.first">
             <div class="title">Error message:</div>
-            <span class="mx-1">{{ myRun.errorMessage }}</span>
+            <span class="mx-1">{{ comparison.first.errorMessage }}</span>
           </v-card-text>
           <v-card-text v-else>
             No data
@@ -23,7 +23,7 @@
         </v-card>
       </v-col>
     </v-row>
-    <v-row v-if="!isError">
+    <v-row v-if="hasRun && !isError">
       <v-col>
         <v-card>
           <v-card-title>
@@ -32,7 +32,11 @@
             </v-toolbar>
           </v-card-title>
           <v-card-text>
-            <commit-info-table v-if="!isError" :run="myRun" :previousRun="previousRun"></commit-info-table>
+            <commit-info-table
+              v-if="!isError"
+              :run="comparison.first"
+              :previousRun="comparison.second"
+            ></commit-info-table>
           </v-card-text>
         </v-card>
       </v-col>
@@ -61,9 +65,6 @@ import CommitInfoTable from '../components/CommitInfoTable.vue'
   }
 })
 export default class CommitDetail extends Vue {
-  private myRun: Run | null = null
-  private previousRun: Run | null = null
-
   get repoID() {
     return this.$route.params.repoID
   }
@@ -72,27 +73,32 @@ export default class CommitDetail extends Vue {
     return this.$route.params.hash
   }
 
+  get hasRun(): boolean {
+    return !!this.comparison && !!this.comparison.second
+  }
+
   get isError() {
-    return !this.myRun || this.myRun.errorMessage
+    return this.hasRun && this.comparison!.second!.errorMessage
   }
 
   get commit(): Commit | null {
-    return this.myRun ? this.myRun.commit : null
+    return this.comparison ? this.comparison.secondCommit : null
   }
 
-  async created() {
-    let comparison = await vxm.commitComparisonModule.fetchCommitComparison({
+  get comparison(): CommitComparison | null {
+    return vxm.commitComparisonModule.commitComparison(
+      this.repoID,
+      null,
+      this.hash
+    )
+  }
+
+  created() {
+    vxm.commitComparisonModule.fetchCommitComparison({
       repoId: this.repoID,
       first: undefined,
       second: this.hash
     })
-
-    if (comparison.first) {
-      this.previousRun = comparison.first
-    }
-    if (comparison.second) {
-      this.myRun = comparison.second
-    }
   }
 }
 </script>

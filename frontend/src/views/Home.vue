@@ -51,8 +51,10 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Watch } from 'vue-property-decorator'
 import { vxm } from '../store/index'
-import { Run } from '@/store/types'
-import MultipleRunOverview from '../components/overviews/MultipleRunOverview.vue'
+import { Run, Commit } from '@/store/types'
+import MultipleRunOverview, {
+  AttributedRun
+} from '../components/overviews/MultipleRunOverview.vue'
 
 @Component({
   components: {
@@ -63,12 +65,20 @@ export default class Home extends Vue {
   private recentAmount: number = 5
   private recentSignificantAmount = 10
 
-  get recent(): Run[] {
+  get recent(): AttributedRun[] {
     return vxm.newsModule.recentRuns
+      .filter(it => it.second)
+      .map(({ second, secondCommit }) => {
+        return new AttributedRun(second!, secondCommit)
+      })
   }
 
-  get recentSignificant(): Run[] {
+  get recentSignificant(): AttributedRun[] {
     return vxm.newsModule.recentSignificantRuns
+      .filter(it => it.second)
+      .map(({ second, secondCommit }) => {
+        return new AttributedRun(second!, secondCommit)
+      })
   }
 
   @Watch('recentAmount')

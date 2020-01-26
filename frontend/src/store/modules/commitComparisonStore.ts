@@ -88,21 +88,29 @@ export class CommitComparisonStore extends VxModule {
    */
   get commitComparison(): (
     repoId: string,
-    first: string,
+    first: string | null,
     second: string
   ) => CommitComparison | null {
-    return (repoId: string, first: string, second: string) => {
+    return (repoId: string, first: string | null, second: string) => {
       let comparisons = this.comparisons[repoId]
       if (!comparisons) {
         return null
       }
       let comparison = comparisons.find(comparison => {
-        if (!comparison.first || !comparison.second) {
+        if (!comparison.secondCommit) {
+          console.log('No second commit ' + comparison)
+
+          return false
+        }
+        if (!first) {
+          return comparison.secondCommit.hash === second
+        }
+        if (!comparison.firstCommit) {
           return false
         }
         return (
-          comparison.first.commit.hash === first &&
-          comparison.second.commit.hash === second
+          comparison.firstCommit.hash === first &&
+          comparison.secondCommit.hash === second
         )
       })
       return comparison || null

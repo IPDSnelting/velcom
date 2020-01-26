@@ -20,18 +20,18 @@
           <v-row no-gutters align="center">
             <v-col :cols="!hideActions ? 8 : 9">
               <v-list-item-title>
-                <repo-display :repoId="run.commit.repoID"></repo-display>
+                <repo-display :repoId="commit.repoID"></repo-display>
                 <span class="mx-2">—</span>
                 <router-link
                   class="concealed-link"
                   tag="span"
-                  :to="{ name: 'commit-detail', params: { repoID: run.commit.repoID, hash: run.commit.hash } }"
+                  :to="{ name: 'commit-detail', params: { repoID: commit.repoID, hash: commit.hash } }"
                 >
-                  <span class="commit-message">{{ run.commit.summary }}</span>
+                  <span class="commit-message">{{ commit.summary }}</span>
                 </router-link>
               </v-list-item-title>
               <v-list-item-subtitle>
-                <span class="author">{{ run.commit.author }}</span> authored on
+                <span class="author">{{ commit.author }}</span> authored on
                 <span class="time" :title="formattedDateUTC">{{ formattedDate }}</span>
               </v-list-item-subtitle>
             </v-col>
@@ -39,12 +39,12 @@
               <v-container fluid class="ma-0 pa-0">
                 <v-row no-gutters align="center" justify="space-between">
                   <v-col cols="auto">
-                    <commit-chip :commit="run.commit"></commit-chip>
+                    <commit-chip :commit="commit"></commit-chip>
                   </v-col>
                   <span v-if="!hideActions">
                     <commit-benchmark-actions
                       :hasExistingBenchmark="true"
-                      @benchmark="benchmark(run.commit)"
+                      @benchmark="benchmark(commit)"
                     ></commit-benchmark-actions>
                   </span>
                 </v-row>
@@ -77,8 +77,11 @@ import CommitBenchmarkActions from '../CommitBenchmarkActions.vue'
   }
 })
 export default class RunOverview extends Vue {
-  @Prop({})
+  @Prop()
   private run!: Run
+
+  @Prop()
+  private commit!: Commit
 
   @Prop({ default: false })
   private hideActions!: boolean
@@ -88,11 +91,11 @@ export default class RunOverview extends Vue {
   }
 
   private get formattedDate() {
-    return formatDate(this.run.commit.authorDate || 0)
+    return formatDate(this.commit.authorDate || 0)
   }
 
   private get formattedDateUTC() {
-    return formatDateUTC(this.run.commit.authorDate || 0)
+    return formatDateUTC(this.commit.authorDate || 0)
   }
 
   private benchmark(commit: Commit) {

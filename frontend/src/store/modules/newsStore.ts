@@ -108,14 +108,8 @@ export class NewsStore extends VxModule {
    * @type {CommitComparison[]}
    * @memberof NewsModuleStore
    */
-  get recentRuns(): Run[] {
-    let runs: Run[] = []
-    this._recentRuns.forEach(comparison => {
-      if (runs.indexOf(comparison.second!) === -1) {
-        runs.push(comparison.second!)
-      }
-    })
-    return runs
+  get recentRuns(): CommitComparison[] {
+    return this._recentRuns
   }
 
   /**
@@ -125,13 +119,7 @@ export class NewsStore extends VxModule {
    * @type {CommitComparison[]}
    * @memberof NewsModuleStore
    */
-  get recentSignificantRuns(): Run[] {
-    let runs: Run[] = []
-    this._recentSignificantRuns.forEach(comparison => {
-      if (runs.indexOf(comparison.second!) === -1) {
-        runs.push(comparison.second!)
-      }
-    })
-    return runs
+  get recentSignificantRuns(): CommitComparison[] {
+    return this._recentSignificantRuns
   }
 }

@@ -118,20 +118,17 @@ export class Commit {
 }
 
 export class Run {
-  commit: Commit
   startTime: number
   stopTime: number
   measurements: Array<Measurement> | null
   errorMessage: string | null
 
   constructor(
-    commit: Commit,
     startTime: number,
     stopTime: number,
     measurements?: Array<Measurement>,
     errorMessage?: string
   ) {
-    this.commit = commit
     this.startTime = startTime
     this.stopTime = stopTime
     this.measurements = (measurements && measurements) || null
@@ -152,15 +149,21 @@ export class Difference {
 export class CommitComparison {
   first: Run | null
   second: Run | null
+  firstCommit: Commit | null
+  secondCommit: Commit
   differences: Difference[]
 
   constructor(
     first: Run | null,
     second: Run | null,
-    differences: Array<Difference>
+    firstCommit: Commit | null,
+    secondCommit: Commit,
+    differences: Difference[]
   ) {
     this.first = first
     this.second = second
+    this.firstCommit = firstCommit
+    this.secondCommit = secondCommit
     this.differences = differences
   }
 }

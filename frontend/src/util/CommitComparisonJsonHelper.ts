@@ -28,16 +28,27 @@ export function commitFromJson(jsonCommit: any): Commit {
 }
 
 export function comparisonFromJson(jsonComparison: any): CommitComparison {
-  let firstRun: Run | null = jsonComparison.first
-    ? runFromJson(jsonComparison.first)
+  let firstRun: Run | null = jsonComparison.first_run
+    ? runFromJson(jsonComparison.first_run)
     : null
-  let secondRun: Run | null = jsonComparison.second
-    ? runFromJson(jsonComparison.second)
+  let secondRun: Run | null = jsonComparison.second_run
+    ? runFromJson(jsonComparison.second_run)
     : null
   let differences: Difference[] = jsonComparison.differences.map((it: any) =>
     differenceFromJson(it)
   )
-  return new CommitComparison(firstRun, secondRun, differences)
+  let firstCommit: Commit | null = jsonComparison.first_commit
+    ? commitFromJson(jsonComparison.first_commit)
+    : null
+  let secondCommit: Commit | null = commitFromJson(jsonComparison.second_commit)
+
+  return new CommitComparison(
+    firstRun,
+    secondRun,
+    firstCommit,
+    secondCommit,
+    differences
+  )
 }
 
 /**
@@ -50,10 +61,10 @@ export function comparisonFromJson(jsonComparison: any): CommitComparison {
  */
 export function runFromJson(jsonRun: any): Run {
   return new Run(
-    commitFromJson(jsonRun.commit),
     jsonRun.start_time,
     jsonRun.stop_time,
-    jsonRun.measurements ? measurementsFromJson(jsonRun.measurements)
+    jsonRun.measurements
+      ? measurementsFromJson(jsonRun.measurements)
       : undefined,
     jsonRun.error_message
   )
