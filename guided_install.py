@@ -11,7 +11,7 @@ NUMBER_REGEX = r"\d+"
 
 def request(prompt, regex=".*"):
     while True:
-        result = input(prompt + ": ")
+        result = input(prompt + "\n  > ")
         if re.fullmatch(regex, result):
             return result
         else:
@@ -53,7 +53,7 @@ def main():
         "- Address the runner should use to contact the backend (just the domain without\n"
         "  http or https, e. g. 192.168.0.74 or example.com). If you want a runner\n"
         "  address like wss://example.com/runner-endpoint, edit tmp/runner_config.json\n"
-        "  once this script has completed. Anyways, the address"
+        "  once this script has completed."
         , RUNNER_ADDRESS_REGEX)
     if runner_address.endswith("/"): runner_address = runner_address[:-1]
     runner_ssl = request(
