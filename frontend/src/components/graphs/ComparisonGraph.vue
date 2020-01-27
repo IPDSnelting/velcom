@@ -113,7 +113,11 @@ export default class ComparisonGraph extends Vue {
   }
 
   get yLabel(): string {
-    return this.metric + ' in ' + this.unit
+    if (this.metric) {
+      return this.metric + ' in ' + this.unit
+    } else {
+      return 'please select benchmark and metric'
+    }
   }
 
   /* private line: any = d3
@@ -133,9 +137,10 @@ export default class ComparisonGraph extends Vue {
     this.svg.selectAll('*').remove()
     this.drawXAxis()
     this.drawYAxis()
-    /* Array.from(Object.keys(this.allRuns)).forEach((repoID: string) => {
+
+    this.repos.forEach((repoID: string) => {
       this.drawDatapoints(repoID)
-    }) */
+    })
   }
 
   drawXAxis() {
@@ -143,11 +148,7 @@ export default class ComparisonGraph extends Vue {
       .append('g')
       .attr('class', 'axis')
       .attr('transform', 'translate(0,' + this.innerHeight + ')')
-      .call(
-        d3
-          .axisBottom(this.xScale)
-          .tickFormat(this.timeFormat)
-      )
+      .call(d3.axisBottom(this.xScale).tickFormat(this.timeFormat))
       .selectAll('text')
       .attr('transform', 'translate(-10,10)rotate(-45)')
       .style('text-anchor', 'end')
@@ -157,43 +158,35 @@ export default class ComparisonGraph extends Vue {
     this.svg
       .append('g')
       .attr('class', 'axis')
-      .call(
-        d3
-          .axisLeft(this.yScale)
-          .tickFormat(this.valueFormat)
-      )
+      .call(d3.axisLeft(this.yScale).tickFormat(this.valueFormat))
 
     this.svg
       .append('text')
       .attr('text-anchor', 'end')
       .attr('transform', 'rotate(-90)')
       .attr('y', -this.margin.left + 20)
-      .attr('x', -this.innerHeight / 2)
+      .attr('x', -this.innerHeight + 300)
       .text(this.yLabel)
   }
 
-  /*
   drawDatapoints(repoID: string) {
     let repoGroup = this.svg.append('g').attr('id', repoID)
 
-    this.allRuns[repoID].forEach(run => {
-      if (run.measurements && run.measurements[0].value) {
-        let value = Math.abs(run.measurements[0].value)
-
-        repoGroup
-          .append('circle')
-          .attr('fill', this.colorById(repoID))
-          .attr('stroke', this.colorById(repoID))
-          .attr('r', 5)
-          .attr('cx', () => {
-            return this.xScale((Math.abs(run.startTime) % 1.8934156e9) * 1000)
-          })
-          .attr('cy', () => {
-            return this.yScale(value)
-          })
-      }
+    this.datapoints[repoID].forEach(datapoint => {
+      repoGroup
+        .append('circle')
+        .attr('class', 'datapoint')
+        .attr('fill', this.colorById(repoID))
+        .attr('stroke', this.colorById(repoID))
+        .attr('r', 5)
+        .attr('cx', () => {
+          return this.xScale(datapoint.commit.authorDate * 1000)
+        })
+        .attr('cy', () => {
+          return this.yScale(datapoint.value)
+        })
     })
-  } */
+  }
 
   mounted() {
     this.svg = d3
@@ -210,6 +203,7 @@ export default class ComparisonGraph extends Vue {
       )
 
     this.drawXAxis()
+    this.drawYAxis()
   }
 }
 </script>
