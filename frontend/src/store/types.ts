@@ -120,13 +120,13 @@ export class Commit {
 export class Run {
   startTime: number
   stopTime: number
-  measurements: Array<Measurement> | null
+  measurements: Measurement[] | null
   errorMessage: string | null
 
   constructor(
     startTime: number,
     stopTime: number,
-    measurements?: Array<Measurement>,
+    measurements?: Measurement[],
     errorMessage?: string
   ) {
     this.startTime = startTime

@@ -13,7 +13,12 @@
           </v-card-title>
           <v-card-text v-if="comparison.second">
             <div class="title">Error message:</div>
-            <span class="mx-1">{{ comparison.second.errorMessage }}</span>
+            <div class="ma-5 error-message">
+              <div v-for="{ isHeader, value} in errorMessageParts" :key="value" class="mb-4">
+                <div v-if="isHeader" class="mt-2 error-message-header">{{ value }}</div>
+                <div v-else>{{ value }}</div>
+              </div>
+            </div>
           </v-card-text>
           <v-card-text v-else>
             No data
@@ -93,6 +98,48 @@ export default class CommitDetail extends Vue {
     )
   }
 
+  get errorMessageParts(): { isHeader: boolean; value: string }[] {
+    let message = this.comparison!.second!.errorMessage!
+    let tempAccumulator: {
+      parsingHeader: boolean
+      tempArray: string[]
+      result: string[][]
+    } = { parsingHeader: false, tempArray: [], result: [] }
+
+    message.split('\n').reduce((accumulated, next) => {
+      if (next.startsWith('###')) {
+        // Opening
+        if (!accumulated.parsingHeader) {
+          if (accumulated.tempArray.length !== 0) {
+            accumulated.result.push(accumulated.tempArray)
+          }
+          accumulated.tempArray = []
+          accumulated.tempArray.push(next)
+        } else {
+          // Closing
+          accumulated.tempArray.push(next)
+          if (accumulated.tempArray.length !== 0) {
+            accumulated.result.push(accumulated.tempArray)
+          }
+          accumulated.tempArray = []
+        }
+        accumulated.parsingHeader = !accumulated.parsingHeader
+        return accumulated
+      }
+      accumulated.tempArray.push(next)
+      return accumulated
+    }, tempAccumulator)
+
+    if (tempAccumulator.tempArray.length > 0) {
+      tempAccumulator.result.push(tempAccumulator.tempArray)
+    }
+
+    return tempAccumulator.result.map(array => ({
+      isHeader: array[0].startsWith('###'),
+      value: array.join('\n')
+    }))
+  }
+
   created() {
     vxm.commitComparisonModule.fetchCommitComparison({
       repoId: this.repoID,
@@ -102,3 +149,15 @@ export default class CommitDetail extends Vue {
   }
 }
 </script>
+
+<style scoped>
+.error-message {
+  font-family: monospace;
+  white-space: pre-wrap;
+  line-height: 1.2em;
+  font-weight: bolder;
+}
+.error-message-header {
+  color: green;
+}
+</style>
