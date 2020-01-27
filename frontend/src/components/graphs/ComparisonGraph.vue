@@ -85,6 +85,17 @@ export default class ComparisonGraph extends Vue {
     }
   }
 
+  get line(): any {
+    return d3
+      .line()
+      .x((datapoint: any) => {
+        return this.xScale(datapoint.commit.authorDate * 1000)
+      })
+      .y((datapoint: any) => {
+        return this.yScale(datapoint.value)
+      })
+  }
+
   get valueRange(): { min: number; max: number } {
     let min: number = Number.POSITIVE_INFINITY
     let max: number = Number.NEGATIVE_INFINITY
@@ -103,12 +114,12 @@ export default class ComparisonGraph extends Vue {
       return d3
         .scaleLinear()
         .domain([this.valueRange.min, this.valueRange.max])
-        .range([0, this.innerHeight])
+        .range([this.innerHeight, 0])
     } else {
       return d3
         .scaleLinear()
         .domain([this.valueRange.min, this.valueRange.max])
-        .range([this.innerHeight, 0])
+        .range([0, this.innerHeight])
     }
   }
 
@@ -162,6 +173,13 @@ export default class ComparisonGraph extends Vue {
   drawDatapoints(repoID: string) {
     let repoGroup = this.svg.append('g').attr('id', repoID)
 
+    repoGroup
+      .append('path')
+      .attr('d', this.line(this.datapoints[repoID]))
+      .attr('stroke', this.colorById(repoID))
+      .attr('stroke-width', 2)
+      .attr('fill', 'none')
+
     this.datapoints[repoID].forEach(datapoint => {
       let date: any = datapoint.commit.authorDate
       if (date) {
@@ -170,7 +188,7 @@ export default class ComparisonGraph extends Vue {
           .attr('class', 'datapoint')
           .attr('fill', this.colorById(repoID))
           .attr('stroke', this.colorById(repoID))
-          .attr('r', 5)
+          .attr('r', 3)
           .attr('cx', () => {
             return this.xScale(date * 1000)
           })
