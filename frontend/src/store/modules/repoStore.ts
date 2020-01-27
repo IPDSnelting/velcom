@@ -16,7 +16,10 @@ export class RepoStore extends VxModule {
   @action
   async fetchRepos() {
     const response = await axios.get('/all-repos', {
-      snackbarTag: 'all repos'
+      snackbarTag: 'all repos',
+      hideLoadingSnackbar: true,
+      hideSuccessSnackbar: true
+      // still show errors
     })
 
     let repos: Array<Repo> = []
