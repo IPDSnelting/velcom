@@ -1,5 +1,6 @@
 package de.aaaaaaah.velcom.runner.entity.execution;
 
+import de.aaaaaaah.velcom.runner.entity.BenchmarkFailureInformation;
 import de.aaaaaaah.velcom.runner.entity.BenchmarkRepoOrganizer;
 import de.aaaaaaah.velcom.runner.entity.RunnerConfiguration;
 import de.aaaaaaah.velcom.runner.entity.WorkExecutor;
@@ -45,28 +46,48 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 	@Override
 	public void startExecution(Path workPath, RunnerWorkOrder workOrder,
 		RunnerConfiguration configuration) {
+		BenchmarkFailureInformation failureInformation = new BenchmarkFailureInformation();
+		failureInformation.addToGeneral("Runner name", '"' + configuration.getRunnerName() + '"');
+		failureInformation.addMachineInfo();
+		failureInformation.addToGeneral("Bench-Repo Hash",
+			configuration.getBenchmarkRepoOrganizer().getHeadHash().orElse("<unknown>")
+		);
+		failureInformation.addToGeneral("User", System.getProperty("user.name"));
+
 		Instant startTime = Instant.now();
 
 		try (var execEnv = new ExecutionEnv(workPath, configuration.getBenchmarkRepoOrganizer())) {
-			// Delay a bit for testing
-			Thread.sleep(5000);
-
-			programResult = new ProgramExecutor().execute(
+			String[] calledCommand = {
 				execEnv.getExecutablePath().toAbsolutePath().toString(),
 				execEnv.unpack(workOrder).toAbsolutePath().toString()
-			);
-			Instant endTime = Instant.now();
+			};
+
+			failureInformation.addEscapedArrayToGeneral("Executed command", calledCommand);
+			failureInformation.addToGeneral("Start time", startTime.toString());
+
+			programResult = new ProgramExecutor().execute(calledCommand);
 
 			ProgramResult result = programResult.get();
+
+			Instant endTime = Instant.now();
+
+			failureInformation.addToGeneral("Stop time", endTime.toString());
+			failureInformation.addToGeneral("Execution time", result.getRuntime().toString());
+			failureInformation.addToGeneral("Exit code", result.getExitCode() + "");
+			failureInformation.addSection(
+				"Stdout",
+				result.getStdOut().isEmpty() ? "<empty>" : result.getStdOut()
+			);
+			failureInformation.addSection(
+				"Stderr",
+				result.getStdErr().isEmpty() ? "<empty>" : result.getStdErr()
+			);
 
 			if (result.getExitCode() != 0) {
 				configuration.getRunnerStateMachine().onWorkDone(
 					new BenchmarkResults(
 						workOrder,
-						"Non-zero exit code: " + result.getExitCode()
-							+ "\n\nOutput       : " + result.getStdOut()
-							+ "\n\nError Output : " + result.getStdErr()
-							+ "\n\nRan for      : " + result.getRuntime(),
+						failureInformation.toString(),
 						startTime,
 						endTime
 					),
@@ -88,8 +109,14 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 		} catch (IOException | ExecutionException | InterruptedException e) {
 			LOGGER.info("Error executing some work for {}", workOrder);
 			LOGGER.info("Stacktrace:", e);
+
+			failureInformation.addSection("Stacktrace", ExceptionHelper.getStackTrace(e));
+			failureInformation.addSection("End time", Instant.now().toString());
+
 			configuration.getRunnerStateMachine().onWorkDone(
-				new BenchmarkResults(workOrder, ExceptionHelper.getStackTrace(e),
+				new BenchmarkResults(
+					workOrder,
+					failureInformation.toString(),
 					startTime,
 					Instant.now()
 				),
@@ -97,10 +124,13 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 			);
 		} catch (OutputParseException e) {
 			LOGGER.info("Benchmark script returned invalid data: '{}'", e.getMessage());
+			failureInformation.addSection("End time", Instant.now().toString());
+			failureInformation.addSection("Invalid output", e.getMessage());
+
 			configuration.getRunnerStateMachine().onWorkDone(
 				new BenchmarkResults(
 					workOrder,
-					"Error processing runner output: " + e.getMessage(),
+					failureInformation.toString(),
 					startTime,
 					Instant.now()
 				),
