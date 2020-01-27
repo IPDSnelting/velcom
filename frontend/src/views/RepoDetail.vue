@@ -321,6 +321,8 @@ export default class RepoDetail extends Vue {
   }
 
   @Watch('id')
+  @Watch('selectedMetric')
+  @Watch('selectedBenchmark')
   retrieveRuns() {
     if (this.$refs.form && (this.$refs.form as any).validate()) {
       vxm.repoDetailModule.fetchHistoryForRepo(this.payload)
