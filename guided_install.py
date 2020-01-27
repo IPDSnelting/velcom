@@ -143,16 +143,21 @@ def main():
     print()
 
     print("  CONTINUE INSTALLATION")
-    print("1. Copy tmp/backend.jar and tmp/backend_config.yaml to your backend installation directory")
-    print("2. Copy tmp/runner.jar and tmp/runner_config.json to your runner installation directory")
+    print("1. Copy tmp/backend.jar and tmp/backend_config.yaml to your backend installation\n"
+          "   directory")
+    print("2. Copy tmp/runner.jar and tmp/runner_config.json to your runner installation\n"
+          "   directory")
     print("3. Assign a unique name to each of your runners!")
-    print("4. Configure your web server according to the rules in the readme (see docs/nginx-site for an example nginx config)")
+    print("4. Configure your web server according to the rules in the readme (see\n"
+          "   docs/nginx-site for an example nginx config)")
     print("5. Copy frontend/dist/ to a directory where it is served by your web server")
     print()
 
     print("  START VELCOM")
-    print("1. Run 'java -jar backend.jar server backend_config.yaml' in your backend installation directory")
-    print("2. Run 'java -jar runner.jar runner_config.json' in each runner's installation directory")
+    print("1. Run 'java -jar backend.jar server backend_config.yaml' in your backend\n"
+          "   installation directory")
+    print("2. Run 'java -jar runner.jar runner_config.json' in each runner's installation\n"
+          "   directory")
     print("3. Ensure your web server is running and serving the frontend")
     print()
 
