@@ -5,12 +5,12 @@ import de.aaaaaaah.velcom.backend.access.commit.Commit;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TmpEntry {
+public class GraphEntry {
 
 	private final Commit commit;
 	private List<Double> values;
 
-	TmpEntry(Commit commit) {
+	GraphEntry(Commit commit) {
 		this.commit = commit;
 		values = new ArrayList<>();
 	}
@@ -33,7 +33,7 @@ public class TmpEntry {
 
 	@Override
 	public String toString() {
-		return "TmpEntry{" +
+		return "GraphEntry{" +
 			"commit=" + commit +
 			", values=" + values +
 			'}';

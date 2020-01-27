@@ -2,7 +2,6 @@ package de.aaaaaaah.velcom.backend.restapi.jsonobjects;
 
 import de.aaaaaaah.velcom.backend.access.benchmark.Run;
 import de.aaaaaaah.velcom.backend.access.commit.CommitAccessException;
-import de.aaaaaaah.velcom.backend.access.repocomparison.TmpEntry;
 import java.util.Collection;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;

@@ -45,9 +45,9 @@ public class RepoComparisonAccess {
 		Collection<String> runIds = getRunIds(repoId, commits);
 
 		// Step 2: Get all entries (commit + measurement values) that are relevant here.
-		Collection<TmpEntry> tmpEntries =
+		Collection<GraphEntry> tmpEntries =
 			collectTmpEntries(repoId, commits, runIds, measurementName).stream()
-				.filter(TmpEntry::hasValue)
+				.filter(GraphEntry::hasValue)
 				.collect(Collectors.toUnmodifiableList());
 
 		// Step 3: Figure out which interpretation and unit to use
@@ -57,10 +57,10 @@ public class RepoComparisonAccess {
 		Unit unit = interpretationAndUnit.getSecond();
 
 		// Step 4: Group the entries based on their commits' author dates using a CommitGrouper
-		Map<Long, List<TmpEntry>> groupedTmpEntries = groupTmpEntries(tmpEntries);
+		Map<Long, List<GraphEntry>> groupedTmpEntries = groupTmpEntries(tmpEntries);
 
 		// Step 5: Find the best entries for each segment
-		Map<Long, TmpEntry> bestTmpEntries = new HashMap<>();
+		Map<Long, GraphEntry> bestTmpEntries = new HashMap<>();
 		groupedTmpEntries.forEach((groupingValue, groupedEntries) ->
 			getBestTmpEntry(groupedEntries, interpretation).ifPresent(bestEntry ->
 				bestTmpEntries.put(groupingValue, bestEntry)));
@@ -93,15 +93,15 @@ public class RepoComparisonAccess {
 		}
 	}
 
-	public Collection<TmpEntry> collectTmpEntries(RepoId repoId, Collection<Commit> commits,
+	public Collection<GraphEntry> collectTmpEntries(RepoId repoId, Collection<Commit> commits,
 		Collection<String> runIds, MeasurementName measurementName) {
 
-		// Map of commitHash -> TmpEntry
+		// Map of commitHash -> GraphEntry
 		// Initialize with commits
-		Map<String, TmpEntry> tmpEntries = new HashMap<>();
+		Map<String, GraphEntry> tmpEntries = new HashMap<>();
 		commits.forEach(commit -> {
 			final String commitHash = commit.getHash().getHash();
-			tmpEntries.put(commitHash, new TmpEntry(commit));
+			tmpEntries.put(commitHash, new GraphEntry(commit));
 		});
 
 		try (DSLContext db = databaseStorage.acquireContext()) {
@@ -162,14 +162,14 @@ public class RepoComparisonAccess {
 		}
 	}
 
-	public Map<Long, List<TmpEntry>> groupTmpEntries(Collection<TmpEntry> tmpEntries) {
+	public Map<Long, List<GraphEntry>> groupTmpEntries(Collection<GraphEntry> tmpEntries) {
 		return tmpEntries.stream()
 			.collect(Collectors.groupingBy(entry -> commitGrouper.getGroup(
 				entry.getCommit().getAuthorDate().atZone(ZoneOffset.UTC)
 			)));
 	}
 
-	public Optional<TmpEntry> getBestTmpEntry(Collection<TmpEntry> tmpEntries,
+	public Optional<GraphEntry> getBestTmpEntry(Collection<GraphEntry> tmpEntries,
 		Interpretation interpretation) {
 
 		// This assumes that the measurements all have the same interpretation as the most recently

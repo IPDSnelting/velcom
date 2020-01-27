@@ -1,13 +1,13 @@
 package de.aaaaaaah.velcom.backend.restapi.jsonobjects;
 
-import de.aaaaaaah.velcom.backend.access.repocomparison.TmpEntry;
+import de.aaaaaaah.velcom.backend.access.repocomparison.GraphEntry;
 
 public class JsonGraphEntry {
 
 	private final JsonCommit commit;
 	private final double value;
 
-	public JsonGraphEntry(TmpEntry entry) {
+	public JsonGraphEntry(GraphEntry entry) {
 		this.commit = new JsonCommit(entry.getCommit());
 		this.value = entry.getValue();
 	}
