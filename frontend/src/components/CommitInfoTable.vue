@@ -2,14 +2,14 @@
   <v-container fluid>
     <v-data-table :headers="headers" :items="entries" item-key="key" multi-sort>
       <template #item.value="{ item, value }">
-        <div v-if="value" class="text-right">{{ formatNumber(value) }}</div>
+        <span v-if="value">{{ formatNumber(value) }}</span>
         <span v-else class="error-message">{{ item.errorMessage }}</span>
       </template>
       <template #item.unit=" { value }">
         <span v-if="value">{{ value }}</span>
         <span v-else>-</span>
       </template>
-      <template #header.compareChange=" { header }">
+      <template #header.compareChange="{}">
         <span class="change-arrow">→</span>
       </template>
     </v-data-table>
@@ -19,7 +19,12 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { Run, Measurement, CommitComparison, MeasurementID } from '../store/types'
+import {
+  Run,
+  Measurement,
+  CommitComparison,
+  MeasurementID
+} from '../store/types'
 import { Prop } from 'vue-property-decorator'
 
 @Component
@@ -46,20 +51,34 @@ export default class CommitInfoTable extends Vue {
       }
 
       return [
-        { text: 'Benchmark', value: 'benchmark' },
-        { text: 'Metric', value: 'metric' },
-        { text: 'Unit', value: 'unit' },
-        { text: this.comparison.firstCommit.hash, value: 'firstVal' },
-        { text: '->', value: 'compareChange' },
-        { text: this.comparison.secondCommit.hash, value: 'secondVal' }
+        { text: 'Benchmark', value: 'benchmark', align: 'left' },
+        { text: 'Metric', value: 'metric', align: 'left' },
+        { text: 'Unit', value: 'unit', align: 'left' },
+        {
+          text: this.comparison.firstCommit.hash,
+          value: 'firstVal',
+          align: 'right'
+        },
+        {
+          text: '->',
+          value: 'compareChange',
+          sortable: false,
+          filterable: false,
+          align: 'center'
+        },
+        {
+          text: this.comparison.secondCommit.hash,
+          value: 'secondVal',
+          align: 'left'
+        }
       ]
     } else {
       return [
-        { text: 'Benchmark', value: 'id.benchmark' },
-        { text: 'Metric', value: 'id.metric' },
-        { text: 'Unit', value: 'unit' },
-        { text: 'Value', value: 'value' },
-        { text: 'Change', value: 'change' }
+        { text: 'Benchmark', value: 'id.benchmark', align: 'left' },
+        { text: 'Metric', value: 'id.metric', align: 'left' },
+        { text: 'Unit', value: 'unit', align: 'left' },
+        { text: 'Value', value: 'value', align: 'right' },
+        { text: 'Change', value: 'change', align: 'right' }
       ]
     }
   }
@@ -103,8 +122,9 @@ export default class CommitInfoTable extends Vue {
       return this.comparison.first.errorMessage
     }
 
-    let measurement = this.comparison.first.measurements
-      .find(m => m.id.equals(measId))
+    let measurement = this.comparison.first.measurements.find(m =>
+      m.id.equals(measId)
+    )
 
     if (measurement) {
       if (measurement.value != null) {
@@ -124,8 +144,9 @@ export default class CommitInfoTable extends Vue {
       return this.comparison.second.errorMessage
     }
 
-    let measurement = this.comparison.second.measurements
-      .find(m => m.id.equals(measId))
+    let measurement = this.comparison.second.measurements.find(m =>
+      m.id.equals(measId)
+    )
 
     if (measurement) {
       if (measurement.value != null) {
@@ -147,8 +168,10 @@ export default class CommitInfoTable extends Vue {
 
     if (this.comparison.second != null && this.comparison.second.measurements) {
       measurements = this.comparison.second.measurements
-    } else if (this.comparison.first != null &&
-      this.comparison.first.measurements) {
+    } else if (
+      this.comparison.first != null &&
+      this.comparison.first.measurements
+    ) {
       measurements = this.comparison.first.measurements
     } else {
       throw new Error('I was given two runs that were both null?!')
@@ -172,8 +195,10 @@ export default class CommitInfoTable extends Vue {
 
   private findChange(measId: MeasurementID) {
     // 1.) Find measurement in first run
-    if (this.comparison.first == null ||
-      this.comparison.first.measurements == null) {
+    if (
+      this.comparison.first == null ||
+      this.comparison.first.measurements == null
+    ) {
       return '-'
     }
 
@@ -186,8 +211,10 @@ export default class CommitInfoTable extends Vue {
     }
 
     // 2.) Find measurement in second run
-    if (this.comparison.second == null ||
-      this.comparison.second.measurements == null) {
+    if (
+      this.comparison.second == null ||
+      this.comparison.second.measurements == null
+    ) {
       return '-'
     }
 
@@ -204,8 +231,6 @@ export default class CommitInfoTable extends Vue {
   }
 
   private formatNumber(number: number): string {
-    console.log('formatting ' + number)
-
     return this.numberFormat.format(number)
   }
 }

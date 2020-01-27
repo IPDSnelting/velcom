@@ -37,11 +37,7 @@
             </v-toolbar>
           </v-card-title>
           <v-card-text>
-            <commit-info-table
-              v-if="!isError"
-              :comparison="comparison"
-              :compare="false"
-            ></commit-info-table>
+            <commit-info-table v-if="!isError" :comparison="comparison" :compare="false"></commit-info-table>
           </v-card-text>
         </v-card>
       </v-col>
