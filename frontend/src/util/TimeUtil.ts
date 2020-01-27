@@ -46,13 +46,13 @@ export function formatDateUTC(date: number): string {
  * Converts an epoch seconds timestamp to a date.
  *
  * @export
- * @param {number} date the epich seconds
+ * @param {number} date the epoch seconds
  * @returns {Date} the matching date
  */
 export function getDate(date: number): Date {
   let myDate = new Date()
-  // TODO: remove clamping
-  myDate.setTime((Math.abs(date) % 1.8934156e9) * 1000)
+  // Time takes an epoch MILLIS string
+  myDate.setTime(date * 1000)
   return myDate
 }
 
