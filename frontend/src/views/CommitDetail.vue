@@ -11,9 +11,9 @@
               <v-toolbar-title>Benchmarking this commit resulted in an error</v-toolbar-title>
             </v-toolbar>
           </v-card-title>
-          <v-card-text v-if="comparison.first">
+          <v-card-text v-if="comparison.second">
             <div class="title">Error message:</div>
-            <span class="mx-1">{{ comparison.first.errorMessage }}</span>
+            <span class="mx-1">{{ comparison.second.errorMessage }}</span>
           </v-card-text>
           <v-card-text v-else>
             No data
@@ -34,8 +34,8 @@
           <v-card-text>
             <commit-info-table
               v-if="!isError"
-              :run="comparison.first"
-              :previousRun="comparison.second"
+              :run="comparison.second"
+              :previousRun="comparison.first"
             ></commit-info-table>
           </v-card-text>
         </v-card>

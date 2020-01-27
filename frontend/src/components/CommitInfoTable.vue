@@ -1,6 +1,15 @@
 <template>
   <v-container fluid>
-    <v-data-table :headers="headers" :items="entries" item-key="key" />
+    <v-data-table :headers="headers" :items="entries" item-key="key">
+      <template #item.value="{ item, value }">
+        <span v-if="value">{{ value }}</span>
+        <span v-else class="error-message">{{ item.errorMessage }}</span>
+      </template>
+      <template #item.unit=" { value }">
+        <span v-if="value">{{ value }}</span>
+        <span v-else>-</span>
+      </template>
+    </v-data-table>
   </v-container>
 </template>
 
@@ -63,4 +72,7 @@ export default class CommitInfoTable extends Vue {
 </script>
 
 <style scoped>
+.error-message {
+  color: var(--v-error-base);
+}
 </style>
