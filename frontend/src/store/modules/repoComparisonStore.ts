@@ -4,11 +4,11 @@ import {
   action,
   getRawActionContext
 } from 'vuex-class-component'
-import { Run, Repo } from '@/store/types'
+import { Datapoint, Repo } from '@/store/types'
 import Vue from 'vue'
 import axios from 'axios'
 import { vxm } from '..'
-import { runFromJson } from '@/util/CommitComparisonJsonHelper'
+import { runFromJson, commitFromJson } from '@/util/CommitComparisonJsonHelper'
 
 const VxModule = createModule({
   namespaced: 'repoComparisonModule',
@@ -18,7 +18,11 @@ const VxModule = createModule({
 export class RepoComparisonStore extends VxModule {
   private _selectedRepos: string[] = []
   private _selectedBranchesByRepoID: { [key: string]: string[] } = {}
-  private _runsByRepoId: { [key: string]: Run[] } = {}
+  private _datapointsByRepoId: { [key: string]: Datapoint[] } = {}
+  private _interpretation: 'LESS_IS_BETTER' | 'MORE_IS_BETTER' | 'NEUTRAL' =
+    'NEUTRAL'
+  private _unit: string = ''
+
   // One week in the past
   private startTime: string = new Date(
     new Date().setDate(new Date().getDate() - 7)
@@ -28,10 +32,10 @@ export class RepoComparisonStore extends VxModule {
   private stopTime: string = new Date().toISOString().substring(0, 10)
 
   @action
-  async fetchDatapoints(payload: {
+  async fetchComparisonData(payload: {
     benchmark: string
     metric: string
-  }): Promise<{ [key: string]: Run[] }> {
+  }): Promise<{ [key: string]: Datapoint[] }> {
     this.cleanupSelectedBranches()
 
     const response = await axios.post('/repo-comparison-graph', {
@@ -42,15 +46,21 @@ export class RepoComparisonStore extends VxModule {
       metric: payload.metric
     })
 
-    let datapoints: { [key: string]: Run[] } = {}
+    let datapoints: { [key: string]: Datapoint[] } = {}
     let jsonData: any[] = response.data.repos
 
     jsonData.forEach((item: any) => {
-      datapoints[item.repo.id] = item.runs.map((run: any) => runFromJson(run))
+      datapoints[item.repo.id] = item.commits.map(
+        (datapoint: any) =>
+          new Datapoint(commitFromJson(datapoint.commit), datapoint.value)
+      )
     })
 
-    this.setDataPoints(datapoints)
-    return this.allRuns
+    this.setDatapoints(datapoints)
+    this._interpretation = response.data.interpretation
+    this._unit = response.data.unit
+
+    return this.allDatapoints
   }
 
   /**
@@ -94,11 +104,29 @@ export class RepoComparisonStore extends VxModule {
    * @memberof RepoComparisonStore
    */
   @mutation
-  setDataPoints(payload: { [key: string]: Run[] }) {
-    this._runsByRepoId = {} // reset it
+  setDatapoints(payload: { [key: string]: Datapoint[] }) {
+    this._datapointsByRepoId = {} // reset it
     Array.from(Object.keys(payload)).forEach(key => {
-      Vue.set(this._runsByRepoId, key, payload[key])
+      Vue.set(this._datapointsByRepoId, key, payload[key])
     })
+  }
+
+  get interpretation(): 'LESS_IS_BETTER' | 'MORE_IS_BETTER' | 'NEUTRAL' {
+    return this._interpretation
+  }
+
+  set interpretation(
+    interpretation: 'LESS_IS_BETTER' | 'MORE_IS_BETTER' | 'NEUTRAL'
+  ) {
+    this._interpretation = interpretation
+  }
+
+  get unit(): string {
+    return this._unit
+  }
+
+  set unit(unit: string) {
+    this._unit = unit
   }
 
   get startDate(): Date {
@@ -124,12 +152,12 @@ export class RepoComparisonStore extends VxModule {
    * @type {{ [key: string]: Run[] }}
    * @memberof RepoComparisonStore
    */
-  get allRuns(): { [key: string]: Run[] } {
-    return this._runsByRepoId
+  get allDatapoints(): { [key: string]: Datapoint[] } {
+    return this._datapointsByRepoId
   }
 
-  get runsByRepoID(): (repoID: string) => Run[] {
-    return (repoID: string) => this._runsByRepoId[repoID]
+  get runsByRepoID(): (repoID: string) => Datapoint[] {
+    return (repoID: string) => this._datapointsByRepoId[repoID]
   }
 
   get selectedRepos(): string[] {

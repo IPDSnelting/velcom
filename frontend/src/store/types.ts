@@ -35,7 +35,7 @@ export class Measurement {
   constructor(
     id: MeasurementID,
     unit?: string,
-    interpretation?: string,
+    interpretation?: 'LESS_IS_BETTER' | 'MORE_IS_BETTER' | 'NEUTRAL',
     values?: Array<number>,
     value?: number,
     errorMessage?: string
@@ -168,6 +168,16 @@ export class CommitComparison {
   }
 }
 
+export class Datapoint {
+  commit: Commit
+  value: number
+
+  constructor(commit: Commit, value: number) {
+    this.commit = commit
+    this.value = value
+  }
+}
+
 export class Worker {
   name: string
   osData: string | null
@@ -179,3 +189,5 @@ export class Worker {
     this.currentTask = currentTask
   }
 }
+
+export enum measurementInterpretation {}

@@ -44,6 +44,7 @@ Vue.use(Vuex)
 
 export const store = new Vuex.Store({
   state: {
+    // baseUrl: 'https://aaaaaaah.de:8667/'
     baseUrl: process.env.VUE_APP_BASE_URL
   } as RootState,
   modules: {
