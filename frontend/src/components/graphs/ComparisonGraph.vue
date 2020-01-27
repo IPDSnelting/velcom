@@ -1,6 +1,12 @@
 <template>
-  <v-card flat outlined ref="graph-card">
-    <div id="comparison-graph"></div>
+  <v-card flat outlined ref="graph-card" class>
+    <v-container>
+      <v-row align="center" justify="center">
+        <v-col>
+          <div id="svg-container"></div>
+        </v-col>
+      </v-row>
+    </v-container>
   </v-card>
 </template>
 
@@ -10,20 +16,17 @@ import Component from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import { vxm } from '@/store/index'
 import * as d3 from 'd3'
-import { Run, MeasurementID, Measurement } from '@/store/types'
+import { Datapoint, Commit } from '@/store/types'
 
 @Component
-export default class ComparisonChart extends Vue {
-  @Prop({ default: 960 })
-  width!: number
+export default class ComparisonGraph extends Vue {
+  @Prop({})
+  metric!: string
 
-  @Prop({ default: 500 })
-  height!: number
+  private width: number = 900
+  private height: number = 500
 
-  @Prop({ default: null })
-  measurement!: MeasurementID
-
-  /* private svg: any = null
+  private svg: any = null
 
   private margin: {
     left: number
@@ -34,7 +37,7 @@ export default class ComparisonChart extends Vue {
     left: 100,
     right: 30,
     top: 10,
-    bottom: 30
+    bottom: 100
   }
 
   private innerWidth: number = this.width - this.margin.left - this.margin.right
@@ -42,84 +45,37 @@ export default class ComparisonChart extends Vue {
     this.height - this.margin.top - this.margin.bottom
 
   private timeFormat: any = d3.timeFormat('%Y-%m-%d')
+  private valueFormat: any = d3.format('<.4')
 
-  private line: any = d3
-    .line()
-    .x((run: any) => {
-      return this.xScale((Math.abs(run.startTime) % 1.8934156e9) * 1000)
-    })
-    .y((run: any) => {
-      return this.yScale(Math.abs(run.measurements[0].value))
-    })
-
-  get selectedRepos(): string[] {
-    return vxm.repoComparisonModule.selectedRepos
+  get interpretation() {
+    return vxm.repoComparisonModule.interpretation
   }
 
-  get datapointsByRepoID(): (repoID: string) => Run[] {
-    return (repoID: string) => vxm.repoComparisonModule.runsByRepoID(repoID)
+  get unit() {
+    return vxm.repoComparisonModule.unit
   }
 
-  get allRuns(): { [key: string]: Run[] } {
-    return vxm.repoComparisonModule.allRuns
+  get minTimestamp(): any {
+    return vxm.repoComparisonModule.startDate.getTime()
   }
 
-  get allDatapoints(): Run[] {
-    let datapoints: Run[] = []
-
-    Array.from(Object.keys(this.allRuns)).forEach((repoID: string) => {
-      datapoints = datapoints.concat(this.allRuns[repoID])
-    })
-    return datapoints
+  get maxTimestamp(): any {
+    return vxm.repoComparisonModule.stopDate.getTime()
   }
 
-  get allValues(): any[] {
-    let values: number[] = []
-    this.allDatapoints.forEach(run => {
-      if (run.measurements) {
-        let measurement = run.measurements[0]
-        if (measurement.value) {
-          values.push(Math.abs(measurement.value))
-        }
-      }
-    })
-    return values
-  }
-
-  get minVal(): any {
-    return d3.min(this.allValues)
-  }
-
-  get maxVal(): any {
-    return d3.max(this.allValues)
-  }
-
-  get minDate(): any {
-    let min = d3.min(this.allDatapoints, function(d) {
-      return (Math.abs(d.startTime) % 1.8934156e9) * 1000
-    })
-    return min
-  }
-
-  get maxDate(): any {
-    let max = d3.max(this.allDatapoints, function(d) {
-      return (Math.abs(d.startTime) % 1.8934156e9) * 1000
-    })
-    return max
-  }
-
-  get yScale() {
-    return d3
-      .scaleLinear()
-      .domain([this.minVal, this.maxVal])
-      .range([this.innerHeight, 0])
-  }
-
-  get xScale() {
+  get xScale(): any {
     return d3
       .scaleTime()
-      .domain([this.minDate, this.maxDate])
+      .domain([this.minTimestamp, this.maxTimestamp])
       .range([0, this.innerWidth])
+  }
+
+  get datapoints(): { [key: string]: Datapoint[] } {
+    return vxm.repoComparisonModule.allDatapoints
+  }
+
+  get repos(): string[] {
+    return Array.from(Object.keys(this.datapoints))
   }
 
   get colorById(): (repoID: string) => string {
@@ -129,30 +85,94 @@ export default class ComparisonChart extends Vue {
     }
   }
 
-  @Watch('allDatapoints')
+  get valueRange(): { min: number; max: number } {
+    let min: number = Number.POSITIVE_INFINITY
+    let max: number = Number.NEGATIVE_INFINITY
+
+    this.repos.forEach((repoID: string) => {
+      this.datapoints[repoID].forEach(datapoint => {
+        min = Math.min(min, datapoint.value)
+        max = Math.max(max, datapoint.value)
+      })
+    })
+    return { min: min, max: max }
+  }
+
+  get yScale() {
+    if (this.interpretation === 'LESS_IS_BETTER') {
+      return d3
+        .scaleLinear()
+        .domain([this.valueRange.min, this.valueRange.max])
+        .range([0, this.innerHeight])
+    } else {
+      return d3
+        .scaleLinear()
+        .domain([this.valueRange.min, this.valueRange.max])
+        .range([this.innerHeight, 0])
+    }
+  }
+
+  get yLabel(): string {
+    return this.metric + ' in ' + this.unit
+  }
+
+  /* private line: any = d3
+    .line()
+    .x((run: any) => {
+      return this.xScale((Math.abs(run.startTime) % 1.8934156e9) * 1000)
+    })
+    .y((run: any) => {
+      return this.yScale(Math.abs(run.measurements[0].value))
+    })
+ */
+
+  @Watch('datapoints')
+  @Watch('minTimestamp')
+  @Watch('maxTimestamp')
   drawGraph() {
     this.svg.selectAll('*').remove()
     this.drawXAxis()
     this.drawYAxis()
-    Array.from(Object.keys(this.allRuns)).forEach((repoID: string) => {
+    /* Array.from(Object.keys(this.allRuns)).forEach((repoID: string) => {
       this.drawDatapoints(repoID)
-    })
+    }) */
   }
 
   drawXAxis() {
     this.svg
       .append('g')
+      .attr('class', 'axis')
       .attr('transform', 'translate(0,' + this.innerHeight + ')')
       .call(
-        d3.axisBottom(this.xScale).ticks(d3.timeYear.every(10))
-        // .tickFormat(this.timeFormat)
+        d3
+          .axisBottom(this.xScale)
+          .tickFormat(this.timeFormat)
       )
+      .selectAll('text')
+      .attr('transform', 'translate(-10,10)rotate(-45)')
+      .style('text-anchor', 'end')
   }
 
   drawYAxis() {
-    this.svg.append('g').call(d3.axisLeft(this.yScale))
+    this.svg
+      .append('g')
+      .attr('class', 'axis')
+      .call(
+        d3
+          .axisLeft(this.yScale)
+          .tickFormat(this.valueFormat)
+      )
+
+    this.svg
+      .append('text')
+      .attr('text-anchor', 'end')
+      .attr('transform', 'rotate(-90)')
+      .attr('y', -this.margin.left + 20)
+      .attr('x', -this.innerHeight / 2)
+      .text(this.yLabel)
   }
 
+  /*
   drawDatapoints(repoID: string) {
     let repoGroup = this.svg.append('g').attr('id', repoID)
 
@@ -173,11 +193,11 @@ export default class ComparisonChart extends Vue {
           })
       }
     })
-  }
+  } */
 
   mounted() {
     this.svg = d3
-      .select('#comparison-graph')
+      .select('#svg-container')
       .append('svg')
       .attr('width', this.width)
       .attr('height', this.height)
@@ -188,6 +208,14 @@ export default class ComparisonChart extends Vue {
         'transform',
         'translate(' + this.margin.left + ',' + this.margin.top + ')'
       )
-  } */
+
+    this.drawXAxis()
+  }
 }
 </script>
+<style>
+.axis text {
+  font-family: Roboto;
+  font-size: 12px;
+}
+</style>

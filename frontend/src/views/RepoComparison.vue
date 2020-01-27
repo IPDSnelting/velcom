@@ -109,17 +109,12 @@
         </v-col>
       </v-row>
 
-      <v-row align="start" justify="start">
+      <v-row align="start" justify="start" class="d-flex">
         <v-col cols="auto">
           <repo-selector v-on:selectionChanged="retrieveGraphData()"></repo-selector>
         </v-col>
         <v-col>
-          <p>testing the new comparison store:</p>
-          <div v-for="repo in repos" :key="repo">
-            {{ repo }}:
-            <p v-for="datapoint in datapointsByRepoID[repo]" :key="datapoint">{{datapoint.value}}</p>
-          </div>
-          <comparison-graph :measurement="selectedMeasurement"></comparison-graph>
+          <comparison-graph :metric="this.selectedMetric"></comparison-graph>
         </v-col>
       </v-row>
     </v-container>

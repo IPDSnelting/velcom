@@ -47,9 +47,9 @@ export class RepoComparisonStore extends VxModule {
     })
 
     let datapoints: { [key: string]: Datapoint[] } = {}
-    let jsonData: any[] = response.data.repos
+    let jsonRepos: any[] = response.data.repos
 
-    jsonData.forEach((item: any) => {
+    jsonRepos.forEach((item: any) => {
       datapoints[item.repo_id] = item.commits.map(
         (datapoint: any) =>
           new Datapoint(commitFromJson(datapoint.commit), datapoint.value)
@@ -57,8 +57,10 @@ export class RepoComparisonStore extends VxModule {
     })
 
     this.setDatapoints(datapoints)
-    this._interpretation = response.data.interpretation
-    this._unit = response.data.unit
+
+    // ugly and wrong, only for demonstration purposes
+    this._interpretation = jsonRepos[0].interpretation
+    this._unit = jsonRepos[0].unit
 
     return this.allDatapoints
   }
