@@ -2,7 +2,7 @@
   <v-container fluid>
     <v-data-table :headers="headers" :items="entries" item-key="key">
       <template #item.value="{ item, value }">
-        <span v-if="value">{{ value }}</span>
+        <div v-if="value" class="text-right">{{ formatNumber(value) }}</div>
         <span v-else class="error-message">{{ item.errorMessage }}</span>
       </template>
       <template #item.unit=" { value }">
@@ -26,6 +26,15 @@ export default class CommitInfoTable extends Vue {
 
   @Prop()
   private previousRun!: Run
+
+  private numberFormat: Intl.NumberFormat = new Intl.NumberFormat(
+    this.getLocaleString(),
+    { maximumFractionDigits: 4 }
+  )
+
+  private getLocaleString() {
+    return new Intl.NumberFormat().resolvedOptions().locale
+  }
 
   private get headers() {
     return [
@@ -67,6 +76,12 @@ export default class CommitInfoTable extends Vue {
     }
 
     return '-'
+  }
+
+  private formatNumber(number: number): string {
+    console.log('formatting ' + number)
+
+    return this.numberFormat.format(number)
   }
 }
 </script>
