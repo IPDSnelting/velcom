@@ -3,11 +3,13 @@ package de.aaaaaaah.velcom.backend.access.repocomparison;
 import static org.jooq.codegen.db.tables.Run.RUN;
 import static org.jooq.codegen.db.tables.RunMeasurement.RUN_MEASUREMENT;
 import static org.jooq.codegen.db.tables.RunMeasurementValue.RUN_MEASUREMENT_VALUE;
+import static org.jooq.impl.DSL.max;
 
 import de.aaaaaaah.velcom.backend.access.benchmark.Interpretation;
 import de.aaaaaaah.velcom.backend.access.benchmark.MeasurementName;
 import de.aaaaaaah.velcom.backend.access.benchmark.Unit;
 import de.aaaaaaah.velcom.backend.access.commit.Commit;
+import de.aaaaaaah.velcom.backend.access.commit.CommitHash;
 import de.aaaaaaah.velcom.backend.access.repo.RepoId;
 import de.aaaaaaah.velcom.backend.access.repocomparison.timeslice.CommitGrouper;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonGraphEntry;
@@ -19,11 +21,9 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.jooq.DSLContext;
-import org.jooq.Record1;
 import org.jooq.Record2;
 
 public class RepoComparisonAccess {
@@ -78,17 +78,18 @@ public class RepoComparisonAccess {
 
 	public Collection<String> getRunIds(RepoId repoId, Collection<Commit> commits) {
 		try (DSLContext db = databaseStorage.acquireContext()) {
-			// Find all valid run IDs
-			return commits.stream()
-				.map(commit -> db.select(RUN.ID)
-					.from(RUN)
-					.where(RUN.REPO_ID.eq(repoId.getId().toString()))
-					.and(RUN.COMMIT_HASH.eq(commit.getHash().getHash()))
-					.orderBy(RUN.START_TIME.desc())
-					.limit(1)
-					.fetchOne())
-				.filter(Objects::nonNull)
-				.map(Record1::value1)
+			Collection<String> commitHashes = commits.stream()
+				.map(Commit::getHash)
+				.map(CommitHash::getHash)
+				.collect(Collectors.toUnmodifiableSet());
+
+			return db.select(RUN.ID, max(RUN.START_TIME))
+				.from(RUN)
+				.where(RUN.REPO_ID.eq(repoId.getId().toString()))
+				.and(RUN.COMMIT_HASH.in(commitHashes))
+				.groupBy(RUN.ID)
+				.stream()
+				.map(Record2::value1)
 				.collect(Collectors.toUnmodifiableSet());
 		}
 	}
