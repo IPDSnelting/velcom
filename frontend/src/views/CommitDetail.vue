@@ -34,8 +34,8 @@
           <v-card-text>
             <commit-info-table
               v-if="!isError"
-              :run="comparison.second"
-              :previousRun="comparison.first"
+              :comparison="comparison"
+              :compare="false"
             ></commit-info-table>
           </v-card-text>
         </v-card>

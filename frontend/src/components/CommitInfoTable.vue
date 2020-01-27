@@ -9,6 +9,9 @@
         <span v-if="value">{{ value }}</span>
         <span v-else>-</span>
       </template>
+      <template #header.compareChange=" { header }">
+        <span class="change-arrow">→</span>
+      </template>
     </v-data-table>
   </v-container>
 </template>
@@ -16,16 +19,16 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { Run, Measurement } from '../store/types'
+import { Run, Measurement, CommitComparison, MeasurementID } from '../store/types'
 import { Prop } from 'vue-property-decorator'
 
 @Component
 export default class CommitInfoTable extends Vue {
   @Prop()
-  private run!: Run
+  private comparison!: CommitComparison
 
   @Prop()
-  private previousRun!: Run
+  private compare!: boolean
 
   private numberFormat: Intl.NumberFormat = new Intl.NumberFormat(
     this.getLocaleString(),
@@ -37,45 +40,167 @@ export default class CommitInfoTable extends Vue {
   }
 
   private get headers() {
-    return [
-      { text: 'Benchmark', value: 'id.benchmark' },
-      { text: 'Metric', value: 'id.metric' },
-      { text: 'Unit', value: 'unit' },
-      { text: 'Value', value: 'value' },
-      { text: 'Change', value: 'change' }
-    ]
+    if (this.compare) {
+      if (this.comparison.firstCommit == null) {
+        throw new Error('compare is true but firstCommit is null?!')
+      }
+
+      return [
+        { text: 'Benchmark', value: 'benchmark' },
+        { text: 'Metric', value: 'metric' },
+        { text: 'Unit', value: 'unit' },
+        { text: this.comparison.firstCommit.hash, value: 'firstVal' },
+        { text: '->', value: 'compareChange' },
+        { text: this.comparison.secondCommit.hash, value: 'secondVal' }
+      ]
+    } else {
+      return [
+        { text: 'Benchmark', value: 'id.benchmark' },
+        { text: 'Metric', value: 'id.metric' },
+        { text: 'Unit', value: 'unit' },
+        { text: 'Value', value: 'value' },
+        { text: 'Change', value: 'change' }
+      ]
+    }
   }
 
   private get entries() {
-    if (this.run.measurements == null) {
-      throw new Error('I was given a run with no measurements!')
-    }
+    if (this.compare) {
+      if (this.comparison.firstCommit == null) {
+        throw new Error('compare is true but firstCommit is null?!')
+      }
 
-    return this.run.measurements.map(measurement => ({
-      key: measurement.id.benchmark + '|' + measurement.id.metric,
-      change: this.changeByItem(measurement),
-      ...measurement
-    }))
+      return this.comparison.differences.map(diff => ({
+        key: diff.measurement.benchmark + '|' + diff.measurement.metric,
+        benchmark: diff.measurement.benchmark,
+        metric: diff.measurement.metric,
+        unit: this.findUnit(diff.measurement),
+        firstVal: this.findFirstVal(diff.measurement),
+        secondVal: this.findSecondVal(diff.measurement),
+        compareChange: this.findChange(diff.measurement)
+      }))
+    } else {
+      if (this.comparison.second == null) {
+        throw new Error('I was given a run with no measurements!')
+      }
+      if (this.comparison.second.measurements == null) {
+        throw new Error('I was given a run with no measurements!')
+      }
+
+      return this.comparison.second.measurements.map(measurement => ({
+        key: measurement.id.benchmark + '|' + measurement.id.metric,
+        change: this.findChange(measurement.id),
+        ...measurement
+      }))
+    }
   }
 
-  private changeByItem(item: Measurement) {
-    if (
-      this.previousRun == null ||
-      this.previousRun.measurements == null ||
-      item.value == null
-    ) {
+  private findFirstVal(measId: MeasurementID) {
+    if (this.comparison.first == null) {
+      // What kind of comparison is this?
+      return '-'
+    } else if (this.comparison.first.measurements == null) {
+      return this.comparison.first.errorMessage
+    }
+
+    let measurement = this.comparison.first.measurements
+      .find(m => m.id.equals(measId))
+
+    if (measurement) {
+      if (measurement.value != null) {
+        return this.numberFormat.format(measurement.value)
+      } else {
+        return measurement.errorMessage
+      }
+    } else {
+      throw new Error('I failed to find the measurement: ' + measId)
+    }
+  }
+
+  private findSecondVal(measId: MeasurementID) {
+    if (this.comparison.second == null) {
+      return '-'
+    } else if (this.comparison.second.measurements == null) {
+      return this.comparison.second.errorMessage
+    }
+
+    let measurement = this.comparison.second.measurements
+      .find(m => m.id.equals(measId))
+
+    if (measurement) {
+      if (measurement.value != null) {
+        return this.numberFormat.format(measurement.value)
+      } else {
+        return measurement.errorMessage
+      }
+    } else {
+      throw new Error('I failed to find the measurement: ' + measId)
+    }
+  }
+
+  private findUnit(measId: MeasurementID): string | null {
+    return this.findMeasurement(measId).unit
+  }
+
+  private findMeasurement(measId: MeasurementID): Measurement {
+    let measurements: Measurement[] | null
+
+    if (this.comparison.second != null && this.comparison.second.measurements) {
+      measurements = this.comparison.second.measurements
+    } else if (this.comparison.first != null &&
+      this.comparison.first.measurements) {
+      measurements = this.comparison.first.measurements
+    } else {
+      throw new Error('I was given two runs that were both null?!')
+    }
+
+    // The measurement must exist since this wall called with a
+    // measID that came from a commit difference which means that
+    // a difference exists which means that the measurement must exist
+    // in either first or second run
+    if (measurements == null) {
+      throw new Error('I was given two runs with no measurements')
+    }
+
+    let measurement = measurements.find(m => m.id.equals(measId))
+    if (measurement) {
+      return measurement
+    } else {
+      throw new Error('I failed to find the right measurement: ' + measId)
+    }
+  }
+
+  private findChange(measId: MeasurementID) {
+    // 1.) Find measurement in first run
+    if (this.comparison.first == null ||
+      this.comparison.first.measurements == null) {
       return '-'
     }
 
-    let previousMeasurement = this.previousRun.measurements.find(measurement =>
-      item.id.equals(measurement.id)
+    let firstMeas = this.comparison.first.measurements.find(measurement =>
+      measId.equals(measurement.id)
     )
 
-    if (previousMeasurement && previousMeasurement.value) {
-      return this.numberFormat.format(item.value - previousMeasurement.value)
+    if (firstMeas === undefined || firstMeas.value == null) {
+      return '-'
     }
 
-    return '-'
+    // 2.) Find measurement in second run
+    if (this.comparison.second == null ||
+      this.comparison.second.measurements == null) {
+      return '-'
+    }
+
+    let secondMeas = this.comparison.second.measurements.find(measurement =>
+      measId.equals(measurement.id)
+    )
+
+    if (secondMeas === undefined || secondMeas.value == null) {
+      return '-'
+    }
+
+    // 3.) Return difference
+    return this.numberFormat.format(secondMeas.value - firstMeas.value)
   }
 
   private formatNumber(number: number): string {
@@ -89,5 +214,9 @@ export default class CommitInfoTable extends Vue {
 <style scoped>
 .error-message {
   color: var(--v-error-base);
+}
+
+.change-arrow {
+  font-size: 1.75em;
 }
 </style>
