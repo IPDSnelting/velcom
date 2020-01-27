@@ -23,7 +23,7 @@ export default class ComparisonChart extends Vue {
   @Prop({ default: null })
   measurement!: MeasurementID
 
-  private svg: any = null
+  /* private svg: any = null
 
   private margin: {
     left: number
@@ -188,6 +188,6 @@ export default class ComparisonChart extends Vue {
         'transform',
         'translate(' + this.margin.left + ',' + this.margin.top + ')'
       )
-  }
+  } */
 }
 </script>

@@ -50,7 +50,7 @@ export class RepoComparisonStore extends VxModule {
     let jsonData: any[] = response.data.repos
 
     jsonData.forEach((item: any) => {
-      datapoints[item.repo.id] = item.commits.map(
+      datapoints[item.repo_id] = item.commits.map(
         (datapoint: any) =>
           new Datapoint(commitFromJson(datapoint.commit), datapoint.value)
       )

@@ -114,6 +114,11 @@
           <repo-selector v-on:selectionChanged="retrieveGraphData()"></repo-selector>
         </v-col>
         <v-col>
+          <p>testing the new comparison store:</p>
+          <div v-for="repo in repos" :key="repo">
+            {{ repo }}:
+            <p v-for="datapoint in datapointsByRepoID[repo]" :key="datapoint">{{datapoint.value}}</p>
+          </div>
           <comparison-graph :measurement="selectedMeasurement"></comparison-graph>
         </v-col>
       </v-row>
@@ -129,7 +134,7 @@ import { vxm } from '../store/index'
 import RepoAddDialog from '../components/dialogs/RepoAddDialog.vue'
 import RepoSelector from '../components/RepoSelector.vue'
 import ComparisonGraph from '../components/graphs/ComparisonGraph.vue'
-import { Repo, MeasurementID } from '../store/types'
+import { Repo, MeasurementID, Datapoint } from '../store/types'
 import { mdiCalendar } from '@mdi/js'
 
 @Component({
@@ -202,11 +207,11 @@ export default class RepoComparison extends Vue {
   @Watch('selectedMetric')
   retrieveGraphData() {
     if (this.selectedMetric !== '') {
-      vxm.repoComparisonModule.fetchDatapoints(this.payload)
+      vxm.repoComparisonModule.fetchComparisonData(this.payload)
     }
   }
 
-  get repos() {
+  get repos(): string[] {
     return vxm.repoComparisonModule.selectedRepos
   }
 
@@ -214,8 +219,8 @@ export default class RepoComparison extends Vue {
     return vxm.repoComparisonModule.selectedBranchesByRepoID
   }
 
-  get graphData() {
-    return vxm.repoComparisonModule.allRuns
+  get datapointsByRepoID(): { [repoID: string]: Datapoint[] } {
+    return vxm.repoComparisonModule.allDatapoints
   }
 }
 </script>
