@@ -32,6 +32,7 @@ export class CommitComparisonStore extends VxModule {
     second: string | undefined
   }): Promise<CommitComparison> {
     const response = await axios.get('/commit-compare', {
+      snackbarTag: 'commit-comparison',
       params: {
         repo_id: payload.repoId,
         first_commit_hash: payload.first,

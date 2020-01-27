@@ -34,6 +34,7 @@ export class RepoDetailStore extends VxModule {
     skip: number
   }): Promise<[Commit, CommitComparison][]> {
     let response = await axios.get('/commit-history', {
+      snackbarTag: 'commit-history',
       params: {
         repo_id: payload.repoId,
         amount: payload.amount,

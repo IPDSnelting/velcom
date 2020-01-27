@@ -17,6 +17,7 @@ export class UserStore extends VxModule {
         username: payload.role,
         password: payload.token
       },
+      snackbarTag: 'login',
       params: {
         repo_id: payload.asRepoAdmin ? payload.role : undefined
       }

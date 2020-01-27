@@ -19,7 +19,7 @@ export class QueueStore extends VxModule {
    */
   @action
   async fetchQueue(): Promise<Commit[]> {
-    const response = await axios.get('/queue')
+    const response = await axios.get('/queue', { snackbarTag: 'queue' })
 
     let tasks: Commit[] = []
     let jsonTasks: any[] = response.data.tasks

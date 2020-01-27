@@ -38,13 +38,17 @@ export class RepoComparisonStore extends VxModule {
   }): Promise<{ [key: string]: Datapoint[] }> {
     this.cleanupSelectedBranches()
 
-    const response = await axios.post('/repo-comparison-graph', {
-      repos: this.selectedReposWithBranches,
-      start_time: this.startDate.getTime() / 1000,
-      stop_time: this.stopDate.getTime() / 1000,
-      benchmark: payload.benchmark,
-      metric: payload.metric
-    })
+    const response = await axios.post(
+      '/repo-comparison-graph',
+      {
+        repos: this.selectedReposWithBranches,
+        start_time: this.startDate.getTime() / 1000,
+        stop_time: this.stopDate.getTime() / 1000,
+        benchmark: payload.benchmark,
+        metric: payload.metric
+      },
+      { snackbarTag: 'repo-comparison' }
+    )
 
     let datapoints: { [key: string]: Datapoint[] } = {}
     let jsonRepos: any[] = response.data.repos

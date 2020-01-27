@@ -28,6 +28,7 @@ export class NewsStore extends VxModule {
     significant: boolean
   }): Promise<CommitComparison[]> {
     const response = await axios.get('/recently-benchmarked-commits', {
+      snackbarTag: 'recent-commits',
       params: {
         amount: payload.amount,
         significant_only: payload.significant

@@ -46,6 +46,7 @@ export class RepoStore extends VxModule {
   @action
   async fetchRepoByID(payload: string) {
     const response = await axios.get('/repo', {
+      snackbarTag: 'repo-detail',
       params: {
         repo_id: payload
       }
