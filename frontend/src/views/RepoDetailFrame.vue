@@ -44,6 +44,9 @@ export default class RepoDetailFrame extends Vue {
   }
 
   set selectedRepoId(repoId: string) {
+    if (this.selectedRepoId === repoId) {
+      return
+    }
     this.$router.replace({ name: 'repo-detail', params: { id: repoId } })
   }
 
