@@ -18,7 +18,7 @@
       <v-list-item-content>
         <v-container fluid class="ma-0 pa-1">
           <v-row no-gutters align="center" justify="space-between">
-            <v-col>
+            <v-col cols="auto" class="flex-shrink-too mr-3">
               <v-list-item-title>
                 <repo-display :repoId="commit.repoID"></repo-display>
                 <span class="mx-2">—</span>
@@ -112,5 +112,9 @@ export default class RunOverview extends Vue {
 <style scoped>
 .commit-message {
   font-style: italic;
+}
+.flex-shrink-too {
+  flex: 1 1 0;
+  min-width: 200px;
 }
 </style>
