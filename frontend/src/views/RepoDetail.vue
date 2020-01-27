@@ -223,7 +223,7 @@ export default class RepoDetail extends Vue {
   }
 
   get occuringBenchmarks(): string[] {
-    return vxm.repoModule.occuringBenchmarks
+    return vxm.repoModule.occuringBenchmarks([this.id])
   }
 
   get metricsForBenchmark(): (benchmark: string) => string[] {

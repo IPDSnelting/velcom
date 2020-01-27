@@ -191,38 +191,32 @@ export class RepoStore extends VxModule {
     return (repoID: string) => this.repoIndices[repoID]
   }
 
-  get occuringBenchmarks() {
-    var benchmarks: string[] = []
-    const repos = Object.keys(this.repos).map(key => this.repos[key])
+  get occuringBenchmarks(): (selectedRepos: string[]) => string[] {
+    return (selectedRepos: string[]) => {
+      let benchmarks = Object.values(this.repos)
+        .filter(repo => selectedRepos.includes(repo.id))
+        .flatMap(repo => repo.measurements)
+        .map(measurement => measurement.benchmark)
+        .reduce(
+          (benchmarks, newBenchmark) => benchmarks.add(newBenchmark),
+          new Set<string>()
+        )
 
-    repos.forEach(repo => {
-      var measurements = repo.measurements
-      measurements.forEach(measurement => {
-        if (!benchmarks.includes(measurement.benchmark)) {
-          benchmarks.push(measurement.benchmark)
-        }
-      })
-    })
-    return benchmarks.sort()
+      return Array.from(benchmarks).sort()
+    }
   }
 
-  get metricsForBenchmark(): (payload: string) => string[] {
-    return (payload: string) => {
-      var metrics: string[] = []
-      const repos = Object.keys(this.repos).map(key => this.repos[key])
-
-      repos.forEach(repo => {
-        var measurements = repo.measurements
-        measurements.forEach(measurement => {
-          if (
-            measurement.benchmark === payload &&
-            !metrics.includes(measurement.metric)
-          ) {
-            metrics.push(measurement.metric)
-          }
-        })
-      })
-      return metrics.sort()
+  get metricsForBenchmark(): (benchmark: string) => string[] {
+    return (benchmark: string) => {
+      let metrics = Object.values(this.repos)
+        .flatMap(repo => repo.measurements)
+        .filter(measurement => measurement.benchmark === benchmark)
+        .map(measurement => measurement.metric)
+        .reduce(
+          (metrics, newMetric) => metrics.add(newMetric),
+          new Set<string>()
+        )
+      return Array.from(metrics).sort()
     }
   }
 }

@@ -165,7 +165,9 @@ export default class RepoComparison extends Vue {
   }
 
   get occuringBenchmarks(): string[] {
-    return vxm.repoModule.occuringBenchmarks
+    return vxm.repoModule.occuringBenchmarks(
+      vxm.repoComparisonModule.selectedRepos
+    )
   }
 
   get metricsForBenchmark(): (benchmark: string) => string[] {
