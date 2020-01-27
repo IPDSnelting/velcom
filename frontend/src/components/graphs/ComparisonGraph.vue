@@ -120,16 +120,6 @@ export default class ComparisonGraph extends Vue {
     }
   }
 
-  /* private line: any = d3
-    .line()
-    .x((run: any) => {
-      return this.xScale((Math.abs(run.startTime) % 1.8934156e9) * 1000)
-    })
-    .y((run: any) => {
-      return this.yScale(Math.abs(run.measurements[0].value))
-    })
- */
-
   @Watch('datapoints')
   @Watch('minTimestamp')
   @Watch('maxTimestamp')
@@ -173,18 +163,21 @@ export default class ComparisonGraph extends Vue {
     let repoGroup = this.svg.append('g').attr('id', repoID)
 
     this.datapoints[repoID].forEach(datapoint => {
-      repoGroup
-        .append('circle')
-        .attr('class', 'datapoint')
-        .attr('fill', this.colorById(repoID))
-        .attr('stroke', this.colorById(repoID))
-        .attr('r', 5)
-        .attr('cx', () => {
-          return this.xScale(datapoint.commit.authorDate * 1000)
-        })
-        .attr('cy', () => {
-          return this.yScale(datapoint.value)
-        })
+      let date: any = datapoint.commit.authorDate
+      if (date) {
+        repoGroup
+          .append('circle')
+          .attr('class', 'datapoint')
+          .attr('fill', this.colorById(repoID))
+          .attr('stroke', this.colorById(repoID))
+          .attr('r', 5)
+          .attr('cx', () => {
+            return this.xScale(date * 1000)
+          })
+          .attr('cy', () => {
+            return this.yScale(datapoint.value)
+          })
+      }
     })
   }
 
