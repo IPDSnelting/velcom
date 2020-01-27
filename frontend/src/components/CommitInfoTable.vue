@@ -1,6 +1,6 @@
 <template>
   <v-container fluid>
-    <v-data-table :headers="headers" :items="entries" item-key="key">
+    <v-data-table :headers="headers" :items="entries" item-key="key" multi-sort>
       <template #item.value="{ item, value }">
         <div v-if="value" class="text-right">{{ formatNumber(value) }}</div>
         <span v-else class="error-message">{{ item.errorMessage }}</span>
@@ -40,8 +40,8 @@ export default class CommitInfoTable extends Vue {
     return [
       { text: 'Benchmark', value: 'id.benchmark' },
       { text: 'Metric', value: 'id.metric' },
-      { text: 'Value', value: 'value' },
       { text: 'Unit', value: 'unit' },
+      { text: 'Value', value: 'value' },
       { text: 'Change', value: 'change' }
     ]
   }
@@ -72,7 +72,7 @@ export default class CommitInfoTable extends Vue {
     )
 
     if (previousMeasurement && previousMeasurement.value) {
-      return item.value - previousMeasurement.value
+      return this.numberFormat.format(item.value - previousMeasurement.value)
     }
 
     return '-'
