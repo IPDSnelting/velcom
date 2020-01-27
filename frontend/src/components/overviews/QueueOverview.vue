@@ -20,9 +20,9 @@
               <v-list-item>
                 <v-list-item-avatar class="index-indicator">{{ index + 1 }}</v-list-item-avatar>
                 <v-list-item-content>
-                  <v-container fluid>
-                    <v-row no-gutters align="center">
-                      <v-col cols="8">
+                  <v-container fluid class="ma-0 pa-1">
+                    <v-row no-gutters align="center" justify="space-between">
+                      <v-col>
                         <v-list-item-title>
                           <repo-display :repoId="commit.repoID"></repo-display>
                           <span class="mx-2">—</span>
@@ -58,7 +58,7 @@
                           </v-tooltip>
                         </v-list-item-content>
                       </v-col>
-                      <v-col>
+                      <v-col cols="auto">
                         <v-container fluid class="ma-0 pa-0">
                           <v-row no-gutters align="center" justify="space-between">
                             <v-col>

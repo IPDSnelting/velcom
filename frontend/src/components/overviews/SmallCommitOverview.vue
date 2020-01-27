@@ -3,9 +3,9 @@
     <v-list-item>
       <slot name="avatar"></slot>
       <v-list-item-content>
-        <v-container fluid>
-          <v-row no-gutters align="center">
-            <v-col :cols="$scopedSlots['actions'] ? 8 : 9">
+        <v-container fluid class="ma-0 pa-1">
+          <v-row no-gutters align="center" justify="space-between">
+            <v-col cols="auto">
               <v-list-item-title>
                 <repo-display :repoId="commit.repoID"></repo-display>
                 <span class="mx-2">—</span>
@@ -22,13 +22,13 @@
                 <span class="time" :title="formattedDateUTC">{{ formattedDate }}</span>
               </v-list-item-subtitle>
             </v-col>
-            <v-col>
+            <v-col cols="auto">
               <v-container fluid class="ma-0 pa-0">
                 <v-row no-gutters align="center" justify="space-between">
                   <v-col cols="auto">
                     <commit-chip :commit="commit"></commit-chip>
                   </v-col>
-                  <span>
+                  <span :class="$scopedSlots['actions'] ? ['pl-3']: ['']">
                     <slot name="actions"></slot>
                   </span>
                 </v-row>
