@@ -44,7 +44,7 @@ export default class RepoDetailFrame extends Vue {
   }
 
   set selectedRepoId(repoId: string) {
-    this.$router.push({ name: 'repo-detail', params: { id: repoId } })
+    this.$router.replace({ name: 'repo-detail', params: { id: repoId } })
   }
 
   get selectedRepo() {
