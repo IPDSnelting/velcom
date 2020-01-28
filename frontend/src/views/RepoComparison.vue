@@ -116,6 +116,11 @@
                           color="primary"
                           @click="startTimeString = defaultStartTime; stopTimeString = defaultStopTime"
                         >Reset dates</v-btn>
+                        <v-btn
+                          text
+                          color="primary"
+                          @click="$globalSnackbar.setError('comparison', 'Not implemented')"
+                        >Auto zoom</v-btn>
                       </v-col>
                     </v-row>
                   </v-col>
