@@ -1,6 +1,6 @@
 <template>
-  <v-card>
-    <v-list-item>
+  <commit-overview-base :commit="commit">
+    <template #avatar>
       <v-list-item-avatar>
         <v-tooltip top>
           <template #activator="{ on }">
@@ -15,46 +15,11 @@
           This run suffered at least one failure :(
         </v-tooltip>
       </v-list-item-avatar>
-      <v-list-item-content>
-        <v-container fluid class="ma-0 pa-1">
-          <v-row no-gutters align="center" justify="space-between">
-            <v-col cols="auto" class="flex-shrink-too mr-3">
-              <v-list-item-title>
-                <repo-display :repoId="commit.repoID"></repo-display>
-                <span class="mx-2">—</span>
-                <router-link
-                  class="concealed-link"
-                  tag="span"
-                  :to="{ name: 'commit-detail', params: { repoID: commit.repoID, hash: commit.hash } }"
-                >
-                  <span class="commit-message">{{ commit.summary }}</span>
-                </router-link>
-              </v-list-item-title>
-              <v-list-item-subtitle>
-                <span class="author">{{ commit.author }}</span> authored on
-                <span class="time" :title="formattedDateUTC">{{ formattedDate }}</span>
-              </v-list-item-subtitle>
-            </v-col>
-            <v-col cols="auto">
-              <v-container fluid class="ma-0 pa-0">
-                <v-row no-gutters align="center" justify="space-between">
-                  <v-col cols="auto">
-                    <commit-chip :commit="commit"></commit-chip>
-                  </v-col>
-                  <span v-if="!hideActions" class="ml-3">
-                    <commit-benchmark-actions
-                      :hasExistingBenchmark="true"
-                      @benchmark="benchmark(commit)"
-                    ></commit-benchmark-actions>
-                  </span>
-                </v-row>
-              </v-container>
-            </v-col>
-          </v-row>
-        </v-container>
-      </v-list-item-content>
-    </v-list-item>
-  </v-card>
+    </template>
+    <template #actions v-if="!hideActions" class="ml-3">
+      <commit-benchmark-actions :hasExistingBenchmark="true" @benchmark="benchmark(commit)"></commit-benchmark-actions>
+    </template>
+  </commit-overview-base>
 </template>
 
 <script lang="ts">
@@ -68,12 +33,12 @@ import CommitChip from '../CommitChip.vue'
 import { formatDate, formatDateUTC } from '@/util/TimeUtil'
 import { mdiCheckboxMarkedCircleOutline, mdiCloseCircleOutline } from '@mdi/js'
 import CommitBenchmarkActions from '../CommitBenchmarkActions.vue'
+import CommitOverviewBase from './CommitOverviewBase.vue'
 
 @Component({
   components: {
-    'repo-display': InlineMinimalRepoNameDisplay,
-    'commit-chip': CommitChip,
-    'commit-benchmark-actions': CommitBenchmarkActions
+    'commit-benchmark-actions': CommitBenchmarkActions,
+    'commit-overview-base': CommitOverviewBase
   }
 })
 export default class RunOverview extends Vue {
@@ -88,14 +53,6 @@ export default class RunOverview extends Vue {
 
   private get isSuccessful(): boolean {
     return !this.run.errorMessage && !!this.run.measurements
-  }
-
-  private get formattedDate() {
-    return formatDate(this.commit.authorDate || 0)
-  }
-
-  private get formattedDateUTC() {
-    return formatDateUTC(this.commit.authorDate || 0)
   }
 
   private benchmark(commit: Commit) {

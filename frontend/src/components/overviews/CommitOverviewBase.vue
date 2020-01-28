@@ -1,5 +1,6 @@
 <template>
   <v-card>
+    <slot name="body.top"></slot>
     <v-list-item>
       <slot name="avatar"></slot>
       <v-list-item-content>
@@ -21,6 +22,9 @@
                 <span class="author">{{ commit.author }}</span> authored on
                 <span class="time" :title="formattedDateUTC">{{ formattedDate }}</span>
               </v-list-item-subtitle>
+              <v-list-item-content v-if="$scopedSlots['content']">
+                <slot name="content"></slot>
+              </v-list-item-content>
             </v-col>
             <v-col cols="auto">
               <v-container fluid class="ma-0 pa-0">
@@ -40,15 +44,14 @@
     </v-list-item>
   </v-card>
 </template>
-
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
+import { formatDate, formatDateUTC } from '../../util/TimeUtil'
+import { Commit } from '../../store/types'
 import InlineMinimalRepoNameDisplay from '../InlineMinimalRepoDisplay.vue'
 import CommitChip from '../CommitChip.vue'
-import { formatDate, formatDateUTC } from '@/util/TimeUtil'
-import { Commit } from '../../store/types'
 
 @Component({
   components: {
@@ -56,7 +59,7 @@ import { Commit } from '../../store/types'
     'commit-chip': CommitChip
   }
 })
-export default class SmallCommitOverview extends Vue {
+export default class CommitOverviewBase extends Vue {
   @Prop()
   private commit!: Commit
 
@@ -71,11 +74,4 @@ export default class SmallCommitOverview extends Vue {
 </script>
 
 <style scoped>
-.commit-message {
-  font-style: italic;
-}
-.flex-shrink-too {
-  flex: 1 1 0;
-  min-width: 200px;
-}
 </style>

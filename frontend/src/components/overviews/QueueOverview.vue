@@ -15,76 +15,35 @@
             v-for="(commit, index) in props.items"
             :key="commit.repoID + commit.hash"
           >
-            <v-card>
-              <v-progress-linear indeterminate v-if="inProgress(commit)" color="accent"></v-progress-linear>
-              <v-list-item>
+            <commit-overview-base :commit="commit">
+              <template #body.top>
+                <v-progress-linear indeterminate v-if="inProgress(commit)" color="accent"></v-progress-linear>
+              </template>
+              <template #avatar>
                 <v-list-item-avatar class="index-indicator">{{ index + 1 }}</v-list-item-avatar>
-                <v-list-item-content>
-                  <v-container fluid class="ma-0 pa-1">
-                    <v-row no-gutters align="center" justify="space-between">
-                      <v-col cols="auto" class="flex-shrink-too mr-3">
-                        <v-list-item-title>
-                          <repo-display :repoId="commit.repoID"></repo-display>
-                          <span class="mx-2">—</span>
-                          <router-link
-                            class="concealed-link"
-                            tag="span"
-                            :to="{ name: 'commit-detail', params: { repoID: commit.repoID, hash: commit.hash } }"
-                          >
-                            <span class="commit-message">{{ commit.summary }}</span>
-                          </router-link>
-                        </v-list-item-title>
-                        <v-list-item-subtitle>
-                          <span class="author">{{ commit.author }}</span> authored on
-                          <span
-                            class="time"
-                            :title="formattedDateUTC(commit.authorDate)"
-                          >{{ formattedDate(commit.authorDate) }}</span>
-                        </v-list-item-subtitle>
-                        <v-list-item-content v-if="getWorker(commit)">
-                          <v-tooltip top>
-                            <template #activator="{ on }">
-                              <span style="flex: 0 0;">
-                                <v-chip
-                                  v-on="on"
-                                  outlined
-                                  label
-                                >Running on » {{ getWorker(commit).name }} «</v-chip>
-                              </span>
-                            </template>
-                            <span
-                              style="white-space: pre; font-family: monospace;"
-                            >{{ getWorker(commit).osData }}</span>
-                          </v-tooltip>
-                        </v-list-item-content>
-                      </v-col>
-                      <v-col cols="auto">
-                        <v-container fluid class="ma-0 pa-0">
-                          <v-row no-gutters align="center" justify="space-between">
-                            <v-col>
-                              <commit-chip :commit="commit"></commit-chip>
-                            </v-col>
-                            <span>
-                              <v-btn
-                                icon
-                                v-if="!inProgress(commit)"
-                                @click="liftToFront(commit, $event)"
-                              >
-                                <v-icon class="rocket">{{ liftToFrontIcon }}</v-icon>
-                              </v-btn>
-                              <v-progress-circular indeterminate color="accent" v-else></v-progress-circular>
-                              <v-btn icon @click="deleteCommit(commit)">
-                                <v-icon color="red">{{ deleteIcon }}</v-icon>
-                              </v-btn>
-                            </span>
-                          </v-row>
-                        </v-container>
-                      </v-col>
-                    </v-row>
-                  </v-container>
-                </v-list-item-content>
-              </v-list-item>
-            </v-card>
+              </template>
+              <template #content v-if="getWorker(commit)">
+                <v-tooltip top>
+                  <template #activator="{ on }">
+                    <span style="flex: 0 0;">
+                      <v-chip v-on="on" outlined label>Running on » {{ getWorker(commit).name }} «</v-chip>
+                    </span>
+                  </template>
+                  <span
+                    style="white-space: pre; font-family: monospace;"
+                  >{{ getWorker(commit).osData }}</span>
+                </v-tooltip>
+              </template>
+              <template #actions>
+                <v-btn icon v-if="!inProgress(commit)" @click="liftToFront(commit, $event)">
+                  <v-icon class="rocket">{{ liftToFrontIcon }}</v-icon>
+                </v-btn>
+                <v-progress-circular indeterminate color="accent" class="mx-1" v-else></v-progress-circular>
+                <v-btn icon @click="deleteCommit(commit)">
+                  <v-icon color="red">{{ deleteIcon }}</v-icon>
+                </v-btn>
+              </template>
+            </commit-overview-base>
           </v-col>
         </v-row>
       </template>
@@ -97,15 +56,13 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { vxm } from '@/store/index'
 import { Commit, Worker } from '@/store/types'
-import InlineMinimalRepoNameDisplay from '../InlineMinimalRepoDisplay.vue'
 import { mdiRocket, mdiDelete } from '@mdi/js'
-import CommitChip from '../CommitChip.vue'
 import { formatDateUTC, formatDate } from '../../util/TimeUtil'
+import CommitOverviewBase from './CommitOverviewBase.vue'
 
 @Component({
   components: {
-    'repo-display': InlineMinimalRepoNameDisplay,
-    'commit-chip': CommitChip
+    'commit-overview-base': CommitOverviewBase
   }
 })
 export default class QueueOverview extends Vue {
@@ -122,14 +79,6 @@ export default class QueueOverview extends Vue {
       .sort((a, b) => a!.message!.localeCompare(b!.message!))
       .forEach(it => openTasks.unshift(it!))
     return openTasks
-  }
-
-  private formattedDateUTC(date: number) {
-    return formatDateUTC(date)
-  }
-
-  private formattedDate(date: number) {
-    return formatDate(date)
   }
 
   private inProgress(commit: Commit) {

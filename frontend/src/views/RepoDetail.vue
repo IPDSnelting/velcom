@@ -151,7 +151,7 @@
                           :commit="commit"
                           :hideActions="!isAdmin"
                         ></run-overview>
-                        <commit-overview v-else :commit="commit">
+                        <commit-overview-base v-else :commit="commit">
                           <template #avatar>
                             <v-list-item-avatar>
                               <v-tooltip top>
@@ -172,7 +172,7 @@
                               @benchmark="benchmark(commit)"
                             ></commit-benchmark-actions>
                           </template>
-                        </commit-overview>
+                        </commit-overview-base>
                       </v-col>
                     </v-row>
                   </template>
@@ -194,16 +194,16 @@ import { Watch } from 'vue-property-decorator'
 import RepoUpdateDialog from '../components/dialogs/RepoUpdateDialog.vue'
 import RunOverview from '../components/overviews/RunOverview.vue'
 import { vxm } from '../store/index'
-import SmallCommitOverview from '../components/overviews/SmallCommitOverview.vue'
 import { mdiHelpCircleOutline } from '@mdi/js'
 import CommitBenchmarkActions from '../components/CommitBenchmarkActions.vue'
+import CommitOverviewBase from '../components/overviews/CommitOverviewBase.vue'
 
 @Component({
   components: {
     'repo-update': RepoUpdateDialog,
     'run-overview': RunOverview,
-    'commit-overview': SmallCommitOverview,
-    'commit-benchmark-actions': CommitBenchmarkActions
+    'commit-benchmark-actions': CommitBenchmarkActions,
+    'commit-overview-base': CommitOverviewBase
   }
 })
 export default class RepoDetail extends Vue {
