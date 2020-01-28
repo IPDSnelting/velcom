@@ -74,4 +74,11 @@ export default class CommitOverviewBase extends Vue {
 </script>
 
 <style scoped>
+.commit-message {
+  font-style: italic;
+}
+.flex-shrink-too {
+  flex: 1 1 0;
+  min-width: 200px;
+}
 </style>
