@@ -80,64 +80,7 @@
     </v-row>
     <v-row align="baseline" justify="center">
       <v-col>
-        <v-card>
-          <v-card-title>
-            <v-toolbar color="primary darken-1" dark>Recent commits in this repo</v-toolbar>
-          </v-card-title>
-          <v-card-text>
-            <v-container fluid>
-              <v-row align="center">
-                <v-data-iterator
-                  :items="commitHistory"
-                  :hide-default-footer="commitHistory.length < defaultItemsPerPage"
-                  :items-per-page="defaultItemsPerPage"
-                  :footer-props="{ itemsPerPageOptions: itemsPerPageOptions }"
-                  style="width: 100%"
-                >
-                  <template v-slot:default="props">
-                    <v-row>
-                      <v-col
-                        cols="12"
-                        class="my-1 py-0"
-                        v-for="({ commit, comparison }, index) in props.items"
-                        :key="index"
-                      >
-                        <run-overview
-                          v-if="comparison.second"
-                          :run="comparison.second"
-                          :commit="commit"
-                          :hideActions="!isAdmin"
-                        ></run-overview>
-                        <commit-overview-base v-else :commit="commit">
-                          <template #avatar>
-                            <v-list-item-avatar>
-                              <v-tooltip top>
-                                <template #activator="{ on }">
-                                  <v-icon
-                                    v-on="on"
-                                    size="32px"
-                                    color="gray"
-                                  >{{ notBenchmarkedIcon }}</v-icon>
-                                </template>
-                                This commit was never benchmarked!
-                              </v-tooltip>
-                            </v-list-item-avatar>
-                          </template>
-                          <template #actions v-if="isAdmin">
-                            <commit-benchmark-actions
-                              :hasExistingBenchmark="false"
-                              @benchmark="benchmark(commit)"
-                            ></commit-benchmark-actions>
-                          </template>
-                        </commit-overview-base>
-                      </v-col>
-                    </v-row>
-                  </template>
-                </v-data-iterator>
-              </v-row>
-            </v-container>
-          </v-card-text>
-        </v-card>
+        <repo-commit-overview :repo="repo"></repo-commit-overview>
       </v-col>
     </v-row>
   </v-container>
@@ -148,21 +91,14 @@ import Vue from 'vue'
 import { Repo, Commit, MeasurementID } from '@/store/types'
 import Component from 'vue-class-component'
 import { Watch } from 'vue-property-decorator'
-import RepoUpdateDialog from '../components/dialogs/RepoUpdateDialog.vue'
-import RunOverview from '../components/overviews/RunOverview.vue'
 import { vxm } from '../store/index'
-import { mdiHelpCircleOutline } from '@mdi/js'
-import CommitBenchmarkActions from '../components/CommitBenchmarkActions.vue'
-import CommitOverviewBase from '../components/overviews/CommitOverviewBase.vue'
 import RepoBaseInformation from '../components/RepoBaseInformation.vue'
+import RepoCommitOverview from '../components/RepoCommitOverview.vue'
 
 @Component({
   components: {
-    'repo-update': RepoUpdateDialog,
-    'run-overview': RunOverview,
-    'commit-benchmark-actions': CommitBenchmarkActions,
-    'commit-overview-base': CommitOverviewBase,
-    'repo-base-information': RepoBaseInformation
+    'repo-base-information': RepoBaseInformation,
+    'repo-commit-overview': RepoCommitOverview
   }
 })
 export default class RepoDetail extends Vue {
@@ -173,9 +109,6 @@ export default class RepoDetail extends Vue {
 
   private amount: string = '10'
   private skip: string = '0'
-
-  private itemsPerPageOptions: number[] = [10, 20, 50, 100, 200, -1]
-  private defaultItemsPerPage: number = 20
 
   private get id() {
     return this.$route.params.id
@@ -189,16 +122,8 @@ export default class RepoDetail extends Vue {
     return (benchmark: string) => vxm.repoModule.metricsForBenchmark(benchmark)
   }
 
-  private get isAdmin() {
-    return vxm.userModule.isAdmin
-  }
-
   private repoExists(id: string): boolean {
     return vxm.repoModule.repoByID(id) !== undefined
-  }
-
-  private get commitHistory() {
-    return vxm.repoDetailModule.historyForRepoId(this.id)
   }
 
   private get payload(): { repoId: string; amount: number; skip: number } {
@@ -254,16 +179,8 @@ export default class RepoDetail extends Vue {
     return vxm.repoModule.repoByID(this.id)!
   }
 
-  private benchmark(commit: Commit) {
-    vxm.queueModule.dispatchPrioritizeOpenTask(commit)
-  }
-
   created() {
     vxm.repoDetailModule.fetchHistoryForRepo(this.payload)
   }
-
-  // ============== ICONS ==============
-  private notBenchmarkedIcon = mdiHelpCircleOutline
-  // ==============       ==============
 }
 </script>
