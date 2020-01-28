@@ -54,6 +54,11 @@
                             ></v-text-field>
                           </template>
                           <v-date-picker v-model="startTimeString" :max="today" no-title scrollable>
+                            <v-btn
+                              text
+                              color="primary"
+                              @click="$refs.startDateMenu.save(today); retrieveGraphData()"
+                            >Today</v-btn>
                             <v-spacer></v-spacer>
                             <v-btn text color="primary" @click="startDateMenuOpen = false">Cancel</v-btn>
                             <v-btn
@@ -90,6 +95,11 @@
                             no-title
                             scrollable
                           >
+                            <v-btn
+                              text
+                              color="primary"
+                              @click="$refs.stopDateMenu.save(today); retrieveGraphData()"
+                            >Today</v-btn>
                             <v-spacer></v-spacer>
                             <v-btn text color="primary" @click="stopDateMenuOpen = false">Cancel</v-btn>
                             <v-btn
