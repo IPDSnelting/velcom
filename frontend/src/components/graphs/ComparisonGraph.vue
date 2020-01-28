@@ -176,6 +176,7 @@ export default class ComparisonGraph extends Vue {
   drawDatapoints(repoID: string) {
     let repoGroup = this.svg.append('g').attr('id', repoID)
 
+    // draw the connecting lines
     repoGroup
       .append('path')
       .attr('d', this.line(this.datapoints[repoID]))
@@ -183,36 +184,33 @@ export default class ComparisonGraph extends Vue {
       .attr('stroke-width', 2)
       .attr('fill', 'none')
 
-    this.datapoints[repoID].forEach(datapoint => {
-      let date: any = datapoint.commit.authorDate
-      if (date) {
-        repoGroup
-          .append('circle')
-          .attr('class', 'datapoint')
-          .attr('fill', this.colorById(repoID))
-          .attr('stroke', this.colorById(repoID))
-          .attr('r', 3)
-          .attr('cx', () => {
-            return this.xScale(date * 1000)
-          })
-          .attr('cy', () => {
-            return this.yScale(datapoint.value)
-          })
-
-        repoGroup
-          .data(this.datapoints[repoID])
-          .on('mouseover', this.mouseover)
-          .on('mousemove', this.mousemove)
-          .on('mouseleave', this.mouseleave)
-      }
-    })
+    // draw the scatterplot and add tooltips
+    repoGroup
+      .selectAll('dot')
+      .data(this.datapoints[repoID])
+      .enter()
+      .append('circle')
+      .attr('class', 'datapoint')
+      .attr('fill', this.colorById(repoID))
+      .attr('stroke', this.colorById(repoID))
+      .attr('r', 3)
+      .attr('cx', (d: any) => {
+        return this.xScale(d.commit.authorDate * 1000)
+      })
+      .attr('cy', (d: any) => {
+        return this.yScale(d.value)
+      })
+      .data(this.datapoints[repoID])
+      .on('mouseover', this.mouseover)
+      .on('mousemove', this.mousemove)
+      .on('mouseleave', this.mouseleave)
   }
 
   mouseover(d: any) {
     this.tooltip.style('opacity', 0.8)
   }
 
-  mousemove(d: Datapoint, i: any, n: any) {
+  mousemove(d: any, i: any, n: any) {
     if (d.commit.authorDate) {
       this.tooltip
         .html(
