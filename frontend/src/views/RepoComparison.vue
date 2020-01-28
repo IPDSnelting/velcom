@@ -201,6 +201,19 @@ export default class RepoComparison extends Vue {
     vxm.repoComparisonModule.stopDate = new Date(value)
   }
 
+  @Watch('selectedBenchmark')
+  clearMetricOnBenchmarkSelection() {
+    if (
+      this.metricsForBenchmark(this.selectedBenchmark).includes(
+        this.selectedMetric
+      )
+    ) {
+      this.retrieveGraphData()
+    } else {
+      this.selectedMetric = ''
+    }
+  }
+
   @Watch('selectedMetric')
   retrieveGraphData() {
     if (this.selectedMetric !== '') {
