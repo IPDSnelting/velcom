@@ -123,6 +123,7 @@
             <v-btn
               color="error"
               text
+              outlined
               :disabled="!selectedBenchmark || !selectedMetric"
               @click="deleteMetric"
             >Delete metric</v-btn>

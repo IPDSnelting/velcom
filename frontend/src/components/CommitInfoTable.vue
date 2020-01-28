@@ -1,9 +1,30 @@
 <template>
   <v-container fluid>
+    <v-dialog max-width="600" v-model="showDetailErrorMessageDialog">
+      <v-card>
+        <v-toolbar dark color="primary">
+          <v-toolbar-title>Full error message</v-toolbar-title>
+        </v-toolbar>
+        <v-card-text>
+          <div class="ma-4 error-message">{{ detailMeasurementErrorMessage }}</div>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="error" text outlined @click="showDetailErrorMessageDialog = false">Close</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <v-data-table :headers="headers" :items="entries" item-key="key" multi-sort>
       <template #item.value="{ item, value }">
         <span v-if="value">{{ formatNumber(value) }}</span>
-        <span v-else class="error-message">{{ item.errorMessage }}</span>
+        <v-btn
+          v-else
+          class="error-message error-message-tooltip"
+          text
+          outlined
+          @click="showDetailErrorMessageDialog = true; detailMeasurementErrorMessage = item.errorMessage"
+        >{{ formatError(item.errorMessage) }}</v-btn>
       </template>
       <template #item.unit=" { value }">
         <span v-if="value">{{ value }}</span>
@@ -34,6 +55,9 @@ export default class CommitInfoTable extends Vue {
 
   @Prop()
   private compare!: boolean
+
+  private showDetailErrorMessageDialog: boolean = false
+  private detailMeasurementErrorMessage: string = ''
 
   private numberFormat: Intl.NumberFormat = new Intl.NumberFormat(
     this.getLocaleString(),
@@ -233,12 +257,25 @@ export default class CommitInfoTable extends Vue {
   private formatNumber(number: number): string {
     return this.numberFormat.format(number)
   }
+
+  private formatError(error: string) {
+    const MAX_ERROR_LENGTH = 30
+    if (error.length < MAX_ERROR_LENGTH) {
+      return error
+    }
+    return error.substring(0, MAX_ERROR_LENGTH) + '…'
+  }
 }
 </script>
 
 <style scoped>
 .error-message {
   color: var(--v-error-base);
+  font-family: monospace;
+}
+
+.error-message-tooltip {
+  cursor: pointer;
 }
 
 .change-arrow {

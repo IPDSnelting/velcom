@@ -32,7 +32,7 @@
       <v-col>
         <v-card>
           <v-card-title>
-            <v-toolbar dark color="primary">
+            <v-toolbar dense dark color="primary">
               <v-toolbar-title>Benchmark results</v-toolbar-title>
             </v-toolbar>
           </v-card-title>
