@@ -2,6 +2,7 @@ import { createModule, mutation, action } from 'vuex-class-component'
 import { Repo } from '@/store/types'
 import Vue from 'vue'
 import axios from 'axios'
+import { vxm } from '..'
 
 const VxModule = createModule({
   namespaced: 'repoModule',
@@ -36,7 +37,6 @@ export class RepoStore extends VxModule {
           item.remote_url
         )
       )
-      this.setIndexForRepo(item.id)
     })
 
     this.setRepos(repos)
@@ -138,7 +138,9 @@ export class RepoStore extends VxModule {
 
   @mutation
   setIndexForRepo(repoID: string) {
-    this.repoIndices[repoID] = this.currentRepoIndex++
+    if (!this.repoIndices[repoID]) {
+      this.repoIndices[repoID] = this.currentRepoIndex++
+    }
   }
 
   @mutation
@@ -152,6 +154,7 @@ export class RepoStore extends VxModule {
       existing.measurements = payload.measurements.slice()
     } else {
       Vue.set(this.repos, payload.id, { ...payload })
+      vxm.repoModule.setIndexForRepo(payload.id)
     }
   }
 
@@ -162,6 +165,7 @@ export class RepoStore extends VxModule {
         Object.assign(this.repos[repo.id], repo)
       } else {
         Vue.set(this.repos, repo.id, { ...repo })
+        vxm.repoModule.setIndexForRepo(repo.id)
       }
     })
   }
