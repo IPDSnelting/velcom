@@ -220,17 +220,5 @@ export default class RepoComparison extends Vue {
       vxm.repoComparisonModule.fetchComparisonData(this.payload)
     }
   }
-
-  get repos(): string[] {
-    return vxm.repoComparisonModule.selectedRepos
-  }
-
-  get branches() {
-    return vxm.repoComparisonModule.selectedBranchesByRepoID
-  }
-
-  get datapointsByRepoID(): { [repoID: string]: Datapoint[] } {
-    return vxm.repoComparisonModule.allDatapoints
-  }
 }
 </script>

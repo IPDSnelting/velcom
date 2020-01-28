@@ -199,7 +199,9 @@ export class RepoStore extends VxModule {
           new Set<string>()
         )
 
-      return Array.from(benchmarks).sort()
+      return Array.from(benchmarks).sort((a, b) =>
+        a.localeCompare(b, undefined, { sensitivity: 'base' })
+      )
     }
   }
 
@@ -213,7 +215,9 @@ export class RepoStore extends VxModule {
           (metrics, newMetric) => metrics.add(newMetric),
           new Set<string>()
         )
-      return Array.from(metrics).sort()
+      return Array.from(metrics).sort((a, b) =>
+        a.localeCompare(b, undefined, { sensitivity: 'base' })
+      )
     }
   }
 }

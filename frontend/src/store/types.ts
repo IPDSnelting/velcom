@@ -16,8 +16,12 @@ export class Repo {
   ) {
     this.id = id
     this.name = name
-    this.branches = branches
-    this.trackedBranches = trackedBranches
+    this.branches = branches.sort((a, b) =>
+      a.localeCompare(b, undefined, { sensitivity: 'base' })
+    )
+    this.trackedBranches = trackedBranches.sort((a, b) =>
+      a.localeCompare(b, undefined, { sensitivity: 'base' })
+    )
     this.measurements = measurements
     this.remoteURL = remoteURL
   }
