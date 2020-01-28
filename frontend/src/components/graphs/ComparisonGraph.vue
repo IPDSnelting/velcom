@@ -17,6 +17,7 @@ import { Prop, Watch } from 'vue-property-decorator'
 import { vxm } from '@/store/index'
 import * as d3 from 'd3'
 import { Datapoint, Commit } from '@/store/types'
+import { formatDateUTC } from '@/util/TimeUtil'
 
 @Component
 export default class ComparisonGraph extends Vue {
@@ -27,6 +28,8 @@ export default class ComparisonGraph extends Vue {
   private height: number = 500
 
   private svg: any = null
+
+  private tooltip: any = null
 
   private margin: {
     left: number
@@ -195,8 +198,44 @@ export default class ComparisonGraph extends Vue {
           .attr('cy', () => {
             return this.yScale(datapoint.value)
           })
+
+        repoGroup
+          .data(this.datapoints[repoID])
+          .on('mouseover', this.mouseover)
+          .on('mousemove', this.mousemove)
+          .on('mouseleave', this.mouseleave)
       }
     })
+  }
+
+  mouseover(d: any) {
+    this.tooltip.style('opacity', 0.8)
+  }
+
+  mousemove(d: Datapoint, i: any, n: any) {
+    if (d.commit.authorDate) {
+      this.tooltip
+        .html(
+          'Commit ' +
+            d.commit.hash +
+            '<br> authored on ' +
+            formatDateUTC(d.commit.authorDate) +
+            ',<br />exact value: ' +
+            d.value +
+            ' ' +
+            this.unit
+        )
+        .style('left', d3.mouse(n[i])[0] + 90 + 'px')
+        .style('top', d3.mouse(n[i])[1] + 90 + 'px')
+        .style('display', 'inline-block')
+    }
+  }
+
+  mouseleave(d: any) {
+    this.tooltip
+      .transition()
+      .duration(500)
+      .style('opacity', 0)
   }
 
   mounted() {
@@ -212,6 +251,20 @@ export default class ComparisonGraph extends Vue {
         'transform',
         'translate(' + this.margin.left + ',' + this.margin.top + ')'
       )
+
+    this.tooltip = d3
+      .select('#svg-container')
+      .append('div')
+      .style('opacity', 0)
+      .attr('class', 'tooltip')
+      .style('position', 'absolute')
+      .style('padding', '5px')
+      .style('border-radius', '5px')
+      .style('background-color', 'black')
+      .style('color', 'white')
+      .style('text-align', 'center')
+      .style('font-family', 'Roboto')
+      .style('font-size', '14px')
 
     this.drawXAxis()
     this.drawYAxis()
