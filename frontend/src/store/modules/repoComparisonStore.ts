@@ -24,12 +24,15 @@ export class RepoComparisonStore extends VxModule {
   private _unit: string = ''
 
   // One week in the past
-  private startTime: string = new Date(
+  private _defaultStartTime: string = new Date(
     new Date().setDate(new Date().getDate() - 7)
   )
     .toISOString()
     .substring(0, 10)
-  private stopTime: string = new Date().toISOString().substring(0, 10)
+  private _defaultStopTime: string = new Date().toISOString().substring(0, 10)
+
+  private startTime: string = this._defaultStartTime
+  private stopTime: string = this._defaultStopTime
 
   @action
   async fetchComparisonData(payload: {
@@ -205,5 +208,13 @@ export class RepoComparisonStore extends VxModule {
       }
     })
     return repos
+  }
+
+  get defaultStartTime() {
+    return this._defaultStartTime
+  }
+
+  get defaultStopTime() {
+    return this._defaultStopTime
   }
 }

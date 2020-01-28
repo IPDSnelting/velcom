@@ -33,7 +33,7 @@
                     </v-row>
                   </v-col>
                   <v-col md="5" sm="12" cols="12">
-                    <v-row>
+                    <v-row align="center">
                       <v-col>
                         <v-menu
                           ref="startDateMenu"
@@ -109,6 +109,13 @@
                             >OK</v-btn>
                           </v-date-picker>
                         </v-menu>
+                      </v-col>
+                      <v-col>
+                        <v-btn
+                          text
+                          color="primary"
+                          @click="startTimeString = defaultStartTime; stopTimeString = defaultStopTime"
+                        >Reset dates</v-btn>
                       </v-col>
                     </v-row>
                   </v-col>
@@ -209,6 +216,14 @@ export default class RepoComparison extends Vue {
 
   set stopTimeString(value: string) {
     vxm.repoComparisonModule.stopDate = new Date(value)
+  }
+
+  get defaultStartTime() {
+    return vxm.repoComparisonModule.defaultStartTime
+  }
+
+  get defaultStopTime() {
+    return vxm.repoComparisonModule.defaultStopTime
   }
 
   @Watch('selectedBenchmark')
