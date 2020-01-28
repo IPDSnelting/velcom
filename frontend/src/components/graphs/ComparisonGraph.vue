@@ -204,6 +204,12 @@ export default class ComparisonGraph extends Vue {
       .on('mouseover', this.mouseover)
       .on('mousemove', this.mousemove)
       .on('mouseleave', this.mouseleave)
+      .on('click', (d: any) => {
+        this.$router.push({
+          name: 'commit-detail',
+          params: { repoID: repoID, hash: d.commit.hash }
+        })
+      })
   }
 
   mouseover(d: any) {
@@ -224,7 +230,7 @@ export default class ComparisonGraph extends Vue {
             this.unit
         )
         .style('left', d3.mouse(n[i])[0] + 90 + 'px')
-        .style('top', d3.mouse(n[i])[1] + 90 + 'px')
+        .style('top', d3.mouse(n[i])[1] + 60 + 'px')
         .style('display', 'inline-block')
     }
   }
