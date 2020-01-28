@@ -70,8 +70,17 @@ public class RepoComparisonGraphEndpoint {
 	 */
 	@POST
 	public PostReply post(@NotNull PostRequest request) {
-		Instant startTime = Instant.ofEpochSecond(request.getStartTime());
-		Instant stopTime = Instant.ofEpochSecond(request.getStopTime());
+		// Make sure that the stop time comes before the start time.
+		Instant startTime;
+		Instant stopTime;
+		if (request.getStartTime() <= request.getStopTime()) {
+			startTime = Instant.ofEpochSecond(request.getStartTime());
+			stopTime = Instant.ofEpochSecond(request.getStopTime());
+		} else {
+			stopTime = Instant.ofEpochSecond(request.getStartTime());
+			startTime = Instant.ofEpochSecond(request.getStopTime());
+		}
+
 		MeasurementName measurementName = new MeasurementName(request.getBenchmark(),
 			request.getMetric());
 
