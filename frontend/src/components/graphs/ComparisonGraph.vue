@@ -200,6 +200,7 @@ export default class ComparisonGraph extends Vue {
       .attr('cy', (d: any) => {
         return this.yScale(d.value)
       })
+      .style('cursor', 'pointer')
       .data(this.datapoints[repoID])
       .on('mouseover', this.mouseover)
       .on('mousemove', this.mousemove)
