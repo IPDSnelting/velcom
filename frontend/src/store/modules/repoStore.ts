@@ -160,14 +160,7 @@ export class RepoStore extends VxModule {
 
   @mutation
   setRepos(repos: Repo[]) {
-    repos.forEach(repo => {
-      if (this.repos[repo.id]) {
-        Object.assign(this.repos[repo.id], repo)
-      } else {
-        Vue.set(this.repos, repo.id, { ...repo })
-        vxm.repoModule.setIndexForRepo(repo.id)
-      }
-    })
+    repos.forEach(repo => vxm.repoModule.setRepo(repo))
   }
 
   @mutation

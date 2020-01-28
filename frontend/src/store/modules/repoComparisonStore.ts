@@ -175,19 +175,32 @@ export class RepoComparisonStore extends VxModule {
   }
 
   get selectedBranchesByRepoID(): { [key: string]: string[] } {
-    return this._selectedBranchesByRepoID
+    return (
+      vxm.repoModule.allRepos
+        .map(repo => ({
+          id: repo.id,
+          branches:
+            // all branches are selected if user has never selected any manually
+            this._selectedBranchesByRepoID[repo.id] || repo.branches.slice()
+        }))
+        // reduce list above to required object structure
+        .reduce((accumulated, repoBranch) => {
+          Vue.set(accumulated, repoBranch.id, repoBranch.branches)
+          return accumulated
+        }, {})
+    )
   }
 
   get selectedReposWithBranches(): string[] {
     let repos: any[] = []
-    Object.keys(this._selectedBranchesByRepoID).forEach(repoID => {
+    Object.keys(this.selectedBranchesByRepoID).forEach(repoID => {
       if (
-        this.selectedRepos.indexOf(repoID) > -1 &&
-        this._selectedBranchesByRepoID[repoID].length !== 0
+        this.selectedRepos.includes(repoID) &&
+        this.selectedBranchesByRepoID[repoID].length !== 0
       ) {
         repos.push({
           repo_id: repoID,
-          branches: this._selectedBranchesByRepoID[repoID]
+          branches: this.selectedBranchesByRepoID[repoID]
         })
       }
     })
