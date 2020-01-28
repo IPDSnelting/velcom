@@ -24,7 +24,7 @@
               <v-row align="center">
                 <v-col cols="3" class="subtitle-2">Branches:</v-col>
                 <v-col cols="9">
-                  <v-tooltip top v-for="branch in branches" :key="branch">
+                  <v-tooltip top v-for="(branch, index) in branches" :key="branch + index">
                     <template v-slot:activator="{ on }">
                       <v-chip
                         class="ma-2"
