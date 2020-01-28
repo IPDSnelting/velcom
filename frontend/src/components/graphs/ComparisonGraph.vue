@@ -219,6 +219,7 @@ export default class ComparisonGraph extends Vue {
 
   mousemove(d: any, i: any, n: any) {
     if (d.commit.authorDate) {
+      let truncatedValue = this.valueFormat(d.value)
       this.tooltip
         .html(
           'Commit ' +
@@ -226,7 +227,7 @@ export default class ComparisonGraph extends Vue {
             '<br> authored on ' +
             formatDateUTC(d.commit.authorDate) +
             ',<br />exact value: ' +
-            d.value +
+            truncatedValue +
             ' ' +
             this.unit
         )
