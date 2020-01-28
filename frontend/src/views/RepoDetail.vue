@@ -92,8 +92,8 @@ import { Repo, Commit, MeasurementID } from '@/store/types'
 import Component from 'vue-class-component'
 import { Watch } from 'vue-property-decorator'
 import { vxm } from '../store/index'
-import RepoBaseInformation from '../components/RepoBaseInformation.vue'
-import RepoCommitOverview from '../components/RepoCommitOverview.vue'
+import RepoBaseInformation from '@/components/repodetail/RepoBaseInformation.vue'
+import RepoCommitOverview from '@/components/repodetail/RepoCommitOverview.vue'
 
 @Component({
   components: {

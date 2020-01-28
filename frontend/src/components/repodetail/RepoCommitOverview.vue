@@ -59,12 +59,12 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
-import { Repo, Commit } from '../store/types'
-import { vxm } from '../store'
-import CommitOverviewBase from './overviews/CommitOverviewBase.vue'
-import CommitBenchmarkActions from './CommitBenchmarkActions.vue'
+import { Repo, Commit } from '@/store/types'
+import { vxm } from '@/store'
 import { mdiHelpCircleOutline } from '@mdi/js'
-import RunOverview from './overviews/RunOverview.vue'
+import CommitOverviewBase from '@/components/overviews/CommitOverviewBase.vue'
+import CommitBenchmarkActions from '@/components/CommitBenchmarkActions.vue'
+import RunOverview from '@/components/overviews/RunOverview.vue'
 
 @Component({
   components: {

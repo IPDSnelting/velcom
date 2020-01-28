@@ -58,10 +58,10 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import RepoUpdateDialog from './dialogs/RepoUpdateDialog.vue'
 import { Prop } from 'vue-property-decorator'
-import { Repo } from '../store/types'
-import { vxm } from '../store'
+import { Repo } from '@/store/types'
+import { vxm } from '@/store'
+import RepoUpdateDialog from '@/components/dialogs/RepoUpdateDialog.vue'
 
 @Component({
   components: {
