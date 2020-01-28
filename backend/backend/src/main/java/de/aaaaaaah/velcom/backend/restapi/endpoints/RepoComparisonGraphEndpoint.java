@@ -8,6 +8,9 @@ import de.aaaaaaah.velcom.backend.access.commit.CommitAccess;
 import de.aaaaaaah.velcom.backend.access.repo.RepoAccess;
 import de.aaaaaaah.velcom.backend.access.repo.RepoId;
 import de.aaaaaaah.velcom.backend.access.repocomparison.RepoComparisonAccess;
+import de.aaaaaaah.velcom.backend.access.repocomparison.timeslice.CommitGrouper;
+import de.aaaaaaah.velcom.backend.access.repocomparison.timeslice.GroupByDay;
+import de.aaaaaaah.velcom.backend.access.repocomparison.timeslice.GroupByHour;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonGraphRepoInfo;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRepo;
 import java.time.Instant;
@@ -31,9 +34,15 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 public class RepoComparisonGraphEndpoint {
 
+	// Difference of start and end time (in seconds) below which the hourly grouper should be used.
+	private static final long HOURLY_THRESHOLD = 60 * 60 * 24 * 7; // one week
+
 	private final CommitAccess commitAccess;
 	private final RepoAccess repoAccess;
 	private final RepoComparisonAccess repoComparisonAccess;
+
+	private final CommitGrouper<Long> hourlyGrouper;
+	private final CommitGrouper<Long> dailyGrouper;
 
 	public RepoComparisonGraphEndpoint(CommitAccess commitAccess, RepoAccess repoAccess,
 		RepoComparisonAccess repoComparisonAccess) {
@@ -41,6 +50,9 @@ public class RepoComparisonGraphEndpoint {
 		this.commitAccess = commitAccess;
 		this.repoAccess = repoAccess;
 		this.repoComparisonAccess = repoComparisonAccess;
+
+		hourlyGrouper = new GroupByHour();
+		dailyGrouper = new GroupByDay();
 	}
 
 	/**
@@ -57,6 +69,14 @@ public class RepoComparisonGraphEndpoint {
 		MeasurementName measurementName = new MeasurementName(request.getBenchmark(),
 			request.getMetric());
 
+		long difference = stopTime.getEpochSecond() - startTime.getEpochSecond();
+		CommitGrouper<Long> grouper;
+		if (difference < HOURLY_THRESHOLD) {
+			grouper = hourlyGrouper;
+		} else {
+			grouper = dailyGrouper;
+		}
+
 		final List<JsonGraphRepoInfo> repoInfos = request.getRepos().stream()
 			.map(branchSpec -> {
 				final RepoId repoId = new RepoId(branchSpec.getRepoId());
@@ -65,7 +85,7 @@ public class RepoComparisonGraphEndpoint {
 				final Collection<Commit> commits = commitAccess.getCommitsBetween(repoId,
 					branchSpec.getBranches(), startTime, stopTime);
 
-				return repoComparisonAccess.getRepoInfo(repoId, commits, measurementName);
+				return repoComparisonAccess.getRepoInfo(repoId, commits, measurementName, grouper);
 			})
 			.collect(Collectors.toUnmodifiableList());
 

@@ -29,17 +29,13 @@ import org.jooq.Record2;
 public class RepoComparisonAccess {
 
 	private final DatabaseStorage databaseStorage;
-	private final CommitGrouper<Long> commitGrouper;
 
-	public RepoComparisonAccess(DatabaseStorage databaseStorage,
-		CommitGrouper<Long> commitGrouper) {
-
+	public RepoComparisonAccess(DatabaseStorage databaseStorage) {
 		this.databaseStorage = databaseStorage;
-		this.commitGrouper = commitGrouper;
 	}
 
 	public JsonGraphRepoInfo getRepoInfo(RepoId repoId, Collection<Commit> commits,
-		MeasurementName measurementName) {
+		MeasurementName measurementName, CommitGrouper<Long> grouper) {
 
 		// Step 1: Find out which runs we're interested in
 		Collection<String> runIds = getRunIds(repoId, commits);
@@ -57,7 +53,7 @@ public class RepoComparisonAccess {
 		Unit unit = interpretationAndUnit.getSecond();
 
 		// Step 4: Group the entries based on their commits' author dates using a CommitGrouper
-		Map<Long, List<GraphEntry>> groupedTmpEntries = groupTmpEntries(tmpEntries);
+		Map<Long, List<GraphEntry>> groupedTmpEntries = groupTmpEntries(tmpEntries, grouper);
 
 		// Step 5: Find the best entries for each segment
 		Map<Long, GraphEntry> bestTmpEntries = new HashMap<>();
@@ -163,9 +159,11 @@ public class RepoComparisonAccess {
 		}
 	}
 
-	public Map<Long, List<GraphEntry>> groupTmpEntries(Collection<GraphEntry> tmpEntries) {
+	public Map<Long, List<GraphEntry>> groupTmpEntries(Collection<GraphEntry> tmpEntries,
+		CommitGrouper<Long> grouper) {
+
 		return tmpEntries.stream()
-			.collect(Collectors.groupingBy(entry -> commitGrouper.getGroup(
+			.collect(Collectors.groupingBy(entry -> grouper.getGroup(
 				entry.getCommit().getAuthorDate().atZone(ZoneOffset.UTC)
 			)));
 	}
