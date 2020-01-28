@@ -23,7 +23,7 @@ const VxModule = createModule({
 
 export class RepoDetailStore extends VxModule {
   private historyByRepoId: {
-    [repoId: string]: [Commit, CommitComparison][]
+    [repoId: string]: { commit: Commit; comparison: CommitComparison }[]
   } = {}
   private _selectedRepoId: string = ''
 
@@ -32,7 +32,7 @@ export class RepoDetailStore extends VxModule {
     repoId: string
     amount: number
     skip: number
-  }): Promise<[Commit, CommitComparison][]> {
+  }): Promise<{ commit: Commit; comparison: CommitComparison }[]> {
     let response = await axios.get('/commit-history', {
       snackbarTag: 'commit-history',
       params: {
@@ -42,15 +42,18 @@ export class RepoDetailStore extends VxModule {
       }
     })
 
-    let commitPairArray: any[] = response.data.commits
+    let commitArray: any[] = response.data.commits
 
-    let resultArray: [Commit, CommitComparison][] = commitPairArray.map(
+    let resultArray: {
+      commit: Commit
+      comparison: CommitComparison
+    }[] = commitArray.map(
       ({ commit: jsonCommit, comparison: jsonComparison }) => {
         let commit: Commit = commitFromJson(jsonCommit)
         const commitComparison: CommitComparison = comparisonFromJson(
           jsonComparison
         )
-        return [commit, commitComparison]
+        return { commit: commit, comparison: commitComparison }
       }
     )
 
@@ -62,7 +65,7 @@ export class RepoDetailStore extends VxModule {
   @mutation
   setHistoryForRepo(payload: {
     repoId: string
-    history: [Commit, CommitComparison][]
+    history: { commit: Commit; comparison: CommitComparison }[]
   }) {
     Vue.set(this.historyByRepoId, payload.repoId, payload.history)
   }
@@ -75,7 +78,9 @@ export class RepoDetailStore extends VxModule {
    * @readonly
    * @memberof RepoDetailStore
    */
-  get historyForRepoId(): (repoId: string) => [Commit, CommitComparison][] {
+  get historyForRepoId(): (
+    repoId: string
+  ) => { commit: Commit; comparison: CommitComparison }[] {
     return (repoId: string) =>
       this.historyByRepoId[repoId] ? this.historyByRepoId[repoId] : []
   }
