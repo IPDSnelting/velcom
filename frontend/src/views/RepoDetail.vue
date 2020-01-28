@@ -80,7 +80,6 @@
     </v-row>
     <v-row align="baseline" justify="center">
       <v-col>
-        <<<<<<< HEAD
         <repo-commit-overview :repo="repo"></repo-commit-overview>=======
         <detail-graph :benchmark="selectedBenchmark" :metric="selectedMetric" :amount="amount"></detail-graph>
       </v-col>
