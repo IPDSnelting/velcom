@@ -88,12 +88,12 @@ export default class RepoBaseInformation extends Vue {
 
   private deleteRepository() {
     let confirmed = window.confirm(
-      `Do you really want to delete ${this.repo.name} (${this.id})?`
+      `Do you really want to delete ${this.repo.name} (${this.repo.id})?`
     )
     if (!confirmed) {
       return
     }
-    vxm.repoModule.deleteRepo(this.id).then(() => {
+    vxm.repoModule.deleteRepo(this.repo.id).then(() => {
       vxm.repoDetailModule.selectedRepoId = ''
       this.$router.replace({ name: 'repo-detail-frame', params: { id: '' } })
     })
