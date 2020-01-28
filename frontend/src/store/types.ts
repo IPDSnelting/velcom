@@ -41,12 +41,12 @@ export class Measurement {
     errorMessage?: string
   ) {
     this.id = id
-    this.successful = (errorMessage && false) || true
-    this.unit = (unit && unit) || null
-    this.interpretation = (interpretation && interpretation) || null
-    this.values = (values && values) || null
-    this.value = (value && value) || null
-    this.errorMessage = (errorMessage && errorMessage) || null
+    this.successful = !errorMessage
+    this.unit = unit || null
+    this.interpretation = interpretation || null
+    this.values = values || null
+    this.value = value || null
+    this.errorMessage = errorMessage || null
   }
 }
 

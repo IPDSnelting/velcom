@@ -2,15 +2,19 @@
   <commit-overview-base :commit="commit">
     <template #avatar>
       <v-list-item-avatar>
-        <v-tooltip top>
+        <v-tooltip top v-if="isSuccessful">
           <template #activator="{ on }">
-            <v-icon v-if="isSuccessful" v-on="on" size="32px" color="success">{{ successIcon }}</v-icon>
+            <v-icon v-on="on" size="32px" color="success">{{ successIcon }}</v-icon>
           </template>
           This run was successful!
         </v-tooltip>
-        <v-tooltip top>
+        <v-tooltip top v-else>
           <template #activator="{ on }">
-            <v-icon v-if="!isSuccessful" color="error" v-on="on" size="32px">{{ errorIcon }}</v-icon>
+            <v-icon
+              :color="isCompleteFailure ? 'error' : 'orange'"
+              v-on="on"
+              size="32px"
+            >{{ isCompleteFailure ? errorIcon : partialErrorIcon }}</v-icon>
           </template>
           This run suffered at least one failure :(
         </v-tooltip>
@@ -31,7 +35,11 @@ import { Commit, Run } from '@/store/types'
 import InlineMinimalRepoNameDisplay from '../InlineMinimalRepoDisplay.vue'
 import CommitChip from '../CommitChip.vue'
 import { formatDate, formatDateUTC } from '@/util/TimeUtil'
-import { mdiCheckboxMarkedCircleOutline, mdiCloseCircleOutline } from '@mdi/js'
+import {
+  mdiCheckboxMarkedCircleOutline,
+  mdiCloseCircleOutline,
+  mdiAlertCircleCheckOutline
+} from '@mdi/js'
 import CommitBenchmarkActions from '../CommitBenchmarkActions.vue'
 import CommitOverviewBase from './CommitOverviewBase.vue'
 
@@ -52,7 +60,19 @@ export default class RunOverview extends Vue {
   private hideActions!: boolean
 
   private get isSuccessful(): boolean {
-    return !this.run.errorMessage && !!this.run.measurements
+    return !this.isCompleteFailure && !this.isPartialFailure
+  }
+
+  private get isCompleteFailure(): boolean {
+    return !!this.run.errorMessage
+  }
+
+  private get isPartialFailure(): boolean {
+    let unsuccessfulMeasurement = this.run.measurements!.find(
+      measurement => !measurement.successful
+    )
+
+    return !!unsuccessfulMeasurement
   }
 
   private benchmark(commit: Commit) {
@@ -61,6 +81,7 @@ export default class RunOverview extends Vue {
 
   // ============== ICONS ==============
   private successIcon = mdiCheckboxMarkedCircleOutline
+  private partialErrorIcon = mdiAlertCircleCheckOutline
   private errorIcon = mdiCloseCircleOutline
   // ==============       ==============
 }
