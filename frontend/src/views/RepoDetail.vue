@@ -2,60 +2,7 @@
   <v-container v-if="repoExists(id)">
     <v-row>
       <v-col>
-        <v-card>
-          <v-card-title>
-            <v-toolbar color="primary darken-1" dark>
-              {{ repo.name }}
-              <span class="ml-5 subtitle-1">{{ repo.id }}</span>
-            </v-toolbar>
-          </v-card-title>
-          <v-card-text>
-            <v-container fluid>
-              <v-row align="center">
-                <v-col cols="3" class="subtitle-2">Remote-URL:</v-col>
-                <v-col cols="9">
-                  <a :href="repo.remoteURL">{{ repo.remoteURL }}</a>
-                </v-col>
-              </v-row>
-              <v-row align="center">
-                <v-col cols="3" class="subtitle-2">ID:</v-col>
-                <v-col cols="9">{{ repo.id }}</v-col>
-              </v-row>
-              <v-row align="center">
-                <v-col cols="3" class="subtitle-2">Branches:</v-col>
-                <v-col cols="9">
-                  <v-tooltip top v-for="(branch, index) in branches" :key="branch + index">
-                    <template v-slot:activator="{ on }">
-                      <v-chip
-                        class="ma-2"
-                        outlined
-                        label
-                        v-on="on"
-                        :color="isBranchTracked(branch) ? 'success' : 'error'"
-                      >{{ branch }}</v-chip>
-                    </template>
-                    {{ isBranchTracked(branch) ? 'Tracked' : 'Not Tracked' }}
-                  </v-tooltip>
-                </v-col>
-              </v-row>
-            </v-container>
-          </v-card-text>
-          <v-card-actions v-if="canEdit">
-            <v-spacer></v-spacer>
-            <repo-update :repoId="id">
-              <template #activator="{ on }">
-                <v-btn v-on="on" color="primary">update</v-btn>
-              </template>
-            </repo-update>
-            <v-btn
-              color="error"
-              class="mr-5 ml-3"
-              outlined
-              text
-              @click="deleteRepository"
-            >Delete Repository</v-btn>
-          </v-card-actions>
-        </v-card>
+        <repo-base-information :repo="repo"></repo-base-information>
       </v-col>
     </v-row>
     <v-row align="baseline" justify="center">
@@ -207,13 +154,15 @@ import { vxm } from '../store/index'
 import { mdiHelpCircleOutline } from '@mdi/js'
 import CommitBenchmarkActions from '../components/CommitBenchmarkActions.vue'
 import CommitOverviewBase from '../components/overviews/CommitOverviewBase.vue'
+import RepoBaseInformation from '../components/RepoBaseInformation.vue'
 
 @Component({
   components: {
     'repo-update': RepoUpdateDialog,
     'run-overview': RunOverview,
     'commit-benchmark-actions': CommitBenchmarkActions,
-    'commit-overview-base': CommitOverviewBase
+    'commit-overview-base': CommitOverviewBase,
+    'repo-base-information': RepoBaseInformation
   }
 })
 export default class RepoDetail extends Vue {
@@ -240,10 +189,6 @@ export default class RepoDetail extends Vue {
     return (benchmark: string) => vxm.repoModule.metricsForBenchmark(benchmark)
   }
 
-  private get canEdit() {
-    return vxm.userModule.authorized(this.id)
-  }
-
   private get isAdmin() {
     return vxm.userModule.isAdmin
   }
@@ -252,62 +197,8 @@ export default class RepoDetail extends Vue {
     return vxm.repoModule.repoByID(id) !== undefined
   }
 
-  private isBranchTracked(branch: string): boolean {
-    return this.repo.trackedBranches.indexOf(branch) >= 0
-  }
-
-  private deleteRepository() {
-    let confirmed = window.confirm(
-      `Do you really want to delete ${this.repo.name} (${this.id})?`
-    )
-    if (!confirmed) {
-      return
-    }
-    vxm.repoModule.deleteRepo(this.id).then(() => {
-      vxm.repoDetailModule.selectedRepoId = ''
-      this.$router.replace({ name: 'repo-detail-frame', params: { id: '' } })
-    })
-  }
-
-  private get branches() {
-    return this.repo.branches
-      .slice()
-      .sort(
-        this.chainComparators(this.comparatorTrackStatus, (a, b) =>
-          a.localeCompare(b)
-        )
-      )
-  }
-
   private get commitHistory() {
     return vxm.repoDetailModule.historyForRepoId(this.id)
-  }
-
-  private comparatorTrackStatus(branchA: string, branchB: string) {
-    const aTracked = this.isBranchTracked(branchA)
-    const bTracked = this.isBranchTracked(branchB)
-    if (aTracked && bTracked) {
-      return 0
-    }
-    if (aTracked) {
-      return -1
-    }
-    if (bTracked) {
-      return 1
-    }
-    return 0
-  }
-
-  private chainComparators(
-    a: (a: string, b: string) => number,
-    b: (a: string, b: string) => number
-  ): (a: string, b: string) => number {
-    return (x, y) => {
-      if (a(x, y) !== 0) {
-        return a(x, y)
-      }
-      return b(x, y)
-    }
   }
 
   private get payload(): { repoId: string; amount: number; skip: number } {
