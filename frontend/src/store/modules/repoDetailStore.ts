@@ -15,6 +15,7 @@ import {
   differenceFromJson,
   comparisonFromJson
 } from '@/util/CommitComparisonJsonHelper'
+import { vxm } from '..'
 
 const VxModule = createModule({
   namespaced: 'repoDetailModule',
@@ -60,6 +61,30 @@ export class RepoDetailStore extends VxModule {
     this.setHistoryForRepo({ repoId: payload.repoId, history: resultArray })
 
     return Promise.resolve(resultArray)
+  }
+
+  @action
+  dispatchDeleteMeasurements(payload: {
+    measurementId: MeasurementID
+    repoId: string
+  }): Promise<void> {
+    return (
+      axios
+        .delete('/measurements', {
+          snackbarTag: 'delete-measurements',
+          params: {
+            repo_id: payload.repoId,
+            benchmark: payload.measurementId.benchmark,
+            metric: payload.measurementId.metric
+          }
+        })
+        // udpate repo
+        .then(() => {
+          return vxm.repoModule.fetchRepoByID(payload.repoId)
+        })
+        // delete result
+        .then(it => {})
+    )
   }
 
   @mutation

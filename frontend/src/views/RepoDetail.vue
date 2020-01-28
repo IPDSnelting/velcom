@@ -118,6 +118,15 @@
               </v-row>
             </v-container>
           </v-card-text>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn
+              color="error"
+              text
+              :disabled="!selectedBenchmark || !selectedMetric"
+              @click="deleteMetric"
+            >Delete metric</v-btn>
+          </v-card-actions>
         </v-card>
       </v-col>
     </v-row>
@@ -142,12 +151,12 @@
                       <v-col
                         cols="12"
                         class="my-1 py-0"
-                        v-for="([commit, commitComparison], index) in props.items"
+                        v-for="({ commit, comparison }, index) in props.items"
                         :key="index"
                       >
                         <run-overview
-                          v-if="commitComparison.second"
-                          :run="commitComparison.second"
+                          v-if="comparison.second"
+                          :run="comparison.second"
                           :commit="commit"
                           :hideActions="!isAdmin"
                         ></run-overview>
@@ -188,7 +197,7 @@
 
 <script lang="ts">
 import Vue from 'vue'
-import { Repo, Commit } from '@/store/types'
+import { Repo, Commit, MeasurementID } from '@/store/types'
 import Component from 'vue-class-component'
 import { Watch } from 'vue-property-decorator'
 import RepoUpdateDialog from '../components/dialogs/RepoUpdateDialog.vue'
@@ -318,6 +327,26 @@ export default class RepoDetail extends Vue {
 
   private onlyNumericInput(input: string): boolean | string {
     return !isNaN(Number(input)) ? true : 'Input must be a number!'
+  }
+
+  private deleteMetric() {
+    if (!this.selectedBenchmark || !this.selectedMetric) {
+      return
+    }
+    if (
+      window.confirm(
+        `Do you really want to delete metric '${this.selectedMetric}' in '${this.selectedBenchmark}'? 
+         This will also delete all measurements for this metric!`
+      )
+    ) {
+      vxm.repoDetailModule.dispatchDeleteMeasurements({
+        measurementId: new MeasurementID(
+          this.selectedBenchmark,
+          this.selectedMetric
+        ),
+        repoId: this.id
+      })
+    }
   }
 
   @Watch('id')
