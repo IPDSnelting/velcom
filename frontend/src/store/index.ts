@@ -19,6 +19,7 @@ interface RootState {
   queueModule: QueueStore
   repoComparisonModule: RepoComparisonStore
   repoModule: RepoStore
+  repoDetailModule: RepoDetailStore
   userModule: UserStore
 }
 
@@ -35,6 +36,9 @@ const vuexLocal = new VuexPersistence<RootState>({
           ._selectedBranchesByRepoID,
         startTime: (state.repoComparisonModule as any).startTime,
         stopTime: (state.repoComparisonModule as any).stopTime
+      },
+      repoDetailModule: {
+        _selectedRepoId: (state.repoDetailModule as any)._selectedRepoId
       }
     }
   }
