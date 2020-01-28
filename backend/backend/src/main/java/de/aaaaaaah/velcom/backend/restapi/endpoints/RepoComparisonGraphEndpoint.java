@@ -11,6 +11,7 @@ import de.aaaaaaah.velcom.backend.access.repocomparison.RepoComparisonAccess;
 import de.aaaaaaah.velcom.backend.access.repocomparison.timeslice.CommitGrouper;
 import de.aaaaaaah.velcom.backend.access.repocomparison.timeslice.GroupByDay;
 import de.aaaaaaah.velcom.backend.access.repocomparison.timeslice.GroupByHour;
+import de.aaaaaaah.velcom.backend.access.repocomparison.timeslice.GroupByWeek;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonGraphRepoInfo;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRepo;
 import java.time.Instant;
@@ -35,7 +36,10 @@ import javax.ws.rs.core.MediaType;
 public class RepoComparisonGraphEndpoint {
 
 	// Difference of start and end time (in seconds) below which the hourly grouper should be used.
-	private static final long HOURLY_THRESHOLD = 60 * 60 * 24 * 7; // one week
+	private static final long HOURLY_THRESHOLD = 60 * 60 * 24 * 20; // 20 days
+	// Difference of start and end time (in seconds) below which the daily grouper should be used.3
+	private static final long DAILY_THRESHOLD = 60 * 60 * 24 * 7 * 20; // 20 weeks
+	// If the start and end time difference is greater than this, the weekly grouper is used.
 
 	private final CommitAccess commitAccess;
 	private final RepoAccess repoAccess;
@@ -43,6 +47,7 @@ public class RepoComparisonGraphEndpoint {
 
 	private final CommitGrouper<Long> hourlyGrouper;
 	private final CommitGrouper<Long> dailyGrouper;
+	private final CommitGrouper<Long> weeklyGrouper;
 
 	public RepoComparisonGraphEndpoint(CommitAccess commitAccess, RepoAccess repoAccess,
 		RepoComparisonAccess repoComparisonAccess) {
@@ -53,6 +58,7 @@ public class RepoComparisonGraphEndpoint {
 
 		hourlyGrouper = new GroupByHour();
 		dailyGrouper = new GroupByDay();
+		weeklyGrouper = new GroupByWeek();
 	}
 
 	/**
@@ -73,8 +79,10 @@ public class RepoComparisonGraphEndpoint {
 		CommitGrouper<Long> grouper;
 		if (difference < HOURLY_THRESHOLD) {
 			grouper = hourlyGrouper;
-		} else {
+		} else if (difference < DAILY_THRESHOLD) {
 			grouper = dailyGrouper;
+		} else {
+			grouper = weeklyGrouper;
 		}
 
 		final List<JsonGraphRepoInfo> repoInfos = request.getRepos().stream()
