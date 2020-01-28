@@ -7,6 +7,7 @@ import de.aaaaaaah.velcom.backend.access.commit.CommitAccess;
 import de.aaaaaaah.velcom.backend.access.repo.RemoteUrl;
 import de.aaaaaaah.velcom.backend.access.repo.RepoAccess;
 import de.aaaaaaah.velcom.backend.access.repocomparison.RepoComparisonAccess;
+import de.aaaaaaah.velcom.backend.access.repocomparison.timeslice.GroupByDay;
 import de.aaaaaaah.velcom.backend.access.repocomparison.timeslice.GroupByHour;
 import de.aaaaaaah.velcom.backend.access.token.AuthToken;
 import de.aaaaaaah.velcom.backend.access.token.TokenAccess;
@@ -83,7 +84,7 @@ public class ServerMain extends Application<GlobalConfig> {
 		RepoAccess repoAccess = new RepoAccess(accessLayer, databaseStorage, repoStorage,
 			new RemoteUrl(configuration.getBenchmarkRepoRemoteUrl()));
 		RepoComparisonAccess repoComparisonAccess =
-			new RepoComparisonAccess(databaseStorage, new GroupByHour());
+			new RepoComparisonAccess(databaseStorage, new GroupByDay());
 		TokenAccess tokenAccess = new TokenAccess(configuration, accessLayer, databaseStorage,
 			new AuthToken(configuration.getWebAdminToken()));
 
