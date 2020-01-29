@@ -58,7 +58,7 @@ export class RepoComparisonStore extends VxModule {
     } else if (payload.startTime === null) {
       effectiveStopTime = undefined
     } else {
-      effectiveStopTime = this.stopDate.getTime() / 1000
+      effectiveStopTime = this.stopDate.getTime() / 1000 + 60 * 60 * 24
     }
 
     const response = await axios.post(
