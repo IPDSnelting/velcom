@@ -49,11 +49,12 @@
                               v-model="startTimeString"
                               label="from:"
                               :prepend-icon="dateIcon"
+                              :rules="[notAfterToday]"
                               readonly
                               v-on="on"
                             ></v-text-field>
                           </template>
-                          <v-date-picker v-model="startTimeString" :max="today" no-title scrollable>
+                          <v-date-picker v-model="startTimeString" no-title scrollable>
                             <v-btn
                               text
                               color="primary"
@@ -84,17 +85,12 @@
                               v-model="stopTimeString"
                               label="to:"
                               :prepend-icon="dateIcon"
+                              :rules="[stopAfterStart, notAfterToday]"
                               readonly
                               v-on="on"
                             ></v-text-field>
                           </template>
-                          <v-date-picker
-                            v-model="stopTimeString"
-                            :min="startTimeString"
-                            :max="today"
-                            no-title
-                            scrollable
-                          >
+                          <v-date-picker v-model="stopTimeString" no-title scrollable>
                             <v-btn
                               text
                               color="primary"
@@ -220,6 +216,22 @@ export default class RepoComparison extends Vue {
     vxm.repoComparisonModule.stopDate = new Date(value)
   }
 
+  private stopAfterStart(): boolean | string {
+    return vxm.repoComparisonModule.startDate.getTime() <=
+      vxm.repoComparisonModule.stopDate.getTime()
+      ? true
+      : 'This date must not be be before the first!'
+  }
+
+  private notAfterToday(input: string): boolean | string {
+    let inputDate = new Date(input)
+    let inputTime = inputDate.getTime()
+    let today: Date = new Date()
+    return inputTime <= today.getTime()
+      ? true
+      : 'This date must not be after today!'
+  }
+
   @Watch('selectedBenchmark')
   clearMetricOnBenchmarkSelection() {
     if (
@@ -235,7 +247,7 @@ export default class RepoComparison extends Vue {
 
   @Watch('selectedMetric')
   retrieveGraphData() {
-    if (this.selectedMetric !== '') {
+    if (this.selectedMetric !== '' && this.stopAfterStart && this.notAfterToday) {
       vxm.repoComparisonModule.fetchComparisonData(this.payload)
     }
   }
