@@ -44,6 +44,14 @@ export default class App extends Vue {
   min-height: 64px;
 }
 
+.theme--light.v-application a.concealed-link {
+  color: rgba(0, 0, 0, 0.87) !important;
+}
+
+.v-application .theme--dark a.concealed-link {
+  color: #ffffff !important;
+}
+
 .concealed-link {
   text-decoration: none;
   cursor: pointer;

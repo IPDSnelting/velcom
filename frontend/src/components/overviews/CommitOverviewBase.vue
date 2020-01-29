@@ -12,7 +12,6 @@
                 <span class="mx-2">—</span>
                 <router-link
                   class="concealed-link"
-                  tag="span"
                   :to="{ name: 'commit-detail', params: { repoID: commit.repoID, hash: commit.hash } }"
                 >
                   <span class="commit-message">{{ commit.summary }}</span>
