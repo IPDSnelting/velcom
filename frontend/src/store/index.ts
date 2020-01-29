@@ -28,7 +28,11 @@ const persistenceLocalStorage = new VuexPersistence<RootState>({
   reducer: state => {
     return {
       userModule: state.userModule,
-      colorModule: state.colorModule
+      colorModule: state.colorModule,
+      repoStore: {
+        repoIndices: (state.repoModule as any).repoIndices,
+        currentRepoIndex: (state.repoModule as any).currentRepoIndex
+      }
     }
   }
 })
