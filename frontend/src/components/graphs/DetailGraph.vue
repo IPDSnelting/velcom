@@ -1,5 +1,5 @@
 <template>
-  <v-card ref="graph-card" flat outlined style="max-height: 800px">
+  <v-card ref="graph-card" flat outlined style="max-height: 1000px">
     <v-container>
       <v-row align="center" justify="center">
         <v-col>
@@ -47,17 +47,7 @@ export default class DetailGraph extends Vue {
 
   created() {
     this.resizeListener = () => {
-      if (!this.$refs['graph-card']) {
-        return
-      }
-      let card = (this.$refs['graph-card'] as Vue).$el as HTMLElement
-      if (!card) {
-        return
-      }
-
-      this.width = card.getBoundingClientRect().width - 40
-      this.height = card.getBoundingClientRect().height - 10
-
+      this.resize()
       this.updateYourself()
     }
     window.addEventListener('resize', this.resizeListener)
@@ -67,8 +57,24 @@ export default class DetailGraph extends Vue {
     window.removeEventListener('resize', this.resizeListener)
   }
 
-  private width: number = 900
-  private height: number = 500
+  resize() {
+    if (!this.$refs['graph-card']) {
+      return
+    }
+    let card = (this.$refs['graph-card'] as Vue).$el as HTMLElement
+    if (!card) {
+      return
+    }
+
+    this.width = card.getBoundingClientRect().width - 40
+    this.height =
+      this.width > 1000 ? this.width * (3 / 7) : this.width * (9 / 16)
+
+    console.log(this.width, this.height)
+  }
+
+  private width: number = 0
+  private height: number = 0
 
   private svg: any = null
 
@@ -284,7 +290,8 @@ export default class DetailGraph extends Vue {
       .append('circle')
       .attr('class', 'datapoint')
       .attr('fill', (d: any) => this.datapointColor(d))
-      .attr('stroke', (d: any) => this.datapointColor(d))
+      .attr('stroke', (d: any) => this.strokeColor(d))
+      .attr('stroke-width', 2)
       .attr('r', 4)
       .attr('cx', (d: any) => {
         return this.x(d)
@@ -306,6 +313,14 @@ export default class DetailGraph extends Vue {
   }
 
   datapointColor(d: any): string {
+    let wantedMeasurement = this.wantedMeasurementForDatapoint(d)
+    if (wantedMeasurement && wantedMeasurement.successful) {
+      return this.colorById(this.selectedRepo)
+    }
+    return 'white'
+  }
+
+  strokeColor(d: any): string {
     let wantedMeasurement = this.wantedMeasurementForDatapoint(d)
     if (wantedMeasurement && wantedMeasurement.successful) {
       return this.colorById(this.selectedRepo)
@@ -404,6 +419,7 @@ export default class DetailGraph extends Vue {
   }
 
   mounted() {
+    this.resize()
     this.updateYourself()
   }
 }
