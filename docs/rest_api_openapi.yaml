@@ -1075,6 +1075,50 @@ paths:
                     required:
                       - differences
                       - second_commit
+                  next:
+                    title: Commit
+                    type: object
+                    properties:
+                      repo_id:
+                        type: string
+                        title: RepoId
+                        format: uuid
+                        description: repo id
+                      hash:
+                        title: CommitHash
+                        type: string
+                        description: commit hash
+                      author:
+                        type: string
+                      author_date:
+                        type: integer
+                        title: Time
+                        description: unix/epoch time (seconds since 1970-01-01)
+                        format: int64
+                      committer:
+                        type: string
+                      committer_date:
+                        type: integer
+                        title: Time
+                        description: unix/epoch time (seconds since 1970-01-01)
+                        format: int64
+                      message:
+                        type: string
+                      parents:
+                        type: array
+                        items:
+                          title: CommitHash
+                          type: string
+                          description: commit hash
+                    required:
+                      - repo_id
+                      - hash
+                      - author
+                      - author_date
+                      - committer
+                      - committer_date
+                      - message
+                      - parents
                 required:
                   - comparison
         '404':

@@ -4,6 +4,7 @@ import de.aaaaaaah.velcom.backend.access.commit.Commit;
 import de.aaaaaaah.velcom.backend.access.repo.Branch;
 import de.aaaaaaah.velcom.backend.access.repo.BranchName;
 import de.aaaaaaah.velcom.backend.access.repo.Repo;
+import de.aaaaaaah.velcom.backend.util.Pair;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -68,7 +69,6 @@ public interface LinearLog {
 	default Optional<Commit> getPreviousCommit(Commit commit) {
 		Repo repo = commit.getRepo();
 
-		// Close manually!
 		try (Stream<Commit> walk = walkBranches(repo, repo.getTrackedBranches())) {
 			Iterator<Commit> remainingCommits = walk
 				.dropWhile(c -> !commit.equals(c))
@@ -80,6 +80,38 @@ public interface LinearLog {
 				: Optional.empty();
 		} catch (LinearLogException e) {
 			return Optional.empty();
+		}
+	}
+
+	default Pair<Optional<Commit>, Optional<Commit>> getPrevNextCommits(Commit commit) {
+		Repo repo = commit.getRepo();
+		try (Stream<Commit> walk = walkBranches(repo, repo.getTrackedBranches())) {
+			Iterator<Commit> iterator = walk.iterator();
+
+			boolean foundCommit = false;
+			Commit nextCommit = null;
+			while (iterator.hasNext()) {
+				Commit currentCommit = iterator.next();
+				if (currentCommit.getHash().equals(commit.getHash())) {
+					foundCommit = true;
+					break;
+				} else {
+					nextCommit = currentCommit;
+				}
+			}
+
+			if (!foundCommit) {
+				return new Pair<>(Optional.empty(), Optional.empty());
+			}
+
+			Commit prevCommit = null;
+			if (iterator.hasNext()) {
+				prevCommit = iterator.next();
+			}
+
+			return new Pair<>(Optional.ofNullable(prevCommit), Optional.ofNullable(nextCommit));
+		} catch (LinearLogException e) {
+			return new Pair<>(Optional.empty(), Optional.empty());
 		}
 	}
 

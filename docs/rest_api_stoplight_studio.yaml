@@ -302,6 +302,8 @@ paths:
                 properties:
                   comparison:
                     $ref: '#/components/schemas/CommitComparison'
+                  next:
+                    $ref: '#/components/schemas/Commit'
                 required:
                   - comparison
         '404':

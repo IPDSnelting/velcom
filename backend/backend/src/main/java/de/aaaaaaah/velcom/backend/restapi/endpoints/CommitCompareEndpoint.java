@@ -9,10 +9,13 @@ import de.aaaaaaah.velcom.backend.access.repo.RepoId;
 import de.aaaaaaah.velcom.backend.data.commitcomparison.CommitComparer;
 import de.aaaaaaah.velcom.backend.data.commitcomparison.CommitComparison;
 import de.aaaaaaah.velcom.backend.data.linearlog.LinearLog;
+import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonCommit;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonCommitComparison;
 import de.aaaaaaah.velcom.backend.restapi.util.ErrorResponseUtil;
+import de.aaaaaaah.velcom.backend.util.Pair;
 import java.util.Optional;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -67,10 +70,13 @@ public class CommitCompareEndpoint {
 				"No commit with hash " + secondHashString + " found");
 		}
 
+		final Pair<Optional<Commit>, Optional<Commit>> prevAndNext = linearLog.getPrevNextCommits(
+			secondCommit.get());
+
 		Optional<Commit> firstCommit = Optional.ofNullable(firstHashString)
 			.map(CommitHash::new)
 			.map(hash -> commitAccess.getCommit(repoId, hash))
-			.or(() -> secondCommit.flatMap(linearLog::getPreviousCommit));
+			.or(prevAndNext::getFirst);
 
 		Optional<Run> firstRun = firstCommit.flatMap(benchmarkAccess::getLatestRunOf);
 		Optional<Run> secondRun = secondCommit.flatMap(benchmarkAccess::getLatestRunOf);
@@ -79,15 +85,21 @@ public class CommitCompareEndpoint {
 			firstCommit.orElse(null), firstRun.orElse(null),
 			secondCommit.get(), secondRun.orElse(null)
 		);
-		return new GetReply(new JsonCommitComparison(comparison));
+		return new GetReply(comparison, prevAndNext.getFirst().orElse(null),
+			prevAndNext.getSecond().orElse(null));
 	}
 
 	private static class GetReply {
 
 		private final JsonCommitComparison comparison;
+		@Nullable
+		private final JsonCommit next;
 
-		public GetReply(JsonCommitComparison comparison) {
-			this.comparison = comparison;
+		public GetReply(CommitComparison comparison, @Nullable Commit previous,
+			@Nullable Commit next) {
+
+			this.comparison = new JsonCommitComparison(comparison);
+			this.next = (next != null) ? new JsonCommit(next) : null;
 		}
 
 		public JsonCommitComparison getComparison() {
