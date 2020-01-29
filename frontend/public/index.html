@@ -10,15 +10,20 @@
       rel="stylesheet"
       href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900"
     />
-    <!--     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@latest/css/materialdesignicons.min.css">
- -->
+    <style>
+      .no-script {
+        display: inline-block;
+        font-size: 2em;
+        /* Old arcane arts of centering to ensure maximum compatibility */
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+    </style>
   </head>
   <body>
-  <noscript>
-    <font size="+2">
-      <center>
-	<pre>
-
+    <noscript>
+      <pre class="no-script">
        .----------.      ____________ ‎
       /  .-.  .-.  \    /            \‎
      /   | |  | |   \   |  Aaaaaaah! |‎
@@ -32,11 +37,9 @@
 We're sorry but VelCom doesn't work
 properly without JavaScript.
 Please enable JavaScript to continue.
-	</pre>
-      </center>
-    </font>
-  </noscript>
-  <div id="app"></div>
-  <!-- built files will be auto injected -->
+      </pre>
+    </noscript>
+    <div id="app"></div>
+    <!-- built files will be auto injected -->
   </body>
 </html>
