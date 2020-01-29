@@ -128,11 +128,11 @@
         </v-col>
       </v-row>
 
-      <v-row align="start" justify="start" class="d-flex">
+      <v-row align="start" justify="start" class="d-flex" no-gutters>
         <v-col cols="auto">
           <repo-selector v-on:selectionChanged="retrieveGraphData()"></repo-selector>
         </v-col>
-        <v-col>
+        <v-col md="9" class="mt-3">
           <comparison-graph :metric="this.selectedMetric"></comparison-graph>
         </v-col>
       </v-row>

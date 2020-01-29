@@ -1,5 +1,5 @@
 <template>
-  <v-card flat outlined ref="graph-card" class>
+  <v-card flat outlined ref="graph-card">
     <v-container>
       <v-row align="center" justify="center">
         <v-col>
@@ -24,8 +24,55 @@ export default class ComparisonGraph extends Vue {
   @Prop({})
   metric!: string
 
-  private width: number = 900
-  private height: number = 500
+  private resizeListener: () => void = () => {}
+
+  created() {
+    this.resizeListener = () => {
+      this.debounce(this.resize, 1000)()
+      this.updateYourself()
+    }
+    window.addEventListener('resize', this.resizeListener)
+  }
+
+  beforeDestroy() {
+    window.removeEventListener('resize', this.resizeListener)
+  }
+
+  resize() {
+    if (!this.$refs['graph-card']) {
+      return
+    }
+    let card = (this.$refs['graph-card'] as Vue).$el as HTMLElement
+    if (!card) {
+      return
+    }
+
+    this.width = card.getBoundingClientRect().width - 40
+    this.height =
+      this.width > 1000 ? this.width * (3 / 7) : this.width * (9 / 16)
+
+    console.log(this.width, this.height)
+  }
+
+  debounce(func: Function, wait: number) {
+    return () => {
+      if (this.notifyTimeout) {
+        return
+      }
+      let context = this
+      let args = arguments
+      clearTimeout(this.notifyTimeout)
+      this.notifyTimeout = setTimeout(() => {
+        this.notifyTimeout = undefined
+        func.apply(context, args)
+      }, wait)
+    }
+  }
+
+  private notifyTimeout: number | undefined
+
+  private width: number = 0
+  private height: number = 0
 
   private svg: any = null
 
@@ -43,9 +90,13 @@ export default class ComparisonGraph extends Vue {
     bottom: 100
   }
 
-  private innerWidth: number = this.width - this.margin.left - this.margin.right
-  private innerHeight: number =
-    this.height - this.margin.top - this.margin.bottom
+  get innerWidth() {
+    return this.width - this.margin.left - this.margin.right
+  }
+
+  get innerHeight() {
+    return this.height - this.margin.top - this.margin.bottom
+  }
 
   private timeFormat: any = d3.timeFormat('%Y-%m-%d')
   private valueFormat: any = d3.format('<.4')
@@ -193,7 +244,7 @@ export default class ComparisonGraph extends Vue {
       .attr('class', 'datapoint')
       .attr('fill', this.colorById(repoID))
       .attr('stroke', this.colorById(repoID))
-      .attr('r', 3)
+      .attr('r', 4)
       .attr('cx', (d: any) => {
         return this.xScale(d.commit.authorDate * 1000)
       })
@@ -244,7 +295,10 @@ export default class ComparisonGraph extends Vue {
       .style('opacity', 0)
   }
 
-  mounted() {
+  updateYourself() {
+    d3.select('#svg-container')
+      .selectAll('*')
+      .remove()
     this.svg = d3
       .select('#svg-container')
       .append('svg')
@@ -274,6 +328,12 @@ export default class ComparisonGraph extends Vue {
 
     this.drawXAxis()
     this.drawYAxis()
+    this.drawGraph()
+  }
+
+  mounted() {
+    this.resize()
+    this.updateYourself()
   }
 }
 </script>
