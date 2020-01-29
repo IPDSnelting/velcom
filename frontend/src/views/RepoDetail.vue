@@ -80,70 +80,12 @@
     </v-row>
     <v-row align="baseline" justify="center">
       <v-col>
-        <repo-commit-overview :repo="repo"></repo-commit-overview>=======
         <detail-graph :benchmark="selectedBenchmark" :metric="selectedMetric" :amount="amount"></detail-graph>
       </v-col>
     </v-row>
     <v-row align="baseline" justify="center">
       <v-col>
-        <v-card>
-          <v-card-title>
-            <v-toolbar color="primary darken-1" dark>Recent commits in this repo</v-toolbar>
-          </v-card-title>
-          <v-card-text>
-            <v-container fluid>
-              <v-row align="center">
-                <v-data-iterator
-                  :items="commitHistory"
-                  :hide-default-footer="commitHistory.length < defaultItemsPerPage"
-                  :items-per-page="defaultItemsPerPage"
-                  :footer-props="{ itemsPerPageOptions: itemsPerPageOptions }"
-                  style="width: 100%"
-                >
-                  <template v-slot:default="props">
-                    <v-row>
-                      <v-col
-                        cols="12"
-                        class="my-1 py-0"
-                        v-for="({ commit, comparison }, index) in props.items"
-                        :key="index"
-                      >
-                        <run-overview
-                          v-if="comparison.second"
-                          :run="comparison.second"
-                          :commit="commit"
-                          :hideActions="!isAdmin"
-                        ></run-overview>
-                        <commit-overview-base v-else :commit="commit">
-                          <template #avatar>
-                            <v-list-item-avatar>
-                              <v-tooltip top>
-                                <template #activator="{ on }">
-                                  <v-icon
-                                    v-on="on"
-                                    size="32px"
-                                    color="gray"
-                                  >{{ notBenchmarkedIcon }}</v-icon>
-                                </template>
-                                This commit was never benchmarked!
-                              </v-tooltip>
-                            </v-list-item-avatar>
-                          </template>
-                          <template #actions v-if="isAdmin">
-                            <commit-benchmark-actions
-                              :hasExistingBenchmark="false"
-                              @benchmark="benchmark(commit)"
-                            ></commit-benchmark-actions>
-                          </template>
-                        </commit-overview-base>
-                      </v-col>
-                    </v-row>
-                  </template>
-                </v-data-iterator>
-              </v-row>
-            </v-container>
-          </v-card-text>
-        </v-card>>>>>>>> basic detail graph component
+        <repo-commit-overview :repo="repo"></repo-commit-overview>
       </v-col>
     </v-row>
   </v-container>

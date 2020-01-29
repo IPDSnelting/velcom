@@ -128,7 +128,7 @@ export default class ComparisonGraph extends Vue {
 
   get yLabel(): string {
     if (this.metric) {
-      return this.metric + ' in ' + this.unit
+      return this.unit ? this.metric + ' in ' + this.unit : this.metric
     } else {
       return 'please select benchmark and metric'
     }
