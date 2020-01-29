@@ -42,12 +42,17 @@ export function comparisonFromJson(jsonComparison: any): CommitComparison {
     : null
   let secondCommit: Commit | null = commitFromJson(jsonComparison.second_commit)
 
+  let nextCommit: Commit | null = jsonComparison.next
+    ? commitFromJson(jsonComparison.next)
+    : null
+
   return new CommitComparison(
     firstRun,
     secondRun,
     firstCommit,
     secondCommit,
-    differences
+    differences,
+    nextCommit
   )
 }
 

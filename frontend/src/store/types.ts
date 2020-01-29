@@ -156,19 +156,22 @@ export class CommitComparison {
   firstCommit: Commit | null
   secondCommit: Commit
   differences: Difference[]
+  nextCommit: Commit | null
 
   constructor(
     first: Run | null,
     second: Run | null,
     firstCommit: Commit | null,
     secondCommit: Commit,
-    differences: Difference[]
+    differences: Difference[],
+    nextCommit: Commit | null
   ) {
     this.first = first
     this.second = second
     this.firstCommit = firstCommit
     this.secondCommit = secondCommit
     this.differences = differences
+    this.nextCommit = nextCommit
   }
 }
 
