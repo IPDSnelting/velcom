@@ -97,6 +97,9 @@ export default class CommitInformation extends Vue {
   @Prop()
   private hasExistingBenchmark!: boolean
 
+  @Prop()
+  private nextCommit: Commit | null = null
+
   private formattedDate(date: number) {
     return formatDate(date)
   }

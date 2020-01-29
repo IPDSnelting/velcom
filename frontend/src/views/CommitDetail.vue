@@ -1,7 +1,12 @@
 <template>
   <v-container>
     <v-row>
-      <commit-information v-if="commit" :commit="commit" :hasExistingBenchmark="hasRun"></commit-information>
+      <commit-information
+        v-if="commit"
+        :nextCommit="nextCommit"
+        :commit="commit"
+        :hasExistingBenchmark="hasRun"
+      ></commit-information>
     </v-row>
     <v-row v-if="hasRun && isError">
       <v-col>
@@ -84,6 +89,10 @@ export default class CommitDetail extends Vue {
 
   get commit(): Commit | null {
     return this.comparison ? this.comparison.secondCommit : null
+  }
+
+  get nextCommit(): Commit | null {
+    return this.comparison && this.comparison.nextCommit
   }
 
   get comparison(): CommitComparison | null {
