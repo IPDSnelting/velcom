@@ -111,15 +111,12 @@
                         </v-menu>
                       </v-col>
                       <v-col>
+                        <v-btn text color="primary" @click="resetDates()">Reset dates</v-btn>
                         <v-btn
+                          :disabled="!selectedBenchmark || !selectedMetric"
                           text
                           color="primary"
-                          @click="startTimeString = defaultStartTime; stopTimeString = defaultStopTime"
-                        >Reset dates</v-btn>
-                        <v-btn
-                          text
-                          color="primary"
-                          @click="$globalSnackbar.setError('comparison', 'Not implemented')"
+                          @click="autoZoom()"
                         >Auto zoom</v-btn>
                       </v-col>
                     </v-row>
@@ -223,14 +220,6 @@ export default class RepoComparison extends Vue {
     vxm.repoComparisonModule.stopDate = new Date(value)
   }
 
-  get defaultStartTime() {
-    return vxm.repoComparisonModule.defaultStartTime
-  }
-
-  get defaultStopTime() {
-    return vxm.repoComparisonModule.defaultStopTime
-  }
-
   @Watch('selectedBenchmark')
   clearMetricOnBenchmarkSelection() {
     if (
@@ -249,6 +238,45 @@ export default class RepoComparison extends Vue {
     if (this.selectedMetric !== '') {
       vxm.repoComparisonModule.fetchComparisonData(this.payload)
     }
+  }
+
+  private resetDates() {
+    this.startTimeString = vxm.repoComparisonModule.defaultStartTime
+    this.stopTimeString = vxm.repoComparisonModule.defaultStopTime
+
+    if (this.selectedBenchmark && this.selectedMetric) {
+      this.retrieveGraphData()
+    }
+  }
+
+  private autoZoom() {
+    vxm.repoComparisonModule
+      .fetchComparisonData({
+        startTime: null,
+        stopTime: null,
+        ...this.payload
+      })
+      .then(data => {
+        let { min, max } = Object.values(data)
+          .flatMap(it => it)
+          .reduce(
+            (accumulated, next) => {
+              let time = next.commit.authorDate
+              if (time && time < accumulated.min) {
+                accumulated.min = time
+              }
+              if (time && time > accumulated.max) {
+                accumulated.max = time
+              }
+              return accumulated
+            },
+            { min: 1e200, max: 0 }
+          )
+        console.log(min + ' ' + max)
+
+        vxm.repoComparisonModule.startDate = new Date(min * 1000)
+        vxm.repoComparisonModule.stopDate = new Date(max * 1000)
+      })
   }
 }
 </script>

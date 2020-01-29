@@ -38,15 +38,35 @@ export class RepoComparisonStore extends VxModule {
   async fetchComparisonData(payload: {
     benchmark: string
     metric: string
+    startTime?: string | null
+    stopTime?: string | null
   }): Promise<{ [key: string]: Datapoint[] }> {
     this.cleanupSelectedBranches()
+
+    let effectiveStartTime: number | undefined
+    if (payload.startTime) {
+      effectiveStartTime = new Date(payload.startTime).getTime()
+    } else if (payload.startTime === null) {
+      effectiveStartTime = undefined
+    } else {
+      effectiveStartTime = this.startDate.getTime() / 1000
+    }
+
+    let effectiveStopTime: number | undefined
+    if (payload.stopTime) {
+      effectiveStopTime = new Date(payload.stopTime).getTime()
+    } else if (payload.startTime === null) {
+      effectiveStopTime = undefined
+    } else {
+      effectiveStopTime = this.stopDate.getTime() / 1000
+    }
 
     const response = await axios.post(
       '/repo-comparison-graph',
       {
         repos: this.selectedReposWithBranches,
-        start_time: this.startDate.getTime() / 1000,
-        stop_time: this.stopDate.getTime() / 1000,
+        start_time: effectiveStartTime,
+        stop_time: effectiveStopTime,
         benchmark: payload.benchmark,
         metric: payload.metric
       },
