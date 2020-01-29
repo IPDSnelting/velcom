@@ -320,7 +320,7 @@ export default class DetailGraph extends Vue {
         d.commit.author +
         '<br> authored on ' +
         formatDateUTC(d.commit.authorDate) +
-        '<br />This commit could was not benchmarked successfully for this metric.'
+        '<br />This commit was not benchmarked successfully for this metric.'
     } else {
       htmlMessage =
         'Commit ' + d.commit.hash + '<br />author:' + d.commit.author
