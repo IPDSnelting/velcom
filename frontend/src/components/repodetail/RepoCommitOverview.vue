@@ -10,7 +10,7 @@
           <v-row align="start" justify="space-around" no-gutters>
             <v-col cols="5">
               <v-autocomplete
-                v-model="firstHash"
+                v-model="firstCommit"
                 :items="allCommits"
                 :filter="filterCommits"
                 item-value="hash"
@@ -20,6 +20,7 @@
                 auto-select-first
                 hide-no-data
                 hide-selected
+                return-object
                 clearable
               >
                 <template v-slot:item="data">
@@ -32,9 +33,9 @@
             </v-col>
             <v-col cols="5">
               <v-autocomplete
-                v-model="secondHash"
-                :items="allCommits"
-                :disabled="firstHashEntered"
+                v-model="secondCommit"
+                :items="secondCommitCandidates"
+                :disabled="!firstChosen"
                 item-value="hash"
                 item-text="hash"
                 label="second commit"
@@ -43,6 +44,7 @@
                 hide-no-data
                 hide-selected
                 clearable
+                return-object
                 @input="navigateToComparison"
               >
                 <template v-slot:item="data">
@@ -134,23 +136,32 @@ export default class RepoCommitOverview extends Vue {
   @Prop()
   private repo!: Repo
 
-  private firstHash: string = ''
-  private secondHash: string = ''
+  private firstCommit: Commit | null | undefined = null
+  private secondCommit: Commit | null | undefined = null
 
-  private get firstHashEntered(): boolean {
-    return this.firstHash === ''
+  private get firstChosen(): boolean {
+    return this.firstCommit != null && this.firstCommit !== undefined
   }
 
   private get commitHistory() {
     return vxm.repoDetailModule.historyForRepoId(this.repo.id)
   }
 
-  private get allCommits() {
+  private get allCommits(): Commit[] {
     return vxm.repoDetailModule
       .historyForRepoId(this.repo.id)
       .map((datapoint: { commit: Commit; comparison: CommitComparison }) => {
         return datapoint.commit
       })
+  }
+
+  private get secondCommitCandidates(): Commit[] {
+    return this.allCommits.filter((commit: Commit) => {
+      let first = this.firstCommit
+      if (first !== null && first !== undefined) {
+        return commit.hash !== first.hash
+      }
+    })
   }
 
   private get isAdmin() {
@@ -173,14 +184,16 @@ export default class RepoCommitOverview extends Vue {
   }
 
   navigateToComparison() {
-    this.$router.push({
-      name: 'commit-comparison',
-      params: {
-        repoID: this.repo.id,
-        hashOne: this.firstHash,
-        hashTwo: this.secondHash
-      }
-    })
+    if (this.firstCommit && this.secondCommit) {
+      this.$router.push({
+        name: 'commit-comparison',
+        params: {
+          repoID: this.repo.id,
+          hashOne: this.firstCommit.hash,
+          hashTwo: this.secondCommit.hash
+        }
+      })
+    }
   }
 
   // ============== ICONS ==============
