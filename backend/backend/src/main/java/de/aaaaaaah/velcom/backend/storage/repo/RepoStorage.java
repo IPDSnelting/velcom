@@ -16,7 +16,6 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.lib.RepositoryBuilder;
@@ -122,12 +121,7 @@ public class RepoStorage {
 
 			Files.createDirectory(repoDir);
 
-			CloneCommand cloneCommand = Git.cloneRepository()
-				.setURI(remoteUrl)
-				.setDirectory(repoDir.toFile())
-				.setBare(true);
-
-			cloneCommand.call().close();
+			GuickCloning.getInstance().cloneMirror(remoteUrl, repoDir);
 
 			return repoDir;
 		} catch (DirectoryAlreadyExistsException e) {

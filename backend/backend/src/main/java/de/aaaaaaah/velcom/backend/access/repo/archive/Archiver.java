@@ -1,7 +1,8 @@
 package de.aaaaaaah.velcom.backend.access.repo.archive;
 
-import de.aaaaaaah.velcom.backend.access.commit.Commit;
 import de.aaaaaaah.velcom.backend.access.commit.CommitHash;
+import de.aaaaaaah.velcom.backend.storage.repo.GuickCloning;
+import de.aaaaaaah.velcom.backend.storage.repo.GuickCloning.CloneException;
 import de.aaaaaaah.velcom.backend.storage.repo.RepoStorage;
 import de.aaaaaaah.velcom.backend.storage.repo.exception.RepositoryAcquisitionException;
 import de.aaaaaaah.velcom.backend.util.CheckedConsumer;
@@ -19,8 +20,6 @@ import java.util.function.Consumer;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.utils.IOUtils;
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Repository;
 import org.slf4j.Logger;
@@ -144,7 +143,7 @@ public class Archiver {
 	}
 
 	private void cloneRepo(String originalRepoDirName, Path destinationCloneDir, CommitHash hash)
-		throws IOException, GitAPIException, RepositoryAcquisitionException {
+		throws IOException, RepositoryAcquisitionException, CloneException {
 
 		long start = System.currentTimeMillis();
 
@@ -165,22 +164,11 @@ public class Archiver {
 
 			Path originalRepoPath = repoStorage.getRepoDir(originalRepoDirName);
 
-			try (Git clone = Git.cloneRepository()
-				.setBare(false)
-				.setCloneSubmodules(true)
-				.setCloneAllBranches(false)
-				.setURI(originalRepoPath.toUri().toString())
-				.setDirectory(destinationCloneDir.toFile())
-				.call()) {
-
-				clone.checkout().setName(hash.getHash()).call();
-
-				// Use git clean to remove untracked submodules
-				clone.clean()
-					.setCleanDirectories(true)
-					.setForce(true)
-					.call();
-			}
+			GuickCloning.getInstance().cloneCommit(
+				originalRepoPath.toAbsolutePath().toString(),
+				destinationCloneDir,
+				hash.getHash()
+			);
 		} catch (Exception e) {
 			// clone operation failed => try to delete clone directory
 			try {
