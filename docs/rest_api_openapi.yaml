@@ -356,8 +356,6 @@ paths:
                   type: string
               required:
                 - repos
-                - start_time
-                - stop_time
                 - benchmark
                 - metric
       responses:

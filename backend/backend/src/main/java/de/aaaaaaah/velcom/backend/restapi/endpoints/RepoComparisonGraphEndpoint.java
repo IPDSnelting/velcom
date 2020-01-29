@@ -13,11 +13,11 @@ import de.aaaaaaah.velcom.backend.access.repocomparison.timeslice.GroupByDay;
 import de.aaaaaaah.velcom.backend.access.repocomparison.timeslice.GroupByHour;
 import de.aaaaaaah.velcom.backend.access.repocomparison.timeslice.GroupByWeek;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonGraphRepoInfo;
-import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRepo;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.validation.constraints.NotNull;
@@ -71,36 +71,44 @@ public class RepoComparisonGraphEndpoint {
 	@POST
 	public PostReply post(@NotNull PostRequest request) {
 		// Make sure that the stop time comes before the start time.
-		Instant startTime;
-		Instant stopTime;
-		if (request.getStartTime() <= request.getStopTime()) {
-			startTime = Instant.ofEpochSecond(request.getStartTime());
-			stopTime = Instant.ofEpochSecond(request.getStopTime());
-		} else {
-			stopTime = Instant.ofEpochSecond(request.getStartTime());
-			startTime = Instant.ofEpochSecond(request.getStopTime());
+		Optional<Instant> startTime = request.getStartTime().map(Instant::ofEpochSecond);
+		Optional<Instant> stopTime = request.getStopTime().map(Instant::ofEpochSecond);
+
+		if (startTime.isPresent() && stopTime.isPresent() && stopTime.get()
+			.isBefore(startTime.get())) {
+
+			Optional<Instant> tmp = startTime;
+			startTime = stopTime;
+			stopTime = tmp;
 		}
 
 		MeasurementName measurementName = new MeasurementName(request.getBenchmark(),
 			request.getMetric());
 
-		long difference = stopTime.getEpochSecond() - startTime.getEpochSecond();
 		CommitGrouper<Long> grouper;
-		if (difference < HOURLY_THRESHOLD) {
-			grouper = hourlyGrouper;
-		} else if (difference < DAILY_THRESHOLD) {
-			grouper = dailyGrouper;
+		if (startTime.isPresent() && stopTime.isPresent()) {
+			long difference = stopTime.get().getEpochSecond() - startTime.get().getEpochSecond();
+			if (difference < HOURLY_THRESHOLD) {
+				grouper = hourlyGrouper;
+			} else if (difference < DAILY_THRESHOLD) {
+				grouper = dailyGrouper;
+			} else {
+				grouper = weeklyGrouper;
+			}
 		} else {
-			grouper = weeklyGrouper;
+			grouper = weeklyGrouper; // TODO choose grouper based on returned commits?
 		}
+
+		// Need these variables because otherwise java won't compile
+		Instant realStartTime = startTime.orElse(null);
+		Instant realStopTime = stopTime.orElse(null);
 
 		final List<JsonGraphRepoInfo> repoInfos = request.getRepos().stream()
 			.map(branchSpec -> {
 				final RepoId repoId = new RepoId(branchSpec.getRepoId());
-				final JsonRepo repo = new JsonRepo(repoAccess.getRepo(repoId));
 
 				final Collection<Commit> commits = commitAccess.getCommitsBetween(repoId,
-					branchSpec.getBranches(), startTime, stopTime);
+					branchSpec.getBranches(), realStartTime, realStopTime);
 
 				return repoComparisonAccess.getRepoInfo(repoId, commits, measurementName, grouper);
 			})
@@ -112,16 +120,16 @@ public class RepoComparisonGraphEndpoint {
 	private static class PostRequest {
 
 		private final Collection<BranchSpec> repos;
-		private final long startTime;
-		private final long stopTime;
+		private final Long startTime;
+		private final Long stopTime;
 		private final String benchmark;
 		private final String metric;
 
 		@JsonCreator
 		public PostRequest(
 			@JsonProperty(value = "repos", required = true) Collection<BranchSpec> repos,
-			@JsonProperty(value = "start_time", required = true) long startTime,
-			@JsonProperty(value = "stop_time", required = true) long stopTime,
+			@JsonProperty(value = "start_time") Long startTime,
+			@JsonProperty(value = "stop_time") Long stopTime,
 			@JsonProperty(value = "benchmark", required = true) String benchmark,
 			@JsonProperty(value = "metric", required = true) String metric) {
 
@@ -136,12 +144,12 @@ public class RepoComparisonGraphEndpoint {
 			return repos;
 		}
 
-		public long getStartTime() {
-			return startTime;
+		public Optional<Long> getStartTime() {
+			return Optional.ofNullable(startTime);
 		}
 
-		public long getStopTime() {
-			return stopTime;
+		public Optional<Long> getStopTime() {
+			return Optional.ofNullable(stopTime);
 		}
 
 		public String getBenchmark() {
