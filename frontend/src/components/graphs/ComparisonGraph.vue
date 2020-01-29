@@ -187,12 +187,32 @@ export default class ComparisonGraph extends Vue {
   @Watch('maxTimestamp')
   drawGraph() {
     this.svg.selectAll('*').remove()
-    this.drawXAxis()
-    this.drawYAxis()
 
-    this.repos.forEach((repoID: string) => {
-      this.drawDatapoints(repoID)
-    })
+    if (
+      this.metric !== '' &&
+      this.valueRange.min !== Number.POSITIVE_INFINITY
+    ) {
+      this.drawXAxis()
+      this.drawYAxis()
+      this.repos.forEach((repoID: string) => {
+        this.drawDatapoints(repoID)
+      })
+    } else {
+      let information: string =
+        this.metric === ''
+          ? 'No data available. Please select benchmark and metric.'
+          : 'There are no commits within the specified time period that have been benchmarked with this metric.'
+
+      this.svg
+        .append('text')
+        .attr('y', this.height / 2)
+        .attr('x', this.margin.left)
+        .text(information)
+        .style('text-align', 'center')
+        .style('font-family', 'Roboto')
+        .style('font-size', '18px')
+        .style('fill', 'grey')
+    }
   }
 
   drawXAxis() {
@@ -309,35 +329,21 @@ export default class ComparisonGraph extends Vue {
         'translate(' + this.margin.left + ',' + this.margin.top + ')'
       )
 
-    if (this.metric) {
-      this.tooltip = d3
-        .select('#svg-container')
-        .append('div')
-        .style('opacity', 0)
-        .attr('class', 'tooltip')
-        .style('position', 'absolute')
-        .style('padding', '5px')
-        .style('border-radius', '5px')
-        .style('background-color', 'black')
-        .style('color', 'white')
-        .style('text-align', 'center')
-        .style('font-family', 'Roboto')
-        .style('font-size', '14px')
+    this.tooltip = d3
+      .select('#svg-container')
+      .append('div')
+      .style('opacity', 0)
+      .attr('class', 'tooltip')
+      .style('position', 'absolute')
+      .style('padding', '5px')
+      .style('border-radius', '5px')
+      .style('background-color', 'black')
+      .style('color', 'white')
+      .style('text-align', 'center')
+      .style('font-family', 'Roboto')
+      .style('font-size', '14px')
 
-      this.drawXAxis()
-      this.drawYAxis()
-      this.drawGraph()
-    } else {
-      this.svg
-        .append('text')
-        .attr('y', this.height / 2)
-        .attr('x', this.margin.left)
-        .text('No data availablle. Please select benchmark and metric.')
-        .style('text-align', 'center')
-        .style('font-family', 'Roboto')
-        .style('font-size', '18px')
-        .style('fill', 'grey')
-    }
+    this.drawGraph()
   }
 
   mounted() {
