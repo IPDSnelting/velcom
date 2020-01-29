@@ -1,8 +1,11 @@
 import { createModule, mutation, action } from 'vuex-class-component'
-import { CommitComparison } from '@/store/types'
+import { CommitComparison, CommitInfo } from '@/store/types'
 import axios from 'axios'
 import Vue from 'vue'
-import { comparisonFromJson } from '@/util/CommitComparisonJsonHelper'
+import {
+  comparisonFromJson,
+  commitDetailFromJson as commitInfoFromJson
+} from '@/util/CommitComparisonJsonHelper'
 
 const VxModule = createModule({
   namespaced: 'commitComparisonModule',
@@ -10,7 +13,7 @@ const VxModule = createModule({
 })
 
 export class CommitComparisonStore extends VxModule {
-  private comparisons: { [key: string]: CommitComparison[] } = {}
+  private commitInfos: { [key: string]: CommitInfo[] } = {}
 
   /**
    * Fetches the commit comparison for two commits in a repo
@@ -21,16 +24,16 @@ export class CommitComparisonStore extends VxModule {
    *     first: string
    *     second: string | undefined
    *   }} payload the playload to fetch
-   * @returns {Promise<CommitComparison>} a promise resolving to
+   * @returns {Promise<CommitInfo>} a promise resolving to
    * the comparison
    * @memberof CommitComparisonModuleStore
    */
   @action
-  async fetchCommitComparison(payload: {
+  async fetchCommitInfo(payload: {
     repoId: string
     first: string | undefined
     second: string | undefined
-  }): Promise<CommitComparison> {
+  }): Promise<CommitInfo> {
     const response = await axios.get('/commit-compare', {
       snackbarTag: 'commit-comparison',
       params: {
@@ -40,11 +43,11 @@ export class CommitComparisonStore extends VxModule {
       }
     })
 
-    let comparison = comparisonFromJson(response.data.comparison)
+    let info = commitInfoFromJson(response.data)
 
-    const mutationPayload = { repoId: payload.repoId, comparison: comparison }
-    this.setCommitComparison(mutationPayload)
-    return comparison
+    const mutationPayload = { repoId: payload.repoId, info: info }
+    this.setCommitInfo(mutationPayload)
+    return info
   }
 
   /**
@@ -57,18 +60,15 @@ export class CommitComparisonStore extends VxModule {
    * @memberof CommitComparisonModuleStore
    */
   @mutation
-  setCommitComparison(payload: {
-    comparison: CommitComparison
-    repoId: string
-  }) {
-    let comparisons = this.comparisons[payload.repoId]
+  setCommitInfo(payload: { info: CommitInfo; repoId: string }) {
+    let comparisons = this.commitInfos[payload.repoId]
     if (!comparisons) {
-      Vue.set(this.comparisons, payload.repoId, [payload.comparison])
+      Vue.set(this.commitInfos, payload.repoId, [payload.info])
     } else {
-      let current = comparisons.findIndex(comparison => {
+      let current = comparisons.findIndex(detail => {
         return (
-          comparison.first === payload.comparison.first &&
-          comparison.second === payload.comparison.second
+          detail.comparison.first === payload.info.comparison.first &&
+          detail.comparison.second === payload.info.comparison.second
         )
       })
 
@@ -76,7 +76,7 @@ export class CommitComparisonStore extends VxModule {
         comparisons.splice(current, 1)
       }
 
-      comparisons.push(payload.comparison)
+      comparisons.push(payload.info)
     }
   }
 
@@ -87,24 +87,23 @@ export class CommitComparisonStore extends VxModule {
    * @readonly
    * @memberof CommitComparisonModuleStore
    */
-  get commitComparison(): (
+  get commitInfo(): (
     repoId: string,
     first: string | null,
     second: string
-  ) => CommitComparison | null {
+  ) => CommitInfo | null {
     return (repoId: string, first: string | null, second: string) => {
-      let comparisons = this.comparisons[repoId]
-      if (!comparisons) {
+      let commitInfo = this.commitInfos[repoId]
+      if (!commitInfo) {
         return null
       }
-      let comparison = comparisons.find(comparison => {
+      let info = commitInfo.find(info => {
+        let comparison = info.comparison
         if (!comparison.secondCommit) {
-          console.log('No second commit ' + comparison)
-
           return false
         }
         if (!first) {
-          return comparison.secondCommit.hash === second
+          return info.comparison.secondCommit.hash === second
         }
         if (!comparison.firstCommit) {
           return false
@@ -114,7 +113,7 @@ export class CommitComparisonStore extends VxModule {
           comparison.secondCommit.hash === second
         )
       })
-      return comparison || null
+      return info || null
     }
   }
 }

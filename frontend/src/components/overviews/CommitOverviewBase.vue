@@ -30,7 +30,7 @@
               <v-container fluid class="ma-0 pa-0">
                 <v-row no-gutters align="center" justify="space-between">
                   <v-col cols="auto">
-                    <commit-chip :commit="commit"></commit-chip>
+                    <commit-chip :commitHash="commit.hash"></commit-chip>
                   </v-col>
                   <span :class="$scopedSlots['actions'] ? ['pl-3']: ['']">
                     <slot name="actions"></slot>

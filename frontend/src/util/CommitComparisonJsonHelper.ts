@@ -4,7 +4,8 @@ import {
   Run,
   Measurement,
   Commit,
-  CommitComparison
+  CommitComparison,
+  CommitInfo
 } from '@/store/types'
 
 /**
@@ -27,6 +28,14 @@ export function commitFromJson(jsonCommit: any): Commit {
   )
 }
 
+export function commitDetailFromJson(jsonCommitInfo: any): CommitInfo {
+  let comparison = comparisonFromJson(jsonCommitInfo.comparison)
+  let nextCommit = jsonCommitInfo.next
+    ? commitFromJson(jsonCommitInfo.next)
+    : null
+  return new CommitInfo(comparison, nextCommit)
+}
+
 export function comparisonFromJson(jsonComparison: any): CommitComparison {
   let firstRun: Run | null = jsonComparison.first_run
     ? runFromJson(jsonComparison.first_run)
@@ -42,17 +51,12 @@ export function comparisonFromJson(jsonComparison: any): CommitComparison {
     : null
   let secondCommit: Commit | null = commitFromJson(jsonComparison.second_commit)
 
-  let nextCommit: Commit | null = jsonComparison.next
-    ? commitFromJson(jsonComparison.next)
-    : null
-
   return new CommitComparison(
     firstRun,
     secondRun,
     firstCommit,
     secondCommit,
-    differences,
-    nextCommit
+    differences
   )
 }
 

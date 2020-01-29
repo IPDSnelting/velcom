@@ -150,28 +150,35 @@ export class Difference {
   }
 }
 
+export class CommitInfo {
+  comparison: CommitComparison
+  nextCommit: Commit | null
+
+  constructor(comparison: CommitComparison, nextCommit: Commit | null) {
+    this.comparison = comparison
+    this.nextCommit = nextCommit
+  }
+}
+
 export class CommitComparison {
   first: Run | null
   second: Run | null
   firstCommit: Commit | null
   secondCommit: Commit
   differences: Difference[]
-  nextCommit: Commit | null
 
   constructor(
     first: Run | null,
     second: Run | null,
     firstCommit: Commit | null,
     secondCommit: Commit,
-    differences: Difference[],
-    nextCommit: Commit | null
+    differences: Difference[]
   ) {
     this.first = first
     this.second = second
     this.firstCommit = firstCommit
     this.secondCommit = secondCommit
     this.differences = differences
-    this.nextCommit = nextCommit
   }
 }
 

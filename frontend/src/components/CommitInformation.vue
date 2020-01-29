@@ -26,7 +26,31 @@
               </v-container>
             </v-toolbar>
             <v-card-text class="body-1">
-              <v-container>
+              <v-container fluid class="ma-0 pa-0">
+                <v-row
+                  :justify="!prevCommit && nextCommit ? 'end' : 'space-between'"
+                  align="center"
+                  no-gutters
+                >
+                  <v-col v-if="prevCommit" cols="auto">
+                    <v-btn
+                      text
+                      outlined
+                      :to="{ name: 'commit-detail', params: { repoID: prevCommit.repoID, hash: prevCommit.hash } }"
+                    >
+                      <v-icon left>{{ previousCommitIcon }}</v-icon>Previous
+                    </v-btn>
+                  </v-col>
+                  <v-col v-if="nextCommit" cols="auto">
+                    <v-btn
+                      text
+                      outlined
+                      :to="{ name: 'commit-detail', params: { repoID: nextCommit.repoID, hash: nextCommit.hash } }"
+                    >
+                      <v-icon left>{{ nextCommitIcon }}</v-icon>Next
+                    </v-btn>
+                  </v-col>
+                </v-row>
                 <v-row justify="space-between" align="center">
                   <v-col>
                     <span class="font-weight-bold">{{ commit.author }}</span> authored at
@@ -46,16 +70,16 @@
                     <div class="mt-5 commit-detail-message">{{ restOfCommitMessage.trim() }}</div>
                   </v-col>
                 </v-row>
-                <v-row>
+                <v-row dense>
                   <v-col cols="12">
-                    <div class="mt-5 mb-2 overline">Parents:</div>
+                    <div class="mb-1 overline">Parents:</div>
                     <v-tooltip v-for="parent in commit.parents" :key="parent" right>
                       <template #activator="{ on }">
                         <commit-chip
                           class="mr-2"
                           :on="on"
                           :to="{ name: 'commit-detail', params: { repoID: commit.repoID, hash: parent } }"
-                          :commit="commit"
+                          :commitHash="parent"
                           :copyOnClick="false"
                         ></commit-chip>
                       </template>
@@ -82,6 +106,7 @@ import CommitChip from './CommitChip.vue'
 import { formatDate, formatDateUTC } from '@/util/TimeUtil'
 import CommitBenchmarkActions from './CommitBenchmarkActions.vue'
 import { vxm } from '../store'
+import { mdiArrowLeft, mdiArrowRight } from '@mdi/js'
 
 @Component({
   components: {
@@ -97,8 +122,11 @@ export default class CommitInformation extends Vue {
   @Prop()
   private hasExistingBenchmark!: boolean
 
-  @Prop()
-  private nextCommit: Commit | null = null
+  @Prop({ default: null })
+  private nextCommit!: Commit | null
+
+  @Prop({ default: null })
+  private prevCommit!: Commit | null
 
   private formattedDate(date: number) {
     return formatDate(date)
@@ -125,6 +153,9 @@ export default class CommitInformation extends Vue {
   private benchmark() {
     vxm.queueModule.dispatchPrioritizeOpenTask(this.commit)
   }
+
+  private previousCommitIcon = mdiArrowLeft
+  private nextCommitIcon = mdiArrowRight
 }
 </script>
 

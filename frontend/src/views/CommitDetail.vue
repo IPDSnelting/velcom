@@ -3,6 +3,7 @@
     <v-row>
       <commit-information
         v-if="commit"
+        :prevCommit="comparison.firstCommit"
         :nextCommit="nextCommit"
         :commit="commit"
         :hasExistingBenchmark="hasRun"
@@ -58,7 +59,8 @@ import {
   CommitComparison,
   Run,
   Measurement,
-  MeasurementID
+  MeasurementID,
+  CommitInfo
 } from '../store/types'
 import { vxm } from '../store'
 import CommitInformation from '../components/CommitInformation.vue'
@@ -92,15 +94,15 @@ export default class CommitDetail extends Vue {
   }
 
   get nextCommit(): Commit | null {
-    return this.comparison && this.comparison.nextCommit
+    return this.info ? this.info.nextCommit : null
   }
 
   get comparison(): CommitComparison | null {
-    return vxm.commitComparisonModule.commitComparison(
-      this.repoID,
-      null,
-      this.hash
-    )
+    return this.info ? this.info.comparison : null
+  }
+
+  get info(): CommitInfo | null {
+    return vxm.commitComparisonModule.commitInfo(this.repoID, null, this.hash)
   }
 
   get errorMessageParts(): { isHeader: boolean; value: string }[] {
@@ -146,7 +148,7 @@ export default class CommitDetail extends Vue {
   }
 
   created() {
-    vxm.commitComparisonModule.fetchCommitComparison({
+    vxm.commitComparisonModule.fetchCommitInfo({
       repoId: this.repoID,
       first: undefined,
       second: this.hash

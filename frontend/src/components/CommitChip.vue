@@ -4,10 +4,10 @@
     label
     color="accent"
     class="commit-hash-chip"
-    @click="copyOnClick ? copyToClipboard(commit.hash) : undefined"
+    @click="copyOnClick ? copyToClipboard(commitHash) : undefined"
     :to="copyOnClick ? undefined : to"
     v-on="on"
-  >{{ commit.hash }}</v-chip>
+  >{{ commitHash }}</v-chip>
 </template>
 
 <script lang="ts">
@@ -19,7 +19,7 @@ import { Commit } from '../store/types'
 @Component
 export default class CommitChip extends Vue {
   @Prop()
-  private commit!: Commit
+  private commitHash!: string
 
   @Prop({ default: true })
   private copyOnClick!: boolean
