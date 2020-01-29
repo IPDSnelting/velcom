@@ -106,6 +106,10 @@ public class CommitCompareEndpoint {
 			return comparison;
 		}
 
+		@Nullable
+		public JsonCommit getNext() {
+			return next;
+		}
 	}
 
 }
