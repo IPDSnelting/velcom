@@ -6,7 +6,7 @@
           <template #activator="{ on }">
             <v-icon v-on="on" size="32px" color="success">{{ successIcon }}</v-icon>
           </template>
-          This run was successful!
+          This run was successful :)
         </v-tooltip>
         <v-tooltip top v-else>
           <template #activator="{ on }">
@@ -16,7 +16,8 @@
               size="32px"
             >{{ isCompleteFailure ? errorIcon : partialErrorIcon }}</v-icon>
           </template>
-          This run suffered at least one failure :(
+          <span v-if="isCompleteFailure">This run failed completely :(</span>
+          <span v-else>This run suffered at least one failure :/</span>
         </v-tooltip>
       </v-list-item-avatar>
     </template>
