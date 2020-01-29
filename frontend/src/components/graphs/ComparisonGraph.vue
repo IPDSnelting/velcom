@@ -24,6 +24,7 @@ export default class ComparisonGraph extends Vue {
   @Prop({})
   metric!: string
 
+  private resizeTimeout: number | undefined
   private resizeListener: () => void = () => {}
 
   created() {
@@ -50,26 +51,22 @@ export default class ComparisonGraph extends Vue {
     this.width = card.getBoundingClientRect().width - 40
     this.height =
       this.width > 1000 ? this.width * (3 / 7) : this.width * (9 / 16)
-
-    console.log(this.width, this.height)
   }
 
   debounce(func: Function, wait: number) {
     return () => {
-      if (this.notifyTimeout) {
+      if (this.resizeTimeout) {
         return
       }
       let context = this
       let args = arguments
-      clearTimeout(this.notifyTimeout)
-      this.notifyTimeout = setTimeout(() => {
-        this.notifyTimeout = undefined
+      clearTimeout(this.resizeTimeout)
+      this.resizeTimeout = setTimeout(() => {
+        this.resizeTimeout = undefined
         func.apply(context, args)
       }, wait)
     }
   }
-
-  private notifyTimeout: number | undefined
 
   private width: number = 0
   private height: number = 0
@@ -181,7 +178,7 @@ export default class ComparisonGraph extends Vue {
     if (this.metric) {
       return this.unit ? this.metric + ' in ' + this.unit : this.metric
     } else {
-      return 'please select benchmark and metric'
+      return '-'
     }
   }
 
@@ -312,23 +309,35 @@ export default class ComparisonGraph extends Vue {
         'translate(' + this.margin.left + ',' + this.margin.top + ')'
       )
 
-    this.tooltip = d3
-      .select('#svg-container')
-      .append('div')
-      .style('opacity', 0)
-      .attr('class', 'tooltip')
-      .style('position', 'absolute')
-      .style('padding', '5px')
-      .style('border-radius', '5px')
-      .style('background-color', 'black')
-      .style('color', 'white')
-      .style('text-align', 'center')
-      .style('font-family', 'Roboto')
-      .style('font-size', '14px')
+    if (this.metric) {
+      this.tooltip = d3
+        .select('#svg-container')
+        .append('div')
+        .style('opacity', 0)
+        .attr('class', 'tooltip')
+        .style('position', 'absolute')
+        .style('padding', '5px')
+        .style('border-radius', '5px')
+        .style('background-color', 'black')
+        .style('color', 'white')
+        .style('text-align', 'center')
+        .style('font-family', 'Roboto')
+        .style('font-size', '14px')
 
-    this.drawXAxis()
-    this.drawYAxis()
-    this.drawGraph()
+      this.drawXAxis()
+      this.drawYAxis()
+      this.drawGraph()
+    } else {
+      this.svg
+        .append('text')
+        .attr('y', this.height / 2)
+        .attr('x', this.margin.left)
+        .text('No data availablle. Please select benchmark and metric.')
+        .style('text-align', 'center')
+        .style('font-family', 'Roboto')
+        .style('font-size', '18px')
+        .style('fill', 'grey')
+    }
   }
 
   mounted() {

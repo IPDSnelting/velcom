@@ -69,8 +69,6 @@ export default class DetailGraph extends Vue {
     this.width = card.getBoundingClientRect().width - 40
     this.height =
       this.width > 1000 ? this.width * (3 / 7) : this.width * (9 / 16)
-
-    console.log(this.width, this.height)
   }
 
   private width: number = 0
@@ -225,12 +223,10 @@ export default class DetailGraph extends Vue {
   }
 
   get yLabel(): string {
-    if (this.metric && this.unit) {
-      return this.metric + ' in ' + this.unit
-    } else if (this.metric) {
-      return this.metric
+    if (this.metric) {
+      return this.unit ? this.metric + ' in ' + this.unit : this.metric
     } else {
-      return 'please select benchmark and metric'
+      return '-'
     }
   }
 
@@ -238,9 +234,30 @@ export default class DetailGraph extends Vue {
   @Watch('amount')
   drawGraph() {
     this.svg.selectAll('*').remove()
-    this.drawXAxis()
-    this.drawYAxis()
-    this.drawDatapoints()
+
+    if (
+      this.metric !== '' &&
+      this.valueRange.min !== Number.POSITIVE_INFINITY
+    ) {
+      this.drawXAxis()
+      this.drawYAxis()
+      this.drawDatapoints()
+    } else {
+      let information: string =
+        this.metric === ''
+          ? 'No data available. Please select benchmark and metric.'
+          : 'The requested commits have not been benchmarked with this metric.'
+
+      this.svg
+        .append('text')
+        .attr('y', this.height / 2)
+        .attr('x', this.margin.left)
+        .text(information)
+        .style('text-align', 'center')
+        .style('font-family', 'Roboto')
+        .style('font-size', '18px')
+        .style('fill', 'grey')
+    }
   }
 
   drawXAxis() {
@@ -386,6 +403,7 @@ export default class DetailGraph extends Vue {
     d3.select('#svg-container')
       .selectAll('*')
       .remove()
+
     this.svg = d3
       .select('#svg-container')
       .append('svg')
@@ -413,8 +431,6 @@ export default class DetailGraph extends Vue {
       .style('font-family', 'Roboto')
       .style('font-size', '14px')
 
-    this.drawXAxis()
-    this.drawYAxis()
     this.drawGraph()
   }
 
