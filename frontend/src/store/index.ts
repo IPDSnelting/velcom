@@ -23,12 +23,20 @@ interface RootState {
   userModule: UserStore
 }
 
-const vuexLocal = new VuexPersistence<RootState>({
+const persistenceLocalStorage = new VuexPersistence<RootState>({
   storage: window.localStorage,
   reducer: state => {
     return {
       userModule: state.userModule,
-      colorModule: state.colorModule,
+      colorModule: state.colorModule
+    }
+  }
+})
+
+const persistenceSessionStorage = new VuexPersistence<RootState>({
+  storage: window.sessionStorage,
+  reducer: state => {
+    return {
       repoComparisonModule: {
         // Dirty hack as those states are private but still need to be persisted...
         _selectedRepos: (state.repoComparisonModule as any)._selectedRepos,
@@ -61,7 +69,7 @@ export const store = new Vuex.Store({
     ...extractVuexModule(RepoStore),
     ...extractVuexModule(UserStore)
   },
-  plugins: [vuexLocal.plugin]
+  plugins: [persistenceLocalStorage.plugin, persistenceSessionStorage.plugin]
 })
 
 export const vxm = {

@@ -272,7 +272,6 @@ export default class RepoComparison extends Vue {
             },
             { min: 1e200, max: 0 }
           )
-        console.log(min + ' ' + max)
 
         vxm.repoComparisonModule.startDate = new Date(min * 1000)
         vxm.repoComparisonModule.stopDate = new Date(max * 1000)
