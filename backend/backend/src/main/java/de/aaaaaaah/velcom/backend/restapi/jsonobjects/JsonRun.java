@@ -1,6 +1,7 @@
 package de.aaaaaaah.velcom.backend.restapi.jsonobjects;
 
 import de.aaaaaaah.velcom.backend.access.benchmark.Run;
+import de.aaaaaaah.velcom.backend.access.commit.Commit;
 import de.aaaaaaah.velcom.backend.access.commit.CommitAccessException;
 import java.util.Collection;
 import java.util.stream.Collectors;
@@ -19,8 +20,9 @@ public class JsonRun {
 	@Nullable
 	private final String errorMessage;
 
-	public JsonRun(Run run) throws CommitAccessException {
-		commit = new JsonCommit(run.getCommit());
+	public JsonRun(Run run, Commit commit) {
+		this.commit = new JsonCommit(commit);
+
 		start_time = run.getStartTime().getEpochSecond();
 		stop_time = run.getStopTime().getEpochSecond();
 
@@ -31,6 +33,10 @@ public class JsonRun {
 		).orElse(null);
 
 		errorMessage = run.getErrorMessage().orElse(null);
+	}
+
+	public JsonRun(Run run) throws CommitAccessException {
+		this(run, run.getCommit());
 	}
 
 	public JsonCommit getCommit() {

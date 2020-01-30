@@ -1,7 +1,9 @@
 package de.aaaaaaah.velcom.backend.restapi.jsonobjects;
 
+import de.aaaaaaah.velcom.backend.access.commit.Commit;
 import de.aaaaaaah.velcom.backend.data.commitcomparison.CommitComparison;
 import java.util.Collection;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -21,10 +23,23 @@ public class JsonCommitComparison {
 	private final Collection<JsonDifference> differences;
 
 	public JsonCommitComparison(CommitComparison commitComparison) {
-		firstCommit = commitComparison.getFirstCommit().map(JsonCommit::new).orElse(null);
-		firstRun = commitComparison.getFirstRun().map(JsonRun::new).orElse(null);
+		final Optional<Commit> maybeFirstCommit = commitComparison.getFirstCommit();
+
+		if (maybeFirstCommit.isPresent()) {
+			firstCommit = new JsonCommit(maybeFirstCommit.get());
+			firstRun = commitComparison.getFirstRun()
+				.map(run -> new JsonRun(run, maybeFirstCommit.get()))
+				.orElse(null);
+		} else {
+			firstCommit = null;
+			// There can't be a run without a commit, so the run would be null anyways
+			firstRun = null;
+		}
+
 		secondCommit = new JsonCommit(commitComparison.getSecondCommit());
-		secondRun = commitComparison.getSecondRun().map(JsonRun::new).orElse(null);
+		secondRun = commitComparison.getSecondRun()
+			.map(run -> new JsonRun(run, commitComparison.getSecondCommit()))
+			.orElse(null);
 
 		differences = commitComparison.getDifferences().stream()
 			.map(JsonDifference::new)
