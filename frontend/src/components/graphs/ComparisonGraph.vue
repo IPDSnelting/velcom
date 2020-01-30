@@ -303,14 +303,26 @@ export default class ComparisonGraph extends Vue {
       let truncatedValue = this.valueFormat(d.value)
       this.tooltip
         .html(
-          'Commit ' +
-            d.commit.hash +
-            '<br> authored on ' +
-            formatDateUTC(d.commit.authorDate) +
-            ',<br />exact value: ' +
-            truncatedValue +
-            ' ' +
-            this.unit
+          `
+          <table class="tooltip-table">
+            <tr>
+              <td>Commit</td>
+              <td>${d.commit.hash}</td>
+            </tr>
+            <tr>
+              <td>Author</td>
+              <td>${d.commit.author}</td>
+            </tr>
+            <tr>
+              <td>Date</td>
+              <td>${formatDateUTC(d.commit.authorDate)}</td>
+            </tr>
+           <tr>
+              <td>Exact value</td>
+              <td>${this.valueFormat(d.value)} ${this.unit}</td>
+            </tr>
+          </table>
+          `
         )
         .style('left', d3.mouse(n[i])[0] + 90 + 'px')
         .style('top', d3.mouse(n[i])[1] + 60 + 'px')

@@ -372,26 +372,47 @@ export default class DetailGraph extends Vue {
       wantedMeasurement &&
       wantedMeasurement.successful
     ) {
-      htmlMessage =
-        'Commit ' +
-        d.commit.hash +
-        '<br />author:' +
-        d.commit.author +
-        '<br> authored on ' +
-        formatDateUTC(d.commit.authorDate) +
-        ',<br />exact value: ' +
-        this.valueFormat(wantedMeasurement.value) +
-        ' ' +
-        this.unit
+      htmlMessage = `
+        <table class="tooltip-table">
+          <tr>
+            <td>Commit</td>
+            <td>${d.commit.hash}</td>
+          </tr>
+          <tr>
+            <td>Author</td>
+            <td>${d.commit.author}</td>
+          </tr>
+          <tr>
+            <td>Date</td>
+            <td>${formatDateUTC(d.commit.authorDate)}</td>
+          </tr>
+          <tr>
+            <td>Exact value</td>
+            <td>${this.valueFormat(wantedMeasurement.value)} ${this.unit}</td>
+          </tr>
+        </table>
+      `
     } else if (d.commit.authorDate) {
-      htmlMessage =
-        'Commit ' +
-        d.commit.hash +
-        '<br />author:' +
-        d.commit.author +
-        '<br> authored on ' +
-        formatDateUTC(d.commit.authorDate) +
-        '<br />This commit was not benchmarked successfully for this metric.'
+      htmlMessage = `
+        <table class="tooltip-table">
+          <tr>
+            <td>Commit</td>
+            <td>${d.commit.hash}</td>
+          </tr>
+          <tr>
+            <td>Author</td>
+            <td>${d.commit.author}</td>
+          </tr>
+          <tr>
+            <td>Date</td>
+            <td>${formatDateUTC(d.commit.authorDate)}</td>
+          </tr>
+          <tr>
+            <td>Exact value</td>
+            <td>This commit was not benchmarked successfully for this metric.</td>
+          </tr>
+       </table>
+      `
     } else {
       htmlMessage =
         'Commit ' + d.commit.hash + '<br />author:' + d.commit.author
@@ -455,5 +476,13 @@ export default class DetailGraph extends Vue {
 .axis text {
   font-family: Roboto;
   font-size: 12px;
+}
+
+.tooltip-table tr td {
+  text-align: left;
+}
+
+.tooltip-table tr td:first-child {
+  padding-right: 2em;
 }
 </style>
