@@ -1,4 +1,4 @@
-package de.aaaaaaah.velcom.runner.util;
+package de.aaaaaaah.velcom.runner.shared.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

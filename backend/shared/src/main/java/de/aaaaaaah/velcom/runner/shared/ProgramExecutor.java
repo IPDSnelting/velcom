@@ -1,6 +1,6 @@
-package de.aaaaaaah.velcom.runner.entity.execution;
+package de.aaaaaaah.velcom.runner.shared;
 
-import de.aaaaaaah.velcom.runner.util.StringOutputStream;
+import de.aaaaaaah.velcom.runner.shared.util.StringOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;

@@ -1,7 +1,9 @@
 package de.aaaaaaah.velcom.backend.storage.repo;
 
-import java.io.IOException;
+import de.aaaaaaah.velcom.runner.shared.ProgramExecutor;
+import de.aaaaaaah.velcom.runner.shared.ProgramExecutor.ProgramResult;
 import java.nio.file.Path;
+import java.util.concurrent.ExecutionException;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -19,14 +21,14 @@ public abstract class GuickCloning {
 
 	private static GuickCloning findInstanceToUse() {
 		try {
-			int exitCode = new ProcessBuilder("git", "--version")
-				.start()
-				.waitFor();
-			if (exitCode == 0) {
+			ProgramResult git = new ProgramExecutor()
+				.execute("git", "--version")
+				.get();
+			if (git.getExitCode() == 0) {
 				LOGGER.info("git executable found, using fast path for cloning");
 				return new CmdGitCloning();
 			}
-		} catch (InterruptedException | IOException ignored) {
+		} catch (InterruptedException | ExecutionException ignored) {
 		}
 		LOGGER.info("git executable not found, falling back to slow path for cloning");
 
@@ -80,7 +82,7 @@ public abstract class GuickCloning {
 	/**
 	 * Uses JGit for cloning.
 	 */
-	static class JgitCloning extends GuickCloning {
+	private static class JgitCloning extends GuickCloning {
 
 		private JgitCloning() {
 		}
@@ -125,24 +127,35 @@ public abstract class GuickCloning {
 	/**
 	 * Uses the git executable for cloning.
 	 */
-	static class CmdGitCloning extends GuickCloning {
+	private static class CmdGitCloning extends GuickCloning {
 
 		@Override
 		public void cloneMirror(String source, Path targetDir) throws CloneException {
 			try {
-				Process process = new ProcessBuilder(
-					"git", "clone", "--mirror", "--recursive", "--recurse-submodules",
-					source,
-					targetDir.toAbsolutePath().toString()
-				)
-					.start();
-				int exitCode = process.waitFor();
-				if (exitCode != 0) {
-					throw new CloneException("Clone failed for " + source + " with " + exitCode);
-				}
-			} catch (IOException | InterruptedException e) {
+				ProgramResult programResult = new ProgramExecutor()
+					.execute(
+						"git", "clone", "--mirror", "--recursive", "--recurse-submodules",
+						source,
+						targetDir.toAbsolutePath().toString()
+					).get();
+				guardResult(source, programResult);
+			} catch (InterruptedException | ExecutionException e) {
 				throw new CloneException("Clone failed for " + source + " (mirror)", e);
 			}
+		}
+
+		private void guardResult(String message, ProgramResult programResult)
+			throws CloneException {
+			if (programResult.getExitCode() == 0) {
+				return;
+			}
+			throw new CloneException(
+				message
+					+ "\nExit code: " + programResult.getExitCode()
+					+ "\nStdout: " + programResult.getStdOut()
+					+ "\nStderr: " + programResult.getStdErr()
+					+ "\nAfter: " + programResult.getRuntime()
+			);
 		}
 
 		@Override
@@ -150,26 +163,30 @@ public abstract class GuickCloning {
 			throws CloneException {
 
 			try {
-				int exitCode = new ProcessBuilder(
-					"git", "clone", "--recursive", "--recurse-submodules",
-					source,
-					targetDir.toAbsolutePath().toString()
-				)
-					.start()
-					.waitFor();
-				if (exitCode != 0) {
-					throw new IOException("Clone exited with exit code " + exitCode);
-				}
-				exitCode = new ProcessBuilder(
-					"git", "checkout", commitHash
-				)
-					.directory(targetDir.toFile())
-					.start()
-					.waitFor();
-				if (exitCode != 0) {
-					throw new IOException("Checkout exited with exit code " + exitCode);
-				}
-			} catch (InterruptedException | IOException e) {
+				ProgramResult programResult = new ProgramExecutor()
+					.execute(
+						"git", "clone", "--recursive", "--recurse-submodules",
+						source,
+						targetDir.toAbsolutePath().toString()
+					)
+					.get();
+				guardResult(
+					"Clone failed",
+					programResult
+				);
+
+				programResult = new ProgramExecutor()
+					.execute(
+						"git", "-C", targetDir.toAbsolutePath().toString(), "checkout", commitHash
+
+					)
+					.get();
+
+				guardResult(
+					"Checkout failed!",
+					programResult
+				);
+			} catch (InterruptedException | ExecutionException e) {
 				throw new CloneException("Clone failed for " + source + " at " + commitHash, e);
 			}
 		}

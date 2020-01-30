@@ -1,4 +1,4 @@
-package de.aaaaaaah.velcom.runner.util;
+package de.aaaaaaah.velcom.runner.shared.util;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
