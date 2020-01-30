@@ -65,7 +65,7 @@
                     <br />
                   </v-col>
                 </v-row>
-                <v-row>
+                <v-row dense v-if="restOfCommitMessage.trim()">
                   <v-col cols="12">
                     <div class="mt-5 commit-detail-message">{{ restOfCommitMessage.trim() }}</div>
                   </v-col>

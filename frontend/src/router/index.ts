@@ -5,7 +5,7 @@ import RepoComparison from '../views/RepoComparison.vue'
 import RepoDetailFrame from '../views/RepoDetailFrame.vue'
 import RepoDetail from '../views/RepoDetail.vue'
 import Queue from '../views/Queue.vue'
-import CommitComparison from '../views/CommitComparison.vue'
+import CommitComparisonDisplay from '../views/CommitComparisonDisplay.vue'
 import CommitDetail from '../views/CommitDetail.vue'
 import {
   mdiHome,
@@ -78,7 +78,7 @@ const routes = [
   {
     path: '/commit-comparison/:repoID/:hashOne/:hashTwo',
     name: 'commit-comparison',
-    component: CommitComparison,
+    component: CommitComparisonDisplay,
     meta: {
       navigable: false,
       label: 'Commit Comparison'

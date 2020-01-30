@@ -301,7 +301,6 @@ export default class DetailGraph extends Vue {
   drawDatapoints() {
     let graph = this.svg.append('g').attr('id', 'graph')
     let datapointsBetweenAxes = this.datapoints.slice(0, this.amount)
-    console.log(datapointsBetweenAxes)
 
     // draw the connecting lines
     graph
