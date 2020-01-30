@@ -11,11 +11,11 @@
           <v-card-title>
             <v-toolbar color="primary darken-1" dark>Filter Data</v-toolbar>
           </v-card-title>
-          <v-card-text>
-            <v-container fluid>
-              <v-row align="start" justify="space-around">
+          <v-card-text class="ma-0 pa-0">
+            <v-container fluid class="ma-0 pa-0">
+              <v-row align="center" justify="space-around" no-gutters>
                 <v-col md="5" sm="12" cols="12">
-                  <v-row>
+                  <v-row no-gutters>
                     <v-col>
                       <v-select
                         class="mr-5"
@@ -37,7 +37,7 @@
                 <v-col md="5" sm="12" cols="12">
                   <v-form v-model="formValid" ref="form">
                     <template>
-                      <v-row>
+                      <v-row no-gutters>
                         <v-col>
                           <v-text-field
                             @blur="retrieveRuns"
@@ -65,7 +65,7 @@
               </v-row>
             </v-container>
           </v-card-text>
-          <v-card-actions>
+          <v-card-actions class="mx-2">
             <v-spacer></v-spacer>
             <v-btn text color="primary" @click="toggleYScale()">{{ yScaleButtonLabel }}</v-btn>
             <v-btn
