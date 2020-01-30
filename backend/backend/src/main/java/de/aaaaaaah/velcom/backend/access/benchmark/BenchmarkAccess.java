@@ -71,8 +71,8 @@ public class BenchmarkAccess {
 				.map(CommitHash::getHash)
 				.collect(Collectors.toUnmodifiableSet());
 
-			final Map<CommitHash, RunId> runIdsByHash = db.select(RUN.COMMIT_HASH, RUN.ID,
-				max(RUN.START_TIME))
+			final Map<CommitHash, RunId> runIdsByHash = db
+				.select(RUN.COMMIT_HASH, RUN.ID, max(RUN.START_TIME))
 				.from(RUN)
 				.where(RUN.REPO_ID.eq(repoId.getId().toString()))
 				.and(RUN.COMMIT_HASH.in(hashSet))
@@ -103,10 +103,15 @@ public class BenchmarkAccess {
 	/**
 	 * Get the runs specified by the run IDs. Preserves the ordering of the IDs.
 	 */
-	public List<Run> getRuns(Collection<RunId> runIds) {
+	public List<Run> getRuns(List<RunId> runIds) {
+		final Set<String> runIdsAsStrings = runIds.stream()
+			.map(RunId::getId)
+			.map(UUID::toString)
+			.collect(Collectors.toUnmodifiableSet());
+
 		try (DSLContext db = databaseStorage.acquireContext()) {
 			final Map<RunId, TmpRun> runs = db.selectFrom(RUN)
-				.where(RUN.ID.in(runIds))
+				.where(RUN.ID.in(runIdsAsStrings))
 				.stream()
 				.map(record -> new TmpRun(
 					new RunId(UUID.fromString(record.getId())),
