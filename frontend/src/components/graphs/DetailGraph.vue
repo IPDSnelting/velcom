@@ -93,11 +93,11 @@ export default class DetailGraph extends Vue {
     bottom: 100
   }
 
-  get innerWidth() {
+  private get innerWidth() {
     return this.width - this.margin.left - this.margin.right
   }
 
-  get innerHeight() {
+  private get innerHeight() {
     return this.height - this.margin.top - this.margin.bottom
   }
 
@@ -131,31 +131,38 @@ export default class DetailGraph extends Vue {
   }
 
   get interpretation() {
-    let interpretation: any = 'NEUTRAL'
-    // pick the first interpretation that exists... wow, that's ugly
-    this.datapoints.forEach(
-      (datapoint: { commit: Commit; comparison: CommitComparison }) => {
-        let wantedMeasurement = this.wantedMeasurementForDatapoint(datapoint)
-        if (wantedMeasurement !== undefined) {
-          interpretation = wantedMeasurement.interpretation
-        }
+    for (const datapoint of this.datapoints) {
+      let wantedMeasurement = this.wantedMeasurementForDatapoint(datapoint)
+      if (wantedMeasurement !== undefined) {
+        return wantedMeasurement.interpretation
       }
-    )
-    return interpretation
+    }
+    return 'NEUTRAL'
   }
 
   get unit() {
-    let unit: string | null = null
-    // pick the first unit that exists... wow, that's just as ugly
-    this.datapoints.forEach(
-      (datapoint: { commit: Commit; comparison: CommitComparison }) => {
-        let wantedMeasurement = this.wantedMeasurementForDatapoint(datapoint)
-        if (wantedMeasurement !== undefined && wantedMeasurement.unit) {
-          unit = wantedMeasurement.unit
-        }
+    for (const datapoint of this.datapoints) {
+      let wantedMeasurement = this.wantedMeasurementForDatapoint(datapoint)
+      if (wantedMeasurement !== undefined && wantedMeasurement.unit) {
+        return wantedMeasurement.unit
       }
-    )
-    return unit
+    }
+    return null
+  }
+
+  get firstSuccessful(): number {
+    for (const datapoint of this.datapoints) {
+      let wantedMeasurement = this.wantedMeasurementForDatapoint(datapoint)
+      if (
+        wantedMeasurement !== undefined &&
+        wantedMeasurement.successful &&
+        wantedMeasurement.value
+      ) {
+        return wantedMeasurement.value
+      }
+    }
+    // if every commit failed, place them on the center line
+    return this.height / 2
   }
 
   get xScale(): any {
@@ -181,6 +188,9 @@ export default class DetailGraph extends Vue {
     if (wantedMeasurement !== undefined && wantedMeasurement.value) {
       this.lastValue = wantedMeasurement.value
       return this.yScale(wantedMeasurement.value)
+    }
+    if (this.datapoints.indexOf(datapoint) === 0) {
+      this.lastValue = this.firstSuccessful
     }
     return this.yScale(this.lastValue)
   }
