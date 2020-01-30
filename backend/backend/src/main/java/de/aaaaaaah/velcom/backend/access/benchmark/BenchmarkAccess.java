@@ -4,6 +4,7 @@ import static org.jooq.codegen.db.tables.Run.RUN;
 import static org.jooq.codegen.db.tables.RunMeasurement.RUN_MEASUREMENT;
 import static org.jooq.codegen.db.tables.RunMeasurementValue.RUN_MEASUREMENT_VALUE;
 import static org.jooq.impl.DSL.exists;
+import static org.jooq.impl.DSL.max;
 import static org.jooq.impl.DSL.selectFrom;
 
 import de.aaaaaaah.velcom.backend.access.AccessLayer;
@@ -19,12 +20,15 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.jooq.DSLContext;
 import org.jooq.InsertValuesStep2;
+import org.jooq.Record1;
 import org.jooq.Record2;
 import org.jooq.Result;
 import org.jooq.codegen.db.tables.records.RunMeasurementRecord;
@@ -58,47 +62,117 @@ public class BenchmarkAccess {
 	Basic querying
 	 */
 
-	private Run runFromRecord(RunRecord runRecord) {
-		return new Run(
-			accessLayer.getBenchmarkAccess(),
-			accessLayer.getCommitAccess(),
-			accessLayer.getRepoAccess(),
-			new RunId(UUID.fromString(runRecord.getId())),
-			new RepoId(UUID.fromString(runRecord.getRepoId())),
-			new CommitHash(runRecord.getCommitHash()),
-			runRecord.getStartTime().toInstant(),
-			runRecord.getStopTime().toInstant(),
-			runRecord.getErrorMessage()
-		);
+	/**
+	 * Get the IDs of the latest runs of a list of commits. Preserves the ordering of the commits.
+	 */
+	public List<RunId> getLatestRunIds(RepoId repoId, List<CommitHash> commitHashes) {
+		try (DSLContext db = databaseStorage.acquireContext()) {
+			final Set<String> hashSet = commitHashes.stream()
+				.map(CommitHash::getHash)
+				.collect(Collectors.toUnmodifiableSet());
+
+			final Map<CommitHash, RunId> runIdsByHash = db.select(RUN.COMMIT_HASH, RUN.ID,
+				max(RUN.START_TIME))
+				.from(RUN)
+				.where(RUN.REPO_ID.eq(repoId.getId().toString()))
+				.and(RUN.COMMIT_HASH.in(hashSet))
+				.groupBy(RUN.COMMIT_HASH)
+				.stream()
+				.collect(Collectors.toMap(
+					record -> new CommitHash(record.value1()),
+					record -> new RunId(UUID.fromString(record.value2()))
+				));
+
+			return commitHashes.stream()
+				.map(runIdsByHash::get)
+				.filter(Objects::nonNull)
+				.collect(Collectors.toUnmodifiableList());
+		}
+	}
+
+	public Optional<RunId> getLatestRunId(RepoId repoId, CommitHash commitHash) {
+		final List<RunId> runIds = getLatestRunIds(repoId, List.of(commitHash));
+
+		if (runIds.isEmpty()) {
+			return Optional.empty();
+		} else {
+			return Optional.of(runIds.get(0));
+		}
+	}
+
+	/**
+	 * Get the runs specified by the run IDs. Preserves the ordering of the IDs.
+	 */
+	public List<Run> getRuns(Collection<RunId> runIds) {
+		try (DSLContext db = databaseStorage.acquireContext()) {
+			final Map<RunId, TmpRun> runs = db.selectFrom(RUN)
+				.where(RUN.ID.in(runIds))
+				.stream()
+				.map(record -> new TmpRun(
+					new RunId(UUID.fromString(record.getId())),
+					new RepoId(UUID.fromString(record.getRepoId())),
+					new CommitHash(record.getCommitHash()),
+					record.getStartTime().toInstant(),
+					record.getStopTime().toInstant(),
+					record.getErrorMessage()
+				))
+				.collect(Collectors.toMap(TmpRun::getId, run -> run));
+
+			db.selectFrom(RUN_MEASUREMENT)
+				.where(RUN_MEASUREMENT.RUN_ID.in(runIds))
+				.stream()
+				.map(record -> new TmpMeasurement(
+					new RunId(UUID.fromString(record.getRunId())),
+					new MeasurementName(record.getBenchmark(), record.getMetric()),
+					(record.getUnit() != null) ? new Unit(record.getUnit()) : null,
+					(record.getInterpretation() != null)
+						? Interpretation.fromTextualRepresentation(record.getInterpretation())
+						: null,
+					record.getErrorMessage()
+				))
+				.forEach(measurement -> runs.get(measurement.getRunId())
+					.getMeasurements()
+					.put(measurement.getMeasurementName(), measurement)
+				);
+
+			db.select(RUN_MEASUREMENT.RUN_ID, RUN_MEASUREMENT.BENCHMARK, RUN_MEASUREMENT.METRIC,
+				RUN_MEASUREMENT_VALUE.VALUE)
+				.from(RUN_MEASUREMENT)
+				.join(RUN_MEASUREMENT_VALUE)
+				.on(RUN_MEASUREMENT.ID.eq(RUN_MEASUREMENT_VALUE.MEASUREMENT_ID))
+				.where(RUN_MEASUREMENT.RUN_ID.in(runIds))
+				.forEach(record -> {
+					final RunId runId = new RunId(UUID.fromString(record.value1()));
+					final MeasurementName measurementName = new MeasurementName(record.value2(),
+						record.value3());
+					final double value = record.value4();
+					runs.get(runId).getMeasurements().get(measurementName).getValues().add(value);
+				});
+
+			return runIds.stream()
+				.map(runs::get)
+				.filter(Objects::nonNull)
+				.map(run -> run.toRun(
+					accessLayer.getBenchmarkAccess(),
+					accessLayer.getCommitAccess(),
+					accessLayer.getRepoAccess()
+				))
+				.collect(Collectors.toUnmodifiableList());
+		}
 	}
 
 	public Run getRun(RunId runId) {
-		try (DSLContext db = databaseStorage.acquireContext()) {
-			final RunRecord runRecord = db.fetchOne(RUN, RUN.ID.eq(runId.getId().toString()));
+		final List<Run> runs = getRuns(List.of(runId));
 
-			if (runRecord == null) {
-				throw new NoSuchRunException(runId);
-			}
-
-			return runFromRecord(runRecord);
+		if (runs.isEmpty()) {
+			throw new NoSuchRunException(runId);
 		}
+
+		return runs.get(0);
 	}
 
 	public Optional<Run> getLatestRunOf(Commit commit) {
-		return getLatestRunOf(commit.getRepoId(), commit.getHash());
-	}
-
-	public Optional<Run> getLatestRunOf(RepoId repoId, CommitHash commitHash) {
-		try (DSLContext db = databaseStorage.acquireContext()) {
-			final Optional<RunRecord> runRecord = db.selectFrom(RUN)
-				.where(RUN.REPO_ID.eq(repoId.getId().toString()))
-				.and(RUN.COMMIT_HASH.eq(commitHash.getHash()))
-				.orderBy(RUN.START_TIME.desc())
-				.limit(1)
-				.fetchOptional();
-
-			return runRecord.map(this::runFromRecord);
-		}
+		return getLatestRunId(commit.getRepoId(), commit.getHash()).map(this::getRun);
 	}
 
 	/*
@@ -114,18 +188,19 @@ public class BenchmarkAccess {
 	 * @param stopTime the time the benchmark script finished executing
 	 * @return the newly created {@link Run}
 	 */
-	public Run addRun(RepoId repoId, CommitHash commitHash, Instant startTime, Instant stopTime) {
+	public RunId addRun(RepoId repoId, CommitHash commitHash, Instant startTime, Instant stopTime) {
 		try (DSLContext db = databaseStorage.acquireContext()) {
+			final RunId runId = new RunId(UUID.randomUUID());
 			final RunRecord runRecord = db.newRecord(RUN);
 
-			runRecord.setId(UUID.randomUUID().toString());
+			runRecord.setId(runId.getId().toString());
 			runRecord.setRepoId(repoId.getId().toString());
 			runRecord.setCommitHash(commitHash.getHash());
 			runRecord.setStartTime(Timestamp.from(startTime));
 			runRecord.setStopTime(Timestamp.from(stopTime));
 
 			runRecord.insert();
-			return runFromRecord(runRecord);
+			return runId;
 		}
 	}
 
@@ -139,13 +214,14 @@ public class BenchmarkAccess {
 	 * @param errorMessage the message with which the run failed
 	 * @return the newly created {@link Run}
 	 */
-	public Run addFailedRun(RepoId repoId, CommitHash commitHash, Instant startTime,
+	public RunId addFailedRun(RepoId repoId, CommitHash commitHash, Instant startTime,
 		Instant stopTime, String errorMessage) {
 
 		try (DSLContext db = databaseStorage.acquireContext()) {
+			final RunId runId = new RunId(UUID.randomUUID());
 			final RunRecord runRecord = db.newRecord(RUN);
 
-			runRecord.setId(UUID.randomUUID().toString());
+			runRecord.setId(runId.getId().toString());
 			runRecord.setRepoId(repoId.getId().toString());
 			runRecord.setCommitHash(commitHash.getHash());
 			runRecord.setStartTime(Timestamp.from(startTime));
@@ -153,7 +229,7 @@ public class BenchmarkAccess {
 			runRecord.setErrorMessage(errorMessage);
 
 			runRecord.insert();
-			return runFromRecord(runRecord);
+			return runId;
 		}
 	}
 
@@ -235,21 +311,24 @@ public class BenchmarkAccess {
 	}
 
 	/**
-	 * Streams all runs sorted by their start time where run with the most recent start time is the
-	 * first element in the stream.
+	 * Streams all run ids sorted by the run's start time (where run with the most recent start time
+	 * is the first element in the stream).
 	 *
 	 * <p>Note that this stream must be closed after it is no longer being used.</p>
 	 *
 	 * @return sorted stream containing all runs
 	 */
-	public Stream<Run> getRecentRuns() {
+	public Stream<RunId> getRecentRunIds() {
 		DSLContext db = databaseStorage.acquireContext();
 
 		try {
-			return db.selectFrom(RUN)
-				.orderBy(RUN.START_TIME)
-				.fetchStream()
-				.map(this::runFromRecord)
+			return db.select(RUN.ID)
+				.from(RUN)
+				.orderBy(RUN.START_TIME.desc())
+				.stream()
+				.map(Record1::value1)
+				.map(UUID::fromString)
+				.map(RunId::new)
 				.onClose(db::close);
 		} catch (Exception e) {
 			db.close();

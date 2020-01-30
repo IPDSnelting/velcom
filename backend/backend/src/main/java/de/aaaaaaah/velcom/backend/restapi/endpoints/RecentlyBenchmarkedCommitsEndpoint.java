@@ -1,14 +1,10 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
 import de.aaaaaaah.velcom.backend.access.benchmark.BenchmarkAccess;
-import de.aaaaaaah.velcom.backend.access.benchmark.Run;
 import de.aaaaaaah.velcom.backend.data.commitcomparison.CommitComparer;
 import de.aaaaaaah.velcom.backend.data.linearlog.LinearLog;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonCommitComparison;
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -48,6 +44,9 @@ public class RecentlyBenchmarkedCommitsEndpoint {
 		@NotNull @QueryParam("amount") Integer amount,
 		@DefaultValue("false") @QueryParam("significant_only") boolean significantOnly) {
 
+		return null; // TODO implement this again with the optimizations in BenchmarkAccess
+
+		/*
 		try (Stream<Run> recentRuns = benchmarkAccess.getRecentRuns()) {
 			List<JsonCommitComparison> interestingCommits = recentRuns
 				.map(run -> {
@@ -67,6 +66,7 @@ public class RecentlyBenchmarkedCommitsEndpoint {
 
 			return new GetReply(interestingCommits);
 		}
+		 */
 	}
 
 	private static class GetReply {

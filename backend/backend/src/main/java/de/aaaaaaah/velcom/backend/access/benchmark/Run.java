@@ -33,10 +33,12 @@ public class Run {
 	private final Instant stopTime;
 	@Nullable
 	private final String errorMessage;
+	@Nullable
+	private final Collection<Measurement> measurements;
 
 	Run(BenchmarkAccess benchmarkAccess, CommitAccess commitAccess, RepoAccess repoAccess,
 		RunId id, RepoId repoId, CommitHash commitHash, Instant startTime, Instant stopTime,
-		@Nullable String errorMessage) {
+		@Nullable String errorMessage, @Nullable Collection<Measurement> measurements) {
 
 		this.benchmarkAccess = benchmarkAccess;
 		this.commitAccess = commitAccess;
@@ -47,7 +49,9 @@ public class Run {
 		this.commitHash = commitHash;
 		this.startTime = startTime;
 		this.stopTime = stopTime;
+
 		this.errorMessage = errorMessage;
+		this.measurements = measurements;
 	}
 
 	public RunId getId() {
@@ -85,7 +89,7 @@ public class Run {
 	 */
 	public Optional<Collection<Measurement>> getMeasurements() {
 		if (errorMessage == null) {
-			return Optional.of(benchmarkAccess.getMeasurements(id));
+			return Optional.ofNullable(measurements);
 		} else {
 			return Optional.empty();
 		}

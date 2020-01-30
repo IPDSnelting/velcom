@@ -3,18 +3,20 @@ package de.aaaaaaah.velcom.backend.restapi.endpoints;
 import de.aaaaaaah.velcom.backend.access.benchmark.BenchmarkAccess;
 import de.aaaaaaah.velcom.backend.access.benchmark.Run;
 import de.aaaaaaah.velcom.backend.access.commit.Commit;
+import de.aaaaaaah.velcom.backend.access.commit.CommitHash;
 import de.aaaaaaah.velcom.backend.access.repo.Repo;
 import de.aaaaaaah.velcom.backend.access.repo.RepoAccess;
 import de.aaaaaaah.velcom.backend.access.repo.RepoId;
 import de.aaaaaaah.velcom.backend.data.commitcomparison.CommitComparer;
+import de.aaaaaaah.velcom.backend.data.commitcomparison.CommitComparison;
 import de.aaaaaaah.velcom.backend.data.linearlog.LinearLog;
 import de.aaaaaaah.velcom.backend.data.linearlog.LinearLogException;
-import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonCommitHistoryEntry;
-import de.aaaaaaah.velcom.backend.util.Pair;
+import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonCommitComparison;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
@@ -40,10 +42,8 @@ public class CommitHistoryEndpoint {
 	private final LinearLog linearLog;
 	private final CommitComparer comparer;
 
-	public CommitHistoryEndpoint(
-		BenchmarkAccess benchmarkAccess,
-		RepoAccess repoAccess, LinearLog linearLog,
-		CommitComparer comparer) {
+	public CommitHistoryEndpoint(BenchmarkAccess benchmarkAccess, RepoAccess repoAccess,
+		LinearLog linearLog, CommitComparer comparer) {
 
 		this.benchmarkAccess = benchmarkAccess;
 		this.repoAccess = repoAccess;
@@ -68,29 +68,51 @@ public class CommitHistoryEndpoint {
 		@Min(0) @DefaultValue("" + DEFAULT_SKIP) @QueryParam("skip") int skip)
 		throws LinearLogException {
 
-		Repo repo = repoAccess.getRepo(new RepoId(repoUuid));
+		final RepoId repoId = new RepoId(repoUuid);
+		final Repo repo = repoAccess.getRepo(repoId);
 
 		try (Stream<Commit> stream = linearLog.walkBranches(repo, repo.getTrackedBranches())) {
-			List<JsonCommitHistoryEntry> commitComparisons = new ArrayList<>();
+			final List<Commit> commits = stream
+				.skip(skip)
+				.limit(amount + 1)
+				.collect(Collectors.toUnmodifiableList());
 
-			Optional<Pair<Commit, Optional<Run>>> nextCommit = Optional.empty();
+			final List<CommitHash> commitHashes = commits.stream()
+				.map(Commit::getHash)
+				.collect(Collectors.toUnmodifiableList());
 
-			final Stream<Commit> limitedStream = stream.skip(skip).limit(amount + 1);
-			for (Commit commit : (Iterable<Commit>) limitedStream::iterator) {
-				final Optional<Run> run = benchmarkAccess.getLatestRunOf(commit);
-				// Building pyramids...
-				nextCommit.ifPresent(
-					commitOptionalPair -> commitComparisons.add(
-						new JsonCommitHistoryEntry(
-							commitOptionalPair.getFirst(),
-							comparer.compare(
-								commit, run.orElse(null),
-								commitOptionalPair.getFirst(), commitOptionalPair.getSecond().orElse(null)
-							)
-						)
-					)
-				);
-				nextCommit = Optional.of(new Pair<>(commit, run));
+			final Map<CommitHash, Run> runs = benchmarkAccess.getRuns(
+				benchmarkAccess.getLatestRunIds(repoId, commitHashes)).stream()
+				.collect(Collectors.toMap(
+					Run::getCommitHash,
+					run -> run
+				));
+
+			List<CommitComparison> commitComparisons = new ArrayList<>();
+
+			for (int i = 0; i < commits.size() - 1; i++) {
+				Commit secondCommit = commits.get(i);
+				Commit firstCommit = commits.get(i + 1);
+
+				commitComparisons.add(comparer.compare(
+					firstCommit,
+					runs.get(firstCommit.getHash()),
+					secondCommit,
+					runs.get(secondCommit.getHash())
+				));
+			}
+
+			// Usually, we get (amount + 1) commits. But if we get less than that, we're probably at
+			// the end of the repo and thus missing commits. In that case, we need to add the last
+			// commit manually.
+			if (commits.size() < amount + 1) {
+				final Commit firstCommit = commits.get(commits.size() - 1);
+				commitComparisons.add(comparer.compare(
+					null,
+					null,
+					firstCommit,
+					runs.get(firstCommit.getHash())
+				));
 			}
 
 			return new GetReply(commitComparisons);
@@ -99,13 +121,15 @@ public class CommitHistoryEndpoint {
 
 	private static class GetReply {
 
-		private final List<JsonCommitHistoryEntry> commits;
+		private final List<JsonCommitComparison> commits;
 
-		public GetReply(List<JsonCommitHistoryEntry> commits) {
-			this.commits = commits;
+		public GetReply(List<CommitComparison> commits) {
+			this.commits = commits.stream()
+				.map(JsonCommitComparison::new)
+				.collect(Collectors.toUnmodifiableList());
 		}
 
-		public List<JsonCommitHistoryEntry> getCommits() {
+		public List<JsonCommitComparison> getCommits() {
 			return commits;
 		}
 

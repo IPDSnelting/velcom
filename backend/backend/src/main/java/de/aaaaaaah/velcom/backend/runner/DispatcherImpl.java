@@ -3,7 +3,7 @@ package de.aaaaaaah.velcom.backend.runner;
 import de.aaaaaaah.velcom.backend.access.benchmark.BenchmarkAccess;
 import de.aaaaaaah.velcom.backend.access.benchmark.Interpretation;
 import de.aaaaaaah.velcom.backend.access.benchmark.MeasurementName;
-import de.aaaaaaah.velcom.backend.access.benchmark.Run;
+import de.aaaaaaah.velcom.backend.access.benchmark.RunId;
 import de.aaaaaaah.velcom.backend.access.benchmark.Unit;
 import de.aaaaaaah.velcom.backend.access.commit.Commit;
 import de.aaaaaaah.velcom.backend.access.commit.CommitHash;
@@ -294,10 +294,10 @@ public class DispatcherImpl implements Dispatcher {
 				results.getError()
 			);
 		} else {
-			Run run = benchmarkAccess.addRun(repoId, commitHash, startTime, endTime);
+			RunId runId = benchmarkAccess.addRun(repoId, commitHash, startTime, endTime);
 			for (Benchmark benchmark : results.getBenchmarks()) {
 				for (Metric metric : benchmark.getMetrics()) {
-					addMeasurementToRun(run, benchmark, metric);
+					addMeasurementToRun(runId, benchmark, metric);
 				}
 			}
 		}
@@ -305,20 +305,20 @@ public class DispatcherImpl implements Dispatcher {
 		queue.finishTask(repoId, commitHash);
 	}
 
-	private void addMeasurementToRun(Run run, Benchmark benchmark, Metric metric) {
+	private void addMeasurementToRun(RunId runId, Benchmark benchmark, Metric metric) {
 		MeasurementName measurementName = new MeasurementName(
 			benchmark.getName(),
 			metric.getName()
 		);
 		if (metric.isError()) {
 			benchmarkAccess.addFailedMeasurement(
-				run.getId(),
+				runId,
 				measurementName,
 				metric.getError()
 			);
 		} else {
 			benchmarkAccess.addMeasurement(
-				run.getId(),
+				runId,
 				measurementName,
 				metric.getResults(),
 				Interpretation.fromTextualRepresentation(
