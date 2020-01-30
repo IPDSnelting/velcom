@@ -3,9 +3,7 @@
     <v-content>
       <nav-bar></nav-bar>
       <snackbar ref="global-snackbar"></snackbar>
-      <!-- Key is set so the component will be recreated when the path changes. -->
-      <!-- The profile view needs this to fetch the correct data -->
-      <router-view :key="$route.fullPath" />
+      <router-view />
     </v-content>
   </v-app>
 </template>
