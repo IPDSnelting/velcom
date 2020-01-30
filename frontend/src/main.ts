@@ -1,7 +1,7 @@
 import Vue from 'vue'
 import App from './App.vue'
 import router from './router'
-import { store, vxm } from './store'
+import { store, vxm, restoreFromPassedSession } from './store'
 import axios from 'axios'
 import vuetify from './plugins/vuetify'
 import { extractErrorMessage } from './util/ErrorUtils'
@@ -9,6 +9,27 @@ import { extractErrorMessage } from './util/ErrorUtils'
 Vue.config.productionTip = false
 
 axios.defaults.baseURL = store.state.baseUrl
+
+window.addEventListener('storage', event => {
+  if (!event.newValue) {
+    return
+  }
+  if (event.key === 'FETCH_STORAGE') {
+    console.log('Donating session data to new tab!')
+
+    localStorage.setItem('TRANSFER_STORAGE', JSON.stringify(sessionStorage))
+    localStorage.removeItem('TRANSFER_STORAGE')
+    return
+  }
+  if (event.key === 'TRANSFER_STORAGE' && sessionStorage.length === 0) {
+    restoreFromPassedSession(JSON.parse(JSON.parse(event.newValue)['vuex']))
+  }
+})
+
+if (sessionStorage.length === 0) {
+  localStorage.setItem('FETCH_STORAGE', 'marker_value')
+  localStorage.removeItem('FETCH_STORAGE')
+}
 
 const vue = new Vue({
   router,

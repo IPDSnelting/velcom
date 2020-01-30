@@ -17,10 +17,31 @@ interface RootState {
   commitComparisonModule: CommitComparisonStore
   newsModule: NewsStore
   queueModule: QueueStore
-  repoComparisonModule: RepoComparisonStore
-  repoModule: RepoStore
-  repoDetailModule: RepoDetailStore
+  repoComparisonModule: PersistedRepoComparisonStore
+  repoModule: PersistedRepoStore
+  repoDetailModule: PersisteRepoDetailStore
   userModule: UserStore
+}
+
+interface PersistedRepoStore {
+  repoIndices: { [repoID: string]: number }
+  currentRepoIndex: number
+}
+
+interface PersistedRepoComparisonStore {
+  _selectedRepos: string[]
+  _selectedBranchesByRepoID: { [key: string]: string[] }
+  startTime: string
+  stopTime: string
+}
+
+interface PersisteRepoDetailStore {
+  _selectedRepoId: string
+}
+
+interface PersistedSessionRootState {
+  repoComparisonModule: PersistedRepoComparisonStore
+  repoDetailModule: PersisteRepoDetailStore
 }
 
 const persistenceLocalStorage = new VuexPersistence<RootState>({
@@ -30,8 +51,8 @@ const persistenceLocalStorage = new VuexPersistence<RootState>({
       userModule: state.userModule,
       colorModule: state.colorModule,
       repoStore: {
-        repoIndices: (state.repoModule as any).repoIndices,
-        currentRepoIndex: (state.repoModule as any).currentRepoIndex
+        repoIndices: state.repoModule.repoIndices,
+        currentRepoIndex: state.repoModule.currentRepoIndex
       }
     }
   }
@@ -42,15 +63,14 @@ const persistenceSessionStorage = new VuexPersistence<RootState>({
   reducer: state => {
     return {
       repoComparisonModule: {
-        // Dirty hack as those states are private but still need to be persisted...
-        _selectedRepos: (state.repoComparisonModule as any)._selectedRepos,
-        _selectedBranchesByRepoID: (state.repoComparisonModule as any)
-          ._selectedBranchesByRepoID,
-        startTime: (state.repoComparisonModule as any).startTime,
-        stopTime: (state.repoComparisonModule as any).stopTime
+        _selectedRepos: state.repoComparisonModule._selectedRepos,
+        _selectedBranchesByRepoID:
+          state.repoComparisonModule._selectedBranchesByRepoID,
+        startTime: state.repoComparisonModule.startTime,
+        stopTime: state.repoComparisonModule.stopTime
       },
       repoDetailModule: {
-        _selectedRepoId: (state.repoDetailModule as any)._selectedRepoId
+        _selectedRepoId: state.repoDetailModule._selectedRepoId
       }
     }
   }
@@ -60,7 +80,6 @@ Vue.use(Vuex)
 
 export const store = new Vuex.Store({
   state: {
-    // baseUrl: 'https://aaaaaaah.de:8667/'
     baseUrl: process.env.VUE_APP_BASE_URL
   } as RootState,
   modules: {
@@ -85,4 +104,16 @@ export const vxm = {
   repoModule: createProxy(store, RepoStore),
   userModule: createProxy(store, UserStore),
   repoDetailModule: createProxy(store, RepoDetailStore)
+}
+
+export function restoreFromPassedSession(state: PersistedSessionRootState) {
+  console.log(
+    'Restoring state donated by another tab: ' + JSON.stringify(state)
+  )
+
+  // Detail module
+  vxm.repoDetailModule.selectedRepoId = state.repoDetailModule._selectedRepoId
+
+  // Comparison module
+  Object.assign(vxm.repoComparisonModule, state.repoComparisonModule)
 }
