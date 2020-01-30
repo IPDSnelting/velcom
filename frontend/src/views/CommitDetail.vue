@@ -1,5 +1,5 @@
 <template>
-  <v-container fluid>
+  <v-container>
     <v-row>
       <commit-information
         v-if="commit"
