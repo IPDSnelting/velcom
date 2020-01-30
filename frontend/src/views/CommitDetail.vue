@@ -65,6 +65,7 @@ import {
 import { vxm } from '../store'
 import CommitInformation from '../components/CommitInformation.vue'
 import CommitInfoTable from '../components/CommitInfoTable.vue'
+import { Watch } from 'vue-property-decorator'
 
 @Component({
   components: {
@@ -147,12 +148,18 @@ export default class CommitDetail extends Vue {
     }))
   }
 
-  created() {
+  @Watch('repoId')
+  @Watch('hash')
+  updateYourself() {
     vxm.commitComparisonModule.fetchCommitInfo({
       repoId: this.repoID,
       first: undefined,
       second: this.hash
     })
+  }
+
+  created() {
+    this.updateYourself()
   }
 }
 </script>
