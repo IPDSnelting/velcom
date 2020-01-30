@@ -2,16 +2,16 @@ package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import de.aaaaaaah.velcom.backend.access.benchmark.BenchmarkAccess;
 import de.aaaaaaah.velcom.backend.access.benchmark.MeasurementName;
+import de.aaaaaaah.velcom.backend.access.benchmark.repocomparison.timeslice.CommitGrouper;
+import de.aaaaaaah.velcom.backend.access.benchmark.repocomparison.timeslice.GroupByDay;
+import de.aaaaaaah.velcom.backend.access.benchmark.repocomparison.timeslice.GroupByHour;
+import de.aaaaaaah.velcom.backend.access.benchmark.repocomparison.timeslice.GroupByWeek;
 import de.aaaaaaah.velcom.backend.access.commit.Commit;
 import de.aaaaaaah.velcom.backend.access.commit.CommitAccess;
 import de.aaaaaaah.velcom.backend.access.repo.RepoAccess;
 import de.aaaaaaah.velcom.backend.access.repo.RepoId;
-import de.aaaaaaah.velcom.backend.access.repocomparison.RepoComparisonAccess;
-import de.aaaaaaah.velcom.backend.access.repocomparison.timeslice.CommitGrouper;
-import de.aaaaaaah.velcom.backend.access.repocomparison.timeslice.GroupByDay;
-import de.aaaaaaah.velcom.backend.access.repocomparison.timeslice.GroupByHour;
-import de.aaaaaaah.velcom.backend.access.repocomparison.timeslice.GroupByWeek;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonGraphRepoInfo;
 import java.time.Instant;
 import java.util.Collection;
@@ -43,18 +43,18 @@ public class RepoComparisonGraphEndpoint {
 
 	private final CommitAccess commitAccess;
 	private final RepoAccess repoAccess;
-	private final RepoComparisonAccess repoComparisonAccess;
+	private final BenchmarkAccess benchmarkAccess;
 
 	private final CommitGrouper<Long> hourlyGrouper;
 	private final CommitGrouper<Long> dailyGrouper;
 	private final CommitGrouper<Long> weeklyGrouper;
 
 	public RepoComparisonGraphEndpoint(CommitAccess commitAccess, RepoAccess repoAccess,
-		RepoComparisonAccess repoComparisonAccess) {
+		BenchmarkAccess benchmarkAccess) {
 
 		this.commitAccess = commitAccess;
 		this.repoAccess = repoAccess;
-		this.repoComparisonAccess = repoComparisonAccess;
+		this.benchmarkAccess = benchmarkAccess;
 
 		hourlyGrouper = new GroupByHour();
 		dailyGrouper = new GroupByDay();
@@ -110,7 +110,8 @@ public class RepoComparisonGraphEndpoint {
 				final Collection<Commit> commits = commitAccess.getCommitsBetween(repoId,
 					branchSpec.getBranches(), realStartTime, realStopTime);
 
-				return repoComparisonAccess.getRepoInfo(repoId, commits, measurementName, grouper);
+				return benchmarkAccess.getRepoComparison()
+					.getRepoInfo(repoId, commits, measurementName, grouper);
 			})
 			.collect(Collectors.toUnmodifiableList());
 

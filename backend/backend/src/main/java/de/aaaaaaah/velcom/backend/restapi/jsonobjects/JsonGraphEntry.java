@@ -1,6 +1,6 @@
 package de.aaaaaaah.velcom.backend.restapi.jsonobjects;
 
-import de.aaaaaaah.velcom.backend.access.repocomparison.GraphEntry;
+import de.aaaaaaah.velcom.backend.access.benchmark.repocomparison.GraphEntry;
 
 public class JsonGraphEntry {
 

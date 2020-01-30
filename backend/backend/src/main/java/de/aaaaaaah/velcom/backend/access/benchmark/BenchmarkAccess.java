@@ -8,6 +8,7 @@ import static org.jooq.impl.DSL.max;
 import static org.jooq.impl.DSL.selectFrom;
 
 import de.aaaaaaah.velcom.backend.access.AccessLayer;
+import de.aaaaaaah.velcom.backend.access.benchmark.repocomparison.RepoComparison;
 import de.aaaaaaah.velcom.backend.access.commit.Commit;
 import de.aaaaaaah.velcom.backend.access.commit.CommitHash;
 import de.aaaaaaah.velcom.backend.access.repo.RepoId;
@@ -42,6 +43,7 @@ public class BenchmarkAccess {
 
 	private final AccessLayer accessLayer;
 	private final DatabaseStorage databaseStorage;
+	private final RepoComparison repoComparison;
 
 	/**
 	 * This constructor also registers the {@link BenchmarkAccess} in the accessLayer.
@@ -52,6 +54,7 @@ public class BenchmarkAccess {
 	public BenchmarkAccess(AccessLayer accessLayer, DatabaseStorage databaseStorage) {
 		this.accessLayer = accessLayer;
 		this.databaseStorage = databaseStorage;
+		this.repoComparison = new RepoComparison(this.databaseStorage);
 
 		accessLayer.registerBenchmarkAccess(this);
 	}
@@ -180,6 +183,10 @@ public class BenchmarkAccess {
 		return getLatestRunId(commit.getRepoId(), commit.getHash()).map(this::getRun);
 	}
 
+	public RepoComparison getRepoComparison() {
+		return this.repoComparison;
+	}
+
 	/*
 	Advanced operations
 	 */
@@ -280,7 +287,6 @@ public class BenchmarkAccess {
 			);
 		}
 	}
-
 
 	/**
 	 * Add a new failed measurement to an existing run.

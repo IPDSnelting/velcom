@@ -6,7 +6,6 @@ import de.aaaaaaah.velcom.backend.access.benchmark.BenchmarkAccess;
 import de.aaaaaaah.velcom.backend.access.commit.CommitAccess;
 import de.aaaaaaah.velcom.backend.access.repo.RemoteUrl;
 import de.aaaaaaah.velcom.backend.access.repo.RepoAccess;
-import de.aaaaaaah.velcom.backend.access.repocomparison.RepoComparisonAccess;
 import de.aaaaaaah.velcom.backend.access.token.AuthToken;
 import de.aaaaaaah.velcom.backend.access.token.TokenAccess;
 import de.aaaaaaah.velcom.backend.data.commitcomparison.CommitComparer;
@@ -81,7 +80,6 @@ public class ServerMain extends Application<GlobalConfig> {
 		CommitAccess commitAccess = new CommitAccess(accessLayer, databaseStorage, repoStorage);
 		RepoAccess repoAccess = new RepoAccess(accessLayer, databaseStorage, repoStorage,
 			new RemoteUrl(configuration.getBenchmarkRepoRemoteUrl()));
-		RepoComparisonAccess repoComparisonAccess = new RepoComparisonAccess(databaseStorage);
 		TokenAccess tokenAccess = new TokenAccess(configuration, accessLayer, databaseStorage,
 			new AuthToken(configuration.getWebAdminToken()));
 
@@ -125,7 +123,7 @@ public class ServerMain extends Application<GlobalConfig> {
 		environment.jersey().register(
 			new RecentlyBenchmarkedCommitsEndpoint(benchmarkAccess, commitComparer, linearLog));
 		environment.jersey().register(
-			new RepoComparisonGraphEndpoint(commitAccess, repoAccess, repoComparisonAccess));
+			new RepoComparisonGraphEndpoint(commitAccess, repoAccess, benchmarkAccess));
 		environment.jersey().register(new RepoEndpoint(repoAccess, tokenAccess, queue, listener));
 		environment.jersey().register(new TestTokenEndpoint());
 	}

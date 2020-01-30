@@ -1,4 +1,4 @@
-package de.aaaaaaah.velcom.backend.access.repocomparison;
+package de.aaaaaaah.velcom.backend.access.benchmark.repocomparison;
 
 import static org.jooq.codegen.db.tables.Run.RUN;
 import static org.jooq.codegen.db.tables.RunMeasurement.RUN_MEASUREMENT;
@@ -8,10 +8,10 @@ import static org.jooq.impl.DSL.max;
 import de.aaaaaaah.velcom.backend.access.benchmark.Interpretation;
 import de.aaaaaaah.velcom.backend.access.benchmark.MeasurementName;
 import de.aaaaaaah.velcom.backend.access.benchmark.Unit;
+import de.aaaaaaah.velcom.backend.access.benchmark.repocomparison.timeslice.CommitGrouper;
 import de.aaaaaaah.velcom.backend.access.commit.Commit;
 import de.aaaaaaah.velcom.backend.access.commit.CommitHash;
 import de.aaaaaaah.velcom.backend.access.repo.RepoId;
-import de.aaaaaaah.velcom.backend.access.repocomparison.timeslice.CommitGrouper;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonGraphEntry;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonGraphRepoInfo;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
@@ -26,11 +26,11 @@ import java.util.stream.Collectors;
 import org.jooq.DSLContext;
 import org.jooq.Record2;
 
-public class RepoComparisonAccess {
+public class RepoComparison {
 
 	private final DatabaseStorage databaseStorage;
 
-	public RepoComparisonAccess(DatabaseStorage databaseStorage) {
+	public RepoComparison(DatabaseStorage databaseStorage) {
 		this.databaseStorage = databaseStorage;
 	}
 
@@ -72,7 +72,7 @@ public class RepoComparisonAccess {
 		return new JsonGraphRepoInfo(repoId, orderedEntries, interpretation, unit);
 	}
 
-	public Collection<String> getRunIds(RepoId repoId, Collection<Commit> commits) {
+	private Collection<String> getRunIds(RepoId repoId, Collection<Commit> commits) {
 		try (DSLContext db = databaseStorage.acquireContext()) {
 			Collection<String> commitHashes = commits.stream()
 				.map(Commit::getHash)
@@ -90,7 +90,7 @@ public class RepoComparisonAccess {
 		}
 	}
 
-	public Collection<GraphEntry> collectTmpEntries(RepoId repoId, Collection<Commit> commits,
+	private Collection<GraphEntry> collectTmpEntries(RepoId repoId, Collection<Commit> commits,
 		Collection<String> runIds, MeasurementName measurementName) {
 
 		// Map of commitHash -> GraphEntry
@@ -126,7 +126,7 @@ public class RepoComparisonAccess {
 		return tmpEntries.values();
 	}
 
-	public Pair<Interpretation, Unit> getInterpretationAndUnit(RepoId repoId,
+	private Pair<Interpretation, Unit> getInterpretationAndUnit(RepoId repoId,
 		Collection<String> runIds, MeasurementName measurementName) {
 
 		try (DSLContext db = databaseStorage.acquireContext()) {
@@ -159,7 +159,7 @@ public class RepoComparisonAccess {
 		}
 	}
 
-	public Map<Long, List<GraphEntry>> groupTmpEntries(Collection<GraphEntry> tmpEntries,
+	private Map<Long, List<GraphEntry>> groupTmpEntries(Collection<GraphEntry> tmpEntries,
 		CommitGrouper<Long> grouper) {
 
 		return tmpEntries.stream()
@@ -168,7 +168,7 @@ public class RepoComparisonAccess {
 			)));
 	}
 
-	public Optional<GraphEntry> getBestTmpEntry(Collection<GraphEntry> tmpEntries,
+	private Optional<GraphEntry> getBestTmpEntry(Collection<GraphEntry> tmpEntries,
 		Interpretation interpretation) {
 
 		// This assumes that the measurements all have the same interpretation as the most recently

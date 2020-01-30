@@ -1,4 +1,4 @@
-package de.aaaaaaah.velcom.backend.access.repocomparison;
+package de.aaaaaaah.velcom.backend.access.benchmark.repocomparison;
 
 import de.aaaaaaah.velcom.backend.access.benchmark.MeasurementValues;
 import de.aaaaaaah.velcom.backend.access.commit.Commit;
