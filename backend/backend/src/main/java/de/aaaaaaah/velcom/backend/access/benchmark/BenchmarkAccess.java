@@ -124,7 +124,7 @@ public class BenchmarkAccess {
 				.collect(Collectors.toMap(TmpRun::getId, run -> run));
 
 			db.selectFrom(RUN_MEASUREMENT)
-				.where(RUN_MEASUREMENT.RUN_ID.in(runIds))
+				.where(RUN_MEASUREMENT.RUN_ID.in(runIdsAsStrings))
 				.stream()
 				.map(record -> new TmpMeasurement(
 					new RunId(UUID.fromString(record.getRunId())),
@@ -145,7 +145,7 @@ public class BenchmarkAccess {
 				.from(RUN_MEASUREMENT)
 				.join(RUN_MEASUREMENT_VALUE)
 				.on(RUN_MEASUREMENT.ID.eq(RUN_MEASUREMENT_VALUE.MEASUREMENT_ID))
-				.where(RUN_MEASUREMENT.RUN_ID.in(runIds))
+				.where(RUN_MEASUREMENT.RUN_ID.in(runIdsAsStrings))
 				.forEach(record -> {
 					final RunId runId = new RunId(UUID.fromString(record.value1()));
 					final MeasurementName measurementName = new MeasurementName(record.value2(),
