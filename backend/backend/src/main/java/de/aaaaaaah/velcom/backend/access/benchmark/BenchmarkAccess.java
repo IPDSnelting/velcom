@@ -8,7 +8,6 @@ import static org.jooq.impl.DSL.max;
 import static org.jooq.impl.DSL.selectFrom;
 
 import de.aaaaaaah.velcom.backend.access.AccessLayer;
-import de.aaaaaaah.velcom.backend.access.benchmark.repocomparison.RepoComparison;
 import de.aaaaaaah.velcom.backend.access.commit.Commit;
 import de.aaaaaaah.velcom.backend.access.commit.CommitHash;
 import de.aaaaaaah.velcom.backend.access.repo.RepoId;
@@ -19,6 +18,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -43,7 +43,6 @@ public class BenchmarkAccess {
 
 	private final AccessLayer accessLayer;
 	private final DatabaseStorage databaseStorage;
-	private final RepoComparison repoComparison;
 
 	/**
 	 * This constructor also registers the {@link BenchmarkAccess} in the accessLayer.
@@ -54,7 +53,6 @@ public class BenchmarkAccess {
 	public BenchmarkAccess(AccessLayer accessLayer, DatabaseStorage databaseStorage) {
 		this.accessLayer = accessLayer;
 		this.databaseStorage = databaseStorage;
-		this.repoComparison = new RepoComparison(this.databaseStorage);
 
 		accessLayer.registerBenchmarkAccess(this);
 	}
@@ -181,10 +179,6 @@ public class BenchmarkAccess {
 
 	public Optional<Run> getLatestRunOf(Commit commit) {
 		return getLatestRunId(commit.getRepoId(), commit.getHash()).map(this::getRun);
-	}
-
-	public RepoComparison getRepoComparison() {
-		return this.repoComparison;
 	}
 
 	/*
@@ -449,6 +443,62 @@ public class BenchmarkAccess {
 				.map(record -> new MeasurementName(record.value1(), record.value2()))
 				.collect(Collectors.toUnmodifiableSet());
 		}
+	}
+
+	/**
+	 * TODO: Documentation
+	 */
+	public Collection<CommitPerformance> getCommitPerformances(RepoId repoId,
+		MeasurementName measurementName,
+		Collection<RunId> runIds) {
+
+		Collection<String> stringRunIds = runIds.stream()
+			.map(r -> r.getId().toString())
+			.collect(Collectors.toList());
+
+		// "lazy" insertion into map guarantees that every commit performance
+		// inside this map has at least one value
+		Map<String, CommitPerformance> commitMap = new HashMap<>();
+
+		try (DSLContext db = databaseStorage.acquireContext()) {
+			// Then collect all the measurements' values
+			db.select(
+				RUN.COMMIT_HASH,
+				RUN_MEASUREMENT_VALUE.VALUE,
+				RUN_MEASUREMENT.BENCHMARK,
+				RUN_MEASUREMENT.METRIC,
+				RUN_MEASUREMENT.INTERPRETATION,
+				RUN_MEASUREMENT.UNIT
+			)
+				.from(RUN
+					.join(RUN_MEASUREMENT)
+					.on(RUN.ID.eq(RUN_MEASUREMENT.RUN_ID))
+					.join(RUN_MEASUREMENT_VALUE)
+					.on(RUN_MEASUREMENT.ID.eq(RUN_MEASUREMENT_VALUE.MEASUREMENT_ID))
+				)
+				.where(RUN.REPO_ID.eq(repoId.getId().toString()))
+				.and(RUN.ID.in(stringRunIds))
+				.and(RUN_MEASUREMENT.BENCHMARK.eq(measurementName.getBenchmark()))
+				.and(RUN_MEASUREMENT.METRIC.eq(measurementName.getMetric()))
+				.and(RUN_MEASUREMENT.ERROR_MESSAGE.isNull())
+				.forEach(r -> {
+					String commitHash = r.value1();
+					double value = r.value2();
+
+					if (!commitMap.containsKey(commitHash)) {
+						commitMap.put(commitHash, new CommitPerformance(
+							new MeasurementName(r.value3(), r.value4()),
+							Interpretation.fromTextualRepresentation(r.value5()),
+							new Unit(r.value6()),
+							new CommitHash(commitHash)
+						));
+					}
+
+					commitMap.get(commitHash).addValue(value);
+				});
+		}
+
+		return commitMap.values();
 	}
 
 }

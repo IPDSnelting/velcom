@@ -2,20 +2,19 @@ package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import de.aaaaaaah.velcom.backend.access.benchmark.BenchmarkAccess;
 import de.aaaaaaah.velcom.backend.access.benchmark.MeasurementName;
-import de.aaaaaaah.velcom.backend.access.benchmark.repocomparison.timeslice.CommitGrouper;
-import de.aaaaaaah.velcom.backend.access.benchmark.repocomparison.timeslice.GroupByDay;
-import de.aaaaaaah.velcom.backend.access.benchmark.repocomparison.timeslice.GroupByHour;
-import de.aaaaaaah.velcom.backend.access.benchmark.repocomparison.timeslice.GroupByWeek;
-import de.aaaaaaah.velcom.backend.access.commit.Commit;
-import de.aaaaaaah.velcom.backend.access.commit.CommitAccess;
-import de.aaaaaaah.velcom.backend.access.repo.RepoAccess;
+import de.aaaaaaah.velcom.backend.access.repo.BranchName;
 import de.aaaaaaah.velcom.backend.access.repo.RepoId;
+import de.aaaaaaah.velcom.backend.data.repocomparison.ComparisonGraph;
+import de.aaaaaaah.velcom.backend.data.repocomparison.GraphEntry;
+import de.aaaaaaah.velcom.backend.data.repocomparison.RepoComparison;
+import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonGraphEntry;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonGraphRepoInfo;
 import java.time.Instant;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -35,30 +34,10 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 public class RepoComparisonGraphEndpoint {
 
-	// Difference of start and end time (in seconds) below which the hourly grouper should be used.
-	private static final long HOURLY_THRESHOLD = 60 * 60 * 24 * 20; // 20 days
-	// Difference of start and end time (in seconds) below which the daily grouper should be used.3
-	private static final long DAILY_THRESHOLD = 60 * 60 * 24 * 7 * 20; // 20 weeks
-	// If the start and end time difference is greater than this, the weekly grouper is used.
+	private final RepoComparison repoComparison;
 
-	private final CommitAccess commitAccess;
-	private final RepoAccess repoAccess;
-	private final BenchmarkAccess benchmarkAccess;
-
-	private final CommitGrouper<Long> hourlyGrouper;
-	private final CommitGrouper<Long> dailyGrouper;
-	private final CommitGrouper<Long> weeklyGrouper;
-
-	public RepoComparisonGraphEndpoint(CommitAccess commitAccess, RepoAccess repoAccess,
-		BenchmarkAccess benchmarkAccess) {
-
-		this.commitAccess = commitAccess;
-		this.repoAccess = repoAccess;
-		this.benchmarkAccess = benchmarkAccess;
-
-		hourlyGrouper = new GroupByHour();
-		dailyGrouper = new GroupByDay();
-		weeklyGrouper = new GroupByWeek();
+	public RepoComparisonGraphEndpoint(RepoComparison repoComparison) {
+		this.repoComparison = repoComparison;
 	}
 
 	/**
@@ -85,37 +64,36 @@ public class RepoComparisonGraphEndpoint {
 		MeasurementName measurementName = new MeasurementName(request.getBenchmark(),
 			request.getMetric());
 
-		CommitGrouper<Long> grouper;
-		if (startTime.isPresent() && stopTime.isPresent()) {
-			long difference = stopTime.get().getEpochSecond() - startTime.get().getEpochSecond();
-			if (difference < HOURLY_THRESHOLD) {
-				grouper = hourlyGrouper;
-			} else if (difference < DAILY_THRESHOLD) {
-				grouper = dailyGrouper;
-			} else {
-				grouper = weeklyGrouper;
-			}
-		} else {
-			grouper = weeklyGrouper; // TODO choose grouper based on returned commits?
+		// Collect all branches and repos
+		final Map<RepoId, List<BranchName>> repoBranches = new HashMap<>();
+
+		for (BranchSpec branchSpec : request.getRepos()) {
+			final RepoId repoId = new RepoId(branchSpec.getRepoId());
+			final List<BranchName> repoBranchNames = branchSpec.getBranches()
+				.stream()
+				.map(BranchName::fromName)
+				.collect(Collectors.toList());
+
+			repoBranches.put(repoId, repoBranchNames);
 		}
 
-		// Need these variables because otherwise java won't compile
-		Instant realStartTime = startTime.orElse(null);
-		Instant realStopTime = stopTime.orElse(null);
+		final ComparisonGraph graph = this.repoComparison.generateGraph(
+			measurementName, repoBranches, startTime.orElse(null), stopTime.orElse(null)
+		);
 
-		final List<JsonGraphRepoInfo> repoInfos = request.getRepos().stream()
-			.map(branchSpec -> {
-				final RepoId repoId = new RepoId(branchSpec.getRepoId());
+		final List<JsonGraphRepoInfo> jsonGraphData = graph.getData().stream()
+			.map(repoGraphData -> new JsonGraphRepoInfo(
+				repoGraphData.getRepoId(),
+				convertEntriesToJson(repoGraphData.getEntries()),
+				repoGraphData.getInterpretation(),
+				repoGraphData.getUnit()))
+			.collect(Collectors.toList());
 
-				final Collection<Commit> commits = commitAccess.getCommitsBetween(repoId,
-					branchSpec.getBranches(), realStartTime, realStopTime);
+		return new PostReply(jsonGraphData);
+	}
 
-				return benchmarkAccess.getRepoComparison()
-					.getRepoInfo(repoId, commits, measurementName, grouper);
-			})
-			.collect(Collectors.toUnmodifiableList());
-
-		return new PostReply(repoInfos);
+	private List<JsonGraphEntry> convertEntriesToJson(Collection<GraphEntry> entries) {
+		return entries.stream().map(JsonGraphEntry::new).collect(Collectors.toList());
 	}
 
 	private static class PostRequest {

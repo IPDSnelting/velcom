@@ -13,6 +13,8 @@ import de.aaaaaaah.velcom.backend.data.linearlog.CommitAccessBasedLinearLog;
 import de.aaaaaaah.velcom.backend.data.linearlog.LinearLog;
 import de.aaaaaaah.velcom.backend.data.queue.PolicyManualFilo;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
+import de.aaaaaaah.velcom.backend.data.repocomparison.RepoComparison;
+import de.aaaaaaah.velcom.backend.data.repocomparison.TimesliceComparison;
 import de.aaaaaaah.velcom.backend.listener.Listener;
 import de.aaaaaaah.velcom.backend.restapi.RepoAuthenticator;
 import de.aaaaaaah.velcom.backend.restapi.RepoUser;
@@ -86,6 +88,7 @@ public class ServerMain extends Application<GlobalConfig> {
 		// Data layer
 		CommitComparer commitComparer = new CommitComparer(configuration.getSignificantFactor());
 		LinearLog linearLog = new CommitAccessBasedLinearLog(commitAccess);
+		RepoComparison repoComparison = new TimesliceComparison(commitAccess, benchmarkAccess);
 
 		Queue queue = new Queue(commitAccess, new PolicyManualFilo());
 		commitAccess.getAllCommitsRequiringBenchmark().forEach(queue::addCommit);
@@ -122,8 +125,7 @@ public class ServerMain extends Application<GlobalConfig> {
 		environment.jersey().register(new QueueEndpoint(commitAccess, queue, dispatcher));
 		environment.jersey().register(
 			new RecentlyBenchmarkedCommitsEndpoint(benchmarkAccess, commitComparer, linearLog));
-		environment.jersey().register(
-			new RepoComparisonGraphEndpoint(commitAccess, repoAccess, benchmarkAccess));
+		environment.jersey().register(new RepoComparisonGraphEndpoint(repoComparison));
 		environment.jersey().register(new RepoEndpoint(repoAccess, tokenAccess, queue, listener));
 		environment.jersey().register(new TestTokenEndpoint());
 	}
