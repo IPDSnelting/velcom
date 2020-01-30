@@ -14,21 +14,14 @@ window.addEventListener('storage', event => {
   if (!event.newValue) {
     return
   }
-  if (event.key === 'FETCH_STORAGE') {
-    console.log('Donating session data to new tab!')
 
-    localStorage.setItem('TRANSFER_STORAGE', JSON.stringify(sessionStorage))
-    localStorage.removeItem('TRANSFER_STORAGE')
-    return
-  }
-  if (event.key === 'TRANSFER_STORAGE' && sessionStorage.length === 0) {
-    restoreFromPassedSession(JSON.parse(JSON.parse(event.newValue)['vuex']))
+  if (event.key === 'persisted_session_state' && sessionStorage.length === 0) {
+    restoreFromPassedSession(event.newValue)
   }
 })
 
 if (sessionStorage.length === 0) {
-  localStorage.setItem('FETCH_STORAGE', 'marker_value')
-  localStorage.removeItem('FETCH_STORAGE')
+  restoreFromPassedSession(null)
 }
 
 const vue = new Vue({

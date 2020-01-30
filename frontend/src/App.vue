@@ -14,7 +14,7 @@ import Component from 'vue-class-component'
 import NavigationBar from './components/NavigationBar.vue'
 import Snackbar from './components/Snackbar.vue'
 import { Store } from 'vuex'
-import { vxm } from './store'
+import { vxm, storeToLocalStorage } from './store'
 
 @Component({
   components: {
@@ -23,11 +23,40 @@ import { vxm } from './store'
   }
 })
 export default class App extends Vue {
+  private clickHandler: any = this.checkClick
+
+  private checkClick(event: Event) {
+    if (!event.srcElement) {
+      return
+    }
+    if (!(event.srcElement instanceof HTMLElement)) {
+      return
+    }
+
+    let tmpElement: HTMLElement | null = event.srcElement
+    while (tmpElement && tmpElement.tagName.toLowerCase() !== 'a') {
+      tmpElement = tmpElement.parentElement
+    }
+
+    if (!tmpElement) {
+      return
+    }
+    storeToLocalStorage()
+  }
+
   created() {
+    document.addEventListener('click', this.clickHandler)
+    document.addEventListener('mousedown', this.clickHandler)
+
     vxm.repoModule.fetchRepos()
     this.$router.afterEach((from, to) => {
       vxm.repoModule.fetchRepos()
     })
+  }
+
+  beforeDestroy() {
+    document.removeEventListener('click', this.clickHandler)
+    document.removeEventListener('mousedown', this.clickHandler)
   }
 }
 </script>

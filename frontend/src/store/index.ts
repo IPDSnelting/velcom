@@ -106,10 +106,42 @@ export const vxm = {
   repoDetailModule: createProxy(store, RepoDetailStore)
 }
 
-export function restoreFromPassedSession(state: PersistedSessionRootState) {
-  console.log(
-    'Restoring state donated by another tab: ' + JSON.stringify(state)
-  )
+export function storeToLocalStorage() {
+  console.log('Saving...')
+
+  let data = {
+    data: JSON.stringify(sessionStorage),
+    accessTime: new Date().getTime()
+  }
+  localStorage.setItem('persisted_session_state', JSON.stringify(data))
+}
+
+export function restoreFromPassedSession(rawData: string | null) {
+  console.log('Trying to restore')
+
+  if (rawData === null) {
+    rawData = localStorage.getItem('persisted_session_state')
+
+    if (rawData === null) {
+      console.log('Raw data really null')
+      return
+    }
+  }
+
+  let { data, accessTime } = JSON.parse(rawData)
+
+  // Older than 10 seconds. Should not happen, but better be safe than sorry.
+  if (new Date().getTime() - accessTime > 10 * 1000) {
+    console.log('Is too old: ' + accessTime)
+    return
+  }
+
+  console.log('Used data: ' + data)
+
+  let state: PersistedSessionRootState = JSON.parse(JSON.parse(data)['vuex'])
+
+  console.log('Used state')
+  console.log(state)
 
   // Detail module
   vxm.repoDetailModule.selectedRepoId = state.repoDetailModule._selectedRepoId
