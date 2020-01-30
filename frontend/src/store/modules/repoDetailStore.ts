@@ -48,15 +48,15 @@ export class RepoDetailStore extends VxModule {
     let resultArray: {
       commit: Commit
       comparison: CommitComparison
-    }[] = commitArray.map(
-      ({ commit: jsonCommit, comparison: jsonComparison }) => {
-        let commit: Commit = commitFromJson(jsonCommit)
-        const commitComparison: CommitComparison = comparisonFromJson(
-          jsonComparison
-        )
-        return { commit: commit, comparison: commitComparison }
+    }[] = commitArray.map(jsonComparison => {
+      const commitComparison: CommitComparison = comparisonFromJson(
+        jsonComparison
+      )
+      return {
+        commit: commitComparison.secondCommit,
+        comparison: commitComparison
       }
-    )
+    })
 
     this.setHistoryForRepo({ repoId: payload.repoId, history: resultArray })
 
