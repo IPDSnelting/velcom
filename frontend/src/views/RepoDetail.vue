@@ -67,6 +67,7 @@
           </v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>
+            <v-btn text color="primary" @click="toggleYScale()">{{ yScaleButtonLabel }}</v-btn>
             <v-btn
               color="error"
               text
@@ -80,7 +81,12 @@
     </v-row>
     <v-row align="baseline" justify="center">
       <v-col>
-        <detail-graph :benchmark="selectedBenchmark" :metric="selectedMetric" :amount="amount"></detail-graph>
+        <detail-graph
+          :benchmark="selectedBenchmark"
+          :metric="selectedMetric"
+          :amount="amount"
+          :beginYAtZero="this.yScaleBeginsAtZero"
+        ></detail-graph>
       </v-col>
     </v-row>
     <v-row align="baseline" justify="center">
@@ -117,6 +123,11 @@ export default class RepoDetail extends Vue {
   private amount: string = '10'
   private skip: string = '0'
 
+  private yScaleBeginsAtZero: boolean = false
+  private yScaleButtonLabel:
+    | 'begin y-Scale at zero'
+    | 'begin y-Scale at minimum Value' = 'begin y-Scale at zero'
+
   private get id() {
     return this.$route.params.id
   }
@@ -151,6 +162,15 @@ export default class RepoDetail extends Vue {
 
   private onlyNumericInput(input: string): boolean | string {
     return !isNaN(Number(input)) ? true : 'Input must be a number!'
+  }
+
+  private toggleYScale() {
+    this.yScaleBeginsAtZero = !this.yScaleBeginsAtZero
+    if (this.yScaleButtonLabel === 'begin y-Scale at zero') {
+      this.yScaleButtonLabel = 'begin y-Scale at minimum Value'
+    } else {
+      this.yScaleButtonLabel = 'begin y-Scale at zero'
+    }
   }
 
   private deleteMetric() {

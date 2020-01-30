@@ -114,6 +114,7 @@
                           color="primary"
                           @click="autoZoom()"
                         >Auto zoom</v-btn>
+                        <v-btn text color="primary" @click="toggleYScale()">{{ yScaleButtonLabel }}</v-btn>
                       </v-col>
                     </v-row>
                   </v-col>
@@ -129,7 +130,7 @@
           <repo-selector v-on:selectionChanged="retrieveGraphData()"></repo-selector>
         </v-col>
         <v-col md="9" class="mt-3">
-          <comparison-graph :metric="this.selectedMetric"></comparison-graph>
+          <comparison-graph :metric="this.selectedMetric" :beginYAtZero="this.yScaleBeginsAtZero"></comparison-graph>
         </v-col>
       </v-row>
     </v-container>
@@ -162,6 +163,11 @@ export default class RepoComparison extends Vue {
 
   private startDateMenuOpen: boolean = false
   private stopDateMenuOpen: boolean = false
+
+  private yScaleBeginsAtZero: boolean = false
+  private yScaleButtonLabel:
+    | 'begin y-Scale at zero'
+    | 'begin y-Scale at minimum Value' = 'begin y-Scale at zero'
 
   // ============== ICONS ==============
   private dateIcon = mdiCalendar
@@ -247,8 +253,21 @@ export default class RepoComparison extends Vue {
 
   @Watch('selectedMetric')
   retrieveGraphData() {
-    if (this.selectedMetric !== '' && this.stopAfterStart && this.notAfterToday) {
+    if (
+      this.selectedMetric !== '' &&
+      this.stopAfterStart &&
+      this.notAfterToday
+    ) {
       vxm.repoComparisonModule.fetchComparisonData(this.payload)
+    }
+  }
+
+  private toggleYScale() {
+    this.yScaleBeginsAtZero = !this.yScaleBeginsAtZero
+    if (this.yScaleButtonLabel === 'begin y-Scale at zero') {
+      this.yScaleButtonLabel = 'begin y-Scale at minimum Value'
+    } else {
+      this.yScaleButtonLabel = 'begin y-Scale at zero'
     }
   }
 

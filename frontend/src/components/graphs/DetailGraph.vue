@@ -35,6 +35,9 @@ export default class DetailGraph extends Vue {
   @Prop({})
   amount!: number
 
+  @Prop({ default: false })
+  beginYAtZero!: boolean
+
   private resizeListener: () => void = () => {}
 
   get selectedRepo(): string {
@@ -206,6 +209,7 @@ export default class DetailGraph extends Vue {
         }
       }
     )
+    min = this.beginYAtZero ? 0 : min
     return { min: min, max: max }
   }
   get yScale() {
@@ -232,6 +236,7 @@ export default class DetailGraph extends Vue {
 
   @Watch('datapoints')
   @Watch('amount')
+  @Watch('beginYAtZero')
   drawGraph() {
     this.svg.selectAll('*').remove()
 

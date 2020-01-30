@@ -24,6 +24,9 @@ export default class ComparisonGraph extends Vue {
   @Prop({})
   metric!: string
 
+  @Prop({ default: false })
+  beginYAtZero!: boolean
+
   private resizeTimeout: number | undefined
   private resizeListener: () => void = () => {}
 
@@ -157,6 +160,7 @@ export default class ComparisonGraph extends Vue {
         max = Math.max(max, datapoint.value)
       })
     })
+    min = this.beginYAtZero ? 0 : min
     return { min: min, max: max }
   }
 
@@ -185,6 +189,7 @@ export default class ComparisonGraph extends Vue {
   @Watch('datapoints')
   @Watch('minTimestamp')
   @Watch('maxTimestamp')
+  @Watch('beginYAtZero')
   drawGraph() {
     this.svg.selectAll('*').remove()
 
