@@ -12,10 +12,7 @@
                 <v-row align="baseline" justify="center" no-gutters>
                   <v-col>
                     <v-row no-gutters align="baseline" justify="center">
-                      <img src="@/assets/mini-logo.png" alt="logo" class="mb-5" />
-                      <img src="@/assets/logo.png" alt="logo" class="mb-5" />
-                      <img src="@/assets/circle-icon.png" alt="logo" class="mb-5" />
-                      <img src="@/assets/other-circle-icon.png" alt="logo" class="mb-5" />
+                      <div class="shapeshifter play"></div>
                     </v-row>
                     <v-row align="center" justify="center">
                       <p class="text-center">
@@ -138,3 +135,29 @@ export default class About extends Vue {
   }
 }
 </script>
+
+<style scoped>
+@keyframes play72 {
+  0% {
+    background-position: 0px 0px;
+  }
+  100% {
+    background-position: -15264px 0px;
+  }
+}
+.shapeshifter {
+  animation-duration: 1200ms;
+  animation-timing-function: steps(72);
+  width: 212px;
+  height: 212px;
+  background-image: url(../assets/flutter.svg);
+  background-repeat: no-repeat;
+}
+.shapeshifter.play {
+  animation-name: play72;
+  animation-iteration-count: infinite;
+  -moz-animation-iteration-count: infinite;
+  -webkit-animation-iteration-count: infinite;
+  -o-animation-iteration-count: infinite;
+}
+</style>
