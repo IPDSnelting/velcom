@@ -11,10 +11,10 @@
               <v-toolbar color="primary darken-1" dark>Filter Data</v-toolbar>
             </v-card-title>
             <v-card-text>
-              <v-container fluid>
-                <v-row align="start" justify="space-around">
+              <v-container fluid class="ma-0 pa-0">
+                <v-row align="center" justify="space-around" no-gutters>
                   <v-col md="5" sm="12" cols="12">
-                    <v-row>
+                    <v-row no-gutters>
                       <v-col>
                         <v-select
                           :items="occuringBenchmarks"
@@ -33,8 +33,8 @@
                     </v-row>
                   </v-col>
                   <v-col md="5" sm="12" cols="12">
-                    <v-row align="center">
-                      <v-col>
+                    <v-row align="center" no-gutters>
+                      <v-col cols="4">
                         <v-menu
                           ref="startDateMenu"
                           v-model="startDateMenuOpen"
@@ -70,7 +70,7 @@
                           </v-date-picker>
                         </v-menu>
                       </v-col>
-                      <v-col>
+                      <v-col cols="4">
                         <v-menu
                           ref="stopDateMenu"
                           v-model="stopDateMenuOpen"
@@ -106,7 +106,7 @@
                           </v-date-picker>
                         </v-menu>
                       </v-col>
-                      <v-col>
+                      <v-col cols="12" md="4">
                         <v-btn text color="primary" @click="resetDates()">Reset dates</v-btn>
                         <v-btn
                           :disabled="!selectedBenchmark || !selectedMetric"
