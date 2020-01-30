@@ -248,11 +248,19 @@ export default class ComparisonGraph extends Vue {
 
   drawDatapoints(repoID: string) {
     let repoGroup = this.svg.append('g').attr('id', repoID)
-
+    let datapointsBetweenAxes: Datapoint[] = this.datapoints[repoID].filter(
+      (datapoint: Datapoint) => {
+        let date = datapoint.commit.authorDate
+        if (date) {
+          date *= 1000
+        }
+        return date && date >= this.minTimestamp && date <= this.maxTimestamp
+      }
+    )
     // draw the connecting lines
     repoGroup
       .append('path')
-      .attr('d', this.line(this.datapoints[repoID]))
+      .attr('d', this.line(datapointsBetweenAxes))
       .attr('stroke', this.colorById(repoID))
       .attr('stroke-width', 2)
       .attr('fill', 'none')
@@ -260,7 +268,7 @@ export default class ComparisonGraph extends Vue {
     // draw the scatterplot and add tooltips
     repoGroup
       .selectAll('dot')
-      .data(this.datapoints[repoID])
+      .data(datapointsBetweenAxes)
       .enter()
       .append('circle')
       .attr('class', 'datapoint')
@@ -274,7 +282,7 @@ export default class ComparisonGraph extends Vue {
         return this.yScale(d.value)
       })
       .style('cursor', 'pointer')
-      .data(this.datapoints[repoID])
+      .data(datapointsBetweenAxes)
       .on('mouseover', this.mouseover)
       .on('mousemove', this.mousemove)
       .on('mouseleave', this.mouseleave)

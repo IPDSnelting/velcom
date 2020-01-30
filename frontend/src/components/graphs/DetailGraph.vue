@@ -299,17 +299,14 @@ export default class DetailGraph extends Vue {
   }
 
   drawDatapoints() {
-    /* don't draw data without a visualisation within this context
-    (would cause d3 to draw data points at the top of the chart...) */
-    if (this.valueRange.min === Number.POSITIVE_INFINITY) {
-      return
-    }
     let graph = this.svg.append('g').attr('id', 'graph')
+    let datapointsBetweenAxes = this.datapoints.slice(0, this.amount)
+    console.log(datapointsBetweenAxes)
 
     // draw the connecting lines
     graph
       .append('path')
-      .attr('d', this.line(this.datapoints))
+      .attr('d', this.line(datapointsBetweenAxes))
       .attr('stroke', this.colorById(this.selectedRepo))
       .attr('stroke-width', 2)
       .attr('fill', 'none')
@@ -317,7 +314,7 @@ export default class DetailGraph extends Vue {
     // draw the scatterplot and add tooltips
     graph
       .selectAll('dot')
-      .data(this.datapoints)
+      .data(datapointsBetweenAxes)
       .enter()
       .append('circle')
       .attr('class', 'datapoint')
@@ -332,7 +329,7 @@ export default class DetailGraph extends Vue {
         return this.y(d)
       })
       .style('cursor', 'pointer')
-      .data(this.datapoints)
+      .data(datapointsBetweenAxes)
       .on('mouseover', this.mouseover)
       .on('mousemove', this.mousemove)
       .on('mouseleave', this.mouseleave)
