@@ -19,13 +19,12 @@
                 <v-tooltip bottom>
                   <template #activator="{ on }">
                     <router-link
-                      v-on="on"
                       class="ml-3 mx-auto"
                       :to="{ name: 'repo-detail', params: { id: repo.id } }"
                       tag="button"
                     >
-                      <v-list-item-title>{{ repo.name }}</v-list-item-title>
-                      <v-list-item-subtitle>{{ repo.id }}</v-list-item-subtitle>
+                      <v-list-item-title v-on="on">{{ repo.name }}</v-list-item-title>
+                      <v-list-item-subtitle v-on="on">{{ repo.id }}</v-list-item-subtitle>
                     </router-link>
                   </template>
                   <span>go to detail page of {{ repo.name }}</span>
