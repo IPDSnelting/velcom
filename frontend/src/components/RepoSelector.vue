@@ -1,7 +1,7 @@
 <template>
   <div class="repo-selector">
     <v-container fluid>
-      <v-card flat outlined>
+      <v-card>
         <v-card-title>
           <v-toolbar color="primary darken-1" dark>Repositories</v-toolbar>
         </v-card-title>

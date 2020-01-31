@@ -1,5 +1,5 @@
 <template>
-  <v-card flat outlined ref="graph-card">
+  <v-card ref="graph-card">
     <v-container>
       <v-row align="center" justify="center">
         <v-col>
