@@ -264,10 +264,16 @@ export default class RepoComparison extends Vue {
     }
   }
 
+  private get selectedRepos() {
+    return vxm.repoComparisonModule.selectedBranchesByRepoID
+  }
+
   @Watch('selectedMetric')
+  @Watch('selectedRepos')
   retrieveGraphData() {
     if (
-      this.selectedMetric !== '' &&
+      this.selectedBenchmark &&
+      this.selectedMetric &&
       this.stopAfterStart &&
       this.notAfterToday
     ) {
@@ -320,10 +326,6 @@ export default class RepoComparison extends Vue {
         vxm.repoComparisonModule.startDate = new Date(min * 1000)
         vxm.repoComparisonModule.stopDate = new Date(max * 1000)
       })
-  }
-
-  mounted() {
-    this.retrieveGraphData()
   }
 }
 </script>
