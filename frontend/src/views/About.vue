@@ -18,7 +18,7 @@
                       <p class="text-center">
                         "The name stands for 'Velocity Commit', and velocity is related to speed and
                         performance.
-                        <br />It also sounds like a german saying 'welcome', which is
+                        <br />It also sounds like a German saying 'welcome', which is
                         nice and friendly."
                       </p>
                     </v-row>
