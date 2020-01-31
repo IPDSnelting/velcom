@@ -1,5 +1,5 @@
 <template>
-  <v-card ref="graph-card">
+  <v-card ref="graphArea-card" flat outlined>
     <v-container>
       <v-row align="center" justify="center">
         <v-col>
@@ -61,10 +61,10 @@ export default class DetailGraph extends Vue {
   }
 
   resize() {
-    if (!this.$refs['graph-card']) {
+    if (!this.$refs['graphArea-card']) {
       return
     }
-    let card = (this.$refs['graph-card'] as Vue).$el as HTMLElement
+    let card = (this.$refs['graphArea-card'] as Vue).$el as HTMLElement
     if (!card) {
       return
     }
@@ -78,8 +78,30 @@ export default class DetailGraph extends Vue {
   private height: number = 0
 
   private svg: any = null
-
   private tooltip: any = null
+  private brushArea: any = null
+  private zooming: boolean = false
+
+  private get brush() {
+    return d3
+      .brushX()
+      .extent([
+        [0, 0],
+        [this.innerWidth, this.innerHeight]
+      ])
+      .on('end', this.brushed)
+  }
+
+  brushed() {
+    let selection = d3.event.selection
+    let newMin: number = Math.floor(this.xScale.invert(selection[0]))
+    let newMax = Math.floor(this.xScale.invert(selection[1]))
+    if (selection) {
+      let newAmount: number = this.amount - newMin - (this.amount - newMax)
+      this.zooming = true
+      this.$emit('selectionChanged', newAmount, newMin)
+    }
+  }
 
   private margin: {
     left: number
@@ -104,9 +126,21 @@ export default class DetailGraph extends Vue {
   private valueFormat: any = d3.format('<.4')
   private lastValue: number = 0
 
+  xAxisFormat(d: any) {
+    if (d % 1 === 0) {
+      return d3.format('.0f')(d)
+    } else {
+      return ''
+    }
+  }
+
   get datapoints(): { commit: Commit; comparison: CommitComparison }[] {
     let selectedRepo: string = vxm.repoDetailModule.selectedRepoId
     return vxm.repoDetailModule.historyForRepoId(selectedRepo)
+  }
+
+  get datapointsBetweenAxes() {
+    return this.datapoints.slice(0, this.amount)
   }
 
   // prettier-ignore
@@ -168,7 +202,7 @@ export default class DetailGraph extends Vue {
   get xScale(): any {
     return d3
       .scaleLinear()
-      .domain([0, this.amount])
+      .domain([0.5, this.amount + 0.5])
       .range([0, this.innerWidth])
   }
 
@@ -244,9 +278,65 @@ export default class DetailGraph extends Vue {
     }
   }
 
+  sleep(ms: number) {
+    return new Promise(resolve => setTimeout(resolve, ms))
+  }
+
   @Watch('datapoints')
   @Watch('amount')
   @Watch('beginYAtZero')
+  async updateYourself() {
+    console.log(this.zooming)
+    if (this.zooming) {
+      console.log('zzz')
+      await this.sleep(350)
+      this.zooming = false
+    }
+    d3.select('#svg-container')
+      .selectAll('*')
+      .remove()
+
+    this.svg = d3
+      .select('#svg-container')
+      .append('svg')
+      .attr('id', 'mainSVG')
+      .attr('width', this.width)
+      .attr('height', this.height)
+      .attr('align', 'end')
+      .attr('justify', 'end')
+      .append('g')
+      .attr(
+        'transform',
+        'translate(' + this.margin.left + ',' + this.margin.top + ')'
+      )
+
+    this.brushArea = d3
+      .select('#mainSVG')
+      .append('g')
+      .attr('id', 'brushArea')
+      .attr(
+        'transform',
+        'translate(' + this.margin.left + ',' + this.margin.top + ')'
+      )
+      .call(this.brush)
+
+    this.tooltip = d3
+      .select('#svg-container')
+      .append('div')
+      .style('opacity', 0)
+      .attr('id', 'tooltip')
+      .style('position', 'absolute')
+      .style('padding', '5px')
+      .style('border-radius', '5px')
+      .style('background-color', 'black')
+      .style('color', 'white')
+      .style('text-align', 'center')
+      .style('font-family', 'Roboto')
+      .style('font-size', '14px')
+
+    this.drawGraph()
+  }
+
   drawGraph() {
     this.svg.selectAll('*').remove()
 
@@ -276,11 +366,11 @@ export default class DetailGraph extends Vue {
   }
 
   drawXAxis() {
-    this.svg
+    return this.svg
       .append('g')
       .attr('class', 'axis')
       .attr('transform', 'translate(0,' + this.innerHeight + ')')
-      .call(d3.axisBottom(this.xScale))
+      .call(d3.axisBottom(this.xScale).tickFormat(this.xAxisFormat))
   }
 
   drawYAxis() {
@@ -299,21 +389,18 @@ export default class DetailGraph extends Vue {
   }
 
   drawDatapoints() {
-    let graph = this.svg.append('g').attr('id', 'graph')
-    let datapointsBetweenAxes = this.datapoints.slice(0, this.amount)
-
-    // draw the connecting lines
-    graph
+    // draw the connecting line
+    this.brushArea
       .append('path')
-      .attr('d', this.line(datapointsBetweenAxes))
+      .attr('d', this.line(this.datapointsBetweenAxes))
       .attr('stroke', this.colorById(this.selectedRepo))
       .attr('stroke-width', 2)
       .attr('fill', 'none')
 
     // draw the scatterplot and add tooltips
-    graph
+    this.brushArea
       .selectAll('dot')
-      .data(datapointsBetweenAxes)
+      .data(this.datapointsBetweenAxes)
       .enter()
       .append('circle')
       .attr('class', 'datapoint')
@@ -328,7 +415,7 @@ export default class DetailGraph extends Vue {
         return this.y(d)
       })
       .style('cursor', 'pointer')
-      .data(datapointsBetweenAxes)
+      .data(this.datapointsBetweenAxes)
       .on('mouseover', this.mouseover)
       .on('mousemove', this.mousemove)
       .on('mouseleave', this.mouseleave)
@@ -417,7 +504,7 @@ export default class DetailGraph extends Vue {
       htmlMessage =
         'Commit ' + d.commit.hash + '<br />author:' + d.commit.author
     }
-    this.tooltip
+    d3.select('#tooltip')
       .html(htmlMessage)
       .style('left', d3.mouse(n[i])[0] + 90 + 'px')
       .style('top', d3.mouse(n[i])[1] + 90 + 'px')
@@ -429,41 +516,6 @@ export default class DetailGraph extends Vue {
       .transition()
       .duration(500)
       .style('opacity', 0)
-  }
-
-  updateYourself() {
-    d3.select('#svg-container')
-      .selectAll('*')
-      .remove()
-
-    this.svg = d3
-      .select('#svg-container')
-      .append('svg')
-      .attr('width', this.width)
-      .attr('height', this.height)
-      .attr('align', 'end')
-      .attr('justify', 'end')
-      .append('g')
-      .attr(
-        'transform',
-        'translate(' + this.margin.left + ',' + this.margin.top + ')'
-      )
-
-    this.tooltip = d3
-      .select('#svg-container')
-      .append('div')
-      .style('opacity', 0)
-      .attr('class', 'tooltip')
-      .style('position', 'absolute')
-      .style('padding', '5px')
-      .style('border-radius', '5px')
-      .style('background-color', 'black')
-      .style('color', 'white')
-      .style('text-align', 'center')
-      .style('font-family', 'Roboto')
-      .style('font-size', '14px')
-
-    this.drawGraph()
   }
 
   mounted() {

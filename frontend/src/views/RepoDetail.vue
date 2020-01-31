@@ -84,8 +84,9 @@
         <detail-graph
           :benchmark="selectedBenchmark"
           :metric="selectedMetric"
-          :amount="amount"
+          :amount="Number.parseInt(amount)"
           :beginYAtZero="this.yScaleBeginsAtZero"
+          @selectionChanged="updateSelection"
         ></detail-graph>
       </v-col>
     </v-row>
@@ -200,6 +201,12 @@ export default class RepoDetail extends Vue {
     if (this.$refs.form && (this.$refs.form as any).validate()) {
       vxm.repoDetailModule.fetchHistoryForRepo(this.payload)
     }
+  }
+
+  updateSelection(newAmount: number, moreSkip: number) {
+    this.amount = newAmount.toString()
+    this.skip = (Number.parseInt(this.skip) + moreSkip).toString()
+    this.retrieveRuns()
   }
 
   private get repo(): Repo {
