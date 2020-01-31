@@ -145,7 +145,11 @@
           <repo-selector v-on:selectionChanged="retrieveGraphData()"></repo-selector>
         </v-col>
         <v-col md="9" class="mt-3">
-          <comparison-graph :metric="this.selectedMetric" :beginYAtZero="this.yScaleBeginsAtZero"></comparison-graph>
+          <comparison-graph
+            :metric="this.selectedMetric"
+            :beginYAtZero="this.yScaleBeginsAtZero"
+            @timeframeChanged="updateTimeframe"
+          ></comparison-graph>
         </v-col>
       </v-row>
     </v-container>
@@ -294,6 +298,12 @@ export default class RepoComparison extends Vue {
     ) {
       vxm.repoComparisonModule.fetchComparisonData(this.payload)
     }
+  }
+
+  updateTimeframe(newMin: Date, newMax: Date) {
+    vxm.repoComparisonModule.startDate = newMin
+    vxm.repoComparisonModule.stopDate = newMax
+    this.retrieveGraphData()
   }
 
   private toggleYScale() {

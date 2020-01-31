@@ -75,8 +75,30 @@ export default class ComparisonGraph extends Vue {
   private height: number = 0
 
   private svg: any = null
-
   private tooltip: any = null
+  private brushArea: any = null
+  private zooming: boolean = false
+
+  private get brush() {
+    return d3
+      .brushX()
+      .extent([
+        [0, 0],
+        [this.innerWidth, this.innerHeight]
+      ])
+      .on('end', this.brushed)
+  }
+
+  brushed() {
+    let selection = d3.event.selection
+    let newMin: Date = d3.timeDay.floor(this.xScale.invert(selection[0]))
+    let newMax: Date = d3.timeDay.floor(this.xScale.invert(selection[1]))
+    console.log(newMin, newMax)
+    if (selection) {
+      this.zooming = true
+      this.$emit('timeframeChanged', newMin, newMax)
+    }
+  }
 
   private margin: {
     left: number
@@ -126,6 +148,22 @@ export default class ComparisonGraph extends Vue {
 
   get datapoints(): { [key: string]: Datapoint[] } {
     return vxm.repoComparisonModule.allDatapoints
+  }
+
+  get datapointsBetweenAxes(): (repoID: string) => Datapoint[] {
+    return (repoID: string) => {
+      return this.datapoints[repoID].filter((datapoint: Datapoint) => {
+        let date = datapoint.commit.authorDate
+        if (date) {
+          date *= 1000
+        }
+        return (
+          date &&
+          date >= this.minTimestamp &&
+          date <= this.maxTimestamp + 1000 * 60 * 60 * 24
+        )
+      })
+    }
   }
 
   get repos(): string[] {
@@ -186,10 +224,65 @@ export default class ComparisonGraph extends Vue {
     }
   }
 
+  sleep(ms: number) {
+    return new Promise(resolve => setTimeout(resolve, ms))
+  }
+
   @Watch('datapoints')
   @Watch('minTimestamp')
   @Watch('maxTimestamp')
   @Watch('beginYAtZero')
+  async updateYourself() {
+    if (this.zooming) {
+      await this.sleep(700)
+      this.zooming = false
+    }
+    d3.select('#svg-container')
+      .selectAll('*')
+      .remove()
+
+    this.svg = d3
+      .select('#svg-container')
+      .append('svg')
+      .attr('id', 'mainSVG')
+      .attr('width', this.width)
+      .attr('height', this.height)
+      .attr('align', 'end')
+      .attr('justify', 'end')
+      .append('g')
+      .attr(
+        'transform',
+        'translate(' + this.margin.left + ',' + this.margin.top + ')'
+      )
+
+    this.brushArea = d3
+      .select('#mainSVG')
+      .append('g')
+      .attr('id', 'brushArea')
+      .attr(
+        'transform',
+        'translate(' + this.margin.left + ',' + this.margin.top + ')'
+      )
+      .call(this.brush)
+
+    this.tooltip = d3
+      .select('#svg-container')
+      .append('div')
+      .style('opacity', 0)
+      .attr('class', 'tooltip')
+      .style('position', 'absolute')
+      .style('padding', '5px')
+      .style('border-radius', '5px')
+      .style('background-color', 'black')
+      .style('color', 'white')
+      .style('text-align', 'center')
+      .style('font-family', 'Roboto')
+      .style('font-size', '14px')
+
+    this.drawGraph()
+    console.log(d3.timeDay(this.minTimestamp), d3.timeDay(this.maxTimestamp))
+  }
+
   drawGraph() {
     this.svg.selectAll('*').remove()
 
@@ -248,17 +341,9 @@ export default class ComparisonGraph extends Vue {
 
   drawDatapoints(repoID: string) {
     let repoGroup = this.svg.append('g').attr('id', repoID)
-    let datapointsBetweenAxes: Datapoint[] = this.datapoints[repoID].filter(
-      (datapoint: Datapoint) => {
-        let date = datapoint.commit.authorDate
-        if (date) {
-          date *= 1000
-        }
-        return date && date >= this.minTimestamp && date <= this.maxTimestamp
-      }
-    )
+    let datapointsBetweenAxes = this.datapointsBetweenAxes(repoID)
     // draw the connecting lines
-    repoGroup
+    this.brushArea
       .append('path')
       .attr('d', this.line(datapointsBetweenAxes))
       .attr('stroke', this.colorById(repoID))
@@ -266,7 +351,7 @@ export default class ComparisonGraph extends Vue {
       .attr('fill', 'none')
 
     // draw the scatterplot and add tooltips
-    repoGroup
+    this.brushArea
       .selectAll('dot')
       .data(datapointsBetweenAxes)
       .enter()
@@ -334,40 +419,6 @@ export default class ComparisonGraph extends Vue {
       .transition()
       .duration(500)
       .style('opacity', 0)
-  }
-
-  updateYourself() {
-    d3.select('#svg-container')
-      .selectAll('*')
-      .remove()
-    this.svg = d3
-      .select('#svg-container')
-      .append('svg')
-      .attr('width', this.width)
-      .attr('height', this.height)
-      .attr('align', 'end')
-      .attr('justify', 'end')
-      .append('g')
-      .attr(
-        'transform',
-        'translate(' + this.margin.left + ',' + this.margin.top + ')'
-      )
-
-    this.tooltip = d3
-      .select('#svg-container')
-      .append('div')
-      .style('opacity', 0)
-      .attr('class', 'tooltip')
-      .style('position', 'absolute')
-      .style('padding', '5px')
-      .style('border-radius', '5px')
-      .style('background-color', 'black')
-      .style('color', 'white')
-      .style('text-align', 'center')
-      .style('font-family', 'Roboto')
-      .style('font-size', '14px')
-
-    this.drawGraph()
   }
 
   mounted() {
