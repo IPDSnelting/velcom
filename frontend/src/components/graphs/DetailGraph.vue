@@ -214,7 +214,9 @@ export default class DetailGraph extends Vue {
   }
 
   x(datapoint: any) {
-    return this.xScale(this.datapoints.length - this.datapoints.indexOf(datapoint))
+    return this.xScale(
+      this.datapoints.length - this.datapoints.indexOf(datapoint)
+    )
   }
 
   y(datapoint: any) {
@@ -373,10 +375,10 @@ export default class DetailGraph extends Vue {
 
     this.svg
       .append('text')
-      .attr('text-anchor', 'end')
+      .attr('text-anchor', 'middle')
       .attr('transform', 'rotate(-90)')
       .attr('y', -this.margin.left + 20)
-      .attr('x', -this.innerHeight + 300)
+      .attr('x', -this.innerHeight / 2)
       .text(this.yLabel)
   }
 
@@ -388,6 +390,7 @@ export default class DetailGraph extends Vue {
       .attr('stroke', this.colorById(this.selectedRepo))
       .attr('stroke-width', 2)
       .attr('fill', 'none')
+      .attr('pointer-events', 'none')
 
     // draw the scatterplot and add tooltips
     this.brushArea
@@ -396,6 +399,7 @@ export default class DetailGraph extends Vue {
       .enter()
       .append('circle')
       .attr('class', 'datapoint')
+      .attr('z-index', 20) // lift it to top to properly capture mouse events
       .attr('fill', (d: any) => this.datapointColor(d))
       .attr('stroke', (d: any) => this.strokeColor(d))
       .attr('stroke-width', 2)
@@ -436,9 +440,16 @@ export default class DetailGraph extends Vue {
   }
 
   mouseover(d: any) {
-    this.tooltip.style('opacity', 0.8).style('visibility', 'visible')
+    // We need a transition here to overwrite possible exit transition
+    // happening in parallel
+    // If we don't do that, this update will be lost and no tooltip
+    // displayed
+    this.tooltip
+      .transition()
+      .duration(300)
+      .style('opacity', 0.8)
+      .style('visibility', 'visible')
   }
-
   mousemove(
     d: { commit: Commit; comparison: CommitComparison },
     i: any,

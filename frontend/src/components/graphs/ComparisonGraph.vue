@@ -320,7 +320,7 @@ export default class ComparisonGraph extends Vue {
       .attr('transform', 'translate(0,' + this.innerHeight + ')')
       .call(d3.axisBottom(this.xScale).tickFormat(this.timeFormat))
       .selectAll('text')
-      .attr('transform', 'translate(-10,10)rotate(-45)')
+      .attr('transform', 'translate(-10, 10) rotate(-45)')
       .style('text-anchor', 'end')
   }
 
@@ -332,10 +332,10 @@ export default class ComparisonGraph extends Vue {
 
     this.svg
       .append('text')
-      .attr('text-anchor', 'end')
+      .attr('text-anchor', 'middle')
       .attr('transform', 'rotate(-90)')
       .attr('y', -this.margin.left + 20)
-      .attr('x', -this.innerHeight + 300)
+      .attr('x', -this.innerHeight / 2)
       .text(this.yLabel)
   }
 
@@ -348,15 +348,16 @@ export default class ComparisonGraph extends Vue {
       .attr('d', this.line(datapointsBetweenAxes))
       .attr('stroke', this.colorById(repoID))
       .attr('stroke-width', 2)
-      .attr('fill', 'none')
+      .attr('pointer-events', 'none')
 
     // draw the scatterplot and add tooltips
     this.brushArea
-      .selectAll('dot')
+      .selectAll('.dot')
       .data(datapointsBetweenAxes)
       .enter()
       .append('circle')
       .attr('class', 'datapoint')
+      .attr('z-index', 20) // lift it to top to properly capture mouse events
       .attr('fill', this.colorById(repoID))
       .attr('stroke', this.colorById(repoID))
       .attr('r', 4)
@@ -380,7 +381,15 @@ export default class ComparisonGraph extends Vue {
   }
 
   mouseover(d: any) {
-    this.tooltip.style('opacity', 0.8).style('visibility', 'visible')
+    // We need a transition here to overwrite possible exit transition
+    // happening in parallel
+    // If we don't do that, this update will be lost and no tooltip
+    // displayed
+    this.tooltip
+      .transition()
+      .duration(300)
+      .style('opacity', 0.8)
+      .style('visibility', 'visible')
   }
 
   mousemove(d: any, i: any, n: any) {
