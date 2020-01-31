@@ -24,7 +24,7 @@ export default class ComparisonGraph extends Vue {
   @Prop({})
   metric!: string
 
-  @Prop({ default: false })
+  @Prop({ default: true })
   beginYAtZero!: boolean
 
   private resizeTimeout: number | undefined
@@ -288,7 +288,7 @@ export default class ComparisonGraph extends Vue {
 
     if (
       this.metric !== '' &&
-      this.valueRange.min !== Number.POSITIVE_INFINITY
+      this.valueRange.max !== Number.NEGATIVE_INFINITY
     ) {
       this.drawXAxis()
       this.drawYAxis()

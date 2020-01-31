@@ -35,7 +35,7 @@ export default class DetailGraph extends Vue {
   @Prop({})
   amount!: number
 
-  @Prop({ default: false })
+  @Prop({ default: true })
   beginYAtZero!: boolean
 
   private resizeListener: () => void = () => {}
@@ -330,10 +330,11 @@ export default class DetailGraph extends Vue {
 
   drawGraph() {
     this.svg.selectAll('*').remove()
+    console.log(this.valueRange.max)
 
     if (
       this.metric !== '' &&
-      this.valueRange.min !== Number.POSITIVE_INFINITY
+      this.valueRange.max !== Number.NEGATIVE_INFINITY
     ) {
       this.drawXAxis()
       this.drawYAxis()

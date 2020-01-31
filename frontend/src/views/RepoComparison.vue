@@ -178,10 +178,10 @@ export default class RepoComparison extends Vue {
   private startDateMenuOpen: boolean = false
   private stopDateMenuOpen: boolean = false
 
-  private yScaleBeginsAtZero: boolean = false
+  private yScaleBeginsAtZero: boolean = true
   private yScaleButtonLabel:
     | 'begin y-Scale at zero'
-    | 'begin y-Scale at minimum Value' = 'begin y-Scale at zero'
+    | 'begin y-Scale at minimum Value' = 'begin y-Scale at minimum Value'
 
   // ============== ICONS ==============
   private dateIcon = mdiCalendar

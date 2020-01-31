@@ -124,10 +124,10 @@ export default class RepoDetail extends Vue {
   private amount: string = '10'
   private skip: string = '0'
 
-  private yScaleBeginsAtZero: boolean = false
+  private yScaleBeginsAtZero: boolean = true
   private yScaleButtonLabel:
     | 'begin y-Scale at zero'
-    | 'begin y-Scale at minimum Value' = 'begin y-Scale at zero'
+    | 'begin y-Scale at minimum Value' = 'begin y-Scale at minimum Value'
 
   private get id() {
     return this.$route.params.id
