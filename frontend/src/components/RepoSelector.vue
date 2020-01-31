@@ -1,6 +1,6 @@
 <template>
   <div class="repo-selector">
-    <v-container fluid>
+    <v-container fluid class="ma-0 pa-0">
       <v-card>
         <v-card-title>
           <v-toolbar color="primary darken-1" dark>Repositories</v-toolbar>
@@ -19,11 +19,12 @@
                 <v-tooltip bottom>
                   <template #activator="{ on }">
                     <router-link
+                      v-on="on"
                       class="ml-3 mx-auto"
                       :to="{ name: 'repo-detail', params: { id: repo.id } }"
                       tag="button"
                     >
-                      <v-list-item-title v-on="on">{{ repo.name }}</v-list-item-title>
+                      <v-list-item-title>{{ repo.name }}</v-list-item-title>
                       <v-list-item-subtitle>{{ repo.id }}</v-list-item-subtitle>
                     </router-link>
                   </template>

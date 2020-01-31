@@ -1,159 +1,157 @@
 <template>
-  <div class="repo-comparison">
-    <v-container fluid>
-      <v-row align="baseline" justify="center">
-        <h1>Repository Comparison</h1>
-      </v-row>
-      <v-row align="baseline" justify="center" class="mx-1">
-        <v-col>
-          <v-card>
-            <v-card-title>
-              <v-toolbar color="primary darken-1" dark>Filter Data</v-toolbar>
-            </v-card-title>
-            <v-card-text class="pa-1">
-              <v-container fluid class="ma-0 pa-4">
-                <v-row align="center" justify="space-around" no-gutters>
-                  <v-col md="5" cols="12">
-                    <v-row no-gutters>
-                      <v-col>
-                        <v-select
-                          :items="occuringBenchmarks"
-                          v-model="selectedBenchmark"
-                          label="benchmark"
-                          class="mr-5"
-                          hide-details="auto"
-                        ></v-select>
-                      </v-col>
-                      <v-col>
-                        <v-select
-                          :items="metricsForBenchmark(this.selectedBenchmark)"
-                          v-model="selectedMetric"
-                          label="metric"
-                          hide-details="auto"
-                        ></v-select>
-                      </v-col>
-                    </v-row>
-                  </v-col>
-                  <v-col md="5" cols="12">
-                    <v-row align="center" no-gutters>
-                      <v-col>
-                        <v-menu
-                          ref="startDateMenu"
-                          v-model="startDateMenuOpen"
-                          :close-on-content-click="false"
-                          :return-value.sync="startTimeString"
-                          transition="scale-transition"
-                          offset-y
-                          min-width="290px"
-                        >
-                          <template v-slot:activator="{ on }" class="mr-5">
-                            <v-text-field
-                              hide-details="auto"
-                              v-model="startTimeString"
-                              label="from:"
-                              :prepend-icon="dateIcon"
-                              :rules="[notAfterToday]"
-                              readonly
-                              v-on="on"
-                            ></v-text-field>
-                          </template>
-                          <v-date-picker
+  <v-container fluid>
+    <v-row align="baseline" justify="center">
+      <h1>Repository Comparison</h1>
+    </v-row>
+    <v-row>
+      <v-col>
+        <v-card>
+          <v-card-title>
+            <v-toolbar color="primary darken-1" dark>Filter Data</v-toolbar>
+          </v-card-title>
+          <v-card-text class="pa-1">
+            <v-container fluid class="ma-0 pa-4">
+              <v-row align="center" justify="space-around" no-gutters>
+                <v-col md="5" cols="12">
+                  <v-row no-gutters>
+                    <v-col>
+                      <v-select
+                        :items="occuringBenchmarks"
+                        v-model="selectedBenchmark"
+                        label="benchmark"
+                        class="mr-5"
+                        hide-details="auto"
+                      ></v-select>
+                    </v-col>
+                    <v-col>
+                      <v-select
+                        :items="metricsForBenchmark(this.selectedBenchmark)"
+                        v-model="selectedMetric"
+                        label="metric"
+                        hide-details="auto"
+                      ></v-select>
+                    </v-col>
+                  </v-row>
+                </v-col>
+                <v-col md="5" cols="12">
+                  <v-row align="center" no-gutters>
+                    <v-col>
+                      <v-menu
+                        ref="startDateMenu"
+                        v-model="startDateMenuOpen"
+                        :close-on-content-click="false"
+                        :return-value.sync="startTimeString"
+                        transition="scale-transition"
+                        offset-y
+                        min-width="290px"
+                      >
+                        <template v-slot:activator="{ on }" class="mr-5">
+                          <v-text-field
                             hide-details="auto"
                             v-model="startTimeString"
-                            no-title
-                            scrollable
-                          >
-                            <v-btn
-                              text
-                              color="primary"
-                              @click="$refs.startDateMenu.save(today); retrieveGraphData()"
-                            >Today</v-btn>
-                            <v-spacer></v-spacer>
-                            <v-btn text color="primary" @click="startDateMenuOpen = false">Cancel</v-btn>
-                            <v-btn
-                              text
-                              color="primary"
-                              @click="$refs.startDateMenu.save(startTimeString); retrieveGraphData()"
-                            >OK</v-btn>
-                          </v-date-picker>
-                        </v-menu>
-                      </v-col>
-                      <v-col>
-                        <v-menu
-                          ref="stopDateMenu"
-                          v-model="stopDateMenuOpen"
-                          :close-on-content-click="false"
-                          :return-value.sync="stopTimeString"
-                          transition="scale-transition"
-                          offset-y
-                          min-width="290px"
+                            label="from:"
+                            :prepend-icon="dateIcon"
+                            :rules="[notAfterToday]"
+                            readonly
+                            v-on="on"
+                          ></v-text-field>
+                        </template>
+                        <v-date-picker
+                          hide-details="auto"
+                          v-model="startTimeString"
+                          no-title
+                          scrollable
                         >
-                          <template v-slot:activator="{ on }">
-                            <v-text-field
-                              hide-details="auto"
-                              v-model="stopTimeString"
-                              label="to:"
-                              :prepend-icon="dateIcon"
-                              :rules="[stopAfterStart, notAfterToday]"
-                              readonly
-                              v-on="on"
-                            ></v-text-field>
-                          </template>
-                          <v-date-picker
-                            v-model="stopTimeString"
-                            no-title
-                            scrollable
+                          <v-btn
+                            text
+                            color="primary"
+                            @click="$refs.startDateMenu.save(today); retrieveGraphData()"
+                          >Today</v-btn>
+                          <v-spacer></v-spacer>
+                          <v-btn text color="primary" @click="startDateMenuOpen = false">Cancel</v-btn>
+                          <v-btn
+                            text
+                            color="primary"
+                            @click="$refs.startDateMenu.save(startTimeString); retrieveGraphData()"
+                          >OK</v-btn>
+                        </v-date-picker>
+                      </v-menu>
+                    </v-col>
+                    <v-col>
+                      <v-menu
+                        ref="stopDateMenu"
+                        v-model="stopDateMenuOpen"
+                        :close-on-content-click="false"
+                        :return-value.sync="stopTimeString"
+                        transition="scale-transition"
+                        offset-y
+                        min-width="290px"
+                      >
+                        <template v-slot:activator="{ on }">
+                          <v-text-field
                             hide-details="auto"
-                          >
-                            <v-btn
-                              text
-                              color="primary"
-                              @click="$refs.stopDateMenu.save(today); retrieveGraphData()"
-                            >Today</v-btn>
-                            <v-spacer></v-spacer>
-                            <v-btn text color="primary" @click="stopDateMenuOpen = false">Cancel</v-btn>
-                            <v-btn
-                              text
-                              color="primary"
-                              @click="$refs.stopDateMenu.save(stopTimeString); retrieveGraphData()"
-                            >OK</v-btn>
-                          </v-date-picker>
-                        </v-menu>
-                      </v-col>
-                    </v-row>
-                  </v-col>
-                </v-row>
-              </v-container>
-            </v-card-text>
-            <v-card-actions>
-              <v-spacer></v-spacer>
-              <v-btn text color="primary" @click="resetDates()">Reset dates</v-btn>
-              <v-btn
-                :disabled="!selectedBenchmark || !selectedMetric"
-                text
-                color="primary"
-                @click="autoZoom()"
-              >Auto zoom</v-btn>
-              <v-btn text color="primary" @click="toggleYScale()">{{ yScaleButtonLabel }}</v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-col>
-      </v-row>
+                            v-model="stopTimeString"
+                            label="to:"
+                            :prepend-icon="dateIcon"
+                            :rules="[stopAfterStart, notAfterToday]"
+                            readonly
+                            v-on="on"
+                          ></v-text-field>
+                        </template>
+                        <v-date-picker
+                          v-model="stopTimeString"
+                          no-title
+                          scrollable
+                          hide-details="auto"
+                        >
+                          <v-btn
+                            text
+                            color="primary"
+                            @click="$refs.stopDateMenu.save(today); retrieveGraphData()"
+                          >Today</v-btn>
+                          <v-spacer></v-spacer>
+                          <v-btn text color="primary" @click="stopDateMenuOpen = false">Cancel</v-btn>
+                          <v-btn
+                            text
+                            color="primary"
+                            @click="$refs.stopDateMenu.save(stopTimeString); retrieveGraphData()"
+                          >OK</v-btn>
+                        </v-date-picker>
+                      </v-menu>
+                    </v-col>
+                  </v-row>
+                </v-col>
+              </v-row>
+            </v-container>
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn text color="primary" @click="resetDates()">Reset dates</v-btn>
+            <v-btn
+              :disabled="!selectedBenchmark || !selectedMetric"
+              text
+              color="primary"
+              @click="autoZoom()"
+            >Auto zoom</v-btn>
+            <v-btn text color="primary" @click="toggleYScale()">{{ yScaleButtonLabel }}</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-col>
+    </v-row>
 
-      <v-row align="start" justify="start" class="d-flex" no-gutters>
-        <v-col cols="auto">
-          <repo-selector v-on:selectionChanged="retrieveGraphData()"></repo-selector>
-        </v-col>
-        <v-col md="9" class="mt-3">
-          <comparison-graph
-            :metric="this.selectedMetric"
-            :beginYAtZero="this.yScaleBeginsAtZero"
-            @timeframeChanged="updateTimeframe"
-          ></comparison-graph>
-        </v-col>
-      </v-row>
-    </v-container>
-  </div>
+    <v-row align="start" justify="start" class="d-flex">
+      <v-col cols="auto">
+        <repo-selector v-on:selectionChanged="retrieveGraphData()"></repo-selector>
+      </v-col>
+      <v-col style="flex: 1 1 50%; min-width: 600px">
+        <comparison-graph
+          :metric="this.selectedMetric"
+          :beginYAtZero="this.yScaleBeginsAtZero"
+          @timeframeChanged="updateTimeframe"
+        ></comparison-graph>
+      </v-col>
+    </v-row>
+  </v-container>
 </template>
 
 <script lang="ts">
