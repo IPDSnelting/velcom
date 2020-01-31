@@ -23,6 +23,9 @@ export class RepoComparisonStore extends VxModule {
     'NEUTRAL'
   private _unit: string = ''
 
+  selectedBenchmark: string = ''
+  selectedMetric: string = ''
+
   // One week in the past
   private _defaultStartTime: string = new Date(
     new Date().setDate(new Date().getDate() - 7)

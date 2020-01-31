@@ -156,9 +156,6 @@ import { mdiCalendar } from '@mdi/js'
   }
 })
 export default class RepoComparison extends Vue {
-  private selectedBenchmark: string = ''
-  private selectedMetric: string = ''
-
   private today = new Date().toISOString().substr(0, 10)
 
   private startDateMenuOpen: boolean = false
@@ -175,6 +172,22 @@ export default class RepoComparison extends Vue {
 
   get selectedMeasurement() {
     return new MeasurementID(this.selectedBenchmark, this.selectedMetric)
+  }
+
+  get selectedBenchmark() {
+    return vxm.repoComparisonModule.selectedBenchmark
+  }
+
+  set selectedBenchmark(benchmark: string) {
+    vxm.repoComparisonModule.selectedBenchmark = benchmark
+  }
+
+  get selectedMetric() {
+    return vxm.repoComparisonModule.selectedMetric
+  }
+
+  set selectedMetric(metric: string) {
+    vxm.repoComparisonModule.selectedMetric = metric
   }
 
   get allRepos(): Repo[] {
@@ -307,6 +320,10 @@ export default class RepoComparison extends Vue {
         vxm.repoComparisonModule.startDate = new Date(min * 1000)
         vxm.repoComparisonModule.stopDate = new Date(max * 1000)
       })
+  }
+
+  mounted() {
+    this.retrieveGraphData()
   }
 }
 </script>
