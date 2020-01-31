@@ -77,15 +77,20 @@
             </v-container>
           </v-card-text>
           <v-card-actions class="mx-2">
-            <v-spacer></v-spacer>
-            <v-btn text color="primary" @click="toggleYScale()">{{ yScaleButtonLabel }}</v-btn>
-            <v-btn
-              color="error"
-              text
-              outlined
-              :disabled="!selectedBenchmark || !selectedMetric"
-              @click="deleteMetric"
-            >Delete metric</v-btn>
+            <v-row no-gutters justify="end">
+              <v-col cols="auto">
+                <v-btn text color="primary" @click="toggleYScale()">{{ yScaleButtonLabel }}</v-btn>
+              </v-col>
+              <v-col cols="auto">
+                <v-btn
+                  color="error"
+                  text
+                  outlined
+                  :disabled="!selectedBenchmark || !selectedMetric"
+                  @click="deleteMetric"
+                >Delete metric</v-btn>
+              </v-col>
+            </v-row>
           </v-card-actions>
         </v-card>
       </v-col>
