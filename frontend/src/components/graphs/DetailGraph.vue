@@ -202,7 +202,7 @@ export default class DetailGraph extends Vue {
   get xScale(): any {
     return d3
       .scaleLinear()
-      .domain([0.5, this.amount + 0.5])
+      .domain([0.5, this.amount + 0.99])
       .range([0, this.innerWidth])
   }
 
@@ -214,7 +214,7 @@ export default class DetailGraph extends Vue {
   }
 
   x(datapoint: any) {
-    return this.xScale(this.datapoints.indexOf(datapoint) + 1)
+    return this.xScale(this.datapoints.length - this.datapoints.indexOf(datapoint))
   }
 
   y(datapoint: any) {
