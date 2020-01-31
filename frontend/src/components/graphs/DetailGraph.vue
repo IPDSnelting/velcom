@@ -1,5 +1,5 @@
 <template>
-  <v-card ref="graphArea-card" flat outlined>
+  <v-card ref="graph-card">
     <v-container>
       <v-row align="center" justify="center">
         <v-col>
@@ -61,10 +61,10 @@ export default class DetailGraph extends Vue {
   }
 
   resize() {
-    if (!this.$refs['graphArea-card']) {
+    if (!this.$refs['graph-card']) {
       return
     }
-    let card = (this.$refs['graphArea-card'] as Vue).$el as HTMLElement
+    let card = (this.$refs['graph-card'] as Vue).$el as HTMLElement
     if (!card) {
       return
     }
@@ -286,9 +286,7 @@ export default class DetailGraph extends Vue {
   @Watch('amount')
   @Watch('beginYAtZero')
   async updateYourself() {
-    console.log(this.zooming)
     if (this.zooming) {
-      console.log('zzz')
       await this.sleep(350)
       this.zooming = false
     }
