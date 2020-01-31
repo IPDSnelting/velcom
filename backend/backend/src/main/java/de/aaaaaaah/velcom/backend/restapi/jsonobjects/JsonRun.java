@@ -13,8 +13,8 @@ import javax.annotation.Nullable;
 public class JsonRun {
 
 	private final JsonCommit commit;
-	private final long start_time;
-	private final long stop_time;
+	private final long startTime;
+	private final long stopTime;
 	@Nullable
 	private final Collection<JsonMeasurement> measurements;
 	@Nullable
@@ -23,8 +23,8 @@ public class JsonRun {
 	public JsonRun(Run run, Commit commit) {
 		this.commit = new JsonCommit(commit);
 
-		start_time = run.getStartTime().getEpochSecond();
-		stop_time = run.getStopTime().getEpochSecond();
+		startTime = run.getStartTime().getEpochSecond();
+		stopTime = run.getStopTime().getEpochSecond();
 
 		measurements = run.getMeasurements().map(
 			m -> m.stream()
@@ -43,12 +43,12 @@ public class JsonRun {
 		return commit;
 	}
 
-	public long getStart_time() {
-		return start_time;
+	public long getStartTime() {
+		return startTime;
 	}
 
-	public long getStop_time() {
-		return stop_time;
+	public long getStopTime() {
+		return stopTime;
 	}
 
 	public Collection<JsonMeasurement> getMeasurements() {
