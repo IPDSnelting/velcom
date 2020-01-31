@@ -125,15 +125,22 @@
             </v-container>
           </v-card-text>
           <v-card-actions>
-            <v-spacer></v-spacer>
-            <v-btn text color="primary" @click="resetDates()">Reset dates</v-btn>
-            <v-btn
-              :disabled="!selectedBenchmark || !selectedMetric"
-              text
-              color="primary"
-              @click="autoZoom()"
-            >Auto zoom</v-btn>
-            <v-btn text color="primary" @click="toggleYScale()">{{ yScaleButtonLabel }}</v-btn>
+            <v-row no-gutters justify="center">
+              <v-col cols="auto">
+                <v-btn text color="primary" @click="resetDates()">Reset dates</v-btn>
+              </v-col>
+              <v-col cols="auto">
+                <v-btn
+                  :disabled="!selectedBenchmark || !selectedMetric"
+                  text
+                  color="primary"
+                  @click="autoZoom()"
+                >Auto zoom</v-btn>
+              </v-col>
+              <v-col cols="auto">
+                <v-btn text color="primary" @click="toggleYScale()">{{ yScaleButtonLabel }}</v-btn>
+              </v-col>
+            </v-row>
           </v-card-actions>
         </v-card>
       </v-col>
