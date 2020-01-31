@@ -380,7 +380,7 @@ export default class ComparisonGraph extends Vue {
   }
 
   mouseover(d: any) {
-    this.tooltip.style('opacity', 0.8)
+    this.tooltip.style('opacity', 0.8).style('visibility', 'visible')
   }
 
   mousemove(d: any, i: any, n: any) {
@@ -419,6 +419,7 @@ export default class ComparisonGraph extends Vue {
       .transition()
       .duration(500)
       .style('opacity', 0)
+      .style('visibility', 'hidden')
   }
 
   mounted() {

@@ -287,7 +287,7 @@ export default class DetailGraph extends Vue {
   @Watch('beginYAtZero')
   async updateYourself() {
     if (this.zooming) {
-      await this.sleep(350)
+      await this.sleep(500)
       this.zooming = false
     }
     d3.select('#svg-container')
@@ -318,21 +318,14 @@ export default class DetailGraph extends Vue {
       )
       .call(this.brush)
 
+    this.drawGraph()
+
     this.tooltip = d3
       .select('#svg-container')
       .append('div')
       .style('opacity', 0)
       .attr('id', 'tooltip')
-      .style('position', 'absolute')
-      .style('padding', '5px')
-      .style('border-radius', '5px')
-      .style('background-color', 'black')
-      .style('color', 'white')
-      .style('text-align', 'center')
-      .style('font-family', 'Roboto')
-      .style('font-size', '14px')
-
-    this.drawGraph()
+      .attr('class', 'tooltip')
   }
 
   drawGraph() {
@@ -442,7 +435,7 @@ export default class DetailGraph extends Vue {
   }
 
   mouseover(d: any) {
-    this.tooltip.style('opacity', 0.8)
+    this.tooltip.style('opacity', 0.8).style('visibility', 'visible')
   }
 
   mousemove(
@@ -502,11 +495,19 @@ export default class DetailGraph extends Vue {
       htmlMessage =
         'Commit ' + d.commit.hash + '<br />author:' + d.commit.author
     }
-    d3.select('#tooltip')
-      .html(htmlMessage)
-      .style('left', d3.mouse(n[i])[0] + 90 + 'px')
-      .style('top', d3.mouse(n[i])[1] + 90 + 'px')
-      .style('display', 'inline-block')
+    if (this.datapoints.indexOf(d) < this.datapoints.length / 2) {
+      d3.select('#tooltip')
+        .html(htmlMessage)
+        .style('left', d3.mouse(n[i])[0] + 90 + 'px')
+        .style('top', d3.mouse(n[i])[1] + 90 + 'px')
+        .style('display', 'inline-block')
+    } else {
+      d3.select('#tooltip')
+        .html(htmlMessage)
+        .style('left', d3.mouse(n[i])[0] - 90 + 'px')
+        .style('top', d3.mouse(n[i])[1] + 90 + 'px')
+        .style('display', 'inline-block')
+    }
   }
 
   mouseleave(d: any) {
@@ -514,6 +515,7 @@ export default class DetailGraph extends Vue {
       .transition()
       .duration(500)
       .style('opacity', 0)
+      .style('visibility', 'hidden')
   }
 
   mounted() {
@@ -526,6 +528,17 @@ export default class DetailGraph extends Vue {
 .axis text {
   font-family: Roboto;
   font-size: 12px;
+}
+
+.tooltip {
+  font-size: 10pt;
+  position: absolute;
+  padding: 5px;
+  border-radius: 5px;
+  background-color: black;
+  color: white;
+  text-align: center;
+  font-family: 'Roboto';
 }
 
 .tooltip-table tr td {
