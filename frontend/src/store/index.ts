@@ -39,6 +39,11 @@ interface PersistedRepoComparisonStore {
 
 interface PersisteRepoDetailStore {
   _selectedRepoId: string
+
+  selectedMetric: string
+  selectedBenchmark: string
+  selectedFetchAmount: string
+  selectedSkipAmount: string
 }
 
 interface PersistedSessionRootState {
@@ -74,7 +79,11 @@ const persistenceSessionStorage = new VuexPersistence<RootState>({
         selectedMetric: state.repoComparisonModule.selectedMetric
       },
       repoDetailModule: {
-        _selectedRepoId: state.repoDetailModule._selectedRepoId
+        _selectedRepoId: state.repoDetailModule._selectedRepoId,
+        selectedMetric: state.repoDetailModule.selectedMetric,
+        selectedBenchmark: state.repoDetailModule.selectedBenchmark,
+        selectedFetchAmount: state.repoDetailModule.selectedFetchAmount,
+        selectedSkipAmount: state.repoDetailModule.selectedSkipAmount
       }
     }
   }
@@ -148,7 +157,7 @@ export function restoreFromPassedSession(rawData: string | null) {
   console.log(state)
 
   // Detail module
-  vxm.repoDetailModule.selectedRepoId = state.repoDetailModule._selectedRepoId
+  Object.assign(vxm.repoDetailModule, state.repoDetailModule)
 
   // Comparison module
   Object.assign(vxm.repoComparisonModule, state.repoComparisonModule)

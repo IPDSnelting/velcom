@@ -28,6 +28,11 @@ export class RepoDetailStore extends VxModule {
   } = {}
   private _selectedRepoId: string = ''
 
+  selectedMetric: string = ''
+  selectedBenchmark: string = ''
+  selectedFetchAmount: string = '10'
+  selectedSkipAmount: string = '0'
+
   @action
   async fetchHistoryForRepo(payload: {
     repoId: string

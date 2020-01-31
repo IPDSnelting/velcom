@@ -121,18 +121,44 @@ import DetailGraph from '@/components/graphs/DetailGraph.vue'
   }
 })
 export default class RepoDetail extends Vue {
-  private selectedBenchmark: string = ''
-  private selectedMetric: string = ''
-
   private formValid: boolean = true
-
-  private amount: string = '10'
-  private skip: string = '0'
 
   private yScaleBeginsAtZero: boolean = true
   private yScaleButtonLabel:
     | 'begin y-Scale at zero'
     | 'begin y-Scale at minimum Value' = 'begin y-Scale at minimum Value'
+
+  private get selectedBenchmark() {
+    return vxm.repoDetailModule.selectedBenchmark
+  }
+
+  private set selectedBenchmark(selectedBenchmark: string) {
+    vxm.repoDetailModule.selectedBenchmark = selectedBenchmark
+  }
+
+  private get selectedMetric() {
+    return vxm.repoDetailModule.selectedMetric
+  }
+
+  private set selectedMetric(selectedMetric: string) {
+    vxm.repoDetailModule.selectedMetric = selectedMetric
+  }
+
+  private get amount() {
+    return vxm.repoDetailModule.selectedFetchAmount
+  }
+
+  private set amount(amount: string) {
+    vxm.repoDetailModule.selectedFetchAmount = amount
+  }
+
+  private get skip() {
+    return vxm.repoDetailModule.selectedSkipAmount
+  }
+
+  private set skip(skip: string) {
+    vxm.repoDetailModule.selectedSkipAmount = skip
+  }
 
   private get id() {
     return this.$route.params.id
