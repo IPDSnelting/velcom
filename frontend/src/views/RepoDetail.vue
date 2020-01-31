@@ -7,12 +7,23 @@
     </v-row>
     <v-row align="baseline" justify="center">
       <v-col>
+        <detail-graph
+          :benchmark="selectedBenchmark"
+          :metric="selectedMetric"
+          :amount="Number.parseInt(amount)"
+          :beginYAtZero="this.yScaleBeginsAtZero"
+          @selectionChanged="updateSelection"
+        ></detail-graph>
+      </v-col>
+    </v-row>
+    <v-row align="baseline" justify="center">
+      <v-col>
         <v-card>
           <v-card-title>
             <v-toolbar color="primary darken-1" dark>Filter Data</v-toolbar>
           </v-card-title>
           <v-card-text class="ma-0 pa-0">
-            <v-container fluid class="ma-0 pa-0">
+            <v-container fluid class="ma-0 px-4">
               <v-row align="center" justify="space-around" no-gutters>
                 <v-col md="5" sm="12" cols="12">
                   <v-row no-gutters>
@@ -77,17 +88,6 @@
             >Delete metric</v-btn>
           </v-card-actions>
         </v-card>
-      </v-col>
-    </v-row>
-    <v-row align="baseline" justify="center">
-      <v-col>
-        <detail-graph
-          :benchmark="selectedBenchmark"
-          :metric="selectedMetric"
-          :amount="Number.parseInt(amount)"
-          :beginYAtZero="this.yScaleBeginsAtZero"
-          @selectionChanged="updateSelection"
-        ></detail-graph>
       </v-col>
     </v-row>
     <v-row align="baseline" justify="center">
