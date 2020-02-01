@@ -3,7 +3,7 @@
     <v-container>
       <v-row align="center" justify="center">
         <v-col>
-          <div id="svg-container"></div>
+          <div id="svg-container" :style="{'height': this.height + 'px'}"></div>
         </v-col>
       </v-row>
     </v-container>
@@ -38,6 +38,7 @@ export default class DetailGraph extends Vue {
   @Prop({ default: true })
   beginYAtZero!: boolean
 
+  private resizeTimeout: number | undefined
   private resizeListener: () => void = () => {}
 
   get selectedRepo(): string {
@@ -50,28 +51,28 @@ export default class DetailGraph extends Vue {
 
   created() {
     this.resizeListener = () => {
-      this.resize()
-      this.updateYourself()
+      this.debounce(this.updateYourself, 500)()
     }
     window.addEventListener('resize', this.resizeListener)
   }
 
-  beforeDestroy() {
-    window.removeEventListener('resize', this.resizeListener)
+  debounce(func: Function, wait: number) {
+    return () => {
+      if (this.resizeTimeout) {
+        return
+      }
+      let context = this
+      let args = arguments
+      clearTimeout(this.resizeTimeout)
+      this.resizeTimeout = setTimeout(() => {
+        this.resizeTimeout = undefined
+        func.apply(context, args)
+      }, wait)
+    }
   }
 
-  resize() {
-    if (!this.$refs['graph-card']) {
-      return
-    }
-    let card = (this.$refs['graph-card'] as Vue).$el as HTMLElement
-    if (!card) {
-      return
-    }
-
-    this.width = card.getBoundingClientRect().width - 40
-    this.height =
-      this.width > 1000 ? this.width * (3 / 7) : this.width * (9 / 16)
+  beforeDestroy() {
+    window.removeEventListener('resize', this.resizeListener)
   }
 
   private width: number = 0
@@ -288,6 +289,10 @@ export default class DetailGraph extends Vue {
   @Watch('amount')
   @Watch('beginYAtZero')
   async updateYourself() {
+    let mainSvg = d3.select('#svg-container').node() as HTMLElement
+    this.width = mainSvg ? mainSvg.getBoundingClientRect().width : 900
+    this.height = this.width / 2
+
     if (this.zooming) {
       await this.sleep(500)
       this.zooming = false
@@ -332,8 +337,6 @@ export default class DetailGraph extends Vue {
 
   drawGraph() {
     this.svg.selectAll('*').remove()
-    console.log(this.valueRange.max)
-
     if (
       this.metric !== '' &&
       this.valueRange.max !== Number.NEGATIVE_INFINITY
@@ -534,8 +537,13 @@ export default class DetailGraph extends Vue {
       .style('visibility', 'hidden')
   }
 
+  @Watch('innerHeight')
+  @Watch('innerWidth')
+  hm() {
+    this.updateYourself()
+  }
+
   mounted() {
-    this.resize()
     this.updateYourself()
   }
 }
