@@ -25,7 +25,7 @@ public class CommitAccessBasedLinearLog implements LinearLog {
 		throws LinearLogException {
 
 		try {
-			return commitAccess.getCommitLog(repo, branches);
+			return commitAccess.getCommitLog(repo.getId(), branches);
 		} catch (CommitAccessException e) {
 			throw new LinearLogException(e);
 		}

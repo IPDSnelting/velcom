@@ -8,7 +8,6 @@ import de.aaaaaaah.velcom.backend.access.AccessLayer;
 import de.aaaaaaah.velcom.backend.access.commit.filter.AuthorTimeRevFilter;
 import de.aaaaaaah.velcom.backend.access.repo.Branch;
 import de.aaaaaaah.velcom.backend.access.repo.BranchName;
-import de.aaaaaaah.velcom.backend.access.repo.Repo;
 import de.aaaaaaah.velcom.backend.access.repo.RepoId;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import de.aaaaaaah.velcom.backend.storage.repo.RepoStorage;
@@ -335,13 +334,13 @@ public class CommitAccess {
 	 * Returns all commits in the specified branches in the order that jgit puts them in. The stream
 	 * must be closed manually once it is no longer required.
 	 *
-	 * @param repo the repo to take the commits from
+	 * @param repoId the id of the repo to take the commits from
 	 * @param branches the branches to take the commits from
 	 * @return the commits
 	 * @throws NoSuchCommitException if anything goes wrong in the underlying jgit commit
 	 * 	traversal
 	 */
-	public Stream<Commit> getCommitLog(Repo repo, Collection<BranchName> branches)
+	public Stream<Commit> getCommitLog(RepoId repoId, Collection<BranchName> branches)
 		throws CommitAccessException {
 		// Step 0: Sort branches so that the outcome is deterministic
 		List<BranchName> sortedBranches = new ArrayList<>(branches);
@@ -351,7 +350,7 @@ public class CommitAccess {
 		Repository jgitRepo;
 
 		try {
-			String directoryName = repo.getId().getDirectoryName();
+			String directoryName = repoId.getDirectoryName();
 			jgitRepo = repoStorage.acquireRepository(directoryName);
 		} catch (RepositoryAcquisitionException e) {
 			throw new CommitAccessException(e);
@@ -371,7 +370,7 @@ public class CommitAccess {
 				logCommand.call().iterator(), 0);
 
 			return StreamSupport.stream(commitSpliterator, false)
-				.map(revCommit -> commitFromRevCommit(repo.getId(), revCommit))
+				.map(revCommit -> commitFromRevCommit(repoId, revCommit))
 				.onClose(jgitRepo::close);
 		} catch (Exception e) {
 			jgitRepo.close(); // Release repo storage lock if this fails

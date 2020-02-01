@@ -108,7 +108,9 @@ public class Listener {
 					.collect(toList());
 
 				Collection<CommitHash> commits;
-				try (Stream<Commit> commitStream = commitAccess.getCommitLog(repo, branches)) {
+				try (Stream<Commit> commitStream = commitAccess.getCommitLog(
+					repo.getId(), branches)) {
+
 					commits = commitStream
 						.map(Commit::getHash)
 						.collect(Collectors.toUnmodifiableList());
