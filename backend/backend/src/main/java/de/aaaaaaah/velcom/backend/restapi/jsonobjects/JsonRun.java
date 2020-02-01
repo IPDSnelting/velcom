@@ -2,7 +2,6 @@ package de.aaaaaaah.velcom.backend.restapi.jsonobjects;
 
 import de.aaaaaaah.velcom.backend.access.benchmark.Run;
 import de.aaaaaaah.velcom.backend.access.commit.Commit;
-import de.aaaaaaah.velcom.backend.access.commit.CommitAccessException;
 import java.util.Collection;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -33,10 +32,6 @@ public class JsonRun {
 		).orElse(null);
 
 		errorMessage = run.getErrorMessage().orElse(null);
-	}
-
-	public JsonRun(Run run) throws CommitAccessException {
-		this(run, run.getCommit());
 	}
 
 	public JsonCommit getCommit() {

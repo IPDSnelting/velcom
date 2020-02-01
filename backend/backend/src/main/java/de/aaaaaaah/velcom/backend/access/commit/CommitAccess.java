@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
@@ -77,6 +78,20 @@ public class CommitAccess {
 			return "<" + ident.getEmailAddress() + ">";
 		} else {
 			return name + " <" + ident.getEmailAddress() + ">";
+		}
+	}
+
+	public Optional<Commit> getCommitMaybe(RepoId repoId, CommitHash commitHash) {
+		try (Repository repo = repoStorage.acquireRepository(repoId.getDirectoryName())) {
+			try (RevWalk walk = new RevWalk(repo)) {
+				ObjectId commitPtr = repo.resolve(commitHash.getHash());
+				RevCommit revCommit = walk.parseCommit(commitPtr);
+
+				return Optional.of(commitFromRevCommit(repoId, revCommit));
+			}
+		} catch (RepositoryAcquisitionException | IOException e) {
+			return Optional.empty();
+			// TODO: Correctly handle IOException and other exceptions
 		}
 	}
 

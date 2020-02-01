@@ -3,13 +3,14 @@ package de.aaaaaaah.velcom.backend.restapi.endpoints;
 import de.aaaaaaah.velcom.backend.access.benchmark.BenchmarkAccess;
 import de.aaaaaaah.velcom.backend.access.benchmark.Run;
 import de.aaaaaaah.velcom.backend.access.benchmark.RunId;
+import de.aaaaaaah.velcom.backend.access.commit.Commit;
 import de.aaaaaaah.velcom.backend.data.commitcomparison.CommitComparer;
 import de.aaaaaaah.velcom.backend.data.commitcomparison.CommitComparison;
 import de.aaaaaaah.velcom.backend.data.linearlog.LinearLog;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonCommitComparison;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.validation.constraints.NotNull;
@@ -57,15 +58,23 @@ public class RecentlyBenchmarkedCommitsEndpoint {
 
 		List<CommitComparison> interestingCommits = recentRuns
 			.map(run -> {
-				Optional<Run> previousRun = linearLog.getPreviousCommit(run.getCommit())
-					.flatMap(benchmarkAccess::getLatestRunOf);
+				Commit runCommit = run.getCommit().orElse(null);
+				if (runCommit == null) {
+					return null;
+				}
+
+				Commit previousCommit = linearLog.getPreviousCommit(runCommit).orElse(null);
+				Run previousRun = previousCommit == null ? null :
+					benchmarkAccess.getLatestRunOf(previousCommit).orElse(null);
+
 				return commitComparer.compare(
-					previousRun.map(Run::getCommit).orElse(null),
-					previousRun.orElse(null),
-					run.getCommit(),
+					previousCommit,
+					previousRun,
+					runCommit,
 					run
 				);
 			})
+			.filter(Objects::nonNull)
 			.filter(comparison -> !significantOnly || comparison.isSignificant())
 			.limit(amount)
 			.collect(Collectors.toUnmodifiableList());

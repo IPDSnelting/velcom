@@ -70,8 +70,8 @@ public class Run {
 		return commitHash;
 	}
 
-	public Commit getCommit() throws CommitAccessException {
-		return commitAccess.getCommit(repoId, commitHash);
+	public Optional<Commit> getCommit() throws CommitAccessException {
+		return commitAccess.getCommitMaybe(repoId, commitHash);
 	}
 
 	public Instant getStartTime() {
