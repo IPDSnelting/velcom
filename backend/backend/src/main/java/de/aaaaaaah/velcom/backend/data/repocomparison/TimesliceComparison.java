@@ -6,7 +6,6 @@ import de.aaaaaaah.velcom.backend.access.benchmark.BenchmarkAccess;
 import de.aaaaaaah.velcom.backend.access.benchmark.CommitPerformance;
 import de.aaaaaaah.velcom.backend.access.benchmark.Interpretation;
 import de.aaaaaaah.velcom.backend.access.benchmark.MeasurementName;
-import de.aaaaaaah.velcom.backend.access.benchmark.RunId;
 import de.aaaaaaah.velcom.backend.access.benchmark.Unit;
 import de.aaaaaaah.velcom.backend.access.commit.Commit;
 import de.aaaaaaah.velcom.backend.access.commit.CommitAccess;
@@ -84,11 +83,8 @@ public class TimesliceComparison implements RepoComparison {
 		commits.forEach(commit -> commitMap.put(commit.getHash().getHash(), commit));
 
 		// 2.) Get relevant runs & commit performances
-		final List<RunId> relevantRuns = benchmarkAccess.getLatestRunIds(repoId,
-			commits.stream().map(Commit::getHash).collect(toList()));
-
 		final Collection<CommitPerformance> performances = benchmarkAccess.getCommitPerformances(
-			repoId, measurementName, relevantRuns
+			repoId, measurementName, commits
 		);
 
 		if (performances.isEmpty()) {

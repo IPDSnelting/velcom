@@ -1,5 +1,6 @@
 package de.aaaaaaah.velcom.backend.access.benchmark;
 
+import static java.util.stream.Collectors.toList;
 import static org.jooq.codegen.db.tables.Run.RUN;
 import static org.jooq.codegen.db.tables.RunMeasurement.RUN_MEASUREMENT;
 import static org.jooq.codegen.db.tables.RunMeasurementValue.RUN_MEASUREMENT_VALUE;
@@ -450,11 +451,16 @@ public class BenchmarkAccess {
 	 */
 	public Collection<CommitPerformance> getCommitPerformances(RepoId repoId,
 		MeasurementName measurementName,
-		Collection<RunId> runIds) {
+		Collection<Commit> commits) {
 
-		Collection<String> stringRunIds = runIds.stream()
-			.map(r -> r.getId().toString())
-			.collect(Collectors.toList());
+		final List<CommitHash> commitHashes = commits.stream()
+			.map(Commit::getHash).collect(toList());
+
+		// For each commit get their latest run
+		final List<String> runIdList = getLatestRunIds(repoId, commitHashes)
+			.stream()
+			.map(runId -> runId.getId().toString())
+			.collect(toList());
 
 		// "lazy" insertion into map guarantees that every commit performance
 		// inside this map has at least one value
@@ -477,7 +483,7 @@ public class BenchmarkAccess {
 					.on(RUN_MEASUREMENT.ID.eq(RUN_MEASUREMENT_VALUE.MEASUREMENT_ID))
 				)
 				.where(RUN.REPO_ID.eq(repoId.getId().toString()))
-				.and(RUN.ID.in(stringRunIds))
+				.and(RUN.ID.in(runIdList))
 				.and(RUN_MEASUREMENT.BENCHMARK.eq(measurementName.getBenchmark()))
 				.and(RUN_MEASUREMENT.METRIC.eq(measurementName.getMetric()))
 				.and(RUN_MEASUREMENT.ERROR_MESSAGE.isNull())
