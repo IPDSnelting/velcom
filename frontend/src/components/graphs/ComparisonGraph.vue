@@ -3,7 +3,7 @@
     <v-container>
       <v-row align="center" justify="center">
         <v-col>
-          <div id="svg-container"></div>
+          <div id="svg-container" :style="{'height': this.height + 'px'}"></div>
         </v-col>
       </v-row>
     </v-container>
@@ -30,30 +30,17 @@ export default class ComparisonGraph extends Vue {
   private resizeTimeout: number | undefined
   private resizeListener: () => void = () => {}
 
+  private height: number = 0
+
   created() {
     this.resizeListener = () => {
-      this.debounce(this.resize, 1000)()
-      this.updateYourself()
+      this.debounce(this.updateYourself, 500)()
     }
     window.addEventListener('resize', this.resizeListener)
   }
 
   beforeDestroy() {
     window.removeEventListener('resize', this.resizeListener)
-  }
-
-  resize() {
-    if (!this.$refs['graph-card']) {
-      return
-    }
-    let card = (this.$refs['graph-card'] as Vue).$el as HTMLElement
-    if (!card) {
-      return
-    }
-
-    this.width = card.getBoundingClientRect().width - 40
-    this.height =
-      this.width > 1000 ? this.width * (3 / 7) : this.width * (9 / 16)
   }
 
   debounce(func: Function, wait: number) {
@@ -71,9 +58,6 @@ export default class ComparisonGraph extends Vue {
     }
   }
 
-  private width: number = 0
-  private height: number = 0
-
   private svg: any = null
   private tooltip: any = null
   private brushArea: any = null
@@ -84,15 +68,15 @@ export default class ComparisonGraph extends Vue {
       .brushX()
       .extent([
         [0, 0],
-        [this.innerWidth, this.innerHeight]
+        [this.innerWidth(), this.innerHeight()]
       ])
       .on('end', this.brushed)
   }
 
   brushed() {
     let selection = d3.event.selection
-    let newMin: Date = d3.timeDay.floor(this.xScale.invert(selection[0]))
-    let newMax: Date = d3.timeDay.floor(this.xScale.invert(selection[1]))
+    let newMin: Date = d3.timeDay.floor(this.xScale().invert(selection[0]))
+    let newMax: Date = d3.timeDay.floor(this.xScale().invert(selection[1]))
     if (selection) {
       this.zooming = true
       this.$emit('timeframeChanged', newMin, newMax)
@@ -111,11 +95,14 @@ export default class ComparisonGraph extends Vue {
     bottom: 100
   }
 
-  get innerWidth() {
-    return this.width - this.margin.left - this.margin.right
+  private innerWidth() {
+    let mainSvg = d3.select('#svg-container').node() as HTMLElement
+    let width = mainSvg ? mainSvg.getBoundingClientRect().width : 900
+    return width - this.margin.left - this.margin.right
   }
 
-  get innerHeight() {
+  private innerHeight() {
+    this.height = this.innerWidth() / 2
     return this.height - this.margin.top - this.margin.bottom
   }
 
@@ -138,11 +125,11 @@ export default class ComparisonGraph extends Vue {
     return vxm.repoComparisonModule.stopDate.getTime() + 1000 * 60 * 60 * 24
   }
 
-  get xScale(): any {
+  private xScale(): any {
     return d3
       .scaleTime()
       .domain([this.minTimestamp, this.maxTimestamp])
-      .range([0, this.innerWidth])
+      .range([0, this.innerWidth()])
   }
 
   get datapoints(): { [key: string]: Datapoint[] } {
@@ -176,10 +163,10 @@ export default class ComparisonGraph extends Vue {
     return d3
       .line()
       .x((datapoint: any) => {
-        return this.xScale(datapoint.commit.authorDate * 1000)
+        return this.xScale()(datapoint.commit.authorDate * 1000)
       })
       .y((datapoint: any) => {
-        return this.yScale(datapoint.value)
+        return this.yScale()(datapoint.value)
       })
   }
 
@@ -197,17 +184,17 @@ export default class ComparisonGraph extends Vue {
     return { min: min, max: max }
   }
 
-  get yScale() {
+  private yScale() {
     if (this.interpretation === 'LESS_IS_BETTER') {
       return d3
         .scaleLinear()
         .domain([this.valueRange.min, this.valueRange.max])
-        .range([this.innerHeight, 0])
+        .range([this.innerHeight(), 0])
     } else {
       return d3
         .scaleLinear()
         .domain([this.valueRange.min, this.valueRange.max])
-        .range([0, this.innerHeight])
+        .range([0, this.innerHeight()])
     }
   }
 
@@ -240,10 +227,10 @@ export default class ComparisonGraph extends Vue {
       .select('#svg-container')
       .append('svg')
       .attr('id', 'mainSVG')
-      .attr('width', this.width)
-      .attr('height', this.height)
       .attr('align', 'end')
       .attr('justify', 'end')
+      .attr('width', '100%')
+      .attr('height', '100%')
       .append('g')
       .attr(
         'transform',
@@ -297,7 +284,7 @@ export default class ComparisonGraph extends Vue {
 
       this.svg
         .append('text')
-        .attr('y', this.height / 2)
+        .attr('y', this.innerHeight() / 2)
         .attr('x', this.margin.left)
         .text(information)
         .style('text-align', 'center')
@@ -311,8 +298,8 @@ export default class ComparisonGraph extends Vue {
     this.svg
       .append('g')
       .attr('class', 'axis')
-      .attr('transform', 'translate(0,' + this.innerHeight + ')')
-      .call(d3.axisBottom(this.xScale).tickFormat(this.timeFormat))
+      .attr('transform', 'translate(0,' + this.innerHeight() + ')')
+      .call(d3.axisBottom(this.xScale()).tickFormat(this.timeFormat))
       .selectAll('text')
       .attr('transform', 'translate(-10, 10) rotate(-45)')
       .style('text-anchor', 'end')
@@ -322,14 +309,14 @@ export default class ComparisonGraph extends Vue {
     this.svg
       .append('g')
       .attr('class', 'axis')
-      .call(d3.axisLeft(this.yScale).tickFormat(this.valueFormat))
+      .call(d3.axisLeft(this.yScale()).tickFormat(this.valueFormat))
 
     this.svg
       .append('text')
       .attr('text-anchor', 'middle')
       .attr('transform', 'rotate(-90)')
       .attr('y', -this.margin.left + 20)
-      .attr('x', -this.innerHeight / 2)
+      .attr('x', -this.innerHeight() / 2)
       .text(this.yLabel)
   }
 
@@ -356,10 +343,10 @@ export default class ComparisonGraph extends Vue {
       .attr('stroke', this.colorById(repoID))
       .attr('r', 4)
       .attr('cx', (d: any) => {
-        return this.xScale(d.commit.authorDate * 1000)
+        return this.xScale()(d.commit.authorDate * 1000)
       })
       .attr('cy', (d: any) => {
-        return this.yScale(d.value)
+        return this.yScale()(d.value)
       })
       .style('cursor', 'pointer')
       .data(datapointsBetweenAxes)
@@ -429,8 +416,9 @@ export default class ComparisonGraph extends Vue {
       .style('visibility', 'hidden')
   }
 
+  @Watch('innerHeight')
+  @Watch('innerWidth')
   mounted() {
-    this.resize()
     this.updateYourself()
   }
 }
