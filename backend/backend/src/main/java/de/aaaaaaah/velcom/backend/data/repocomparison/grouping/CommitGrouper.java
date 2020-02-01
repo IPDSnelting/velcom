@@ -1,4 +1,4 @@
-package de.aaaaaaah.velcom.backend.access.benchmark.repocomparison.timeslice;
+package de.aaaaaaah.velcom.backend.data.repocomparison.grouping;
 
 import java.time.ZonedDateTime;
 
