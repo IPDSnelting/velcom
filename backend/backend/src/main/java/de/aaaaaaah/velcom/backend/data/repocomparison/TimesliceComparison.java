@@ -95,9 +95,34 @@ public class TimesliceComparison implements RepoComparison {
 			return Optional.empty(); // No graph data available
 		}
 
-		final CommitPerformance firstPerformance = performances.iterator().next();
-		final Interpretation interpr = firstPerformance.getInterpretation();
-		final Unit unit = firstPerformance.getUnit();
+		Instant oldestAuthorDate = null;
+		CommitPerformance oldestPerformance = null;
+		Instant youngestAuthorDate = null;
+		CommitPerformance youngestPerformance = null;
+		for (CommitPerformance performance : performances) {
+			Commit commit = commitMap.get(performance.getCommitHash().getHash());
+			Instant authorDate = commit.getAuthorDate();
+
+			if (oldestAuthorDate == null || authorDate.isBefore(oldestAuthorDate)) {
+				oldestAuthorDate = authorDate;
+				oldestPerformance = performance;
+			}
+
+			if (youngestAuthorDate == null || authorDate.isAfter(youngestAuthorDate)) {
+				youngestAuthorDate = authorDate;
+				youngestPerformance = performance;
+			}
+		}
+
+		Interpretation interpretation = youngestPerformance.getInterpretation();
+		Unit unit = youngestPerformance.getUnit();
+
+		if (startTime == null) {
+			startTime = oldestAuthorDate;
+		}
+		if (stopTime == null) {
+			stopTime = youngestAuthorDate;
+		}
 
 		// 3.) Build graph data (convert pairs to GraphEntry instances & group them)
 		final Map<Long, List<GraphEntry>> groupMap = groupPerformancesToEntries(
@@ -106,15 +131,17 @@ public class TimesliceComparison implements RepoComparison {
 
 		// 4.) Find best entries for each time slice
 		Map<Long, GraphEntry> bestEntries = new HashMap<>();
-		groupMap.forEach((groupingValue, groupedEntries) -> findBestEntry(groupedEntries, interpr)
-			.ifPresent(bestEntry -> bestEntries.put(groupingValue, bestEntry)));
+		groupMap.forEach(
+			(groupingValue, groupedEntries) -> findBestEntry(groupedEntries, interpretation)
+				.ifPresent(bestEntry -> bestEntries.put(groupingValue, bestEntry))
+		);
 
 		final List<GraphEntry> graphEntries = bestEntries.keySet().stream()
 			.sorted()
 			.map(bestEntries::get)
 			.collect(toList());
 
-		return Optional.of(new RepoGraphData(repoId, graphEntries, interpr, unit));
+		return Optional.of(new RepoGraphData(repoId, graphEntries, interpretation, unit));
 	}
 
 	private Map<Long, List<GraphEntry>> groupPerformancesToEntries(Instant startTime,
