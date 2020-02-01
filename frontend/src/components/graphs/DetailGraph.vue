@@ -480,6 +480,10 @@ export default class DetailGraph extends Vue {
             <td>Exact value</td>
             <td>${this.valueFormat(wantedMeasurement.value)} ${this.unit}</td>
           </tr>
+          <tr>
+            <td>Commit summary</td>
+            <td>${d.commit.summary!.trim()}</td>
+           </tr>
         </table>
       `
     } else if (d.commit.authorDate) {

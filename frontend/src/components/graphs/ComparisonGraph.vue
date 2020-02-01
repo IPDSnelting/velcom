@@ -404,9 +404,13 @@ export default class ComparisonGraph extends Vue {
               <td>Date</td>
               <td>${formatDateUTC(d.commit.authorDate)}</td>
             </tr>
-           <tr>
+            <tr>
               <td>Exact value</td>
               <td>${this.valueFormat(d.value)} ${this.unit}</td>
+            </tr>
+            <tr>
+              <td>Commit summary</td>
+              <td>${d.commit.summary.trim()}</td>
             </tr>
           </table>
           `
