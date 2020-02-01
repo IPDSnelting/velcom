@@ -93,7 +93,6 @@ export default class ComparisonGraph extends Vue {
     let selection = d3.event.selection
     let newMin: Date = d3.timeDay.floor(this.xScale.invert(selection[0]))
     let newMax: Date = d3.timeDay.floor(this.xScale.invert(selection[1]))
-    console.log(newMin, newMax)
     if (selection) {
       this.zooming = true
       this.$emit('timeframeChanged', newMin, newMax)
@@ -136,7 +135,7 @@ export default class ComparisonGraph extends Vue {
   }
 
   get maxTimestamp(): any {
-    return vxm.repoComparisonModule.stopDate.getTime()
+    return vxm.repoComparisonModule.stopDate.getTime() + 1000 * 60 * 60 * 24
   }
 
   get xScale(): any {
@@ -157,11 +156,7 @@ export default class ComparisonGraph extends Vue {
         if (date) {
           date *= 1000
         }
-        return (
-          date &&
-          date >= this.minTimestamp &&
-          date <= this.maxTimestamp + 1000 * 60 * 60 * 24
-        )
+        return date && date >= this.minTimestamp && date <= this.maxTimestamp
       })
     }
   }
@@ -280,7 +275,6 @@ export default class ComparisonGraph extends Vue {
       .style('font-size', '14px')
 
     this.drawGraph()
-    console.log(d3.timeDay(this.minTimestamp), d3.timeDay(this.maxTimestamp))
   }
 
   drawGraph() {
