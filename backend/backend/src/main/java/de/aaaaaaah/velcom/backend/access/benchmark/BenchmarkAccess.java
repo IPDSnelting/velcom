@@ -13,9 +13,7 @@ import de.aaaaaaah.velcom.backend.access.commit.Commit;
 import de.aaaaaaah.velcom.backend.access.commit.CommitHash;
 import de.aaaaaaah.velcom.backend.access.repo.RepoId;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
-import de.aaaaaaah.velcom.backend.util.Either;
 import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -29,12 +27,10 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.jooq.DSLContext;
-import org.jooq.InsertValuesStep2;
 import org.jooq.Record1;
 import org.jooq.Record2;
 import org.jooq.Result;
 import org.jooq.codegen.db.tables.records.RunMeasurementRecord;
-import org.jooq.codegen.db.tables.records.RunMeasurementValueRecord;
 import org.jooq.codegen.db.tables.records.RunRecord;
 
 /**
@@ -187,132 +183,63 @@ public class BenchmarkAccess {
 	 */
 
 	/**
-	 * Add a new successful run to the db.
+	 * Creates a new {@link Run} based on the provided builder and inserts it into database.
 	 *
-	 * @param repoId the repo the commit is in
-	 * @param commitHash the hash of the benchmarked commit
-	 * @param startTime the time the benchmark script execution was started
-	 * @param stopTime the time the benchmark script finished executing
-	 * @return the newly created {@link Run}
+	 * @param builder the builder to base the run on
+	 * @return the id of the newly created run
 	 */
-	public RunId addRun(RepoId repoId, CommitHash commitHash, Instant startTime, Instant stopTime) {
+	public RunId addRun(RunBuilder builder) {
 		try (DSLContext db = databaseStorage.acquireContext()) {
+			// 1.) Insert run into database
 			final RunId runId = new RunId(UUID.randomUUID());
 			final RunRecord runRecord = db.newRecord(RUN);
 
 			runRecord.setId(runId.getId().toString());
-			runRecord.setRepoId(repoId.getId().toString());
-			runRecord.setCommitHash(commitHash.getHash());
-			runRecord.setStartTime(Timestamp.from(startTime));
-			runRecord.setStopTime(Timestamp.from(stopTime));
+			runRecord.setRepoId(builder.getRepoId().getId().toString());
+			runRecord.setCommitHash(builder.getCommitHash().getHash());
+			runRecord.setStartTime(Timestamp.from(builder.getStartTime()));
+			runRecord.setStopTime(Timestamp.from(builder.getStopTime()));
+			runRecord.setErrorMessage(builder.getErrorMessage());
 
 			runRecord.insert();
+
+			// 2.) Insert measurements
+			for (TmpMeasurement measure : builder.getMeasurements()) {
+				// Insert measurement
+				final UUID measurement_id = UUID.randomUUID();
+				final RunMeasurementRecord runMeasurementRecord = db.newRecord(RUN_MEASUREMENT);
+				final MeasurementName measurementName = measure.getMeasurementName();
+
+				runMeasurementRecord.setId(measurement_id.toString());
+				runMeasurementRecord.setRunId(runId.getId().toString());
+				runMeasurementRecord.setBenchmark(measurementName.getBenchmark());
+				runMeasurementRecord.setMetric(measurementName.getMetric());
+
+				if (measure.getUnit() != null) {
+					runMeasurementRecord.setUnit(measure.getUnit().getName());
+				}
+
+				if (measure.getInterpretation() != null) {
+					runMeasurementRecord.setInterpretation(
+						measure.getInterpretation().getTextualRepresentation());
+				}
+
+				runMeasurementRecord.setErrorMessage(measure.getErrorMessage());
+				runMeasurementRecord.insert();
+
+				// 3.) Insert individual measurement values
+				if (!measure.getValues().isEmpty()) {
+					final List<Double> values = measure.getValues();
+
+					var step = db.insertInto(RUN_MEASUREMENT_VALUE)
+						.columns(RUN_MEASUREMENT_VALUE.MEASUREMENT_ID, RUN_MEASUREMENT_VALUE.VALUE);
+
+					values.forEach(value -> step.values(measurement_id.toString(), value));
+					step.execute();
+				}
+			}
+
 			return runId;
-		}
-	}
-
-	/**
-	 * Add a new failed run to the db.
-	 *
-	 * @param repoId the repo the commit is in
-	 * @param commitHash the hash of the benchmarked commit
-	 * @param startTime the time the benchmark script execution was started
-	 * @param stopTime the time the benchmark script finished executing
-	 * @param errorMessage the message with which the run failed
-	 * @return the newly created {@link Run}
-	 */
-	public RunId addFailedRun(RepoId repoId, CommitHash commitHash, Instant startTime,
-		Instant stopTime, String errorMessage) {
-
-		try (DSLContext db = databaseStorage.acquireContext()) {
-			final RunId runId = new RunId(UUID.randomUUID());
-			final RunRecord runRecord = db.newRecord(RUN);
-
-			runRecord.setId(runId.getId().toString());
-			runRecord.setRepoId(repoId.getId().toString());
-			runRecord.setCommitHash(commitHash.getHash());
-			runRecord.setStartTime(Timestamp.from(startTime));
-			runRecord.setStopTime(Timestamp.from(stopTime));
-			runRecord.setErrorMessage(errorMessage);
-
-			runRecord.insert();
-			return runId;
-		}
-	}
-
-	/**
-	 * Add a new successful measurement to an existing run.
-	 *
-	 * @param runId the run's id
-	 * @param measurementName the measurement identification
-	 * @param values the measured values
-	 * @param interpretation the values' interpretation
-	 * @param unit the values' unit
-	 * @return the newly created {@link Measurement}
-	 */
-	public Measurement addMeasurement(RunId runId, MeasurementName measurementName,
-		List<Double> values, Interpretation interpretation, Unit unit) {
-
-		try (DSLContext db = databaseStorage.acquireContext()) {
-			// Insert new measurement
-			final UUID measurement_id = UUID.randomUUID();
-			final RunMeasurementRecord runMeasurementRecord = db.newRecord(RUN_MEASUREMENT);
-
-			runMeasurementRecord.setId(measurement_id.toString());
-			runMeasurementRecord.setRunId(runId.getId().toString());
-			runMeasurementRecord.setBenchmark(measurementName.getBenchmark());
-			runMeasurementRecord.setMetric(measurementName.getMetric());
-			runMeasurementRecord.setUnit(unit.getName());
-			runMeasurementRecord.setInterpretation(interpretation.getTextualRepresentation());
-
-			runMeasurementRecord.insert();
-
-			// Insert individual measurement values
-			final InsertValuesStep2<RunMeasurementValueRecord, String, Double> step = db.insertInto(
-				RUN_MEASUREMENT_VALUE)
-				.columns(RUN_MEASUREMENT_VALUE.MEASUREMENT_ID, RUN_MEASUREMENT_VALUE.VALUE);
-			values.forEach(value -> step.values(measurement_id.toString(), value));
-			step.execute();
-
-			return new Measurement(
-				accessLayer.getBenchmarkAccess(),
-				runId,
-				measurementName,
-				Either.ofRight(new MeasurementValues(values, unit, interpretation))
-			);
-		}
-	}
-
-	/**
-	 * Add a new failed measurement to an existing run.
-	 *
-	 * @param runId the run's id
-	 * @param measurementName the measurement identification
-	 * @param errorMessage the message with which the specific measurement failed
-	 * @return the newly created {@link Measurement}
-	 */
-	public Measurement addFailedMeasurement(RunId runId, MeasurementName measurementName,
-		String errorMessage) {
-
-		try (DSLContext db = databaseStorage.acquireContext()) {
-			// Insert new measurement
-			final UUID measurement_id = UUID.randomUUID();
-			final RunMeasurementRecord runMeasurementRecord = db.newRecord(RUN_MEASUREMENT);
-
-			runMeasurementRecord.setId(measurement_id.toString());
-			runMeasurementRecord.setRunId(runId.getId().toString());
-			runMeasurementRecord.setBenchmark(measurementName.getBenchmark());
-			runMeasurementRecord.setMetric(measurementName.getMetric());
-			runMeasurementRecord.setErrorMessage(errorMessage);
-
-			runMeasurementRecord.insert();
-
-			return new Measurement(
-				accessLayer.getBenchmarkAccess(),
-				runId,
-				measurementName,
-				Either.ofLeft(new MeasurementError(errorMessage))
-			);
 		}
 	}
 

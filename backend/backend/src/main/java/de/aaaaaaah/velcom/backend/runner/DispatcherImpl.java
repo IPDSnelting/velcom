@@ -3,7 +3,7 @@ package de.aaaaaaah.velcom.backend.runner;
 import de.aaaaaaah.velcom.backend.access.benchmark.BenchmarkAccess;
 import de.aaaaaaah.velcom.backend.access.benchmark.Interpretation;
 import de.aaaaaaah.velcom.backend.access.benchmark.MeasurementName;
-import de.aaaaaaah.velcom.backend.access.benchmark.RunId;
+import de.aaaaaaah.velcom.backend.access.benchmark.RunBuilder;
 import de.aaaaaaah.velcom.backend.access.benchmark.Unit;
 import de.aaaaaaah.velcom.backend.access.commit.Commit;
 import de.aaaaaaah.velcom.backend.access.commit.CommitHash;
@@ -286,45 +286,46 @@ public class DispatcherImpl implements Dispatcher {
 		Instant endTime = results.getEndTime();
 
 		if (results.isError()) {
-			benchmarkAccess.addFailedRun(
+			RunBuilder runBuilder = RunBuilder.failed(
 				repoId,
 				commitHash,
 				startTime,
 				endTime,
 				results.getError()
 			);
+
+			benchmarkAccess.addRun(runBuilder);
 		} else {
-			RunId runId = benchmarkAccess.addRun(repoId, commitHash, startTime, endTime);
+			RunBuilder runBuilder = RunBuilder.successful(repoId, commitHash, startTime, endTime);
+
 			for (Benchmark benchmark : results.getBenchmarks()) {
 				for (Metric metric : benchmark.getMetrics()) {
-					addMeasurementToRun(runId, benchmark, metric);
+					addMeasurementToRun(runBuilder, benchmark, metric);
 				}
 			}
+
+			benchmarkAccess.addRun(runBuilder);
 		}
 
 		queue.finishTask(repoId, commitHash);
 	}
 
-	private void addMeasurementToRun(RunId runId, Benchmark benchmark, Metric metric) {
+	private void addMeasurementToRun(RunBuilder runBuilder, Benchmark benchmark, Metric metric) {
 		MeasurementName measurementName = new MeasurementName(
 			benchmark.getName(),
 			metric.getName()
 		);
+
 		if (metric.isError()) {
-			benchmarkAccess.addFailedMeasurement(
-				runId,
-				measurementName,
-				metric.getError()
-			);
+			runBuilder.addFailedMeasurement(measurementName, metric.getError());
 		} else {
-			benchmarkAccess.addMeasurement(
-				runId,
+			runBuilder.addSuccessfulMeasurement(
 				measurementName,
-				metric.getResults(),
 				Interpretation.fromTextualRepresentation(
 					metric.getResultInterpretation().name()
 				),
-				new Unit(metric.getUnit())
+				new Unit(metric.getUnit()),
+				metric.getResults()
 			);
 		}
 	}

@@ -3,6 +3,8 @@ package de.aaaaaaah.velcom.backend.access.benchmark;
 import de.aaaaaaah.velcom.backend.util.Either;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 class TmpMeasurement {
@@ -29,6 +31,22 @@ class TmpMeasurement {
 		values = new ArrayList<>();
 	}
 
+	TmpMeasurement(@Nonnull RunId runId, @Nonnull MeasurementName measurementName,
+		@Nonnull Unit unit, @Nonnull Interpretation interpretation, @Nonnull List<Double> values) {
+		Objects.requireNonNull(runId);
+		Objects.requireNonNull(measurementName);
+		Objects.requireNonNull(unit);
+		Objects.requireNonNull(interpretation);
+		Objects.requireNonNull(values);
+
+		this.runId = runId;
+		this.measurementName = measurementName;
+		this.unit = unit;
+		this.interpretation = interpretation;
+		this.errorMessage = null;
+		this.values = values;
+	}
+
 	public RunId getRunId() {
 		return runId;
 	}
@@ -39,6 +57,21 @@ class TmpMeasurement {
 
 	public List<Double> getValues() {
 		return values;
+	}
+
+	@Nullable
+	public Unit getUnit() {
+		return unit;
+	}
+
+	@Nullable
+	public Interpretation getInterpretation() {
+		return interpretation;
+	}
+
+	@Nullable
+	public String getErrorMessage() {
+		return errorMessage;
 	}
 
 	public Measurement toMeasurement(BenchmarkAccess benchmarkAccess) {
