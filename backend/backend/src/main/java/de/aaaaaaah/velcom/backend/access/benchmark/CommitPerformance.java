@@ -16,9 +16,6 @@ public class CommitPerformance {
 	private final CommitHash commitHash;
 	private final List<Double> values;
 
-	/**
-	 * TODO: Documentation
-	 */
 	CommitPerformance(MeasurementName measurementName, Interpretation interpretation,
 		Unit unit, CommitHash commitHash) {
 

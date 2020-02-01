@@ -28,7 +28,10 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
- * TODO: Documentation
+ * A timeslice comparison compares the provided repositories with their respective commits in the
+ * given time frame by splitting that time frame into smaller time slices and considering only the
+ * best commit per repository for each time slice. This way the graph will be a lot smoother,
+ * removing small one-off performance drops and peaks, which lends itself better for comparisons.
  */
 public class TimesliceComparison implements RepoComparison {
 
@@ -46,7 +49,10 @@ public class TimesliceComparison implements RepoComparison {
 	private final BenchmarkAccess benchmarkAccess;
 
 	/**
-	 * TODO: Documentation
+	 * Constructs a new time slice comparison.
+	 *
+	 * @param commitAccess the commit access used to collect commit data
+	 * @param benchmarkAccess the benchmark access used to collect benchmark data
 	 */
 	public TimesliceComparison(CommitAccess commitAccess, BenchmarkAccess benchmarkAccess) {
 		this.commitAccess = commitAccess;

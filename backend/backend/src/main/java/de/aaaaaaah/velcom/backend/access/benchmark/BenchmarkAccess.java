@@ -374,7 +374,12 @@ public class BenchmarkAccess {
 	}
 
 	/**
-	 * TODO: Documentation
+	 * Gets the most recent performances of the given commits on the specified measurement.
+	 *
+	 * @param repoId the repository of the commits
+	 * @param measurementName the measurement
+	 * @param commits the commits
+	 * @return a collection of these performances
 	 */
 	public Collection<CommitPerformance> getCommitPerformances(RepoId repoId,
 		MeasurementName measurementName,
