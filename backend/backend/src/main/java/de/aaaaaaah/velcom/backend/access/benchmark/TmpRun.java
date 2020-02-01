@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
-public class TmpRun {
+class TmpRun {
 
 	private final RunId id;
 	private final RepoId repoId;
@@ -22,7 +22,7 @@ public class TmpRun {
 	private final String errorMessage;
 	private final Map<MeasurementName, TmpMeasurement> measurements;
 
-	public TmpRun(RunId id, RepoId repoId, CommitHash commitHash, Instant startTime,
+	TmpRun(RunId id, RepoId repoId, CommitHash commitHash, Instant startTime,
 		Instant stopTime, @Nullable String errorMessage) {
 
 		this.id = id;
@@ -50,7 +50,7 @@ public class TmpRun {
 			.map(measurement -> measurement.toMeasurement(benchmarkAccess))
 			.collect(Collectors.toUnmodifiableList());
 
-		return new Run(benchmarkAccess, commitAccess, repoAccess, id, repoId, commitHash, startTime,
+		return new Run(commitAccess, repoAccess, id, repoId, commitHash, startTime,
 			stopTime, errorMessage, (errorMessage == null) ? measurements : null);
 	}
 }

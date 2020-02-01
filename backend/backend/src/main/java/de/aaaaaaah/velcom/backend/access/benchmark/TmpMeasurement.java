@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
 
-public class TmpMeasurement {
+class TmpMeasurement {
 
 	private final RunId runId;
 	private final MeasurementName measurementName;
@@ -17,7 +17,7 @@ public class TmpMeasurement {
 	private final String errorMessage;
 	private final List<Double> values;
 
-	public TmpMeasurement(RunId runId, MeasurementName measurementName, @Nullable Unit unit,
+	TmpMeasurement(RunId runId, MeasurementName measurementName, @Nullable Unit unit,
 		@Nullable Interpretation interpretation, @Nullable String errorMessage) {
 
 		this.runId = runId;

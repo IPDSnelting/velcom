@@ -22,7 +22,6 @@ import javax.annotation.Nullable;
  */
 public class Run {
 
-	private final BenchmarkAccess benchmarkAccess;
 	private final CommitAccess commitAccess;
 	private final RepoAccess repoAccess;
 
@@ -36,11 +35,10 @@ public class Run {
 	@Nullable
 	private final Collection<Measurement> measurements;
 
-	Run(BenchmarkAccess benchmarkAccess, CommitAccess commitAccess, RepoAccess repoAccess,
-		RunId id, RepoId repoId, CommitHash commitHash, Instant startTime, Instant stopTime,
-		@Nullable String errorMessage, @Nullable Collection<Measurement> measurements) {
+	Run(CommitAccess commitAccess, RepoAccess repoAccess, RunId id, RepoId repoId,
+		CommitHash commitHash, Instant startTime, Instant stopTime, @Nullable String errorMessage,
+		@Nullable Collection<Measurement> measurements) {
 
-		this.benchmarkAccess = benchmarkAccess;
 		this.commitAccess = commitAccess;
 		this.repoAccess = repoAccess;
 
