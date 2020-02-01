@@ -1,6 +1,11 @@
 package de.aaaaaaah.velcom.runner.shared.util;
 
-public class OSCheck {
+public final class OSCheck {
+
+	private OSCheck() {
+		throw new UnsupportedOperationException("No instantiation");
+	}
+
 
 	public static boolean isStupidWindows() {
 		return System.getProperty("os.name", "generic")

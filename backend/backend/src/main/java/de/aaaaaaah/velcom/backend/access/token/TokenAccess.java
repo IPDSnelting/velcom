@@ -28,7 +28,6 @@ public class TokenAccess {
 	private final int currentHashAlgorithmId;
 	private final Map<Integer, HashAlgorithm> hashAlgorithms;
 
-	private final AccessLayer accessLayer;
 	private final DatabaseStorage databaseStorage;
 
 	private final String adminTokenHash;
@@ -36,6 +35,7 @@ public class TokenAccess {
 	/**
 	 * This constructor also registers the {@link CommitAccess} in the accessLayer.
 	 *
+	 * @param config the global configuration file
 	 * @param accessLayer the {@link AccessLayer} to register with
 	 * @param databaseStorage a database storage
 	 * @param adminToken the admin token from the config
@@ -51,7 +51,6 @@ public class TokenAccess {
 		hashAlgorithms = new HashMap<>();
 		hashAlgorithms.put(currentHashAlgorithmId, currentHashAlgorithm);
 
-		this.accessLayer = accessLayer;
 		this.databaseStorage = databaseStorage;
 		this.adminTokenHash = currentHashAlgorithm.generateHash(adminToken);
 

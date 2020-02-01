@@ -56,13 +56,12 @@ public class TestRepo {
 				if (branches.contains(branch)) {
 					// branch already exists
 					git.checkout().setName(branch).call();
-					currentBranch = branch;
 				} else {
 					// new branch
 					git.checkout().setName(branch).setCreateBranch(true).call();
 					branches.add(branch);
-					currentBranch = branch;
 				}
+				currentBranch = branch;
 			}
 
 			Files.write(repoDir.resolve(file), content.getBytes(), StandardOpenOption.CREATE);

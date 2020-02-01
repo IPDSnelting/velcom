@@ -8,11 +8,16 @@ import java.io.IOException;
 import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.websocket.servlet.WebSocketServlet;
 import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A servlet that sets up the server side runner communication servlet.
  */
 public class ServerMasterWebsocketServlet extends WebSocketServlet {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(
+		ServerMasterWebsocketServlet.class);
 
 	private final Dispatcher dispatcher;
 	private final Serializer serializer;
@@ -42,9 +47,9 @@ public class ServerMasterWebsocketServlet extends WebSocketServlet {
 						"Please provide a valid token in the "
 							+ "'" + HttpHeader.AUTHORIZATION.asString() + "' header!"
 					);
-				} catch (IOException e) {
-					e.printStackTrace();
+				} catch (IOException ignore) {
 				}
+				LOGGER.info("Runner from {} failed authentication!", req.getRemoteAddress());
 				return null;
 			}
 			ServerRunnerStateMachine stateMachine = new ServerRunnerStateMachine();

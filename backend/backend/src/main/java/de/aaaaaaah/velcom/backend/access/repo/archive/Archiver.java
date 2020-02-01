@@ -138,7 +138,7 @@ public class Archiver {
 				));
 		} finally {
 			long end = System.currentTimeMillis();
-			LOGGER.info("Tar operation took {} ms... ({})", (end - start), cloneDir);
+			LOGGER.info("Tar operation took {} ms... ({})", end - start, cloneDir);
 		}
 	}
 
@@ -179,7 +179,7 @@ public class Archiver {
 			throw e;
 		} finally {
 			long end = System.currentTimeMillis();
-			LOGGER.info("Clone operation took {} ms... ({})", (end - start), originalRepoDirName);
+			LOGGER.info("Clone operation took {} ms... ({})", end - start, originalRepoDirName);
 		}
 	}
 

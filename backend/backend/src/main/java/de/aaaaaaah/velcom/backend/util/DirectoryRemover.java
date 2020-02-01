@@ -10,7 +10,12 @@ import java.nio.file.attribute.BasicFileAttributes;
 /**
  * Provides the ability to completely remove directories with all its content.
  */
-public class DirectoryRemover {
+public final class DirectoryRemover {
+
+	private DirectoryRemover() {
+		throw new UnsupportedOperationException("No instantiation");
+	}
+
 
 	/**
 	 * Deletes all files (direct and indirect) inside the given directory and the directory itself.

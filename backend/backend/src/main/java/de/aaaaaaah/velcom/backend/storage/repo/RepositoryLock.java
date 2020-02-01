@@ -10,10 +10,6 @@ import org.eclipse.jgit.annotations.NonNull;
 import org.eclipse.jgit.annotations.Nullable;
 import org.eclipse.jgit.attributes.AttributesNodeProvider;
 import org.eclipse.jgit.dircache.DirCache;
-import org.eclipse.jgit.errors.AmbiguousObjectException;
-import org.eclipse.jgit.errors.CorruptObjectException;
-import org.eclipse.jgit.errors.IncorrectObjectTypeException;
-import org.eclipse.jgit.errors.MissingObjectException;
 import org.eclipse.jgit.errors.NoWorkTreeException;
 import org.eclipse.jgit.errors.RevisionSyntaxException;
 import org.eclipse.jgit.events.ListenerList;
@@ -138,6 +134,7 @@ public class RepositoryLock extends Repository {
 		return repository.getFS();
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	@Deprecated
 	public boolean hasObject(AnyObjectId objectId) {
@@ -146,14 +143,14 @@ public class RepositoryLock extends Repository {
 
 	@Override
 	@NonNull
-	public ObjectLoader open(AnyObjectId objectId) throws MissingObjectException, IOException {
+	public ObjectLoader open(AnyObjectId objectId) throws IOException {
 		return repository.open(objectId);
 	}
 
 	@Override
 	@NonNull
 	public ObjectLoader open(AnyObjectId objectId,
-		int typeHint) throws MissingObjectException, IncorrectObjectTypeException, IOException {
+		int typeHint) throws IOException {
 		return repository.open(objectId, typeHint);
 	}
 
@@ -178,13 +175,13 @@ public class RepositoryLock extends Repository {
 	@Override
 	@Nullable
 	public ObjectId resolve(String revstr)
-		throws AmbiguousObjectException, IncorrectObjectTypeException, RevisionSyntaxException, IOException {
+		throws RevisionSyntaxException, IOException {
 		return repository.resolve(revstr);
 	}
 
 	@Override
 	@Nullable
-	public String simplify(String revstr) throws AmbiguousObjectException, IOException {
+	public String simplify(String revstr) throws IOException {
 		return repository.simplify(revstr);
 	}
 
@@ -223,6 +220,7 @@ public class RepositoryLock extends Repository {
 		return repository.getAdditionalHaves();
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	@NonNull
 	@Deprecated
@@ -230,6 +228,7 @@ public class RepositoryLock extends Repository {
 		return repository.getAllRefs();
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	@NonNull
 	@Deprecated
@@ -237,6 +236,7 @@ public class RepositoryLock extends Repository {
 		return repository.getTags();
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	@NonNull
 	@Deprecated
@@ -257,20 +257,19 @@ public class RepositoryLock extends Repository {
 	}
 
 	@Override
-	public RevCommit parseCommit(AnyObjectId id)
-		throws IncorrectObjectTypeException, IOException, MissingObjectException {
+	public RevCommit parseCommit(AnyObjectId id) throws IOException {
 		return repository.parseCommit(id);
 	}
 
 	@Override
 	@NonNull
-	public DirCache readDirCache() throws NoWorkTreeException, CorruptObjectException, IOException {
+	public DirCache readDirCache() throws NoWorkTreeException, IOException {
 		return repository.readDirCache();
 	}
 
 	@Override
 	@NonNull
-	public DirCache lockDirCache() throws NoWorkTreeException, CorruptObjectException, IOException {
+	public DirCache lockDirCache() throws NoWorkTreeException, IOException {
 		return repository.lockDirCache();
 	}
 

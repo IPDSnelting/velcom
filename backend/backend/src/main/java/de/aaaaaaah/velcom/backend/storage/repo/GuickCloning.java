@@ -16,13 +16,14 @@ import org.slf4j.LoggerFactory;
 public abstract class GuickCloning {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(GuickCloning.class);
+	private static final String GIT_EXECUTABLE = "git";
 
 	private static final GuickCloning INSTANCE = findInstanceToUse();
 
 	private static GuickCloning findInstanceToUse() {
 		try {
 			ProgramResult git = new ProgramExecutor()
-				.execute("git", "--version")
+				.execute(GIT_EXECUTABLE, "--version")
 				.get();
 			if (git.getExitCode() == 0) {
 				LOGGER.info("git executable found, using fast path for cloning");

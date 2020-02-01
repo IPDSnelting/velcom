@@ -135,6 +135,8 @@ public class RunnerStateMachine {
 	private void doWithErrorAndSwitch(IOErrorCallable action, RunnerConfiguration configuration) {
 		try {
 			RunnerState newState = action.run();
+			// Reference comparison is wanted here! Even if a new state of the same type is returned
+			// we want to init it
 			if (newState != state) {
 				LOGGER.debug("Switching from {} to {}", state, newState);
 				this.state = newState;

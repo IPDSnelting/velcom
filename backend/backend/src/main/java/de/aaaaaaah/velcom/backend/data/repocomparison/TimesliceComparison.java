@@ -66,10 +66,11 @@ public class TimesliceComparison implements RepoComparison {
 
 		List<RepoGraphData> dataList = new ArrayList<>();
 
-		repoBranches.forEach((repoId, branches) -> {
-			collectData(repoId, measurement, branches, startTime, stopTime)
-				.ifPresent(dataList::add);
-		});
+		repoBranches.forEach(
+			(repoId, branches) ->
+				collectData(repoId, measurement, branches, startTime, stopTime)
+					.ifPresent(dataList::add)
+		);
 
 		return new ComparisonGraph(measurement, repoBranches, dataList);
 	}
@@ -98,7 +99,6 @@ public class TimesliceComparison implements RepoComparison {
 		}
 
 		Instant oldestAuthorDate = null;
-		CommitPerformance oldestPerformance = null;
 		Instant youngestAuthorDate = null;
 		CommitPerformance youngestPerformance = null;
 		for (CommitPerformance performance : performances) {
@@ -107,7 +107,6 @@ public class TimesliceComparison implements RepoComparison {
 
 			if (oldestAuthorDate == null || authorDate.isBefore(oldestAuthorDate)) {
 				oldestAuthorDate = authorDate;
-				oldestPerformance = performance;
 			}
 
 			if (youngestAuthorDate == null || authorDate.isAfter(youngestAuthorDate)) {

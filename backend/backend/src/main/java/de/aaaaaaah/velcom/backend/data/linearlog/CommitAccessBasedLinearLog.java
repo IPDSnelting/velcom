@@ -5,11 +5,12 @@ import de.aaaaaaah.velcom.backend.access.commit.CommitAccess;
 import de.aaaaaaah.velcom.backend.access.commit.CommitAccessException;
 import de.aaaaaaah.velcom.backend.access.repo.BranchName;
 import de.aaaaaaah.velcom.backend.access.repo.Repo;
+import de.aaaaaaah.velcom.backend.access.repo.RepoId;
 import java.util.Collection;
 import java.util.stream.Stream;
 
 /**
- * This is a linear log that is based on the log at {@link CommitAccess#getCommitLog(Repo,
+ * This is a linear log that is based on the log at {@link CommitAccess#getCommitLog(RepoId,
  * Collection)}, which is based on jgit's git log command.
  */
 public class CommitAccessBasedLinearLog implements LinearLog {

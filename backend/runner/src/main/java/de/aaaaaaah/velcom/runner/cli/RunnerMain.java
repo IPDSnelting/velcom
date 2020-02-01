@@ -20,15 +20,11 @@ import de.aaaaaaah.velcom.runner.shared.protocol.serialization.SimpleJsonSeriali
 import de.aaaaaaah.velcom.runner.state.RunnerStateMachine;
 import java.io.IOException;
 import java.net.URI;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * The runner main class.
  */
 public class RunnerMain {
-
-	private static final Logger LOGGER = LoggerFactory.getLogger(RunnerMain.class);
 
 	/**
 	 * Called by the vm, the main entry point.

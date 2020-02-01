@@ -1,9 +1,6 @@
 package de.aaaaaaah.velcom.backend.access.token.hashalgorithm;
 
 import de.aaaaaaah.velcom.backend.access.token.AuthToken;
-import de.mkammerer.argon2.Argon2;
-import de.mkammerer.argon2.Argon2Factory;
-import de.mkammerer.argon2.Argon2Helper;
 
 /**
  * Represents a certain hashing algorithm used for storing tokens.

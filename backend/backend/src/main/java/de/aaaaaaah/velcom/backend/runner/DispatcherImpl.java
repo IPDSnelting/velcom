@@ -271,7 +271,7 @@ public class DispatcherImpl implements Dispatcher {
 		try {
 			runner.getRunnerStateMachine().resetRunner("Abort requested");
 		} catch (IOException e) {
-			e.printStackTrace();
+			LOGGER.info("Failed to reset a runner", e);
 			// It is already disconnected, so force it now
 			runner.getConnectionManager().disconnect();
 		}

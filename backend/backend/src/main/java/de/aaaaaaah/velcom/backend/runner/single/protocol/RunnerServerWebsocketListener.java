@@ -107,7 +107,7 @@ public class RunnerServerWebsocketListener implements WebSocketListener, WebSock
 
 	@Override
 	public void onWebSocketError(Throwable cause) {
-		cause.printStackTrace();
+		LOGGER.info("Websocket encountered an error", cause);
 		disconnectImpl();
 	}
 
@@ -124,7 +124,7 @@ public class RunnerServerWebsocketListener implements WebSocketListener, WebSock
 				ByteBuffer.allocate(Long.SIZE).putLong(System.currentTimeMillis())
 			);
 		} catch (IOException e) {
-			e.printStackTrace();
+			LOGGER.debug("Sending ping failed", e);
 			return false;
 		}
 		return true;

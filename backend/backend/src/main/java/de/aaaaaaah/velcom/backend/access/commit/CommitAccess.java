@@ -262,8 +262,10 @@ public class CommitAccess {
 
 			return commitList;
 		} catch (RepositoryAcquisitionException | IOException e) {
-			throw new CommitAccessException("Failed to get all tasks of status " + status
-				+ " from repo " + repoId);
+			throw new CommitAccessException(
+				"Failed to get all tasks of status " + status + " from repo " + repoId,
+				e
+			);
 		}
 	}
 
@@ -452,7 +454,7 @@ public class CommitAccess {
 			return commits;
 
 		} catch (RepositoryAcquisitionException | GitAPIException | IOException e) {
-			throw new CommitAccessException();
+			throw new CommitAccessException(e);
 		}
 	}
 }

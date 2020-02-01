@@ -152,8 +152,6 @@ public class RepoEndpoint {
 		RepoId repoId = new RepoId(repoUuid);
 		user.guardRepoAccess(repoId);
 
-		Repo repo = repoAccess.getRepo(repoId);
-
 		repoAccess.deleteRepo(repoId);
 		queue.abortAllTasksOfRepo(repoId);
 	}

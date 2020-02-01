@@ -314,7 +314,7 @@ public class RepoAccess {
 			repoStorage.deleteRepository(repoId.getDirectoryName());
 			repoStorage.addRepository(repoId.getDirectoryName(), remoteUrl.getUrl());
 		} catch (IOException | AddRepositoryException e) {
-			throw new RepoAccessException(repoId);
+			throw new RepoAccessException(repoId, e);
 		}
 
 		// (3): Update database
@@ -407,7 +407,7 @@ public class RepoAccess {
 
 			return branchList;
 		} catch (RepositoryAcquisitionException | GitAPIException e) {
-			throw new RepoAccessException(repoId);
+			throw new RepoAccessException(repoId, e);
 		}
 	}
 

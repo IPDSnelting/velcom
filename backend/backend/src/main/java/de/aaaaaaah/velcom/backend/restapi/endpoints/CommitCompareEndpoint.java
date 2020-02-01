@@ -85,7 +85,7 @@ public class CommitCompareEndpoint {
 			firstCommit.orElse(null), firstRun.orElse(null),
 			secondCommit.get(), secondRun.orElse(null)
 		);
-		return new GetReply(comparison, prevAndNext.getFirst().orElse(null),
+		return new GetReply(comparison,
 			prevAndNext.getSecond().orElse(null));
 	}
 
@@ -95,8 +95,7 @@ public class CommitCompareEndpoint {
 		@Nullable
 		private final JsonCommit next;
 
-		public GetReply(CommitComparison comparison, @Nullable Commit previous,
-			@Nullable Commit next) {
+		public GetReply(CommitComparison comparison, @Nullable Commit next) {
 
 			this.comparison = new JsonCommitComparison(comparison);
 			this.next = (next != null) ? new JsonCommit(next) : null;

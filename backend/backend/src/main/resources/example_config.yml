@@ -1,7 +1,7 @@
 # The JDBC (Java database connectivity) url used to connect to the database
 jdbcUrl: "jdbc:sqlite:file:data/data.db"
 # The interval between listener updates. (in seconds)
-pollInterval: 600
+pollInterval: 30
 # The token for the web administrator
 webAdminToken: "12345"
 # The port that the REST API should be listening on

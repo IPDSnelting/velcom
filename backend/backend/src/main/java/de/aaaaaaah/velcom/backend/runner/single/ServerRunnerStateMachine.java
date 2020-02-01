@@ -61,6 +61,8 @@ public class ServerRunnerStateMachine {
 	public void onMessageReceived(String type, SentEntity entity) {
 		RunnerState previousState = state;
 		RunnerState newState = state.onMessage(type, entity, runnerInformation);
+		// Reference comparison is wanted here! Even if a new state of the same type is returned
+		// we want to init it
 		if (newState != state && previousState == state) {
 			switchState(newState);
 		}

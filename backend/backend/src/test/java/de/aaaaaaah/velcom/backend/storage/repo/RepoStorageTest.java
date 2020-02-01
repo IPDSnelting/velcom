@@ -180,11 +180,11 @@ class RepoStorageTest {
 		});
 
 		repoStorage.deleteRepository(dirName);
-		assertThrows(NoSuchRepositoryException.class, () -> {
-			repoStorage.acquireRepository(dirName, repo -> {
+		assertThrows(NoSuchRepositoryException.class,
+			() -> repoStorage.acquireRepository(dirName, repo -> {
 				throw new AssertionError();
-			});
-		});
+			})
+		);
 	}
 
 }

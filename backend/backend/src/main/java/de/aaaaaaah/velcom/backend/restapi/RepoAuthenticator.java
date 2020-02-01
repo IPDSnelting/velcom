@@ -3,7 +3,6 @@ package de.aaaaaaah.velcom.backend.restapi;
 import de.aaaaaaah.velcom.backend.access.repo.RepoId;
 import de.aaaaaaah.velcom.backend.access.token.AuthToken;
 import de.aaaaaaah.velcom.backend.access.token.TokenAccess;
-import io.dropwizard.auth.AuthenticationException;
 import io.dropwizard.auth.Authenticator;
 import io.dropwizard.auth.basic.BasicCredentials;
 import java.util.Optional;
@@ -19,8 +18,7 @@ public class RepoAuthenticator implements Authenticator<BasicCredentials, RepoUs
 	}
 
 	@Override
-	public Optional<RepoUser> authenticate(BasicCredentials basicCredentials)
-		throws AuthenticationException {
+	public Optional<RepoUser> authenticate(BasicCredentials basicCredentials) {
 
 		@Nullable RepoId repoId;
 		String username = basicCredentials.getUsername();
