@@ -68,7 +68,7 @@ public class BenchmarkAccess {
 	/**
 	 * Get the IDs of the latest runs of a list of commits. Preserves the ordering of the commits.
 	 */
-	public List<RunId> getLatestRunIds(RepoId repoId, List<CommitHash> commitHashes) {
+	public List<RunId> getLatestRunIds(RepoId repoId, Collection<CommitHash> commitHashes) {
 		try (DSLContext db = databaseStorage.acquireContext()) {
 			final Set<String> hashSet = commitHashes.stream()
 				.map(CommitHash::getHash)
@@ -106,7 +106,7 @@ public class BenchmarkAccess {
 	/**
 	 * Get the runs specified by the run IDs. Preserves the ordering of the IDs.
 	 */
-	public List<Run> getRuns(List<RunId> runIds) {
+	public List<Run> getRuns(Collection<RunId> runIds) {
 		final Set<String> runIdsAsStrings = runIds.stream()
 			.map(RunId::getId)
 			.map(UUID::toString)
