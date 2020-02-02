@@ -191,7 +191,7 @@ public class BenchmarkAccess {
 	public RunId addRun(RunBuilder builder) {
 		try (DSLContext db = databaseStorage.acquireContext()) {
 			// 1.) Insert run into database
-			final RunId runId = new RunId(UUID.randomUUID());
+			final RunId runId = builder.getId();
 			final RunRecord runRecord = db.newRecord(RUN);
 
 			runRecord.setId(runId.getId().toString());
