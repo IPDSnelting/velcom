@@ -146,7 +146,6 @@ public class Listener {
 				}
 
 				// (2): Add new commits to queue (in a sorted manner)
-				// TODO: Check if sorting order is correct or if it needs to be reversed
 				allNewCommits.sort(Comparator.comparing(Commit::getAuthorDate));
 				allNewCommits.forEach(queue::addTask);
 			}
@@ -157,30 +156,6 @@ public class Listener {
 
 			long end = System.currentTimeMillis();
 			LOGGER.debug("checkForUnknownCommits({}) took {} ms", repoId.getId(), (end - start));
-		}
-	}
-
-	/**
-	 * Shuts the listener down.
-	 */
-	public void shutdown() {
-		executor.shutdown(); // Disable new tasks from being submitted
-
-		try {
-			// Wait a while for existing tasks to terminate
-			if (!executor.awaitTermination(60, TimeUnit.SECONDS)) {
-				executor.shutdownNow(); // Cancel currently executing tasks
-
-				// Wait a while for tasks to respond to being cancelled
-				if (!executor.awaitTermination(60, TimeUnit.SECONDS)) {
-					LOGGER.warn("Listener thread pool did not terminate!");
-				}
-			}
-		} catch (InterruptedException ie) {
-			// (Re-)Cancel if current thread also interrupted
-			executor.shutdownNow();
-			// Preserve interrupt status
-			Thread.currentThread().interrupt();
 		}
 	}
 
