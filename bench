@@ -43,10 +43,10 @@ def guarded_try_metric(benchmark: str, metric: str, function):
             "results": [function()]
         }
     except subprocess.CalledProcessError as e:
+        stdout = e.stdout.decode('UTF-8') if e.stdout else '<Empty>'
+        stderr = e.stderr.decode('UTF-8') if e.stderr else '<Empty>'
         program_result[benchmark][metric] = {
-            "error": f"{str(e)}"
-            f"\n StdOut: {e.stdout.decode('UTF-8') if e.stdout else '<Empty>'}"
-            f"\n StdErr: {e.stderr.decode('UTF-8') if e.stderr else '<Empty>'}"
+            "error": str(e) + "\n StdOut: " + stdout + "\n StdErr: " + stderr
         }
     except Exception as e:
         program_result[benchmark][metric] = {
