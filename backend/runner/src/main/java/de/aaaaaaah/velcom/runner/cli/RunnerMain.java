@@ -83,7 +83,7 @@ public class RunnerMain {
 		try {
 			websocketListener.connect();
 		} catch (HandshakeFailureException e) {
-			System.err.println("\n========= HANDSHAKE  FAILED =========");
+			System.err.println("\n========= HANDSHAKE FAILED =========");
 
 			System.err.println(
 				"Handshake with server failed with response '" + e.getResponse() + "'"
@@ -91,8 +91,9 @@ public class RunnerMain {
 			if (e.isAuthenticationFailure()) {
 				System.err.println("\n====== RESPONSE INTERPRETATION ======");
 				System.err.println("Invalid credentials, please check them!");
+				System.err.println("I will exit now, as this error is likely not recoverable!");
+				System.exit(1);
 			}
-			System.exit(1);
 		} catch (ConnectionException e) {
 			System.err.println("Initial server connection failed with '" + e.getMessage() + "'\n");
 		}
