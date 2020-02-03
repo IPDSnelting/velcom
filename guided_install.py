@@ -98,8 +98,8 @@ def main():
         'webAdminToken: "12345"',
         'webAdminToken: "' + web_admin_token + '"'
     ).replace(
-        "restApiPort: 80",
-        "restApiPort: " + api_port
+        "port: 9001 # REST API port",
+        "port: " + api_port + " # REST API port",
     ).replace(
         "runnerPort: 3546",
         "runnerPort: " + runner_port
@@ -159,6 +159,9 @@ def main():
     print("2. Run 'java -jar runner.jar runner_config.json' in each runner's installation\n"
           "   directory")
     print("3. Ensure your web server is running and serving the frontend")
+    print()
+    print("The backend's Dropwizard admin UI is on port 9002 per default,\n"
+          "but can be changed in the config file.")
     print()
 
     print("Have a nice day :D")

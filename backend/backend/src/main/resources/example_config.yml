@@ -1,29 +1,46 @@
+# Dropwizard magic so the REST API port can be configured
+server:
+  applicationConnectors:
+    - type: http
+      port: 9001 # REST API port
+  adminConnectors:
+    - type: http
+      port: 9002 # Admin UI port
+
 # The JDBC (Java database connectivity) url used to connect to the database
 jdbcUrl: "jdbc:sqlite:file:data/data.db"
+
 # The interval between listener updates. (in seconds)
 pollInterval: 30
+
 # The token for the web administrator
 webAdminToken: "12345"
-# The port that the REST API should be listening on
-restApiPort: 80
+
 # The port that the dispatcher should be listening on
 runnerPort: 3546
+
 # The remote url where the benchmark repo remote url can be cloned from
 benchmarkRepoRemoteUrl: "git@git.scc.kit.edu:aaaaaaah/pseubench.git"
+
 # The token runners need to provide in order to connect successfully.
 # Will be transmitted in plain text over an HTTPS connection.
 runnerToken: "Correct-Horse_Battery Staple"
+
 # The duration in seconds after which disconnected runners are given up on (removed and commit
 # rescheduled)
 disconnectedRunnerGracePeriodSeconds: 600
+
 # A commit becomes significant if it differs by more than significantFactor * previousValue from
 # the previous value
 significantFactor: 0.05 # A difference of 5%
+
 # The path to the directory where all local repositories will be placed in.
 # Can either be relative to the working directory or absolute.
 repoDir: "data/repos"
+
 # The hashing algorithm's memory usage in KiB
 hashMemory: 5120
+
 # How many iterations the hashing algorithm should make. See the readme for more details on how to
 # set this value.
 hashIterations: 50

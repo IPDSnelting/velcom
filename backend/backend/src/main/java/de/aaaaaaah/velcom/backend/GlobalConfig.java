@@ -25,10 +25,6 @@ public class GlobalConfig extends Configuration {
 	@Min(1)
 	@Max(65535)
 	@NotNull
-	private int restApiPort;
-	@Min(1)
-	@Max(65535)
-	@NotNull
 	private int runnerPort;
 
 	@NotEmpty
@@ -77,13 +73,6 @@ public class GlobalConfig extends Configuration {
 	 */
 	public String getWebAdminToken() {
 		return webAdminToken;
-	}
-
-	/**
-	 * @return the port that the REST API should be listening on
-	 */
-	public int getRestApiPort() {
-		return restApiPort;
 	}
 
 	/**
