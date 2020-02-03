@@ -217,6 +217,8 @@ public class RepoAccess {
 				if (!remoteUrl.equals(this.benchRepoRemoteUrl)) {
 					// remote url changed! => delete repo so that fetchOrCloneLocalRepo
 					// completely clones it again
+					LOGGER.info("benchrepo remote url changed! cloning it again...");
+
 					repoStorage.deleteRepository(benchRepoDirName);
 					archiver.deleteArchives(benchRepoDirName);
 
@@ -235,6 +237,7 @@ public class RepoAccess {
 				}
 			} else {
 				// bench repo is currently not on disk => clone it
+				LOGGER.info("missing benchrepo on disk! cloning it...");
 				fetchOrCloneLocalRepo(benchRepoDirName, benchRepoRemoteUrl);
 			}
 		} catch (GitAPIException | RepositoryAcquisitionException | AddRepositoryException | IOException e) {
