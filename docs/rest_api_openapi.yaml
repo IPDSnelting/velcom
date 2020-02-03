@@ -3,6 +3,7 @@ info:
   title: rest-api
   version: '1.0'
 servers:
+  - url: 'https://aaaaaaah.de:81'
   - url: 'http://localhost:3000'
 paths:
   /repo:
