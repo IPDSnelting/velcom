@@ -24,11 +24,11 @@
             <v-tooltip top v-for="(branch, index) in branches" :key="branch + index">
               <template v-slot:activator="{ on }">
                 <v-chip
-                  class="ma-2"
+                  :class="{ 'ma-2': true, 'untracked': !isBranchTracked(branch) }"
                   outlined
                   label
                   v-on="on"
-                  :color="isBranchTracked(branch) ? 'success' : 'error'"
+                  :color="isBranchTracked(branch) ? 'success' : 'darkgray'"
                 >{{ branch }}</v-chip>
               </template>
               {{ isBranchTracked(branch) ? 'Tracked' : 'Not Tracked' }}
@@ -133,4 +133,7 @@ export default class RepoBaseInformation extends Vue {
 </script>
 
 <style scoped>
+.untracked {
+  color: rgba(0, 0, 0, 0.6);
+}
 </style>
