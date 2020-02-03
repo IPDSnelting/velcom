@@ -67,7 +67,7 @@ public class JsonRepo {
 		return remoteUrl;
 	}
 
-	public boolean isHasToken() {
+	public boolean getHasToken() {
 		return hasToken;
 	}
 }
