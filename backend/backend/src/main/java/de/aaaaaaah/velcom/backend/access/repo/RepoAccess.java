@@ -205,16 +205,39 @@ public class RepoAccess {
 	 */
 	public void updateBenchmarkRepo() throws RepoAccessException {
 		try {
-			final CommitHash oldHash = getLatestBenchmarkRepoHash();
-			fetchOrCloneLocalRepo(benchRepoDirName, benchRepoRemoteUrl);
-			final CommitHash newHash = getLatestBenchmarkRepoHash();
+			if (repoStorage.containsRepository(benchRepoDirName)) {
+				// Check if remote url changed
 
-			if (!oldHash.equals(newHash)) {
-				// benchmark repo was updated => remove old cloned archives since a new clone
-				// will be created with the newest hash once it is required.
-				archiver.deleteArchives(benchRepoDirName);
+				final String remoteUrl;
+
+				try (Repository repo = repoStorage.acquireRepository(benchRepoDirName)) {
+					remoteUrl = repo.getConfig().getString("remote", "origin", "url");
+				}
+
+				if (!remoteUrl.equals(this.benchRepoRemoteUrl)) {
+					// remote url changed! => delete repo so that fetchOrCloneLocalRepo
+					// completely clones it again
+					repoStorage.deleteRepository(benchRepoDirName);
+					archiver.deleteArchives(benchRepoDirName);
+
+					fetchOrCloneLocalRepo(benchRepoDirName, benchRepoRemoteUrl);
+				} else {
+					// remote url has not changed => just fetch and check if hash changed
+					final CommitHash oldHash = getLatestBenchmarkRepoHash();
+					fetchOrCloneLocalRepo(benchRepoDirName, benchRepoRemoteUrl);
+					final CommitHash newHash = getLatestBenchmarkRepoHash();
+
+					if (!oldHash.equals(newHash)) {
+						// benchmark repo was updated => remove old cloned archives since a new clone
+						// will be created with the newest hash once it is required.
+						archiver.deleteArchives(benchRepoDirName);
+					}
+				}
+			} else {
+				// bench repo is currently not on disk => clone it
+				fetchOrCloneLocalRepo(benchRepoDirName, benchRepoRemoteUrl);
 			}
-		} catch (GitAPIException | RepositoryAcquisitionException | AddRepositoryException e) {
+		} catch (GitAPIException | RepositoryAcquisitionException | AddRepositoryException | IOException e) {
 			throw new RepoAccessException("failed to fetch/clone benchmark repo with remote url: "
 				+ benchRepoRemoteUrl, e);
 		}
