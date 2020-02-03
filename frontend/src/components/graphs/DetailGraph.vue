@@ -98,9 +98,9 @@ export default class DetailGraph extends Vue {
     let newMin: number = Math.floor(this.xScale.invert(selection[0]))
     let newMax = Math.floor(this.xScale.invert(selection[1]))
     if (selection) {
-      let newAmount: number = this.amount - newMin - (this.amount - newMax)
+      let newAmount: number = newMax - newMin
       this.zooming = true
-      this.$emit('selectionChanged', newAmount, newMin)
+      this.$emit('selectionChanged', newAmount, this.amount - newMax)
     }
   }
 
