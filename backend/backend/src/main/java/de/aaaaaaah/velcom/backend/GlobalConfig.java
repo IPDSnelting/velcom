@@ -51,7 +51,6 @@ public class GlobalConfig extends Configuration {
 
 	public GlobalConfig() {
 		RunnerAwareServerFactory.getInstance().setConfig(this);
-		RunnerAwareServerFactory.getInstance().setServerFactory(super.getServerFactory());
 	}
 
 	/**
@@ -137,6 +136,9 @@ public class GlobalConfig extends Configuration {
 
 	@Override
 	public ServerFactory getServerFactory() {
+		if (RunnerAwareServerFactory.getInstance().lacksFactory()) {
+			RunnerAwareServerFactory.getInstance().setServerFactory(super.getServerFactory());
+		}
 		return RunnerAwareServerFactory.getInstance();
 	}
 }

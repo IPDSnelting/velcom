@@ -114,6 +114,14 @@ public class RunnerAwareServerFactory implements ServerFactory {
 		this.dispatcher = dispatcher;
 	}
 
+	/**
+	 * Returns whether the factory lacks an underlying server factory.
+	 *
+	 * @return true if no underlying server factory is available
+	 */
+	public boolean lacksFactory() {
+		return underlying == null;
+	}
 
 	private void ensureIsInitialized() {
 		if (config == null) {
