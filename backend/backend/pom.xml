@@ -45,6 +45,8 @@
                 <Main-Class>de.aaaaaaah.velcom.backend.ServerMain</Main-Class>
               </manifestEntries>
             </transformer>
+            <transformer
+              implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
           </transformers>
         </configuration>
         <groupId>org.apache.maven.plugins</groupId>
