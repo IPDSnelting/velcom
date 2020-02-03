@@ -59,13 +59,13 @@ def build_makefile():
     guarded_try_metric(
         "frontend",
         "build_time",
-        lambda: execute_program(["make", "frontend"])
+        lambda: execute_program(["make", "-C", target_path(), "frontend"])
     )
 
     guarded_try_metric(
         "backend",
         "build_time",
-        lambda: execute_program(["make", "backend"])
+        lambda: execute_program(["make", "-C", target_path(), "backend"])
     )
 
 
