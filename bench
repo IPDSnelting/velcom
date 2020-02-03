@@ -1,0 +1,90 @@
+#!/usr/bin/env python3
+
+from pathlib import Path
+from typing import List
+import subprocess
+import sys
+import time
+import json
+
+program_result = {}
+
+
+def execute_program(args: List[str]) -> float:
+    """ Executes a given program and waits for the output. """
+    start = time.time()
+    subprocess.run(args, stdout=subprocess.PIPE,
+                   stderr=subprocess.PIPE, check=True)
+    end = time.time()
+    return end - start
+
+
+def can_use_makefile() -> bool:
+    """ Checks whether a usable make file exists. """
+    return (target_path() / "Makefile").exists()
+
+
+def target_path() -> Path:
+    """ Returns the path of the target repo. """
+    if Path(sys.argv[1]).is_absolute():
+        return Path(sys.argv[1])
+    return Path(__file__).resolve().parent / sys.argv[1]
+
+
+def guarded_try_metric(benchmark: str, metric: str, function):
+    global program_result
+    if benchmark not in program_result:
+        program_result[benchmark] = {}
+    program_result[benchmark] = {}
+    try:
+        program_result[benchmark][metric] = {
+            "unit": "seconds",
+            "resultInterpretation": "LESS_IS_BETTER",
+            "results": [function()]
+        }
+    except subprocess.CalledProcessError as e:
+        program_result[benchmark][metric] = {
+            "error": f"{str(e)}"
+            f"\n StdOut: {e.stdout.decode('UTF-8') if e.stdout else '<Empty>'}"
+            f"\n StdErr: {e.stderr.decode('UTF-8') if e.stderr else '<Empty>'}"
+        }
+    except Exception as e:
+        program_result[benchmark][metric] = {
+            "error": str(e)
+        }
+
+
+def build_makefile():
+    """ Builds VelCom with a makefile. """
+    guarded_try_metric(
+        "frontend",
+        "build_time",
+        lambda: execute_program(["make", "frontend"])
+    )
+
+    guarded_try_metric(
+        "backend",
+        "build_time",
+        lambda: execute_program(["make", "backend"])
+    )
+
+
+def build_error(message: str):
+    global program_result
+    program_result = {"error": message}
+
+
+def run():
+    """ Main function. """
+    if can_use_makefile():
+        build_makefile()
+        print(json.dumps(program_result))
+        exit(0)
+    else:
+        build_error("No Makefile found!")
+        print(json.dumps(program_result))
+        exit(0)
+
+
+if __name__ == '__main__':
+    run()
