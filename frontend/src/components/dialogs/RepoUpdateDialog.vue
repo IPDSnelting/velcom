@@ -179,6 +179,7 @@ export default class RepoUpdateDialog extends Vue {
     this.remoteUrl = this.repo.remoteURL
     this.repoName = this.repo.name
     this.tokenState = 'unchanged'
+    this.newToken = ''
     this.searchValue = ''
 
     this.newTrackedBranches = Object.assign([], this.repo.trackedBranches)
