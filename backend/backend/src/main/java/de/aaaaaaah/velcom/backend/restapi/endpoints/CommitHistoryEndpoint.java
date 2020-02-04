@@ -105,7 +105,7 @@ public class CommitHistoryEndpoint {
 			// Usually, we get (amount + 1) commits. But if we get less than that, we're probably at
 			// the end of the repo and thus missing commits. In that case, we need to add the last
 			// commit manually.
-			if (commits.size() < amount + 1) {
+			if (!commits.isEmpty() && commits.size() < amount + 1) {
 				final Commit firstCommit = commits.get(commits.size() - 1);
 				commitComparisons.add(comparer.compare(
 					null,
