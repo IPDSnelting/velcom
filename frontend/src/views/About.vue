@@ -12,7 +12,11 @@
                 <v-row align="baseline" justify="center" no-gutters>
                   <v-col>
                     <v-row no-gutters align="baseline" justify="center">
-                      <div class="shapeshifter play"></div>
+                      <div
+                        id="shapeshifter-logo"
+                        class="shapeshifter play"
+                        @click="flutterByMyButterfly"
+                      ></div>
                     </v-row>
                     <v-row align="center" justify="center">
                       <p class="text-center">
@@ -102,6 +106,7 @@ import axios from 'axios'
 @Component
 export default class About extends Vue {
   private htmlImpressum: string | null = null
+  private fluttering: boolean = false
 
   private relativeUrlToBase(path: string) {
     return document.location.protocol + '//' + document.location.host + path
@@ -109,6 +114,44 @@ export default class About extends Vue {
 
   get impressumLocation() {
     return this.relativeUrlToBase('/Impressum.html')
+  }
+
+  private flutterByMyButterfly() {
+    let element = document.getElementById('shapeshifter-logo')!
+
+    if (this.fluttering) {
+      element.classList.remove('flutterByMyButterfly')
+      this.fluttering = false
+      return
+    }
+    this.fluttering = true
+    element.classList.add('flutterByMyButterfly')
+
+    // https://en.wikipedia.org/wiki/Lemniscate_of_Bernoulli#Equations
+
+    let time = 0
+    let sqrt2 = Math.sqrt(2)
+    let callback = (callTime: DOMHighResTimeStamp) => {
+      if (!element.classList.contains('flutterByMyButterfly')) {
+        return
+      }
+      let a = window.innerWidth / 4
+      let xOffset = window.innerWidth / 2 - 100
+      let yOffset = window.innerHeight / 4
+
+      time += (Math.PI * 2) / 60 / 10
+      let sint = Math.sin(time)
+      let cost = Math.cos(time)
+      let denominator = sint * sint + 1
+      let x = (a * sqrt2 * cost) / denominator + xOffset
+      let y = (a * sqrt2 * cost * sint) / denominator + yOffset
+
+      element.style.top = y + 'px'
+      element.style.left = x + 'px'
+      requestAnimationFrame(callback)
+    }
+
+    requestAnimationFrame(callback)
   }
 
   async mounted() {
@@ -159,5 +202,10 @@ export default class About extends Vue {
   -moz-animation-iteration-count: infinite;
   -webkit-animation-iteration-count: infinite;
   -o-animation-iteration-count: infinite;
+}
+.flutterByMyButterfly {
+  position: fixed;
+  z-index: 100; /* NOTHING is more important! */
+  animation-duration: 600ms;
 }
 </style>
