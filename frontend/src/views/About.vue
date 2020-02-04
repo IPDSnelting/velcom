@@ -129,22 +129,30 @@ export default class About extends Vue {
 
     // https://en.wikipedia.org/wiki/Lemniscate_of_Bernoulli#Equations
 
+    let theta = Math.random() * Math.PI * 2
     let time = 0
     let sqrt2 = Math.sqrt(2)
     let callback = (callTime: DOMHighResTimeStamp) => {
       if (!element.classList.contains('flutterByMyButterfly')) {
         return
       }
-      let a = window.innerWidth / 4
+      let a = Math.min(window.innerWidth, window.innerHeight) / 4
       let xOffset = window.innerWidth / 2 - 100
       let yOffset = window.innerHeight / 4
 
       time += (Math.PI * 2) / 60 / 10
+      theta += (Math.PI * 2) / 60 / 100
       let sint = Math.sin(time)
       let cost = Math.cos(time)
       let denominator = sint * sint + 1
-      let x = (a * sqrt2 * cost) / denominator + xOffset
-      let y = (a * sqrt2 * cost * sint) / denominator + yOffset
+      let x = (a * sqrt2 * cost) / denominator
+      let y = (a * sqrt2 * cost * sint) / denominator
+
+      let baseAngle = Math.atan2(y, x)
+      let baseDistance = Math.sqrt(x * x + y * y)
+
+      x = Math.cos(baseAngle + theta) * baseDistance + xOffset
+      y = Math.sin(baseAngle + theta) * baseDistance + yOffset
 
       element.style.top = y + 'px'
       element.style.left = x + 'px'
