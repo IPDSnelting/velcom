@@ -272,6 +272,7 @@ export default class CommitInfoTable extends Vue {
 .error-message {
   color: var(--v-error-base);
   font-family: monospace;
+  white-space: pre-line;
 }
 
 .error-message-tooltip {
