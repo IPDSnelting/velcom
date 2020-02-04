@@ -9,51 +9,15 @@
         <v-container fluid>
           <v-row align="start" justify="space-around" no-gutters>
             <v-col cols="5">
-              <v-autocomplete
-                v-model="firstCommit"
-                :items="allCommits"
-                :filter="filterCommits"
-                item-value="hash"
-                item-text="hash"
-                label="first commit"
-                placeholder="Search for a hash or message"
-                auto-select-first
-                hide-no-data
-                hide-selected
-                return-object
-                clearable
-              >
-                <template v-slot:item="data">
-                  <v-list-item-content>
-                    <v-list-item-title>{{ data.item.hash }}</v-list-item-title>
-                    <v-list-item-subtitle>{{ data.item.message }}</v-list-item-subtitle>
-                  </v-list-item-content>
-                </template>
-              </v-autocomplete>
+              <commit-selection v-model="firstCommit" :allCommits="allCommits"></commit-selection>
             </v-col>
             <v-col cols="5">
-              <v-autocomplete
+              <commit-selection
                 v-model="secondCommit"
-                :items="secondCommitCandidates"
-                :disabled="!firstChosen"
-                item-value="hash"
-                item-text="hash"
-                label="second commit"
-                placeholder="Search for a hash or message"
-                auto-select-first
-                hide-no-data
-                hide-selected
-                clearable
-                return-object
-                @input="navigateToComparison"
-              >
-                <template v-slot:item="data">
-                  <v-list-item-content>
-                    <v-list-item-title>{{ data.item.hash }}</v-list-item-title>
-                    <v-list-item-subtitle>{{ data.item.message }}</v-list-item-subtitle>
-                  </v-list-item-content>
-                </template>
-              </v-autocomplete>
+                :allCommits="secondCommitCandidates"
+                @value="navigateToComparison"
+                :disabled="!firstCommit"
+              ></commit-selection>
             </v-col>
           </v-row>
         </v-container>
@@ -121,12 +85,14 @@ import { mdiHelpCircleOutline } from '@mdi/js'
 import CommitOverviewBase from '@/components/overviews/CommitOverviewBase.vue'
 import CommitBenchmarkActions from '@/components/CommitBenchmarkActions.vue'
 import RunOverview from '@/components/overviews/RunOverview.vue'
+import CommitSelectionComponent from '../CommitSelectionComponent.vue'
 
 @Component({
   components: {
     'commit-overview-base': CommitOverviewBase,
     'run-overview': RunOverview,
-    'commit-benchmark-actions': CommitBenchmarkActions
+    'commit-benchmark-actions': CommitBenchmarkActions,
+    'commit-selection': CommitSelectionComponent
   }
 })
 export default class RepoCommitOverview extends Vue {
@@ -136,8 +102,31 @@ export default class RepoCommitOverview extends Vue {
   @Prop()
   private repo!: Repo
 
-  private firstCommit: Commit | null | undefined = null
+  private firstCommitHashSearch: string = ''
+  private secondCommitHashSearch: string = ''
+
+  private firstCommit: Commit | string | null | undefined = null
   private secondCommit: Commit | null | undefined = null
+
+  private get firstCommitHash(): string | null {
+    if (!this.firstCommit) {
+      return null
+    }
+    if (typeof this.firstCommit === 'string') {
+      return this.firstCommit
+    }
+    return this.firstCommit.hash
+  }
+
+  private get secondCommitHash(): string | null {
+    if (!this.secondCommit) {
+      return null
+    }
+    if (typeof this.secondCommit === 'string') {
+      return this.secondCommit
+    }
+    return this.secondCommit.hash
+  }
 
   private get firstChosen(): boolean {
     return this.firstCommit != null && this.firstCommit !== undefined
@@ -159,7 +148,7 @@ export default class RepoCommitOverview extends Vue {
     return this.allCommits.filter((commit: Commit) => {
       let first = this.firstCommit
       if (first !== null && first !== undefined) {
-        return commit.hash !== first.hash
+        return commit.hash !== this.firstCommitHash
       }
     })
   }
@@ -184,13 +173,13 @@ export default class RepoCommitOverview extends Vue {
   }
 
   navigateToComparison() {
-    if (this.firstCommit && this.secondCommit) {
+    if (this.firstCommitHash && this.secondCommitHash) {
       this.$router.push({
         name: 'commit-comparison',
         params: {
           repoID: this.repo.id,
-          hashOne: this.firstCommit.hash,
-          hashTwo: this.secondCommit.hash
+          hashOne: this.firstCommitHash,
+          hashTwo: this.secondCommitHash
         }
       })
     }
