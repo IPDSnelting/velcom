@@ -60,12 +60,6 @@ export default class RepoDetailFrame extends Vue {
     return vxm.repoModule.allRepos
   }
 
-  get route(): string | null {
-    return this.selectedRepo === null
-      ? null
-      : '/repo-detail/' + this.selectedRepo.id
-  }
-
   get isAdmin() {
     return vxm.userModule.isAdmin
   }

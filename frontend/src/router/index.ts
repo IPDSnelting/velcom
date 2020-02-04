@@ -149,4 +149,15 @@ router.beforeEach((to, from, next) => {
   next()
 })
 
+router.beforeEach((to, from, next) => {
+  if (to.name === 'repo-detail-frame' && !to.params['id']) {
+    let saved = vxm.repoDetailModule.selectedRepoId
+    if (saved) {
+      next({ name: 'repo-detail', params: { id: saved } })
+      return
+    }
+  }
+  next()
+})
+
 export default router
