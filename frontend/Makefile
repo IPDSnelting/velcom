@@ -1,5 +1,7 @@
 .PHONY: clean
 
+mode=development
+
 all: build
 
 node_modules: package.json yarn.lock
@@ -7,7 +9,7 @@ node_modules: package.json yarn.lock
 	touch node_modules
 
 dist: $(shell find src -name "*.vue" -o -name "*.ts") node_modules .env.production
-	yarn build
+	yarn build --mode="$(mode)"
 	touch dist
 
 build: dist

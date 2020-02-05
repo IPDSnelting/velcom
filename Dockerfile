@@ -1,5 +1,6 @@
 # Base image is java 11
 FROM openjdk:11-slim
+LABEL "velcom-server"="true"
 
 # We use nginx as a reverse proxy
 RUN apt update && apt install nginx -y

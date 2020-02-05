@@ -1,5 +1,8 @@
+# vim: ft=dockerfile
+
 # Base image is java 11
 FROM openjdk:11-slim
+LABEL "velcom-server"="true"
 
 # We use nginx as a reverse proxy
 RUN apt update && apt install nginx -y
@@ -22,8 +25,6 @@ VOLUME ["/home/velcom/config"]
 
 # Frontend serving port (from nginx config)
 EXPOSE 80
-# Backend API port (from nginx config)
-EXPOSE 81
 # Runner port (from nginx config)
 EXPOSE 82
 

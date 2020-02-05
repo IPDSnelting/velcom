@@ -37,7 +37,8 @@ docker-build-server: backend frontend
 	cp Dockerfile .docker
 	(cd .docker && sudo docker build -t velcom-server:latest .)
 
-docker-build-server-single-port: backend frontend
+docker-build-server-single-port: backend
+	make -C frontend/ mode=production-single-port
 	mkdir -p .docker
 	cp backend/backend/target/backend.jar .docker
 	cp -r frontend/dist .docker
