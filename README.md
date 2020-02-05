@@ -139,6 +139,22 @@ $ cp -r frontend/dist/ path/to/install/dir/
 $ vi path/to/install/dir/dist/Impressum.html
 ```
 
+### Running backend or frontend on a single port
+
+It is possible to run the backend *and* the frontend on a single port.
+
+1. To do this you need to make the backend accessible on some sub path (like
+   `/api/<path>`) and tell your reverse proxy to forward requests to this path
+   to the backend. Make sure you remove the prefix (e.g. `/api/`) before
+   forwarding the requests. If you do not do that, be prepared to just receive
+   404s when accessing the backend.
+2. Set the backend url in the frontend's `.env` file and *include the backend
+   prefix at the end*!
+   An example: `https://example.com:8080/api/`.
+
+You can refer to [docs/nginx-site-single-port](docs/nginx-site-single-port) for
+a working reference config.
+
 ## Starting VelCom
 
 In the directory where the backend was installed, run the `backend.jar`. The
