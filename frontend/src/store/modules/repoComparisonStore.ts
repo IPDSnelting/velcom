@@ -217,8 +217,10 @@ export class RepoComparisonStore extends VxModule {
     )
   }
 
-  get selectedReposWithBranches(): string[] {
-    let repos: any[] = []
+  // eslint-disable-next-line camelcase
+  get selectedReposWithBranches(): { repo_id: string; branches: string[] }[] {
+    // eslint-disable-next-line camelcase
+    let repos: { repo_id: string; branches: string[] }[] = []
     Object.keys(this.selectedBranchesByRepoID).forEach(repoID => {
       if (
         this.selectedRepos.includes(repoID) &&
