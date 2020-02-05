@@ -292,8 +292,6 @@ export default class RepoComparison extends Vue {
     return vxm.repoComparisonModule.selectedBranchesByRepoID
   }
 
-  @Watch('selectedMetric')
-  @Watch('selectedRepos')
   retrieveGraphData() {
     if (
       this.selectedBenchmark &&
@@ -356,6 +354,39 @@ export default class RepoComparison extends Vue {
         vxm.repoComparisonModule.startDate = new Date(min * 1000)
         vxm.repoComparisonModule.stopDate = new Date(max * 1000)
       })
+  }
+
+  @Watch('selectedMetric')
+  @Watch('selectedBenchmark')
+  @Watch('startTimeString')
+  @Watch('stopTimeString')
+  @Watch('selectedRepos')
+  updateUrl() {
+    let newQuery: { [param: string]: string } = {
+      metric: this.selectedMetric,
+      benchmark: this.selectedBenchmark,
+      repos: JSON.stringify(this.selectedRepos),
+      start: this.startTimeString,
+      stop: this.stopTimeString
+    }
+
+    if (JSON.stringify(this.$route.query) === JSON.stringify(newQuery)) {
+      return
+    }
+
+    history.replaceState(
+      {},
+      document.title,
+      this.$route.path +
+        '?' +
+        Object.keys(newQuery)
+          .map(key => {
+            return (
+              encodeURIComponent(key) + '=' + encodeURIComponent(newQuery[key])
+            )
+          })
+          .join('&')
+    )
   }
 }
 </script>

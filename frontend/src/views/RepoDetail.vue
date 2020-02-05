@@ -241,19 +241,26 @@ export default class RepoDetail extends Vue {
   @Watch('skip')
   @Watch('amount')
   updateUrl() {
-    if (!this.repo) {
-      return
+    let newQuery: { [param: string]: string } = {
+      metric: this.selectedMetric,
+      benchmark: this.selectedBenchmark,
+      skip: this.skip,
+      fetchAmount: this.amount
     }
-    this.$router.replace({
-      name: 'repo-detail',
-      params: { id: this.repo.id },
-      query: {
-        metric: this.selectedMetric,
-        benchmark: this.selectedBenchmark,
-        skip: this.skip,
-        fetchAmount: this.amount
-      }
-    })
+
+    history.replaceState(
+      {},
+      document.title,
+      this.$route.path +
+        '?' +
+        Object.keys(newQuery)
+          .map(key => {
+            return (
+              encodeURIComponent(key) + '=' + encodeURIComponent(newQuery[key])
+            )
+          })
+          .join('&')
+    )
   }
 
   beforeRouteEnter(
@@ -266,6 +273,7 @@ export default class RepoDetail extends Vue {
       vm.updateToUrl(to.query)
 
       vxm.repoDetailModule.fetchHistoryForRepo(vm.payload)
+      vm.updateUrl()
     })
   }
 
