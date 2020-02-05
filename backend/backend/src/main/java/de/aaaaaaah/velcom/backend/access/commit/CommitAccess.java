@@ -359,6 +359,12 @@ public class CommitAccess {
 	 */
 	public Stream<Commit> getCommitLog(RepoId repoId, Collection<BranchName> branches)
 		throws CommitAccessException {
+
+		// Step -1: Return nothing if no branches were selected
+		if (branches.isEmpty()) {
+			return Stream.empty();
+		}
+
 		// Step 0: Sort branches so that the outcome is deterministic
 		List<BranchName> sortedBranches = new ArrayList<>(branches);
 		Collections.sort(sortedBranches);
