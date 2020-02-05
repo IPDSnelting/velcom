@@ -6,7 +6,7 @@ node_modules: package.json yarn.lock
 	yarn install
 	touch node_modules
 
-dist: $(shell find src -name "*.vue" -o -name "*.ts") node_modules
+dist: $(shell find src -name "*.vue" -o -name "*.ts") node_modules .env.production
 	yarn build
 	touch dist
 
