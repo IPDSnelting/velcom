@@ -171,6 +171,8 @@ import RepoSelector from '../components/RepoSelector.vue'
 import ComparisonGraph from '../components/graphs/ComparisonGraph.vue'
 import { Repo, MeasurementID, Datapoint } from '../store/types'
 import { mdiCalendar } from '@mdi/js'
+import { Route, RawLocation } from 'vue-router'
+import { Dictionary } from 'vue-router/types/router'
 
 @Component({
   components: {
@@ -362,16 +364,26 @@ export default class RepoComparison extends Vue {
   @Watch('stopTimeString')
   @Watch('selectedRepos')
   updateUrl() {
+    let repos: { [repoId: string]: string[] } = {}
+    vxm.repoComparisonModule.selectedReposWithBranches.forEach(
+      ({ repo_id: repoId, branches }) => {
+        let repo = vxm.repoModule.repoByID(repoId)
+        if (!repo) {
+          return
+        }
+        if (branches.length === repo.branches.length) {
+          repos[repoId] = []
+        } else {
+          repos[repoId] = branches
+        }
+      }
+    )
     let newQuery: { [param: string]: string } = {
       metric: this.selectedMetric,
       benchmark: this.selectedBenchmark,
-      repos: JSON.stringify(this.selectedRepos),
+      repos: JSON.stringify(repos),
       start: this.startTimeString,
       stop: this.stopTimeString
-    }
-
-    if (JSON.stringify(this.$route.query) === JSON.stringify(newQuery)) {
-      return
     }
 
     history.replaceState(
@@ -387,6 +399,56 @@ export default class RepoComparison extends Vue {
           })
           .join('&')
     )
+  }
+
+  beforeRouteEnter(
+    to: Route,
+    from: Route,
+    next: (to?: RawLocation | false | ((vm: Vue) => any) | void) => void
+  ) {
+    next(component => {
+      let vm = component as RepoComparison
+      vxm.repoModule.fetchRepos().then(() => {
+        vm.updateToUrl(to.query)
+
+        vm.updateUrl()
+      })
+    })
+  }
+
+  private updateToUrl(query: Dictionary<string | (string | null)[]>) {
+    if (query.repos) {
+      let branchesByRepoId: { [key: string]: string[] } = JSON.parse(
+        query.repos as string
+      )
+      vxm.repoComparisonModule.selectedRepos = Object.keys(branchesByRepoId)
+      Object.keys(branchesByRepoId).forEach(repoId => {
+        let branches = branchesByRepoId[repoId]
+        if (branches.length === 0) {
+          let repo = vxm.repoModule.repoByID(repoId)
+          if (!repo) {
+            return
+          }
+          branches = repo.branches.slice()
+        }
+        vxm.repoComparisonModule.setSelectedBranchesForRepo({
+          repoID: repoId,
+          selectedBranches: branches
+        })
+      })
+    }
+    if (query.benchmark) {
+      vxm.repoComparisonModule.selectedBenchmark = query.benchmark as string
+    }
+    if (query.metric) {
+      vxm.repoComparisonModule.selectedMetric = query.metric as string
+    }
+    if (query.start) {
+      vxm.repoComparisonModule.startDate = new Date(query.start as string)
+    }
+    if (query.stop) {
+      vxm.repoComparisonModule.stopDate = new Date(query.stop as string)
+    }
   }
 }
 </script>
