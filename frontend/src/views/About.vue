@@ -13,6 +13,7 @@
                   <v-col>
                     <v-row no-gutters align="baseline" justify="center">
                       <v-col class="shapeshifter-container" cols="auto">
+                        <canvas id="myCanvas" @click="flutterByMyButterfly"></canvas>
                         <div
                           id="shapeshifter-logo"
                           class="shapeshifter play"
@@ -121,47 +122,90 @@ export default class About extends Vue {
   private flutterByMyButterfly() {
     let element = document.getElementById('shapeshifter-logo')!
 
+    let canvas = document.getElementById('myCanvas')! as HTMLCanvasElement
+    canvas.width = window.innerWidth
+    canvas.height = window.innerHeight
+    let context = canvas.getContext('2d')!
+    context.fillStyle = '#989cff'
+
     if (this.fluttering) {
       element.classList.remove('flutterByMyButterfly')
       this.fluttering = false
+      context.clearRect(0, 0, canvas.width, canvas.height)
       return
     }
     this.fluttering = true
     element.classList.add('flutterByMyButterfly')
 
+    let elementWidthOffset = element.getBoundingClientRect().width / 2
+    let elementHeightOffset = element.getBoundingClientRect().height / 2
+    elementHeightOffset += elementHeightOffset / 4 + 25
+
     // https://en.wikipedia.org/wiki/Lemniscate_of_Bernoulli#Equations
 
-    let theta = Math.random() * Math.PI * 2
-    let time = 0
-    let sqrt2 = Math.sqrt(2)
+    let { y: yMin } = this.evalLemniscate(Math.PI / 2, 0)
+
+    let { y: yMax } = this.evalLemniscate(Math.PI / 2, Math.PI)
+
+    let height = Math.abs(yMax - yMin)
+
+    // let theta = 5.39317816
+    let theta = Math.PI / 2
+    let time = 4.94277244164
     let callback = (callTime: DOMHighResTimeStamp) => {
       if (!element.classList.contains('flutterByMyButterfly')) {
         return
       }
-      let a = Math.min(window.innerWidth, window.innerHeight) / 4
-      let xOffset = window.innerWidth / 2 - 100
-      let yOffset = window.innerHeight / 4
+      let xOffset = window.innerWidth / 2 - elementWidthOffset
+      let yOffset = -elementHeightOffset / 2 + height / 2
 
-      time += (Math.PI * 2) / 60 / 10
-      theta += (Math.PI * 2) / 60 / 100
-      let sint = Math.sin(time)
-      let cost = Math.cos(time)
-      let denominator = sint * sint + 1
-      let x = (a * sqrt2 * cost) / denominator
-      let y = (a * sqrt2 * cost * sint) / denominator
+      let { x, y } = this.evalLemniscate(theta, time)
+      x += xOffset
+      y += yOffset
 
-      let baseAngle = Math.atan2(y, x)
-      let baseDistance = Math.sqrt(x * x + y * y)
-
-      x = Math.cos(baseAngle + theta) * baseDistance + xOffset
-      y = Math.sin(baseAngle + theta) * baseDistance + yOffset
+      for (let i = 0; i < Math.PI / 4; i += (Math.PI * 2) / 20) {
+        let { x, y } = this.evalLemniscate(theta - i / 2, time - i)
+        context.fillRect(
+          x + xOffset + elementWidthOffset,
+          y + yOffset + elementHeightOffset,
+          2,
+          2
+        )
+      }
 
       element.style.top = y + 'px'
       element.style.left = x + 'px'
       requestAnimationFrame(callback)
+
+      time += (Math.PI * 2) / 60 / 10
+      theta += (Math.PI * 2) / 60 / 100
     }
 
     requestAnimationFrame(callback)
+  }
+
+  private evalLemniscate(
+    theta: number,
+    time: number
+  ): { x: number; y: number } {
+    let sqrt2 = Math.sqrt(2)
+
+    let a = Math.min(window.innerWidth, window.innerHeight) / 4
+
+    let sint = Math.sin(time)
+    let cost = Math.cos(time)
+    let denominator = sint * sint + 1
+    let x = (a * sqrt2 * cost) / denominator
+    let y = (a * sqrt2 * cost * sint) / denominator
+
+    let baseAngle = Math.atan2(y, x)
+    let baseDistance = Math.sqrt(x * x + y * y)
+
+    x = Math.cos(baseAngle + theta) * baseDistance
+
+    y = Math.sin(baseAngle + theta) * baseDistance
+
+    return { x: x, y: y }
   }
 
   async mounted() {
@@ -201,6 +245,13 @@ export default class About extends Vue {
 .shapeshifter-container {
   width: 212px;
   height: 212px;
+}
+#myCanvas {
+  position: fixed;
+  top: 0%;
+  left: 0%;
+  z-index: 50; /* NOTHING is more important! */
+  pointer-events: none;
 }
 .shapeshifter {
   animation-duration: 1200ms;
