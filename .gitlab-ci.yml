@@ -48,7 +48,7 @@ compile-frontend:
   script:
     - apk update
     - apk add make
-    - make frontend
+    - make frontend mode=production-single-port
   tags:
     - keep
 
