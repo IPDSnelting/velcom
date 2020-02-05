@@ -112,6 +112,8 @@ import { vxm } from '../store/index'
 import RepoBaseInformation from '@/components/repodetail/RepoBaseInformation.vue'
 import RepoCommitOverview from '@/components/repodetail/RepoCommitOverview.vue'
 import DetailGraph from '@/components/graphs/DetailGraph.vue'
+import { Route, RawLocation } from 'vue-router'
+import { Dictionary } from 'vue-router/types/router'
 
 @Component({
   components: {
@@ -234,6 +236,39 @@ export default class RepoDetail extends Vue {
     }
   }
 
+  @Watch('selectedMetric')
+  @Watch('selectedBenchmark')
+  @Watch('skip')
+  @Watch('amount')
+  updateUrl() {
+    if (!this.repo) {
+      return
+    }
+    this.$router.replace({
+      name: 'repo-detail',
+      params: { id: this.repo.id },
+      query: {
+        metric: this.selectedMetric,
+        benchmark: this.selectedBenchmark,
+        skip: this.skip,
+        fetchAmount: this.amount
+      }
+    })
+  }
+
+  beforeRouteEnter(
+    to: Route,
+    from: Route,
+    next: (to?: RawLocation | false | ((vm: Vue) => any) | void) => void
+  ) {
+    next(component => {
+      let vm = component as RepoDetail
+      vm.updateToUrl(to.query)
+
+      vxm.repoDetailModule.fetchHistoryForRepo(vm.payload)
+    })
+  }
+
   updateSelection(newAmount: number, moreSkip: number) {
     this.amount = newAmount.toString()
     this.skip = (Number.parseInt(this.skip) + moreSkip).toString()
@@ -244,8 +279,25 @@ export default class RepoDetail extends Vue {
     return vxm.repoModule.repoByID(this.id)!
   }
 
-  created() {
-    vxm.repoDetailModule.fetchHistoryForRepo(this.payload)
+  private updateToUrl(query: Dictionary<string | (string | null)[]>) {
+    if (query.skip) {
+      this.skip = query.skip as string
+    }
+    if (query.fetchAmount) {
+      this.amount = query.fetchAmount as string
+    }
+    if (query.metric) {
+      this.selectedMetric = query.metric as string
+    }
+    if (query.benchmark) {
+      this.selectedBenchmark = query.benchmark as string
+    }
+  }
+
+  mounted() {
+    if (!this.$route.query) {
+      this.updateUrl()
+    }
   }
 }
 </script>

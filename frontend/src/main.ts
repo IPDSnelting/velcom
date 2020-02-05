@@ -1,4 +1,5 @@
 import Vue from 'vue'
+import './class-components-router-hooks' // Register custom hooks
 import App from './App.vue'
 import router from './router'
 import { store, vxm, restoreFromPassedSession } from './store'
