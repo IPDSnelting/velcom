@@ -69,7 +69,13 @@ export default class RepoSelector extends Vue {
 
   private notifyTimeout: number | undefined
 
-  private selectedRepos: string[] = vxm.repoComparisonModule.selectedRepos
+  get selectedRepos() {
+    return vxm.repoComparisonModule.selectedRepos
+  }
+
+  set selectedRepos(repos: string[]) {
+    vxm.repoComparisonModule.selectedRepos = repos
+  }
 
   get allRepos(): Repo[] {
     return vxm.repoModule.allRepos
@@ -96,7 +102,6 @@ export default class RepoSelector extends Vue {
   }
 
   updateSelectedRepos() {
-    vxm.repoComparisonModule.selectedRepos = this.selectedRepos
     this.debounce(this.notifySelectionChanged, 1000)()
   }
 
