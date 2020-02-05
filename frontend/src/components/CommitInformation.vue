@@ -33,22 +33,38 @@
                   no-gutters
                 >
                   <v-col v-if="prevCommit" cols="auto">
-                    <v-btn
-                      text
-                      outlined
-                      :to="{ name: 'commit-detail', params: { repoID: prevCommit.repoID, hash: prevCommit.hash } }"
-                    >
-                      <v-icon left>{{ previousCommitIcon }}</v-icon>Previous
-                    </v-btn>
+                    <v-tooltip right>
+                      <template #activator="{ on }">
+                        <v-btn
+                          v-on="on"
+                          text
+                          outlined
+                          :to="{ name: 'commit-detail', params: { repoID: prevCommit.repoID, hash: prevCommit.hash } }"
+                        >
+                          <v-icon left>{{ previousCommitIcon }}</v-icon>Previous
+                        </v-btn>
+                      </template>
+                      {{ prevCommit.summary }}
+                      <br />
+                      by {{ prevCommit.author }}
+                    </v-tooltip>
                   </v-col>
                   <v-col v-if="nextCommit" cols="auto">
-                    <v-btn
-                      text
-                      outlined
-                      :to="{ name: 'commit-detail', params: { repoID: nextCommit.repoID, hash: nextCommit.hash } }"
-                    >
-                      <v-icon left>{{ nextCommitIcon }}</v-icon>Next
-                    </v-btn>
+                    <v-tooltip left>
+                      <template #activator="{ on }">
+                        <v-btn
+                          v-on="on"
+                          text
+                          outlined
+                          :to="{ name: 'commit-detail', params: { repoID: nextCommit.repoID, hash: nextCommit.hash } }"
+                        >
+                          <v-icon left>{{ nextCommitIcon }}</v-icon>Next
+                        </v-btn>
+                      </template>
+                      {{ nextCommit.summary }}
+                      <br />
+                      by {{ nextCommit.author }}
+                    </v-tooltip>
                   </v-col>
                 </v-row>
                 <v-row justify="space-between" align="center">
