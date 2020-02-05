@@ -1,14 +1,16 @@
 package de.aaaaaaah.velcom.backend.newaccess;
 
-import de.aaaaaaah.velcom.backend.access.commit.CommitHash;
-import de.aaaaaaah.velcom.backend.access.repo.RepoId;
+
+import de.aaaaaaah.velcom.backend.newaccess.entities.Commit;
+import de.aaaaaaah.velcom.backend.newaccess.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.newaccess.entities.RepoId;
+import de.aaaaaaah.velcom.backend.newaccess.exceptions.CommitAccessException;
 import de.aaaaaaah.velcom.backend.storage.repo.RepoStorage;
 import de.aaaaaaah.velcom.backend.storage.repo.exception.RepositoryAcquisitionException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import org.eclipse.jgit.lib.AnyObjectId;
 import org.eclipse.jgit.lib.ObjectId;
@@ -35,7 +37,7 @@ public class CommitReadAccess {
 		}
 	}
 
-	private static Commit commitFromRevCommit(RepoId repoId, RevCommit revCommit) {
+	static Commit commitFromRevCommit(RepoId repoId, RevCommit revCommit) {
 		CommitHash ownHash = new CommitHash(revCommit.getId().getName());
 
 		List<CommitHash> parentHashes = List.of(revCommit.getParents()).stream()
@@ -67,13 +69,13 @@ public class CommitReadAccess {
 	 * @return The commit if it could be found. Returns empty if the repo doesn't exist or the
 	 * 	commit could not be found.
 	 */
-	public Optional<Commit> getCommit(RepoId repoId, CommitHash commitHash) {
+	public Commit getCommit(RepoId repoId, CommitHash commitHash) {
 		List<Commit> commits = getCommits(repoId, List.of(commitHash));
 
 		if (!commits.isEmpty()) {
-			return Optional.of(commits.get(0));
+			return commits.get(0);
 		} else {
-			return Optional.empty();
+			throw new CommitAccessException(repoId, commitHash);
 		}
 	}
 
@@ -108,6 +110,34 @@ public class CommitReadAccess {
 		}
 
 		return commits;
+	}
+
+	/**
+	 * Constructs a new commit walk instance starting at the specified commit.
+	 *
+	 * @param startCommit the commit to start at
+	 * @return the commit walk instance
+	 */
+	public CommitWalk getCommitWalk(Commit startCommit) {
+		RepoId repoId = startCommit.getRepoId();
+		Repository repo = null;
+		RevWalk walk = null;
+
+		try {
+			repo = repoStorage.acquireRepository(repoId.getDirectoryName());
+			walk = new RevWalk(repo);
+
+			return new CommitWalk(repoId, repo, walk, startCommit);
+		} catch (Exception e) {
+			if (walk != null) {
+				walk.close();
+			}
+			if (repo != null) {
+				repo.close();
+			}
+			throw new CommitAccessException("Failed to create commit walk", e,
+				startCommit.getRepoId(), startCommit.getHash());
+		}
 	}
 
 }
