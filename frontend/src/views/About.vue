@@ -12,11 +12,13 @@
                 <v-row align="baseline" justify="center" no-gutters>
                   <v-col>
                     <v-row no-gutters align="baseline" justify="center">
-                      <div
-                        id="shapeshifter-logo"
-                        class="shapeshifter play"
-                        @click="flutterByMyButterfly"
-                      ></div>
+                      <v-col class="shapeshifter-container" cols="auto">
+                        <div
+                          id="shapeshifter-logo"
+                          class="shapeshifter play"
+                          @click="flutterByMyButterfly"
+                        ></div>
+                      </v-col>
                     </v-row>
                     <v-row align="center" justify="center">
                       <p class="text-center">
@@ -195,6 +197,10 @@ export default class About extends Vue {
   100% {
     background-position: -15264px 0px;
   }
+}
+.shapeshifter-container {
+  width: 212px;
+  height: 212px;
 }
 .shapeshifter {
   animation-duration: 1200ms;
