@@ -23,6 +23,8 @@ import org.eclipse.jgit.transport.SshSessionFactory;
 import org.eclipse.jgit.transport.sshd.DefaultProxyDataFactory;
 import org.eclipse.jgit.transport.sshd.JGitKeyCache;
 import org.eclipse.jgit.transport.sshd.SshdSessionFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * // TODO: 27.12.19 Repo vs Repository?
@@ -31,6 +33,8 @@ import org.eclipse.jgit.transport.sshd.SshdSessionFactory;
  * A repo storage is able to store git repositories on the file system.
  */
 public class RepoStorage {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(RepoStorage.class);
 
 	private final Path rootDir;
 	private final ReadWriteLock lock = new ReentrantReadWriteLock();
@@ -121,7 +125,12 @@ public class RepoStorage {
 
 			Files.createDirectory(repoDir);
 
+			long start = System.currentTimeMillis();
+			LOGGER.info("Cloning repo from {} into {}", remoteUrl, dirName);
+
 			GuickCloning.getInstance().cloneMirror(remoteUrl, repoDir);
+
+			LOGGER.info("Cloning took {} ms", System.currentTimeMillis() - start);
 
 			return repoDir;
 		} catch (DirectoryAlreadyExistsException e) {
