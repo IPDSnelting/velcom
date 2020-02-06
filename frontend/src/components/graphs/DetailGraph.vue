@@ -136,8 +136,7 @@ export default class DetailGraph extends Vue {
   }
 
   get datapoints(): { commit: Commit; comparison: CommitComparison }[] {
-    let selectedRepo: string = vxm.repoDetailModule.selectedRepoId
-    return vxm.repoDetailModule.historyForRepoId(selectedRepo)
+    return vxm.repoDetailModule.repoHistory
   }
 
   get datapointsBetweenAxes() {

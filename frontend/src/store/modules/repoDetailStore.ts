@@ -23,9 +23,10 @@ const VxModule = createModule({
 })
 
 export class RepoDetailStore extends VxModule {
-  private historyByRepoId: {
-    [repoId: string]: { commit: Commit; comparison: CommitComparison }[]
-  } = {}
+  private _repoHistory: {
+    commit: Commit
+    comparison: CommitComparison
+  }[] = []
   private _selectedRepoId: string = ''
 
   selectedMetric: string = ''
@@ -63,7 +64,7 @@ export class RepoDetailStore extends VxModule {
       }
     })
 
-    this.setHistoryForRepo({ repoId: payload.repoId, history: resultArray })
+    this.setRepoHistory(resultArray)
 
     return Promise.resolve(resultArray)
   }
@@ -93,11 +94,8 @@ export class RepoDetailStore extends VxModule {
   }
 
   @mutation
-  setHistoryForRepo(payload: {
-    repoId: string
-    history: { commit: Commit; comparison: CommitComparison }[]
-  }) {
-    Vue.set(this.historyByRepoId, payload.repoId, payload.history)
+  setRepoHistory(history: { commit: Commit; comparison: CommitComparison }[]) {
+    this._repoHistory = history
   }
 
   /**
@@ -108,11 +106,8 @@ export class RepoDetailStore extends VxModule {
    * @readonly
    * @memberof RepoDetailStore
    */
-  get historyForRepoId(): (
-    repoId: string
-  ) => { commit: Commit; comparison: CommitComparison }[] {
-    return (repoId: string) =>
-      this.historyByRepoId[repoId] ? this.historyByRepoId[repoId] : []
+  get repoHistory(): { commit: Commit; comparison: CommitComparison }[] {
+    return this._repoHistory
   }
 
   /**
