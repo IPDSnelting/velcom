@@ -46,7 +46,20 @@
                     :run="comparison.second"
                     :commit="commit"
                     :hideActions="!isAdmin"
-                  ></run-overview>
+                  >
+                    <template #actions>
+                      <v-tooltip top>
+                        <template #activator="{ on }">
+                          <v-btn icon v-on="on" @click="benchmarkUpwardsOf(commit)">
+                            <v-icon>{{ benchmarkUpwardsIcon }}</v-icon>
+                          </v-btn>
+                        </template>
+                        Benchmarks all commits upwards of this commit (this
+                        <strong>one</strong> and
+                        <strong>up</strong>)
+                      </v-tooltip>
+                    </template>
+                  </run-overview>
                   <commit-overview-base v-else :commit="commit">
                     <template #avatar>
                       <v-list-item-avatar>
@@ -63,6 +76,16 @@
                         :hasExistingBenchmark="false"
                         @benchmark="benchmark(commit)"
                       ></commit-benchmark-actions>
+                      <v-tooltip top>
+                        <template #activator="{ on }">
+                          <v-btn icon v-on="on" @click="benchmarkUpwardsOf(commit)">
+                            <v-icon>{{ benchmarkUpwardsIcon }}</v-icon>
+                          </v-btn>
+                        </template>
+                        Benchmarks all commits upwards of this commit (this
+                        <strong>one</strong> and
+                        <strong>up</strong>)
+                      </v-tooltip>
                     </template>
                   </commit-overview-base>
                 </v-col>
@@ -81,7 +104,7 @@ import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 import { Repo, Commit, CommitComparison } from '@/store/types'
 import { vxm } from '@/store'
-import { mdiHelpCircleOutline } from '@mdi/js'
+import { mdiHelpCircleOutline, mdiOneUp } from '@mdi/js'
 import CommitOverviewBase from '@/components/overviews/CommitOverviewBase.vue'
 import CommitBenchmarkActions from '@/components/CommitBenchmarkActions.vue'
 import RunOverview from '@/components/overviews/RunOverview.vue'
@@ -102,11 +125,8 @@ export default class RepoCommitOverview extends Vue {
   @Prop()
   private repo!: Repo
 
-  private firstCommitHashSearch: string = ''
-  private secondCommitHashSearch: string = ''
-
   private firstCommit: Commit | string | null | undefined = null
-  private secondCommit: Commit | null | undefined = null
+  private secondCommit: Commit | string | null | undefined = null
 
   private get firstCommitHash(): string | null {
     if (!this.firstCommit) {
@@ -185,8 +205,13 @@ export default class RepoCommitOverview extends Vue {
     }
   }
 
+  private benchmarkUpwardsOf(commit: Commit) {
+    this.$globalSnackbar.setError('one-up', 'Not implemented')
+  }
+
   // ============== ICONS ==============
   private notBenchmarkedIcon = mdiHelpCircleOutline
+  private benchmarkUpwardsIcon = mdiOneUp
   // ==============       ==============
 }
 </script>

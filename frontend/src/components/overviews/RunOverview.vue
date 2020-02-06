@@ -23,6 +23,7 @@
     </template>
     <template #actions v-if="!hideActions" class="ml-3">
       <commit-benchmark-actions :hasExistingBenchmark="true" @benchmark="benchmark(commit)"></commit-benchmark-actions>
+      <slot name="actions"></slot>
     </template>
   </commit-overview-base>
 </template>
