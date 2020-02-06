@@ -2,9 +2,6 @@
   <div class="queue">
     <v-container>
       <v-row align="baseline" justify="center">
-        <h1>Queue Overview</h1>
-      </v-row>
-      <v-row align="baseline" justify="center">
         <v-col>
           <v-card>
             <v-card-title>

@@ -1,9 +1,6 @@
 <template>
   <div class="repo-detail-frame">
     <v-container>
-      <v-row align="baseline" justify="center">
-        <h1>Repository details</h1>
-      </v-row>
       <v-row align="center" justify="center">
         <v-col class="d-flex">
           <repo-select v-model="selectedRepoId" :repos="allRepos"></repo-select>

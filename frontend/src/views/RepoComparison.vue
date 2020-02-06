@@ -1,8 +1,5 @@
 <template>
   <v-container fluid>
-    <v-row align="baseline" justify="center">
-      <h1>Repository Comparison</h1>
-    </v-row>
     <v-row>
       <v-col>
         <v-card>
