@@ -86,6 +86,26 @@ export class QueueStore extends VxModule {
   }
 
   /**
+   * Queues all commits upwards of (and including) the passed commit.
+   *
+   * @param {Commit} commit the base commit to prioritize
+   * @returns {Promise<void>} a promise completing with an optional error
+   * @memberof QueueModuleStore
+   */
+  @action
+  dispatchQueueUpwardsOf(commit: Commit): Promise<void> {
+    return axios
+      .post('/queue', {
+        repo_id: commit.repoID,
+        commit_hash: commit.hash,
+        include_all_commits_after: true
+      })
+      .then(() => {
+        this.prioritizeOpenTask(commit)
+      })
+  }
+
+  /**
    *Sends a delete request for an open task to the server.
    *
    * @param {Commit} payload the commit to delete
