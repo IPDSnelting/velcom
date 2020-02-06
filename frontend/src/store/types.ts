@@ -31,7 +31,7 @@ export class Measurement {
   id: MeasurementID
   successful: boolean
   unit: string | null
-  interpretation: string | null
+  interpretation: 'LESS_IS_BETTER' | 'MORE_IS_BETTER' | 'NEUTRAL' | null
   values: Array<number> | null
   value: number | null
   errorMessage: string | null

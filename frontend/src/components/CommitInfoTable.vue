@@ -16,6 +16,9 @@
     </v-dialog>
 
     <v-data-table :headers="headers" :items="entries" item-key="key" multi-sort>
+      <template #header.compareChange="{}">
+        <span class="change-arrow">→</span>
+      </template>
       <template #item.value="{ item, value }">
         <span v-if="value">{{ formatNumber(value) }}</span>
         <v-btn
@@ -30,8 +33,11 @@
         <span v-if="value">{{ value }}</span>
         <span v-else>-</span>
       </template>
-      <template #header.compareChange="{}">
-        <span class="change-arrow">→</span>
+      <template #item.change=" { item, value }">
+        <span :style="{ color: changeColor(item, value) }">{{ formatNumber(value) }}</span>
+      </template>
+      <template #item.compareChange=" { item, value }">
+        <span :style="{ color: changeColor(item, value) }">{{ formatNumber(value) }}</span>
       </template>
     </v-data-table>
   </v-container>
@@ -120,7 +126,8 @@ export default class CommitInfoTable extends Vue {
         unit: this.findUnit(diff.measurement),
         firstVal: this.findFirstVal(diff.measurement),
         secondVal: this.findSecondVal(diff.measurement),
-        compareChange: this.findChange(diff.measurement)
+        compareChange: this.findChange(diff.measurement),
+        interpretation: this.findMeasurement(diff.measurement).interpretation
       }))
     } else {
       if (this.comparison.second == null) {
@@ -255,6 +262,9 @@ export default class CommitInfoTable extends Vue {
   }
 
   private formatNumber(number: number): string {
+    if (Math.abs(number) === 0) {
+      return '0'
+    }
     return this.numberFormat.format(number)
   }
 
@@ -264,6 +274,17 @@ export default class CommitInfoTable extends Vue {
       return error
     }
     return error.substring(0, MAX_ERROR_LENGTH) + '…'
+  }
+
+  private changeColor(item: Measurement, change: number): string {
+    if (Math.abs(change) === 0) {
+      return ''
+    }
+
+    if (change < 0 && item.interpretation === 'LESS_IS_BETTER') {
+      return 'var(--v-success-base)'
+    }
+    return 'var(--v-warning-base)'
   }
 }
 </script>
