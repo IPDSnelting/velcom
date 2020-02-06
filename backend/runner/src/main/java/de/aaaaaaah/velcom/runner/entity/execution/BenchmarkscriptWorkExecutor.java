@@ -106,7 +106,7 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 
 			String error = bareResult.getError();
 			if (error != null) {
-				failureInformation.addSection("Benchmarkscript error", error);
+				failureInformation.addSection("Benchmark-Script error", error);
 				failureInformation.addSection(
 					"Reason",
 					"The Benchmark-Script terminated successfully but returned an error message!"
