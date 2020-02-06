@@ -85,6 +85,11 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 			);
 
 			if (result.getExitCode() != 0) {
+				failureInformation.addSection(
+					"Reason",
+					"The Benchmark-Script terminated with a non-zero exit code"
+						+ " (" + result.getExitCode() + ")!"
+				);
 				configuration.getRunnerStateMachine().onWorkDone(
 					new BenchmarkResults(
 						workOrder,
@@ -99,10 +104,20 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 
 			BareResult bareResult = benchmarkScriptOutputParser.parse(result.getStdOut());
 
+			String error = bareResult.getError();
+			if (error != null) {
+				failureInformation.addSection("Benchmarkscript error", error);
+				failureInformation.addSection(
+					"Reason",
+					"The Benchmark-Script terminated successfully but returned an error message!"
+				);
+				error = failureInformation.toString();
+			}
+
 			BenchmarkResults results = new BenchmarkResults(
 				workOrder,
 				bareResult.getBenchmarks(),
-				bareResult.getError(),
+				error,
 				startTime, endTime
 			);
 
@@ -113,6 +128,10 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 
 			failureInformation.addSection("Stacktrace", ExceptionHelper.getStackTrace(e));
 			failureInformation.addSection("End time", Instant.now().toString());
+			failureInformation.addSection(
+				"Reason",
+				"Most likely an internal runner error. Rebenchmarking might solve the problem!"
+			);
 
 			configuration.getRunnerStateMachine().onWorkDone(
 				new BenchmarkResults(
@@ -127,6 +146,10 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 			LOGGER.info("Benchmark script returned invalid data: '{}'", e.getMessage());
 			failureInformation.addSection("End time", Instant.now().toString());
 			failureInformation.addSection("Invalid output", e.getMessage());
+			failureInformation.addSection(
+				"Reason",
+				"The Benchmark-Script returned invalid output!"
+			);
 
 			configuration.getRunnerStateMachine().onWorkDone(
 				new BenchmarkResults(
