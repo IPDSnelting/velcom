@@ -1,17 +1,36 @@
 package de.aaaaaaah.velcom.backend.newaccess;
 
-import de.aaaaaaah.velcom.backend.newaccess.entities.*;
-import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
-import org.jooq.DSLContext;
-import org.jooq.codegen.db.tables.records.RunMeasurementRecord;
-import org.jooq.codegen.db.tables.records.RunRecord;
-
-import java.util.*;
-
-import static java.util.stream.Collectors.*;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
+import static java.util.stream.Collectors.toUnmodifiableSet;
 import static org.jooq.codegen.db.tables.Run.RUN;
 import static org.jooq.codegen.db.tables.RunMeasurement.RUN_MEASUREMENT;
 import static org.jooq.codegen.db.tables.RunMeasurementValue.RUN_MEASUREMENT_VALUE;
+
+import de.aaaaaaah.velcom.backend.newaccess.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Interpretation;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Measurement;
+import de.aaaaaaah.velcom.backend.newaccess.entities.MeasurementError;
+import de.aaaaaaah.velcom.backend.newaccess.entities.MeasurementName;
+import de.aaaaaaah.velcom.backend.newaccess.entities.MeasurementValues;
+import de.aaaaaaah.velcom.backend.newaccess.entities.RepoId;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Run;
+import de.aaaaaaah.velcom.backend.newaccess.entities.RunId;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Unit;
+import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import org.jooq.DSLContext;
+import org.jooq.codegen.db.tables.records.RunMeasurementRecord;
+import org.jooq.codegen.db.tables.records.RunRecord;
 
 /**
  * Provides read access to benchmark related entities such as runs and measurements.
@@ -27,7 +46,7 @@ public class BenchmarkReadAccess {
 	/**
 	 * Gets the most recent runs ordered by their start time.
 	 *
-	 * @param skip   how many recent runs to skip
+	 * @param skip how many recent runs to skip
 	 * @param amount how many recent runs to collect
 	 * @return a sorted list containing the recent runs
 	 */
@@ -51,19 +70,21 @@ public class BenchmarkReadAccess {
 	/**
 	 * Gets the latest run for the given commit
 	 *
-	 * @param repoId     the id of the repository
+	 * @param repoId the id of the repository
 	 * @param commitHash the hash of the commit
-	 * @return the latest run for the commit, or {@link Optional#empty()} if no run for that commit exists yet.
+	 * @return the latest run for the commit, or {@link Optional#empty()} if no run for that commit
+	 * 	exists yet.
 	 */
 	public Optional<Run> getLatestRun(RepoId repoId, CommitHash commitHash) {
 		Map<CommitHash, Run> resultMap = getLatestRuns(repoId, List.of(commitHash));
-		return resultMap.containsKey(commitHash) ? Optional.of(resultMap.get(commitHash)) : Optional.empty();
+		return resultMap.containsKey(commitHash) ? Optional.of(resultMap.get(commitHash))
+			: Optional.empty();
 	}
 
 	/**
 	 * Gets the latest runs for the given commits.
 	 *
-	 * @param repoId       the id of the repository that the commits are from
+	 * @param repoId the id of the repository that the commits are from
 	 * @param commitHashes the hashes of the commits
 	 * @return a map that maps each commit hash to its latest run
 	 */
@@ -74,7 +95,9 @@ public class BenchmarkReadAccess {
 		// ...
 
 		// Check database
-		Set<String> uncachedCommitHashes = commitHashes.stream().map(CommitHash::getHash).collect(toSet());
+		Set<String> uncachedCommitHashes = commitHashes.stream()
+			.map(CommitHash::getHash)
+			.collect(toSet());
 
 		if (!uncachedCommitHashes.isEmpty()) {
 			try (DSLContext db = databaseStorage.acquireContext()) {
@@ -84,7 +107,8 @@ public class BenchmarkReadAccess {
 					.and(RUN.COMMIT_HASH.in(uncachedCommitHashes))
 					.fetchMap(RUN.ID);
 
-				loadRunData(db, runRecordMap).forEach(run -> resultMap.put(run.getCommitHash(), run));
+				loadRunData(db, runRecordMap).forEach(
+					run -> resultMap.put(run.getCommitHash(), run));
 			}
 		}
 
@@ -135,7 +159,7 @@ public class BenchmarkReadAccess {
 
 			// Read measurement content
 			if (measurementRecord.getErrorMessage() != null) {
-				MeasurementError measurementError = new MeasurementError(measurementRecord.getErrorMessage());
+				var measurementError = new MeasurementError(measurementRecord.getErrorMessage());
 				measurement = new Measurement(runId, measurementName, measurementError);
 			} else {
 				List<Double> values = valueMap.get(measurementRecord.getId());
@@ -144,8 +168,7 @@ public class BenchmarkReadAccess {
 					measurementRecord.getInterpretation()
 				);
 
-				MeasurementValues measurementValues = new MeasurementValues(values, unit, interpretation);
-
+				var measurementValues = new MeasurementValues(values, unit, interpretation);
 				measurement = new Measurement(runId, measurementName, measurementValues);
 			}
 
