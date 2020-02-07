@@ -8,6 +8,7 @@ import de.aaaaaaah.velcom.runner.entity.execution.output.BenchmarkScriptOutputPa
 import de.aaaaaaah.velcom.runner.entity.execution.output.BenchmarkScriptOutputParser.BareResult;
 import de.aaaaaaah.velcom.runner.entity.execution.output.OutputParseException;
 import de.aaaaaaah.velcom.runner.shared.ProgramExecutor;
+import de.aaaaaaah.velcom.runner.shared.ProgramExecutor.FutureProgramResult;
 import de.aaaaaaah.velcom.runner.shared.ProgramExecutor.ProgramResult;
 import de.aaaaaaah.velcom.runner.shared.protocol.runnerbound.entities.RunnerWorkOrder;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkResults;
@@ -19,7 +20,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.Future;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,7 +31,7 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 	private static final Logger LOGGER = LoggerFactory.getLogger(BenchmarkscriptWorkExecutor.class);
 
 	private final BenchmarkScriptOutputParser benchmarkScriptOutputParser;
-	private Future<ProgramResult> programResult;
+	private FutureProgramResult programResult;
 
 	public BenchmarkscriptWorkExecutor() {
 		benchmarkScriptOutputParser = new BenchmarkScriptOutputParser();
@@ -40,7 +40,7 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 	@Override
 	public void abortExecution() {
 		if (programResult != null && !programResult.isDone()) {
-			programResult.cancel(true);
+			programResult.cancel();
 		}
 	}
 

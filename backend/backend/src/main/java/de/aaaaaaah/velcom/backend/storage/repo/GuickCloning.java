@@ -2,8 +2,8 @@ package de.aaaaaaah.velcom.backend.storage.repo;
 
 import de.aaaaaaah.velcom.runner.shared.ProgramExecutor;
 import de.aaaaaaah.velcom.runner.shared.ProgramExecutor.ProgramResult;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
-import java.util.concurrent.ExecutionException;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -29,7 +29,7 @@ public abstract class GuickCloning {
 				LOGGER.info("git executable found, using fast path for cloning");
 				return new CmdGitCloning();
 			}
-		} catch (InterruptedException | ExecutionException ignored) {
+		} catch (InterruptedException | UncheckedIOException ignored) {
 		}
 		LOGGER.info("git executable not found, falling back to slow path for cloning");
 
@@ -140,7 +140,7 @@ public abstract class GuickCloning {
 						targetDir.toAbsolutePath().toString()
 					).get();
 				guardResult(source, programResult);
-			} catch (InterruptedException | ExecutionException e) {
+			} catch (InterruptedException | UncheckedIOException e) {
 				throw new CloneException("Clone failed for " + source + " (mirror)", e);
 			}
 		}
@@ -187,7 +187,7 @@ public abstract class GuickCloning {
 					"Checkout failed!",
 					programResult
 				);
-			} catch (InterruptedException | ExecutionException e) {
+			} catch (InterruptedException | UncheckedIOException e) {
 				throw new CloneException("Clone failed for " + source + " at " + commitHash, e);
 			}
 		}
