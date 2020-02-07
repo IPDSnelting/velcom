@@ -116,7 +116,7 @@ public class WebsocketListener implements WebSocket.Listener, SocketConnectionMa
 							break;
 					}
 				} catch (SerializationException e) {
-					LOGGER.warn("Unknwon message received", e);
+					LOGGER.warn("Unknown message received", e);
 				}
 			}
 		}
@@ -181,7 +181,7 @@ public class WebsocketListener implements WebSocket.Listener, SocketConnectionMa
 
 	@Override
 	public void onError(WebSocket webSocket, Throwable error) {
-		LOGGER.warn("Error in Websockets", error);
+		LOGGER.warn("Error in Websocket", error);
 		disconnectImpl();
 	}
 	//</editor-fold>
