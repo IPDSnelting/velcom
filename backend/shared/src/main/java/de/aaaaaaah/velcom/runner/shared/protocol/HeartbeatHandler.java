@@ -13,37 +13,55 @@ public class HeartbeatHandler {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(HeartbeatHandler.class);
 
-	private static final int TIMEOUT_SECONDS = 20;
+	private static final int DEFAULT_TIMEOUT_SECONDS = 20;
 
-	private AtomicReference<Instant> lastTime;
+	private final AtomicReference<Instant> lastTime;
 	private volatile boolean run;
 
 	/**
 	 * Creates a new heartbeat handler for the given socket.
 	 *
-	 * @param socketConnection the socket to montor
+	 * <p>
+	 * Uses the default timeout of <em>currently</em> 20 seconds.
+	 *
+	 * @param socketConnection the socket to monitor
 	 */
 	public HeartbeatHandler(HeartbeatWebsocket socketConnection) {
+		this(socketConnection, DEFAULT_TIMEOUT_SECONDS);
+	}
+
+	/**
+	 * Creates a new heartbeat handler for the given socket.
+	 *
+	 * @param socketConnection the socket to monitor
+	 * @param timeoutMillis the duration in millis after which the connection is dropped
+	 */
+	public HeartbeatHandler(HeartbeatWebsocket socketConnection, int timeoutMillis) {
 		this.lastTime = new AtomicReference<>(Instant.now());
 		this.run = true;
 
 		Thread thread = new Thread(() -> {
 			while (run) {
 				try {
-					Thread.sleep(TIMEOUT_SECONDS / 2 * 1000);
+					Thread.sleep(timeoutMillis / 2);
 				} catch (InterruptedException ignored) {
 				}
 				if (!run) {
 					break;
 				}
 				LOGGER.debug("Sending ping!");
+
+				// If the ping was successful, it was *SENT* successfully.
+				// This does not mean we got an answer.
+				// If sending the ping failed already, that is a deeper problem the socket should
+				// habdle - and we do not try to!
 				if (!socketConnection.sendPing()) {
 					LOGGER.warn("Ping to runner/server failed!");
 					continue;
 				}
-				long secondsSinceLastPing = Duration.between(lastTime.get(), Instant.now())
-					.getSeconds();
-				if (secondsSinceLastPing > TIMEOUT_SECONDS) {
+				long millisSinceLastPing = Duration.between(lastTime.get(), Instant.now())
+					.toMillis();
+				if (millisSinceLastPing > timeoutMillis) {
 					socketConnection.onTimeoutDetected();
 				}
 			}
