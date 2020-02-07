@@ -1,0 +1,33 @@
+# Metric is no (valid) object
+{ "test": { "metric": {} } }
+{ "test": { "metric": [] } }
+{ "test": { "metric": 20 } }
+{ "test": { "metric": "hey" } }
+{ "test": { "metric": false } }
+{ "test": { "metric": null } }
+# Invalid unit
+{ "test": { "metric": { "results": [ 1341173530.8587837 ], "unit": 20, "resultInterpretation": "LESS_IS_BETTER" } } }
+{ "test": { "metric": { "results": [ 1341173530.8587837 ], "unit": false, "resultInterpretation": "LESS_IS_BETTER" } } }
+{ "test": { "metric": { "results": [ 1341173530.8587837 ], "unit": null, "resultInterpretation": "LESS_IS_BETTER" } } }
+{ "test": { "metric": { "results": [ 1341173530.8587837 ], "unit": [], "resultInterpretation": "LESS_IS_BETTER" } } }
+{ "test": { "metric": { "results": [ 1341173530.8587837 ], "unit": {}, "resultInterpretation": "LESS_IS_BETTER" } } }
+# Invalid results
+{ "test": { "metric": { "results": null, "unit": "cats", "resultInterpretation": "LESS_IS_BETTER" } } }
+{ "test": { "metric": { "results": {}, "unit": "cats", "resultInterpretation": "LESS_IS_BETTER" } } }
+{ "test": { "metric": { "results": "hey", "unit": "cats", "resultInterpretation": "LESS_IS_BETTER" } } }
+{ "test": { "metric": { "results": 20, "unit": "cats", "resultInterpretation": "LESS_IS_BETTER" } } }
+{ "test": { "metric": { "results": false, "unit": "cats", "resultInterpretation": "LESS_IS_BETTER" } } }
+# Invalid result entries
+{ "test": { "metric": { "results": [], "unit": "cats", "resultInterpretation": "LESS_IS_BETTER" } } }
+{ "test": { "metric": { "results": [ false ], "unit": "cats", "resultInterpretation": "LESS_IS_BETTER" } } }
+{ "test": { "metric": { "results": [ null ], "unit": "cats", "resultInterpretation": "LESS_IS_BETTER" } } }
+{ "test": { "metric": { "results": [ {} ], "unit": "cats", "resultInterpretation": "LESS_IS_BETTER" } } }
+{ "test": { "metric": { "results": [ [] ], "unit": "cats", "resultInterpretation": "LESS_IS_BETTER" } } }
+{ "test": { "metric": { "results": [ "Hey" ], "unit": "cats", "resultInterpretation": "LESS_IS_BETTER" } } }
+# Invalid interpretation
+{ "test": { "metric": { "results": [ 1341173530.8587837 ], "unit": "cats", "resultInterpretation": "dsds" } } }
+{ "test": { "metric": { "results": [ 1341173530.8587837 ], "unit": "cats", "resultInterpretation": [] } } }
+{ "test": { "metric": { "results": [ 1341173530.8587837 ], "unit": "cats", "resultInterpretation": {} } } }
+{ "test": { "metric": { "results": [ 1341173530.8587837 ], "unit": "cats", "resultInterpretation": 20 } } }
+{ "test": { "metric": { "results": [ 1341173530.8587837 ], "unit": "cats", "resultInterpretation": false } } }
+{ "test": { "metric": { "results": [ 1341173530.8587837 ], "unit": "cats", "resultInterpretation": null } } }

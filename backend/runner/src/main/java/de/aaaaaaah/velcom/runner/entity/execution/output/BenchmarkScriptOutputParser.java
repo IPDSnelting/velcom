@@ -49,7 +49,8 @@ public class BenchmarkScriptOutputParser {
 		if (!root.isObject()) {
 			throw new OutputParseException("Root is no object");
 		}
-		if (root.hasNonNull("error")) {
+		// the is object check is needed to allow benchmarks named "error"
+		if (root.hasNonNull("error") && !root.get("error").isObject()) {
 			if (!root.get("error").isTextual()) {
 				throw new OutputParseException("Error is no string: " + root);
 			}
@@ -62,6 +63,10 @@ public class BenchmarkScriptOutputParser {
 		while (fields.hasNext()) {
 			Entry<String, JsonNode> field = fields.next();
 			benchmarks.add(parseBenchmark(field.getKey(), field.getValue()));
+		}
+
+		if (benchmarks.isEmpty()) {
+			throw new OutputParseException("Root element has no benchmarks");
 		}
 
 		return new BareResult(benchmarks, null);
@@ -78,6 +83,10 @@ public class BenchmarkScriptOutputParser {
 		while (fields.hasNext()) {
 			Entry<String, JsonNode> field = fields.next();
 			metrics.add(parseMetric(field.getKey(), field.getValue()));
+		}
+
+		if (metrics.isEmpty()) {
+			throw new OutputParseException("Benchmark '" + name + "' has no metric: " + node);
 		}
 
 		return new Benchmark(name, metrics);
@@ -138,6 +147,10 @@ public class BenchmarkScriptOutputParser {
 				);
 			}
 			results.add(element.asDouble());
+		}
+
+		if (results.isEmpty()) {
+			throw new OutputParseException("Expected result to have at least one value!");
 		}
 
 		return results;
