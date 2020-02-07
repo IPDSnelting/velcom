@@ -33,13 +33,13 @@ public class UpdateBenchmarkRepoState implements RunnerState {
 	public RunnerState onFileReceived(Path path, RunnerConfiguration configuration)
 		throws IOException {
 		Path tempDirectory = Files.createTempDirectory("work-temp");
+		FileHelper.deleteOnExit(tempDirectory);
+		FileHelper.deleteOnExit(path);
+
 		TarHelper.untar(path, tempDirectory);
 		configuration.getBenchmarkRepoOrganizer().copyToYourself(
 			tempDirectory, newRepoHeadHash
 		);
-
-		FileHelper.deleteOnExit(tempDirectory);
-		FileHelper.deleteOnExit(path);
 
 		FileHelper.deleteDirectoryOrFile(tempDirectory);
 		FileHelper.deleteDirectoryOrFile(path);
