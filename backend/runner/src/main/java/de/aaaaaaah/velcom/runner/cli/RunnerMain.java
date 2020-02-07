@@ -20,11 +20,30 @@ import de.aaaaaaah.velcom.runner.shared.protocol.serialization.SimpleJsonSeriali
 import de.aaaaaaah.velcom.runner.state.RunnerStateMachine;
 import java.io.IOException;
 import java.net.URI;
+import java.util.Objects;
 
 /**
  * The runner main class.
  */
 public class RunnerMain {
+
+	/**
+	 * Shuts down the JVM. Can be mocked if you want to replace it for tests.
+	 */
+	interface SystemExiter {
+
+		/**
+		 * Shut down the system.
+		 *
+		 * @param code the exit code
+		 */
+		void exit(int code);
+	}
+
+	/**
+	 * The exiter that the main method uses.
+	 */
+	static SystemExiter exiter = System::exit;
 
 	/**
 	 * Called by the vm, the main entry point.
@@ -37,13 +56,15 @@ public class RunnerMain {
 
 		if (parseResult instanceof HelpRequested) {
 			new RunnerCliSpec_Parser().printOnlineHelp(System.err);
-			System.exit(0);
+			exiter.exit(0);
+			return;
 		} else if (parseResult instanceof ParsingFailed) {
 			System.err.println("Error: " + ((ParsingFailed) parseResult).getError().getMessage());
 			System.err.println();
 			System.err.println();
 			new RunnerCliSpec_Parser().printOnlineHelp(System.err);
-			System.exit(0);
+			exiter.exit(0);
+			return;
 		}
 		RunnerCliSpec cliSpec = ((ParsingSuccess) parseResult).getResult();
 
@@ -92,7 +113,8 @@ public class RunnerMain {
 				System.err.println("\n====== RESPONSE INTERPRETATION ======");
 				System.err.println("Invalid credentials, please check them!");
 				System.err.println("I will exit now, as this error is likely not recoverable!");
-				System.exit(1);
+				exiter.exit(1);
+				return;
 			}
 		} catch (ConnectionException e) {
 			System.err.println("Initial server connection failed with '" + e.getMessage() + "'\n");
@@ -147,7 +169,8 @@ public class RunnerMain {
 		System.err.println();
 		System.err.println("And here is the full stack trace if you want to report the error:");
 		e.printStackTrace(System.err);
-		System.exit(1);
+		exiter.exit(1);
+		throw new IllegalStateException("Exiter did not exit!");
 	}
 
 	@JsonIgnoreProperties("_comment")
@@ -161,9 +184,9 @@ public class RunnerMain {
 
 		@JsonCreator
 		public RunnerConfigPojo(URI serverUrl, String runnerToken, String runnerName) {
-			this.serverUrl = serverUrl;
-			this.runnerToken = runnerToken;
-			this.runnerName = runnerName;
+			this.serverUrl = Objects.requireNonNull(serverUrl, "serverUrl can not be null!");
+			this.runnerToken = Objects.requireNonNull(runnerToken, "runnerToken can not be null!");
+			this.runnerName = Objects.requireNonNull(runnerName, "runnerName can not be null!");
 		}
 
 		public URI getServerUrl() {
