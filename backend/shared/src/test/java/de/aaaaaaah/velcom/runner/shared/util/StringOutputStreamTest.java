@@ -58,4 +58,14 @@ class StringOutputStreamTest {
 		);
 	}
 
+	@Test
+	void writePartial() {
+		String text = "Hello world";
+		outputStream.write(text.getBytes(StandardCharsets.UTF_8), 0, 6);
+		assertEquals(
+			text.substring(0, 6),
+			outputStream.getString()
+		);
+	}
+
 }
