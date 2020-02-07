@@ -37,7 +37,7 @@ import org.jooq.codegen.db.tables.records.RunRecord;
  */
 public class BenchmarkReadAccess {
 
-	private final DatabaseStorage databaseStorage;
+	protected final DatabaseStorage databaseStorage;
 
 	public BenchmarkReadAccess(DatabaseStorage databaseStorage) {
 		this.databaseStorage = Objects.requireNonNull(databaseStorage);
