@@ -2,6 +2,7 @@ package de.aaaaaaah.velcom.runner.shared.protocol.runnerbound.entities;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import de.aaaaaaah.velcom.runner.shared.protocol.SentEntity;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -40,6 +41,24 @@ public class RunnerWorkOrder implements SentEntity {
 	 */
 	public String getCommitHash() {
 		return commitHash;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) {
+			return true;
+		}
+		if (o == null || getClass() != o.getClass()) {
+			return false;
+		}
+		RunnerWorkOrder workOrder = (RunnerWorkOrder) o;
+		return Objects.equals(repoId, workOrder.repoId) &&
+			Objects.equals(commitHash, workOrder.commitHash);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(repoId, commitHash);
 	}
 
 	@Override

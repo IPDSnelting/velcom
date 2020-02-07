@@ -3,6 +3,7 @@ package de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import de.aaaaaaah.velcom.runner.shared.protocol.SentEntity;
 import de.aaaaaaah.velcom.runner.shared.protocol.runnerbound.entities.RunnerWorkOrder;
+import java.util.Objects;
 
 /**
  * Indicates that the runner has received the work binaries and the server can go on freeing them.
@@ -28,6 +29,23 @@ public class WorkReceived implements SentEntity {
 	 */
 	public RunnerWorkOrder getWorkOrder() {
 		return workOrder;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) {
+			return true;
+		}
+		if (o == null || getClass() != o.getClass()) {
+			return false;
+		}
+		WorkReceived that = (WorkReceived) o;
+		return Objects.equals(workOrder, that.workOrder);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(workOrder);
 	}
 
 	@Override
