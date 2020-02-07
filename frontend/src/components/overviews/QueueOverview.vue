@@ -7,12 +7,12 @@
       :footer-props="{ itemsPerPageOptions: itemsPerPageOptions }"
       no-data-text="No commits are currently enqueued."
     >
-      <template v-slot:default="props">
+      <template v-slot:default="{ items, pagination: { itemsPerPage, page } }">
         <v-row>
           <v-col
             cols="12"
             class="my-1 py-0"
-            v-for="(commit, index) in props.items"
+            v-for="(commit, index) in items"
             :key="commit.repoID + commit.hash"
           >
             <commit-overview-base :commit="commit">
@@ -20,7 +20,9 @@
                 <v-progress-linear indeterminate v-if="inProgress(commit)" color="accent"></v-progress-linear>
               </template>
               <template #avatar>
-                <v-list-item-avatar class="index-indicator">{{ index + 1 }}</v-list-item-avatar>
+                <v-list-item-avatar
+                  class="index-indicator"
+                >{{ (page - 1) * itemsPerPage + index + 1 }}</v-list-item-avatar>
               </template>
               <template #content v-if="getWorker(commit)">
                 <v-tooltip top>
