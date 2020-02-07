@@ -6,6 +6,7 @@ import static org.mockito.Mockito.when;
 
 import de.aaaaaaah.velcom.runner.entity.BenchmarkRepoOrganizer;
 import de.aaaaaaah.velcom.runner.entity.RunnerConfiguration;
+import de.aaaaaaah.velcom.runner.entity.WorkExecutor;
 import de.aaaaaaah.velcom.runner.protocol.SocketConnectionManager;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.RunnerInformation;
 import java.io.IOException;
@@ -19,6 +20,7 @@ class RunnerStateMachineTest {
 	private RunnerStateMachine runnerStateMachine;
 	private RunnerConfiguration configuration;
 	private SocketConnectionManager socketConnectionManager;
+	private WorkExecutor workExecutor;
 
 	@BeforeEach
 	void setUp() {
@@ -26,10 +28,12 @@ class RunnerStateMachineTest {
 
 		configuration = mock(RunnerConfiguration.class);
 		socketConnectionManager = mock(SocketConnectionManager.class);
+		workExecutor = mock(WorkExecutor.class);
 		BenchmarkRepoOrganizer benchmarkRepoOrganizer = mock(BenchmarkRepoOrganizer.class);
 
 		when(configuration.getConnectionManager()).thenReturn(socketConnectionManager);
 		when(configuration.getBenchmarkRepoOrganizer()).thenReturn(benchmarkRepoOrganizer);
+		when(configuration.getWorkExecutor()).thenReturn(workExecutor);
 
 		when(benchmarkRepoOrganizer.getHeadHash()).thenReturn(Optional.empty());
 	}
@@ -39,6 +43,13 @@ class RunnerStateMachineTest {
 		runnerStateMachine.onConnectionEstablished(configuration);
 
 		verify(socketConnectionManager).sendEntity(Matchers.isA(RunnerInformation.class));
+	}
+
+	@Test
+	void resetInitiatesReset() {
+		runnerStateMachine.onResetRequested("Hm", configuration);
+
+		verify(workExecutor).abortExecution();
 	}
 
 }
