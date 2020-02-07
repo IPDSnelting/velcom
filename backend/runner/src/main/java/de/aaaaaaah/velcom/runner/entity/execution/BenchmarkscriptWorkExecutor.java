@@ -18,7 +18,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.Future;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -122,15 +122,13 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 			);
 
 			configuration.getRunnerStateMachine().onWorkDone(results, configuration);
-		} catch (IOException | ExecutionException | InterruptedException e) {
-			LOGGER.info("Error executing some work for {}", workOrder);
-			LOGGER.info("Stacktrace:", e);
-
-			failureInformation.addSection("Stacktrace", ExceptionHelper.getStackTrace(e));
+		} catch (OutputParseException e) {
+			LOGGER.info("Benchmark script returned invalid data: '{}'", e.getMessage());
 			failureInformation.addSection("End time", Instant.now().toString());
+			failureInformation.addSection("Invalid output", e.getMessage());
 			failureInformation.addSection(
 				"Reason",
-				"Most likely an internal runner error. Rebenchmarking might solve the problem!"
+				"The Benchmark-Script returned invalid output!"
 			);
 
 			configuration.getRunnerStateMachine().onWorkDone(
@@ -142,13 +140,32 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 				),
 				configuration
 			);
-		} catch (OutputParseException e) {
-			LOGGER.info("Benchmark script returned invalid data: '{}'", e.getMessage());
+		} catch (CancellationException e) {
+			LOGGER.info("Program for order {} aborted!", workOrder);
 			failureInformation.addSection("End time", Instant.now().toString());
-			failureInformation.addSection("Invalid output", e.getMessage());
 			failureInformation.addSection(
 				"Reason",
-				"The Benchmark-Script returned invalid output!"
+				"The benchmark process was manually aborted!"
+			);
+
+			configuration.getRunnerStateMachine().onWorkDone(
+				new BenchmarkResults(
+					workOrder,
+					failureInformation.toString(),
+					startTime,
+					Instant.now()
+				),
+				configuration
+			);
+		} catch (Exception e) {
+			LOGGER.info("Error executing some work for {}", workOrder);
+			LOGGER.info("Stacktrace:", e);
+
+			failureInformation.addSection("Stacktrace", ExceptionHelper.getStackTrace(e));
+			failureInformation.addSection("End time", Instant.now().toString());
+			failureInformation.addSection(
+				"Reason",
+				"Maybe an internal runner error. Rebenchmarking might solve the problem!"
 			);
 
 			configuration.getRunnerStateMachine().onWorkDone(
