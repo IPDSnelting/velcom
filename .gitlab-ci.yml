@@ -13,6 +13,11 @@ compile-backend:
     paths:
       - "backend/backend/target/backend.jar"
       - "backend/runner/target/runner.jar"
+    reports:
+      junit:
+        - backend/backend/target/surefire-reports/TEST-*.xml
+        - backend/runner/target/surefire-reports/TEST-*.xml
+        - backend/shared/target/surefire-reports/TEST-*.xml
 
   # Cache maven deps
   cache:
