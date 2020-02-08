@@ -7,6 +7,26 @@
       :footer-props="{ itemsPerPageOptions: itemsPerPageOptions }"
       no-data-text="No commits are currently enqueued."
     >
+      <template #header v-if="isAdmin">
+        <v-row>
+          <v-spacer></v-spacer>
+          <v-col cols="auto">
+            <v-tooltip left>
+              <template #activator="{ on }">
+                <v-btn
+                  v-on="on"
+                  color="warning"
+                  text
+                  outlined
+                  @click="cancelAllFetched()"
+                >Cancel all</v-btn>
+              </template>
+              Cancels
+              <strong>all</strong> tasks you can see in the queue.
+            </v-tooltip>
+          </v-col>
+        </v-row>
+      </template>
       <template v-slot:default="{ items, pagination: { itemsPerPage, page } }">
         <v-row>
           <v-col
@@ -36,7 +56,7 @@
                   >{{ getWorker(commit).osData }}</span>
                 </v-tooltip>
               </template>
-              <template #actions>
+              <template #actions v-if="isAdmin">
                 <v-btn icon v-if="!inProgress(commit)" @click="liftToFront(commit, $event)">
                   <v-icon class="rocket">{{ liftToFrontIcon }}</v-icon>
                 </v-btn>
@@ -61,6 +81,7 @@ import { Commit, Worker } from '@/store/types'
 import { mdiRocket, mdiDelete } from '@mdi/js'
 import { formatDateUTC, formatDate } from '../../util/TimeUtil'
 import CommitOverviewBase from './CommitOverviewBase.vue'
+import { extractErrorMessage } from '../../util/ErrorUtils'
 
 @Component({
   components: {
@@ -85,6 +106,10 @@ export default class QueueOverview extends Vue {
 
   private inProgress(commit: Commit) {
     return vxm.queueModule.openTasks.indexOf(commit) < 0
+  }
+
+  private get isAdmin() {
+    return vxm.userModule.isAdmin
   }
 
   private liftToFront(commit: Commit, event: Event) {
@@ -172,7 +197,7 @@ export default class QueueOverview extends Vue {
   }
 
   private deleteCommit(commit: Commit) {
-    vxm.queueModule.dispatchDeleteOpenTask(commit)
+    vxm.queueModule.dispatchDeleteOpenTask({ commit: commit })
   }
 
   private getWorker(commit: Commit): Worker | undefined {
@@ -183,6 +208,40 @@ export default class QueueOverview extends Vue {
           it.currentTask!.repoID === commit.repoID &&
           it.currentTask!.hash === commit.hash
       )
+  }
+
+  private cancelAllFetched() {
+    if (!window.confirm('Do you really want to empty the queue?')) {
+      return
+    }
+
+    this.$globalSnackbar.setLoading('cancel-queue', 2)
+    Promise.all(
+      vxm.queueModule.openTasks.map(it => {
+        return vxm.queueModule.dispatchDeleteOpenTask({
+          commit: it,
+          suppressRefetch: true,
+          suppressSnackbar: true
+        })
+      })
+    )
+      .then(() => {
+        this.$globalSnackbar.setSuccess(
+          'cancel-queue',
+          'Cancelled all open tasks!',
+          2
+        )
+      })
+      .catch(error => {
+        this.$globalSnackbar.setError(
+          'cancel-queue',
+          extractErrorMessage(error),
+          2
+        )
+      })
+      .finally(() => {
+        vxm.queueModule.fetchQueue({ hideFromSnackbar: true })
+      })
   }
 
   created() {

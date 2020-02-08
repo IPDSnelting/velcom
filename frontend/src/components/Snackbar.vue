@@ -21,33 +21,42 @@ export default class Snackbar extends Vue implements ISnackbar {
   private timeout: number = 15 * 1000 // 15 seconds
   private color: Color = 'error'
   private loading: boolean = false
+  private currentPriority: number = 1
 
-  setError(tag: string, error: string) {
-    this.displayNormalText(this.appendTag(error, `'${tag}'`, ' for '), 'error')
-  }
-
-  setSuccess(tag: string, message: string) {
+  setError(tag: string, error: string, priority?: number) {
     this.displayNormalText(
-      this.appendTag(message, `(${tag})`),
-      'success',
-      2 * 1000
+      this.appendTag(error, `'${tag}'`, ' for '),
+      'error',
+      15 * 1000,
+      priority
     )
   }
 
-  setLoading(tag: string) {
+  setSuccess(tag: string, message: string, priority?: number) {
     this.displayNormalText(
-      this.appendTag('Please stand by, loading', `'${tag}'`) + '...',
+      this.appendTag(message, `(${tag})`),
+      'success',
+      2 * 1000,
+      priority
+    )
+  }
+
+  setLoading(tag: string, priority?: number) {
+    this.displayNormalText(
+      this.appendTag('Please stand by, processing', `'${tag}'`) + '...',
       'info',
-      60 * 60 * 1000
+      60 * 60 * 1000,
+      priority
     )
     this.loading = true
   }
 
-  finishedLoading(tag: string) {
+  finishedLoading(tag: string, priority?: number) {
     this.displayNormalText(
       this.appendTag('Success', `'${tag}'`, ' for ') + '!',
       'success',
-      2 * 1000
+      2 * 1000,
+      priority
     )
   }
 
@@ -61,8 +70,15 @@ export default class Snackbar extends Vue implements ISnackbar {
   private displayNormalText(
     text: string,
     color: Color,
-    timeout: number = 15 * 1000
+    timeout: number,
+    priority: number = 1
   ) {
+    if (this.currentPriority > priority && this.displaySnackbar) {
+      return
+    }
+
+    this.currentPriority = priority
+
     this.timeout = timeout
     this.text = text
     this.color = color
