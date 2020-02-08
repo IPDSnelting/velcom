@@ -5,6 +5,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -150,7 +151,7 @@ class WebsocketListenerTest {
 
 		websocketListener.sendPing();
 
-		verify(socket).sendPing(any());
+		verify(socket, atLeastOnce()).sendPing(any());
 	}
 
 	@Test
@@ -163,8 +164,9 @@ class WebsocketListenerTest {
 
 		websocketListener.disconnect();
 
-		verify(socket).sendClose(eq(StatusCodeMappings.CLIENT_ORDERLY_DISCONNECT), anyString());
-		verify(socket).abort();
+		verify(socket, atLeastOnce())
+			.sendClose(eq(StatusCodeMappings.CLIENT_ORDERLY_DISCONNECT), anyString());
+		verify(socket, atLeastOnce()).abort();
 	}
 
 	@Test
