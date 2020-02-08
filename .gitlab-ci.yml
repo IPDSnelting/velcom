@@ -18,7 +18,7 @@ compile-backend:
         - backend/backend/target/surefire-reports/TEST-*.xml
         - backend/runner/target/surefire-reports/TEST-*.xml
         - backend/shared/target/surefire-reports/TEST-*.xml
-  coverage: "/Total[^%]+?(\d+)%/"
+  coverage: "/Total[^%]+?(\\d+)%/"
   # Cache maven deps
   cache:
     key: "backend_cache"
