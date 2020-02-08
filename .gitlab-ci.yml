@@ -32,6 +32,7 @@ compile-backend:
     - apt update
     - apt install make
     - make backend
+    - cat backend/aggregator/target/site/jacoco-aggregate/index.html | grep -oP 'Total[^%]+?(\d+)%'
   tags:
     - keep
 
