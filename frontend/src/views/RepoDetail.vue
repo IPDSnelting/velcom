@@ -7,13 +7,14 @@
     </v-row>
     <v-row align="baseline" justify="center">
       <v-col>
-        <detail-graph
-          :benchmark="selectedBenchmark"
-          :metric="selectedMetric"
-          :amount="Number.parseInt(amount)"
-          :beginYAtZero="this.yScaleBeginsAtZero"
-          @selectionChanged="updateSelection"
-        ></detail-graph>
+        <v-card>
+          <detail-graph
+            :measurement="selectedMeasurement"
+            :amount="Number.parseInt(amount)"
+            :beginYAtZero="this.yScaleBeginsAtZero"
+            @selectionChanged="updateSelection"
+          ></detail-graph>
+        </v-card>
       </v-col>
     </v-row>
     <v-row align="baseline" justify="center">
@@ -111,7 +112,7 @@ import { Watch } from 'vue-property-decorator'
 import { vxm } from '../store/index'
 import RepoBaseInformation from '@/components/repodetail/RepoBaseInformation.vue'
 import RepoCommitOverview from '@/components/repodetail/RepoCommitOverview.vue'
-import DetailGraph from '@/components/graphs/DetailGraph.vue'
+import NewDetailGraph from '@/components/graphs/NewDetailGraph.vue'
 import { Route, RawLocation } from 'vue-router'
 import { Dictionary } from 'vue-router/types/router'
 
@@ -119,7 +120,7 @@ import { Dictionary } from 'vue-router/types/router'
   components: {
     'repo-base-information': RepoBaseInformation,
     'repo-commit-overview': RepoCommitOverview,
-    'detail-graph': DetailGraph
+    'detail-graph': NewDetailGraph
   }
 })
 export default class RepoDetail extends Vue {
@@ -130,7 +131,7 @@ export default class RepoDetail extends Vue {
     | 'begin y-Scale at zero'
     | 'begin y-Scale at minimum Value' = 'begin y-Scale at minimum Value'
 
-  private get selectedBenchmark() {
+  private get selectedBenchmark(): string {
     return vxm.repoDetailModule.selectedBenchmark
   }
 
@@ -138,12 +139,16 @@ export default class RepoDetail extends Vue {
     vxm.repoDetailModule.selectedBenchmark = selectedBenchmark
   }
 
-  private get selectedMetric() {
+  private get selectedMetric(): string {
     return vxm.repoDetailModule.selectedMetric
   }
 
   private set selectedMetric(selectedMetric: string) {
     vxm.repoDetailModule.selectedMetric = selectedMetric
+  }
+
+  private get selectedMeasurement(): MeasurementID {
+    return new MeasurementID(this.selectedBenchmark, this.selectedMetric)
   }
 
   private get amount() {
