@@ -68,7 +68,7 @@ export default class NewDetailGraph extends Vue {
   // anything related with getting values
 
   private get datapoints(): CommitInfo[] {
-    return vxm.repoDetailModule.repoHistory
+    return vxm.repoDetailModule.repoHistory.reverse()
   }
 
   // prettier-ignore
@@ -130,8 +130,8 @@ export default class NewDetailGraph extends Vue {
   private get xScale(): d3.ScaleLinear<number, number> {
     return d3
       .scaleLinear()
-      .domain([0, this.amount])
-      .range([this.innerWidth, 0])
+      .domain([this.amount, 0])
+      .range([0, this.innerWidth])
   }
 
   private get yScale(): d3.ScaleLinear<number, number> {
@@ -145,7 +145,8 @@ export default class NewDetailGraph extends Vue {
 
   private x(comparison: CommitComparison): number {
     return this.xScale(
-      this.datapoints.findIndex(it => it.comparison === comparison)
+      this.datapoints.length -
+        this.datapoints.findIndex(it => it.comparison === comparison)
     )
   }
   private y(comparison: CommitComparison): number {
@@ -239,33 +240,42 @@ export default class NewDetailGraph extends Vue {
     }
 
     let datapoints: d3.Selection<
-      SVGCircleElement,
+      SVGPathElement,
       CommitInfo,
       d3.BaseType,
       unknown
     > = d3
       .select('#dataLayer')
-      .selectAll<SVGCircleElement, unknown>('.datapoint')
+      .selectAll<SVGPathElement, unknown>('.datapoint')
       .data(this.datapoints, keyFn)
 
     let newDatapoints = datapoints
       .enter()
-      .append('circle')
+      .append('path')
       .attr('class', 'datapoint')
       .merge(datapoints)
       .transition()
       .duration(1000)
       .delay(100)
-      .attr('fill', (d: CommitInfo) => this.datapointColor(d.comparison))
-      .attr('stroke', (d: CommitInfo) => this.strokeColor(d.comparison))
-      .attr('stroke-width', 2)
-      .attr('r', 4)
-      .attr('cx', (d: CommitInfo) => {
-        return this.x(d.comparison)
-      })
-      .attr('cy', (d: CommitInfo) => {
-        return this.y(d.comparison)
-      })
+      .attr(
+        'd',
+        d3
+          .symbol()
+          .type((d: CommitInfo) => this.datapointSymbol(d))
+          .size((d: CommitInfo) => this.datapointSize(d))
+      )
+      .attr(
+        'transform',
+        (d: CommitInfo) =>
+          'translate(' +
+          this.x(d.comparison) +
+          ', ' +
+          this.y(d.comparison) +
+          ') rotate(-45)'
+      )
+      .attr('fill', (d: CommitInfo) => this.datapointColor(d))
+      .attr('stroke', (d: CommitInfo) => this.strokeColor(d))
+      .attr('stroke-width', (d: CommitInfo) => this.strokeWidth(d))
       .attr('opacity', 1)
 
     datapoints
@@ -281,6 +291,74 @@ export default class NewDetailGraph extends Vue {
       .on('mouseover', this.mouseover)
       .on('mousemove', this.mousemove)
       .on('mouseleave', this.mouseleave)
+      .on('click', (d: any) => {
+        this.$router.push({
+          name: 'commit-detail',
+          params: { repoID: this.selectedRepo, hash: d.commit.hash }
+        })
+      })
+  }
+
+  datapointSymbol(d: CommitInfo): d3.SymbolType {
+    let wantedMeasurement = this.wantedMeasurementForDatapoint(d.comparison)
+    if (wantedMeasurement && !wantedMeasurement.successful) {
+      return d3.symbolCross
+    }
+    return d3.symbolCircle
+  }
+
+  datapointSize(d: CommitInfo): number {
+    let wantedMeasurement = this.wantedMeasurementForDatapoint(d.comparison)
+    if (wantedMeasurement && !wantedMeasurement.successful) {
+      return 80
+    }
+    return 50
+  }
+
+  datapointColor(d: CommitInfo): string {
+    let wantedMeasurement = this.wantedMeasurementForDatapoint(d.comparison)
+    if (wantedMeasurement && wantedMeasurement.successful) {
+      return this.colorById(this.selectedRepo)
+    } else if (wantedMeasurement) {
+      return 'grey'
+    }
+    return 'white'
+  }
+
+  strokeColor(d: CommitInfo): string {
+    let wantedMeasurement = this.wantedMeasurementForDatapoint(d.comparison)
+    if (wantedMeasurement && wantedMeasurement.successful) {
+      return this.colorById(this.selectedRepo)
+    } else if (wantedMeasurement) {
+      return 'grey'
+    }
+    return 'grey'
+  }
+
+  private strokeWidth(d: CommitInfo): number {
+    let wantedMeasurement = this.wantedMeasurementForDatapoint(d.comparison)
+    if (wantedMeasurement && !wantedMeasurement.successful) {
+      return 1
+    }
+    return 2
+  }
+
+  private get colorById(): (repoID: string) => string {
+    return (repoID: string) => {
+      let index: number = vxm.repoModule.repoIndex(repoID)
+      return vxm.colorModule.colorByIndex(index)
+    }
+  }
+
+  get line() {
+    return d3
+      .line<CommitInfo>()
+      .x((datapoint: CommitInfo) => {
+        return this.x(datapoint.comparison)
+      })
+      .y((datapoint: CommitInfo) => {
+        return this.y(datapoint.comparison)
+      })
   }
 
   mouseover(d: any) {
@@ -332,6 +410,27 @@ export default class NewDetailGraph extends Vue {
            </tr>
         </table>
       `
+    } else if (d.commit.authorDate && wantedMeasurement) {
+      htmlMessage = `
+        <table class="tooltip-table">
+          <tr>
+            <td>Commit</td>
+            <td>${d.commit.hash}</td>
+          </tr>
+          <tr>
+            <td>Author</td>
+            <td>${d.commit.author}</td>
+          </tr>
+          <tr>
+            <td>Date</td>
+            <td>${formatDateUTC(d.commit.authorDate)}</td>
+          </tr>
+          <tr>
+            <td></td>
+            <td>This commit has not been benchmarked successfully.</td>
+          </tr>
+       </table>
+      `
     } else if (d.commit.authorDate) {
       htmlMessage = `
         <table class="tooltip-table">
@@ -348,8 +447,8 @@ export default class NewDetailGraph extends Vue {
             <td>${formatDateUTC(d.commit.authorDate)}</td>
           </tr>
           <tr>
-            <td>Exact value</td>
-            <td>This commit was not benchmarked successfully for this metric.</td>
+            <td></td>
+            <td>This commit has not been benchmarked with this metric.</td>
           </tr>
        </table>
       `
@@ -405,39 +504,6 @@ export default class NewDetailGraph extends Vue {
   }
   get selectedRepo(): string {
     return vxm.repoDetailModule.selectedRepoId
-  }
-
-  datapointColor(d: any): string {
-    let wantedMeasurement = this.wantedMeasurementForDatapoint(d)
-    if (wantedMeasurement && wantedMeasurement.successful) {
-      return this.colorById(this.selectedRepo)
-    }
-    return 'white'
-  }
-
-  strokeColor(d: any): string {
-    let wantedMeasurement = this.wantedMeasurementForDatapoint(d)
-    if (wantedMeasurement && wantedMeasurement.successful) {
-      return this.colorById(this.selectedRepo)
-    }
-    return 'grey'
-  }
-  private get colorById(): (repoID: string) => string {
-    return (repoID: string) => {
-      let index: number = vxm.repoModule.repoIndex(repoID)
-      return vxm.colorModule.colorByIndex(index)
-    }
-  }
-
-  get line() {
-    return d3
-      .line<CommitInfo>()
-      .x((datapoint: CommitInfo) => {
-        return this.x(datapoint.comparison)
-      })
-      .y((datapoint: CommitInfo) => {
-        return this.y(datapoint.comparison)
-      })
   }
 
   // updating
@@ -558,8 +624,6 @@ export default class NewDetailGraph extends Vue {
   text-align: center;
   font-family: 'Roboto';
   margin: 0;
-  left: -8px;
-  top: 7px;
 }
 
 .tooltip:after {
