@@ -122,7 +122,7 @@ export class QueueStore extends VxModule {
         }
       })
       .then(() => {
-        this.deleteOpenTask(payload)
+        this.fetchQueue()
       })
   }
 
