@@ -57,6 +57,11 @@
         <groupId>org.apache.maven.plugins</groupId>
       </plugin>
 
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+      </plugin>
+
       <!-- FLYWAY -->
       <plugin>
         <artifactId>flyway-maven-plugin</artifactId>

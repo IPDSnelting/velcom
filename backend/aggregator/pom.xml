@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <parent>
+    <artifactId>velcom</artifactId>
+    <groupId>de.aaaaaaah</groupId>
+    <version>0.0</version>
+  </parent>
+  <modelVersion>4.0.0</modelVersion>
+
+  <artifactId>aggregator</artifactId>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
+
+  <dependencies>
+    <dependency>
+      <groupId>de.aaaaaaah</groupId>
+      <artifactId>shared</artifactId>
+      <version>0.0</version>
+    </dependency>
+    <dependency>
+      <groupId>de.aaaaaaah</groupId>
+      <artifactId>runner</artifactId>
+      <version>0.0</version>
+    </dependency>
+    <dependency>
+      <groupId>de.aaaaaaah</groupId>
+      <artifactId>backend</artifactId>
+      <version>0.0</version>
+    </dependency>
+  </dependencies>
+
+</project>
