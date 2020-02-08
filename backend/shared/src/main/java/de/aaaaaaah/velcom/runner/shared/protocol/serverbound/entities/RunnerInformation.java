@@ -3,6 +3,7 @@ package de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import de.aaaaaaah.velcom.runner.shared.RunnerStatusEnum;
 import de.aaaaaaah.velcom.runner.shared.protocol.SentEntity;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -90,6 +91,29 @@ public class RunnerInformation implements SentEntity {
 	 */
 	public Optional<String> getCurrentBenchmarkRepoHash() {
 		return Optional.ofNullable(currentBenchmarkRepoHash);
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) {
+			return true;
+		}
+		if (o == null || getClass() != o.getClass()) {
+			return false;
+		}
+		RunnerInformation that = (RunnerInformation) o;
+		return coreCount == that.coreCount &&
+			availableMemory == that.availableMemory &&
+			Objects.equals(name, that.name) &&
+			Objects.equals(operatingSystem, that.operatingSystem) &&
+			runnerState == that.runnerState &&
+			Objects.equals(currentBenchmarkRepoHash, that.currentBenchmarkRepoHash);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(name, operatingSystem, coreCount, availableMemory, runnerState,
+			currentBenchmarkRepoHash);
 	}
 
 	@Override
