@@ -27,7 +27,7 @@ public class HeartbeatHandler {
 	 * @param socketConnection the socket to monitor
 	 */
 	public HeartbeatHandler(HeartbeatWebsocket socketConnection) {
-		this(socketConnection, DEFAULT_TIMEOUT_SECONDS);
+		this(socketConnection, DEFAULT_TIMEOUT_SECONDS * 1000);
 	}
 
 	/**
