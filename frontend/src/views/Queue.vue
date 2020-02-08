@@ -24,7 +24,7 @@
               <v-toolbar color="primary darken-1" dark>Queued commits (in planned execution order)</v-toolbar>
             </v-card-title>
             <v-card-text>
-              <v-container fluid>
+              <v-container fluid class="ma-0 pa-0">
                 <v-row align="center">
                   <queue-overview></queue-overview>
                 </v-row>
