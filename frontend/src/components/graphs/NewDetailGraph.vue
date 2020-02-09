@@ -68,7 +68,7 @@ export default class NewDetailGraph extends Vue {
   // anything related with getting values
 
   private get datapoints(): CommitInfo[] {
-    return vxm.repoDetailModule.repoHistory.reverse()
+    return vxm.repoDetailModule.repoHistory.slice().reverse()
   }
 
   // prettier-ignore
@@ -287,7 +287,7 @@ export default class NewDetailGraph extends Vue {
 
     let tooltip = d3
       .selectAll('.datapoint')
-      .data(this.datapoints)
+      .data(this.datapoints, keyFn)
       .on('mouseover', this.mouseover)
       .on('mousemove', this.mousemove)
       .on('mouseleave', this.mouseleave)
