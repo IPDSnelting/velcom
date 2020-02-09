@@ -291,36 +291,38 @@ export default class NewDetailGraph extends Vue {
       .on('mouseover', this.mouseover)
       .on('mousemove', this.mousemove)
       .on('mouseleave', this.mouseleave)
-      .on('click', (d: any) => {
+      .on('click', (d: CommitInfo) => {
         this.$router.push({
           name: 'commit-detail',
           params: { repoID: this.selectedRepo, hash: d.commit.hash }
         })
       })
+      .on('contextmenu', (d: CommitInfo) => {
+        d3.event.preventDefault()
+        this.openDatapointMenu(d)
+      })
   }
 
   datapointSymbol(d: CommitInfo): d3.SymbolType {
-    let wantedMeasurement = this.wantedMeasurementForDatapoint(d.comparison)
-    if (wantedMeasurement && !wantedMeasurement.successful) {
+    if (this.benchmarkFailed(d)) {
       return d3.symbolCross
     }
     return d3.symbolCircle
   }
 
   datapointSize(d: CommitInfo): number {
-    let wantedMeasurement = this.wantedMeasurementForDatapoint(d.comparison)
-    if (wantedMeasurement && !wantedMeasurement.successful) {
-      return 80
+    if (this.benchmarkFailed(d)) {
+      return 100
     }
     return 50
   }
 
   datapointColor(d: CommitInfo): string {
     let wantedMeasurement = this.wantedMeasurementForDatapoint(d.comparison)
-    if (wantedMeasurement && wantedMeasurement.successful) {
-      return this.colorById(this.selectedRepo)
-    } else if (wantedMeasurement) {
+    if (this.benchmarkFailed(d)) {
       return 'grey'
+    } else if (wantedMeasurement) {
+      return this.colorById(this.selectedRepo)
     }
     return 'white'
   }
@@ -329,18 +331,22 @@ export default class NewDetailGraph extends Vue {
     let wantedMeasurement = this.wantedMeasurementForDatapoint(d.comparison)
     if (wantedMeasurement && wantedMeasurement.successful) {
       return this.colorById(this.selectedRepo)
-    } else if (wantedMeasurement) {
-      return 'grey'
     }
     return 'grey'
   }
 
   private strokeWidth(d: CommitInfo): number {
-    let wantedMeasurement = this.wantedMeasurementForDatapoint(d.comparison)
-    if (wantedMeasurement && !wantedMeasurement.successful) {
-      return 1
+    if (this.benchmarkFailed(d)) {
+      return 0
     }
     return 2
+  }
+
+  private benchmarkFailed(d: CommitInfo): boolean {
+    let wantedMeasurement = this.wantedMeasurementForDatapoint(d.comparison)
+    let runFailed: boolean =
+      !!d.comparison.second && !!d.comparison.second.errorMessage
+    return runFailed || (!!wantedMeasurement && !wantedMeasurement.successful)
   }
 
   private get colorById(): (repoID: string) => string {
@@ -410,7 +416,7 @@ export default class NewDetailGraph extends Vue {
            </tr>
         </table>
       `
-    } else if (d.commit.authorDate && wantedMeasurement) {
+    } else if (d.commit.authorDate && this.benchmarkFailed(d)) {
       htmlMessage = `
         <table class="tooltip-table">
           <tr>
@@ -505,6 +511,8 @@ export default class NewDetailGraph extends Vue {
   get selectedRepo(): string {
     return vxm.repoDetailModule.selectedRepoId
   }
+
+  openDatapointMenu(datapoint: CommitInfo) {}
 
   // updating
 
