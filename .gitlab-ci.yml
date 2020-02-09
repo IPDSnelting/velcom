@@ -61,6 +61,8 @@ compile-frontend:
 deploy:
   stage: deploy
   environment: "Keep"
+  only:
+    - master
   script:
     ##
     ## Create the SSH directory and give it the right permissions
