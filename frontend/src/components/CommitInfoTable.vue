@@ -34,7 +34,9 @@
         <span v-else>-</span>
       </template>
       <template #item.change=" { item, value }">
-        <span :style="{ color: changeColor(item, value) }">{{ formatNumber(value) }}</span>
+        <span
+          :style="{ color: changeColor(item, value) }"
+        >{{ value === '-' ? '-': formatNumber(value) }}</span>
       </template>
       <template #item.compareChange=" { item, value }">
         <span :style="{ color: changeColor(item, value) }">{{ formatNumber(value) }}</span>
@@ -159,7 +161,7 @@ export default class CommitInfoTable extends Vue {
 
     if (measurement) {
       if (measurement.value != null) {
-        return this.numberFormat.format(measurement.value)
+        return this.formatNumber(measurement.value)
       } else {
         return measurement.errorMessage
       }
@@ -181,7 +183,7 @@ export default class CommitInfoTable extends Vue {
 
     if (measurement) {
       if (measurement.value != null) {
-        return this.numberFormat.format(measurement.value)
+        return this.formatNumber(measurement.value)
       } else {
         return measurement.errorMessage
       }
@@ -224,7 +226,7 @@ export default class CommitInfoTable extends Vue {
     }
   }
 
-  private findChange(measId: MeasurementID) {
+  private findChange(measId: MeasurementID): number | '-' {
     // 1.) Find measurement in first run
     if (
       this.comparison.first == null ||
@@ -258,7 +260,7 @@ export default class CommitInfoTable extends Vue {
     }
 
     // 3.) Return difference
-    return this.numberFormat.format(secondMeas.value - firstMeas.value)
+    return secondMeas.value - firstMeas.value
   }
 
   private formatNumber(number: number): string {
@@ -277,7 +279,7 @@ export default class CommitInfoTable extends Vue {
   }
 
   private changeColor(item: Measurement, change: number): string {
-    if (Math.abs(change) === 0) {
+    if (Math.abs(change) === 0 || isNaN(change)) {
       return ''
     }
 
