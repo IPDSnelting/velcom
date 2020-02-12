@@ -48,6 +48,25 @@
         </v-card>
       </v-col>
     </v-row>
+    <v-row v-if="!hasRun">
+      <v-col>
+        <v-card>
+          <v-card-title>
+            <v-toolbar dense dark color="primary">
+              <v-toolbar-title>Benchmark status: Sad times ahead</v-toolbar-title>
+            </v-toolbar>
+          </v-card-title>
+          <v-card-text class="text-center subtitle-1">
+            Hey, this commit was
+            <span class="font-weight-bold">never benchmarked</span>. Maybe it is already in the queue, but if it is not, you can place it there.
+            <br />To do so you need
+            <span class="font-weight-bold">admin privilegies</span> (or a way to ask your friendly admin!)
+            <br />Then just click the
+            <span class="font-weight-bold">icon next to the Repo name</span> and id that says "benchmark" when you hover over it :)
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
   </v-container>
 </template>
 
