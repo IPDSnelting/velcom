@@ -371,7 +371,7 @@ export default class NewDetailGraph extends Vue {
     d3.select('#tooltip')
       .transition()
       .duration(300)
-      .style('opacity', 0.8)
+      .style('opacity', 1)
       .style('visibility', 'visible')
   }
   private mousemove(d: { commit: Commit; comparison: CommitComparison }) {
@@ -413,7 +413,7 @@ export default class NewDetailGraph extends Vue {
           <tr>
             <td>Commit summary</td>
             <td>${d.commit.summary!.trim()}</td>
-           </tr>
+          </tr>
         </table>
       `
     } else if (d.commit.authorDate && this.benchmarkFailed(d)) {
@@ -432,8 +432,11 @@ export default class NewDetailGraph extends Vue {
             <td>${formatDateUTC(d.commit.authorDate)}</td>
           </tr>
           <tr>
-            <td></td>
-            <td>This commit has not been benchmarked successfully.</td>
+            <td>Commit summary</td>
+            <td>${d.commit.summary!.trim()}</td>
+          </tr>
+          <tr>
+            <td colspan=2>This commit has not been benchmarked successfully.</td>
           </tr>
        </table>
       `
@@ -453,8 +456,11 @@ export default class NewDetailGraph extends Vue {
             <td>${formatDateUTC(d.commit.authorDate)}</td>
           </tr>
           <tr>
-            <td></td>
-            <td>This commit has not been benchmarked with this metric.</td>
+            <td>Commit summary</td>
+            <td>${d.commit.summary!.trim()}</td>
+          </tr>
+          <tr>
+            <td colspan=2>This commit has not been benchmarked with this metric.</td>
           </tr>
        </table>
       `
@@ -622,15 +628,30 @@ export default class NewDetailGraph extends Vue {
   font-size: 13px;
 }
 
+.tooltip-table tr td {
+  padding: 2px;
+}
+
+.tooltip-table tr td:nth-child(2) {
+  font-family: monospace;
+}
+.tooltip-table tr td:first-child {
+  padding-right: 10px;
+}
+.tooltip-table tr td:only-child {
+  font-weight: bold;
+  padding-top: 1em;
+  font-size: 1.1em;
+}
+
 .tooltip {
   font-size: 10pt;
   position: absolute;
   padding: 5px;
   border-radius: 5px;
-  background-color: black;
-  color: white;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: rgba(255, 255, 255, 0.9);
   text-align: center;
-  font-family: 'Roboto';
   margin: 0;
 }
 
