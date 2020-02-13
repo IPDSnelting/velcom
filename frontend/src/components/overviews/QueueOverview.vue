@@ -158,42 +158,48 @@ export default class QueueOverview extends Vue {
         clonedElement.style.left = Math.round(offsetLeft) + 'px'
         clonedElement.classList.add('shoot-off')
 
-        setTimeout(() => {
-          let alpha = (Math.random() * Math.PI) / 4
-          if (Math.random() < 0.5) {
-            alpha *= -1
-          }
-          let rocketTilt = Math.PI / 4
-          alpha += -startAngle + rocketTilt
-
-          let direction = [Math.cos(alpha), Math.sin(alpha)]
-
-          let targetX = offsetLeft
-          let targetY = offsetTop
-
-          while (
-            targetY > 0 &&
-            targetY < window.innerHeight &&
-            targetX > 0 &&
-            targetX < window.innerWidth
-          ) {
-            targetX += direction[0]
-            targetY -= direction[1]
-          }
-
-          clonedElement.style.top = targetY + 'px'
-          clonedElement.style.left = targetX + 'px'
-          clonedElement.style.rotate = -alpha + Math.PI / 4 + 'rad'
-
-          const animationDuration = 6000
-          setTimeout(() => clonedElement.remove(), animationDuration)
-        }, 1)
+        this.flyRocket(clonedElement, startAngle, offsetLeft, offsetTop)
       })
       .finally(() => {
         srcElement.style.rotate = '0deg'
         let index = this.liftsInProgress[commit.repoID].indexOf(commit.hash)
         this.liftsInProgress[commit.repoID].splice(index, 1)
       })
+  }
+
+  private flyRocket(
+    clonedElement: HTMLElement,
+    startAngle: number,
+    rawTargetX: number,
+    rawTargetY: number
+  ) {
+    setTimeout(() => {
+      let alpha = (Math.random() * Math.PI) / 4
+      if (Math.random() < 0.5) {
+        alpha *= -1
+      }
+      let rocketTilt = Math.PI / 4
+      alpha += -startAngle + rocketTilt
+
+      let direction = [Math.cos(alpha), Math.sin(alpha)]
+
+      while (
+        rawTargetY > 0 &&
+        rawTargetY < window.innerHeight &&
+        rawTargetX > 0 &&
+        rawTargetX < window.innerWidth
+      ) {
+        rawTargetX += direction[0]
+        rawTargetY -= direction[1]
+      }
+
+      clonedElement.style.top = rawTargetY + 'px'
+      clonedElement.style.left = rawTargetX + 'px'
+      clonedElement.style.rotate = -alpha + Math.PI / 4 + 'rad'
+
+      const animationDuration = 6000
+      setTimeout(() => clonedElement.remove(), animationDuration)
+    }, 1)
   }
 
   private deleteCommit(commit: Commit) {
