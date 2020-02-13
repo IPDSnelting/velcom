@@ -201,8 +201,17 @@ export default class RepoComparison extends Vue {
     return vxm.repoComparisonModule.selectedBenchmark
   }
 
-  set selectedBenchmark(benchmark: string) {
-    vxm.repoComparisonModule.selectedBenchmark = benchmark
+  set selectedBenchmark(newBenchmark: string) {
+    if (vxm.repoComparisonModule.selectedBenchmark !== newBenchmark) {
+      let newMetrics = this.metricsForBenchmark(newBenchmark)
+      if (!newMetrics.includes(this.selectedMetric)) {
+        if (newMetrics) {
+          this.selectedMetric = newMetrics[0]
+        }
+      }
+    }
+
+    vxm.repoComparisonModule.selectedBenchmark = newBenchmark
   }
 
   get selectedMetric() {

@@ -136,6 +136,14 @@ export default class RepoDetail extends Vue {
   }
 
   private set selectedBenchmark(selectedBenchmark: string) {
+    if (vxm.repoDetailModule.selectedBenchmark !== selectedBenchmark) {
+      let newMetrics = this.metricsForBenchmark(selectedBenchmark)
+      if (!newMetrics.includes(this.selectedMetric)) {
+        if (newMetrics) {
+          this.selectedMetric = newMetrics[0]
+        }
+      }
+    }
     vxm.repoDetailModule.selectedBenchmark = selectedBenchmark
   }
 
