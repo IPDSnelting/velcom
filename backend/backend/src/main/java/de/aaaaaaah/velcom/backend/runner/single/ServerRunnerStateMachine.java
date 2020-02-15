@@ -81,7 +81,7 @@ public class ServerRunnerStateMachine {
 	 */
 	public void onWorkDone(BenchmarkResults results) {
 		runnerInformation.setResults(results);
-		markAsMyCommit(null);
+		runnerInformation.clearCurrentCommit();
 	}
 
 	/**
@@ -92,7 +92,7 @@ public class ServerRunnerStateMachine {
 	 */
 	public void resetRunner(String reason) throws IOException {
 		runnerInformation.getConnectionManager().sendEntity(new ResetOrder(reason));
-		markAsMyCommit(null);
+		runnerInformation.clearCurrentCommit();
 		switchState(new RunnerIdleState());
 	}
 

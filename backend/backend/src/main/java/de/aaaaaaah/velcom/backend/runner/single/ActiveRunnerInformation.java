@@ -191,6 +191,13 @@ public class ActiveRunnerInformation {
 		this.currentCommit = currentCommit;
 	}
 
+	/**
+	 * Clears the current commit.
+	 */
+	public void clearCurrentCommit() {
+		setCurrentCommit(null);
+	}
+
 	@Override
 	public String toString() {
 		return "ActiveRunnerInformation{" +

@@ -226,6 +226,7 @@ public class DispatcherImpl implements Dispatcher {
 			if (runner.getState() == RunnerStatusEnum.WORKING) {
 				resetRunner(runner);
 			}
+			runner.clearCurrentCommit();
 			return true;
 		}
 		return false;
@@ -365,6 +366,11 @@ public class DispatcherImpl implements Dispatcher {
 			RunnerWorkOrder workOrder = new RunnerWorkOrder(
 				commit.getRepoId().getId(), commit.getHash().getHash()
 			);
+
+			// Commit was cancelled
+			if (runner.getCurrentCommit().isEmpty()) {
+				return true;
+			}
 
 			runner.getRunnerStateMachine().startWork(
 				commit,
