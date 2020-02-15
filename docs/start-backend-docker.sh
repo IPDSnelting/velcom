@@ -11,8 +11,12 @@
 # Start nginx for routing
 nginx &
 
+cd "/home/velcom"
+
+echo "Running in $PWD"
+
 # Start our backend
-java -jar /home/velcom/velcom.jar server "$1" &
+sudo -Eu velcom $(which java) -jar /home/velcom/velcom.jar server "$1" &
 
 # Save its PID so we can relay kill signals
 JAVA_PID="$!"
