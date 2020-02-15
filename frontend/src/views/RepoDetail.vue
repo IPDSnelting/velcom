@@ -55,7 +55,7 @@
                             @blur="retrieveRuns"
                             @keyup.enter="retrieveRuns"
                             v-model="amount"
-                            :rules="[nonEmptyRunAmount, nonNegativeRunAmount, onlyNumericInput]"
+                            :rules="[nonEmptyRunAmount, nonNegativeRunAmount, onlyNumericInput, noIntegerOverflow]"
                             label="number of commits to fetch"
                             class="mr-5"
                           ></v-text-field>
@@ -65,7 +65,7 @@
                             @blur="retrieveRuns"
                             @keyup.enter="retrieveRuns"
                             v-model="skip"
-                            :rules="[nonEmptyRunAmount, nonNegativeRunAmount, onlyNumericInput]"
+                            :rules="[nonEmptyRunAmount, nonNegativeRunAmount, onlyNumericInput, noIntegerOverflow]"
                             label="number of commits to skip"
                             class="mr-5"
                           ></v-text-field>
@@ -209,6 +209,15 @@ export default class RepoDetail extends Vue {
 
   private onlyNumericInput(input: string): boolean | string {
     return !isNaN(Number(input)) ? true : 'Input must be a number!'
+  }
+
+  private noIntegerOverflow(input: string): boolean | string {
+    let value = Math.abs(Number(input))
+
+    if (value >= Math.pow(2, 31) - 1) {
+      return 'Input is too large!'
+    }
+    return true
   }
 
   private toggleYScale() {
