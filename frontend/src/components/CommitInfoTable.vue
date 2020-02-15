@@ -1,6 +1,6 @@
 <template>
   <v-container fluid>
-    <v-dialog max-width="600" v-model="showDetailErrorMessageDialog">
+    <v-dialog v-model="showDetailErrorMessageDialog">
       <v-card>
         <v-toolbar dark color="primary">
           <v-toolbar-title>Full error message</v-toolbar-title>
