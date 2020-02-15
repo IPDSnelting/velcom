@@ -87,7 +87,7 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 			if (result.getExitCode() != 0) {
 				failureInformation.addSection(
 					"Reason",
-					"The Benchmark-Script terminated with a non-zero exit code"
+					"The benchmark script terminated with a non-zero exit code"
 						+ " (" + result.getExitCode() + ")!"
 				);
 				configuration.getRunnerStateMachine().onWorkDone(
@@ -106,10 +106,10 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 
 			String error = bareResult.getError();
 			if (error != null) {
-				failureInformation.addSection("Benchmark-Script error", error);
+				failureInformation.addSection("Benchmark script error", error);
 				failureInformation.addSection(
 					"Reason",
-					"The Benchmark-Script terminated successfully but returned an error message!"
+					"The benchmark script terminated successfully but returned an error message!"
 				);
 				error = failureInformation.toString();
 			}
@@ -128,7 +128,7 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 			failureInformation.addSection("Invalid output", e.getMessage());
 			failureInformation.addSection(
 				"Reason",
-				"The Benchmark-Script returned invalid output!"
+				"The benchmark script returned invalid output!"
 			);
 
 			configuration.getRunnerStateMachine().onWorkDone(
