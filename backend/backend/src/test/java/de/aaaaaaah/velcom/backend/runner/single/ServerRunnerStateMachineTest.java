@@ -53,7 +53,7 @@ class ServerRunnerStateMachineTest {
 		stateMachine.onWorkDone(results);
 
 		verify(runnerInformation).setResults(eq(results));
-		verify(runnerInformation).setCurrentCommit(eq(null));
+		verify(runnerInformation).clearCurrentCommit();
 	}
 
 	@Test
@@ -61,7 +61,7 @@ class ServerRunnerStateMachineTest {
 		stateMachine.resetRunner("Test");
 
 		verify(connectionManager).sendEntity(isA(ResetOrder.class));
-		verify(runnerInformation).setCurrentCommit(eq(null));
+		verify(runnerInformation).clearCurrentCommit();
 	}
 
 	@Test

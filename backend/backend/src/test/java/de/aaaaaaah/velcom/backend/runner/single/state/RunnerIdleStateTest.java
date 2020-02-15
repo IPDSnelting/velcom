@@ -6,6 +6,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import de.aaaaaaah.velcom.backend.access.commit.Commit;
 import de.aaaaaaah.velcom.backend.runner.single.ActiveRunnerInformation;
 import de.aaaaaaah.velcom.backend.runner.single.RunnerConnectionManager;
 import de.aaaaaaah.velcom.backend.runner.single.ServerRunnerStateMachine;
@@ -14,6 +15,7 @@ import de.aaaaaaah.velcom.runner.shared.protocol.runnerbound.entities.RunnerWork
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkResults;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.WorkReceived;
 import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,6 +38,7 @@ class RunnerIdleStateTest {
 	@Test
 	void switchesToExecutingWhenWorkReceived() {
 		WorkReceived workReceived = new WorkReceived(new RunnerWorkOrder(UUID.randomUUID(), "hey"));
+		when(runnerInformation.getCurrentCommit()).thenReturn(Optional.of(mock(Commit.class)));
 
 		RunnerState newState = idleState.onMessage(
 			WorkReceived.class.getSimpleName(),
