@@ -1,6 +1,6 @@
-package de.aaaaaaah.velcom.backend.access.repo.archive;
+package de.aaaaaaah.velcom.backend.newaccess.archive;
 
-import de.aaaaaaah.velcom.backend.access.commit.CommitHash;
+import de.aaaaaaah.velcom.backend.newaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.storage.repo.GuickCloning;
 import de.aaaaaaah.velcom.backend.storage.repo.GuickCloning.CloneException;
 import de.aaaaaaah.velcom.backend.storage.repo.RepoStorage;
@@ -31,7 +31,8 @@ import org.slf4j.LoggerFactory;
  */
 public class Archiver {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(Archiver.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(
+		Archiver.class);
 	private static final Path ARCHIVES_ROOT_DIR = Paths.get("data/archives/");
 
 	private final RepoStorage repoStorage;

@@ -1,9 +1,13 @@
 package de.aaaaaaah.velcom.backend.restapi.jsonobjects;
 
-import de.aaaaaaah.velcom.backend.access.repo.Branch;
-import de.aaaaaaah.velcom.backend.access.repo.BranchName;
-import de.aaaaaaah.velcom.backend.access.repo.Repo;
+import de.aaaaaaah.velcom.backend.newaccess.BenchmarkReadAccess;
+import de.aaaaaaah.velcom.backend.newaccess.RepoReadAccess;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Branch;
+import de.aaaaaaah.velcom.backend.newaccess.entities.BranchName;
+import de.aaaaaaah.velcom.backend.newaccess.entities.MeasurementName;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Repo;
 import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -20,27 +24,28 @@ public class JsonRepo {
 	private final String remoteUrl;
 	private final boolean hasToken;
 
-	public JsonRepo(Repo repo) {
-		id = repo.getId().getId();
-		name = repo.getName();
+	public JsonRepo(Repo repo, Collection<Branch> branches,
+		Collection<MeasurementName> measurements, boolean hasToken) {
 
-		branches = repo.getBranches().stream()
+		this.id = repo.getRepoId().getId();
+		this.name = repo.getName();
+
+		this.branches = branches.stream()
 			.map(Branch::getName)
 			.map(BranchName::getName)
 			.collect(Collectors.toUnmodifiableList());
 
-		trackedBranches = repo.getBranches().stream()
-			.filter(Branch::isTracked)
+		this.trackedBranches = repo.getTrackedBranches().stream()
 			.map(Branch::getName)
 			.map(BranchName::getName)
 			.collect(Collectors.toUnmodifiableList());
 
-		measurements = repo.getAvailableMeasurements().stream()
+		this.measurements = measurements.stream()
 			.map(JsonMeasurementName::new)
 			.collect(Collectors.toUnmodifiableList());
 
-		remoteUrl = repo.getRemoteUrl().getUrl();
-		hasToken = repo.hasToken();
+		this.remoteUrl = repo.getRemoteUrl().getUrl();
+		this.hasToken = hasToken;
 	}
 
 	public UUID getId() {

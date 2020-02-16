@@ -3,8 +3,8 @@ package de.aaaaaaah.velcom.backend.newaccess;
 import static org.jooq.codegen.db.tables.Repository.REPOSITORY;
 import static org.jooq.codegen.db.tables.TrackedBranch.TRACKED_BRANCH;
 
-import de.aaaaaaah.velcom.backend.access.repo.archive.ArchiveException;
-import de.aaaaaaah.velcom.backend.access.repo.archive.Archiver;
+import de.aaaaaaah.velcom.backend.newaccess.archive.ArchiveException;
+import de.aaaaaaah.velcom.backend.newaccess.archive.Archiver;
 import de.aaaaaaah.velcom.backend.newaccess.entities.Branch;
 import de.aaaaaaah.velcom.backend.newaccess.entities.BranchName;
 import de.aaaaaaah.velcom.backend.newaccess.entities.CommitHash;
@@ -327,8 +327,7 @@ public class RepoWriteAccess extends RepoReadAccess {
 		OutputStream outputStream) throws ArchiveException {
 
 		String dirName = repoId.getDirectoryName();
-		// TODO: Uncomment once archiver accepts new commit hash class
-		//archiver.archive(dirName, commit, outputStream, false);
+		archiver.archive(dirName, commitHash, outputStream, false);
 	}
 
 	/**
@@ -341,8 +340,7 @@ public class RepoWriteAccess extends RepoReadAccess {
 	 */
 	public void streamBenchmarkRepoArchive(OutputStream outputStream) throws ArchiveException {
 		CommitHash commitHash = getLatestBenchmarkRepoHash();
-		// TODO: Uncomment once archiver accepts new commit hash class
-		//archiver.archive(this.benchRepoDirName, commitHash, outputStream, true);
+		archiver.archive(this.benchRepoDirName, commitHash, outputStream, true);
 	}
 
 }

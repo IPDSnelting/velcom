@@ -1,6 +1,6 @@
 package de.aaaaaaah.velcom.backend.restapi.jsonobjects;
 
-import de.aaaaaaah.velcom.backend.access.benchmark.MeasurementName;
+import de.aaaaaaah.velcom.backend.newaccess.entities.MeasurementName;
 
 /**
  * A helper class for serialization representing a measurement name.

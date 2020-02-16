@@ -1,6 +1,6 @@
 package de.aaaaaaah.velcom.backend.restapi;
 
-import de.aaaaaaah.velcom.backend.access.repo.RepoId;
+import de.aaaaaaah.velcom.backend.newaccess.entities.RepoId;
 import java.security.Principal;
 import java.util.Optional;
 import javax.annotation.Nullable;

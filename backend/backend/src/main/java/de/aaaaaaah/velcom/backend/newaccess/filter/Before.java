@@ -1,15 +1,15 @@
-package de.aaaaaaah.velcom.backend.access.commit.filter;
+package de.aaaaaaah.velcom.backend.newaccess.filter;
 
 import java.time.Instant;
 import org.eclipse.jgit.errors.StopWalkException;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 
-class After extends AuthorTimeRevFilter {
+class Before extends AuthorTimeRevFilter {
 
 	private final Instant time;
 
-	public After(Instant time) {
+	public Before(Instant time) {
 		this.time = time;
 	}
 
@@ -17,6 +17,6 @@ class After extends AuthorTimeRevFilter {
 	public boolean include(RevWalk walker, RevCommit cmit)
 		throws StopWalkException {
 
-		return cmit.getAuthorIdent().getWhen().toInstant().isAfter(time);
+		return cmit.getAuthorIdent().getWhen().toInstant().isBefore(time);
 	}
 }

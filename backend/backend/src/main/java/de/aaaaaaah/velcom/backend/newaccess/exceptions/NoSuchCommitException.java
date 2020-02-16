@@ -1,6 +1,7 @@
-package de.aaaaaaah.velcom.backend.access.commit;
+package de.aaaaaaah.velcom.backend.newaccess.exceptions;
 
-import de.aaaaaaah.velcom.backend.access.repo.RepoId;
+import de.aaaaaaah.velcom.backend.newaccess.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.newaccess.entities.RepoId;
 import java.util.NoSuchElementException;
 
 /**

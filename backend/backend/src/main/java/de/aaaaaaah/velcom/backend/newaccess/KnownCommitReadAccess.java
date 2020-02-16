@@ -1,9 +1,11 @@
 package de.aaaaaaah.velcom.backend.newaccess;
 
-import static de.aaaaaaah.velcom.backend.access.commit.BenchmarkStatus.BENCHMARK_REQUIRED;
+import static de.aaaaaaah.velcom.backend.newaccess.entities.BenchmarkStatus.BENCHMARK_REQUIRED;
+import static de.aaaaaaah.velcom.backend.newaccess.entities.BenchmarkStatus.BENCHMARK_REQUIRED_MANUAL_PRIORITY;
 import static org.jooq.codegen.db.tables.KnownCommit.KNOWN_COMMIT;
 
 import de.aaaaaaah.velcom.backend.newaccess.entities.BenchmarkStatus;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Commit;
 import de.aaaaaaah.velcom.backend.newaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.newaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
@@ -90,4 +92,20 @@ public class KnownCommitReadAccess {
 				.collect(Collectors.toUnmodifiableSet());
 		}
 	}
+
+	public Set<Pair<RepoId, CommitHash>> getAllCommitsRequiringBenchmark() {
+		try (DSLContext db = databaseStorage.acquireContext()) {
+			return db.select(KNOWN_COMMIT.REPO_ID, KNOWN_COMMIT.HASH)
+				.from(KNOWN_COMMIT)
+				.where(KNOWN_COMMIT.STATUS.eq(BENCHMARK_REQUIRED.getNumericalValue()))
+				.or(KNOWN_COMMIT.STATUS.eq(BENCHMARK_REQUIRED_MANUAL_PRIORITY.getNumericalValue()))
+				.stream()
+				.map(r -> new Pair<>(
+					new RepoId(UUID.fromString(r.value1())),
+					new CommitHash(r.value2())
+				))
+				.collect(Collectors.toUnmodifiableSet());
+		}
+	}
+
 }

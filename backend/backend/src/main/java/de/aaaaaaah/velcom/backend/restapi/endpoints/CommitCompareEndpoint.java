@@ -1,18 +1,19 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
-import de.aaaaaaah.velcom.backend.access.benchmark.BenchmarkAccess;
-import de.aaaaaaah.velcom.backend.access.benchmark.Run;
-import de.aaaaaaah.velcom.backend.access.commit.Commit;
-import de.aaaaaaah.velcom.backend.access.commit.CommitAccess;
-import de.aaaaaaah.velcom.backend.access.commit.CommitHash;
-import de.aaaaaaah.velcom.backend.access.repo.RepoId;
 import de.aaaaaaah.velcom.backend.data.commitcomparison.CommitComparer;
 import de.aaaaaaah.velcom.backend.data.commitcomparison.CommitComparison;
 import de.aaaaaaah.velcom.backend.data.linearlog.LinearLog;
+import de.aaaaaaah.velcom.backend.newaccess.BenchmarkReadAccess;
+import de.aaaaaaah.velcom.backend.newaccess.CommitReadAccess;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Commit;
+import de.aaaaaaah.velcom.backend.newaccess.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.newaccess.entities.RepoId;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Run;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonCommit;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonCommitComparison;
 import de.aaaaaaah.velcom.backend.restapi.util.ErrorResponseUtil;
 import de.aaaaaaah.velcom.backend.util.Pair;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -31,12 +32,12 @@ import javax.ws.rs.core.Response.Status;
 @Produces(MediaType.APPLICATION_JSON)
 public class CommitCompareEndpoint {
 
-	private final BenchmarkAccess benchmarkAccess;
-	private final CommitAccess commitAccess;
+	private final BenchmarkReadAccess benchmarkAccess;
+	private final CommitReadAccess commitAccess;
 	private final CommitComparer commitComparer;
 	private final LinearLog linearLog;
 
-	public CommitCompareEndpoint(BenchmarkAccess benchmarkAccess, CommitAccess commitAccess,
+	public CommitCompareEndpoint(BenchmarkReadAccess benchmarkAccess, CommitReadAccess commitAccess,
 		CommitComparer commitComparer, LinearLog linearLog) {
 
 		this.benchmarkAccess = benchmarkAccess;
@@ -61,30 +62,37 @@ public class CommitCompareEndpoint {
 
 		RepoId repoId = new RepoId(repoUuid);
 
-		Optional<Commit> secondCommit = Optional.ofNullable(secondHashString)
+		// Get second commit & run
+		Commit secondCommit = Optional.ofNullable(secondHashString)
 			.map(CommitHash::new)
-			.map(hash -> commitAccess.getCommit(repoId, hash));
+			.map(hash -> commitAccess.getCommit(repoId, hash))
+			.orElse(null);
 
-		if (secondCommit.isEmpty()) {
+		if (secondCommit == null) {
 			ErrorResponseUtil.throwErrorResponse(Status.NOT_FOUND,
 				"No commit with hash " + secondHashString + " found");
 		}
 
+		Optional<Run> secondRun = benchmarkAccess.getLatestRun(repoId, secondCommit.getHash());
+
+		// Get first commit & run
 		final Pair<Optional<Commit>, Optional<Commit>> prevAndNext = linearLog.getPrevNextCommits(
-			secondCommit.get());
+			secondCommit);
 
 		Optional<Commit> firstCommit = Optional.ofNullable(firstHashString)
 			.map(CommitHash::new)
 			.map(hash -> commitAccess.getCommit(repoId, hash))
 			.or(prevAndNext::getFirst);
 
-		Optional<Run> firstRun = firstCommit.flatMap(benchmarkAccess::getLatestRunOf);
-		Optional<Run> secondRun = secondCommit.flatMap(benchmarkAccess::getLatestRunOf);
+		Optional<Run> firstRun = firstCommit.isEmpty() ? Optional.empty()
+			: benchmarkAccess.getLatestRun(repoId, firstCommit.get().getHash());
 
+		// Compare
 		CommitComparison comparison = commitComparer.compare(
 			firstCommit.orElse(null), firstRun.orElse(null),
-			secondCommit.get(), secondRun.orElse(null)
+			secondCommit, secondRun.orElse(null)
 		);
+
 		return new GetReply(comparison,
 			prevAndNext.getSecond().orElse(null));
 	}

@@ -1,6 +1,6 @@
 package de.aaaaaaah.velcom.backend.runner.single;
 
-import de.aaaaaaah.velcom.backend.access.commit.Commit;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Commit;
 import de.aaaaaaah.velcom.backend.runner.single.state.RunnerDisconnectedState;
 import de.aaaaaaah.velcom.backend.runner.single.state.RunnerIdleState;
 import de.aaaaaaah.velcom.backend.runner.single.state.RunnerInitializingState;

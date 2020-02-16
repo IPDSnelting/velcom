@@ -69,12 +69,10 @@ public class Run {
 		return stopTime;
 	}
 
-	@Nullable
 	public Optional<String> getErrorMessage() {
 		return Optional.ofNullable(errorMessage);
 	}
 
-	@Nullable
 	public Optional<Collection<Measurement>> getMeasurements() {
 		return Optional.ofNullable(measurements);
 	}

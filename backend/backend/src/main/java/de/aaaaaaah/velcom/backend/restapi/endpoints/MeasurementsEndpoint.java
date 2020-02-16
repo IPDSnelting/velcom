@@ -1,8 +1,8 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
-import de.aaaaaaah.velcom.backend.access.benchmark.BenchmarkAccess;
-import de.aaaaaaah.velcom.backend.access.benchmark.MeasurementName;
-import de.aaaaaaah.velcom.backend.access.repo.RepoId;
+import de.aaaaaaah.velcom.backend.newaccess.BenchmarkWriteAccess;
+import de.aaaaaaah.velcom.backend.newaccess.entities.MeasurementName;
+import de.aaaaaaah.velcom.backend.newaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.restapi.RepoUser;
 import io.dropwizard.auth.Auth;
 import java.util.UUID;
@@ -21,9 +21,9 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 public class MeasurementsEndpoint {
 
-	private final BenchmarkAccess benchmarkAccess;
+	private final BenchmarkWriteAccess benchmarkAccess;
 
-	public MeasurementsEndpoint(BenchmarkAccess benchmarkAccess) {
+	public MeasurementsEndpoint(BenchmarkWriteAccess benchmarkAccess) {
 		this.benchmarkAccess = benchmarkAccess;
 	}
 
@@ -48,4 +48,5 @@ public class MeasurementsEndpoint {
 
 		benchmarkAccess.deleteAllMeasurementsOfName(repoId, measurementName);
 	}
+
 }

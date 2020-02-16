@@ -1,7 +1,7 @@
 package de.aaaaaaah.velcom.backend.newaccess;
 
-import de.aaaaaaah.velcom.backend.access.repo.RepoId;
 import de.aaaaaaah.velcom.backend.newaccess.entities.AuthToken;
+import de.aaaaaaah.velcom.backend.newaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import javax.annotation.Nullable;
 

@@ -106,9 +106,9 @@ public class RepoReadAccess {
 	 */
 	public Collection<RepoId> getAllRepoIds() {
 		try (DSLContext db = databaseStorage.acquireContext()) {
-			return db.select(REPOSITORY.ID)
+			return db.fetch(REPOSITORY)
 				.stream()
-				.map(record -> new RepoId(UUID.fromString(record.value1())))
+				.map(record -> new RepoId(UUID.fromString(record.getId())))
 				.collect(toList());
 		}
 	}

@@ -2,14 +2,17 @@ package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import de.aaaaaaah.velcom.backend.access.repo.BranchName;
-import de.aaaaaaah.velcom.backend.access.repo.RemoteUrl;
-import de.aaaaaaah.velcom.backend.access.repo.Repo;
-import de.aaaaaaah.velcom.backend.access.repo.RepoAccess;
-import de.aaaaaaah.velcom.backend.access.repo.RepoId;
-import de.aaaaaaah.velcom.backend.access.repo.exception.AddRepoException;
-import de.aaaaaaah.velcom.backend.access.token.AuthToken;
-import de.aaaaaaah.velcom.backend.access.token.TokenAccess;
+import de.aaaaaaah.velcom.backend.newaccess.BenchmarkReadAccess;
+import de.aaaaaaah.velcom.backend.newaccess.RepoWriteAccess;
+import de.aaaaaaah.velcom.backend.newaccess.TokenWriteAccess;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Branch;
+import de.aaaaaaah.velcom.backend.newaccess.entities.BranchName;
+import de.aaaaaaah.velcom.backend.newaccess.entities.MeasurementName;
+import de.aaaaaaah.velcom.backend.newaccess.entities.RemoteUrl;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Repo;
+import de.aaaaaaah.velcom.backend.newaccess.entities.RepoId;
+import de.aaaaaaah.velcom.backend.newaccess.exceptions.AddRepoException;
+import de.aaaaaaah.velcom.backend.newaccess.entities.AuthToken;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.listener.CommitSearchException;
 import de.aaaaaaah.velcom.backend.listener.Listener;
@@ -19,6 +22,7 @@ import de.aaaaaaah.velcom.backend.restapi.util.ErrorResponseUtil;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.PATCH;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -48,17 +52,19 @@ public class RepoEndpoint {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(RepoEndpoint.class);
 
-	private final RepoAccess repoAccess;
-	private final TokenAccess tokenAccess;
+	private final RepoWriteAccess repoAccess;
+	private final TokenWriteAccess tokenAccess;
+	private final BenchmarkReadAccess benchmarkAccess;
 
 	private final Queue queue;
 	private final Listener listener;
 
-	public RepoEndpoint(RepoAccess repoAccess, TokenAccess tokenAccess, Queue queue,
-		Listener listener) {
+	public RepoEndpoint(RepoWriteAccess repoAccess, TokenWriteAccess tokenAccess, Queue queue,
+		Listener listener, BenchmarkReadAccess benchmarkAccess) {
 
 		this.repoAccess = repoAccess;
 		this.tokenAccess = tokenAccess;
+		this.benchmarkAccess = benchmarkAccess;
 
 		this.queue = queue;
 		this.listener = listener;
@@ -74,7 +80,16 @@ public class RepoEndpoint {
 	public GetReply get(@NotNull @QueryParam("repo_id") UUID repoUuid) {
 		RepoId repoId = new RepoId(repoUuid);
 		Repo repo = repoAccess.getRepo(repoId);
-		return new GetReply(new JsonRepo(repo));
+
+		Collection<Branch> branches = repoAccess.getBranches(repoId);
+
+		Collection<MeasurementName> measurements = benchmarkAccess.getAvailableMeasurements(
+			repoId
+		);
+
+		boolean hasToken = tokenAccess.hasToken(repoId);
+
+		return new GetReply(new JsonRepo(repo, branches, measurements, hasToken));
 	}
 
 	/**
@@ -98,18 +113,22 @@ public class RepoEndpoint {
 
 		request.getToken()
 			.map(AuthToken::new)
-			.ifPresent(token -> tokenAccess.setToken(repo.getId(), token));
+			.ifPresent(token -> tokenAccess.setToken(repo.getRepoId(), token));
 
 		// Run listener on this repo on a separate thread
 		new Thread(() -> {
 			try {
-				listener.checkForUnknownCommits(repo.getId());
+				listener.checkForUnknownCommits(repo.getRepoId());
 			} catch (CommitSearchException e) {
 				LOGGER.warn("Failed to run listener for new repo: " + repo, e);
 			}
-		}, "ListenerThreadFor" + repo.getId().getId().toString()).start();
+		}, "ListenerThreadFor" + repo.getRepoId().getId().toString()).start();
 
-		return new GetReply(new JsonRepo(repo));
+		Collection<Branch> branches = repoAccess.getBranches(repo.getRepoId());
+
+		boolean hasToken = request.getToken().isPresent();
+
+		return new GetReply(new JsonRepo(repo, branches, Collections.emptyList(), hasToken));
 	}
 
 	/**

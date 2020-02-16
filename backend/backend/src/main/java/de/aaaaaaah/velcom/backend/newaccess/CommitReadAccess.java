@@ -1,20 +1,37 @@
 package de.aaaaaaah.velcom.backend.newaccess;
 
 
+import de.aaaaaaah.velcom.backend.newaccess.entities.BranchName;
 import de.aaaaaaah.velcom.backend.newaccess.entities.Commit;
 import de.aaaaaaah.velcom.backend.newaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.newaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.newaccess.exceptions.CommitAccessException;
+import de.aaaaaaah.velcom.backend.newaccess.exceptions.CommitLogException;
+import de.aaaaaaah.velcom.backend.newaccess.exceptions.RepoAccessException;
+import de.aaaaaaah.velcom.backend.newaccess.filter.AuthorTimeRevFilter;
 import de.aaaaaaah.velcom.backend.storage.repo.RepoStorage;
 import de.aaaaaaah.velcom.backend.storage.repo.exception.RepositoryAcquisitionException;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+import javax.annotation.Nullable;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.LogCommand;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.AnyObjectId;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.PersonIdent;
+import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
@@ -137,6 +154,104 @@ public class CommitReadAccess {
 			}
 			throw new CommitAccessException("Failed to create commit walk", e,
 				startCommit.getRepoId(), startCommit.getHash());
+		}
+	}
+
+	/**
+	 * Collects all commits from the specified repository that were authored between the given
+	 * startTime and stopTime.
+	 *
+	 * <p>If no startTime or no stopTime are specified, the author date will not be limited
+	 * in that regard.</p>
+	 *
+	 * @param repoId the id of the repository
+	 * @param branches what branches to consider
+	 * @param startTime the start time
+	 * @param stopTime the stop time
+	 * @return a map with each commit hash pointing to its respective commit
+	 */
+	public Map<CommitHash, Commit> getCommitsBetween(RepoId repoId,
+		Collection<BranchName> branches, @Nullable Instant startTime, @Nullable Instant stopTime) {
+
+		try (Repository repo = repoStorage.acquireRepository(repoId.getDirectoryName())) {
+			RevWalk walk = new RevWalk(repo);
+			Git git = Git.wrap(repo);
+
+			// Start the walk from the specified branches
+			Map<CommitHash, Commit> commitMap = new HashMap<>();
+
+			for (Ref branchRef : git.branchList().call()) {
+				BranchName branchName = BranchName.fromFullName(branchRef.getName());
+
+				if (branches.contains(branchName)) {
+					ObjectId branchObjectId = branchRef.getObjectId();
+					RevCommit revCommit = walk.parseCommit(branchObjectId); // Doesn't load body
+
+					walk.markStart(revCommit);
+				}
+			}
+
+			// Restrict the search results
+			if (startTime != null && stopTime != null) {
+				walk.setRevFilter(AuthorTimeRevFilter.between(startTime, stopTime));
+			} else if (startTime != null) {
+				walk.setRevFilter(AuthorTimeRevFilter.after(startTime));
+			} else if (stopTime != null) {
+				walk.setRevFilter(AuthorTimeRevFilter.before(stopTime));
+			}
+
+			for (RevCommit revCommit : walk) {
+				Commit commit = commitFromRevCommit(repoId, revCommit);
+				commitMap.put(commit.getHash(), commit);
+			}
+
+			return commitMap;
+		} catch (RepositoryAcquisitionException | GitAPIException | IOException e) {
+			throw new RepoAccessException(repoId, e);
+		}
+	}
+
+	public Stream<Commit> getCommitLog(RepoId repoId, Collection<BranchName> branches)
+		throws CommitLogException {
+
+		// Step -1: Return nothing if no branches were selected
+		if (branches.isEmpty()) {
+			return Stream.empty();
+		}
+
+		// Step 0: Sort branches so that the outcome is deterministic
+		List<BranchName> sortedBranches = new ArrayList<>(branches);
+		Collections.sort(sortedBranches);
+
+		// Step 1: Acquire repository
+		Repository jgitRepo;
+
+		try {
+			String directoryName = repoId.getDirectoryName();
+			jgitRepo = repoStorage.acquireRepository(directoryName);
+		} catch (RepositoryAcquisitionException e) {
+			throw new CommitLogException(repoId, branches, e);
+		}
+
+		try {
+			// Step 2: Run log command
+			LogCommand logCommand = Git.wrap(jgitRepo).log();
+
+			for (BranchName branchName : sortedBranches) {
+				ObjectId branchId = jgitRepo.resolve(branchName.getFullName());
+				logCommand.add(branchId);
+			}
+
+			// Step 3: Prepare stream
+			Spliterator<RevCommit> commitSpliterator = Spliterators.spliteratorUnknownSize(
+				logCommand.call().iterator(), 0);
+
+			return StreamSupport.stream(commitSpliterator, false)
+				.map(revCommit -> commitFromRevCommit(repoId, revCommit))
+				.onClose(jgitRepo::close);
+		} catch (Exception e) {
+			jgitRepo.close(); // Release repo storage lock if this fails
+			throw new CommitLogException(repoId, branches, e);
 		}
 	}
 

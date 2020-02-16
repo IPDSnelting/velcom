@@ -1,8 +1,8 @@
 package de.aaaaaaah.velcom.backend.data.repocomparison;
 
-import de.aaaaaaah.velcom.backend.access.benchmark.MeasurementName;
-import de.aaaaaaah.velcom.backend.access.repo.BranchName;
-import de.aaaaaaah.velcom.backend.access.repo.RepoId;
+import de.aaaaaaah.velcom.backend.newaccess.entities.MeasurementName;
+import de.aaaaaaah.velcom.backend.newaccess.entities.BranchName;
+import de.aaaaaaah.velcom.backend.newaccess.entities.RepoId;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;

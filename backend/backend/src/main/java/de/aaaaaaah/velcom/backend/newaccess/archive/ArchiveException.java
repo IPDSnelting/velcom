@@ -1,6 +1,6 @@
-package de.aaaaaaah.velcom.backend.access.repo.archive;
+package de.aaaaaaah.velcom.backend.newaccess.archive;
 
-import de.aaaaaaah.velcom.backend.access.commit.CommitHash;
+import de.aaaaaaah.velcom.backend.newaccess.entities.CommitHash;
 import java.io.IOException;
 
 /**

@@ -1,15 +1,15 @@
 package de.aaaaaaah.velcom.backend.runner;
 
-import de.aaaaaaah.velcom.backend.access.benchmark.BenchmarkAccess;
-import de.aaaaaaah.velcom.backend.access.benchmark.Interpretation;
-import de.aaaaaaah.velcom.backend.access.benchmark.MeasurementName;
-import de.aaaaaaah.velcom.backend.access.benchmark.RunBuilder;
-import de.aaaaaaah.velcom.backend.access.benchmark.Unit;
-import de.aaaaaaah.velcom.backend.access.commit.Commit;
-import de.aaaaaaah.velcom.backend.access.commit.CommitHash;
-import de.aaaaaaah.velcom.backend.access.repo.RepoAccess;
-import de.aaaaaaah.velcom.backend.access.repo.RepoId;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
+import de.aaaaaaah.velcom.backend.newaccess.BenchmarkWriteAccess;
+import de.aaaaaaah.velcom.backend.newaccess.RepoWriteAccess;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Commit;
+import de.aaaaaaah.velcom.backend.newaccess.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Interpretation;
+import de.aaaaaaah.velcom.backend.newaccess.entities.MeasurementName;
+import de.aaaaaaah.velcom.backend.newaccess.entities.RepoId;
+import de.aaaaaaah.velcom.backend.newaccess.entities.RunBuilder;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Unit;
 import de.aaaaaaah.velcom.backend.runner.single.ActiveRunnerInformation;
 import de.aaaaaaah.velcom.runner.shared.RunnerStatusEnum;
 import de.aaaaaaah.velcom.runner.shared.protocol.StatusCodeMappings;
@@ -47,8 +47,8 @@ public class DispatcherImpl implements Dispatcher {
 
 	private final Collection<ActiveRunnerInformation> activeRunners;
 	private final Queue queue;
-	private final RepoAccess repoAccess;
-	private final BenchmarkAccess benchmarkAccess;
+	private final RepoWriteAccess repoAccess;
+	private final BenchmarkWriteAccess benchmarkAccess;
 	private final Duration allowedRunnerDisconnectTime;
 	private final java.util.Queue<ActiveRunnerInformation> freeRunners;
 	private final ScheduledExecutorService watchdogPool;
@@ -63,8 +63,8 @@ public class DispatcherImpl implements Dispatcher {
 	 * @param allowedRunnerDisconnectTime the duration runners might be disconnected for before
 	 * 	they are given up on (removed and commit rescheduled)
 	 */
-	public DispatcherImpl(Queue queue, RepoAccess repoAccess, BenchmarkAccess benchmarkAccess,
-		Duration allowedRunnerDisconnectTime) {
+	public DispatcherImpl(Queue queue, RepoWriteAccess repoAccess,
+		BenchmarkWriteAccess benchmarkAccess, Duration allowedRunnerDisconnectTime) {
 		this.queue = queue;
 		this.repoAccess = repoAccess;
 		this.benchmarkAccess = benchmarkAccess;
@@ -294,7 +294,7 @@ public class DispatcherImpl implements Dispatcher {
 				results.getError()
 			);
 
-			benchmarkAccess.addRun(runBuilder);
+			benchmarkAccess.insertRun(runBuilder.build());
 		} else {
 			RunBuilder runBuilder = RunBuilder.successful(repoId, commitHash, startTime, endTime);
 
@@ -304,7 +304,7 @@ public class DispatcherImpl implements Dispatcher {
 				}
 			}
 
-			benchmarkAccess.addRun(runBuilder);
+			benchmarkAccess.insertRun(runBuilder.build());
 		}
 
 		queue.finishTask(repoId, commitHash);
@@ -369,7 +369,9 @@ public class DispatcherImpl implements Dispatcher {
 			runner.getRunnerStateMachine().startWork(
 				commit,
 				workOrder,
-				outputStream -> repoAccess.streamNormalRepoArchive(commit, outputStream)
+				outputStream -> repoAccess.streamNormalRepoArchive(
+					commit.getRepoId(), commit.getHash(), outputStream
+				)
 			);
 			return true;
 		} catch (Throwable e) {

@@ -1,12 +1,11 @@
 package de.aaaaaaah.velcom.backend.restapi.jsonobjects;
 
-import de.aaaaaaah.velcom.backend.access.benchmark.Measurement;
-import de.aaaaaaah.velcom.backend.access.benchmark.MeasurementError;
-import de.aaaaaaah.velcom.backend.access.benchmark.MeasurementValues;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Measurement;
+import de.aaaaaaah.velcom.backend.newaccess.entities.MeasurementError;
+import de.aaaaaaah.velcom.backend.newaccess.entities.MeasurementValues;
 import de.aaaaaaah.velcom.backend.util.Either;
 import java.util.List;
 import javax.annotation.Nullable;
-
 
 /**
  * A helper class for serialization representing a measurement.
@@ -37,7 +36,7 @@ public class JsonMeasurement {
 			unit = measurementValues.getUnit().getName();
 			interpretation = measurementValues.getInterpretation().getTextualRepresentation();
 			values = measurementValues.getValues();
-			value = measurementValues.getValue();
+			value = measurementValues.getAverageValue();
 			errorMessage = null;
 		} else {
 			//noinspection OptionalGetWithoutIsPresent

@@ -5,12 +5,12 @@ import static org.jooq.codegen.db.tables.Run.RUN;
 import static org.jooq.codegen.db.tables.RunMeasurement.RUN_MEASUREMENT;
 import static org.jooq.impl.DSL.exists;
 
-import de.aaaaaaah.velcom.backend.access.benchmark.Measurement;
-import de.aaaaaaah.velcom.backend.access.benchmark.MeasurementError;
-import de.aaaaaaah.velcom.backend.access.benchmark.MeasurementName;
-import de.aaaaaaah.velcom.backend.access.benchmark.MeasurementValues;
-import de.aaaaaaah.velcom.backend.access.benchmark.Run;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Measurement;
+import de.aaaaaaah.velcom.backend.newaccess.entities.MeasurementError;
+import de.aaaaaaah.velcom.backend.newaccess.entities.MeasurementName;
+import de.aaaaaaah.velcom.backend.newaccess.entities.MeasurementValues;
 import de.aaaaaaah.velcom.backend.newaccess.entities.RepoId;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Run;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import java.sql.Timestamp;
 import java.util.Collection;

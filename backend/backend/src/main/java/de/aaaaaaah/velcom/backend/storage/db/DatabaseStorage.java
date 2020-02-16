@@ -3,6 +3,7 @@ package de.aaaaaaah.velcom.backend.storage.db;
 import de.aaaaaaah.velcom.backend.GlobalConfig;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Statement;
 import javax.sql.DataSource;
 import org.flywaydb.core.Flyway;
 import org.jooq.DSLContext;
@@ -51,6 +52,10 @@ public class DatabaseStorage {
 		this.connection = dataSource.getConnection();
 
 		this.context = DSL.using(this.connection, SQLDialect.SQLITE);
+
+		try (Statement statement = this.connection.createStatement()) {
+			statement.executeQuery("SELECT * FROM repository");
+		}
 
 		migrate(dataSource);
 	}

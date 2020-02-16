@@ -2,11 +2,11 @@ package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import de.aaaaaaah.velcom.backend.access.commit.Commit;
-import de.aaaaaaah.velcom.backend.access.commit.CommitAccess;
-import de.aaaaaaah.velcom.backend.access.commit.CommitHash;
-import de.aaaaaaah.velcom.backend.access.repo.RepoId;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
+import de.aaaaaaah.velcom.backend.newaccess.CommitReadAccess;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Commit;
+import de.aaaaaaah.velcom.backend.newaccess.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.newaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.restapi.RepoUser;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonCommit;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonWorker;
@@ -35,11 +35,11 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 public class QueueEndpoint {
 
-	private final CommitAccess commitAccess;
+	private final CommitReadAccess commitAccess;
 	private final Queue queue;
 	private final Dispatcher dispatcher;
 
-	public QueueEndpoint(CommitAccess commitAccess, Queue queue, Dispatcher dispatcher) {
+	public QueueEndpoint(CommitReadAccess commitAccess, Queue queue, Dispatcher dispatcher) {
 		this.commitAccess = commitAccess;
 		this.queue = queue;
 		this.dispatcher = dispatcher;

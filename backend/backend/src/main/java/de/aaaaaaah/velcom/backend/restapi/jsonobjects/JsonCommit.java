@@ -1,7 +1,7 @@
 package de.aaaaaaah.velcom.backend.restapi.jsonobjects;
 
-import de.aaaaaaah.velcom.backend.access.commit.Commit;
-import de.aaaaaaah.velcom.backend.access.commit.CommitHash;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Commit;
+import de.aaaaaaah.velcom.backend.newaccess.entities.CommitHash;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.UUID;

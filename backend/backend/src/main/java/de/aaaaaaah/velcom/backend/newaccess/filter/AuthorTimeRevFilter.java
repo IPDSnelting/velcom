@@ -1,4 +1,4 @@
-package de.aaaaaaah.velcom.backend.access.commit.filter;
+package de.aaaaaaah.velcom.backend.newaccess.filter;
 
 import java.time.Instant;
 import org.eclipse.jgit.revwalk.filter.RevFilter;

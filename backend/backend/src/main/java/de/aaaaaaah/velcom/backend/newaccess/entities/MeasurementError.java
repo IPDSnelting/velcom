@@ -1,7 +1,5 @@
 package de.aaaaaaah.velcom.backend.newaccess.entities;
 
-import de.aaaaaaah.velcom.backend.access.benchmark.Measurement;
-
 import java.util.Objects;
 
 /**

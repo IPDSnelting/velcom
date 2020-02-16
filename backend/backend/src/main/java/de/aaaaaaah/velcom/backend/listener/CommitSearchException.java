@@ -1,6 +1,6 @@
 package de.aaaaaaah.velcom.backend.listener;
 
-import de.aaaaaaah.velcom.backend.access.repo.RepoId;
+import de.aaaaaaah.velcom.backend.newaccess.entities.RepoId;
 
 /**
  * An exception that occurs when trying to search for unknown commits.

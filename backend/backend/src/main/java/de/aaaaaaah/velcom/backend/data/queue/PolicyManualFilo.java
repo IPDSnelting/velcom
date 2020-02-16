@@ -1,8 +1,8 @@
 package de.aaaaaaah.velcom.backend.data.queue;
 
-import de.aaaaaaah.velcom.backend.access.commit.Commit;
-import de.aaaaaaah.velcom.backend.access.commit.CommitHash;
-import de.aaaaaaah.velcom.backend.access.repo.RepoId;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Commit;
+import de.aaaaaaah.velcom.backend.newaccess.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.newaccess.entities.RepoId;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;

@@ -3,8 +3,8 @@ package de.aaaaaaah.velcom.backend.newaccess;
 import static org.jooq.codegen.db.tables.RepoToken.REPO_TOKEN;
 import static org.jooq.impl.DSL.selectFrom;
 
-import de.aaaaaaah.velcom.backend.access.repo.RepoId;
 import de.aaaaaaah.velcom.backend.newaccess.entities.AuthToken;
+import de.aaaaaaah.velcom.backend.newaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.newaccess.hashalgorithm.Argon2Algorithm;
 import de.aaaaaaah.velcom.backend.newaccess.hashalgorithm.HashAlgorithm;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
