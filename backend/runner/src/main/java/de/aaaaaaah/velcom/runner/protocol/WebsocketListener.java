@@ -13,6 +13,7 @@ import de.aaaaaaah.velcom.runner.shared.protocol.runnerbound.entities.RunnerWork
 import de.aaaaaaah.velcom.runner.shared.protocol.runnerbound.entities.UpdateBenchmarkRepoOrder;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.net.http.HttpClient;
 import java.net.http.WebSocket;
 import java.net.http.WebSocketHandshakeException;
@@ -54,7 +55,7 @@ public class WebsocketListener implements WebSocket.Listener, SocketConnectionMa
 	public WebsocketListener() {
 		this.binaryLock = new Object();
 		this.textLock = new Object();
-		this.textBuilder = new StringBuilder();
+		flushTextBuffer();
 		this.stateListeners = Collections.newSetFromMap(new ConcurrentHashMap<>());
 	}
 
@@ -89,7 +90,7 @@ public class WebsocketListener implements WebSocket.Listener, SocketConnectionMa
 
 			if (last) {
 				String request = textBuilder.toString();
-				textBuilder = new StringBuilder();
+				flushTextBuffer();
 				try {
 					switch (configuration.getSerializer().peekType(request)) {
 						case "RunnerWorkOrder":
@@ -131,7 +132,7 @@ public class WebsocketListener implements WebSocket.Listener, SocketConnectionMa
 			try {
 				handleWriteFile(data, last);
 			} catch (IOException e) {
-				throw new RuntimeException(e);
+				throw new UncheckedIOException(e);
 			}
 		}
 		return null;
@@ -147,8 +148,7 @@ public class WebsocketListener implements WebSocket.Listener, SocketConnectionMa
 		outputStream.write(buffer);
 
 		if (last) {
-			outputStream.close();
-			outputStream = null;
+			flushBinaryBuffer();
 			configuration.getRunnerStateMachine().onFileReceived(outputFilePath, configuration);
 		}
 	}
@@ -184,8 +184,8 @@ public class WebsocketListener implements WebSocket.Listener, SocketConnectionMa
 		LOGGER.warn("Error in Websocket", error);
 		disconnectImpl();
 	}
-	//</editor-fold>
 
+	//</editor-fold>
 	@Override
 	public void sendEntity(SentEntity entity) {
 		if (websocket == null) {
@@ -263,6 +263,8 @@ public class WebsocketListener implements WebSocket.Listener, SocketConnectionMa
 	}
 
 	private void disconnectImpl() {
+		flushBinaryBuffer();
+		flushTextBuffer();
 		if (websocket != null) {
 			websocket.sendClose(
 				StatusCodeMappings.CLIENT_ORDERLY_DISCONNECT, "Client initiated close"
@@ -285,5 +287,21 @@ public class WebsocketListener implements WebSocket.Listener, SocketConnectionMa
 			heartbeatHandler.shutdown();
 		}
 		websocket = null;
+	}
+
+	private void flushTextBuffer() {
+		textBuilder = new StringBuilder();
+	}
+
+	private void flushBinaryBuffer() {
+		try {
+			if (outputStream != null) {
+				outputStream.close();
+			}
+		} catch (IOException e) {
+			throw new UncheckedIOException(e);
+		} finally {
+			outputStream = null;
+		}
 	}
 }
