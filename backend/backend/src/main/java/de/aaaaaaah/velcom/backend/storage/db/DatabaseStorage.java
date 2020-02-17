@@ -53,10 +53,6 @@ public class DatabaseStorage {
 
 		this.context = DSL.using(this.connection, SQLDialect.SQLITE);
 
-		try (Statement statement = this.connection.createStatement()) {
-			statement.executeQuery("SELECT * FROM repository");
-		}
-
 		migrate(dataSource);
 	}
 

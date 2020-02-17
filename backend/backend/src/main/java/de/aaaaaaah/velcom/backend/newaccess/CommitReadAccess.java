@@ -5,6 +5,7 @@ import de.aaaaaaah.velcom.backend.newaccess.entities.BranchName;
 import de.aaaaaaah.velcom.backend.newaccess.entities.Commit;
 import de.aaaaaaah.velcom.backend.newaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.newaccess.entities.RepoId;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Run;
 import de.aaaaaaah.velcom.backend.newaccess.exceptions.CommitAccessException;
 import de.aaaaaaah.velcom.backend.newaccess.exceptions.CommitLogException;
 import de.aaaaaaah.velcom.backend.newaccess.exceptions.RepoAccessException;
@@ -19,6 +20,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.stream.Collectors;
@@ -94,6 +96,11 @@ public class CommitReadAccess {
 		} else {
 			throw new CommitAccessException(repoId, commitHash);
 		}
+	}
+
+	public Optional<Commit> getCommit(Run run) {
+		List<Commit> commits = getCommits(run.getRepoId(), List.of(run.getCommitHash()));
+		return commits.isEmpty() ? Optional.empty() : Optional.of(commits.get(0));
 	}
 
 	/**

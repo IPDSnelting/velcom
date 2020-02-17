@@ -188,16 +188,6 @@ public class BenchmarkReadAccess {
 				CommitHash commitHash = new CommitHash(runRecord.getCommitHash());
 
 				if (runRecord.getErrorMessage() != null) {
-					List<Measurement> measurements = runToMeasurementMap.get(runId);
-					return new Run(
-						runId,
-						repoId,
-						commitHash,
-						runRecord.getStartTime().toInstant(),
-						runRecord.getStopTime().toInstant(),
-						measurements
-					);
-				} else {
 					return new Run(
 						runId,
 						repoId,
@@ -205,6 +195,17 @@ public class BenchmarkReadAccess {
 						runRecord.getStartTime().toInstant(),
 						runRecord.getStopTime().toInstant(),
 						runRecord.getErrorMessage()
+					);
+				} else {
+					List<Measurement> measurements = runToMeasurementMap.get(runId);
+
+					return new Run(
+						runId,
+						repoId,
+						commitHash,
+						runRecord.getStartTime().toInstant(),
+						runRecord.getStopTime().toInstant(),
+						measurements
 					);
 				}
 			})
