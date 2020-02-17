@@ -6,7 +6,7 @@ build: backend/target/backend.jar
 
 backend/target/backend.jar: $(shell find -name '*.java' -o -name '*.sql' -o -name pom.xml)
 	@echo 'Building backend'
-	mvn package
+	mvn package site jacoco:report-aggregate
 
 clean: clean-backend-data
 	mvn clean

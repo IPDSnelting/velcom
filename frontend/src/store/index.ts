@@ -120,8 +120,6 @@ export const vxm = {
 }
 
 export function storeToLocalStorage() {
-  console.log('Saving...')
-
   let data = {
     data: JSON.stringify(sessionStorage),
     accessTime: new Date().getTime()

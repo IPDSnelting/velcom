@@ -13,7 +13,12 @@ compile-backend:
     paths:
       - "backend/backend/target/backend.jar"
       - "backend/runner/target/runner.jar"
-
+    reports:
+      junit:
+        - backend/backend/target/surefire-reports/TEST-*.xml
+        - backend/runner/target/surefire-reports/TEST-*.xml
+        - backend/shared/target/surefire-reports/TEST-*.xml
+  coverage: "/Total[^%]+?(\\d+)%/"
   # Cache maven deps
   cache:
     key: "backend_cache"
@@ -27,6 +32,7 @@ compile-backend:
     - apt update
     - apt install make
     - make backend
+    - cat backend/aggregator/target/site/jacoco-aggregate/index.html | grep -oP 'Total[^%]+?(\d+)%'
   tags:
     - keep
 
@@ -55,6 +61,8 @@ compile-frontend:
 deploy:
   stage: deploy
   environment: "Keep"
+  only:
+    - master
   script:
     ##
     ## Create the SSH directory and give it the right permissions

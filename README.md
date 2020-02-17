@@ -10,6 +10,7 @@
         - [The hard way™](#the-hard-way)
     - [Starting VelCom](#starting-velcom)
     - [Configuring the web server](#configuring-the-web-server)
+        - [Cloning Repositories via SSH](#cloning-repositories-via-ssh)
     - [Using the REST-API manually](#using-the-rest-api-manually)
 
 <!-- markdown-toc end -->
@@ -188,6 +189,20 @@ respectively.
 
 An example config for nginx that implements these rules can be found
 [in the `docs` directory](docs/nginx-site).
+
+### Cloning repositories via SSH
+
+To combat the less than optimal speed of JGit VelCom will prefer using the
+native git installation for cloning repositories. The native installation and
+VelCom's JGit handle SSH connections differently:
+
+* **JGit:** No host-key verification is performed *at all*
+* **Native git:** Host key verification is done normally. Please note that *the
+  first connection to a new host will fail*, as velcom can not ask you to verify
+  the key! As soon as you connected *once* normally (via ssh or the command line
+  git) and the host is in `known_hosts`, cloning will work normally. If the host
+  key changes, VelCom will refuse cloning any new repo from that host, but
+  fetching will still work (as JGit is used for that).
 
 ## Using the REST-API manually
 

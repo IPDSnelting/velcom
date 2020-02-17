@@ -9,6 +9,7 @@
     <module>runner</module>
     <module>backend</module>
     <module>shared</module>
+    <module>aggregator</module>
   </modules>
 
   <artifactId>velcom</artifactId>
@@ -66,6 +67,52 @@
           <version>3.0.0-M3</version>
         </plugin>
 
+        <!-- CODE COVERAGE-->
+        <plugin>
+          <groupId>org.jacoco</groupId>
+          <artifactId>jacoco-maven-plugin</artifactId>
+          <version>0.8.5</version>
+          <executions>
+            <execution>
+              <id>prepare-agent</id>
+              <goals>
+                <goal>prepare-agent</goal>
+              </goals>
+            </execution>
+            <execution>
+              <id>report</id>
+              <phase>prepare-package</phase>
+              <goals>
+                <goal>report</goal>
+              </goals>
+            </execution>
+            <execution>
+              <id>post-unit-test</id>
+              <phase>test</phase>
+              <goals>
+                <goal>report</goal>
+              </goals>
+              <configuration>
+                <!-- Sets the path to the file which contains the execution data. -->
+
+                <dataFile>target/jacoco.exec</dataFile>
+                <!-- Sets the output directory for the code coverage report. -->
+                <outputDirectory>target/jacoco-ut</outputDirectory>
+              </configuration>
+            </execution>
+          </executions>
+          <configuration>
+            <excludes>
+            </excludes>
+          </configuration>
+        </plugin>
+
+        <!-- Maven site -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-site-plugin</artifactId>
+          <version>3.8.2</version>
+        </plugin>
       </plugins>
     </pluginManagement>
   </build>
@@ -117,6 +164,12 @@
         <version>1.10.19</version>
         <scope>test</scope>
       </dependency>
+      <dependency>
+        <groupId>org.assertj</groupId>
+        <artifactId>assertj-core</artifactId>
+        <version>3.15.0</version>
+        <scope>test</scope>
+      </dependency>
 
       <dependency>
         <groupId>org.slf4j</groupId>
@@ -133,4 +186,31 @@
     </dependencies>
   </dependencyManagement>
 
+  <reporting>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-project-info-reports-plugin</artifactId>
+        <version>3.0.0</version>
+        <reportSets>
+          <reportSet>
+            <reports>
+            </reports>
+          </reportSet>
+        </reportSets>
+      </plugin>
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <reportSets>
+          <reportSet>
+            <reports>
+              <!-- select non-aggregate reports -->
+              <report>report</report>
+            </reports>
+          </reportSet>
+        </reportSets>
+      </plugin>
+    </plugins>
+  </reporting>
 </project>

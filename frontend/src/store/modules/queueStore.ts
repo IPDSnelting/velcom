@@ -14,12 +14,22 @@ export class QueueStore extends VxModule {
   /**
    * Fetches the whole queue.
    *
+   * @param {{
+   *     hideFromSnackbar?: boolean
+   *   }} [payload] the payload. If hideFromSnackbar is true,
+   * it will not be shown in the snackbar.
    * @returns {Promise<Commit[]>} a promise completing the commits
    * @memberof QueueModuleStore
    */
   @action
-  async fetchQueue(): Promise<Commit[]> {
-    const response = await axios.get('/queue', { snackbarTag: 'queue' })
+  async fetchQueue(payload?: {
+    hideFromSnackbar?: boolean
+  }): Promise<Commit[]> {
+    const response = await axios.get('/queue', {
+      hideLoadingSnackbar: payload && payload.hideFromSnackbar,
+      hideSuccessSnackbar: payload && payload.hideFromSnackbar,
+      snackbarTag: 'queue'
+    })
 
     let tasks: Commit[] = []
     let jsonTasks: any[] = response.data.tasks
@@ -106,23 +116,35 @@ export class QueueStore extends VxModule {
   }
 
   /**
-   *Sends a delete request for an open task to the server.
+   * Sends a delete request for an open task to the server.
    *
-   * @param {Commit} payload the commit to delete
+   * @param {{
+   *     commit: Commit,
+   *     suppressRefetch?: boolean,
+   *     suppressSnackbar?: boolean,
+   *   }} payload the commit to delete. If `suppressRefetch` is false or not present, it will also call "fetchQueue"
    * @returns {Promise<void>} a promise completing with an optional error
    * @memberof QueueModuleStore
    */
   @action
-  dispatchDeleteOpenTask(payload: Commit): Promise<void> {
+  dispatchDeleteOpenTask(payload: {
+    commit: Commit
+    suppressRefetch?: boolean
+    suppressSnackbar?: boolean
+  }): Promise<void> {
     return axios
       .delete('/queue', {
+        hideSuccessSnackbar: payload.suppressSnackbar,
+        hideLoadingSnackbar: payload.suppressSnackbar,
         params: {
-          repo_id: payload.repoID,
-          commit_hash: payload.hash
+          repo_id: payload.commit.repoID,
+          commit_hash: payload.commit.hash
         }
       })
       .then(() => {
-        this.deleteOpenTask(payload)
+        if (!payload.suppressRefetch) {
+          this.fetchQueue()
+        }
       })
   }
 

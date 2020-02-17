@@ -17,7 +17,8 @@ public class ReestablishConnectionListener implements
 	SocketConnectionManager.ConnectionStateListener {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(
-		ReestablishConnectionListener.class);
+		ReestablishConnectionListener.class
+	);
 
 	private ScheduledExecutorService scheduler;
 	private SocketConnectionManager connectionManager;
@@ -105,6 +106,7 @@ public class ReestablishConnectionListener implements
 		if (scheduledFuture != null) {
 			scheduledFuture.cancel(true);
 		}
+		scheduler.shutdown();
 	}
 
 	/**

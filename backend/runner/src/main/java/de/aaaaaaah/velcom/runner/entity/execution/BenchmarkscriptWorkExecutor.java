@@ -8,6 +8,7 @@ import de.aaaaaaah.velcom.runner.entity.execution.output.BenchmarkScriptOutputPa
 import de.aaaaaaah.velcom.runner.entity.execution.output.BenchmarkScriptOutputParser.BareResult;
 import de.aaaaaaah.velcom.runner.entity.execution.output.OutputParseException;
 import de.aaaaaaah.velcom.runner.shared.ProgramExecutor;
+import de.aaaaaaah.velcom.runner.shared.ProgramExecutor.FutureProgramResult;
 import de.aaaaaaah.velcom.runner.shared.ProgramExecutor.ProgramResult;
 import de.aaaaaaah.velcom.runner.shared.protocol.runnerbound.entities.RunnerWorkOrder;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkResults;
@@ -18,8 +19,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
+import java.util.concurrent.CancellationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,7 +31,7 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 	private static final Logger LOGGER = LoggerFactory.getLogger(BenchmarkscriptWorkExecutor.class);
 
 	private final BenchmarkScriptOutputParser benchmarkScriptOutputParser;
-	private Future<ProgramResult> programResult;
+	private FutureProgramResult programResult;
 
 	public BenchmarkscriptWorkExecutor() {
 		benchmarkScriptOutputParser = new BenchmarkScriptOutputParser();
@@ -40,7 +40,7 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 	@Override
 	public void abortExecution() {
 		if (programResult != null && !programResult.isDone()) {
-			programResult.cancel(true);
+			programResult.cancel();
 		}
 	}
 
@@ -87,7 +87,7 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 			if (result.getExitCode() != 0) {
 				failureInformation.addSection(
 					"Reason",
-					"The Benchmark-Script terminated with a non-zero exit code"
+					"The benchmark script terminated with a non-zero exit code"
 						+ " (" + result.getExitCode() + ")!"
 				);
 				configuration.getRunnerStateMachine().onWorkDone(
@@ -106,10 +106,10 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 
 			String error = bareResult.getError();
 			if (error != null) {
-				failureInformation.addSection("Benchmark-Script error", error);
+				failureInformation.addSection("Benchmark script error", error);
 				failureInformation.addSection(
 					"Reason",
-					"The Benchmark-Script terminated successfully but returned an error message!"
+					"The benchmark script terminated successfully but returned an error message!"
 				);
 				error = failureInformation.toString();
 			}
@@ -122,15 +122,13 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 			);
 
 			configuration.getRunnerStateMachine().onWorkDone(results, configuration);
-		} catch (IOException | ExecutionException | InterruptedException e) {
-			LOGGER.info("Error executing some work for {}", workOrder);
-			LOGGER.info("Stacktrace:", e);
-
-			failureInformation.addSection("Stacktrace", ExceptionHelper.getStackTrace(e));
+		} catch (OutputParseException e) {
+			LOGGER.info("Benchmark script returned invalid data: '{}'", e.getMessage());
 			failureInformation.addSection("End time", Instant.now().toString());
+			failureInformation.addSection("Invalid output", e.getMessage());
 			failureInformation.addSection(
 				"Reason",
-				"Most likely an internal runner error. Rebenchmarking might solve the problem!"
+				"The benchmark script returned invalid output!"
 			);
 
 			configuration.getRunnerStateMachine().onWorkDone(
@@ -142,13 +140,32 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 				),
 				configuration
 			);
-		} catch (OutputParseException e) {
-			LOGGER.info("Benchmark script returned invalid data: '{}'", e.getMessage());
+		} catch (CancellationException e) {
+			LOGGER.info("Program for order {} aborted!", workOrder);
 			failureInformation.addSection("End time", Instant.now().toString());
-			failureInformation.addSection("Invalid output", e.getMessage());
 			failureInformation.addSection(
 				"Reason",
-				"The Benchmark-Script returned invalid output!"
+				"The benchmark process was manually aborted!"
+			);
+
+			configuration.getRunnerStateMachine().onWorkDone(
+				new BenchmarkResults(
+					workOrder,
+					failureInformation.toString(),
+					startTime,
+					Instant.now()
+				),
+				configuration
+			);
+		} catch (Exception e) {
+			LOGGER.info("Error executing some work for {}", workOrder);
+			LOGGER.info("Stacktrace:", e);
+
+			failureInformation.addSection("Stacktrace", ExceptionHelper.getStackTrace(e));
+			failureInformation.addSection("End time", Instant.now().toString());
+			failureInformation.addSection(
+				"Reason",
+				"Maybe an internal runner error. Rebenchmarking might solve the problem!"
 			);
 
 			configuration.getRunnerStateMachine().onWorkDone(

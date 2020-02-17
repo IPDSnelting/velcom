@@ -20,6 +20,11 @@ public final class StatusCodeMappings {
 	 */
 	public static final int NAME_ALREADY_TAKEN = 4003;
 
+	/**
+	 * The server tried to tell the client to abort a commit, but it failed.
+	 */
+	public static final int CLIENT_FAILED_TO_CANCEL = 4004;
+
 	private StatusCodeMappings() {
 		throw new UnsupportedOperationException("No instantiation");
 	}

@@ -1,5 +1,5 @@
 <template>
-  <v-container>
+  <v-container fluid class="my-0 py-0">
     <v-data-iterator
       :items="queueItems"
       :hide-default-footer="queueItems.length < defaultItemsPerPage"
@@ -7,6 +7,26 @@
       :footer-props="{ itemsPerPageOptions: itemsPerPageOptions }"
       no-data-text="No commits are currently enqueued."
     >
+      <template #header v-if="isAdmin">
+        <v-row>
+          <v-spacer></v-spacer>
+          <v-col cols="auto">
+            <v-tooltip left>
+              <template #activator="{ on }">
+                <v-btn
+                  v-on="on"
+                  color="warning"
+                  text
+                  outlined
+                  @click="cancelAllFetched()"
+                >Cancel all</v-btn>
+              </template>
+              Cancels
+              <strong>all</strong> tasks you can see in the queue.
+            </v-tooltip>
+          </v-col>
+        </v-row>
+      </template>
       <template v-slot:default="{ items, pagination: { itemsPerPage, page } }">
         <v-row>
           <v-col
@@ -36,7 +56,7 @@
                   >{{ getWorker(commit).osData }}</span>
                 </v-tooltip>
               </template>
-              <template #actions>
+              <template #actions v-if="isAdmin">
                 <v-btn icon v-if="!inProgress(commit)" @click="liftToFront(commit, $event)">
                   <v-icon class="rocket">{{ liftToFrontIcon }}</v-icon>
                 </v-btn>
@@ -61,6 +81,7 @@ import { Commit, Worker } from '@/store/types'
 import { mdiRocket, mdiDelete } from '@mdi/js'
 import { formatDateUTC, formatDate } from '../../util/TimeUtil'
 import CommitOverviewBase from './CommitOverviewBase.vue'
+import { extractErrorMessage } from '../../util/ErrorUtils'
 
 @Component({
   components: {
@@ -85,6 +106,10 @@ export default class QueueOverview extends Vue {
 
   private inProgress(commit: Commit) {
     return vxm.queueModule.openTasks.indexOf(commit) < 0
+  }
+
+  private get isAdmin() {
+    return vxm.userModule.isAdmin
   }
 
   private liftToFront(commit: Commit, event: Event) {
@@ -133,36 +158,7 @@ export default class QueueOverview extends Vue {
         clonedElement.style.left = Math.round(offsetLeft) + 'px'
         clonedElement.classList.add('shoot-off')
 
-        setTimeout(() => {
-          let alpha = (Math.random() * Math.PI) / 4
-          if (Math.random() < 0.5) {
-            alpha *= -1
-          }
-          let rocketTilt = Math.PI / 4
-          alpha += -startAngle + rocketTilt
-
-          let direction = [Math.cos(alpha), Math.sin(alpha)]
-
-          let targetX = offsetLeft
-          let targetY = offsetTop
-
-          while (
-            targetY > 0 &&
-            targetY < window.innerHeight &&
-            targetX > 0 &&
-            targetX < window.innerWidth
-          ) {
-            targetX += direction[0]
-            targetY -= direction[1]
-          }
-
-          clonedElement.style.top = targetY + 'px'
-          clonedElement.style.left = targetX + 'px'
-          clonedElement.style.rotate = -alpha + Math.PI / 4 + 'rad'
-
-          const animationDuration = 6000
-          setTimeout(() => clonedElement.remove(), animationDuration)
-        }, 1)
+        this.flyRocket(clonedElement, startAngle, offsetLeft, offsetTop)
       })
       .finally(() => {
         srcElement.style.rotate = '0deg'
@@ -171,8 +167,43 @@ export default class QueueOverview extends Vue {
       })
   }
 
+  private flyRocket(
+    clonedElement: HTMLElement,
+    startAngle: number,
+    rawTargetX: number,
+    rawTargetY: number
+  ) {
+    setTimeout(() => {
+      let alpha = (Math.random() * Math.PI) / 4
+      if (Math.random() < 0.5) {
+        alpha *= -1
+      }
+      let rocketTilt = Math.PI / 4
+      alpha += -startAngle + rocketTilt
+
+      let direction = [Math.cos(alpha), Math.sin(alpha)]
+
+      while (
+        rawTargetY > 0 &&
+        rawTargetY < window.innerHeight &&
+        rawTargetX > 0 &&
+        rawTargetX < window.innerWidth
+      ) {
+        rawTargetX += direction[0]
+        rawTargetY -= direction[1]
+      }
+
+      clonedElement.style.top = rawTargetY + 'px'
+      clonedElement.style.left = rawTargetX + 'px'
+      clonedElement.style.rotate = -alpha + Math.PI / 4 + 'rad'
+
+      const animationDuration = 6000
+      setTimeout(() => clonedElement.remove(), animationDuration)
+    }, 1)
+  }
+
   private deleteCommit(commit: Commit) {
-    vxm.queueModule.dispatchDeleteOpenTask(commit)
+    vxm.queueModule.dispatchDeleteOpenTask({ commit: commit })
   }
 
   private getWorker(commit: Commit): Worker | undefined {
@@ -183,6 +214,40 @@ export default class QueueOverview extends Vue {
           it.currentTask!.repoID === commit.repoID &&
           it.currentTask!.hash === commit.hash
       )
+  }
+
+  private cancelAllFetched() {
+    if (!window.confirm('Do you really want to empty the queue?')) {
+      return
+    }
+
+    this.$globalSnackbar.setLoading('cancel-queue', 2)
+    Promise.all(
+      vxm.queueModule.openTasks.map(it => {
+        return vxm.queueModule.dispatchDeleteOpenTask({
+          commit: it,
+          suppressRefetch: true,
+          suppressSnackbar: true
+        })
+      })
+    )
+      .then(() => {
+        this.$globalSnackbar.setSuccess(
+          'cancel-queue',
+          'Cancelled all open tasks!',
+          2
+        )
+      })
+      .catch(error => {
+        this.$globalSnackbar.setError(
+          'cancel-queue',
+          extractErrorMessage(error),
+          2
+        )
+      })
+      .finally(() => {
+        vxm.queueModule.fetchQueue({ hideFromSnackbar: true })
+      })
   }
 
   created() {

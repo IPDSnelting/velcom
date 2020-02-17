@@ -24,7 +24,7 @@
               <v-toolbar color="primary darken-1" dark>Queued commits (in planned execution order)</v-toolbar>
             </v-card-title>
             <v-card-text>
-              <v-container fluid>
+              <v-container fluid class="ma-0 pa-0">
                 <v-row align="center">
                   <queue-overview></queue-overview>
                 </v-row>
@@ -43,6 +43,7 @@ import Component from 'vue-class-component'
 import WorkerOverview from '../components/overviews/WorkerOverview.vue'
 import QueueOverview from '../components/overviews/QueueOverview.vue'
 import { vxm } from '../store/index'
+import { Route, RawLocation } from 'vue-router'
 
 @Component({
   components: {
@@ -53,6 +54,16 @@ import { vxm } from '../store/index'
 export default class Queue extends Vue {
   private get workers() {
     return vxm.queueModule.workers
+  }
+
+  beforeRouteLeave(
+    to: Route,
+    from: Route,
+    next: (to?: RawLocation | false | ((vm: Vue) => any) | void) => void
+  ): void {
+    vxm.queueModule.setOpenTasks([])
+    vxm.queueModule.setWorkers([])
+    next()
   }
 }
 </script>

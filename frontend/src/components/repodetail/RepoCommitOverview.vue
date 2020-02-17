@@ -62,7 +62,7 @@
                       <commit-benchmark-actions
                         :hasExistingBenchmark="false"
                         @benchmark="benchmark(commit)"
-                        @benchmarkUpwards="benchmarkUpwards(commit)"
+                        @benchmarkUpwards="benchmarkUpwardsOf(commit)"
                       ></commit-benchmark-actions>
                     </template>
                   </commit-overview-base>

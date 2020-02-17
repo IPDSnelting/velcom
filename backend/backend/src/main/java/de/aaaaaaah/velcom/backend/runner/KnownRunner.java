@@ -3,6 +3,7 @@ package de.aaaaaaah.velcom.backend.runner;
 import de.aaaaaaah.velcom.backend.newaccess.entities.Commit;
 import de.aaaaaaah.velcom.runner.shared.RunnerStatusEnum;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.RunnerInformation;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -118,6 +119,29 @@ public class KnownRunner {
 			runnerInformation.getAvailableMemory(),
 			commit
 		);
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) {
+			return true;
+		}
+		if (o == null || getClass() != o.getClass()) {
+			return false;
+		}
+		KnownRunner that = (KnownRunner) o;
+		return coreCount == that.coreCount &&
+			availableMemory == that.availableMemory &&
+			currentStatus == that.currentStatus &&
+			Objects.equals(name, that.name) &&
+			Objects.equals(operatingSystem, that.operatingSystem) &&
+			Objects.equals(currentCommit, that.currentCommit);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(currentStatus, name, operatingSystem, coreCount, availableMemory,
+			currentCommit);
 	}
 
 	@Override

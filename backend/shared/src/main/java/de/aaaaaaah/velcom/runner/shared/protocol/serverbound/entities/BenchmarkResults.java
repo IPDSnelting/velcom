@@ -9,6 +9,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Contains the results of a benchmark.
@@ -125,6 +126,27 @@ public class BenchmarkResults implements SentEntity {
 	 */
 	public RunnerWorkOrder getWorkOrder() {
 		return workOrder;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) {
+			return true;
+		}
+		if (o == null || getClass() != o.getClass()) {
+			return false;
+		}
+		BenchmarkResults that = (BenchmarkResults) o;
+		return Objects.equals(workOrder, that.workOrder) &&
+			Objects.equals(benchmarks, that.benchmarks) &&
+			Objects.equals(error, that.error) &&
+			Objects.equals(startTime, that.startTime) &&
+			Objects.equals(endTime, that.endTime);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(workOrder, benchmarks, error, startTime, endTime);
 	}
 
 	@Override

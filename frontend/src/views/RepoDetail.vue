@@ -7,13 +7,14 @@
     </v-row>
     <v-row align="baseline" justify="center">
       <v-col>
-        <detail-graph
-          :benchmark="selectedBenchmark"
-          :metric="selectedMetric"
-          :amount="Number.parseInt(amount)"
-          :beginYAtZero="this.yScaleBeginsAtZero"
-          @selectionChanged="updateSelection"
-        ></detail-graph>
+        <v-card>
+          <detail-graph
+            :measurement="selectedMeasurement"
+            :amount="Number.parseInt(amount)"
+            :beginYAtZero="this.yScaleBeginsAtZero"
+            @selectionChanged="updateSelection"
+          ></detail-graph>
+        </v-card>
       </v-col>
     </v-row>
     <v-row align="baseline" justify="center">
@@ -54,7 +55,7 @@
                             @blur="retrieveRuns"
                             @keyup.enter="retrieveRuns"
                             v-model="amount"
-                            :rules="[nonEmptyRunAmount, nonNegativeRunAmount, onlyNumericInput]"
+                            :rules="[nonEmptyRunAmount, nonNegativeRunAmount, onlyNumericInput, noIntegerOverflow]"
                             label="number of commits to fetch"
                             class="mr-5"
                           ></v-text-field>
@@ -64,7 +65,7 @@
                             @blur="retrieveRuns"
                             @keyup.enter="retrieveRuns"
                             v-model="skip"
-                            :rules="[nonEmptyRunAmount, nonNegativeRunAmount, onlyNumericInput]"
+                            :rules="[nonEmptyRunAmount, nonNegativeRunAmount, onlyNumericInput, noIntegerOverflow]"
                             label="number of commits to skip"
                             class="mr-5"
                           ></v-text-field>
@@ -111,7 +112,7 @@ import { Watch } from 'vue-property-decorator'
 import { vxm } from '../store/index'
 import RepoBaseInformation from '@/components/repodetail/RepoBaseInformation.vue'
 import RepoCommitOverview from '@/components/repodetail/RepoCommitOverview.vue'
-import DetailGraph from '@/components/graphs/DetailGraph.vue'
+import NewDetailGraph from '@/components/graphs/NewDetailGraph.vue'
 import { Route, RawLocation } from 'vue-router'
 import { Dictionary } from 'vue-router/types/router'
 
@@ -119,7 +120,7 @@ import { Dictionary } from 'vue-router/types/router'
   components: {
     'repo-base-information': RepoBaseInformation,
     'repo-commit-overview': RepoCommitOverview,
-    'detail-graph': DetailGraph
+    'detail-graph': NewDetailGraph
   }
 })
 export default class RepoDetail extends Vue {
@@ -130,20 +131,32 @@ export default class RepoDetail extends Vue {
     | 'begin y-Scale at zero'
     | 'begin y-Scale at minimum Value' = 'begin y-Scale at minimum Value'
 
-  private get selectedBenchmark() {
+  private get selectedBenchmark(): string {
     return vxm.repoDetailModule.selectedBenchmark
   }
 
   private set selectedBenchmark(selectedBenchmark: string) {
+    if (vxm.repoDetailModule.selectedBenchmark !== selectedBenchmark) {
+      let newMetrics = this.metricsForBenchmark(selectedBenchmark)
+      if (!newMetrics.includes(this.selectedMetric)) {
+        if (newMetrics) {
+          this.selectedMetric = newMetrics[0]
+        }
+      }
+    }
     vxm.repoDetailModule.selectedBenchmark = selectedBenchmark
   }
 
-  private get selectedMetric() {
+  private get selectedMetric(): string {
     return vxm.repoDetailModule.selectedMetric
   }
 
   private set selectedMetric(selectedMetric: string) {
     vxm.repoDetailModule.selectedMetric = selectedMetric
+  }
+
+  private get selectedMeasurement(): MeasurementID {
+    return new MeasurementID(this.selectedBenchmark, this.selectedMetric)
   }
 
   private get amount() {
@@ -196,6 +209,15 @@ export default class RepoDetail extends Vue {
 
   private onlyNumericInput(input: string): boolean | string {
     return !isNaN(Number(input)) ? true : 'Input must be a number!'
+  }
+
+  private noIntegerOverflow(input: string): boolean | string {
+    let value = Math.abs(Number(input))
+
+    if (value >= Math.pow(2, 31) - 1) {
+      return 'Input is too large!'
+    }
+    return true
   }
 
   private toggleYScale() {
@@ -294,11 +316,11 @@ export default class RepoDetail extends Vue {
     if (query.fetchAmount) {
       this.amount = query.fetchAmount as string
     }
-    if (query.metric) {
-      this.selectedMetric = query.metric as string
-    }
     if (query.benchmark) {
       this.selectedBenchmark = query.benchmark as string
+    }
+    if (query.metric) {
+      this.selectedMetric = query.metric as string
     }
   }
 

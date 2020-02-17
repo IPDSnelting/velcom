@@ -84,6 +84,7 @@ public class BenchmarkFailureInformation {
 	@Override
 	public String toString() {
 		return allSections.stream()
+			.filter(it -> !it.data.isEmpty())
 			.map(Section::toString)
 			.collect(Collectors.joining("\n\n"));
 	}
@@ -145,10 +146,6 @@ public class BenchmarkFailureInformation {
 
 		public String getName() {
 			return name;
-		}
-
-		public String getValue() {
-			return value;
 		}
 
 		public String toString(int width) {

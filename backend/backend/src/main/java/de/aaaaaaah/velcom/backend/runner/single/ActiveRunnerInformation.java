@@ -5,6 +5,7 @@ import de.aaaaaaah.velcom.runner.shared.RunnerStatusEnum;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkResults;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.RunnerInformation;
 import java.time.Instant;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.IntConsumer;
@@ -179,7 +180,7 @@ public class ActiveRunnerInformation {
 	 */
 	void setResults(BenchmarkResults results) {
 		this.resultListener.accept(results);
-		setCurrentCommit(null);
+		clearCurrentCommit();
 	}
 
 	/**
@@ -188,7 +189,16 @@ public class ActiveRunnerInformation {
 	 * @param currentCommit the current commit. May be null.
 	 */
 	void setCurrentCommit(Commit currentCommit) {
-		this.currentCommit = currentCommit;
+		this.currentCommit = Objects.requireNonNull(
+			currentCommit, "currentCommit can not be null, use clearCurrentCommit!"
+		);
+	}
+
+	/**
+	 * Clears the current commit.
+	 */
+	public void clearCurrentCommit() {
+		currentCommit = null;
 	}
 
 	@Override

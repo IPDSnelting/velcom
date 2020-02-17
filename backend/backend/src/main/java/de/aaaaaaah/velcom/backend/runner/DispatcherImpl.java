@@ -1,5 +1,7 @@
 package de.aaaaaaah.velcom.backend.runner;
 
+import static java.util.function.Predicate.not;
+
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.newaccess.BenchmarkWriteAccess;
 import de.aaaaaaah.velcom.backend.newaccess.RepoWriteAccess;
@@ -34,6 +36,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -113,6 +116,7 @@ public class DispatcherImpl implements Dispatcher {
 	@Override
 	public void addRunner(ActiveRunnerInformation runnerInformation) {
 		AtomicBoolean initialConnect = new AtomicBoolean(true);
+		AtomicReference<BenchmarkResults> lastResults = new AtomicReference<>();
 
 		runnerInformation.setOnRunnerInformation(newInformation -> {
 			boolean isWorking = newInformation.getRunnerState() == RunnerStatusEnum.WORKING;
@@ -135,6 +139,27 @@ public class DispatcherImpl implements Dispatcher {
 				if (isWorking && lastCommits.isEmpty()) {
 					resetRunner(runnerInformation);
 				}
+				// Runner doesn't even know it should be working
+				// Or it has finished its work and we will get a dedicated result packet soon
+				if (isWorking && !lastCommits.isEmpty()) {
+					// Give the runner a 1 second grace period in which it can send the results
+					watchdogPool.schedule(() -> {
+						// We got no results -> Re-benchmark all commits the runner should have been
+						// running
+						if (lastResults.get() == null) {
+							lastCommits.forEach(queue::addCommit);
+							return;
+						}
+						// Add all commits we did not get any results for to the queue
+						RunnerWorkOrder workOrder = lastResults.get().getWorkOrder();
+						lastCommits.stream()
+							.filter(not(it ->
+								it.getHash().getHash().equals(workOrder.getCommitHash())
+									&& it.getRepoId().getId().equals(workOrder.getRepoId())
+							))
+							.forEach(queue::addCommit);
+					}, 1, TimeUnit.SECONDS);
+				}
 				activeRunners.add(runnerInformation);
 			}
 
@@ -151,7 +176,10 @@ public class DispatcherImpl implements Dispatcher {
 			}
 		});
 		runnerInformation.setResultListener(
-			results -> this.onResultsReceived(runnerInformation, results)
+			results -> {
+				lastResults.set(results);
+				this.onResultsReceived(runnerInformation, results);
+			}
 		);
 		LOGGER.debug("Got add request for a runner {}", runnerInformation);
 	}
@@ -226,6 +254,7 @@ public class DispatcherImpl implements Dispatcher {
 			if (runner.getState() == RunnerStatusEnum.WORKING) {
 				resetRunner(runner);
 			}
+			runner.clearCurrentCommit();
 			return true;
 		}
 		return false;
@@ -365,6 +394,11 @@ public class DispatcherImpl implements Dispatcher {
 			RunnerWorkOrder workOrder = new RunnerWorkOrder(
 				commit.getRepoId().getId(), commit.getHash().getHash()
 			);
+
+			// Commit was cancelled
+			if (runner.getCurrentCommit().isEmpty()) {
+				return true;
+			}
 
 			runner.getRunnerStateMachine().startWork(
 				commit,
