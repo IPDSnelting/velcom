@@ -316,11 +316,11 @@ export default class RepoDetail extends Vue {
     if (query.fetchAmount) {
       this.amount = query.fetchAmount as string
     }
-    if (query.metric) {
-      this.selectedMetric = query.metric as string
-    }
     if (query.benchmark) {
       this.selectedBenchmark = query.benchmark as string
+    }
+    if (query.metric) {
+      this.selectedMetric = query.metric as string
     }
   }
 
