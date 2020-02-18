@@ -39,6 +39,9 @@ import io.dropwizard.auth.AuthValueFactoryProvider;
 import io.dropwizard.auth.basic.BasicCredentialAuthFilter;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
+import io.prometheus.client.CollectorRegistry;
+import io.prometheus.client.dropwizard.DropwizardExports;
+import io.prometheus.client.exporter.MetricsServlet;
 import java.util.EnumSet;
 import javax.servlet.DispatcherType;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
@@ -71,6 +74,12 @@ public class ServerMain extends Application<GlobalConfig> {
 		// Exception mappers
 		environment.jersey().register(new NoSuchRepoExceptionMapper());
 		environment.jersey().register(new NoSuchCommitExceptionMapper());
+
+		CollectorRegistry collectorRegistry = new CollectorRegistry();
+		collectorRegistry.register(new DropwizardExports(environment.metrics()));
+		environment.admin()
+			.addServlet("prometheusMetrics", new MetricsServlet(collectorRegistry))
+			.addMapping("/prometheusMetrics");
 
 		// Storage layer
 		RepoStorage repoStorage = new RepoStorage(configuration.getRepoDir());

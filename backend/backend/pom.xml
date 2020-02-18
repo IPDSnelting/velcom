@@ -139,6 +139,24 @@
       <version>${dropwizard-auth.version}</version>
     </dependency>
 
+    <dependency>
+      <groupId>io.prometheus</groupId>
+      <artifactId>simpleclient_dropwizard</artifactId>
+      <version>0.8.1</version>
+    </dependency>
+
+    <dependency>
+      <groupId>io.prometheus</groupId>
+      <artifactId>simpleclient</artifactId>
+      <version>0.8.1</version>
+    </dependency>
+    <dependency>
+      <groupId>io.prometheus</groupId>
+      <artifactId>simpleclient_servlet</artifactId>
+      <version>0.8.1</version>
+    </dependency>
+
+
     <!--NEEDED FOR DROPWIZARD (NO LONGER INCLUDED IN THE JDK)-->
     <dependency>
       <artifactId>jakarta.xml.bind-api</artifactId>
