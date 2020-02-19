@@ -156,6 +156,14 @@
       <version>0.8.1</version>
     </dependency>
 
+    <!-- https://mvnrepository.com/artifact/org.kohsuke.metainf-services/metainf-services -->
+    <dependency>
+      <groupId>org.kohsuke.metainf-services</groupId>
+      <artifactId>metainf-services</artifactId>
+      <version>1.8</version>
+      <scope>provided</scope>
+    </dependency>
+
 
     <!--NEEDED FOR DROPWIZARD (NO LONGER INCLUDED IN THE JDK)-->
     <dependency>

@@ -6,6 +6,11 @@ server:
   adminConnectors:
     - type: http
       port: 9002 # Admin UI port
+  requestLog:
+    appenders:
+      - type: console
+        filterFactories:
+          - type: metrics-endpoint
 
 # The JDBC (Java database connectivity) url used to connect to the database
 jdbcUrl: "jdbc:sqlite:file:data/data.db"
