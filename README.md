@@ -12,6 +12,8 @@
     - [Configuring the web server](#configuring-the-web-server)
         - [Cloning Repositories via SSH](#cloning-repositories-via-ssh)
     - [Using the REST-API manually](#using-the-rest-api-manually)
+    - [Monitoring VelCom](#monitoring-velcom)
+        - [Public Monitoring instance](#public-monitoring-instance)
 
 <!-- markdown-toc end -->
 
@@ -218,3 +220,33 @@ The API uses JSON bodies and HTTP Basic authentication. To authenticate as web
 admin, use username `admin` and the web admin token as password. To authenticate
 as repo admin, use the repo id as username and the repo token as password. The
 web admin and repo tokens must have a length of at least 1.
+
+
+## Monitoring VelCom
+
+It is always nice to get notified if VelCom just suddenly died a gruesome death
+or is not working correctly. To help you with this task, VelCom exposes two
+metric endpoints on its *admin connector* (look in the config for the
+`adminConnectors`
+to find out what port it is running on):
+* `/metrics` -- Aggregated server health metrics from Dropwizard in JSON Format
+* `/prometheusMetrics` -- Aggregated server health and status metrics in a
+  [Prometheus](https://prometheus.io/) compatible format.
+
+The Prometheus endpoint can easily be integrated in an existing
+Prometheus/Grafana based workflow. There is a small Aaaaaaah project called
+[Pseumonitor](https://git.scc.kit.edu/aaaaaaah/pseumonitor) which provides a
+`docker-compose.yml` file that automatically sets up
+[node_exporter](https://github.com/prometheus/node_exporter),
+[Grafana](https://grafana.com/) and [Prometheus](https://prometheus.io/) to
+scrape a locally running VelCom instance. This can be adapted to your
+needs quite easily and might serve as a nice starting point.
+
+### Public Monitoring instance
+
+There is a public instance of Pseumonitor running at
+[https://velcom.aaaaaaah.de:667](https://velcom.aaaaaaah.de:667/d/rKedptwWk/velcom-dashboard?orgId=1&refresh=30s).
+The username is `admin` and the password is `Aaaaaaah`. The Grafana instance
+currently features a single dashboard displaying server health metrics (CPU
+usage, disk space) and application information (Heap usage, requests, response
+times, 5xxer responses, etc.).
