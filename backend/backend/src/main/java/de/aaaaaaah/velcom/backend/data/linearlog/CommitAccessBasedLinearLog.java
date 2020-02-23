@@ -1,36 +1,98 @@
 package de.aaaaaaah.velcom.backend.data.linearlog;
 
-import de.aaaaaaah.velcom.backend.access.commit.Commit;
-import de.aaaaaaah.velcom.backend.access.commit.CommitAccess;
-import de.aaaaaaah.velcom.backend.access.commit.CommitAccessException;
-import de.aaaaaaah.velcom.backend.access.repo.BranchName;
-import de.aaaaaaah.velcom.backend.access.repo.Repo;
-import de.aaaaaaah.velcom.backend.access.repo.RepoId;
+import de.aaaaaaah.velcom.backend.newaccess.CommitReadAccess;
+import de.aaaaaaah.velcom.backend.newaccess.RepoReadAccess;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Branch;
+import de.aaaaaaah.velcom.backend.newaccess.entities.BranchName;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Commit;
+import de.aaaaaaah.velcom.backend.newaccess.entities.RepoId;
+import de.aaaaaaah.velcom.backend.newaccess.exceptions.CommitLogException;
+import de.aaaaaaah.velcom.backend.util.Pair;
 import java.util.Collection;
+import java.util.Iterator;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 /**
- * This is a linear log that is based on the log at {@link CommitAccess#getCommitLog(RepoId,
+ * This is a linear log that is based on the log at {@link CommitReadAccess#getCommitLog(RepoId,
  * Collection)}, which is based on jgit's git log command.
  */
 public class CommitAccessBasedLinearLog implements LinearLog {
 
-	private final CommitAccess commitAccess;
+	private final CommitReadAccess commitAccess;
+	private final RepoReadAccess repoAccess;
 
-	public CommitAccessBasedLinearLog(CommitAccess commitAccess) {
+	public CommitAccessBasedLinearLog(CommitReadAccess commitAccess, RepoReadAccess repoAccess) {
 		this.commitAccess = commitAccess;
+		this.repoAccess = repoAccess;
 	}
 
 	@Override
-	public Stream<Commit> walk(Repo repo, Collection<BranchName> branches)
+	public Stream<Commit> walk(RepoId repoId, Collection<BranchName> branches)
 		throws LinearLogException {
 
 		try {
-			return commitAccess.getCommitLog(repo.getId(), branches);
-		} catch (CommitAccessException e) {
+			return commitAccess.getCommitLog(repoId, branches);
+		} catch (CommitLogException e) {
 			throw new LinearLogException(e);
 		}
 	}
 
+	@Override
+	public Optional<Commit> getPreviousCommit(Commit commit) {
+		RepoId repoId = commit.getRepoId();
+		Collection<Branch> trackedBranches = repoAccess.getTrackedBranches(repoId);
+
+		try (Stream<Commit> walk = walkBranches(repoId, trackedBranches)) {
+			Iterator<Commit> remainingCommits = walk
+				.dropWhile(c -> !commit.equals(c))
+				.skip(1)
+				.iterator();
+
+			return remainingCommits.hasNext()
+				? Optional.of(remainingCommits.next())
+				: Optional.empty();
+		} catch (LinearLogException e) {
+			return Optional.empty();
+		}
+	}
+
+	@Override
+	public Pair<Optional<Commit>, Optional<Commit>> getPrevNextCommits(Commit commit) {
+		RepoId repoId = commit.getRepoId();
+		Collection<Branch> trackedBranches = repoAccess.getTrackedBranches(repoId);
+
+		try (Stream<Commit> walk = walkBranches(repoId, trackedBranches)) {
+			Iterator<Commit> iterator = walk.iterator();
+
+			boolean foundCommit = false;
+			Commit nextCommit = null;
+			while (iterator.hasNext()) {
+				Commit currentCommit = iterator.next();
+				if (currentCommit.getHash().equals(commit.getHash())) {
+					foundCommit = true;
+					break;
+				} else {
+					nextCommit = currentCommit;
+				}
+			}
+
+			if (!foundCommit) {
+				return new Pair<>(Optional.empty(), Optional.empty());
+			}
+
+			Commit prevCommit = null;
+			if (iterator.hasNext()) {
+				prevCommit = iterator.next();
+			}
+
+			return new Pair<>(Optional.ofNullable(prevCommit), Optional.ofNullable(nextCommit));
+		} catch (LinearLogException e) {
+			return new Pair<>(Optional.empty(), Optional.empty());
+		}
+
+	}
+
 	// TODO maybe optimize getPreviousCommit using jgit in CommitAccess?
+
 }

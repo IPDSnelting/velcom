@@ -1,8 +1,8 @@
 package de.aaaaaaah.velcom.backend.restapi.jsonobjects;
 
-import de.aaaaaaah.velcom.backend.access.benchmark.Interpretation;
-import de.aaaaaaah.velcom.backend.access.benchmark.Unit;
-import de.aaaaaaah.velcom.backend.access.repo.RepoId;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Interpretation;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Unit;
+import de.aaaaaaah.velcom.backend.newaccess.entities.RepoId;
 import java.util.List;
 
 

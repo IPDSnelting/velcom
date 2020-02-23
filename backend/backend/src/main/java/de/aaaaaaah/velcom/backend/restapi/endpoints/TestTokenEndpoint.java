@@ -1,6 +1,6 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
-import de.aaaaaaah.velcom.backend.access.repo.RepoId;
+import de.aaaaaaah.velcom.backend.newaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.restapi.RepoUser;
 import io.dropwizard.auth.Auth;
 import java.util.UUID;

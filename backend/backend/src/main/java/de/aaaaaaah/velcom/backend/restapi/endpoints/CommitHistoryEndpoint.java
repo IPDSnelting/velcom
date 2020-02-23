@@ -1,16 +1,16 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
-import de.aaaaaaah.velcom.backend.access.benchmark.BenchmarkAccess;
-import de.aaaaaaah.velcom.backend.access.benchmark.Run;
-import de.aaaaaaah.velcom.backend.access.commit.Commit;
-import de.aaaaaaah.velcom.backend.access.commit.CommitHash;
-import de.aaaaaaah.velcom.backend.access.repo.Repo;
-import de.aaaaaaah.velcom.backend.access.repo.RepoAccess;
-import de.aaaaaaah.velcom.backend.access.repo.RepoId;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Run;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Commit;
+import de.aaaaaaah.velcom.backend.newaccess.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Repo;
+import de.aaaaaaah.velcom.backend.newaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.data.commitcomparison.CommitComparer;
 import de.aaaaaaah.velcom.backend.data.commitcomparison.CommitComparison;
 import de.aaaaaaah.velcom.backend.data.linearlog.LinearLog;
 import de.aaaaaaah.velcom.backend.data.linearlog.LinearLogException;
+import de.aaaaaaah.velcom.backend.newaccess.BenchmarkReadAccess;
+import de.aaaaaaah.velcom.backend.newaccess.RepoReadAccess;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonCommitComparison;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,12 +37,12 @@ public class CommitHistoryEndpoint {
 	public static final int DEFAULT_AMOUNT = Integer.MAX_VALUE; // TODO choose better default amount?
 	public static final int DEFAULT_SKIP = 0;
 
-	private final BenchmarkAccess benchmarkAccess;
-	private final RepoAccess repoAccess;
+	private final BenchmarkReadAccess benchmarkAccess;
+	private final RepoReadAccess repoAccess;
 	private final LinearLog linearLog;
 	private final CommitComparer comparer;
 
-	public CommitHistoryEndpoint(BenchmarkAccess benchmarkAccess, RepoAccess repoAccess,
+	public CommitHistoryEndpoint(BenchmarkReadAccess benchmarkAccess, RepoReadAccess repoAccess,
 		LinearLog linearLog, CommitComparer comparer) {
 
 		this.benchmarkAccess = benchmarkAccess;
@@ -71,7 +71,7 @@ public class CommitHistoryEndpoint {
 		final RepoId repoId = new RepoId(repoUuid);
 		final Repo repo = repoAccess.getRepo(repoId);
 
-		try (Stream<Commit> stream = linearLog.walkBranches(repo, repo.getTrackedBranches())) {
+		try (Stream<Commit> stream = linearLog.walkBranches(repoId, repo.getTrackedBranches())) {
 			final List<Commit> commits = stream
 				.skip(skip)
 				.limit(amount + 1)
@@ -81,12 +81,7 @@ public class CommitHistoryEndpoint {
 				.map(Commit::getHash)
 				.collect(Collectors.toUnmodifiableList());
 
-			final Map<CommitHash, Run> runs = benchmarkAccess.getRuns(
-				benchmarkAccess.getLatestRunIds(repoId, commitHashes)).stream()
-				.collect(Collectors.toMap(
-					Run::getCommitHash,
-					run -> run
-				));
+			Map<CommitHash, Run> runs = benchmarkAccess.getLatestRuns(repoId, commitHashes);
 
 			List<CommitComparison> commitComparisons = new ArrayList<>();
 

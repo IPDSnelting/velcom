@@ -12,12 +12,12 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import de.aaaaaaah.velcom.backend.access.benchmark.BenchmarkAccess;
-import de.aaaaaaah.velcom.backend.access.commit.Commit;
-import de.aaaaaaah.velcom.backend.access.commit.CommitHash;
-import de.aaaaaaah.velcom.backend.access.repo.RepoAccess;
-import de.aaaaaaah.velcom.backend.access.repo.RepoId;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
+import de.aaaaaaah.velcom.backend.newaccess.BenchmarkWriteAccess;
+import de.aaaaaaah.velcom.backend.newaccess.RepoWriteAccess;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Commit;
+import de.aaaaaaah.velcom.backend.newaccess.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.newaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.runner.single.ActiveRunnerInformation;
 import de.aaaaaaah.velcom.backend.runner.single.RunnerConnectionManager;
 import de.aaaaaaah.velcom.backend.runner.single.ServerRunnerStateMachine;
@@ -50,13 +50,13 @@ class DispatcherImplTest {
 
 	private DispatcherImpl dispatcher;
 	private Queue queue;
-	private BenchmarkAccess benchmarkAccess;
+	private BenchmarkWriteAccess benchmarkAccess;
 
 	@BeforeEach
 	void setUp() {
 		queue = mock(Queue.class);
-		RepoAccess repoAccess = mock(RepoAccess.class);
-		benchmarkAccess = mock(BenchmarkAccess.class);
+		RepoWriteAccess repoAccess = mock(RepoWriteAccess.class);
+		benchmarkAccess = mock(BenchmarkWriteAccess.class);
 
 		when(repoAccess.getLatestBenchmarkRepoHash()).thenReturn(BENCH_REPO_HASH);
 
@@ -181,7 +181,7 @@ class DispatcherImplTest {
 			Instant.now()
 		));
 
-		verify(benchmarkAccess).addRun(any());
+		verify(benchmarkAccess).insertRun(any());
 		verify(queue).finishTask(REPO_ID, COMMIT_HASH);
 	}
 
@@ -194,7 +194,7 @@ class DispatcherImplTest {
 			"error", Instant.now(), Instant.now()
 		));
 
-		verify(benchmarkAccess).addRun(any());
+		verify(benchmarkAccess).insertRun(any());
 		verify(queue).finishTask(REPO_ID, COMMIT_HASH);
 	}
 

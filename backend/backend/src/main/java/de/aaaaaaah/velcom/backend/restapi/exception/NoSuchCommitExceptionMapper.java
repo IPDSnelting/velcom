@@ -1,6 +1,6 @@
 package de.aaaaaaah.velcom.backend.restapi.exception;
 
-import de.aaaaaaah.velcom.backend.access.commit.NoSuchCommitException;
+import de.aaaaaaah.velcom.backend.newaccess.exceptions.NoSuchCommitException;
 import de.aaaaaaah.velcom.backend.restapi.util.ErrorResponseUtil;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;

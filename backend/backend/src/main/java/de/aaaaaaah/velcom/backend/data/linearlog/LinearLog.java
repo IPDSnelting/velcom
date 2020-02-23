@@ -1,9 +1,9 @@
 package de.aaaaaaah.velcom.backend.data.linearlog;
 
-import de.aaaaaaah.velcom.backend.access.commit.Commit;
-import de.aaaaaaah.velcom.backend.access.repo.Branch;
-import de.aaaaaaah.velcom.backend.access.repo.BranchName;
-import de.aaaaaaah.velcom.backend.access.repo.Repo;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Branch;
+import de.aaaaaaah.velcom.backend.newaccess.entities.BranchName;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Commit;
+import de.aaaaaaah.velcom.backend.newaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.util.Pair;
 import java.util.Collection;
 import java.util.Iterator;
@@ -32,10 +32,10 @@ public interface LinearLog {
 	 * @throws LinearLogException if anything goes wrong (for example, the underlying jgit repo may
 	 * 	close unexpectedly)
 	 */
-	Stream<Commit> walk(Repo repo, Collection<BranchName> branches) throws LinearLogException;
+	Stream<Commit> walk(RepoId repo, Collection<BranchName> branches) throws LinearLogException;
 
 	/**
-	 * A helper function for {@link #walk(Repo, Collection)} that takes {@link Branch}es instead of
+	 * A helper function for {@link #walk(RepoId, Collection)} that takes {@link Branch}es instead of
 	 * {@link BranchName}s.
 	 *
 	 * <p>Note that the returned stream must be closed after it is no longer being used.</p>
@@ -47,7 +47,7 @@ public interface LinearLog {
 	 * @throws LinearLogException if anything goes wrong (for example, the underlying jgit repo may
 	 * 	close unexpectedly)
 	 */
-	default Stream<Commit> walkBranches(Repo repo, Collection<Branch> branches)
+	default Stream<Commit> walkBranches(RepoId repo, Collection<Branch> branches)
 		throws LinearLogException {
 
 		List<BranchName> branchNames = branches.stream()
@@ -66,53 +66,8 @@ public interface LinearLog {
 	 * 	Also returns {@link Optional#empty()} if a {@link LinearLogException} occurred while trying
 	 * 	to find the previous commit
 	 */
-	default Optional<Commit> getPreviousCommit(Commit commit) {
-		Repo repo = commit.getRepo();
+	Optional<Commit> getPreviousCommit(Commit commit);
 
-		try (Stream<Commit> walk = walkBranches(repo, repo.getTrackedBranches())) {
-			Iterator<Commit> remainingCommits = walk
-				.dropWhile(c -> !commit.equals(c))
-				.skip(1)
-				.iterator();
-
-			return remainingCommits.hasNext()
-				? Optional.of(remainingCommits.next())
-				: Optional.empty();
-		} catch (LinearLogException e) {
-			return Optional.empty();
-		}
-	}
-
-	default Pair<Optional<Commit>, Optional<Commit>> getPrevNextCommits(Commit commit) {
-		Repo repo = commit.getRepo();
-		try (Stream<Commit> walk = walkBranches(repo, repo.getTrackedBranches())) {
-			Iterator<Commit> iterator = walk.iterator();
-
-			boolean foundCommit = false;
-			Commit nextCommit = null;
-			while (iterator.hasNext()) {
-				Commit currentCommit = iterator.next();
-				if (currentCommit.getHash().equals(commit.getHash())) {
-					foundCommit = true;
-					break;
-				} else {
-					nextCommit = currentCommit;
-				}
-			}
-
-			if (!foundCommit) {
-				return new Pair<>(Optional.empty(), Optional.empty());
-			}
-
-			Commit prevCommit = null;
-			if (iterator.hasNext()) {
-				prevCommit = iterator.next();
-			}
-
-			return new Pair<>(Optional.ofNullable(prevCommit), Optional.ofNullable(nextCommit));
-		} catch (LinearLogException e) {
-			return new Pair<>(Optional.empty(), Optional.empty());
-		}
-	}
+	Pair<Optional<Commit>, Optional<Commit>> getPrevNextCommits(Commit commit);
 
 }

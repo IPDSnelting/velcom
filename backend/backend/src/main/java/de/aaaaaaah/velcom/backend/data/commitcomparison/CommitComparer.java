@@ -1,7 +1,7 @@
 package de.aaaaaaah.velcom.backend.data.commitcomparison;
 
-import de.aaaaaaah.velcom.backend.access.benchmark.Run;
-import de.aaaaaaah.velcom.backend.access.commit.Commit;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Run;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Commit;
 import javax.annotation.Nullable;
 
 public class CommitComparer {

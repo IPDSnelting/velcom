@@ -2,6 +2,8 @@ package de.aaaaaaah.velcom.backend.prototype;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import de.aaaaaaah.velcom.backend.newaccess.entities.BranchName;
+import de.aaaaaaah.velcom.backend.newaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.storage.repo.RepoStorage;
 import de.aaaaaaah.velcom.backend.storage.repo.exception.AddRepositoryException;
 import de.aaaaaaah.velcom.backend.storage.repo.exception.RepositoryAcquisitionException;
@@ -12,6 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -153,6 +156,11 @@ class RepoStorageTest {
 				// Get RevCommit for each branch
 				List<RevCommit> branchCommits = new ArrayList<>();
 				for (ObjectId branchId : branches) {
+					System.out.println("-----------------");
+					System.out.println(branchId.getName());
+					RevCommit revCommit = walk.parseCommit(branchId);
+					System.out.println(revCommit.getId().getName());
+
 					branchCommits.add(walk.parseCommit(branchId));
 				}
 
@@ -165,6 +173,51 @@ class RepoStorageTest {
 					System.out.println("-> " + current.getId().getName());
 				}
 			}
+		}
+	}
+
+	@Test
+	@Disabled
+	public void testWalkWithoutBody() throws AddRepositoryException, IOException, GitAPIException {
+		String url = "https://github.com/kwerber/tiny_repo";
+
+		Path repoDir = storage.addRepository("test_repo", url);
+		assertTrue(Files.exists(repoDir));
+
+		Collection<BranchName> branches = List.of(
+			BranchName.fromName("master"),
+			BranchName.fromName("otherbranch")
+		);
+
+		try (Git git = Git.open(repoDir.toFile())) {
+			Repository repo = git.getRepository();
+
+			RevWalk walk = new RevWalk(repo);
+
+			walk.setRetainBody(true);
+
+			// Start the walk from the specified branches
+			List<CommitHash> commitList = new ArrayList<>();
+
+			for (Ref branchRef : git.branchList().call()) {
+				BranchName branchName = BranchName.fromFullName(branchRef.getName());
+
+				if (branches.contains(branchName)) {
+					ObjectId branchObjectId = branchRef.getObjectId();
+					RevCommit revCommit = walk.lookupCommit(branchObjectId);
+
+					walk.markStart(revCommit);
+				}
+			}
+
+			for (RevCommit revCommit : walk) {
+				String hashStr = revCommit.getId().getName();
+				commitList.add(new CommitHash(hashStr));
+
+				String fullMessage = revCommit.getFullMessage();
+				System.out.println(fullMessage);
+			}
+
 		}
 	}
 

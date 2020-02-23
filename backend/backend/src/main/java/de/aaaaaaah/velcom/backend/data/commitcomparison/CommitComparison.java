@@ -1,10 +1,10 @@
 package de.aaaaaaah.velcom.backend.data.commitcomparison;
 
-import de.aaaaaaah.velcom.backend.access.benchmark.Measurement;
-import de.aaaaaaah.velcom.backend.access.benchmark.MeasurementName;
-import de.aaaaaaah.velcom.backend.access.benchmark.MeasurementValues;
-import de.aaaaaaah.velcom.backend.access.benchmark.Run;
-import de.aaaaaaah.velcom.backend.access.commit.Commit;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Commit;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Measurement;
+import de.aaaaaaah.velcom.backend.newaccess.entities.MeasurementName;
+import de.aaaaaaah.velcom.backend.newaccess.entities.MeasurementValues;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Run;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -93,7 +93,7 @@ public class CommitComparison {
 			}
 
 			commitDifferences.add(new CommitDifference(name,
-				firstValues.get().getValue(), secondValues.get().getValue()));
+				firstValues.get().getAverageValue(), secondValues.get().getAverageValue()));
 		}
 
 		return commitDifferences;

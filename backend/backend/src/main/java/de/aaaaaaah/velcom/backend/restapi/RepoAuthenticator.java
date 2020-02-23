@@ -1,8 +1,8 @@
 package de.aaaaaaah.velcom.backend.restapi;
 
-import de.aaaaaaah.velcom.backend.access.repo.RepoId;
-import de.aaaaaaah.velcom.backend.access.token.AuthToken;
-import de.aaaaaaah.velcom.backend.access.token.TokenAccess;
+import de.aaaaaaah.velcom.backend.newaccess.TokenReadAccess;
+import de.aaaaaaah.velcom.backend.newaccess.entities.AuthToken;
+import de.aaaaaaah.velcom.backend.newaccess.entities.RepoId;
 import io.dropwizard.auth.Authenticator;
 import io.dropwizard.auth.basic.BasicCredentials;
 import java.util.Optional;
@@ -11,9 +11,9 @@ import javax.annotation.Nullable;
 
 public class RepoAuthenticator implements Authenticator<BasicCredentials, RepoUser> {
 
-	private final TokenAccess tokenAccess;
+	private final TokenReadAccess tokenAccess;
 
-	public RepoAuthenticator(TokenAccess tokenAccess) {
+	public RepoAuthenticator(TokenReadAccess tokenAccess) {
 		this.tokenAccess = tokenAccess;
 	}
 

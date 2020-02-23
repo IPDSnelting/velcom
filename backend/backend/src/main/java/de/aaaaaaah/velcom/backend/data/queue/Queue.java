@@ -1,10 +1,10 @@
 package de.aaaaaaah.velcom.backend.data.queue;
 
-import de.aaaaaaah.velcom.backend.access.commit.BenchmarkStatus;
-import de.aaaaaaah.velcom.backend.access.commit.Commit;
-import de.aaaaaaah.velcom.backend.access.commit.CommitAccess;
-import de.aaaaaaah.velcom.backend.access.commit.CommitHash;
-import de.aaaaaaah.velcom.backend.access.repo.RepoId;
+import de.aaaaaaah.velcom.backend.newaccess.KnownCommitWriteAccess;
+import de.aaaaaaah.velcom.backend.newaccess.entities.BenchmarkStatus;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Commit;
+import de.aaaaaaah.velcom.backend.newaccess.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.newaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.util.Pair;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * The queue is passed tasks from various sources. It keeps track of all tasks and updates their
- * benchmark status in the {@link CommitAccess}, and also passes all tasks to an internal {@link
+ * benchmark status in the {@link KnownCommitWriteAccess}, and also passes all tasks to an internal {@link
  * QueuePolicy}. That policy keeps the tasks and decides in which order they should be executed.
  *
  * <p> When the queue is loaded after a restart, all the known commits which still need to be
@@ -38,14 +38,15 @@ public class Queue {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(Queue.class);
 
-	private final CommitAccess commitAccess;
+	private final KnownCommitWriteAccess knownCommitAccess;
 	private final QueuePolicy queuePolicy;
 
 	private final Collection<Consumer<Commit>> somethingAddedListeners;
 	private final Collection<Consumer<Pair<RepoId, CommitHash>>> somethingAbortedListeners;
 
-	public Queue(CommitAccess commitAccess, QueuePolicy queuePolicy) {
-		this.commitAccess = commitAccess;
+	public Queue(KnownCommitWriteAccess knownCommitAccess, QueuePolicy queuePolicy) {
+
+		this.knownCommitAccess = knownCommitAccess;
 		this.queuePolicy = queuePolicy;
 
 		somethingAddedListeners = new ArrayList<>();
@@ -60,7 +61,7 @@ public class Queue {
 	 */
 	public synchronized void addTask(Commit commit) {
 		if (queuePolicy.addTask(commit)) {
-			commitAccess.setBenchmarkStatus(commit.getRepoId(), commit.getHash(),
+			knownCommitAccess.setBenchmarkStatus(commit.getRepoId(), commit.getHash(),
 				BenchmarkStatus.BENCHMARK_REQUIRED);
 			callAllAddedListeners(commit);
 			LOGGER.info("Added task " + commit + " to queue and notified all listeners");
@@ -78,7 +79,7 @@ public class Queue {
 	 */
 	public synchronized void addManualTask(Commit commit) {
 		if (queuePolicy.addManualTask(commit)) {
-			commitAccess.setBenchmarkStatus(commit.getRepoId(), commit.getHash(),
+			knownCommitAccess.setBenchmarkStatus(commit.getRepoId(), commit.getHash(),
 				BenchmarkStatus.BENCHMARK_REQUIRED_MANUAL_PRIORITY);
 			callAllAddedListeners(commit);
 			LOGGER.info("Added manual task " + commit + " to queue and notified all listeners");
@@ -88,15 +89,15 @@ public class Queue {
 	}
 
 	/**
-	 * Add a commit either as a task or a manual task, based on its {@link
-	 * Commit#getBenchmarkStatus()}.
+	 * Add a commit either as a task or a manual task, based on its benchmark status.
 	 *
 	 * @param commit the commit that should be added as a task
 	 */
 	public synchronized void addCommit(Commit commit) {
-		if (commit.getBenchmarkStatus()
-			.equals(BenchmarkStatus.BENCHMARK_REQUIRED_MANUAL_PRIORITY)) {
+		BenchmarkStatus status = knownCommitAccess.getBenchmarkStatus(commit.getRepoId(),
+			commit.getHash());
 
+		if (status.equals(BenchmarkStatus.BENCHMARK_REQUIRED_MANUAL_PRIORITY)) {
 			addManualTask(commit);
 		} else {
 			addTask(commit);
@@ -116,7 +117,7 @@ public class Queue {
 	 * @param commitHash the commit's hash
 	 */
 	public synchronized void finishTask(RepoId repoId, CommitHash commitHash) {
-		commitAccess.setBenchmarkStatus(repoId, commitHash,
+		knownCommitAccess.setBenchmarkStatus(repoId, commitHash,
 			BenchmarkStatus.NO_BENCHMARK_REQUIRED);
 		LOGGER.info(
 			"Task with repoId " + repoId + " and commitHash " + commitHash
@@ -142,7 +143,9 @@ public class Queue {
 	 */
 	public synchronized void abortTask(RepoId repoId, CommitHash commitHash) {
 		queuePolicy.abortTask(repoId, commitHash);
-		commitAccess.setBenchmarkStatus(repoId, commitHash, BenchmarkStatus.NO_BENCHMARK_REQUIRED);
+		knownCommitAccess.setBenchmarkStatus(
+			repoId, commitHash, BenchmarkStatus.NO_BENCHMARK_REQUIRED
+		);
 		callAllAbortedListeners(repoId, commitHash);
 		LOGGER.info("Task with repoId " + repoId + " and hash " + commitHash + " was aborted");
 	}

@@ -1,7 +1,14 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
-import de.aaaaaaah.velcom.backend.access.repo.RepoAccess;
+import de.aaaaaaah.velcom.backend.newaccess.BenchmarkReadAccess;
+import de.aaaaaaah.velcom.backend.newaccess.RepoReadAccess;
+import de.aaaaaaah.velcom.backend.newaccess.TokenReadAccess;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Branch;
+import de.aaaaaaah.velcom.backend.newaccess.entities.MeasurementName;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Repo;
+import de.aaaaaaah.velcom.backend.newaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRepo;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -17,10 +24,15 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 public class AllReposEndpoint {
 
-	private final RepoAccess repoAccess;
+	private final RepoReadAccess repoAccess;
+	private final BenchmarkReadAccess benchmarkAccess;
+	private final TokenReadAccess tokenAccess;
 
-	public AllReposEndpoint(RepoAccess repoAccess) {
+	public AllReposEndpoint(RepoReadAccess repoAccess, BenchmarkReadAccess benchmarkAccess,
+		TokenReadAccess tokenAccess) {
 		this.repoAccess = repoAccess;
+		this.benchmarkAccess = benchmarkAccess;
+		this.tokenAccess = tokenAccess;
 	}
 
 	/**
@@ -30,10 +42,22 @@ public class AllReposEndpoint {
 	 */
 	@GET
 	public GetReply get() {
-		List<JsonRepo> repos = repoAccess.getAllRepos().stream()
-			.map(JsonRepo::new)
-			.collect(Collectors.toUnmodifiableList());
-		return new GetReply(repos);
+		Collection<Repo> repos = repoAccess.getAllRepos();
+		List<JsonRepo> jsonRepos = new ArrayList<>(repos.size());
+
+		for (Repo repo : repos) {
+			Collection<Branch> branches = repoAccess.getBranches(repo.getRepoId());
+
+			Collection<MeasurementName> measurements = benchmarkAccess.getAvailableMeasurements(
+				repo.getRepoId()
+			);
+
+			boolean hasToken = tokenAccess.hasToken(repo.getRepoId());
+
+			jsonRepos.add(new JsonRepo(repo, branches, measurements, hasToken));
+		}
+
+		return new GetReply(jsonRepos);
 	}
 
 	private static class GetReply {

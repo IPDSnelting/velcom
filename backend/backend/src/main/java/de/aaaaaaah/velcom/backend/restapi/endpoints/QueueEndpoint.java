@@ -2,15 +2,16 @@ package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import de.aaaaaaah.velcom.backend.access.commit.Commit;
-import de.aaaaaaah.velcom.backend.access.commit.CommitAccess;
-import de.aaaaaaah.velcom.backend.access.commit.CommitHash;
-import de.aaaaaaah.velcom.backend.access.repo.Branch;
-import de.aaaaaaah.velcom.backend.access.repo.BranchName;
-import de.aaaaaaah.velcom.backend.access.repo.RepoId;
 import de.aaaaaaah.velcom.backend.data.linearlog.LinearLog;
 import de.aaaaaaah.velcom.backend.data.linearlog.LinearLogException;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
+import de.aaaaaaah.velcom.backend.newaccess.CommitReadAccess;
+import de.aaaaaaah.velcom.backend.newaccess.RepoReadAccess;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Branch;
+import de.aaaaaaah.velcom.backend.newaccess.entities.BranchName;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Commit;
+import de.aaaaaaah.velcom.backend.newaccess.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.newaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.restapi.RepoUser;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonCommit;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonWorker;
@@ -43,17 +44,19 @@ public class QueueEndpoint {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(QueueEndpoint.class);
 
-	private final CommitAccess commitAccess;
+	private final CommitReadAccess commitAccess;
+	private final RepoReadAccess repoReadAccess;
 	private final Queue queue;
 	private final Dispatcher dispatcher;
 	private final LinearLog linearLog;
 
-	public QueueEndpoint(CommitAccess commitAccess, Queue queue, Dispatcher dispatcher,
-		LinearLog linearLog) {
+	public QueueEndpoint(CommitReadAccess commitAccess, Queue queue, Dispatcher dispatcher,
+		LinearLog linearLog, RepoReadAccess repoReadAccess) {
 		this.commitAccess = commitAccess;
 		this.queue = queue;
 		this.dispatcher = dispatcher;
 		this.linearLog = linearLog;
+		this.repoReadAccess = repoReadAccess;
 	}
 
 	/**
@@ -88,14 +91,13 @@ public class QueueEndpoint {
 		queue.addManualTask(commit);
 
 		if (postRequest.isIncludeUpwards()) {
-			List<BranchName> branchNames = commit.getRepo()
-				.getBranches()
+			List<BranchName> branchNames = repoReadAccess.getBranches(repoId)
 				.stream()
 				.map(Branch::getName)
 				.collect(Collectors.toList());
 
 			try {
-				linearLog.walk(commit.getRepo(), branchNames)
+				linearLog.walk(repoId, branchNames)
 					.takeWhile(it -> !it.getHash().equals(commitHash))
 					.forEach(queue::addManualTask);
 			} catch (LinearLogException e) {

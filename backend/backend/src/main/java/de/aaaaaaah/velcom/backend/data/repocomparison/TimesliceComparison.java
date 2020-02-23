@@ -2,19 +2,22 @@ package de.aaaaaaah.velcom.backend.data.repocomparison;
 
 import static java.util.stream.Collectors.toList;
 
-import de.aaaaaaah.velcom.backend.access.benchmark.BenchmarkAccess;
-import de.aaaaaaah.velcom.backend.access.benchmark.CommitPerformance;
-import de.aaaaaaah.velcom.backend.access.benchmark.Interpretation;
-import de.aaaaaaah.velcom.backend.access.benchmark.MeasurementName;
-import de.aaaaaaah.velcom.backend.access.benchmark.Unit;
-import de.aaaaaaah.velcom.backend.access.commit.Commit;
-import de.aaaaaaah.velcom.backend.access.commit.CommitAccess;
-import de.aaaaaaah.velcom.backend.access.repo.BranchName;
-import de.aaaaaaah.velcom.backend.access.repo.RepoId;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Interpretation;
+import de.aaaaaaah.velcom.backend.newaccess.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Measurement;
+import de.aaaaaaah.velcom.backend.newaccess.entities.MeasurementName;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Unit;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Commit;
 import de.aaaaaaah.velcom.backend.data.repocomparison.grouping.CommitGrouper;
 import de.aaaaaaah.velcom.backend.data.repocomparison.grouping.GroupByDay;
 import de.aaaaaaah.velcom.backend.data.repocomparison.grouping.GroupByHour;
 import de.aaaaaaah.velcom.backend.data.repocomparison.grouping.GroupByWeek;
+import de.aaaaaaah.velcom.backend.newaccess.BenchmarkReadAccess;
+import de.aaaaaaah.velcom.backend.newaccess.CommitReadAccess;
+import de.aaaaaaah.velcom.backend.newaccess.entities.BranchName;
+import de.aaaaaaah.velcom.backend.newaccess.entities.MeasurementValues;
+import de.aaaaaaah.velcom.backend.newaccess.entities.RepoId;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Run;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -45,8 +48,8 @@ public class TimesliceComparison implements RepoComparison {
 	private static final CommitGrouper<Long> DAILY_GROUPER = new GroupByDay();
 	private static final CommitGrouper<Long> WEEKLY_GROUPER = new GroupByWeek();
 
-	private final CommitAccess commitAccess;
-	private final BenchmarkAccess benchmarkAccess;
+	private final CommitReadAccess commitAccess;
+	private final BenchmarkReadAccess benchmarkAccess;
 
 	/**
 	 * Constructs a new time slice comparison.
@@ -54,7 +57,7 @@ public class TimesliceComparison implements RepoComparison {
 	 * @param commitAccess the commit access used to collect commit data
 	 * @param benchmarkAccess the benchmark access used to collect benchmark data
 	 */
-	public TimesliceComparison(CommitAccess commitAccess, BenchmarkAccess benchmarkAccess) {
+	public TimesliceComparison(CommitReadAccess commitAccess, BenchmarkReadAccess benchmarkAccess) {
 		this.commitAccess = commitAccess;
 		this.benchmarkAccess = benchmarkAccess;
 	}
@@ -83,26 +86,34 @@ public class TimesliceComparison implements RepoComparison {
 			.collect(toList());
 
 		// 1.) Get commits
-		final Collection<Commit> commits = commitAccess.getCommitsBetween(repoId, branchNames,
-			startTime, stopTime);
+		Map<CommitHash, Commit> commitMap = commitAccess.getCommitsBetween(repoId,
+			branches, startTime, stopTime);
 
-		final Map<String, Commit> commitMap = new HashMap<>();
-		commits.forEach(commit -> commitMap.put(commit.getHash().getHash(), commit));
+		// 2.) Get relevant runs & values
+		Map<CommitHash, Run> latestRuns = benchmarkAccess.getLatestRuns(repoId, commitMap.keySet());
 
-		// 2.) Get relevant runs & commit performances
-		final Collection<CommitPerformance> performances = benchmarkAccess.getCommitPerformances(
-			repoId, measurementName, commits
-		);
+		if (latestRuns.isEmpty()) {
+			return Optional.empty(); // No graph data available
+		}
 
-		if (performances.isEmpty()) {
+		Map<CommitHash, MeasurementValues> valueMap = new HashMap<>();
+
+		latestRuns.forEach((hash, run) -> {
+			findMeasurement(measurementName, run).ifPresent(values -> valueMap.put(hash, values));
+		});
+
+		if (valueMap.isEmpty()) {
 			return Optional.empty(); // No graph data available
 		}
 
 		Instant oldestAuthorDate = null;
 		Instant youngestAuthorDate = null;
-		CommitPerformance youngestPerformance = null;
-		for (CommitPerformance performance : performances) {
-			Commit commit = commitMap.get(performance.getCommitHash().getHash());
+		MeasurementValues youngestValues = null;
+
+		for (CommitHash commitHash : valueMap.keySet()) {
+			Commit commit = commitMap.get(commitHash);
+			Objects.requireNonNull(commit, "commit not found: " + commitHash);
+
 			Instant authorDate = commit.getAuthorDate();
 
 			if (oldestAuthorDate == null || authorDate.isBefore(oldestAuthorDate)) {
@@ -111,12 +122,12 @@ public class TimesliceComparison implements RepoComparison {
 
 			if (youngestAuthorDate == null || authorDate.isAfter(youngestAuthorDate)) {
 				youngestAuthorDate = authorDate;
-				youngestPerformance = performance;
+				youngestValues = valueMap.get(commitHash);
 			}
 		}
 
-		Interpretation interpretation = youngestPerformance.getInterpretation();
-		Unit unit = youngestPerformance.getUnit();
+		Interpretation interpretation = youngestValues.getInterpretation();
+		Unit unit = youngestValues.getUnit();
 
 		if (startTime == null) {
 			startTime = oldestAuthorDate;
@@ -126,8 +137,17 @@ public class TimesliceComparison implements RepoComparison {
 		}
 
 		// 3.) Build graph data (convert pairs to GraphEntry instances & group them)
-		final Map<Long, List<GraphEntry>> groupMap = groupPerformancesToEntries(
-			startTime, stopTime, performances, commitMap
+		List<GraphEntry> entries = new ArrayList<>();
+
+		valueMap.forEach((hash, values) -> {
+			Commit commit = commitMap.get(hash);
+			Objects.requireNonNull(commit, "commit not found: " + hash);
+
+			entries.add(new GraphEntry(commit, values.getAverageValue()));
+		});
+
+		final Map<Long, List<GraphEntry>> groupMap = groupEntries(
+			startTime, stopTime, entries, commitMap
 		);
 
 		// 4.) Find best entries for each time slice
@@ -145,19 +165,12 @@ public class TimesliceComparison implements RepoComparison {
 		return Optional.of(new RepoGraphData(repoId, graphEntries, interpretation, unit));
 	}
 
-	private Map<Long, List<GraphEntry>> groupPerformancesToEntries(Instant startTime,
-		Instant stopTime, Collection<CommitPerformance> performances, Map<String,
-		Commit> commitMap) {
+	private Map<Long, List<GraphEntry>> groupEntries(Instant startTime,
+		Instant stopTime, Collection<GraphEntry> entries, Map<CommitHash, Commit> commitMap) {
 
 		final CommitGrouper<Long> grouper = determineGrouper(startTime, stopTime);
 
-		return performances.stream()
-			.map(performance -> {
-				Commit commit = commitMap.get(performance.getCommitHash().getHash());
-				Objects.requireNonNull(commit, "commit null for: " + performance);
-
-				return new GraphEntry(commit, performance.getAverage());
-			})
+		return entries.stream()
 			.collect(Collectors.groupingBy(entry -> grouper.getGroup(
 				entry.getCommit().getAuthorDate().atZone(ZoneOffset.UTC)
 			)));
@@ -196,6 +209,24 @@ public class TimesliceComparison implements RepoComparison {
 		}
 
 		return grouper;
+	}
+
+	private Optional<MeasurementValues> findMeasurement(MeasurementName name, Run run) {
+		if (run.getMeasurements().isPresent()) {
+			Collection<Measurement> measurements = run.getMeasurements().get();
+
+			Measurement measurement = measurements.stream()
+				.filter(m -> m.getMeasurementName().equals(name))
+				.findAny()
+				.orElse(null);
+
+			if (measurement != null && measurement.getContent().getRight().isPresent()) {
+				MeasurementValues values = measurement.getContent().getRight().get();
+				return Optional.of(values);
+			}
+		}
+
+		return Optional.empty();
 	}
 
 }

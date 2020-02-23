@@ -1,13 +1,6 @@
 package de.aaaaaaah.velcom.backend;
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
-import de.aaaaaaah.velcom.backend.access.AccessLayer;
-import de.aaaaaaah.velcom.backend.access.benchmark.BenchmarkAccess;
-import de.aaaaaaah.velcom.backend.access.commit.CommitAccess;
-import de.aaaaaaah.velcom.backend.access.repo.RemoteUrl;
-import de.aaaaaaah.velcom.backend.access.repo.RepoAccess;
-import de.aaaaaaah.velcom.backend.access.token.AuthToken;
-import de.aaaaaaah.velcom.backend.access.token.TokenAccess;
 import de.aaaaaaah.velcom.backend.data.commitcomparison.CommitComparer;
 import de.aaaaaaah.velcom.backend.data.linearlog.CommitAccessBasedLinearLog;
 import de.aaaaaaah.velcom.backend.data.linearlog.LinearLog;
@@ -16,6 +9,13 @@ import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.data.repocomparison.RepoComparison;
 import de.aaaaaaah.velcom.backend.data.repocomparison.TimesliceComparison;
 import de.aaaaaaah.velcom.backend.listener.Listener;
+import de.aaaaaaah.velcom.backend.newaccess.BenchmarkWriteAccess;
+import de.aaaaaaah.velcom.backend.newaccess.CommitReadAccess;
+import de.aaaaaaah.velcom.backend.newaccess.KnownCommitWriteAccess;
+import de.aaaaaaah.velcom.backend.newaccess.RepoWriteAccess;
+import de.aaaaaaah.velcom.backend.newaccess.TokenWriteAccess;
+import de.aaaaaaah.velcom.backend.newaccess.entities.AuthToken;
+import de.aaaaaaah.velcom.backend.newaccess.entities.RemoteUrl;
 import de.aaaaaaah.velcom.backend.restapi.RepoAuthenticator;
 import de.aaaaaaah.velcom.backend.restapi.RepoUser;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.AllReposEndpoint;
@@ -86,24 +86,35 @@ public class ServerMain extends Application<GlobalConfig> {
 		DatabaseStorage databaseStorage = new DatabaseStorage(configuration);
 
 		// Access layer
-		AccessLayer accessLayer = new AccessLayer();
-		BenchmarkAccess benchmarkAccess = new BenchmarkAccess(accessLayer, databaseStorage);
-		CommitAccess commitAccess = new CommitAccess(accessLayer, databaseStorage, repoStorage);
-		RepoAccess repoAccess = new RepoAccess(accessLayer, databaseStorage, repoStorage,
+		BenchmarkWriteAccess benchmarkAccess = new BenchmarkWriteAccess(databaseStorage);
+		CommitReadAccess commitAccess = new CommitReadAccess(repoStorage);
+		KnownCommitWriteAccess knownCommitAccess = new KnownCommitWriteAccess(databaseStorage);
+		RepoWriteAccess repoAccess = new RepoWriteAccess(databaseStorage, repoStorage,
 			new RemoteUrl(configuration.getBenchmarkRepoRemoteUrl()));
-		TokenAccess tokenAccess = new TokenAccess(configuration, accessLayer, databaseStorage,
-			new AuthToken(configuration.getWebAdminToken()));
+		TokenWriteAccess tokenAccess = new TokenWriteAccess(
+			databaseStorage,
+			new AuthToken(configuration.getWebAdminToken()),
+			configuration.getHashMemory(),
+			configuration.getHashIterations()
+		);
 
 		// Data layer
 		CommitComparer commitComparer = new CommitComparer(configuration.getSignificantFactor());
-		LinearLog linearLog = new CommitAccessBasedLinearLog(commitAccess);
+		LinearLog linearLog = new CommitAccessBasedLinearLog(commitAccess, repoAccess);
 		RepoComparison repoComparison = new TimesliceComparison(commitAccess, benchmarkAccess);
 
-		Queue queue = new Queue(commitAccess, new PolicyManualFilo());
-		commitAccess.getAllCommitsRequiringBenchmark().forEach(queue::addCommit);
+		Queue queue = new Queue(knownCommitAccess, new PolicyManualFilo());
+		knownCommitAccess.getAllCommitsRequiringBenchmark()
+			.stream()
+			.map((repoIdHashPair ->
+				commitAccess.getCommit(repoIdHashPair.getFirst(), repoIdHashPair.getSecond()))
+			)
+			.forEach(queue::addCommit);
 
 		// Listener
-		Listener listener = new Listener(configuration, accessLayer, queue);
+		Listener listener = new Listener(
+			configuration, repoAccess, commitAccess, knownCommitAccess, queue
+		);
 
 		// Dispatcher
 		Dispatcher dispatcher = new DispatcherImpl(
@@ -125,18 +136,21 @@ public class ServerMain extends Application<GlobalConfig> {
 		environment.jersey().register(new AuthValueFactoryProvider.Binder<>(RepoUser.class));
 
 		// API endpoints
-		environment.jersey().register(new AllReposEndpoint(repoAccess));
+		environment.jersey().register(
+			new AllReposEndpoint(repoAccess, benchmarkAccess, tokenAccess));
 		environment.jersey().register(
 			new CommitCompareEndpoint(benchmarkAccess, commitAccess, commitComparer, linearLog));
 		environment.jersey().register(
 			new CommitHistoryEndpoint(benchmarkAccess, repoAccess, linearLog, commitComparer));
 		environment.jersey().register(new MeasurementsEndpoint(benchmarkAccess));
 		environment.jersey()
-			.register(new QueueEndpoint(commitAccess, queue, dispatcher, linearLog));
+			.register(new QueueEndpoint(commitAccess, queue, dispatcher, linearLog, repoAccess));
 		environment.jersey().register(
-			new RecentlyBenchmarkedCommitsEndpoint(benchmarkAccess, commitComparer, linearLog));
+			new RecentlyBenchmarkedCommitsEndpoint(
+				benchmarkAccess, commitAccess, commitComparer, linearLog));
 		environment.jersey().register(new RepoComparisonGraphEndpoint(repoComparison));
-		environment.jersey().register(new RepoEndpoint(repoAccess, tokenAccess, queue, listener));
+		environment.jersey().register(new RepoEndpoint(
+			repoAccess, tokenAccess, queue, listener, benchmarkAccess));
 		environment.jersey().register(new TestTokenEndpoint());
 	}
 

@@ -1,10 +1,10 @@
 package de.aaaaaaah.velcom.backend.listener;
 
-import de.aaaaaaah.velcom.backend.access.commit.Commit;
-import de.aaaaaaah.velcom.backend.access.commit.CommitAccess;
-import de.aaaaaaah.velcom.backend.access.commit.CommitHash;
-import de.aaaaaaah.velcom.backend.access.commit.CommitWalk;
-import de.aaaaaaah.velcom.backend.access.repo.Branch;
+import de.aaaaaaah.velcom.backend.newaccess.CommitReadAccess;
+import de.aaaaaaah.velcom.backend.newaccess.CommitWalk;
+import de.aaaaaaah.velcom.backend.newaccess.KnownCommitReadAccess;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Commit;
+import de.aaaaaaah.velcom.backend.newaccess.entities.CommitHash;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -22,8 +22,10 @@ public class BreadthFirstSearchFinder implements UnknownCommitFinder {
 	private static final int MAX_COMMITS = 1000;
 
 	@Override
-	public Collection<Commit> find(CommitAccess commitAccess, Branch branch) throws IOException {
-		try (CommitWalk walk = commitAccess.getCommitWalk(branch)) {
+	public Collection<Commit> find(CommitReadAccess commitAccess, KnownCommitReadAccess knownAccess,
+		Commit start) throws IOException {
+
+		try (CommitWalk walk = commitAccess.getCommitWalk(start)) {
 			List<Commit> unknownCommits = new ArrayList<>();
 			Set<CommitHash> visitedCommits = new HashSet<>();
 
@@ -43,7 +45,7 @@ public class BreadthFirstSearchFinder implements UnknownCommitFinder {
 					continue;
 				}
 
-				if (current.isKnown()) {
+				if (knownAccess.isKnown(start.getRepoId(), current.getHash())) {
 					// Since this commit is known, all parents of this commit
 					// are known as well => skip this one
 					continue;
