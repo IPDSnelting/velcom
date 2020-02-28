@@ -63,6 +63,21 @@ export default class NewDetailGraph extends Vue {
     return this.height - this.margin.top - this.margin.bottom
   }
 
+  private get mainSvg(): d3.Selection<SVGGElement, unknown, HTMLElement, any> {
+    return d3
+      .select('#mainSvg')
+      .attr('width', '100%')
+      .attr('height', '100%')
+      .attr('align', 'end')
+      .attr('justify', 'end')
+      .append('g')
+      .attr('id', 'dataLayer')
+      .attr(
+        'transform',
+        'translate(' + this.margin.left + ',' + this.margin.top + ')'
+      )
+  }
+
   private resizeListener: () => void = () => {}
 
   // anything related with getting values
@@ -107,6 +122,10 @@ export default class NewDetailGraph extends Vue {
     return d3.max(this.datapoints, this.datapointValue)
   }
 
+  private get dataAvailable(): boolean {
+    return this.measurement.metric !== '' && this.maxVal !== undefined
+  }
+
   private lastValue: number = 0
 
   get firstSuccessful(): number {
@@ -124,6 +143,8 @@ export default class NewDetailGraph extends Vue {
     }
     return this.height / 2
   }
+
+  private graphDrawn: boolean = false
 
   // anything axes related
 
@@ -204,6 +225,42 @@ export default class NewDetailGraph extends Vue {
   // drawing the actual graph
 
   private drawGraph() {
+    if (this.dataAvailable) {
+      if (!this.graphDrawn) {
+        this.mainSvg.selectAll('*').remove()
+        this.defineSvgElements()
+        this.graphDrawn = true
+      }
+
+      let keyFn: d3.ValueFn<any, any, string> = (d: CommitInfo) => {
+        return d.commit.hash
+      }
+      this.drawPath()
+      this.drawDatapoints(keyFn)
+      this.appendTooltips(keyFn)
+    } else {
+      if (this.graphDrawn) {
+        this.mainSvg.selectAll('*').remove()
+        this.graphDrawn = false
+      }
+      let information: string =
+        this.measurement.metric === ''
+          ? 'No data available. Please select benchmark and metric.'
+          : 'There are no commits within the specified time period that have been benchmarked with this metric.'
+
+      this.mainSvg
+        .append('text')
+        .attr('y', this.innerHeight / 2)
+        .attr('x', this.margin.left)
+        .text(information)
+        .style('text-align', 'center')
+        .style('font-family', 'Roboto')
+        .style('font-size', '18px')
+        .style('fill', 'grey')
+    }
+  }
+
+  private drawPath() {
     let path: d3.Selection<
       SVGPathElement,
       CommitInfo[],
@@ -213,7 +270,6 @@ export default class NewDetailGraph extends Vue {
       .select('#dataLayer')
       .selectAll<SVGPathElement, unknown>('#line')
       .data([this.datapoints])
-
     let newPath = path
       .enter()
       .append('path')
@@ -227,18 +283,15 @@ export default class NewDetailGraph extends Vue {
       .attr('stroke-width', 2)
       .attr('fill', 'none')
       .attr('pointer-events', 'none')
-
     path
       .exit()
       .transition()
       .attr('opacity', 0)
       .attr('width', 0)
       .remove()
+  }
 
-    let keyFn: d3.ValueFn<any, any, string> = (d: CommitInfo) => {
-      return d.commit.hash
-    }
-
+  private drawDatapoints(keyFn: d3.ValueFn<any, any, string>) {
     let datapoints: d3.Selection<
       SVGPathElement,
       CommitInfo,
@@ -253,6 +306,7 @@ export default class NewDetailGraph extends Vue {
       .enter()
       .append('path')
       .attr('class', 'datapoint')
+      .attr('id', (d: CommitInfo) => '_' + d.commit.hash)
       .merge(datapoints)
       .transition()
       .duration(1000)
@@ -284,7 +338,9 @@ export default class NewDetailGraph extends Vue {
       .attr('opacity', 0)
       .attr('width', 0)
       .remove()
+  }
 
+  private appendTooltips(keyFn: d3.ValueFn<any, any, string>) {
     let tooltip = d3
       .selectAll('.datapoint')
       .data(this.datapoints, keyFn)
@@ -518,7 +574,14 @@ export default class NewDetailGraph extends Vue {
     return vxm.repoDetailModule.selectedRepoId
   }
 
-  openDatapointMenu(datapoint: CommitInfo) {}
+  openDatapointMenu(datapoint: CommitInfo) {
+    d3.select('#_' + datapoint.commit.hash).attr('stroke', 'red')
+    d3.select('#reference-line')
+      .attr('x1', this.xScale(0))
+      .attr('y1', this.y(datapoint.comparison))
+      .attr('x2', this.xScale(this.amount))
+      .attr('y2', this.y(datapoint.comparison))
+  }
 
   // updating
 
@@ -526,19 +589,23 @@ export default class NewDetailGraph extends Vue {
     let chart = d3.select('#chart').node() as HTMLElement
     this.width = chart ? chart.getBoundingClientRect().width : 900
     this.height = this.width / 2
-    this.updateAxes()
+    this.updateData()
   }
 
   @Watch('datapoints')
-  private updateGraph() {
+  private updateDatapoints() {
     d3.select('#yLabel').text(this.yLabel)
     this.drawGraph()
   }
 
   @Watch('beginYAtZero')
   @Watch('amount')
+  private updateData() {
+    this.updateAxes()
+    this.drawGraph()
+  }
+
   private updateAxes() {
-    console.log(this.minVal)
     ;(d3.select('#xAxis') as d3.Selection<
       SVGGElement,
       unknown,
@@ -556,8 +623,42 @@ export default class NewDetailGraph extends Vue {
     d3.select('#yLabel')
       .attr('y', -this.margin.left + 30)
       .attr('x', -this.innerHeight / 2)
+  }
 
-    this.drawGraph()
+  private defineSvgElements() {
+    this.mainSvg
+      .append('g')
+      .attr('class', 'axis')
+      .attr('id', 'xAxis')
+      .attr('transform', 'translate(0,' + this.innerHeight + ')')
+      .call(this.xAxis)
+
+    this.mainSvg
+      .append('g')
+      .attr('class', 'axis')
+      .attr('id', 'yAxis')
+      .call(this.yAxis)
+
+    this.mainSvg
+      .append('text')
+      .attr('id', 'yLabel')
+      .attr('text-anchor', 'middle')
+      .attr('transform', 'rotate(-90)')
+      .attr('y', -this.margin.left + 30)
+      .attr('x', -this.innerHeight / 2)
+      .text(this.yLabel)
+
+    this.mainSvg
+      .append('g')
+      .append('line')
+      .attr('id', 'reference-line')
+
+    let tip = d3
+      .select('#chart')
+      .append('div')
+      .attr('class', 'tooltip')
+      .attr('id', 'tooltip')
+      .style('opacity', 0)
   }
 
   created() {
@@ -569,51 +670,6 @@ export default class NewDetailGraph extends Vue {
 
   mounted() {
     this.resize()
-    let mainSvg: d3.Selection<SVGGElement, unknown, HTMLElement, any> = d3
-      .select('#mainSvg')
-      .attr('width', '100%')
-      .attr('height', '100%')
-      .attr('align', 'end')
-      .attr('justify', 'end')
-      .append('g')
-      .attr('id', 'dataLayer')
-      .attr(
-        'transform',
-        'translate(' + this.margin.left + ',' + this.margin.top + ')'
-      )
-
-    mainSvg
-      .append('g')
-      .attr('class', 'axis')
-      .attr('id', 'xAxis')
-      .attr('transform', 'translate(0,' + this.innerHeight + ')')
-      .call(this.xAxis)
-
-    mainSvg
-      .append('g')
-      .attr('class', 'axis')
-      .attr('id', 'yAxis')
-      .call(this.yAxis)
-
-    mainSvg
-      .append('text')
-      .attr('id', 'yLabel')
-      .attr('text-anchor', 'middle')
-      .attr('transform', 'rotate(-90)')
-      .attr('y', -this.margin.left + 30)
-      .attr('x', -this.innerHeight / 2)
-      .text(this.yLabel)
-
-    const p = 30
-    const i = 10
-
-    let tip = d3
-      .select('#chart')
-      .append('div')
-      .attr('class', 'tooltip')
-      .attr('id', 'tooltip')
-      .style('opacity', 0)
-
     this.drawGraph()
   }
 
@@ -667,6 +723,13 @@ export default class NewDetailGraph extends Vue {
   transform: var(--tail-rotation);
   left: var(--tail-left);
   top: var(--tail-top);
+}
+
+#reference-line {
+  fill: none;
+  stroke: black;
+  stroke-width: 0.5px;
+  stroke-dasharray: 5 5;
 }
 
 #chart {
