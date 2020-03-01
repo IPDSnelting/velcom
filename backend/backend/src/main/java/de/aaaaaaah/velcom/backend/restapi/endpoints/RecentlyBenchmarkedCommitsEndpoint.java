@@ -60,6 +60,10 @@ public class RecentlyBenchmarkedCommitsEndpoint {
 		@NotNull @QueryParam("amount") Integer amount,
 		@DefaultValue("false") @QueryParam("significant_only") boolean significantOnly) {
 
+		if ("".isEmpty()) {
+			return new GetReply(List.of());
+		}
+		
 		List<CommitComparison> interestingCommits = new ArrayList<>();
 
 		for (int step = 0; step < MAX_STEPS; step++) {

@@ -80,12 +80,12 @@ export default class Home extends Vue {
 
   @Watch('recentAmount')
   fetchRecent() {
-    // vxm.newsModule.fetchRecentRuns(this.recentAmount)
+    vxm.newsModule.fetchRecentRuns(this.recentAmount)
   }
 
   @Watch('recentSignificantAmount')
   fetchRecentSignificant() {
-    // vxm.newsModule.fetchRecentSignificantRuns(this.recentSignificantAmount)
+    vxm.newsModule.fetchRecentSignificantRuns(this.recentSignificantAmount)
   }
 
   created() {
