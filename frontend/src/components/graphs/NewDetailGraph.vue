@@ -42,6 +42,7 @@ export default class NewDetailGraph extends Vue {
 
   private width: number = 0
   private height: number = 0
+  private datapointWidth: number = 50
 
   private margin: {
     left: number
@@ -63,7 +64,7 @@ export default class NewDetailGraph extends Vue {
     return this.height - this.margin.top - this.margin.bottom
   }
 
-  private get mainSvg(): d3.Selection<SVGGElement, unknown, HTMLElement, any> {
+  private get svg() {
     return d3
       .select('#mainSvg')
       .attr('width', '100%')
@@ -76,6 +77,70 @@ export default class NewDetailGraph extends Vue {
         'transform',
         'translate(' + this.margin.left + ',' + this.margin.top + ')'
       )
+  }
+
+  private get graphWindow() {
+    return this.svg.append('g').attr('id', 'window')
+  }
+
+  // prettier-ignore
+  private get mainSvg(): d3.Selection<
+    SVGRectElement,
+    unknown,
+    HTMLElement,
+    any
+    > {
+    // rectangle with listener for pointer events
+    return this.svg
+      .append('rect')
+      .attr('id', 'listener-rect')
+      .attr('x', 0)
+      .attr('y', 0)
+      .attr('width', this.innerWidth)
+      .attr('height', this.innerHeight)
+      .style('opacity', 0)
+  }
+
+  private get zoom() {
+    var zoom = d3
+      .zoom()
+      .scaleExtent([1, 50])
+      .extent([
+        [0, 0],
+        [this.innerWidth, this.innerHeight]
+      ])
+      .translateExtent([
+        [0, -Infinity],
+        [this.innerWidth, Infinity]
+      ])
+      .on('zoom', this.zoomed)
+    return zoom
+  }
+
+  private zoomed() {
+    var transform = d3.event.transform
+    var zoomedXScale = transform.rescaleX(this.xScale)
+
+    d3.select('#dataLayer')
+      .selectAll<SVGPathElement, unknown>('.datapoint')
+      .attr(
+        'transform',
+        (d: any) =>
+          'translate(' +
+          this.x(d.comparison, zoomedXScale) +
+          ', ' +
+          this.y(d.comparison) +
+          ') rotate(-45)'
+      )
+
+    d3.select('#dataLayer')
+      .selectAll<SVGPathElement, unknown>('#line')
+      .attr('d', this.line(zoomedXScale))
+
+    this.xAxis.scale(zoomedXScale)
+    d3.select('#xAxis')
+      .attr('transform', 'translate(0,' + this.innerHeight + ')')
+      .call(this.xAxis as any)
   }
 
   private resizeListener: () => void = () => {}
@@ -151,7 +216,7 @@ export default class NewDetailGraph extends Vue {
   private get xScale(): d3.ScaleLinear<number, number> {
     return d3
       .scaleLinear()
-      .domain([this.amount, 0])
+      .domain([this.amount + 0.5, 0.5])
       .range([0, this.innerWidth])
   }
 
@@ -164,8 +229,11 @@ export default class NewDetailGraph extends Vue {
       .range([this.innerHeight, 0])
   }
 
-  private x(comparison: CommitComparison): number {
-    return this.xScale(
+  private x(
+    comparison: CommitComparison,
+    xScale: d3.ScaleLinear<number, number>
+  ): number {
+    return xScale(
       this.datapoints.length -
         this.datapoints.findIndex(it => it.comparison === comparison)
     )
@@ -240,23 +308,20 @@ export default class NewDetailGraph extends Vue {
       this.appendTooltips(keyFn)
     } else {
       if (this.graphDrawn) {
-        this.mainSvg.selectAll('*').remove()
         this.graphDrawn = false
       }
+      this.mainSvg.selectAll('*').remove()
       let information: string =
         this.measurement.metric === ''
-          ? 'No data available. Please select benchmark and metric.'
-          : 'There are no commits within the specified time period that have been benchmarked with this metric.'
+          ? '<tspan x="0" dy="1.2em">No data available.</tspan><tspan x="0" dy="1.2em">Please select benchmark and metric.</tspan>'
+          : '<tspan x="0" dy="1.2em">There are no commits within the specified time period</tspan><tspan x="0" dy="1.2em"> that have been benchmarked with this metric.</tspan>'
 
       this.mainSvg
         .append('text')
         .attr('y', this.innerHeight / 2)
-        .attr('x', this.margin.left)
-        .text(information)
-        .style('text-align', 'center')
-        .style('font-family', 'Roboto')
-        .style('font-size', '18px')
-        .style('fill', 'grey')
+        .attr('x', -this.margin.left)
+        .html(information)
+        .attr('class', 'information')
     }
   }
 
@@ -266,8 +331,7 @@ export default class NewDetailGraph extends Vue {
       CommitInfo[],
       d3.BaseType,
       unknown
-    > = d3
-      .select('#dataLayer')
+    > = this.graphWindow
       .selectAll<SVGPathElement, unknown>('#line')
       .data([this.datapoints])
     let newPath = path
@@ -278,7 +342,7 @@ export default class NewDetailGraph extends Vue {
       .transition()
       .duration(1000)
       .delay(100)
-      .attr('d', this.line)
+      .attr('d', this.line(this.xScale))
       .attr('stroke', this.colorById(this.selectedRepo))
       .attr('stroke-width', 2)
       .attr('fill', 'none')
@@ -297,8 +361,8 @@ export default class NewDetailGraph extends Vue {
       CommitInfo,
       d3.BaseType,
       unknown
-    > = d3
-      .select('#dataLayer')
+    > = this.graphWindow
+      .attr('clip-path', 'url(#clip)')
       .selectAll<SVGPathElement, unknown>('.datapoint')
       .data(this.datapoints, keyFn)
 
@@ -322,7 +386,7 @@ export default class NewDetailGraph extends Vue {
         'transform',
         (d: CommitInfo) =>
           'translate(' +
-          this.x(d.comparison) +
+          this.x(d.comparison, this.xScale) +
           ', ' +
           this.y(d.comparison) +
           ') rotate(-45)'
@@ -367,10 +431,9 @@ export default class NewDetailGraph extends Vue {
   }
 
   datapointSize(d: CommitInfo): number {
-    if (this.benchmarkFailed(d)) {
-      return 100
-    }
-    return 50
+    return this.benchmarkFailed(d)
+      ? 2 * this.datapointWidth
+      : this.datapointWidth
   }
 
   datapointColor(d: CommitInfo): string {
@@ -412,15 +475,16 @@ export default class NewDetailGraph extends Vue {
     }
   }
 
-  get line() {
-    return d3
-      .line<CommitInfo>()
-      .x((datapoint: CommitInfo) => {
-        return this.x(datapoint.comparison)
-      })
-      .y((datapoint: CommitInfo) => {
-        return this.y(datapoint.comparison)
-      })
+  get line(): (xScale: d3.ScaleLinear<number, number>) => any {
+    return (xScale: d3.ScaleLinear<number, number>) =>
+      d3
+        .line<CommitInfo>()
+        .x((datapoint: CommitInfo) => {
+          return this.x(datapoint.comparison, xScale)
+        })
+        .y((datapoint: CommitInfo) => {
+          return this.y(datapoint.comparison)
+        })
   }
 
   mouseover(d: any) {
@@ -589,6 +653,13 @@ export default class NewDetailGraph extends Vue {
     let chart = d3.select('#chart').node() as HTMLElement
     this.width = chart ? chart.getBoundingClientRect().width : 900
     this.height = this.width / 2
+
+    this.mainSvg.call(this.zoom as any)
+    d3.select('#mainSvg')
+      .select('#clip-rect')
+      .attr('width', this.innerWidth)
+      .attr('height', this.innerHeight + 2 * this.datapointWidth)
+
     this.updateData()
   }
 
@@ -626,20 +697,31 @@ export default class NewDetailGraph extends Vue {
   }
 
   private defineSvgElements() {
-    this.mainSvg
+    this.mainSvg.call(this.zoom as any)
+
+    d3.select('#mainSvg')
+      .append('clipPath')
+      .attr('id', 'clip')
+      .append('rect')
+      .attr('id', 'clip-rect')
+      .attr('y', -this.datapointWidth)
+      .attr('width', this.innerWidth)
+      .attr('height', this.innerHeight + 2 * this.datapointWidth)
+
+    this.svg
       .append('g')
       .attr('class', 'axis')
       .attr('id', 'xAxis')
       .attr('transform', 'translate(0,' + this.innerHeight + ')')
       .call(this.xAxis)
 
-    this.mainSvg
+    this.svg
       .append('g')
       .attr('class', 'axis')
       .attr('id', 'yAxis')
       .call(this.yAxis)
 
-    this.mainSvg
+    this.svg
       .append('text')
       .attr('id', 'yLabel')
       .attr('text-anchor', 'middle')
@@ -723,6 +805,13 @@ export default class NewDetailGraph extends Vue {
   transform: var(--tail-rotation);
   left: var(--tail-left);
   top: var(--tail-top);
+}
+
+.information {
+  text-align: center;
+  font-family: Roboto;
+  font-size: 18px;
+  fill: grey;
 }
 
 #reference-line {
