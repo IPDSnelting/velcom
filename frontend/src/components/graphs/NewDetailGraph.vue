@@ -7,6 +7,16 @@
         </div>
       </v-col>
     </v-row>
+    <v-dialog width="600" v-model="dialogOpen">
+      <v-card>
+        <v-radio-group>
+          <v-radio label="use datapoint as reference"></v-radio>
+          <v-radio label="display datapoints relative to this one"></v-radio>
+          <v-radio label="none of the above"></v-radio>
+        </v-radio-group>
+        <v-btn color="error" @click="dialogOpen = false">Close</v-btn>
+      </v-card>
+    </v-dialog>
   </v-container>
 </template>
 
@@ -38,6 +48,9 @@ export default class NewDetailGraph extends Vue {
   @Prop({ default: true })
   beginYAtZero!: boolean
 
+  private dialogOpen: boolean = false
+  private referencePoint: CommitInfo | null = null
+
   // anything with and height related
 
   private width: number = 0
@@ -64,7 +77,7 @@ export default class NewDetailGraph extends Vue {
     return this.height - this.margin.top - this.margin.bottom
   }
 
-  private get svg() {
+  private get mainSvg() {
     return d3
       .select('#mainSvg')
       .attr('width', '100%')
@@ -79,25 +92,22 @@ export default class NewDetailGraph extends Vue {
       )
   }
 
-  private get graphWindow() {
-    return this.svg.append('g').attr('id', 'window')
-  }
-
   // prettier-ignore
-  private get mainSvg(): d3.Selection<
+  private get listenerRect(): d3.Selection<
     SVGRectElement,
     unknown,
     HTMLElement,
     any
     > {
     // rectangle with listener for pointer events
-    return this.svg
+    return this.mainSvg
       .append('rect')
-      .attr('id', 'listener-rect')
+      .attr('id', 'listenerRect')
       .attr('x', 0)
       .attr('y', 0)
       .attr('width', this.innerWidth)
       .attr('height', this.innerHeight)
+      .attr('pointer-events', 'all')
       .style('opacity', 0)
   }
 
@@ -118,6 +128,7 @@ export default class NewDetailGraph extends Vue {
   }
 
   private zoomed() {
+    console.log('hi')
     var transform = d3.event.transform
     var zoomedXScale = transform.rescaleX(this.xScale)
 
@@ -331,7 +342,8 @@ export default class NewDetailGraph extends Vue {
       CommitInfo[],
       d3.BaseType,
       unknown
-    > = this.graphWindow
+    > = d3
+      .select('#graphArea')
       .selectAll<SVGPathElement, unknown>('#line')
       .data([this.datapoints])
     let newPath = path
@@ -361,7 +373,8 @@ export default class NewDetailGraph extends Vue {
       CommitInfo,
       d3.BaseType,
       unknown
-    > = this.graphWindow
+    > = d3
+      .select('#graphArea')
       .attr('clip-path', 'url(#clip)')
       .selectAll<SVGPathElement, unknown>('.datapoint')
       .data(this.datapoints, keyFn)
@@ -639,12 +652,13 @@ export default class NewDetailGraph extends Vue {
   }
 
   openDatapointMenu(datapoint: CommitInfo) {
+    this.dialogOpen = true /*
     d3.select('#_' + datapoint.commit.hash).attr('stroke', 'red')
     d3.select('#reference-line')
       .attr('x1', this.xScale(0))
       .attr('y1', this.y(datapoint.comparison))
       .attr('x2', this.xScale(this.amount))
-      .attr('y2', this.y(datapoint.comparison))
+      .attr('y2', this.y(datapoint.comparison)) */
   }
 
   // updating
@@ -654,7 +668,7 @@ export default class NewDetailGraph extends Vue {
     this.width = chart ? chart.getBoundingClientRect().width : 900
     this.height = this.width / 2
 
-    this.mainSvg.call(this.zoom as any)
+    this.listenerRect.call(this.zoom as any)
     d3.select('#mainSvg')
       .select('#clip-rect')
       .attr('width', this.innerWidth)
@@ -697,7 +711,17 @@ export default class NewDetailGraph extends Vue {
   }
 
   private defineSvgElements() {
-    this.mainSvg.call(this.zoom as any)
+    this.mainSvg
+      .append('rect')
+      .attr('id', 'listenerRect')
+      .attr('x', 0)
+      .attr('y', 0)
+      .attr('width', this.innerWidth)
+      .attr('height', this.innerHeight)
+      .attr('pointer-events', 'all')
+      .style('opacity', 0)
+      .call(this.zoom as any)
+    this.mainSvg.append('g').attr('id', 'graphArea')
 
     d3.select('#mainSvg')
       .append('clipPath')
@@ -708,20 +732,20 @@ export default class NewDetailGraph extends Vue {
       .attr('width', this.innerWidth)
       .attr('height', this.innerHeight + 2 * this.datapointWidth)
 
-    this.svg
+    this.mainSvg
       .append('g')
       .attr('class', 'axis')
       .attr('id', 'xAxis')
       .attr('transform', 'translate(0,' + this.innerHeight + ')')
       .call(this.xAxis)
 
-    this.svg
+    this.mainSvg
       .append('g')
       .attr('class', 'axis')
       .attr('id', 'yAxis')
       .call(this.yAxis)
 
-    this.svg
+    this.mainSvg
       .append('text')
       .attr('id', 'yLabel')
       .attr('text-anchor', 'middle')
@@ -730,10 +754,10 @@ export default class NewDetailGraph extends Vue {
       .attr('x', -this.innerHeight / 2)
       .text(this.yLabel)
 
-    this.mainSvg
+    /* this.mainSvg
       .append('g')
       .append('line')
-      .attr('id', 'reference-line')
+      .attr('id', 'reference-line') */
 
     let tip = d3
       .select('#chart')
