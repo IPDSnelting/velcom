@@ -1,6 +1,6 @@
 .PHONY: clean
 
-mode=development
+mode?=production
 
 all: build
 
