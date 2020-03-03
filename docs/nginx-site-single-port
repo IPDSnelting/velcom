@@ -38,12 +38,12 @@ server {
       proxy_set_header        X-Forwarded-Proto $scheme;
       proxy_set_header        X-Forwarded-Host $host;
 
-      # Backend is running at port 8080
+      # Backend is running at port 9001 in our example
       # The trailing '/' is REQUIRED as otherwise nginx does not replace the
       # '/api/' part in the url. This leads to a 404 as the backend does not
       # know the path '/api/<url>' or '//<url>' (if you do not have a trailing
       # slash at the end of the location block)
-      proxy_pass              http://127.0.0.1:8080/;
+      proxy_pass              http://127.0.0.1:9001/;
    }
 }
 

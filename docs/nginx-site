@@ -35,8 +35,8 @@ server {
       proxy_set_header        X-Forwarded-Proto $scheme;
       proxy_set_header        X-Forwarded-Host $host;
 
-      # Backend is running at port 8080
-      proxy_pass              http://127.0.0.1:8080;
+      # Backend is running at port 9001 in our example
+      proxy_pass              http://127.0.0.1:9001;
    }
 
    listen 81;
