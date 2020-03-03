@@ -5,6 +5,8 @@ import static org.jooq.codegen.db.tables.Run.RUN;
 import static org.jooq.codegen.db.tables.RunMeasurement.RUN_MEASUREMENT;
 import static org.jooq.impl.DSL.exists;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import de.aaaaaaah.velcom.backend.newaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.newaccess.entities.Measurement;
 import de.aaaaaaah.velcom.backend.newaccess.entities.MeasurementError;
 import de.aaaaaaah.velcom.backend.newaccess.entities.MeasurementName;
@@ -32,7 +34,7 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 	 */
 	public void insertRun(Run run) {
 		try (DSLContext db = databaseStorage.acquireContext()) {
-			// 1.) Insert run
+			// 1.) Insert run into database
 			RunRecord runRecord = db.newRecord(RUN);
 			runRecord.setId(run.getId().getId().toString());
 			runRecord.setRepoId(run.getRepoId().getId().toString());
@@ -43,7 +45,7 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 
 			runRecord.insert();
 
-			// Insert measurements
+			// 2.) Insert measurements into database
 			if (run.getMeasurements().isPresent()) {
 				Collection<Measurement> measurements = run.getMeasurements().get();
 
@@ -57,18 +59,21 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 					measurementRecord.setMetric(measurement.getMeasurementName().getMetric());
 
 					if (measurement.getContent().isLeft()) {
-						MeasurementError error = measurement.getContent().getLeft().get();
+						MeasurementError error = measurement.getContent().getLeft().orElseThrow();
+
 						measurementRecord.setErrorMessage(error.getErrorMessage());
 						measurementRecord.insert();
 					} else {
-						MeasurementValues values = measurement.getContent().getRight().get();
+						MeasurementValues values = measurement.getContent().getRight()
+							.orElseThrow();
+
 						measurementRecord.setUnit(values.getUnit().getName());
 						measurementRecord.setInterpretation(
 							values.getInterpretation().getTextualRepresentation()
 						);
 						measurementRecord.insert();
 
-						// 3.) Insert values
+						// 2.1.) Insert values into database
 						var valuesInsertStep = db.insertInto(RUN_MEASUREMENT_VALUE)
 							.columns(
 								RUN_MEASUREMENT_VALUE.MEASUREMENT_ID,
@@ -83,6 +88,18 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 					}
 				}
 			}
+
+			// 3.) Insert run into cache
+			recentRunCache.addFirst(run);
+			while (recentRunCache.size() > RECENT_RUN_CACHE_SIZE) {
+				recentRunCache.removeLast();
+			}
+
+			final Cache<CommitHash, Run> cache = runCache.computeIfAbsent(run.getRepoId(),
+				r -> RUN_CACHE_BUILDER.build()
+			);
+
+			cache.put(run.getCommitHash(), run);
 		}
 	}
 

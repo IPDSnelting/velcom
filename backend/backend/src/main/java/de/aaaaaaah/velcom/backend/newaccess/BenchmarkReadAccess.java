@@ -7,6 +7,8 @@ import static org.jooq.codegen.db.tables.Run.RUN;
 import static org.jooq.codegen.db.tables.RunMeasurement.RUN_MEASUREMENT;
 import static org.jooq.codegen.db.tables.RunMeasurementValue.RUN_MEASUREMENT_VALUE;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import de.aaaaaaah.velcom.backend.newaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.newaccess.entities.Interpretation;
 import de.aaaaaaah.velcom.backend.newaccess.entities.Measurement;
@@ -20,8 +22,10 @@ import de.aaaaaaah.velcom.backend.newaccess.entities.Unit;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -37,10 +41,22 @@ import org.jooq.codegen.db.tables.records.RunRecord;
  */
 public class BenchmarkReadAccess {
 
+	protected static final Caffeine<Object, Object> RUN_CACHE_BUILDER = Caffeine.newBuilder()
+		.maximumSize(10000);
+	protected static final int RECENT_RUN_CACHE_SIZE = 10;
+
 	protected final DatabaseStorage databaseStorage;
+
+	protected final Map<RepoId, Cache<CommitHash, Run>> runCache = new HashMap<>();
+	protected final LinkedList<Run> recentRunCache = new LinkedList<>();
 
 	public BenchmarkReadAccess(DatabaseStorage databaseStorage) {
 		this.databaseStorage = Objects.requireNonNull(databaseStorage);
+
+		// Populate recent run cache
+		for (Run recentRun : getRecentRuns(0, RECENT_RUN_CACHE_SIZE)) {
+			recentRunCache.addFirst(recentRun);
+		}
 	}
 
 	/**
@@ -49,22 +65,40 @@ public class BenchmarkReadAccess {
 	 * @param skip how many recent runs to skip
 	 * @param amount how many recent runs to collect
 	 * @return a sorted list containing the recent runs
+	 * @throws IllegalArgumentException if skip/amount is negative
 	 */
-	public List<Run> getRecentRuns(int skip, int amount) {
+	public List<Run> getRecentRuns(int skip, int amount) throws IllegalArgumentException {
+		if (skip < 0) { throw new IllegalArgumentException("skip must be positive"); }
+		if (amount < 0) { throw new IllegalArgumentException("amount must be positive"); }
+		if (amount == 0) { return Collections.emptyList(); }
+
+		List<Run> runList = new ArrayList<>();
+
 		// Check cache
-		// ...
+		if (skip < recentRunCache.size()) {
+			// There are at least some relevant runs in cache
+			recentRunCache.stream().skip(skip).limit(amount).forEach(runList::add);
+		}
 
 		// Check database
-		try (DSLContext db = databaseStorage.acquireContext()) {
-			Map<String, RunRecord> runRecordMap = db.selectFrom(RUN)
-				.orderBy(RUN.START_TIME.desc())
-				.limit(skip, amount)
-				.fetchMap(RUN.ID);
+		if (skip >= recentRunCache.size() || skip + amount > recentRunCache.size()) {
+			// Need to load even more runs
 
-			List<Run> runList = loadRunData(db, runRecordMap);
-			runList.sort(Comparator.comparing(Run::getStartTime));
-			return runList;
+			int dbSkip = Math.max(skip, recentRunCache.size());
+			int dbAmount = amount - runList.size();
+
+			try (DSLContext db = databaseStorage.acquireContext()) {
+				Map<String, RunRecord> runRecordMap = db.selectFrom(RUN)
+					.orderBy(RUN.START_TIME.desc())
+					.limit(dbSkip, dbAmount)
+					.fetchMap(RUN.ID);
+
+				runList.addAll(loadRunData(db, runRecordMap));
+			}
 		}
+
+		runList.sort(Comparator.comparing(Run::getStartTime));
+		return runList;
 	}
 
 	/**
@@ -92,10 +126,15 @@ public class BenchmarkReadAccess {
 		Map<CommitHash, Run> resultMap = new HashMap<>();
 
 		// Check cache
-		// ...
+		final Cache<CommitHash, Run> repoRunCache = runCache.computeIfAbsent(repoId,
+			r -> RUN_CACHE_BUILDER.build()
+		);
+
+		repoRunCache.getAllPresent(commitHashes).forEach(resultMap::put);
 
 		// Check database
 		Set<String> uncachedCommitHashes = commitHashes.stream()
+			.filter(hash -> !resultMap.containsKey(hash))
 			.map(CommitHash::getHash)
 			.collect(toSet());
 
@@ -107,8 +146,12 @@ public class BenchmarkReadAccess {
 					.and(RUN.COMMIT_HASH.in(uncachedCommitHashes))
 					.fetchMap(RUN.ID);
 
-				loadRunData(db, runRecordMap).forEach(
-					run -> resultMap.put(run.getCommitHash(), run));
+				loadRunData(db, runRecordMap).forEach(run -> {
+					resultMap.put(run.getCommitHash(), run);
+
+					// Insert run into cache
+					repoRunCache.put(run.getCommitHash(), run);
+				});
 			}
 		}
 
