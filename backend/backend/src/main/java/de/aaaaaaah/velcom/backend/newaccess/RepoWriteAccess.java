@@ -1,5 +1,6 @@
 package de.aaaaaaah.velcom.backend.newaccess;
 
+import static java.util.stream.Collectors.toList;
 import static org.jooq.codegen.db.tables.Repository.REPOSITORY;
 import static org.jooq.codegen.db.tables.TrackedBranch.TRACKED_BRANCH;
 
@@ -78,7 +79,17 @@ public class RepoWriteAccess extends RepoReadAccess {
 		}
 
 		// Update cache
-		// ...
+		final Repo cachedRepo = this.repoCache.getIfPresent(repoId);
+		if (cachedRepo != null) {
+			Repo newRepo = new Repo(
+				cachedRepo.getRepoId(),
+				newName,
+				cachedRepo.getRemoteUrl(),
+				cachedRepo.getTrackedBranches()
+			);
+
+			this.repoCache.put(newRepo.getRepoId(), newRepo);
+		}
 	}
 
 	/**
@@ -111,7 +122,17 @@ public class RepoWriteAccess extends RepoReadAccess {
 		}
 
 		// (4): Update cache
-		// ...
+		final Repo cachedRepo = this.repoCache.getIfPresent(repoId);
+		if (cachedRepo != null) {
+			Repo newRepo = new Repo(
+				cachedRepo.getRepoId(),
+				cachedRepo.getName(),
+				newRemoteUrl,
+				cachedRepo.getTrackedBranches()
+			);
+
+			this.repoCache.put(newRepo.getRepoId(), newRepo);
+		}
 	}
 
 	/**
@@ -145,7 +166,17 @@ public class RepoWriteAccess extends RepoReadAccess {
 		}
 
 		// Update cache
-		// ...
+		final Repo cachedRepo = this.repoCache.getIfPresent(repoId);
+		if (cachedRepo != null) {
+			Repo newRepo = new Repo(
+				cachedRepo.getRepoId(),
+				cachedRepo.getName(),
+				cachedRepo.getRemoteUrl(),
+				branches.stream().map(bName -> new Branch(repoId, bName)).collect(toList())
+			);
+
+			this.repoCache.put(newRepo.getRepoId(), newRepo);
+		}
 	}
 
 	// --- Add / Delete Repos ---------------------------------------------------------------------
@@ -196,7 +227,7 @@ public class RepoWriteAccess extends RepoReadAccess {
 			List.of(new Branch(repoId, trackedBranchName))
 		);
 
-		// ... (cache)
+		this.repoCache.put(repo.getRepoId(), repo);
 
 		return repo;
 	}
@@ -223,7 +254,7 @@ public class RepoWriteAccess extends RepoReadAccess {
 		}
 
 		// Remove from cache
-		// ...
+		this.repoCache.invalidate(repoId);
 	}
 
 	// --- Update Operations ----------------------------------------------------------------------

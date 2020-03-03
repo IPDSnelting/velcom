@@ -5,6 +5,8 @@ import static java.util.stream.Collectors.toSet;
 import static org.jooq.codegen.db.Tables.REPOSITORY;
 import static org.jooq.codegen.db.Tables.TRACKED_BRANCH;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import de.aaaaaaah.velcom.backend.newaccess.entities.Branch;
 import de.aaaaaaah.velcom.backend.newaccess.entities.BranchName;
 import de.aaaaaaah.velcom.backend.newaccess.entities.CommitHash;
@@ -47,6 +49,10 @@ public class RepoReadAccess {
 	protected final String benchRepoDirName = "benchrepo";
 	protected final RemoteUrl benchRepoRemoteUrl;
 
+	protected final Cache<RepoId, Repo> repoCache = Caffeine.newBuilder()
+		.maximumSize(100)
+		.build();
+
 	public RepoReadAccess(DatabaseStorage databaseStorage, RepoStorage repoStorage,
 		RemoteUrl benchRepoUrl) {
 
@@ -67,7 +73,10 @@ public class RepoReadAccess {
 	 */
 	public Repo getRepo(RepoId repoId) throws NoSuchRepoException {
 		// Check cache
-		// ...
+		final Repo cachedRepo = this.repoCache.getIfPresent(repoId);
+		if (cachedRepo != null) {
+			return cachedRepo;
+		}
 
 		// Check database
 		RepositoryRecord repoRecord;
@@ -81,7 +90,11 @@ public class RepoReadAccess {
 				throw new NoSuchRepoException(repoId);
 			}
 
-			return loadRepoData(db, repoRecord);
+			final Repo loadedRepo = loadRepoData(db, repoRecord);
+
+			this.repoCache.put(loadedRepo.getRepoId(), loadedRepo);
+
+			return loadedRepo;
 		}
 	}
 
@@ -90,15 +103,21 @@ public class RepoReadAccess {
 	 */
 	public Collection<Repo> getAllRepos() {
 		// Check cache
-		// ...
+		List<Repo> repoList = new ArrayList<>(this.repoCache.asMap().values());
 
 		// Check database
+		List<String> cachedRepoIdList = repoList.stream()
+			.map(repo -> repo.getRepoId().getId().toString())
+			.collect(toList());
+
 		try (DSLContext db = databaseStorage.acquireContext()) {
-			return db.fetch(REPOSITORY)
+			db.fetch(REPOSITORY, REPOSITORY.ID.notIn(cachedRepoIdList))
 				.stream()
 				.map(record -> loadRepoData(db, record))
-				.collect(toList());
+				.forEach(repoList::add);
 		}
+
+		return repoList;
 	}
 
 	/**
@@ -188,7 +207,10 @@ public class RepoReadAccess {
 	 */
 	public RemoteUrl getRemoteUrl(RepoId repoId) {
 		// Check cache
-		// ...
+		final Repo cachedRepo = this.repoCache.getIfPresent(repoId);
+		if (cachedRepo != null) {
+			return cachedRepo.getRemoteUrl();
+		}
 
 		// Check database
 		try (DSLContext db = databaseStorage.acquireContext()) {
