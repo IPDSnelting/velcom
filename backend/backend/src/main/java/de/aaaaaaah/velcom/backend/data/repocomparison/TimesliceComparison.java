@@ -2,12 +2,6 @@ package de.aaaaaaah.velcom.backend.data.repocomparison;
 
 import static java.util.stream.Collectors.toList;
 
-import de.aaaaaaah.velcom.backend.newaccess.entities.Interpretation;
-import de.aaaaaaah.velcom.backend.newaccess.entities.CommitHash;
-import de.aaaaaaah.velcom.backend.newaccess.entities.Measurement;
-import de.aaaaaaah.velcom.backend.newaccess.entities.MeasurementName;
-import de.aaaaaaah.velcom.backend.newaccess.entities.Unit;
-import de.aaaaaaah.velcom.backend.newaccess.entities.Commit;
 import de.aaaaaaah.velcom.backend.data.repocomparison.grouping.CommitGrouper;
 import de.aaaaaaah.velcom.backend.data.repocomparison.grouping.GroupByDay;
 import de.aaaaaaah.velcom.backend.data.repocomparison.grouping.GroupByHour;
@@ -15,9 +9,15 @@ import de.aaaaaaah.velcom.backend.data.repocomparison.grouping.GroupByWeek;
 import de.aaaaaaah.velcom.backend.newaccess.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.entities.BranchName;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Commit;
+import de.aaaaaaah.velcom.backend.newaccess.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Interpretation;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Measurement;
+import de.aaaaaaah.velcom.backend.newaccess.entities.MeasurementName;
 import de.aaaaaaah.velcom.backend.newaccess.entities.MeasurementValues;
 import de.aaaaaaah.velcom.backend.newaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.newaccess.entities.Run;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Unit;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -80,10 +80,6 @@ public class TimesliceComparison implements RepoComparison {
 
 	private Optional<RepoGraphData> collectData(RepoId repoId, MeasurementName measurementName,
 		Collection<BranchName> branches, @Nullable Instant startTime, @Nullable Instant stopTime) {
-
-		Collection<String> branchNames = branches.stream()
-			.map(BranchName::getName)
-			.collect(toList());
 
 		// 1.) Get commits
 		Map<CommitHash, Commit> commitMap = commitAccess.getCommitsBetween(repoId,

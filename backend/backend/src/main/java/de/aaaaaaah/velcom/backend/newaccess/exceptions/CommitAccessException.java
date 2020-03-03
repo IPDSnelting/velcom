@@ -9,6 +9,7 @@ public class CommitAccessException extends RuntimeException {
 	private final CommitHash commitHash;
 
 	public CommitAccessException(RepoId repoId, CommitHash commitHash) {
+		super("failed to access commit in repo: " + repoId + ", " + commitHash);
 		this.repoId = repoId;
 		this.commitHash = commitHash;
 	}
