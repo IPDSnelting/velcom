@@ -16,6 +16,8 @@ import de.aaaaaaah.velcom.backend.newaccess.exceptions.AddRepoException;
 import de.aaaaaaah.velcom.backend.newaccess.exceptions.DeleteRepoException;
 import de.aaaaaaah.velcom.backend.newaccess.exceptions.RepoAccessException;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
+import de.aaaaaaah.velcom.backend.storage.repo.GuickCloning;
+import de.aaaaaaah.velcom.backend.storage.repo.GuickCloning.CloneException;
 import de.aaaaaaah.velcom.backend.storage.repo.RepoStorage;
 import de.aaaaaaah.velcom.backend.storage.repo.exception.AddRepositoryException;
 import de.aaaaaaah.velcom.backend.storage.repo.exception.RepositoryAcquisitionException;
@@ -23,8 +25,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Collection;
 import java.util.List;
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Repository;
 import org.jooq.DSLContext;
 import org.jooq.codegen.db.tables.records.RepositoryRecord;
@@ -270,7 +270,7 @@ public class RepoWriteAccess extends RepoReadAccess {
 		try {
 			RemoteUrl remoteUrl = getRemoteUrl(repoId);
 			fetchOrCloneLocalRepo(repoId.getDirectoryName(), remoteUrl);
-		} catch (RepositoryAcquisitionException | GitAPIException | AddRepositoryException e) {
+		} catch (RepositoryAcquisitionException | CloneException | AddRepositoryException e) {
 			throw new RepoAccessException(repoId, e);
 		}
 	}
@@ -318,8 +318,8 @@ public class RepoWriteAccess extends RepoReadAccess {
 				LOGGER.info("missing benchrepo on disk! cloning it...");
 				fetchOrCloneLocalRepo(benchRepoDirName, benchRepoRemoteUrl);
 			}
-		} catch (GitAPIException | RepositoryAcquisitionException | AddRepositoryException
-			| IOException e) {
+		} catch (RepositoryAcquisitionException | AddRepositoryException | IOException |
+			CloneException e) {
 
 			throw new RepoAccessException("failed to fetch/clone benchmark repo with remote url: "
 				+ benchRepoRemoteUrl, e);
@@ -327,14 +327,14 @@ public class RepoWriteAccess extends RepoReadAccess {
 	}
 
 	private void fetchOrCloneLocalRepo(String dirName, RemoteUrl remoteUrl)
-		throws RepositoryAcquisitionException, GitAPIException, AddRepositoryException {
+		throws RepositoryAcquisitionException, AddRepositoryException, CloneException {
 
 		if (repoStorage.containsRepository(dirName)) {
 			// local repo exists => just fetch
 			LOGGER.info("fetching from {} into {}", remoteUrl, dirName);
 
 			try (Repository repo = repoStorage.acquireRepository(dirName)) {
-				Git.wrap(repo).fetch().call();
+				GuickCloning.getInstance().updateBareRepo(repo.getDirectory().toPath());
 			}
 		} else {
 			// local repo does not exist => clone
@@ -349,6 +349,7 @@ public class RepoWriteAccess extends RepoReadAccess {
 	 * Write an uncompressed tar archive containing the (recursively cloned) working directory for
 	 * the specified commit to the output stream.
 	 *
+	 * @param repoId the id of the repo
 	 * @param commitHash the hash of commit to send
 	 * @param outputStream where to write the archive
 	 * @throws ArchiveException if the commit could not be compressed (or something else went wrong

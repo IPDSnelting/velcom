@@ -2,6 +2,7 @@ package de.aaaaaaah.velcom.backend.storage.repo;
 
 import de.aaaaaaah.velcom.runner.shared.ProgramExecutor;
 import de.aaaaaaah.velcom.runner.shared.ProgramExecutor.ProgramResult;
+import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import org.eclipse.jgit.api.CloneCommand;
@@ -69,6 +70,14 @@ public abstract class GuickCloning {
 	public abstract void cloneCommit(String source, Path targetDir, String commitHash)
 		throws CloneException;
 
+	/**
+	 * Updates a bare repo to the remote state.
+	 *
+	 * @param repoDir the path to the repo
+	 * @throws CloneException if an error occurs
+	 */
+	public abstract void updateBareRepo(Path repoDir) throws CloneException;
+
 
 	/**
 	 * An exception that occurred while cloning a repo.
@@ -131,6 +140,18 @@ public abstract class GuickCloning {
 				throw new CloneException("Error checking out commit", e);
 			}
 		}
+
+		@Override
+		public void updateBareRepo(Path repoDir) throws CloneException {
+			try {
+				Git.open(repoDir.toFile()).fetch().call();
+			} catch (GitAPIException | IOException e) {
+				throw new CloneException(
+					"Error when pulling the latest changes from a bare git repo",
+					e
+				);
+			}
+		}
 	}
 
 	/**
@@ -143,7 +164,8 @@ public abstract class GuickCloning {
 			try {
 				ProgramResult programResult = new ProgramExecutor()
 					.execute(
-						"git", "clone", "--mirror", "--recursive", "--recurse-submodules",
+						GIT_EXECUTABLE, "clone",
+						"--mirror", "--recursive", "--recurse-submodules",
 						source,
 						targetDir.toAbsolutePath().toString()
 					).get();
@@ -174,7 +196,7 @@ public abstract class GuickCloning {
 			try {
 				ProgramResult programResult = new ProgramExecutor()
 					.execute(
-						"git", "clone", "--recursive", "--recurse-submodules",
+						GIT_EXECUTABLE, "clone", "--recursive", "--recurse-submodules",
 						source,
 						targetDir.toAbsolutePath().toString()
 					)
@@ -186,8 +208,8 @@ public abstract class GuickCloning {
 
 				programResult = new ProgramExecutor()
 					.execute(
-						"git", "-C", targetDir.toAbsolutePath().toString(), "checkout", commitHash
-
+						GIT_EXECUTABLE, "-C", targetDir.toAbsolutePath().toString(),
+						"checkout", commitHash
 					)
 					.get();
 
@@ -198,7 +220,7 @@ public abstract class GuickCloning {
 
 				programResult = new ProgramExecutor()
 					.execute(
-						"git", "-C", targetDir.toAbsolutePath().toString(),
+						GIT_EXECUTABLE, "-C", targetDir.toAbsolutePath().toString(),
 						"submodule", "update", "--force", "--recursive"
 					)
 					.get();
@@ -209,6 +231,20 @@ public abstract class GuickCloning {
 				);
 			} catch (InterruptedException | UncheckedIOException e) {
 				throw new CloneException("Clone failed for " + source + " at " + commitHash, e);
+			}
+		}
+
+		@Override
+		public void updateBareRepo(Path repoDir) throws CloneException {
+			try {
+				ProgramResult programResult = new ProgramExecutor()
+					.execute(
+						GIT_EXECUTABLE, "-C", repoDir.toAbsolutePath().toString(),
+						"fetch", "--all"
+					).get();
+				guardResult("Fetch failed :/", programResult);
+			} catch (InterruptedException | UncheckedIOException e) {
+				throw new CloneException("Fetch failed for " + repoDir, e);
 			}
 		}
 	}
