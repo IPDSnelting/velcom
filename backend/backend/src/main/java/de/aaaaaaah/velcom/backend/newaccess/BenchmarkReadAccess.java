@@ -56,7 +56,7 @@ public class BenchmarkReadAccess {
 
 		// Populate recent run cache
 		for (Run recentRun : getRecentRuns(0, RECENT_RUN_CACHE_SIZE)) {
-			recentRunCache.addFirst(recentRun);
+			recentRunCache.addLast(recentRun);
 		}
 	}
 
@@ -98,7 +98,7 @@ public class BenchmarkReadAccess {
 			}
 		}
 
-		runList.sort(Comparator.comparing(Run::getStartTime));
+		runList.sort(Comparator.comparing(Run::getStartTime).reversed());
 		return runList;
 	}
 
