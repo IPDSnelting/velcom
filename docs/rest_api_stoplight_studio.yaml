@@ -261,13 +261,18 @@ paths:
         - schema:
             type: integer
           in: query
-          name: amount
-          description: maximum number of commits to return
+          name: before
+          description: number of (older) commits to fetch before the current commit
         - schema:
             type: integer
           in: query
-          name: skip
-          description: number of commits to skip over (starting at the newest commit)
+          name: after
+          description: number of (newer) commits to fetch after the current commit
+        - schema:
+            type: string
+          in: query
+          name: relative_to
+          description: "the commit that 'before' and 'after' are relative to"
   /test-token:
     post:
       summary: Test whether an auth token is valid
