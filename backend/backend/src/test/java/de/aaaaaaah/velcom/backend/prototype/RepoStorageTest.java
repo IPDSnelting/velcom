@@ -18,12 +18,16 @@ import java.util.Collection;
 import java.util.List;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.errors.IncorrectObjectTypeException;
+import org.eclipse.jgit.errors.MissingObjectException;
+import org.eclipse.jgit.errors.StopWalkException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ProgressMonitor;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
+import org.eclipse.jgit.revwalk.filter.RevFilter;
 import org.eclipse.jgit.transport.FetchResult;
 import org.eclipse.jgit.transport.SshSessionFactory;
 import org.eclipse.jgit.transport.TrackingRefUpdate;
@@ -272,7 +276,20 @@ class RepoStorageTest {
 				System.out.println("Got branch: " + ref.getName());
 
 				// Iterate over every commit on this branch...
-				Iterable<RevCommit> commitIterable = git.log().add(objectId).call();
+				Iterable<RevCommit> commitIterable = git.log()
+					.setRevFilter(new RevFilter() {
+						@Override
+						public boolean include(RevWalk walker, RevCommit cmit)
+							throws StopWalkException, MissingObjectException, IncorrectObjectTypeException, IOException {
+							return false;
+						}
+
+						@Override
+						public RevFilter clone() {
+							return null;
+						}
+					})
+					.add(objectId).call();
 
 				commitIterable.forEach(revCommit ->
 					System.out.println("Got commit: " + revCommit.getShortMessage()));

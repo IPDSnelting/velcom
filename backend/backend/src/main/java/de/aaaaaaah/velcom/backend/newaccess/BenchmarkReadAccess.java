@@ -32,6 +32,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import org.jooq.DSLContext;
 import org.jooq.codegen.db.tables.records.RunMeasurementRecord;
 import org.jooq.codegen.db.tables.records.RunRecord;
@@ -47,7 +48,7 @@ public class BenchmarkReadAccess {
 
 	protected final DatabaseStorage databaseStorage;
 
-	protected final Map<RepoId, Cache<CommitHash, Run>> runCache = new HashMap<>();
+	protected final Map<RepoId, Cache<CommitHash, Run>> runCache = new ConcurrentHashMap<>();
 	protected final LinkedList<Run> recentRunCache = new LinkedList<>();
 
 	public BenchmarkReadAccess(DatabaseStorage databaseStorage) {

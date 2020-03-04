@@ -16,7 +16,7 @@ server:
 jdbcUrl: "jdbc:sqlite:file:data/data.db"
 
 # The interval between listener updates. (in seconds)
-pollInterval: 30
+pollInterval: 120
 
 # The token for the web administrator
 webAdminToken: "12345"
