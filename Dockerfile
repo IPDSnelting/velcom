@@ -11,9 +11,12 @@ RUN apt update && apt install nginx -y && apt install sudo -y && apt install git
 COPY nginx-site /etc/nginx/sites-available
 COPY nginx.conf /etc/nginx/nginx.conf
 
+ARG USER_ID
+
 RUN ln -s /etc/nginx/sites-available/nginx-site /etc/nginx/sites-enabled && \
     rm /etc/nginx/sites-enabled/default && \
-    useradd --uid 1003 velcom
+    # The user id is injected at build time
+    useradd --uid $USER_ID velcom
 
 # Expose the config dir
 VOLUME ["/home/velcom/config"]

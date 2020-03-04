@@ -33,8 +33,10 @@ Run the `guided_install.py` script and follow its instructions.
 Go to the root directory of this project and build the docker image using the
 makefile.
 
+For an explanation of `USER_ID`, have a look at step 5 below. If you do not provide
+a UID, the Makefile uses 1003.
 ```
-$ make docker-build-server
+$ make docker-build-server USER_ID=<uid>
 ```
 
 This will build the backend and the frontend, copy all relevant files into a
@@ -52,7 +54,9 @@ Now you need to actually configure and launch the server.
 5. Optionally create a SSH folder containing a private key the backend should
    use for cloning repositories.
    If you do this *make sure the user ids match! Otherwise SSH will not get the
-   permissions it expects!* The default Dockerfiles use a user with UID 1003,
+   permissions it expects!*. The Dockerfiles provide the build argument
+   `USER_ID` for this. You can use it with `docker build -t velcom:latest
+   --build-arg USER_ID=<uid>`. The default Makefiles use a user id of 1003,
    adjust this to your needs.
 6. Start the container
 

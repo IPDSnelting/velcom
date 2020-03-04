@@ -1,5 +1,7 @@
 .PHONY: frontend backend clean
 
+USER_ID ?= 1003
+
 all: frontend backend
 
 frontend:
@@ -35,7 +37,7 @@ docker-build-server: backend frontend
 	cp -r frontend/dist .docker
 	cp -r docs/* .docker
 	cp Dockerfile .docker
-	(cd .docker && sudo docker build -t velcom-server:latest .)
+	(cd .docker && sudo docker build -t velcom-server:latest --build-arg USER_ID=$(USER_ID) .)
 
 docker-build-server-single-port: backend
 	make -C frontend/ mode=production-single-port
@@ -44,4 +46,4 @@ docker-build-server-single-port: backend
 	cp -r frontend/dist .docker
 	cp -r docs/* .docker
 	cp Dockerfile-Single-Port .docker/Dockerfile
-	(cd .docker && sudo docker build -t velcom-server:latest .)
+	(cd .docker && sudo docker build -t velcom-server:latest --build-arg USER_ID=$(USER_ID) .)
