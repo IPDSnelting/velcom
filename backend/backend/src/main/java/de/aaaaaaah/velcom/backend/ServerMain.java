@@ -46,11 +46,15 @@ import io.prometheus.client.exporter.MetricsServlet;
 import java.util.EnumSet;
 import javax.servlet.DispatcherType;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The backend's main class. Contains the core initialisation routines for the web server.
  */
 public class ServerMain extends Application<GlobalConfig> {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(ServerMain.class);
 
 	private static MetricRegistry metricRegistry;
 
@@ -58,6 +62,11 @@ public class ServerMain extends Application<GlobalConfig> {
 	 * @return the global metric registry
 	 */
 	public static MetricRegistry getMetricRegistry() {
+		// Called before `run` was called (in a Test`)
+		if (metricRegistry == null) {
+			LOGGER.warn("Returning bogus metrics factory!");
+			return new MetricRegistry();
+		}
 		return metricRegistry;
 	}
 
