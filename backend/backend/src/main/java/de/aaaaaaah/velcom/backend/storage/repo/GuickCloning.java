@@ -21,6 +21,10 @@ public abstract class GuickCloning {
 
 	private static final GuickCloning INSTANCE = findInstanceToUse();
 
+	private GuickCloning() {
+		throw new UnsupportedOperationException("No instantiation");
+	}
+
 	private static GuickCloning findInstanceToUse() {
 		try {
 			ProgramResult git = new ProgramExecutor()
