@@ -96,21 +96,6 @@ export default class NewDetailGraph extends Vue {
     return this.height - this.margin.top - this.margin.bottom
   }
 
-  private get mainSvg() {
-    return d3
-      .select('#mainSvg')
-      .attr('width', '100%')
-      .attr('height', '100%')
-      .attr('align', 'end')
-      .attr('justify', 'end')
-      .append('g')
-      .attr('id', 'dataLayer')
-      .attr(
-        'transform',
-        'translate(' + this.margin.left + ',' + this.margin.top + ')'
-      )
-  }
-
   private get zoom() {
     var zoom = d3
       .zoom()
@@ -175,7 +160,9 @@ export default class NewDetailGraph extends Vue {
       let additionalSkip: number = newMin
       this.$emit('selectionChanged', newAmount, additionalSkip)
     }
-    this.mainSvg.select('#brush').call(this.brush.move as any, null)
+    d3.select('#dataLayer')
+      .select('#brush')
+      .call(this.brush.move as any, null)
   }
 
   private resizeListener: () => void = () => {}
@@ -332,7 +319,9 @@ export default class NewDetailGraph extends Vue {
   private drawGraph() {
     if (this.dataAvailable) {
       if (!this.graphDrawn) {
-        this.mainSvg.selectAll('*').remove()
+        d3.select('#dataLayer')
+          .selectAll('*')
+          .remove()
         this.defineSvgElements()
         this.graphDrawn = true
       }
@@ -347,13 +336,15 @@ export default class NewDetailGraph extends Vue {
       if (this.graphDrawn) {
         this.graphDrawn = false
       }
-      this.mainSvg.selectAll('*').remove()
+      d3.select('#dataLayer')
+        .selectAll('*')
+        .remove()
       let information: string =
         this.measurement.metric === ''
           ? '<tspan x="0" dy="1.2em">No data available.</tspan><tspan x="0" dy="1.2em">Please select benchmark and metric.</tspan>'
           : '<tspan x="0" dy="1.2em">There are no commits within the specified time period</tspan><tspan x="0" dy="1.2em"> that have been benchmarked with this metric.</tspan>'
 
-      this.mainSvg
+      d3.select('#dataLayer')
         .append('text')
         .attr('y', this.innerHeight / 2)
         .attr('x', -this.margin.left)
@@ -792,9 +783,31 @@ export default class NewDetailGraph extends Vue {
       .attr('x', -this.innerHeight / 2)
   }
 
+  private getXTranslation(transform: string): number[] {
+    let transFormString: string[] = transform
+      .substring(transform.indexOf('(') + 1, transform.indexOf(')'))
+      .split(',')
+
+    return [Number.parseInt(transFormString[0])]
+  }
+
+  private pan(startX: number, pannedX: number) {
+    let dx = pannedX - startX
+
+    d3.select('#graphArea').attr('transform', 'translate(' + [dx, 0] + ')')
+    d3.event.stopImmediatePropagation()
+  }
+
   private defineSvgElements() {
-    this.mainSvg
-      .select('#listenerRect')
+    d3.select('#mainSvg')
+      .append('g')
+      .attr('id', 'dataLayer')
+      .attr(
+        'transform',
+        'translate(' + this.margin.left + ',' + this.margin.top + ')'
+      )
+
+    d3.select('#dataLayer')
       .append('rect')
       .attr('id', 'listenerRect')
       .attr('x', 0)
@@ -803,12 +816,16 @@ export default class NewDetailGraph extends Vue {
       .attr('height', this.innerHeight)
       .attr('pointer-events', 'all')
       .style('opacity', 0)
-    this.mainSvg
+
+    d3.select('#dataLayer')
       .append('g')
       .attr('id', 'brush')
       .call(this.brush)
-    this.mainSvg.call(this.zoom as any)
-    this.mainSvg.append('g').attr('id', 'graphArea')
+
+    d3.select('#dataLayer').call(this.zoom as any)
+    d3.select('#dataLayer')
+      .append('g')
+      .attr('id', 'graphArea')
 
     d3.select('#mainSvg')
       .append('clipPath')
@@ -819,20 +836,20 @@ export default class NewDetailGraph extends Vue {
       .attr('width', this.innerWidth)
       .attr('height', this.innerHeight + 2 * this.datapointWidth)
 
-    this.mainSvg
+    d3.select('#dataLayer')
       .append('g')
       .attr('class', 'axis')
       .attr('id', 'xAxis')
       .attr('transform', 'translate(0,' + this.innerHeight + ')')
       .call(this.xAxis)
 
-    this.mainSvg
+    d3.select('#dataLayer')
       .append('g')
       .attr('class', 'axis')
       .attr('id', 'yAxis')
       .call(this.yAxis)
 
-    this.mainSvg
+    d3.select('#dataLayer')
       .append('text')
       .attr('id', 'yLabel')
       .attr('text-anchor', 'middle')
@@ -841,7 +858,7 @@ export default class NewDetailGraph extends Vue {
       .attr('x', -this.innerHeight / 2)
       .text(this.yLabel)
 
-    this.mainSvg
+    d3.select('#dataLayer')
       .append('g')
       .append('line')
       .attr('id', 'baseLine')
@@ -873,6 +890,11 @@ export default class NewDetailGraph extends Vue {
   }
 
   mounted() {
+    d3.select('#mainSvg')
+      .attr('width', '100%')
+      .attr('height', '100%')
+      .attr('align', 'end')
+      .attr('justify', 'end')
     this.resize()
     this.drawGraph()
     d3.select('#brush .overlay').attr('cursor', 'cursor')
