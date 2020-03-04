@@ -32,10 +32,10 @@ class ArchiverTest {
 	Path tempDir;
 
 	private Path repoPath;
-	private Path submodulePath;
 	private Path garbageDir;
 
 	private Archiver archiver;
+	public static final String SUBMODULE_PATH = "submodule";
 
 	@BeforeEach
 	void setUp() throws Exception {
@@ -43,7 +43,7 @@ class ArchiverTest {
 
 		Files.createDirectories(tempDir);
 		repoPath = tempDir.resolve("repo");
-		submodulePath = tempDir.resolve("sub_module");
+		Path submodulePath = tempDir.resolve("sub_module");
 		garbageDir = tempDir.resolve("garbage");
 		Files.createDirectory(garbageDir);
 
@@ -63,8 +63,8 @@ class ArchiverTest {
 		Git repoGit = Git.open(repoPath.toFile());
 		repoGit
 			.submoduleAdd()
-			.setName("Submodule")
-			.setPath("submodule")
+			.setName("submodule")
+			.setPath(SUBMODULE_PATH)
 			.setURI(submodulePath.toUri().toString())
 			.call();
 
@@ -81,7 +81,7 @@ class ArchiverTest {
 		while (submoduleWalk.next()) {
 			Git.wrap(submoduleWalk.getRepository()).pull().setStrategy(MergeStrategy.THEIRS).call();
 		}
-		repoGit.add().addFilepattern("submodule").call();
+		repoGit.add().addFilepattern(SUBMODULE_PATH).call();
 		// commit modification
 		repoGit.commit().setAuthor("Auth", "er").setMessage("Updated submodule").call();
 
@@ -103,7 +103,7 @@ class ArchiverTest {
 		assertThat(Git.open(repoPath.toFile()).status().call().isClean())
 			.withFailMessage("The repo was not clean!")
 			.isTrue();
-		assertThat(Files.readString(repoPath.resolve("submodule/test.txt")))
+		assertThat(Files.readString(repoPath.resolve(SUBMODULE_PATH + "/test.txt")))
 			.isEqualTo("Version 2!");
 	}
 
@@ -125,7 +125,7 @@ class ArchiverTest {
 		assertThat(Git.open(outDir.toFile()).status().call().isClean())
 			.withFailMessage("The repo was not clean!")
 			.isTrue();
-		assertThat(Files.readString(outDir.resolve("submodule/test.txt")))
+		assertThat(Files.readString(outDir.resolve(SUBMODULE_PATH + "/test.txt")))
 			.isEqualTo(version);
 	}
 }

@@ -31,8 +31,7 @@ import org.slf4j.LoggerFactory;
  */
 public class Archiver {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(
-		Archiver.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(Archiver.class);
 	private static final Path ARCHIVES_ROOT_DIR = Paths.get("data/archives/");
 
 	private final RepoStorage repoStorage;

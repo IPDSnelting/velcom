@@ -22,7 +22,6 @@ public abstract class GuickCloning {
 	private static final GuickCloning INSTANCE = findInstanceToUse();
 
 	private GuickCloning() {
-		throw new UnsupportedOperationException("No instantiation");
 	}
 
 	private static GuickCloning findInstanceToUse() {
@@ -118,6 +117,8 @@ public abstract class GuickCloning {
 				.call()) {
 
 				clone.checkout().setName(commitHash).call();
+				clone.submoduleInit().call();
+				clone.submoduleSync().call();
 				// Update submodules
 				clone.submoduleUpdate().setFetch(true).setStrategy(MergeStrategy.THEIRS).call();
 
