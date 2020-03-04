@@ -80,11 +80,19 @@ public class ProgramExecutor {
 				processHandle.destroy();
 				// Allow time for graceful shutdown
 				try {
+					LOGGER.info(
+						"Waiting for {} millis for the thread to die",
+						timeToForceKillMillis
+					);
 					process.waitFor(timeToForceKillMillis, TimeUnit.MILLISECONDS);
 				} catch (InterruptedException ignored) {
 				}
-				LOGGER.info("Nuking uncooperative process (SIGKILL)");
-				processHandle.destroyForcibly();
+				if (processHandle.isAlive()) {
+					LOGGER.info("Nuking uncooperative process (SIGKILL)");
+					processHandle.destroyForcibly();
+				} else {
+					LOGGER.info("Process was nice and died properly!");
+				}
 				collectedException.set(new CancellationException("Killed process!"));
 			}
 			try {
