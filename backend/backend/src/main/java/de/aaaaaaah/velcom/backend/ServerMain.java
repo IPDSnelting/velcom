@@ -146,7 +146,7 @@ public class ServerMain extends Application<GlobalConfig> {
 		environment.jersey()
 			.register(new QueueEndpoint(commitAccess, queue, dispatcher, linearLog, repoAccess));
 		environment.jersey().register(
-			new RecentlyBenchmarkedCommitsEndpoint(
+			new RecentlyBenchmarkedCommitsEndpoint(repoAccess,
 				benchmarkAccess, commitAccess, commitComparer, linearLog));
 		environment.jersey().register(new RepoComparisonGraphEndpoint(repoComparison));
 		environment.jersey().register(new RepoEndpoint(

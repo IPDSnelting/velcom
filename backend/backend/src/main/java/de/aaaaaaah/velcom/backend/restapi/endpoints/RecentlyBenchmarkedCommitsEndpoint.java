@@ -5,8 +5,10 @@ import static java.util.stream.Collectors.toList;
 import de.aaaaaaah.velcom.backend.data.commitcomparison.CommitComparer;
 import de.aaaaaaah.velcom.backend.data.commitcomparison.CommitComparison;
 import de.aaaaaaah.velcom.backend.data.linearlog.LinearLog;
+import de.aaaaaaah.velcom.backend.data.recentbenchmarks.RecentBenchmarkCollector;
 import de.aaaaaaah.velcom.backend.newaccess.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.CommitReadAccess;
+import de.aaaaaaah.velcom.backend.newaccess.RepoReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.entities.Commit;
 import de.aaaaaaah.velcom.backend.newaccess.entities.Run;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonCommitComparison;
@@ -38,14 +40,19 @@ public class RecentlyBenchmarkedCommitsEndpoint {
 	private final CommitReadAccess commitAccess;
 	private final CommitComparer commitComparer;
 	private final LinearLog linearLog;
+	private final RecentBenchmarkCollector collector;
 
-	public RecentlyBenchmarkedCommitsEndpoint(BenchmarkReadAccess benchmarkAccess,
+	public RecentlyBenchmarkedCommitsEndpoint(RepoReadAccess repoAccess,
+		BenchmarkReadAccess benchmarkAccess,
 		CommitReadAccess commitAccess, CommitComparer commitComparer, LinearLog linearLog) {
 
 		this.benchmarkAccess = benchmarkAccess;
 		this.commitAccess = commitAccess;
 		this.commitComparer = commitComparer;
 		this.linearLog = linearLog;
+
+		this.collector = new RecentBenchmarkCollector(repoAccess, benchmarkAccess, commitAccess,
+			linearLog, commitComparer);
 	}
 
 	/**
@@ -60,40 +67,50 @@ public class RecentlyBenchmarkedCommitsEndpoint {
 		@NotNull @QueryParam("amount") Integer amount,
 		@DefaultValue("false") @QueryParam("significant_only") boolean significantOnly) {
 
-		if ("".isEmpty()) {
-			return new GetReply(List.of());
-		}
-		
-		List<CommitComparison> interestingCommits = new ArrayList<>();
+		//if ("".isEmpty()) {
+		//	return new GetReply(List.of());
+		//}
+//
+		List<CommitComparison> interestingCommits = null; //new ArrayList<>();
 
-		for (int step = 0; step < MAX_STEPS; step++) {
-			if (interestingCommits.size() >= amount) { break; }
+		long start = System.currentTimeMillis();
 
-			List<Run> runs = benchmarkAccess.getRecentRuns(
-				step * COMMITS_PER_STEP, COMMITS_PER_STEP
-			);
+		interestingCommits = collector.collect(amount, significantOnly);
 
-			// Transform to comparisons
-			List<CommitComparison> comparisons = runs.stream()
-				.map(this::compareWithPrevious)
-				.filter(Optional::isPresent)
-				.map(Optional::get)
-				.collect(Collectors.toCollection(ArrayList::new));
+		long end = System.currentTimeMillis();
 
-			// Filter out commits if significantOnly
-			if (significantOnly) {
-				Iterator<CommitComparison> iterator = comparisons.iterator();
-				while (iterator.hasNext()) {
-					CommitComparison next = iterator.next();
-
-					if (!next.isSignificant()) {
-						iterator.remove();
-					}
-				}
-			}
-
-			interestingCommits.addAll(comparisons);
-		}
+		System.err.println("Took: " + (end-start));
+//
+		//for (int step = 0; step < MAX_STEPS; step++) {
+		//	if (interestingCommits.size() >= amount) {
+		//		break;
+		//	}
+//
+		//	List<Run> runs = benchmarkAccess.getRecentRuns(
+		//		step * COMMITS_PER_STEP, COMMITS_PER_STEP
+		//	);
+//
+		//	// Transform to comparisons
+		//	List<CommitComparison> comparisons = runs.stream()
+		//		.map(this::compareWithPrevious)
+		//		.filter(Optional::isPresent)
+		//		.map(Optional::get)
+		//		.collect(Collectors.toCollection(ArrayList::new));
+//
+		//	// Filter out commits if significantOnly
+		//	if (significantOnly) {
+		//		Iterator<CommitComparison> iterator = comparisons.iterator();
+		//		while (iterator.hasNext()) {
+		//			CommitComparison next = iterator.next();
+//
+		//			if (!next.isSignificant()) {
+		//				iterator.remove();
+		//			}
+		//		}
+		//	}
+//
+		//	interestingCommits.addAll(comparisons);
+		//}
 
 		return new GetReply(interestingCommits);
 	}
