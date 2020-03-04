@@ -1,5 +1,8 @@
 package de.aaaaaaah.velcom.backend.data.queue;
 
+import com.codahale.metrics.Gauge;
+import com.codahale.metrics.MetricRegistry;
+import de.aaaaaaah.velcom.backend.ServerMain;
 import de.aaaaaaah.velcom.backend.newaccess.KnownCommitWriteAccess;
 import de.aaaaaaah.velcom.backend.newaccess.entities.BenchmarkStatus;
 import de.aaaaaaah.velcom.backend.newaccess.entities.Commit;
@@ -16,8 +19,9 @@ import org.slf4j.LoggerFactory;
 
 /**
  * The queue is passed tasks from various sources. It keeps track of all tasks and updates their
- * benchmark status in the {@link KnownCommitWriteAccess}, and also passes all tasks to an internal {@link
- * QueuePolicy}. That policy keeps the tasks and decides in which order they should be executed.
+ * benchmark status in the {@link KnownCommitWriteAccess}, and also passes all tasks to an internal
+ * {@link QueuePolicy}. That policy keeps the tasks and decides in which order they should be
+ * executed.
  *
  * <p> When the queue is loaded after a restart, all the known commits which still need to be
  * benchmarked as well as the manual commits need to be added one by one again. The queue does
@@ -51,6 +55,11 @@ public class Queue {
 
 		somethingAddedListeners = new ArrayList<>();
 		somethingAbortedListeners = new ArrayList<>();
+
+		ServerMain.getMetricRegistry().register(
+			MetricRegistry.name(getClass(), "queue_length"),
+			(Gauge<Integer>) () -> viewAllCurrentTasks().size()
+		);
 	}
 
 	/**

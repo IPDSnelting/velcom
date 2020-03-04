@@ -2,6 +2,10 @@ package de.aaaaaaah.velcom.backend.runner;
 
 import static java.util.function.Predicate.not;
 
+import com.codahale.metrics.Gauge;
+import com.codahale.metrics.Histogram;
+import com.codahale.metrics.MetricRegistry;
+import de.aaaaaaah.velcom.backend.ServerMain;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.newaccess.BenchmarkWriteAccess;
 import de.aaaaaaah.velcom.backend.newaccess.RepoWriteAccess;
@@ -23,6 +27,7 @@ import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.RunnerInfo
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -56,6 +61,7 @@ public class DispatcherImpl implements Dispatcher {
 	private final java.util.Queue<ActiveRunnerInformation> freeRunners;
 	private final ScheduledExecutorService watchdogPool;
 	private final ExecutorService dispatcherExecutorPool;
+	private final Histogram durationsHistogram;
 
 	/**
 	 * Creates a new dispatcher.
@@ -86,6 +92,12 @@ public class DispatcherImpl implements Dispatcher {
 			Math.max(allowedRunnerDisconnectTime.toSeconds() / 4, 1),
 			TimeUnit.SECONDS
 		);
+		ServerMain.getMetricRegistry().register(
+			MetricRegistry.name(getClass(), "runner_count"),
+			(Gauge<Integer>) activeRunners::size
+		);
+		durationsHistogram = ServerMain.getMetricRegistry()
+			.histogram(MetricRegistry.name(getClass(), "execution_durations"));
 	}
 
 	private void cleanupCrashedRunners() {
@@ -313,6 +325,8 @@ public class DispatcherImpl implements Dispatcher {
 		CommitHash commitHash = new CommitHash(results.getWorkOrder().getCommitHash());
 		Instant startTime = results.getStartTime();
 		Instant endTime = results.getEndTime();
+
+		durationsHistogram.update(Math.abs(ChronoUnit.SECONDS.between(startTime, endTime)));
 
 		if (results.isError()) {
 			RunBuilder runBuilder = RunBuilder.failed(

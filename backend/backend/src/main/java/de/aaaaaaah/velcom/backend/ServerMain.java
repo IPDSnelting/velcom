@@ -1,5 +1,6 @@
 package de.aaaaaaah.velcom.backend;
 
+import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import de.aaaaaaah.velcom.backend.data.commitcomparison.CommitComparer;
 import de.aaaaaaah.velcom.backend.data.linearlog.CommitAccessBasedLinearLog;
@@ -51,6 +52,15 @@ import org.eclipse.jetty.servlets.CrossOriginFilter;
  */
 public class ServerMain extends Application<GlobalConfig> {
 
+	private static MetricRegistry metricRegistry;
+
+	/**
+	 * @return the global metric registry
+	 */
+	public static MetricRegistry getMetricRegistry() {
+		return metricRegistry;
+	}
+
 	/**
 	 * The backend's main class's main method. Starts the web server.
 	 *
@@ -68,6 +78,8 @@ public class ServerMain extends Application<GlobalConfig> {
 
 	@Override
 	public void run(GlobalConfig configuration, Environment environment) throws Exception {
+		metricRegistry = environment.metrics();
+
 		environment.getObjectMapper().setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
 		configureCors(environment);
 
