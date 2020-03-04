@@ -299,9 +299,9 @@ export default class RepoDetail extends Vue {
     })
   }
 
-  updateSelection(newAmount: number, moreSkip: number) {
+  updateSelection(newAmount: number, additionalSkip: number) {
     this.amount = newAmount.toString()
-    this.skip = (Number.parseInt(this.skip) + moreSkip).toString()
+    this.skip = (Number.parseInt(this.skip) + additionalSkip).toString()
     this.retrieveRuns()
   }
 

@@ -7,16 +7,29 @@
         </div>
       </v-col>
     </v-row>
-    <v-dialog width="600" v-model="dialogOpen">
-      <v-card>
-        <v-radio-group>
-          <v-radio label="use datapoint as reference"></v-radio>
-          <v-radio label="display datapoints relative to this one"></v-radio>
-          <v-radio label="none of the above"></v-radio>
-        </v-radio-group>
-        <v-btn color="error" @click="dialogOpen = false">Close</v-btn>
-      </v-card>
-    </v-dialog>
+    <v-row>
+      <v-col>
+        <v-dialog width="600" v-model="dialogOpen">
+          <v-card>
+            <v-toolbar dark color="primary">
+              <v-toolbar-title></v-toolbar-title>
+            </v-toolbar>
+            <v-card-text>
+              <v-radio-group v-model="selectedReference">
+                <v-radio label="use datapoint as reference" value="datapoint"></v-radio>
+                <v-radio label="display datapoints relative to this one" value="baseline"></v-radio>
+                <v-radio label="remove references" value="none"></v-radio>
+              </v-radio-group>
+            </v-card-text>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn color="error" @click="dialogOpen = false">Close</v-btn>
+              <v-btn color="primary" @click="onConfirm">Confirm</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+      </v-col>
+    </v-row>
   </v-container>
 </template>
 
@@ -42,14 +55,20 @@ export default class NewDetailGraph extends Vue {
   @Prop({})
   measurement!: MeasurementID
 
-  @Prop({})
-  amount!: number
+  private get amount(): number {
+    return Number.parseInt(vxm.repoDetailModule.selectedFetchAmount)
+  }
 
   @Prop({ default: true })
   beginYAtZero!: boolean
 
   private dialogOpen: boolean = false
+  private selectedDatapoint: CommitInfo | null = null
   private referencePoint: CommitInfo | null = null
+  private selectedReference: 'none' | 'datapoint' | 'baseline' = 'none'
+  private reference: 'none' | 'datapoint' | 'baseline' = 'none'
+  private comparePointOne: CommitInfo | null = null
+  private comparePointTwo: CommitInfo | null = null
 
   // anything with and height related
 
@@ -128,9 +147,8 @@ export default class NewDetailGraph extends Vue {
   }
 
   private zoomed() {
-    console.log('hi')
-    var transform = d3.event.transform
-    var zoomedXScale = transform.rescaleX(this.xScale)
+    let transform = d3.event.transform
+    let zoomedXScale = transform.rescaleX(this.xScale)
 
     d3.select('#dataLayer')
       .selectAll<SVGPathElement, unknown>('.datapoint')
@@ -152,6 +170,30 @@ export default class NewDetailGraph extends Vue {
     d3.select('#xAxis')
       .attr('transform', 'translate(0,' + this.innerHeight + ')')
       .call(this.xAxis as any)
+  }
+
+  private get brush(): d3.BrushBehavior<unknown> {
+    return d3
+      .brushX()
+      .extent([
+        [0, 0],
+        [this.innerWidth, this.innerHeight]
+      ])
+      .on('end', this.brushened)
+  }
+
+  private brushened() {
+    let key = d3.event.shiftKey
+    let selection = d3.event.selection
+
+    let newMin: number = Math.floor(this.xScale.invert(selection[1]))
+    let newMax = Math.floor(this.xScale.invert(selection[0]))
+    if (selection) {
+      let newAmount: number = newMax - newMin
+      let additionalSkip: number = newMin
+      this.$emit('selectionChanged', newAmount, additionalSkip)
+    }
+    this.mainSvg.select('.brush').call(this.brush.move as any, null)
   }
 
   private resizeListener: () => void = () => {}
@@ -647,18 +689,72 @@ export default class NewDetailGraph extends Vue {
       .style('opacity', 0)
       .style('visibility', 'hidden')
   }
+
   get selectedRepo(): string {
     return vxm.repoDetailModule.selectedRepoId
   }
 
   openDatapointMenu(datapoint: CommitInfo) {
-    this.dialogOpen = true /*
-    d3.select('#_' + datapoint.commit.hash).attr('stroke', 'red')
-    d3.select('#reference-line')
-      .attr('x1', this.xScale(0))
-      .attr('y1', this.y(datapoint.comparison))
-      .attr('x2', this.xScale(this.amount))
-      .attr('y2', this.y(datapoint.comparison)) */
+    this.dialogOpen = true
+    this.selectedDatapoint = datapoint
+    // d3.select('#_' + datapoint.commit.hash).attr('stroke', 'red')
+  }
+
+  private onConfirm() {
+    this.dialogOpen = false
+    this.reference = this.selectedReference
+    switch (this.selectedReference) {
+      case 'baseline':
+        this.setBaseline()
+        break
+      case 'datapoint':
+        this.setReferencePoint()
+        break
+      case 'none':
+        this.removeReferences()
+        break
+    }
+  }
+
+  setBaseline() {
+    if (this.selectedDatapoint) {
+      this.referencePoint = this.selectedDatapoint
+    }
+    if (this.referencePoint) {
+      let baseLine = d3
+        .select('#graphArea')
+        .selectAll<SVGPathElement, unknown>('#baseLine')
+        .data([this.datapoints])
+      let newBaseLine = baseLine
+        .enter()
+        .append('line')
+        .attr('id', 'baseLine')
+        .merge(baseLine as any)
+        .transition()
+        .duration(1000)
+        .delay(100)
+        .attr('x1', this.innerWidth)
+        .attr('y1', this.y(this.referencePoint.comparison))
+        .attr('x2', 0)
+        .attr('y2', this.y(this.referencePoint.comparison))
+
+      baseLine
+        .exit()
+        .transition()
+        .attr('opacity', 0)
+        .remove()
+    }
+  }
+
+  private setReferencePoint() {
+    this.referencePoint = this.selectedDatapoint
+  }
+
+  private removeReferences() {
+    this.referencePoint = null
+    d3.select('#graphArea')
+      .selectAll<SVGPathElement, unknown>('#baseLine')
+      .remove()
   }
 
   // updating
@@ -688,6 +784,7 @@ export default class NewDetailGraph extends Vue {
   private updateData() {
     this.updateAxes()
     this.drawGraph()
+    this.setBaseline()
   }
 
   private updateAxes() {
@@ -710,7 +807,24 @@ export default class NewDetailGraph extends Vue {
       .attr('x', -this.innerHeight / 2)
   }
 
+  private getXTranslation(transform: string): number[] {
+    let transFormString: string[] = transform
+      .substring(transform.indexOf('(') + 1, transform.indexOf(')'))
+      .split(',')
+
+    return [Number.parseInt(transFormString[0])]
+  }
+
+  private pan(startX: number, pannedX: number) {
+    let dx = pannedX - startX
+
+    d3.select('#graphArea').attr('transform', 'translate(' + [dx, 0] + ')')
+    d3.event.stopImmediatePropagation()
+  }
+
   private defineSvgElements() {
+    let startX: number = 0
+    let mouseIsDown: boolean = false
     this.mainSvg
       .append('rect')
       .attr('id', 'listenerRect')
@@ -720,7 +834,32 @@ export default class NewDetailGraph extends Vue {
       .attr('height', this.innerHeight)
       .attr('pointer-events', 'all')
       .style('opacity', 0)
-      .call(this.zoom as any)
+    this.mainSvg
+      .append('g')
+      .attr('class', 'brush')
+      .on('mousemove', () => {
+        if (d3.event.shiftKey) {
+          d3.event.stopImmediatePropagation()
+        }
+        if (mouseIsDown) {
+          d3.event.stopImmediatePropagation()
+          let pannedX: number = d3.event.clientX
+          this.pan(startX, pannedX)
+        }
+      })
+      .on('mousedown', () => {
+        startX = d3.event.clientX
+        mouseIsDown = true
+
+        if (!d3.event.shiftKey) {
+          d3.event.stopImmediatePropagation()
+        }
+      })
+      .on('mouseup', () => {
+        mouseIsDown = false
+      })
+      .call(this.brush)
+    this.mainSvg.call(this.zoom as any)
     this.mainSvg.append('g').attr('id', 'graphArea')
 
     d3.select('#mainSvg')
@@ -754,10 +893,10 @@ export default class NewDetailGraph extends Vue {
       .attr('x', -this.innerHeight / 2)
       .text(this.yLabel)
 
-    /* this.mainSvg
+    this.mainSvg
       .append('g')
       .append('line')
-      .attr('id', 'reference-line') */
+      .attr('id', 'baseLine')
 
     let tip = d3
       .select('#chart')
@@ -838,7 +977,7 @@ export default class NewDetailGraph extends Vue {
   fill: grey;
 }
 
-#reference-line {
+#baseLine {
   fill: none;
   stroke: black;
   stroke-width: 0.5px;
