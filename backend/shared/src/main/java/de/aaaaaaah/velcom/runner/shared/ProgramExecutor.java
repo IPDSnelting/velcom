@@ -48,7 +48,7 @@ public class ProgramExecutor {
 				process = new ProcessBuilder(command).start();
 			} catch (IOException e) {
 				collectedException.set(new UncheckedIOException(e));
-				throw new UncheckedIOException(e);
+				return;
 			}
 			ProcessHandle processHandle = process.toHandle();
 
@@ -61,14 +61,13 @@ public class ProgramExecutor {
 					inputStream.transferTo(stdOut);
 				} catch (IOException e) {
 					collectedException.set(new UncheckedIOException(e));
-					throw new UncheckedIOException(e);
+					return;
 				}
 
 				try (InputStream errorStream = process.getErrorStream()) {
 					errorStream.transferTo(stdErr);
 				} catch (IOException e) {
 					collectedException.set(new UncheckedIOException(e));
-					throw new UncheckedIOException(e);
 				}
 			});
 			readerThread.start();
@@ -94,7 +93,7 @@ public class ProgramExecutor {
 			} catch (InterruptedException ignore) {
 			}
 			if (collectedException.get() != null) {
-				throw collectedException.get();
+				return;
 			}
 
 			reference.set(
