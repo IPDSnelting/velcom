@@ -112,7 +112,7 @@ import { Watch } from 'vue-property-decorator'
 import { vxm } from '../store/index'
 import RepoBaseInformation from '@/components/repodetail/RepoBaseInformation.vue'
 import RepoCommitOverview from '@/components/repodetail/RepoCommitOverview.vue'
-import NewDetailGraph from '@/components/graphs/NewDetailGraph.vue'
+import DetailGraph from '@/components/graphs/DetailGraph.vue'
 import { Route, RawLocation } from 'vue-router'
 import { Dictionary } from 'vue-router/types/router'
 
@@ -120,7 +120,7 @@ import { Dictionary } from 'vue-router/types/router'
   components: {
     'repo-base-information': RepoBaseInformation,
     'repo-commit-overview': RepoCommitOverview,
-    'detail-graph': NewDetailGraph
+    'detail-graph': DetailGraph
   }
 })
 export default class RepoDetail extends Vue {
