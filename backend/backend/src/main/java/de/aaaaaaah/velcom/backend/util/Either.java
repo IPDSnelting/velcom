@@ -66,4 +66,22 @@ public final class Either<L, R> {
 	public Optional<R> getRight() {
 		return Optional.ofNullable(right);
 	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) {
+			return true;
+		}
+		if (o == null || getClass() != o.getClass()) {
+			return false;
+		}
+		Either<?, ?> either = (Either<?, ?>) o;
+		return Objects.equals(left, either.left) &&
+			Objects.equals(right, either.right);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(left, right);
+	}
 }
