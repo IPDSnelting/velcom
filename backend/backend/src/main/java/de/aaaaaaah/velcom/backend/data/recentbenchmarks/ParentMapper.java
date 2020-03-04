@@ -17,6 +17,12 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+/**
+ * Transforms the complete linear history of a repository into a parent map which maps each commit's
+ * hash to their respective previous commit's hash.
+ *
+ * <p>This class is <b>not</b> thread safe.</p>
+ */
 public class ParentMapper {
 
 	private final RepoReadAccess repoAccess;
@@ -29,14 +35,27 @@ public class ParentMapper {
 		this.globalParentMap = new HashMap<>();
 	}
 
+	/**
+	 * Get the hash of the commit that is one step before the commit with the specified {@code
+	 * hash}.
+	 *
+	 * <p>
+	 * <b>Beware</b> that, if this is the first time that this method is called with the
+	 * given {@code repoId}, the complete linear log of that repository will be read into memory and
+	 * transformed into the parent map. This can be a quite expensive operation
+	 * </p>
+	 *
+	 * @param repoId the repository of the commit
+	 * @param hash the hash of the commit
+	 * @return returns the hash of the previous commit, if it exists
+	 * @throws LinearLogException if the linear log could not be read from the repository
+	 */
 	public Optional<CommitHash> getParent(RepoId repoId, CommitHash hash)
 		throws LinearLogException {
 
 		Map<CommitHash, CommitHash> parentMap = globalParentMap.get(repoId);
 
 		if (parentMap == null) {
-			long start = System.currentTimeMillis();
-
 			// Need to generate the parent map for this repository
 			parentMap = new HashMap<>();
 			globalParentMap.put(repoId, parentMap);
@@ -59,9 +78,6 @@ public class ParentMapper {
 					currentCommit = nextCommit;
 				}
 			}
-
-			long end = System.currentTimeMillis();
-			//System.err.println("ParentMapper: Generated in " + (end-start) + " ms for: " + repoId);
 		}
 
 		return Optional.ofNullable(parentMap.get(hash));

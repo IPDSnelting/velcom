@@ -18,6 +18,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Collects the most recent benchmarked commits and compares them against their previous commits.
+ */
 public class RecentBenchmarkCollector {
 
 	private static final int BATCH_SIZE = 100;
@@ -41,7 +44,20 @@ public class RecentBenchmarkCollector {
 		this.comparer = comparer;
 	}
 
-	public List<CommitComparison> collect(int amount, boolean onlySignificant) {
+	/**
+	 * Collects the most recent benchmarked commits and compares them against their previous
+	 * commits.
+	 *
+	 * @param amount the amount of commits to collect
+	 * @param onlySignificant whether or not to only include commits which brought some significant
+	 * 	change compared to its previous commit.
+	 * @return an ordered list of collected commits, where the first commit is the one with the most
+	 * 	recent run
+	 * @throws BenchmarkCollectorException if an error occurs while trying to collect commits
+	 */
+	public List<CommitComparison> collect(int amount, boolean onlySignificant)
+		throws BenchmarkCollectorException {
+
 		List<CommitComparison> resultList = new ArrayList<>();
 		ParentMapper parentMapper = new ParentMapper(repoAccess, linearLog);
 
