@@ -111,25 +111,6 @@ export default class NewDetailGraph extends Vue {
       )
   }
 
-  // prettier-ignore
-  private get listenerRect(): d3.Selection<
-    SVGRectElement,
-    unknown,
-    HTMLElement,
-    any
-    > {
-    // rectangle with listener for pointer events
-    return this.mainSvg
-      .append('rect')
-      .attr('id', 'listenerRect')
-      .attr('x', 0)
-      .attr('y', 0)
-      .attr('width', this.innerWidth)
-      .attr('height', this.innerHeight)
-      .attr('pointer-events', 'all')
-      .style('opacity', 0)
-  }
-
   private get zoom() {
     var zoom = d3
       .zoom()
@@ -179,6 +160,7 @@ export default class NewDetailGraph extends Vue {
         [0, 0],
         [this.innerWidth, this.innerHeight]
       ])
+      .filter(() => d3.event.shiftKey)
       .on('end', this.brushened)
   }
 
@@ -193,10 +175,12 @@ export default class NewDetailGraph extends Vue {
       let additionalSkip: number = newMin
       this.$emit('selectionChanged', newAmount, additionalSkip)
     }
-    this.mainSvg.select('.brush').call(this.brush.move as any, null)
+    this.mainSvg.select('#brush').call(this.brush.move as any, null)
   }
 
   private resizeListener: () => void = () => {}
+  private keyupListener: (e: KeyboardEvent) => void = () => {}
+  private keydownListener: (e: KeyboardEvent) => void = () => {}
 
   // anything related with getting values
 
@@ -450,6 +434,7 @@ export default class NewDetailGraph extends Vue {
       .attr('stroke', (d: CommitInfo) => this.strokeColor(d))
       .attr('stroke-width', (d: CommitInfo) => this.strokeWidth(d))
       .attr('opacity', 1)
+      .style('cursor', 'pointer')
 
     datapoints
       .exit()
@@ -764,7 +749,7 @@ export default class NewDetailGraph extends Vue {
     this.width = chart ? chart.getBoundingClientRect().width : 900
     this.height = this.width / 2
 
-    this.listenerRect.call(this.zoom as any)
+    d3.select('#listenerRect').call(this.zoom as any)
     d3.select('#mainSvg')
       .select('#clip-rect')
       .attr('width', this.innerWidth)
@@ -807,25 +792,9 @@ export default class NewDetailGraph extends Vue {
       .attr('x', -this.innerHeight / 2)
   }
 
-  private getXTranslation(transform: string): number[] {
-    let transFormString: string[] = transform
-      .substring(transform.indexOf('(') + 1, transform.indexOf(')'))
-      .split(',')
-
-    return [Number.parseInt(transFormString[0])]
-  }
-
-  private pan(startX: number, pannedX: number) {
-    let dx = pannedX - startX
-
-    d3.select('#graphArea').attr('transform', 'translate(' + [dx, 0] + ')')
-    d3.event.stopImmediatePropagation()
-  }
-
   private defineSvgElements() {
-    let startX: number = 0
-    let mouseIsDown: boolean = false
     this.mainSvg
+      .select('#listenerRect')
       .append('rect')
       .attr('id', 'listenerRect')
       .attr('x', 0)
@@ -836,28 +805,7 @@ export default class NewDetailGraph extends Vue {
       .style('opacity', 0)
     this.mainSvg
       .append('g')
-      .attr('class', 'brush')
-      .on('mousemove', () => {
-        if (d3.event.shiftKey) {
-          d3.event.stopImmediatePropagation()
-        }
-        if (mouseIsDown) {
-          d3.event.stopImmediatePropagation()
-          let pannedX: number = d3.event.clientX
-          this.pan(startX, pannedX)
-        }
-      })
-      .on('mousedown', () => {
-        startX = d3.event.clientX
-        mouseIsDown = true
-
-        if (!d3.event.shiftKey) {
-          d3.event.stopImmediatePropagation()
-        }
-      })
-      .on('mouseup', () => {
-        mouseIsDown = false
-      })
+      .attr('id', 'brush')
       .call(this.brush)
     this.mainSvg.call(this.zoom as any)
     this.mainSvg.append('g').attr('id', 'graphArea')
@@ -910,16 +858,30 @@ export default class NewDetailGraph extends Vue {
     this.resizeListener = () => {
       this.resize()
     }
+    this.keydownListener = (e: KeyboardEvent) => {
+      d3.select('#brush .overlay').attr(
+        'cursor',
+        e.shiftKey ? 'crosshair' : 'cursor'
+      )
+    }
+    this.keyupListener = (e: KeyboardEvent) => {
+      d3.select('#brush .overlay').attr('cursor', 'cursor')
+    }
     window.addEventListener('resize', this.resizeListener)
+    document.addEventListener('keydown', this.keydownListener)
+    document.addEventListener('keyup', this.keyupListener)
   }
 
   mounted() {
     this.resize()
     this.drawGraph()
+    d3.select('#brush .overlay').attr('cursor', 'cursor')
   }
 
   beforeDestroy() {
     window.removeEventListener('resize', this.resizeListener)
+    document.removeEventListener('keydown', this.keydownListener)
+    document.removeEventListener('keyup', this.keyupListener)
   }
 }
 </script>
