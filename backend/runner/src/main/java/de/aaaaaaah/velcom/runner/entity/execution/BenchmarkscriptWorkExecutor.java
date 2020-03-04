@@ -90,6 +90,14 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 					"The benchmark script terminated with a non-zero exit code"
 						+ " (" + result.getExitCode() + ")!"
 				);
+				LinuxSignal.forExitCode(result.getExitCode()).ifPresent(signal -> {
+					failureInformation.addSection(
+						"Exit code interpretation",
+						"The exit code looks like the linux signal " + signal.name() + ".\n"
+							+ "It's signal number " + signal.getNumber() + " and it is caused by '"
+							+ signal.getExplanation() + "'."
+					);
+				});
 				configuration.getRunnerStateMachine().onWorkDone(
 					new BenchmarkResults(
 						workOrder,
