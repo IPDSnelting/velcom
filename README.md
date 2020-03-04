@@ -50,7 +50,10 @@ Now you need to actually configure and launch the server.
 4. Adjust the `jdbcUrl` field to point to wherever you mounted the data
    directory when running the container.
 5. Optionally create a SSH folder containing a private key the backend should
-   use for cloning repositories
+   use for cloning repositories.
+   If you do this *make sure the user ids match! Otherwise SSH will not get the
+   permissions it expects!* The default Dockerfiles use a user with UID 1003,
+   adjust this to your needs.
 6. Start the container
 
 ```sh
@@ -167,6 +170,8 @@ file. If you followed the installation steps above, this looks like:
 ```
 $ java -jar backend.jar server config.yml
 ```
+Make sure the working directory is writable for the user you excute the backend
+with, as it will store archive data in "$PWD/data/archives".
 
 In the directory where the runner was installed, run the `runner.jar`. The first
 (and only) argument should be the path to the config file. If you've followed

@@ -13,7 +13,7 @@ COPY nginx.conf /etc/nginx/nginx.conf
 
 RUN ln -s /etc/nginx/sites-available/nginx-site /etc/nginx/sites-enabled && \
     rm /etc/nginx/sites-enabled/default && \
-    useradd velcom
+    useradd --uid 1003 velcom
 
 # Expose the config dir
 VOLUME ["/home/velcom/config"]
