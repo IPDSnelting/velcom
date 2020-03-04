@@ -1,9 +1,8 @@
-package de.aaaaaaah.velcom.runner.util.compression;
+package de.aaaaaaah.velcom.runner.shared.util.compression;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import de.aaaaaaah.velcom.runner.shared.util.compression.PermissionsHelper;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;

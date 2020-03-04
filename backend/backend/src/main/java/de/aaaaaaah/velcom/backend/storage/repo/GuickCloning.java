@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.merge.MergeStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -113,6 +114,8 @@ public abstract class GuickCloning {
 				.call()) {
 
 				clone.checkout().setName(commitHash).call();
+				// Update submodules
+				clone.submoduleUpdate().setFetch(true).setStrategy(MergeStrategy.THEIRS).call();
 
 				// Use git clean to remove untracked submodules
 				clone.clean()
@@ -185,6 +188,18 @@ public abstract class GuickCloning {
 
 				guardResult(
 					"Checkout failed!",
+					programResult
+				);
+
+				programResult = new ProgramExecutor()
+					.execute(
+						"git", "-C", targetDir.toAbsolutePath().toString(),
+						"submodule", "update", "--force", "--recursive"
+					)
+					.get();
+
+				guardResult(
+					"Submodule checkout failed!",
 					programResult
 				);
 			} catch (InterruptedException | UncheckedIOException e) {

@@ -1,4 +1,4 @@
-package de.aaaaaaah.velcom.runner.util.compression;
+package de.aaaaaaah.velcom.runner.shared.util.compression;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 

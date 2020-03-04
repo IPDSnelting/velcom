@@ -200,7 +200,7 @@ VelCom's JGit handle SSH connections differently:
 
 * **JGit:** No host-key verification is performed *at all*
 * **Native git:** Host key verification is done normally. Please note that *the
-  first connection to a new host will fail*, as velcom can not ask you to verify
+  first connection to a new host will fail*, as VelCom can not ask you to verify
   the key! As soon as you connected *once* normally (via ssh or the command line
   git) and the host is in `known_hosts`, cloning will work normally. If the host
   key changes, VelCom will refuse cloning any new repo from that host, but

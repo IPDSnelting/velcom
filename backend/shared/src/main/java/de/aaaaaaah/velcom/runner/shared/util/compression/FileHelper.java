@@ -1,4 +1,4 @@
-package de.aaaaaaah.velcom.runner.util.compression;
+package de.aaaaaaah.velcom.runner.shared.util.compression;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
