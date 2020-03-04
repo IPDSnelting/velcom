@@ -413,6 +413,8 @@ paths:
                   $ref: '#/components/schemas/RepoId'
                 commit_hash:
                   $ref: '#/components/schemas/CommitHash'
+                include_all_commits_after:
+                  type: boolean
               required:
                 - repo_id
                 - commit_hash

@@ -1591,6 +1591,8 @@ paths:
                   title: CommitHash
                   type: string
                   description: commit hash
+                include_all_commits_after:
+                  type: boolean
               required:
                 - repo_id
                 - commit_hash
