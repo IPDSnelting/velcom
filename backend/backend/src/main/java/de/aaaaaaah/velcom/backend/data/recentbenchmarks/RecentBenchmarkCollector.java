@@ -17,9 +17,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 public class RecentBenchmarkCollector {
 
@@ -44,21 +41,7 @@ public class RecentBenchmarkCollector {
 		this.comparer = comparer;
 	}
 
-	static boolean repeatOn = false;
-	static ScheduledExecutorService executor;
-
 	public List<CommitComparison> collect(int amount, boolean onlySignificant) {
-		if (!repeatOn) {
-			repeatOn = true;
-			executor = Executors.newSingleThreadScheduledExecutor();
-			executor.scheduleAtFixedRate(
-				() -> collect(20, true),
-				10000,
-				10000,
-				TimeUnit.MILLISECONDS
-			);
-		}
-
 		List<CommitComparison> resultList = new ArrayList<>();
 		ParentMapper parentMapper = new ParentMapper(repoAccess, linearLog);
 
@@ -66,8 +49,7 @@ public class RecentBenchmarkCollector {
 			for (int i = 0; i < MAX_ROUNDS && resultList.size() < amount; i++) {
 				processBatch(resultList, i * BATCH_SIZE, parentMapper, onlySignificant);
 			}
-		}
-		catch (Exception e) {
+		} catch (Exception e) {
 			throw new BenchmarkCollectorException(e);
 		}
 
@@ -76,16 +58,11 @@ public class RecentBenchmarkCollector {
 
 	private void processBatch(List<CommitComparison> resultList, int skip,
 		ParentMapper parentMapper, boolean onlySignificant) throws LinearLogException {
-		long start = System.currentTimeMillis();
 
 		// 0.) Get runs for this batch
-		long aas = System.currentTimeMillis();
 		List<Run> runs = benchmarkAccess.getRecentRuns(skip, BATCH_SIZE);
-		long aae = System.currentTimeMillis();
 
 		// 1.) Filter out runs that belong to the same commit
-		long as = System.currentTimeMillis();
-
 		Map<RepoId, Map<CommitHash, Run>> commitToRunMap = new HashMap<>();
 
 		Iterator<Run> iterator = runs.iterator();
@@ -100,17 +77,12 @@ public class RecentBenchmarkCollector {
 				// There is already an earlier run (more recent based on the lists ordering)
 				// for this commit => older run can be discarded
 				iterator.remove();
-			}
-			else {
+			} else {
 				commitToRunMap.get(run.getRepoId()).put(run.getCommitHash(), run);
 			}
 		}
 
-		long ae = System.currentTimeMillis();
-
 		// 2.) Find out which parent runs need to be loaded from database
-		long bs = System.currentTimeMillis();
-
 		Map<RepoId, List<CommitHash>> missingParentRuns = new HashMap<>();
 
 		iterator = runs.iterator();
@@ -128,8 +100,7 @@ public class RecentBenchmarkCollector {
 				// => if onlySignificant is true this run can never be significant => remove run
 				iterator.remove();
 				commitToRunMap.get(run.getRepoId()).remove(run.getCommitHash());
-			}
-			else if (parentHash != null) {
+			} else if (parentHash != null) {
 				// Only insert into missingParentRuns if parent commit actually exists
 				// (since if it does not exist, no run for that commit can exist => not missing)
 
@@ -141,11 +112,7 @@ public class RecentBenchmarkCollector {
 			}
 		}
 
-		long be = System.currentTimeMillis();
-
 		// 3.) Load missing parent runs
-		long cs = System.currentTimeMillis();
-
 		if (!missingParentRuns.isEmpty()) {
 			// Maybe a universal identifier for (repoid+commithash pair) would be nice
 			// so we don't have to do this for each repository...
@@ -158,11 +125,7 @@ public class RecentBenchmarkCollector {
 			});
 		}
 
-		long ce = System.currentTimeMillis();
-
 		// 4.) Load commit data
-		long ds = System.currentTimeMillis();
-
 		Map<RepoId, Map<CommitHash, Commit>> commitDataMap = new HashMap<>();
 
 		commitToRunMap.forEach((repoId, hashToRunMap) -> {
@@ -176,11 +139,7 @@ public class RecentBenchmarkCollector {
 			}
 		});
 
-		long de = System.currentTimeMillis();
-
 		// 5.) Do the actual comparisons
-		long es = System.currentTimeMillis();
-
 		iterator = runs.iterator();
 		while (iterator.hasNext()) {
 			Run run = iterator.next();
@@ -194,15 +153,13 @@ public class RecentBenchmarkCollector {
 				// No commit data available => no comparison possible
 				iterator.remove();
 				commitToRunMap.get(run.getRepoId()).remove(commitHash);
-			}
-			else {
+			} else {
 				CommitComparison comparison;
 
 				if (parentHash == null) {
 					// Parent not available, but since this run still exists, it is okay
 					comparison = comparer.compare(null, null, commit, run);
-				}
-				else {
+				} else {
 					// Parent is available => load it and its run
 					Commit parent = commitDataMap.get(run.getRepoId()).get(parentHash);
 					Run parentRun = commitToRunMap.get(run.getRepoId()).get(parentHash);
@@ -210,12 +167,10 @@ public class RecentBenchmarkCollector {
 					if (parent == null) {
 						// parent commit data not available => no comparison can be made with it
 						comparison = comparer.compare(null, null, commit, run);
-					}
-					else if (parentRun == null) {
+					} else if (parentRun == null) {
 						// parent run not available
 						comparison = comparer.compare(parent, null, commit, run);
-					}
-					else {
+					} else {
 						// parent run & parent commit data available
 						comparison = comparer.compare(parent, parentRun, commit, run);
 					}
@@ -226,19 +181,6 @@ public class RecentBenchmarkCollector {
 				}
 			}
 		}
-
-		long ee = System.currentTimeMillis();
-
-		long end = System.currentTimeMillis();
-		System.err.println(
-			(end - start) + "|"
-			+ (aae - aas) + "|"
-			+ (ae - as) + "|"
-			+ (be - bs) + "|"
-			+ (ce - cs) + "|"
-			+ (de - ds) + "|"
-			+ (ee - es)
-		);
 	}
 
 }

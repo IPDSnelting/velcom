@@ -1,7 +1,5 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
-import static java.util.stream.Collectors.toList;
-
 import de.aaaaaaah.velcom.backend.data.commitcomparison.CommitComparer;
 import de.aaaaaaah.velcom.backend.data.commitcomparison.CommitComparison;
 import de.aaaaaaah.velcom.backend.data.linearlog.LinearLog;
@@ -9,14 +7,8 @@ import de.aaaaaaah.velcom.backend.data.recentbenchmarks.RecentBenchmarkCollector
 import de.aaaaaaah.velcom.backend.newaccess.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.RepoReadAccess;
-import de.aaaaaaah.velcom.backend.newaccess.entities.Commit;
-import de.aaaaaaah.velcom.backend.newaccess.entities.Run;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonCommitComparison;
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Optional;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.DefaultValue;
@@ -33,23 +25,11 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 public class RecentlyBenchmarkedCommitsEndpoint {
 
-	private static final int COMMITS_PER_STEP = 400;
-	private static final int MAX_STEPS = 10;
-
-	private final BenchmarkReadAccess benchmarkAccess;
-	private final CommitReadAccess commitAccess;
-	private final CommitComparer commitComparer;
-	private final LinearLog linearLog;
 	private final RecentBenchmarkCollector collector;
 
 	public RecentlyBenchmarkedCommitsEndpoint(RepoReadAccess repoAccess,
 		BenchmarkReadAccess benchmarkAccess,
 		CommitReadAccess commitAccess, CommitComparer commitComparer, LinearLog linearLog) {
-
-		this.benchmarkAccess = benchmarkAccess;
-		this.commitAccess = commitAccess;
-		this.commitComparer = commitComparer;
-		this.linearLog = linearLog;
 
 		this.collector = new RecentBenchmarkCollector(repoAccess, benchmarkAccess, commitAccess,
 			linearLog, commitComparer);
@@ -67,89 +47,10 @@ public class RecentlyBenchmarkedCommitsEndpoint {
 		@NotNull @QueryParam("amount") Integer amount,
 		@DefaultValue("false") @QueryParam("significant_only") boolean significantOnly) {
 
-		//if ("".isEmpty()) {
-		//	return new GetReply(List.of());
-		//}
-//
-		List<CommitComparison> interestingCommits = null; //new ArrayList<>();
-
-		long start = System.currentTimeMillis();
-
-		interestingCommits = collector.collect(amount, significantOnly);
-
-		long end = System.currentTimeMillis();
-
-		System.err.println("Took: " + (end-start));
-//
-		//for (int step = 0; step < MAX_STEPS; step++) {
-		//	if (interestingCommits.size() >= amount) {
-		//		break;
-		//	}
-//
-		//	List<Run> runs = benchmarkAccess.getRecentRuns(
-		//		step * COMMITS_PER_STEP, COMMITS_PER_STEP
-		//	);
-//
-		//	// Transform to comparisons
-		//	List<CommitComparison> comparisons = runs.stream()
-		//		.map(this::compareWithPrevious)
-		//		.filter(Optional::isPresent)
-		//		.map(Optional::get)
-		//		.collect(Collectors.toCollection(ArrayList::new));
-//
-		//	// Filter out commits if significantOnly
-		//	if (significantOnly) {
-		//		Iterator<CommitComparison> iterator = comparisons.iterator();
-		//		while (iterator.hasNext()) {
-		//			CommitComparison next = iterator.next();
-//
-		//			if (!next.isSignificant()) {
-		//				iterator.remove();
-		//			}
-		//		}
-		//	}
-//
-		//	interestingCommits.addAll(comparisons);
-		//}
+		List<CommitComparison> interestingCommits = collector.collect(amount, significantOnly);
 
 		return new GetReply(interestingCommits);
 	}
-
-	private Optional<CommitComparison> compareWithPrevious(Run run) {
-		Commit commit = commitAccess.getCommit(run).orElse(null);
-
-		if (commit == null) {
-			return Optional.empty();
-		}
-
-		Optional<Commit> previousCommit = linearLog.getPreviousCommit(commit);
-
-		Optional<Run> previousRun = previousCommit
-			.flatMap(prev -> benchmarkAccess.getLatestRun(run.getRepoId(), prev.getHash()));
-
-		return Optional.of(commitComparer.compare(
-			previousCommit.orElse(null),
-			previousRun.orElse(null),
-			commit,
-			run
-		));
-	}
-
-	/*private Stream<Run> getRecentRunsStream() {
-		// The try-with-resources makes this stream not look as nice as it could otherwise look.
-		// But we neeeeed them...
-		return Stream.iterate(0, i -> i + COMMITS_PER_STEP)
-			.map(i -> {
-				try (Stream<RunId> stream = benchmarkAccess.getRecentRunIds()) {
-					return stream
-						.skip(i)
-						.limit(COMMITS_PER_STEP + 1)
-						.collect(Collectors.toUnmodifiableList());
-				}
-			})
-			.map(benchmarkAccess::getRuns)
-			.flatMap(Collection::stream);
-	}*/
 
 	private static class GetReply {
 
