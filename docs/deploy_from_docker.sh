@@ -25,7 +25,7 @@ cp Dockerfile .docker
 
 cd .docker
 
-docker build -t velcom-server:latest --build-arg UID=1003 .
+docker build -t velcom-server:latest --build-arg USER_ID=1003 .
 
 # Clean up old images
 sudo docker image prune --filter "until=10m" --filter "label=velcom-server" -f
