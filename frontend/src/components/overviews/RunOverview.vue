@@ -17,7 +17,14 @@
             >{{ isCompleteFailure ? errorIcon : partialErrorIcon }}</v-icon>
           </template>
           <span v-if="isCompleteFailure">This run failed completely :(</span>
-          <span v-else>This run suffered at least one failure :/</span>
+          <span v-else>
+            This run suffered at least one failure :/
+            <div
+              class="ml-2"
+              v-for="id in partialFailures"
+              :key="id"
+            >{{ id.benchmark + " — " + id.metric }}</div>
+          </span>
         </v-tooltip>
       </v-list-item-avatar>
     </template>
@@ -40,7 +47,7 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import { vxm } from '@/store/index'
-import { Commit, Run } from '@/store/types'
+import { Commit, Run, MeasurementID } from '@/store/types'
 import InlineMinimalRepoNameDisplay from '../InlineMinimalRepoDisplay.vue'
 import CommitChip from '../CommitChip.vue'
 import { formatDate, formatDateUTC } from '@/util/TimeUtil'
@@ -77,11 +84,15 @@ export default class RunOverview extends Vue {
   }
 
   private get isPartialFailure(): boolean {
-    let unsuccessfulMeasurement = this.run.measurements!.find(
-      measurement => !measurement.successful
-    )
+    return this.partialFailures.length !== 0
+  }
 
-    return !!unsuccessfulMeasurement
+  private get partialFailures(): MeasurementID[] {
+    let unsuccessfulMeasurements = this.run
+      .measurements!.filter(measurement => !measurement.successful)
+      .map(it => it.id)
+
+    return unsuccessfulMeasurements
   }
 
   private benchmark(commit: Commit) {
