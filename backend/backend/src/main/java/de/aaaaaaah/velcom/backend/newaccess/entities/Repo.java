@@ -1,6 +1,7 @@
 package de.aaaaaaah.velcom.backend.newaccess.entities;
 
 import java.util.Collection;
+import java.util.Objects;
 
 /**
  * A git repository that is being tracked and benchmarked by the system. A {@link Repo} has a list
@@ -40,6 +41,33 @@ public class Repo {
 
 	public Collection<Branch> getTrackedBranches() {
 		return trackedBranches;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) {
+			return true;
+		}
+		if (o == null || getClass() != o.getClass()) {
+			return false;
+		}
+		Repo repo = (Repo) o;
+		return repoId.equals(repo.repoId);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(repoId);
+	}
+
+	@Override
+	public String toString() {
+		return "Repo{" +
+			"repoId=" + repoId +
+			", name='" + name + '\'' +
+			", remoteUrl=" + remoteUrl +
+			", trackedBranches=" + trackedBranches +
+			'}';
 	}
 
 }
