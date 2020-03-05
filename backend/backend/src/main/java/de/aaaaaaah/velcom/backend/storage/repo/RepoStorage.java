@@ -206,8 +206,10 @@ public class RepoStorage {
 	 * @return Returns the jgit repository instance for this repository
 	 * @throws RepositoryAcquisitionException if an exception occurs while trying to acquire the
 	 * 	repository
+	 * @throws NoSuchRepositoryException if no repository under the given directory exists
 	 */
-	public Repository acquireRepository(String dirName) throws RepositoryAcquisitionException {
+	public Repository acquireRepository(String dirName)
+		throws RepositoryAcquisitionException, NoSuchRepositoryException {
 		Path repoDir = getRepoDir(dirName);
 
 		RepositoryBuilder b = new RepositoryBuilder();

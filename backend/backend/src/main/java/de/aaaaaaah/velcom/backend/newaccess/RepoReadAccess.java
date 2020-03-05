@@ -17,6 +17,7 @@ import de.aaaaaaah.velcom.backend.newaccess.exceptions.NoSuchRepoException;
 import de.aaaaaaah.velcom.backend.newaccess.exceptions.RepoAccessException;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import de.aaaaaaah.velcom.backend.storage.repo.RepoStorage;
+import de.aaaaaaah.velcom.backend.storage.repo.exception.NoSuchRepositoryException;
 import de.aaaaaaah.velcom.backend.storage.repo.exception.RepositoryAcquisitionException;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -168,7 +169,7 @@ public class RepoReadAccess {
 			}
 
 			return nameList;
-		} catch (RepositoryAcquisitionException | GitAPIException e) {
+		} catch (NoSuchRepositoryException | RepositoryAcquisitionException | GitAPIException e) {
 			throw new RepoAccessException(repoId, e);
 		}
 	}
@@ -252,7 +253,7 @@ public class RepoReadAccess {
 		try (Repository localRepo = repoStorage.acquireRepository(dirName)) {
 			ObjectId refPtr = localRepo.resolve(ref);
 			return new CommitHash(refPtr.getName()); // returns sha-1 hash
-		} catch (RepositoryAcquisitionException | IOException e) {
+		} catch (NoSuchRepositoryException | RepositoryAcquisitionException | IOException e) {
 			throw new RepoAccessException("failed to access ref " + ref + " under local repo "
 				+ dirName, e);
 		}

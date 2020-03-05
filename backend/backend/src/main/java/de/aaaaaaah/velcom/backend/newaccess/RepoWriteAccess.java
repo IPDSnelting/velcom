@@ -14,6 +14,7 @@ import de.aaaaaaah.velcom.backend.newaccess.entities.Repo;
 import de.aaaaaaah.velcom.backend.newaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.newaccess.exceptions.AddRepoException;
 import de.aaaaaaah.velcom.backend.newaccess.exceptions.DeleteRepoException;
+import de.aaaaaaah.velcom.backend.newaccess.exceptions.NoSuchRepoException;
 import de.aaaaaaah.velcom.backend.newaccess.exceptions.RepoAccessException;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import de.aaaaaaah.velcom.backend.storage.repo.GuickCloning;
@@ -266,8 +267,9 @@ public class RepoWriteAccess extends RepoReadAccess {
 	 *
 	 * @param repoId the id of the repository
 	 * @throws RepoAccessException if an error occurs during the fetch/clone operation
+	 * @throws NoSuchRepoException if no repository with that id exists
 	 */
-	public void updateRepo(RepoId repoId) throws RepoAccessException {
+	public void updateRepo(RepoId repoId) throws RepoAccessException, NoSuchRepoException {
 		try {
 			RemoteUrl remoteUrl = getRemoteUrl(repoId);
 			fetchOrCloneLocalRepo(repoId.getDirectoryName(), remoteUrl);
