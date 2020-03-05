@@ -18,7 +18,7 @@
                   </v-col>
                   <v-col cols="auto">
                     <commit-benchmark-actions
-                      @benchmark="benchmark()"
+                      :commit="commit"
                       :hasExistingBenchmark="hasExistingBenchmark"
                     ></commit-benchmark-actions>
                   </v-col>
@@ -164,10 +164,6 @@ export default class CommitInformation extends Vue {
       return ''
     }
     return this.commit.bodyWithoutSummary
-  }
-
-  private benchmark() {
-    vxm.queueModule.dispatchPrioritizeOpenTask(this.commit)
   }
 
   private previousCommitIcon = mdiArrowLeft

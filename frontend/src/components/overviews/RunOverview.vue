@@ -22,18 +22,14 @@
             <div
               class="ml-2"
               v-for="id in partialFailures"
-              :key="id"
+              :key="id.benchmark + id.metric"
             >{{ id.benchmark + " — " + id.metric }}</div>
           </span>
         </v-tooltip>
       </v-list-item-avatar>
     </template>
     <template #actions v-if="!hideActions" class="ml-3">
-      <commit-benchmark-actions
-        :hasExistingBenchmark="true"
-        @benchmark="benchmark(commit)"
-        @benchmarkUpwards="benchmarkUpwards(commit)"
-      ></commit-benchmark-actions>
+      <commit-benchmark-actions :hasExistingBenchmark="true" :commit="commit"></commit-benchmark-actions>
       <slot name="actions"></slot>
     </template>
     <template #content>
@@ -93,14 +89,6 @@ export default class RunOverview extends Vue {
       .map(it => it.id)
 
     return unsuccessfulMeasurements
-  }
-
-  private benchmark(commit: Commit) {
-    vxm.queueModule.dispatchPrioritizeOpenTask(commit)
-  }
-
-  private benchmarkUpwards(commit: Commit) {
-    vxm.queueModule.dispatchQueueUpwardsOf(commit)
   }
 
   // ============== ICONS ==============

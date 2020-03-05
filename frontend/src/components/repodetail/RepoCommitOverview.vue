@@ -59,11 +59,7 @@
                       </v-list-item-avatar>
                     </template>
                     <template #actions v-if="isAdmin">
-                      <commit-benchmark-actions
-                        :hasExistingBenchmark="false"
-                        @benchmark="benchmark(commit)"
-                        @benchmarkUpwards="benchmarkUpwardsOf(commit)"
-                      ></commit-benchmark-actions>
+                      <commit-benchmark-actions :hasExistingBenchmark="false" :commit="commit"></commit-benchmark-actions>
                     </template>
                   </commit-overview-base>
                 </v-col>
@@ -153,14 +149,6 @@ export default class RepoCommitOverview extends Vue {
 
   private get isAdmin() {
     return vxm.userModule.isAdmin
-  }
-
-  private benchmark(commit: Commit) {
-    vxm.queueModule.dispatchPrioritizeOpenTask(commit)
-  }
-
-  private benchmarkUpwardsOf(commit: Commit) {
-    vxm.queueModule.dispatchQueueUpwardsOf(commit)
   }
 
   filterCommits(item: Commit, queryText: any, itemText: any) {

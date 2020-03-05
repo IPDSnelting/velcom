@@ -2,7 +2,7 @@
   <span v-if="isAdmin">
     <v-tooltip top>
       <template #activator="{ on }">
-        <v-btn v-on="on" icon @click="$emit('benchmark', true)">
+        <v-btn v-on="on" icon @click="benchmark">
           <v-icon class="rocket">{{ hasExistingBenchmark ? rebenchmarkIcon : benchmarkIcon }}</v-icon>
         </v-btn>
       </template>
@@ -11,7 +11,7 @@
     </v-tooltip>
     <v-tooltip top>
       <template #activator="{ on }">
-        <v-btn icon v-on="on" @click="$emit('benchmarkUpwards')">
+        <v-btn icon v-on="on" @click="benchmarkUpwards">
           <v-icon>{{ benchmarkUpwardsIcon }}</v-icon>
         </v-btn>
       </template>
@@ -28,17 +28,26 @@ import Component from 'vue-class-component'
 import { mdiHistory, mdiFlash, mdiOneUp } from '@mdi/js'
 import { Prop } from 'vue-property-decorator'
 import { vxm } from '../store'
+import { Commit } from '../store/types'
 
-/**
- * @events 'benchmark', 'benchmarkUpwards
- */
 @Component
 export default class CommitBenchmarkActions extends Vue {
   @Prop({ default: true })
   private hasExistingBenchmark!: boolean
 
+  @Prop()
+  private commit!: Commit
+
   get isAdmin() {
     return vxm.userModule.isAdmin
+  }
+
+  private benchmark() {
+    vxm.queueModule.dispatchPrioritizeOpenTask(this.commit)
+  }
+
+  private benchmarkUpwards() {
+    vxm.queueModule.dispatchQueueUpwardsOf(this.commit)
   }
 
   // ============== ICONS ==============
