@@ -21,7 +21,7 @@
                 <span class="author">{{ commit.author }}</span> authored on
                 <span class="time" :title="formattedDateUTC">{{ formattedDate }}</span>
               </v-list-item-subtitle>
-              <v-list-item-content v-if="$scopedSlots['content']">
+              <v-list-item-content v-if="$scopedSlots['content']" class="py-0">
                 <slot name="content"></slot>
               </v-list-item-content>
             </v-col>

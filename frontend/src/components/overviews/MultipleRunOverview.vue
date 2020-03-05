@@ -11,10 +11,30 @@
         <v-col
           cols="12"
           class="my-1 py-0"
-          v-for="( { run, commit }, index) in props.items"
+          v-for="( attributedRun, index) in props.items"
           :key="index"
         >
-          <run-overview :commit="commit" :run="run"></run-overview>
+          <run-overview :commit="attributedRun.commit" :run="attributedRun.run">
+            <template #content>
+              <v-row no-gutters class="ma-0">
+                <v-col
+                  v-for="relevantChange in relevantChanges(attributedRun)"
+                  :key="relevantChange.id.benchmark + relevantChange.id.metric"
+                  cols="auto"
+                  class="mr-2 mt-2"
+                >
+                  <v-chip label outlined :color="relevantChange.color" :input-value="true">
+                    <v-icon left>{{ relevantChange.icon }}</v-icon>
+                    {{ relevantChange.id.benchmark }} — {{ relevantChange.id.metric }}
+                    <span
+                      class="font-weight-bold pl-3"
+                      style="font-size: 1.1rem"
+                    >{{ formatPercentage(relevantChange.change) }}</span>
+                  </v-chip>
+                </v-col>
+              </v-row>
+            </template>
+          </run-overview>
         </v-col>
       </v-row>
     </template>
@@ -25,16 +45,60 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
-import { Run, Commit } from '../../store/types'
+import {
+  Run,
+  Commit,
+  CommitComparison,
+  MeasurementID,
+  Measurement
+} from '../../store/types'
 import RunOverview from './RunOverview.vue'
+import {
+  mdiChevronDoubleDown,
+  mdiChevronTripleDown,
+  mdiChevronDoubleUp,
+  mdiChevronTripleUp
+} from '@mdi/js'
 
 export class AttributedRun {
   readonly run: Run
   readonly commit: Commit
+  readonly comparison: CommitComparison
 
-  constructor(run: Run, commit: Commit) {
+  constructor(run: Run, commit: Commit, comparison: CommitComparison) {
     this.run = run
     this.commit = commit
+    this.comparison = comparison
+  }
+}
+
+class RelevantChange {
+  id: MeasurementID
+  change: number
+  better: boolean
+
+  constructor(id: MeasurementID, change: number, better: boolean) {
+    this.id = id
+    this.change = change
+    this.better = better
+  }
+
+  get color() {
+    return this.better ? 'success' : 'warning'
+  }
+
+  get icon() {
+    const SIGNIFICANT_CHANGE_THRESHOLD = 5
+    const adjustedChange = Math.abs(Math.round(this.change * 100))
+
+    if (this.better) {
+      return adjustedChange >= SIGNIFICANT_CHANGE_THRESHOLD
+        ? mdiChevronTripleUp
+        : mdiChevronDoubleUp
+    }
+    return adjustedChange >= SIGNIFICANT_CHANGE_THRESHOLD
+      ? mdiChevronTripleDown
+      : mdiChevronTripleUp
   }
 }
 
@@ -47,8 +111,52 @@ export default class MultipleRunOverview extends Vue {
   @Prop()
   private runs!: AttributedRun[]
 
+  @Prop({ default: 3 })
+  private numberOfChanges!: number
+
   private itemsPerPageOptions: number[] = [10, 20, 50, 100, 200, -1]
   private defaultItemsPerPage: number = 20
+
+  private relevantChanges(run: AttributedRun): RelevantChange[] {
+    if (!run.run.measurements) {
+      return []
+    }
+    let findMeasurement: (
+      id: MeasurementID
+    ) => Measurement | undefined = id => {
+      return run.run.measurements!.find(it => it.id.equals(id))
+    }
+    let changes = run.comparison.differences
+      .filter(difference => findMeasurement(difference.measurement))
+      .map(difference => {
+        let measurement = findMeasurement(difference.measurement)!
+        let value = measurement.value!
+        let valueDifference = difference.difference
+        let differencePercentage = valueDifference / value
+
+        let isNowBetter =
+          (measurement.interpretation === 'LESS_IS_BETTER' &&
+            valueDifference < 0) ||
+          (measurement.interpretation === 'MORE_IS_BETTER' &&
+            valueDifference > 0)
+
+        return new RelevantChange(
+          measurement.id,
+          differencePercentage,
+          isNowBetter
+        )
+      })
+      .sort((a, b) => Math.abs(b.change) - Math.abs(a.change))
+
+    changes = changes.slice(0, this.numberOfChanges)
+
+    return changes
+  }
+
+  private formatPercentage(percentage: number) {
+    let scaled = Math.round(percentage * 100)
+    return `${scaled}%`
+  }
 }
 </script>
 

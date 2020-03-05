@@ -47,7 +47,7 @@
               <template #content v-if="getWorker(commit)">
                 <v-tooltip top>
                   <template #activator="{ on }">
-                    <span style="flex: 0 0;">
+                    <span style="flex: 0 0;" class="pt-3">
                       <v-chip v-on="on" outlined label>Running on » {{ getWorker(commit).name }} «</v-chip>
                     </span>
                   </template>

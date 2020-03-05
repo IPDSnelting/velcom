@@ -29,6 +29,9 @@
       ></commit-benchmark-actions>
       <slot name="actions"></slot>
     </template>
+    <template #content>
+      <slot name="content"></slot>
+    </template>
   </commit-overview-base>
 </template>
 

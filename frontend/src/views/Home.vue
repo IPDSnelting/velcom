@@ -65,17 +65,27 @@ export default class Home extends Vue {
   get recent(): AttributedRun[] {
     return vxm.newsModule.recentRuns
       .filter(it => it.second)
-      .map(({ second, secondCommit }) => {
-        return new AttributedRun(second!, secondCommit)
-      })
+      .map(
+        comparison =>
+          new AttributedRun(
+            comparison.second!,
+            comparison.secondCommit,
+            comparison
+          )
+      )
   }
 
   get recentSignificant(): AttributedRun[] {
     return vxm.newsModule.recentSignificantRuns
       .filter(it => it.second)
-      .map(({ second, secondCommit }) => {
-        return new AttributedRun(second!, secondCommit)
-      })
+      .map(
+        comparison =>
+          new AttributedRun(
+            comparison.second!,
+            comparison.secondCommit,
+            comparison
+          )
+      )
   }
 
   @Watch('recentAmount')
