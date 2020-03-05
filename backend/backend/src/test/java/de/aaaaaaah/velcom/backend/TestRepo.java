@@ -4,8 +4,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -15,9 +19,11 @@ public class TestRepo {
 
 	private final Path repoDir;
 	private final Set<String> branches = new HashSet<>();
+	private final Map<TestCommit, String> commitHashMap = new HashMap<>();
 	private String currentBranch = "master";
 
 	public TestRepo(Path repoDir) throws GitAPIException, IOException {
+		Objects.requireNonNull(repoDir);
 		this.repoDir = repoDir;
 		this.branches.add("master");
 
@@ -27,6 +33,13 @@ public class TestRepo {
 		Git.init().setBare(false).setDirectory(repoDir.toFile()).call();
 	}
 
+	public TestRepo(Path repoDir, TestCommit[] commits) throws GitAPIException, IOException {
+		this(repoDir);
+		for (TestCommit commit : commits) {
+			this.commit(commit);
+		}
+	}
+
 	public TestRepo(Path repoDir, List<TestCommit> commits) throws GitAPIException, IOException {
 		this(repoDir);
 		for (TestCommit commit : commits) {
@@ -34,21 +47,37 @@ public class TestRepo {
 		}
 	}
 
-	public RevCommit commit(TestCommit commit) throws IOException, GitAPIException {
-		if (commit.getBranch() == null) {
-			return commit(commit.getMessage(), commit.getFile(), commit.getContent());
-		} else {
-			return commit(commit.getMessage(), commit.getFile(), commit.getContent(),
-				commit.getBranch());
+	public Optional<String> getCommitHash(TestCommit testCommit) {
+		return Optional.ofNullable(commitHashMap.get(testCommit));
+	}
+
+	public void commit(TestCommit[] commits) throws IOException, GitAPIException {
+		for (TestCommit commit : commits) {
+			this.commit(commit);
 		}
 	}
 
-	public RevCommit commit(String message, String file, String content)
+	public RevCommit commit(TestCommit commit) throws IOException, GitAPIException {
+		RevCommit revCommit;
+
+		if (commit.getBranch() == null) {
+			revCommit = commit(commit.getMessage(), commit.getFile(), commit.getContent());
+		} else {
+			revCommit = commit(commit.getMessage(), commit.getFile(), commit.getContent(),
+				commit.getBranch());
+		}
+
+		this.commitHashMap.put(commit, revCommit.getId().getName());
+
+		return revCommit;
+	}
+
+	private RevCommit commit(String message, String file, String content)
 		throws IOException, GitAPIException {
 		return this.commit(message, file, content, "master");
 	}
 
-	public RevCommit commit(String message, String file, String content, String branch)
+	private RevCommit commit(String message, String file, String content, String branch)
 		throws IOException, GitAPIException {
 
 		try (Git git = Git.open(repoDir.toFile())) {
