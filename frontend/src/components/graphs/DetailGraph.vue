@@ -25,6 +25,11 @@
               </v-radio-group>
             </v-card-text>
             <v-card-actions>
+              <commit-benchmark-actions
+                :hasExistingBenchmark="false"
+                @benchmark="benchmarkSelectedCommit"
+                @benchmarkUpwards="benchmarkUpwardsOfSelectedCommit"
+              ></commit-benchmark-actions>
               <v-spacer></v-spacer>
               <v-btn color="error" @click="dialogOpen = false">Close</v-btn>
               <v-btn color="primary" @click="onConfirm">Confirm</v-btn>
@@ -51,10 +56,15 @@ import {
 import { vxm } from '../../store'
 import { formatDateUTC } from '../../util/TimeUtil'
 import { mdiCrosshairsGps } from '@mdi/js'
+import CommitBenchmarkActions from '../CommitBenchmarkActions.vue'
 
 type CommitInfo = { commit: Commit; comparison: CommitComparison }
 
-@Component
+@Component({
+  components: {
+    'commit-benchmark-actions': CommitBenchmarkActions
+  }
+})
 export default class NewDetailGraph extends Vue {
   @Prop({})
   measurement!: MeasurementID
@@ -211,6 +221,13 @@ export default class NewDetailGraph extends Vue {
   openDatapointMenu(datapoint: CommitInfo) {
     this.dialogOpen = true
     this.selectedDatapoint = datapoint
+  }
+  private benchmarkSelectedCommit() {
+    vxm.queueModule.dispatchPrioritizeOpenTask(this.selectedDatapoint!.commit)
+  }
+
+  private benchmarkUpwardsOfSelectedCommit() {
+    vxm.queueModule.dispatchQueueUpwardsOf(this.selectedDatapoint!.commit)
   }
 
   private onConfirm() {
