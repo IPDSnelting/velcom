@@ -146,7 +146,7 @@ public class RepoReadAccess {
 				.where(TRACKED_BRANCH.REPO_ID.eq(repoId.getId().toString()))
 				.fetch()
 				.stream()
-				.map(r -> new BranchName(r.getBranchName()))
+				.map(r -> BranchName.fromName(r.getBranchName()))
 				.map(b -> new Branch(repoId, b))
 				.collect(toSet());
 		}
@@ -236,7 +236,7 @@ public class RepoReadAccess {
 			.where(TRACKED_BRANCH.REPO_ID.eq(repoId.getId().toString()))
 			.fetch()
 			.stream()
-			.map(r -> new BranchName(r.getBranchName()))
+			.map(r -> BranchName.fromName(r.getBranchName()))
 			.map(b -> new Branch(repoId, b))
 			.collect(toSet());
 

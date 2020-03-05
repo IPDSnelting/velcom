@@ -9,7 +9,7 @@ public class BranchName implements Comparable<BranchName> {
 
 	private final String name;
 
-	public BranchName(String name) {
+	private BranchName(String name) {
 		this.name = name;
 	}
 
