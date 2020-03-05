@@ -20,9 +20,9 @@ def execute_program(args: List[str]) -> float:
     return end - start
 
 
-def getCoverage() -> str:
-    path= target_path() / "backend/aggregator/target/site/jacoco-aggregate/index.html"
-    coverageRegex=r"Total[^%]+?(\d+)%"
+def get_coverage() -> str:
+    path = target_path() / "backend/aggregator/target/site/jacoco-aggregate/index.html"
+    coverageRegex = r"Total[^%]+?(\d+)%"
     with open(path) as file:
         coverage = re.search(coverageRegex, file.read()).group(1)
         return int(coverage)
@@ -44,7 +44,6 @@ def guarded_try_metric(benchmark: str, metric: str, function, unit="seconds", re
     global program_result
     if benchmark not in program_result:
         program_result[benchmark] = {}
-    program_result[benchmark] = {}
     try:
         program_result[benchmark][metric] = {
             "unit": unit,
@@ -76,11 +75,11 @@ def build_makefile():
         "build_time",
         lambda: execute_program(["make", "-C", str(target_path()), "backend"])
     )
-    
+
     guarded_try_metric(
         "backend",
         "coverage",
-        lambda: getCoverage(),
+        lambda: get_coverage(),
         "percent",
         "MORE_IS_BETTER"
     )
