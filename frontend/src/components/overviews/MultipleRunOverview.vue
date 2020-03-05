@@ -54,8 +54,10 @@ import {
 } from '../../store/types'
 import RunOverview from './RunOverview.vue'
 import {
+  mdiChevronDown,
   mdiChevronDoubleDown,
   mdiChevronTripleDown,
+  mdiChevronUp,
   mdiChevronDoubleUp,
   mdiChevronTripleUp
 } from '@mdi/js'
@@ -69,6 +71,19 @@ export class AttributedRun {
     this.run = run
     this.commit = commit
     this.comparison = comparison
+  }
+}
+
+let iconMappings = {
+  up: {
+    small: mdiChevronUp,
+    middle: mdiChevronDoubleUp,
+    large: mdiChevronTripleUp
+  },
+  down: {
+    small: mdiChevronDown,
+    middle: mdiChevronDoubleDown,
+    large: mdiChevronTripleDown
   }
 }
 
@@ -88,17 +103,20 @@ class RelevantChange {
   }
 
   get icon() {
-    const SIGNIFICANT_CHANGE_THRESHOLD = 5
+    const MIDDLE_CHANGE_THRESHOLD = 3
+    const LARGE_CHANGE_THRESHOLD = 5
     const adjustedChange = Math.abs(Math.round(this.change * 100))
 
-    if (this.better) {
-      return adjustedChange >= SIGNIFICANT_CHANGE_THRESHOLD
-        ? mdiChevronTripleUp
-        : mdiChevronDoubleUp
+    let direction: 'up' | 'down' = this.change >= 0 ? 'up' : 'down'
+
+    let magnitude: 'small' | 'middle' | 'large' = 'small'
+    if (adjustedChange >= LARGE_CHANGE_THRESHOLD) {
+      magnitude = 'large'
+    } else if (adjustedChange >= MIDDLE_CHANGE_THRESHOLD) {
+      magnitude = 'middle'
     }
-    return adjustedChange >= SIGNIFICANT_CHANGE_THRESHOLD
-      ? mdiChevronTripleDown
-      : mdiChevronTripleUp
+
+    return iconMappings[direction][magnitude]
   }
 }
 
