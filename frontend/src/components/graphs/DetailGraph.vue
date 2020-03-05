@@ -239,8 +239,8 @@ export default class NewDetailGraph extends Vue {
       vxm.repoDetailModule.referenceDatapoint = this.selectedDatapoint
     }
     if (vxm.repoDetailModule.referenceDatapoint) {
-      this.drawCrosshair(vxm.repoDetailModule.referenceDatapoint, 'gray')
       this.drawReferenceLine(vxm.repoDetailModule.referenceDatapoint)
+      this.drawCrosshair(vxm.repoDetailModule.referenceDatapoint, 'gray')
     }
   }
 
@@ -248,7 +248,7 @@ export default class NewDetailGraph extends Vue {
     let referenceLine = d3
       .select('#graphArea')
       .selectAll<SVGPathElement, unknown>('#referenceLine')
-      .data([this.datapoints])
+      .data([datapoint])
 
     let newReferenceLine = referenceLine
       .enter()
@@ -271,12 +271,13 @@ export default class NewDetailGraph extends Vue {
   }
 
   private removeReferenceLine() {
-    vxm.repoDetailModule.referenceDatapoint = null
     d3.select('#referenceLine')
       .exit()
       .transition()
       .attr('opacity', 0)
       .remove()
+    this.removeCrosshair(vxm.repoDetailModule.referenceDatapoint!)
+    vxm.repoDetailModule.referenceDatapoint = null
   }
 
   private selectCommitToCompare() {
@@ -1163,7 +1164,7 @@ export default class NewDetailGraph extends Vue {
   }
 }
 </script>
-<style scoped>
+<style>
 .axis text {
   font-family: Roboto;
   font-size: 13px;
@@ -1227,8 +1228,7 @@ export default class NewDetailGraph extends Vue {
 #chart {
   position: relative;
 }
-</style>
-<style>
+
 .datapointDialog .v-input .v-label {
   height: unset !important;
 }
