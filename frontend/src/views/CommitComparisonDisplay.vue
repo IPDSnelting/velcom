@@ -53,6 +53,8 @@ import CommitInfoTable from '../components/CommitInfoTable.vue'
   }
 })
 export default class CommitComparisonDisplay extends Vue {
+  private commitInfo: CommitInfo | null = null
+
   private get repoID() {
     return this.$route.params.repoID
   }
@@ -77,23 +79,17 @@ export default class CommitComparisonDisplay extends Vue {
     return this.commitInfo ? this.commitInfo.comparison : null
   }
 
-  private get commitInfo(): CommitInfo | null {
-    return vxm.commitComparisonModule.commitInfo(
-      this.repoID,
-      this.firstHash,
-      this.secondHash
-    )
-  }
-
   @Watch('repoID')
   @Watch('firstHash')
   @Watch('secondHash')
   private updateThySelf() {
-    vxm.commitComparisonModule.fetchCommitInfo({
-      repoId: this.repoID,
-      first: this.firstHash,
-      second: this.secondHash
-    })
+    vxm.commitComparisonModule
+      .fetchCommitInfo({
+        repoId: this.repoID,
+        first: this.firstHash,
+        second: this.secondHash
+      })
+      .then(it => (this.commitInfo = it))
   }
 
   created() {
