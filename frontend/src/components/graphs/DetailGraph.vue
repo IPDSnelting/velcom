@@ -10,7 +10,7 @@
     <v-row>
       <v-col>
         <v-dialog width="600" v-model="dialogOpen">
-          <v-card>
+          <v-card class="datapointDialog">
             <v-card-title></v-card-title>
             <v-card-text>
               <v-radio-group v-model="datapointAction">
@@ -226,107 +226,51 @@ export default class NewDetailGraph extends Vue {
         this.compareCommits()
         break
       case 'removeReference':
-        this.removeReference()
+        this.removeReferenceLine()
         break
     }
   }
 
   setReference() {
     if (vxm.repoDetailModule.referenceDatapoint) {
-      d3.select('#_' + vxm.repoDetailModule.referenceDatapoint.commit.hash)
-        .attr(
-          'd',
-          d3
-            .symbol()
-            .type(this.datapointSymbol(vxm.repoDetailModule.referenceDatapoint))
-            .size(this.datapointSize(vxm.repoDetailModule.referenceDatapoint))
-        )
-        .attr(
-          'transform',
-          'translate(' +
-            this.x(
-              vxm.repoDetailModule.referenceDatapoint.comparison,
-              this.xScale
-            ) +
-            ', ' +
-            this.y(vxm.repoDetailModule.referenceDatapoint.comparison) +
-            ') rotate(-45)'
-        )
-        .attr(
-          'fill',
-          this.datapointColor(vxm.repoDetailModule.referenceDatapoint)
-        )
-        .attr(
-          'stroke',
-          this.strokeColor(vxm.repoDetailModule.referenceDatapoint)
-        )
+      this.removeCrosshair(vxm.repoDetailModule.referenceDatapoint)
     }
     if (this.selectedDatapoint) {
       vxm.repoDetailModule.referenceDatapoint = this.selectedDatapoint
     }
     if (vxm.repoDetailModule.referenceDatapoint) {
-      let crosshair = d3.select(
-        '#_' + vxm.repoDetailModule.referenceDatapoint.commit.hash
-      )
-      let crosshaiRect = (crosshair.node() as SVGElement).getBoundingClientRect()
-      let crosshairWidth: number = crosshaiRect.width
-      let crosshairHeight: number = crosshaiRect.height
-
-      d3.select('#_' + vxm.repoDetailModule.referenceDatapoint.commit.hash)
-        .transition()
-        .delay(100)
-        .duration(1000)
-        .attr(
-          'd',
-          d3
-            .symbol()
-            .type(this.crosshairIcon)
-            .size(this.datapointWidth)
-        )
-        .attr(
-          'transform',
-          'translate(' +
-            (this.x(
-              vxm.repoDetailModule.referenceDatapoint!.comparison,
-              this.xScale
-            ) -
-              crosshairWidth / 2) +
-            ', ' +
-            (this.y(vxm.repoDetailModule.referenceDatapoint!.comparison) -
-              crosshairHeight / 2) +
-            ')'
-        )
-        .attr('opacity', 1)
-        .attr('fill', 'gray')
-        .attr('stroke', 'gray')
-
-      let referenceLine = d3
-        .select('#graphArea')
-        .selectAll<SVGPathElement, unknown>('#referenceLine')
-        .data([this.datapoints])
-
-      let newReferenceLine = referenceLine
-        .enter()
-        .append('line')
-        .attr('id', 'referenceLine')
-        .merge(referenceLine as any)
-        .transition()
-        .duration(1000)
-        .delay(100)
-        .attr('x1', this.innerWidth)
-        .attr('y1', this.y(vxm.repoDetailModule.referenceDatapoint.comparison))
-        .attr('x2', 0)
-        .attr('y2', this.y(vxm.repoDetailModule.referenceDatapoint.comparison))
-
-      referenceLine
-        .exit()
-        .transition()
-        .attr('opacity', 0)
-        .remove()
+      this.drawCrosshair(vxm.repoDetailModule.referenceDatapoint, 'gray')
+      this.drawReferenceLine(vxm.repoDetailModule.referenceDatapoint)
     }
   }
 
-  private removeReference() {
+  private drawReferenceLine(datapoint: CommitInfo) {
+    let referenceLine = d3
+      .select('#graphArea')
+      .selectAll<SVGPathElement, unknown>('#referenceLine')
+      .data([this.datapoints])
+
+    let newReferenceLine = referenceLine
+      .enter()
+      .append('line')
+      .attr('id', 'referenceLine')
+      .merge(referenceLine as any)
+      .transition()
+      .duration(1000)
+      .delay(100)
+      .attr('x1', this.innerWidth)
+      .attr('y1', this.y(datapoint.comparison))
+      .attr('x2', 0)
+      .attr('y2', this.y(datapoint.comparison))
+
+    referenceLine
+      .exit()
+      .transition()
+      .attr('opacity', 0)
+      .remove()
+  }
+
+  private removeReferenceLine() {
     vxm.repoDetailModule.referenceDatapoint = null
     d3.select('#referenceLine')
       .exit()
@@ -335,9 +279,82 @@ export default class NewDetailGraph extends Vue {
       .remove()
   }
 
-  private selectCommitToCompare() {}
+  private selectCommitToCompare() {
+    if (this.commitToCompare) {
+      this.removeCrosshair(this.commitToCompare)
+    }
+    if (this.selectedDatapoint) {
+      this.commitToCompare = this.selectedDatapoint || null
+      this.drawCrosshair(
+        this.selectedDatapoint,
+        this.datapointColor(this.selectedDatapoint)
+      )
+    }
+  }
 
-  private compareCommits() {}
+  private compareCommits() {
+    if (this.commitToCompare && this.selectedDatapoint) {
+      this.$router.push({
+        name: 'commit-comparison',
+        params: {
+          repoID: this.selectedRepo,
+          hashOne: this.commitToCompare.commit.hash,
+          hashTwo: this.selectedDatapoint.commit.hash
+        }
+      })
+    }
+  }
+
+  private drawCrosshair(datapoint: CommitInfo, color: string) {
+    let crosshair = d3.select('#_' + datapoint.commit.hash)
+    let crosshaiRect = (crosshair.node() as SVGElement).getBoundingClientRect()
+    let crosshairWidth: number = crosshaiRect.width
+    let crosshairHeight: number = crosshaiRect.height
+
+    d3.select('#_' + datapoint.commit.hash)
+      .transition()
+      .delay(100)
+      .duration(1000)
+      .attr(
+        'd',
+        d3
+          .symbol()
+          .type(this.crosshairIcon)
+          .size(this.datapointWidth)
+      )
+      .attr(
+        'transform',
+        'translate(' +
+          (this.x(datapoint.comparison, this.xScale) - crosshairWidth / 2) +
+          ', ' +
+          (this.y(datapoint.comparison) - crosshairHeight / 2) +
+          ')'
+      )
+      .attr('opacity', 1)
+      .attr('fill', color)
+      .attr('stroke', color)
+  }
+
+  private removeCrosshair(datapoint: CommitInfo) {
+    d3.select('#_' + datapoint.commit.hash)
+      .attr(
+        'd',
+        d3
+          .symbol()
+          .type(this.datapointSymbol(datapoint))
+          .size(this.datapointSize(datapoint))
+      )
+      .attr(
+        'transform',
+        'translate(' +
+          this.x(datapoint.comparison, this.xScale) +
+          ', ' +
+          this.y(datapoint.comparison) +
+          ') rotate(-45)'
+      )
+      .attr('fill', this.datapointColor(datapoint))
+      .attr('stroke', this.strokeColor(datapoint))
+  }
 
   // anything with and height related
 
@@ -1146,7 +1163,7 @@ export default class NewDetailGraph extends Vue {
   }
 }
 </script>
-<style>
+<style scoped>
 .axis text {
   font-family: Roboto;
   font-size: 13px;
@@ -1209,5 +1226,10 @@ export default class NewDetailGraph extends Vue {
 
 #chart {
   position: relative;
+}
+</style>
+<style>
+.datapointDialog .v-input .v-label {
+  height: unset !important;
 }
 </style>
