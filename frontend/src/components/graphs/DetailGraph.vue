@@ -55,7 +55,6 @@ import {
 } from '../../store/types'
 import { vxm } from '../../store'
 import { formatDateUTC } from '../../util/TimeUtil'
-import { mdiCrosshairsGps } from '@mdi/js'
 import CommitBenchmarkActions from '../CommitBenchmarkActions.vue'
 
 type CommitInfo = { commit: Commit; comparison: CommitComparison }
@@ -69,6 +68,7 @@ export default class NewDetailGraph extends Vue {
   @Prop({})
   measurement!: MeasurementID
 
+  // mdiCrosshairsGps as svg path
   private crosshairIcon = {
     draw: function(context: any, size: any) {
       let scale: (x: number) => number = (x: number) => 0.02 * size * x
@@ -186,13 +186,11 @@ export default class NewDetailGraph extends Vue {
       )
       context.closePath()
     }
-  } // mdiCrosshairsGps
+  }
 
   private get amount(): number {
     return Number.parseInt(vxm.repoDetailModule.selectedFetchAmount)
   }
-
-  private ic = mdiCrosshairsGps
 
   @Prop({ default: true })
   beginYAtZero!: boolean
@@ -234,7 +232,7 @@ export default class NewDetailGraph extends Vue {
     this.dialogOpen = false
     switch (this.datapointAction) {
       case 'setReference':
-        this.setReference()
+        this.setReference(this.xScale)
         break
       case 'selectCommitToCompare':
         this.selectCommitToCompare()
@@ -248,7 +246,7 @@ export default class NewDetailGraph extends Vue {
     }
   }
 
-  setReference() {
+  setReference(xScale: d3.ScaleLinear<number, number>) {
     if (vxm.repoDetailModule.referenceDatapoint) {
       this.removeCrosshair(vxm.repoDetailModule.referenceDatapoint)
     }
@@ -257,7 +255,11 @@ export default class NewDetailGraph extends Vue {
     }
     if (vxm.repoDetailModule.referenceDatapoint) {
       this.drawReferenceLine(vxm.repoDetailModule.referenceDatapoint)
-      this.drawCrosshair(vxm.repoDetailModule.referenceDatapoint, 'gray')
+      this.drawCrosshair(
+        vxm.repoDetailModule.referenceDatapoint,
+        xScale,
+        'gray'
+      )
     }
   }
 
@@ -305,6 +307,7 @@ export default class NewDetailGraph extends Vue {
       this.commitToCompare = this.selectedDatapoint || null
       this.drawCrosshair(
         this.selectedDatapoint,
+        this.xScale,
         this.datapointColor(this.selectedDatapoint)
       )
     }
@@ -323,34 +326,41 @@ export default class NewDetailGraph extends Vue {
     }
   }
 
-  private drawCrosshair(datapoint: CommitInfo, color: string) {
+  private drawCrosshair(
+    datapoint: CommitInfo,
+    xScale: d3.ScaleLinear<number, number>,
+    color: string
+  ) {
     let crosshair = d3.select('#_' + datapoint.commit.hash)
-    let crosshaiRect = (crosshair.node() as SVGElement).getBoundingClientRect()
-    let crosshairWidth: number = crosshaiRect.width
-    let crosshairHeight: number = crosshaiRect.height
+    if (crosshair) {
+      let crosshairRect = (crosshair.node() as SVGElement).getBoundingClientRect()
+      let crosshairWidth: number = crosshairRect.width
+      let crosshairHeight: number = crosshairRect.height
 
-    d3.select('#_' + datapoint.commit.hash)
-      .transition()
-      .delay(100)
-      .duration(1000)
-      .attr(
-        'd',
-        d3
-          .symbol()
-          .type(this.crosshairIcon)
-          .size(this.datapointWidth)
-      )
-      .attr(
-        'transform',
-        'translate(' +
-          (this.x(datapoint.comparison, this.xScale) - crosshairWidth / 2) +
-          ', ' +
-          (this.y(datapoint.comparison) - crosshairHeight / 2) +
-          ')'
-      )
-      .attr('opacity', 1)
-      .attr('fill', color)
-      .attr('stroke', color)
+      d3.select('#_' + datapoint.commit.hash)
+        .transition()
+        .duration(1000)
+        .delay(100)
+        .attr(
+          'd',
+          d3
+            .symbol()
+            .type(this.crosshairIcon)
+            .size(this.datapointWidth)
+        )
+        .attr(
+          'transform',
+          'translate(' +
+            (this.x(datapoint.comparison, xScale) - crosshairWidth / 2) +
+            ', ' +
+            (this.y(datapoint.comparison) - crosshairHeight / 2) +
+            ')'
+        )
+        .attr('opacity', 1)
+        .attr('fill', color)
+        .attr('stroke', color)
+    }
+    console.log(d3.select('#_' + datapoint.commit.hash))
   }
 
   private removeCrosshair(datapoint: CommitInfo) {
@@ -419,7 +429,7 @@ export default class NewDetailGraph extends Vue {
 
   private zoomed() {
     let transform = d3.event.transform
-    let zoomedXScale = transform.rescaleX(this.xScale)
+    this.currentXScale = transform.rescaleX(this.xScale)
 
     d3.select('#dataLayer')
       .selectAll<SVGPathElement, unknown>('.datapoint')
@@ -427,7 +437,7 @@ export default class NewDetailGraph extends Vue {
         'transform',
         (d: any) =>
           'translate(' +
-          this.x(d.comparison, zoomedXScale) +
+          this.x(d.comparison, this.currentXScale) +
           ', ' +
           this.y(d.comparison) +
           ') rotate(-45)'
@@ -436,32 +446,30 @@ export default class NewDetailGraph extends Vue {
       let crosshair = d3.select(
         '#_' + vxm.repoDetailModule.referenceDatapoint.commit.hash
       )
-      let crosshaiRect = (crosshair.node() as SVGElement).getBoundingClientRect()
-      let crosshairWidth: number = crosshaiRect.width
-      let crosshairHeight: number = crosshaiRect.height
+      if (crosshair) {
+        let crosshairRect = (crosshair.node() as SVGElement).getBoundingClientRect()
+        let crosshairWidth: number = crosshairRect.width
+        let crosshairHeight: number = crosshairRect.height
 
-      d3.select(
-        '#_' + vxm.repoDetailModule.referenceDatapoint.commit.hash
-      ).attr(
-        'transform',
-        'translate(' +
-          (this.x(
-            vxm.repoDetailModule.referenceDatapoint!.comparison,
-            zoomedXScale
-          ) -
-            crosshairWidth / 2) +
-          ', ' +
-          (this.y(vxm.repoDetailModule.referenceDatapoint!.comparison) -
-            crosshairHeight / 2) +
-          ')'
-      )
+        d3.select(
+          '#_' + vxm.repoDetailModule.referenceDatapoint.commit.hash
+        ).attr(
+          'transform',
+          (d: any) =>
+            'translate(' +
+            (this.x(d.comparison, this.currentXScale) - crosshairWidth / 2) +
+            ', ' +
+            (this.y(d.comparison) - crosshairHeight / 2) +
+            ')'
+        )
+      }
     }
 
     d3.select('#dataLayer')
       .selectAll<SVGPathElement, unknown>('#line')
-      .attr('d', this.line(zoomedXScale))
+      .attr('d', this.line(this.currentXScale))
 
-    this.xAxis.scale(zoomedXScale)
+    this.xAxis.scale(this.currentXScale)
     d3.select('#xAxis')
       .attr('transform', 'translate(0,' + this.innerHeight + ')')
       .call(this.xAxis as any)
@@ -474,22 +482,21 @@ export default class NewDetailGraph extends Vue {
         [0, 0],
         [this.innerWidth, this.innerHeight]
       ])
-      .filter(() => d3.event.shiftKey)
+      .filter(() => d3.event.ctrlKey)
       .on('end', this.brushed)
   }
 
   private brushed() {
-    let key = d3.event.shiftKey
     let selection = d3.event.selection
 
-    let newMin: number = Math.floor(this.xScale.invert(selection[1]))
-    let newMax = Math.floor(this.xScale.invert(selection[0]))
     if (selection) {
+      let newMin: number = Math.floor(this.currentXScale.invert(selection[1]))
+      let newMax = Math.floor(this.currentXScale.invert(selection[0]))
       let newAmount: number = newMax - newMin
       let additionalSkip: number = newMin
       this.$emit('selectionChanged', newAmount, additionalSkip)
+      d3.select('#brush').call(this.brush.move as any, null)
     }
-    d3.select('#brush').call(this.brush.move as any, null)
   }
 
   private resizeListener: () => void = () => {}
@@ -571,6 +578,8 @@ export default class NewDetailGraph extends Vue {
       .range([0, this.innerWidth])
   }
 
+  private currentXScale: d3.ScaleLinear<number, number> = this.xScale
+
   private get yScale(): d3.ScaleLinear<number, number> {
     let min: number = !this.beginYAtZero && this.minVal ? this.minVal : 0
     let max: number = this.maxVal || 0
@@ -646,9 +655,7 @@ export default class NewDetailGraph extends Vue {
   private drawGraph() {
     if (this.dataAvailable) {
       if (!this.graphDrawn) {
-        d3.select('#dataLayer')
-          .selectAll('*')
-          .remove()
+        d3.select('#dataLayer').remove()
         this.defineSvgElements()
         this.graphDrawn = true
       }
@@ -658,21 +665,33 @@ export default class NewDetailGraph extends Vue {
       }
       this.drawPath()
       this.drawDatapoints(keyFn)
-      this.setReference()
       this.appendTooltips(keyFn)
+      if (this.commitToCompare) {
+        this.drawCrosshair(
+          this.commitToCompare,
+          this.xScale,
+          this.datapointColor(this.commitToCompare)
+        )
+      }
+      this.setReference(this.xScale)
     } else {
       if (this.graphDrawn) {
         this.graphDrawn = false
       }
-      d3.select('#dataLayer')
-        .selectAll('*')
-        .remove()
+      d3.select('#dataLayer').remove()
+
       let information: string =
         this.measurement.metric === ''
           ? '<tspan x="0" dy="1.2em">No data available.</tspan><tspan x="0" dy="1.2em">Please select benchmark and metric.</tspan>'
           : '<tspan x="0" dy="1.2em">There are no commits within the specified time period</tspan><tspan x="0" dy="1.2em"> that have been benchmarked with this metric.</tspan>'
 
-      d3.select('#dataLayer')
+      d3.select('#mainSvg')
+        .append('g')
+        .attr('id', 'dataLayer')
+        .attr(
+          'transform',
+          'translate(' + this.margin.left + ',' + this.margin.top + ')'
+        )
         .append('text')
         .attr('y', this.innerHeight / 2)
         .attr('x', -this.margin.left)
@@ -779,6 +798,17 @@ export default class NewDetailGraph extends Vue {
       .on('contextmenu', (d: CommitInfo) => {
         d3.event.preventDefault()
         this.openDatapointMenu(d)
+      })
+      .on('mousedown', (d: CommitInfo) => {
+        console.log('hoho')
+        if (d3.event.which === 2) {
+          d3.event.preventDefault()
+          let routeData = this.$router.resolve({
+            name: 'commit-detail',
+            params: { repoID: this.selectedRepo, hash: d.commit.hash }
+          })
+          window.open(routeData.href, '_blank')
+        }
       })
   }
 
@@ -1027,7 +1057,7 @@ export default class NewDetailGraph extends Vue {
   @Watch('datapoints')
   private updateDatapoints() {
     d3.select('#yLabel').text(this.yLabel)
-    this.drawGraph()
+    this.updateData()
   }
 
   @Watch('beginYAtZero')
@@ -1055,21 +1085,6 @@ export default class NewDetailGraph extends Vue {
     d3.select('#yLabel')
       .attr('y', -this.margin.left + 30)
       .attr('x', -this.innerHeight / 2)
-  }
-
-  private getXTranslation(transform: string): number[] {
-    let transFormString: string[] = transform
-      .substring(transform.indexOf('(') + 1, transform.indexOf(')'))
-      .split(',')
-
-    return [Number.parseInt(transFormString[0])]
-  }
-
-  private pan(startX: number, pannedX: number) {
-    let dx = pannedX - startX
-
-    d3.select('#graphArea').attr('transform', 'translate(' + [dx, 0] + ')')
-    d3.event.stopImmediatePropagation()
   }
 
   private defineSvgElements() {
@@ -1152,7 +1167,7 @@ export default class NewDetailGraph extends Vue {
     this.keydownListener = (e: KeyboardEvent) => {
       d3.select('#brush .overlay').attr(
         'cursor',
-        e.shiftKey ? 'crosshair' : 'cursor'
+        e.ctrlKey ? 'crosshair' : 'cursor'
       )
     }
     this.keyupListener = (e: KeyboardEvent) => {
@@ -1169,8 +1184,8 @@ export default class NewDetailGraph extends Vue {
       .attr('height', '100%')
       .attr('align', 'end')
       .attr('justify', 'end')
+      .on('mouseenter', () => this.keydownListener(d3.event))
     this.resize()
-    this.drawGraph()
     d3.select('#brush .overlay').attr('cursor', 'cursor')
   }
 
