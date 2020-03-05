@@ -164,6 +164,7 @@ export default class MultipleRunOverview extends Vue {
           isNowBetter
         )
       })
+      .filter(it => Math.round(it.change * 100) !== 0)
       .sort((a, b) => Math.abs(b.change) - Math.abs(a.change))
 
     changes = changes.slice(0, this.numberOfChanges)
