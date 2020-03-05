@@ -20,8 +20,9 @@
 ## Installation guide
 
 Ensure that the following tools are installed on your system:
+- `jdk` (Version 11 or newer)
 - `make`
-- `maven`
+- `maven` (Maven 3)
 - `yarn`
 
 ### The easy way™
@@ -79,10 +80,13 @@ $ docker run                                                  \
         # Expose the frontend port (80) to port 9080 (decide for yourself)
         -p 127.0.0.1:9080:80                                  \
         # Expose the backend api port (81) to port 9081 (decide for yourself)
+        # if you use the single port image you can omit this mapping
         -p 127.0.0.1:9081:81                                  \
         # Expose the runner port (82) to port 9082 (decide for yourself)
         -p 127.0.0.1:9666:82                                  \
         # Give it read access to an SSH key you added to the relevant repositories
+        # If you do this make sure the UIDs match! You can set the UID with the
+        # Makefile or directly as a docker build argument
         -v /install/dir/ssh:/root/.ssh:ro                     \
         # Start the image
         velcom-server                                         \
@@ -109,7 +113,8 @@ $ make
 
 Copy the `backend.jar` and `example_config.yml` files to the location where the
 backend should run. These commands assume you are in the base directory of the
-`velcom` repo.
+`velcom` repo. Make sure the `server.applicationConnectors.port` in the config
+match what you told the frontend with the `VUE_APP_BASE_URL`.
 
 ```
 $ cp backend/backend/target/backend.jar install/dir/
@@ -161,6 +166,8 @@ It is possible to run the backend *and* the frontend on a single port.
 2. Set the backend url in the frontend's `.env` file and *include the backend
    prefix at the end*!
    An example: `https://example.com:8080/api/`.
+3. Rebuild the frontend (`yarn build` in the frontend directory)
+4. Deploy the new frontend `dist` folder
 
 You can refer to [docs/nginx-site-single-port](docs/nginx-site-single-port) for
 a working reference config.
@@ -180,6 +187,11 @@ with, as it will store archive data in "$PWD/data/archives".
 In the directory where the runner was installed, run the `runner.jar`. The first
 (and only) argument should be the path to the config file. If you've followed
 the installation steps above, this looks like:
+
+If your benchmark repo is cloned over SSH and you do not have a working SSH
+setup for that remote server, starting the backend will fail with an error
+message. See [Cloning repositories via SSH](#cloning-repositories-via-ssh) for
+further information.
 
 ```
 $ java -jar runner.jar config.json
