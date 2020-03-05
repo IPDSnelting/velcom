@@ -6,17 +6,26 @@ import subprocess
 import sys
 import time
 import json
+import re
 
 program_result = {}
 
 
 def execute_program(args: List[str]) -> float:
-    """ Executes a given program and waits for the output. """
+    """ Executes a given program and returns build time. """
     start = time.time()
     subprocess.run(args, stdout=subprocess.PIPE,
                    stderr=subprocess.PIPE, check=True)
     end = time.time()
     return end - start
+
+
+def getCoverage() -> str:
+    path= target_path() / "backend/aggregator/target/site/jacoco-aggregate/index.html"
+    coverageRegex=r"Total[^%]+?(\d+)%"
+    with open(path) as file:
+        coverage = re.search(coverageRegex, file.read()).group(1)
+        return int(coverage)
 
 
 def can_use_makefile() -> bool:
@@ -31,15 +40,15 @@ def target_path() -> Path:
     return Path(__file__).resolve().parent / sys.argv[1]
 
 
-def guarded_try_metric(benchmark: str, metric: str, function):
+def guarded_try_metric(benchmark: str, metric: str, function, unit="seconds", resultInterpretation="LESS_IS_BETTER"):
     global program_result
     if benchmark not in program_result:
         program_result[benchmark] = {}
     program_result[benchmark] = {}
     try:
         program_result[benchmark][metric] = {
-            "unit": "seconds",
-            "resultInterpretation": "LESS_IS_BETTER",
+            "unit": unit,
+            "resultInterpretation": resultInterpretation,
             "results": [function()]
         }
     except subprocess.CalledProcessError as e:
@@ -66,6 +75,14 @@ def build_makefile():
         "backend",
         "build_time",
         lambda: execute_program(["make", "-C", str(target_path()), "backend"])
+    )
+    
+    guarded_try_metric(
+        "backend",
+        "coverage",
+        lambda: getCoverage(),
+        "percent",
+        "MORE_IS_BETTER"
     )
 
 
