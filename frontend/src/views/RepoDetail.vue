@@ -20,9 +20,6 @@
     <v-row align="baseline" justify="center">
       <v-col>
         <v-card>
-          <v-card-title>
-            <v-toolbar color="primary darken-1" dark>Filter Data</v-toolbar>
-          </v-card-title>
           <v-card-text class="ma-0 pa-0">
             <v-container fluid class="ma-0 px-4">
               <v-row align="center" justify="space-around" no-gutters>
@@ -79,10 +76,25 @@
           </v-card-text>
           <v-card-actions class="mx-2">
             <v-row no-gutters justify="end">
-              <v-col cols="auto">
+              <v-col v-show="referenceCommitSelected">
+                <v-row no-gutters>
+                  <v-col cols="12">
+                    <span class="hint">reference commit</span>
+                  </v-col>
+                  <v-col>
+                    <commit-chip
+                      class="mr-2"
+                      :to="{ name: 'commit-detail', params: { repoID: id, hash: referenceCommit } }"
+                      :commitHash="referenceCommit"
+                      :copyOnClick="false"
+                    ></commit-chip>
+                  </v-col>
+                </v-row>
+              </v-col>
+              <v-col cols="auto" align-self="end">
                 <v-btn text color="primary" @click="toggleYScale()">{{ yScaleButtonLabel }}</v-btn>
               </v-col>
-              <v-col cols="auto">
+              <v-col cols="auto" align-self="end">
                 <v-btn
                   color="error"
                   text
@@ -115,16 +127,28 @@ import RepoCommitOverview from '@/components/repodetail/RepoCommitOverview.vue'
 import DetailGraph from '@/components/graphs/DetailGraph.vue'
 import { Route, RawLocation } from 'vue-router'
 import { Dictionary } from 'vue-router/types/router'
+import CommitChip from '../components/CommitChip.vue'
 
 @Component({
   components: {
     'repo-base-information': RepoBaseInformation,
     'repo-commit-overview': RepoCommitOverview,
-    'detail-graph': DetailGraph
+    'detail-graph': DetailGraph,
+    'commit-chip': CommitChip
   }
 })
 export default class RepoDetail extends Vue {
   private formValid: boolean = true
+
+  private get referenceCommit(): string {
+    return vxm.repoDetailModule.referenceDatapoint
+      ? vxm.repoDetailModule.referenceDatapoint.commit.hash
+      : ''
+  }
+
+  private get referenceCommitSelected(): boolean {
+    return vxm.repoDetailModule.referenceDatapoint !== null
+  }
 
   private yScaleBeginsAtZero: boolean = true
   private yScaleButtonLabel:
@@ -331,3 +355,11 @@ export default class RepoDetail extends Vue {
   }
 }
 </script>
+
+<style scoped>
+.hint {
+  font-size: 14px;
+  font-weight: 400;
+  color: rgba(0, 0, 0, 0.6);
+}
+</style>

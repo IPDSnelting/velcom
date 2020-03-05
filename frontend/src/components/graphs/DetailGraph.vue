@@ -11,14 +11,17 @@
       <v-col>
         <v-dialog width="600" v-model="dialogOpen">
           <v-card>
-            <v-toolbar dark color="primary">
-              <v-toolbar-title></v-toolbar-title>
-            </v-toolbar>
+            <v-card-title></v-card-title>
             <v-card-text>
-              <v-radio-group v-model="selectedReference">
-                <v-radio label="use datapoint as reference" value="datapoint"></v-radio>
-                <v-radio label="display datapoints relative to this one" value="baseline"></v-radio>
-                <v-radio label="remove references" value="none"></v-radio>
+              <v-radio-group v-model="datapointAction">
+                <v-radio label="use datapoint as reference" value="setReference"></v-radio>
+                <v-radio label="Select this commit to compare" value="selectCommitToCompare"></v-radio>
+                <v-radio
+                  v-show="selectedCommitToCompare"
+                  :label="compareLabel"
+                  value="compareCommits"
+                ></v-radio>
+                <v-radio label="remove reference line" value="removeReference"></v-radio>
               </v-radio-group>
             </v-card-text>
             <v-card-actions>
@@ -47,6 +50,7 @@ import {
 } from '../../store/types'
 import { vxm } from '../../store'
 import { formatDateUTC } from '../../util/TimeUtil'
+import { mdiCrosshairsGps } from '@mdi/js'
 
 type CommitInfo = { commit: Commit; comparison: CommitComparison }
 
@@ -55,20 +59,285 @@ export default class NewDetailGraph extends Vue {
   @Prop({})
   measurement!: MeasurementID
 
+  private crosshairIcon = {
+    draw: function(context: any, size: any) {
+      let scale: (x: number) => number = (x: number) => 0.02 * size * x
+
+      context.moveTo(scale(12), scale(8))
+      context.bezierCurveTo(
+        scale(14.209138999323173),
+        scale(8),
+        scale(16),
+        scale(9.790861000676827),
+        scale(16),
+        scale(12)
+      )
+      context.bezierCurveTo(
+        scale(16),
+        scale(14.209138999323173),
+        scale(14.209138999323173),
+        scale(16),
+        scale(12),
+        scale(16)
+      )
+      context.bezierCurveTo(
+        scale(9.790861000676827),
+        scale(16),
+        scale(8),
+        scale(14.209138999323173),
+        scale(8),
+        scale(12)
+      )
+      context.bezierCurveTo(
+        scale(8),
+        scale(9.790861000676827),
+        scale(9.790861000676827),
+        scale(8),
+        scale(12),
+        scale(8)
+      )
+      context.moveTo(scale(3.05), scale(13))
+      context.lineTo(scale(1), scale(13))
+      context.lineTo(scale(1), scale(11))
+      context.lineTo(scale(3.05), scale(11))
+      context.bezierCurveTo(
+        scale(3.5),
+        scale(6.83),
+        scale(6.83),
+        scale(3.5),
+        scale(11),
+        scale(3.05)
+      )
+      context.lineTo(scale(11), scale(1))
+      context.lineTo(scale(13), scale(1))
+      context.lineTo(scale(13), scale(3.05))
+      context.bezierCurveTo(
+        scale(17.17),
+        scale(3.5),
+        scale(20.5),
+        scale(6.83),
+        scale(20.95),
+        scale(11)
+      )
+      context.lineTo(scale(23), scale(11))
+      context.lineTo(scale(23), scale(13))
+      context.lineTo(scale(20.95), scale(13))
+      context.bezierCurveTo(
+        scale(20.5),
+        scale(17.17),
+        scale(17.17),
+        scale(20.5),
+        scale(13),
+        scale(20.95)
+      )
+      context.lineTo(scale(13), scale(23))
+      context.lineTo(scale(11), scale(23))
+      context.lineTo(scale(11), scale(20.95))
+      context.bezierCurveTo(
+        scale(6.83),
+        scale(20.5),
+        scale(3.5),
+        scale(17.17),
+        scale(3.05),
+        scale(13)
+      )
+      context.moveTo(scale(12), scale(5))
+      context.bezierCurveTo(
+        scale(8.134006751184447),
+        scale(5.000000000000001),
+        scale(4.999999999999999),
+        scale(8.134006751184447),
+        scale(5),
+        scale(12)
+      )
+      context.bezierCurveTo(
+        scale(5.000000000000001),
+        scale(15.865993248815553),
+        scale(8.134006751184447),
+        scale(19),
+        scale(12),
+        scale(19)
+      )
+      context.bezierCurveTo(
+        scale(15.865993248815553),
+        scale(19),
+        scale(19),
+        scale(15.865993248815553),
+        scale(19),
+        scale(12)
+      )
+      context.bezierCurveTo(
+        scale(19),
+        scale(8.134006751184447),
+        scale(15.865993248815553),
+        scale(5),
+        scale(12),
+        scale(5)
+      )
+      context.closePath()
+    }
+  } // mdiCrosshairsGps
+
   private get amount(): number {
     return Number.parseInt(vxm.repoDetailModule.selectedFetchAmount)
   }
 
+  private ic = mdiCrosshairsGps
+
   @Prop({ default: true })
   beginYAtZero!: boolean
 
+  // interacting with datapoints
+
   private dialogOpen: boolean = false
   private selectedDatapoint: CommitInfo | null = null
-  private referencePoint: CommitInfo | null = null
-  private selectedReference: 'none' | 'datapoint' | 'baseline' = 'none'
-  private reference: 'none' | 'datapoint' | 'baseline' = 'none'
-  private comparePointOne: CommitInfo | null = null
-  private comparePointTwo: CommitInfo | null = null
+  private commitToCompare: CommitInfo | null = null
+  private datapointAction:
+    | 'setReference'
+    | 'selectCommitToCompare'
+    | 'compareCommits'
+    | 'removeReference' = 'setReference'
+
+  private get selectedCommitToCompare(): boolean {
+    return this.commitToCompare !== null
+  }
+
+  private get compareLabel(): string {
+    return this.commitToCompare
+      ? 'Compare this commit to commit ' + this.commitToCompare!.commit.hash
+      : ''
+  }
+
+  openDatapointMenu(datapoint: CommitInfo) {
+    this.dialogOpen = true
+    this.selectedDatapoint = datapoint
+  }
+
+  private onConfirm() {
+    this.dialogOpen = false
+    switch (this.datapointAction) {
+      case 'setReference':
+        this.setReference()
+        break
+      case 'selectCommitToCompare':
+        this.selectCommitToCompare()
+        break
+      case 'compareCommits':
+        this.compareCommits()
+        break
+      case 'removeReference':
+        this.removeReference()
+        break
+    }
+  }
+
+  setReference() {
+    if (vxm.repoDetailModule.referenceDatapoint) {
+      d3.select('#_' + vxm.repoDetailModule.referenceDatapoint.commit.hash)
+        .attr(
+          'd',
+          d3
+            .symbol()
+            .type(this.datapointSymbol(vxm.repoDetailModule.referenceDatapoint))
+            .size(this.datapointSize(vxm.repoDetailModule.referenceDatapoint))
+        )
+        .attr(
+          'transform',
+          'translate(' +
+            this.x(
+              vxm.repoDetailModule.referenceDatapoint.comparison,
+              this.xScale
+            ) +
+            ', ' +
+            this.y(vxm.repoDetailModule.referenceDatapoint.comparison) +
+            ') rotate(-45)'
+        )
+        .attr(
+          'fill',
+          this.datapointColor(vxm.repoDetailModule.referenceDatapoint)
+        )
+        .attr(
+          'stroke',
+          this.strokeColor(vxm.repoDetailModule.referenceDatapoint)
+        )
+    }
+    if (this.selectedDatapoint) {
+      vxm.repoDetailModule.referenceDatapoint = this.selectedDatapoint
+    }
+    if (vxm.repoDetailModule.referenceDatapoint) {
+      let crosshair = d3.select(
+        '#_' + vxm.repoDetailModule.referenceDatapoint.commit.hash
+      )
+      let crosshaiRect = (crosshair.node() as SVGElement).getBoundingClientRect()
+      let crosshairWidth: number = crosshaiRect.width
+      let crosshairHeight: number = crosshaiRect.height
+
+      d3.select('#_' + vxm.repoDetailModule.referenceDatapoint.commit.hash)
+        .transition()
+        .delay(100)
+        .duration(1000)
+        .attr(
+          'd',
+          d3
+            .symbol()
+            .type(this.crosshairIcon)
+            .size(this.datapointWidth)
+        )
+        .attr(
+          'transform',
+          'translate(' +
+            (this.x(
+              vxm.repoDetailModule.referenceDatapoint!.comparison,
+              this.xScale
+            ) -
+              crosshairWidth / 2) +
+            ', ' +
+            (this.y(vxm.repoDetailModule.referenceDatapoint!.comparison) -
+              crosshairHeight / 2) +
+            ')'
+        )
+        .attr('opacity', 1)
+        .attr('fill', 'gray')
+        .attr('stroke', 'gray')
+
+      let referenceLine = d3
+        .select('#graphArea')
+        .selectAll<SVGPathElement, unknown>('#referenceLine')
+        .data([this.datapoints])
+
+      let newReferenceLine = referenceLine
+        .enter()
+        .append('line')
+        .attr('id', 'referenceLine')
+        .merge(referenceLine as any)
+        .transition()
+        .duration(1000)
+        .delay(100)
+        .attr('x1', this.innerWidth)
+        .attr('y1', this.y(vxm.repoDetailModule.referenceDatapoint.comparison))
+        .attr('x2', 0)
+        .attr('y2', this.y(vxm.repoDetailModule.referenceDatapoint.comparison))
+
+      referenceLine
+        .exit()
+        .transition()
+        .attr('opacity', 0)
+        .remove()
+    }
+  }
+
+  private removeReference() {
+    vxm.repoDetailModule.referenceDatapoint = null
+    d3.select('#referenceLine')
+      .exit()
+      .transition()
+      .attr('opacity', 0)
+      .remove()
+  }
+
+  private selectCommitToCompare() {}
+
+  private compareCommits() {}
 
   // anything with and height related
 
@@ -96,8 +365,10 @@ export default class NewDetailGraph extends Vue {
     return this.height - this.margin.top - this.margin.bottom
   }
 
+  // interacting with the graph
+
   private get zoom() {
-    var zoom = d3
+    return d3
       .zoom()
       .scaleExtent([1, 50])
       .extent([
@@ -109,7 +380,6 @@ export default class NewDetailGraph extends Vue {
         [this.innerWidth, Infinity]
       ])
       .on('zoom', this.zoomed)
-    return zoom
   }
 
   private zoomed() {
@@ -127,6 +397,30 @@ export default class NewDetailGraph extends Vue {
           this.y(d.comparison) +
           ') rotate(-45)'
       )
+    if (vxm.repoDetailModule.referenceDatapoint) {
+      let crosshair = d3.select(
+        '#_' + vxm.repoDetailModule.referenceDatapoint.commit.hash
+      )
+      let crosshaiRect = (crosshair.node() as SVGElement).getBoundingClientRect()
+      let crosshairWidth: number = crosshaiRect.width
+      let crosshairHeight: number = crosshaiRect.height
+
+      d3.select(
+        '#_' + vxm.repoDetailModule.referenceDatapoint.commit.hash
+      ).attr(
+        'transform',
+        'translate(' +
+          (this.x(
+            vxm.repoDetailModule.referenceDatapoint!.comparison,
+            zoomedXScale
+          ) -
+            crosshairWidth / 2) +
+          ', ' +
+          (this.y(vxm.repoDetailModule.referenceDatapoint!.comparison) -
+            crosshairHeight / 2) +
+          ')'
+      )
+    }
 
     d3.select('#dataLayer')
       .selectAll<SVGPathElement, unknown>('#line')
@@ -138,7 +432,7 @@ export default class NewDetailGraph extends Vue {
       .call(this.xAxis as any)
   }
 
-  private get brush(): d3.BrushBehavior<unknown> {
+  private get brush() {
     return d3
       .brushX()
       .extent([
@@ -146,10 +440,10 @@ export default class NewDetailGraph extends Vue {
         [this.innerWidth, this.innerHeight]
       ])
       .filter(() => d3.event.shiftKey)
-      .on('end', this.brushened)
+      .on('end', this.brushed)
   }
 
-  private brushened() {
+  private brushed() {
     let key = d3.event.shiftKey
     let selection = d3.event.selection
 
@@ -160,9 +454,7 @@ export default class NewDetailGraph extends Vue {
       let additionalSkip: number = newMin
       this.$emit('selectionChanged', newAmount, additionalSkip)
     }
-    d3.select('#dataLayer')
-      .select('#brush')
-      .call(this.brush.move as any, null)
+    d3.select('#brush').call(this.brush.move as any, null)
   }
 
   private resizeListener: () => void = () => {}
@@ -331,6 +623,7 @@ export default class NewDetailGraph extends Vue {
       }
       this.drawPath()
       this.drawDatapoints(keyFn)
+      this.setReference()
       this.appendTooltips(keyFn)
     } else {
       if (this.graphDrawn) {
@@ -670,69 +963,6 @@ export default class NewDetailGraph extends Vue {
     return vxm.repoDetailModule.selectedRepoId
   }
 
-  openDatapointMenu(datapoint: CommitInfo) {
-    this.dialogOpen = true
-    this.selectedDatapoint = datapoint
-    // d3.select('#_' + datapoint.commit.hash).attr('stroke', 'red')
-  }
-
-  private onConfirm() {
-    this.dialogOpen = false
-    this.reference = this.selectedReference
-    switch (this.selectedReference) {
-      case 'baseline':
-        this.setBaseline()
-        break
-      case 'datapoint':
-        this.setReferencePoint()
-        break
-      case 'none':
-        this.removeReferences()
-        break
-    }
-  }
-
-  setBaseline() {
-    if (this.selectedDatapoint) {
-      this.referencePoint = this.selectedDatapoint
-    }
-    if (this.referencePoint) {
-      let baseLine = d3
-        .select('#graphArea')
-        .selectAll<SVGPathElement, unknown>('#baseLine')
-        .data([this.datapoints])
-      let newBaseLine = baseLine
-        .enter()
-        .append('line')
-        .attr('id', 'baseLine')
-        .merge(baseLine as any)
-        .transition()
-        .duration(1000)
-        .delay(100)
-        .attr('x1', this.innerWidth)
-        .attr('y1', this.y(this.referencePoint.comparison))
-        .attr('x2', 0)
-        .attr('y2', this.y(this.referencePoint.comparison))
-
-      baseLine
-        .exit()
-        .transition()
-        .attr('opacity', 0)
-        .remove()
-    }
-  }
-
-  private setReferencePoint() {
-    this.referencePoint = this.selectedDatapoint
-  }
-
-  private removeReferences() {
-    this.referencePoint = null
-    d3.select('#graphArea')
-      .selectAll<SVGPathElement, unknown>('#baseLine')
-      .remove()
-  }
-
   // updating
 
   private resize() {
@@ -740,9 +970,19 @@ export default class NewDetailGraph extends Vue {
     this.width = chart ? chart.getBoundingClientRect().width : 900
     this.height = this.width / 2
 
+    d3.select('#dataLayer')
+      .select('#brush')
+      .remove()
+    d3.select('#listenerRect')
+      .attr('width', this.innerWidth)
+      .attr('height', this.innerHeight + 2 * this.datapointWidth)
+    d3.select('#dataLayer')
+      .append('g')
+      .attr('id', 'brush')
+      .call(this.brush)
     d3.select('#listenerRect').call(this.zoom as any)
     d3.select('#mainSvg')
-      .select('#clip-rect')
+      .select('#clipRect')
       .attr('width', this.innerWidth)
       .attr('height', this.innerHeight + 2 * this.datapointWidth)
 
@@ -760,7 +1000,6 @@ export default class NewDetailGraph extends Vue {
   private updateData() {
     this.updateAxes()
     this.drawGraph()
-    this.setBaseline()
   }
 
   private updateAxes() {
@@ -823,6 +1062,7 @@ export default class NewDetailGraph extends Vue {
       .call(this.brush)
 
     d3.select('#dataLayer').call(this.zoom as any)
+
     d3.select('#dataLayer')
       .append('g')
       .attr('id', 'graphArea')
@@ -831,7 +1071,7 @@ export default class NewDetailGraph extends Vue {
       .append('clipPath')
       .attr('id', 'clip')
       .append('rect')
-      .attr('id', 'clip-rect')
+      .attr('id', 'clipRect')
       .attr('y', -this.datapointWidth)
       .attr('width', this.innerWidth)
       .attr('height', this.innerHeight + 2 * this.datapointWidth)
@@ -859,9 +1099,8 @@ export default class NewDetailGraph extends Vue {
       .text(this.yLabel)
 
     d3.select('#dataLayer')
-      .append('g')
       .append('line')
-      .attr('id', 'baseLine')
+      .attr('id', 'referenceLine')
 
     let tip = d3
       .select('#chart')
@@ -958,13 +1197,13 @@ export default class NewDetailGraph extends Vue {
   text-align: center;
   font-family: Roboto;
   font-size: 18px;
-  fill: grey;
+  fill: dimgray;
 }
 
-#baseLine {
+#referenceLine {
   fill: none;
-  stroke: black;
-  stroke-width: 0.5px;
+  stroke: dimgray;
+  stroke-width: 1px;
   stroke-dasharray: 5 5;
 }
 

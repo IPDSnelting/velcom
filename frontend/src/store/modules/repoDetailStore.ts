@@ -1,20 +1,7 @@
 import { createModule, mutation, action } from 'vuex-class-component'
-import {
-  CommitComparison,
-  Run,
-  Difference,
-  MeasurementID,
-  Commit,
-  Measurement
-} from '@/store/types'
-import Vue from 'vue'
+import { CommitComparison, MeasurementID, Commit } from '@/store/types'
 import axios from 'axios'
-import {
-  commitFromJson,
-  runFromJson,
-  differenceFromJson,
-  comparisonFromJson
-} from '@/util/CommitComparisonJsonHelper'
+import { comparisonFromJson } from '@/util/CommitComparisonJsonHelper'
 import { vxm } from '..'
 
 const VxModule = createModule({
@@ -33,6 +20,10 @@ export class RepoDetailStore extends VxModule {
   selectedBenchmark: string = ''
   selectedFetchAmount: string = '10'
   selectedSkipAmount: string = '0'
+  referenceDatapoint: {
+    commit: Commit
+    comparison: CommitComparison
+  } | null = null
 
   @action
   async fetchHistoryForRepo(payload: {
