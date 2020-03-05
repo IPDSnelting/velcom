@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 class ArchiveAccessTest {
 
 	private static final Path STORAGE_DIR = Paths.get("data/repos_test");
+	private static final Path ARCHIVES_ROOT_DIR = Paths.get("data/archives/");
 
 	RepoStorage repoStorage;
 	Archiver archiveAccess;
@@ -46,7 +47,7 @@ class ArchiveAccessTest {
 
 		this.repoStorage = new RepoStorage(STORAGE_DIR);
 
-		this.archiveAccess = new Archiver(this.repoStorage);
+		this.archiveAccess = new Archiver(this.repoStorage, ARCHIVES_ROOT_DIR);
 	}
 
 	@AfterEach

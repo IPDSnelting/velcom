@@ -23,6 +23,7 @@ import de.aaaaaaah.velcom.backend.storage.repo.exception.AddRepositoryException;
 import de.aaaaaaah.velcom.backend.storage.repo.exception.RepositoryAcquisitionException;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 import org.eclipse.jgit.lib.Repository;
@@ -42,11 +43,11 @@ public class RepoWriteAccess extends RepoReadAccess {
 	private final Archiver archiver;
 
 	public RepoWriteAccess(DatabaseStorage databaseStorage, RepoStorage repoStorage,
-		RemoteUrl benchRepoUrl) {
+		RemoteUrl benchRepoUrl, Path archivesRootDir) {
 
 		super(databaseStorage, repoStorage, benchRepoUrl);
 
-		this.archiver = new Archiver(repoStorage);
+		this.archiver = new Archiver(repoStorage, archivesRootDir);
 
 		// Clone benchmark repo if needed
 		if (!repoStorage.containsRepository(benchRepoDirName)) {

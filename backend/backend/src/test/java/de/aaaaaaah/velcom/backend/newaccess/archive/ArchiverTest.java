@@ -33,6 +33,7 @@ class ArchiverTest {
 
 	private Path repoPath;
 	private Path garbageDir;
+	private Path archivesRootDir;
 
 	private Archiver archiver;
 	public static final String SUBMODULE_PATH = "submodule";
@@ -46,6 +47,8 @@ class ArchiverTest {
 		Path submodulePath = tempDir.resolve("sub_module");
 		garbageDir = tempDir.resolve("garbage");
 		Files.createDirectory(garbageDir);
+		archivesRootDir = tempDir.resolve("archives_root");
+		Files.createDirectory(archivesRootDir);
 
 		// Init repos
 		Git.init().setDirectory(repoPath.toFile()).call();
@@ -90,7 +93,7 @@ class ArchiverTest {
 		RepoStorage repoStorage = mock(RepoStorage.class);
 		when(repoStorage.acquireRepository("repo")).thenReturn(repoGit.getRepository());
 		when(repoStorage.getRepoDir("repo")).thenReturn(repoPath.toAbsolutePath());
-		this.archiver = new Archiver(repoStorage);
+		this.archiver = new Archiver(repoStorage, archivesRootDir);
 	}
 
 	@AfterEach

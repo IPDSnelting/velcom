@@ -49,6 +49,9 @@ public class GlobalConfig extends Configuration {
 	@Min(1)
 	private int hashIterations;
 
+	@NotEmpty
+	private String archivesRootDir;
+
 	public GlobalConfig() {
 		RunnerAwareServerFactory.getInstance().setConfig(this);
 	}
@@ -132,6 +135,13 @@ public class GlobalConfig extends Configuration {
 
 	public int getHashIterations() {
 		return hashIterations;
+	}
+
+	/**
+	 * @return the path to the directory where archives are placed in
+	 */
+	public String getArchivesRootDir() {
+		return archivesRootDir;
 	}
 
 	@Override

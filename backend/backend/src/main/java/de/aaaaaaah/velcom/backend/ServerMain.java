@@ -43,6 +43,7 @@ import io.dropwizard.setup.Environment;
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.dropwizard.DropwizardExports;
 import io.prometheus.client.exporter.MetricsServlet;
+import java.nio.file.Paths;
 import java.util.EnumSet;
 import javax.servlet.DispatcherType;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
@@ -110,8 +111,12 @@ public class ServerMain extends Application<GlobalConfig> {
 		BenchmarkWriteAccess benchmarkAccess = new BenchmarkWriteAccess(databaseStorage);
 		CommitReadAccess commitAccess = new CommitReadAccess(repoStorage);
 		KnownCommitWriteAccess knownCommitAccess = new KnownCommitWriteAccess(databaseStorage);
-		RepoWriteAccess repoAccess = new RepoWriteAccess(databaseStorage, repoStorage,
-			new RemoteUrl(configuration.getBenchmarkRepoRemoteUrl()));
+		RepoWriteAccess repoAccess = new RepoWriteAccess(
+			databaseStorage,
+			repoStorage,
+			new RemoteUrl(configuration.getBenchmarkRepoRemoteUrl()),
+			Paths.get(configuration.getArchivesRootDir())
+		);
 		TokenWriteAccess tokenAccess = new TokenWriteAccess(
 			databaseStorage,
 			new AuthToken(configuration.getWebAdminToken()),

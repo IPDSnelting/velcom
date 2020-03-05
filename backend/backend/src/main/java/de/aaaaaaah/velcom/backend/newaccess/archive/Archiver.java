@@ -14,7 +14,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Objects;
 import java.util.function.Consumer;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -32,17 +31,18 @@ import org.slf4j.LoggerFactory;
 public class Archiver {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(Archiver.class);
-	private static final Path ARCHIVES_ROOT_DIR = Paths.get("data/archives/");
 
 	private final RepoStorage repoStorage;
+	private final Path archivesRootDir;
 
 	/**
 	 * Constructs a new instance of {@link Archiver}.
 	 *
 	 * @param repoStorage the storage containing the local repositories
 	 */
-	public Archiver(RepoStorage repoStorage) {
+	public Archiver(RepoStorage repoStorage, Path archivesRootDir) {
 		this.repoStorage = repoStorage;
+		this.archivesRootDir = archivesRootDir;
 	}
 
 	/**
@@ -54,7 +54,7 @@ public class Archiver {
 	 * @param dirName the directory name of the repository
 	 */
 	public synchronized void deleteArchives(String dirName) {
-		Path archivesDir = ARCHIVES_ROOT_DIR.resolve(dirName);
+		Path archivesDir = archivesRootDir.resolve(dirName);
 
 		try {
 			DirectoryRemover.deleteDirectoryRecursive(archivesDir);
@@ -84,7 +84,7 @@ public class Archiver {
 		LOGGER.info("Creating archive for: {}/{} (keepDeepClone = {})", dirName,
 			commitHash.getHash(), keepDeepClone);
 
-		Path cloneDir = ARCHIVES_ROOT_DIR.resolve(dirName).resolve(commitHash.getHash());
+		Path cloneDir = archivesRootDir.resolve(dirName).resolve(commitHash.getHash());
 
 		try {
 			// (1): Clone repository
