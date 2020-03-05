@@ -93,6 +93,8 @@ import { Watch } from 'vue-property-decorator'
   }
 })
 export default class CommitDetail extends Vue {
+  private info: CommitInfo | null = null
+
   get repoID() {
     return this.$route.params.repoID
   }
@@ -119,10 +121,6 @@ export default class CommitDetail extends Vue {
 
   get comparison(): CommitComparison | null {
     return this.info ? this.info.comparison : null
-  }
-
-  get info(): CommitInfo | null {
-    return vxm.commitComparisonModule.commitInfo(this.repoID, null, this.hash)
   }
 
   get errorMessageParts(): { isHeader: boolean; value: string }[] {
@@ -170,11 +168,13 @@ export default class CommitDetail extends Vue {
   @Watch('repoId')
   @Watch('hash')
   updateYourself() {
-    vxm.commitComparisonModule.fetchCommitInfo({
-      repoId: this.repoID,
-      first: undefined,
-      second: this.hash
-    })
+    vxm.commitComparisonModule
+      .fetchCommitInfo({
+        repoId: this.repoID,
+        first: undefined,
+        second: this.hash
+      })
+      .then(it => (this.info = it))
   }
 
   created() {

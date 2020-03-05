@@ -13,8 +13,6 @@ const VxModule = createModule({
 })
 
 export class CommitComparisonStore extends VxModule {
-  private commitInfos: { [key: string]: CommitInfo[] } = {}
-
   /**
    * Fetches the commit comparison for two commits in a repo
    * from the server.
@@ -42,78 +40,6 @@ export class CommitComparisonStore extends VxModule {
         second_commit_hash: payload.second
       }
     })
-
-    let info = commitInfoFromJson(response.data)
-
-    const mutationPayload = { repoId: payload.repoId, info: info }
-    this.setCommitInfo(mutationPayload)
-    return info
-  }
-
-  /**
-   * Sets the commit comparison for a given repo.
-   *
-   * @param {{
-   *     comparison: CommitComparison
-   *     repoId: string
-   *   }} payload the payload to set
-   * @memberof CommitComparisonModuleStore
-   */
-  @mutation
-  setCommitInfo(payload: { info: CommitInfo; repoId: string }) {
-    let comparisons = this.commitInfos[payload.repoId]
-    if (!comparisons) {
-      Vue.set(this.commitInfos, payload.repoId, [payload.info])
-    } else {
-      let current = comparisons.findIndex(detail => {
-        return (
-          detail.comparison.first === payload.info.comparison.first &&
-          detail.comparison.second === payload.info.comparison.second
-        )
-      })
-
-      if (current !== -1) {
-        comparisons.splice(current, 1)
-      }
-
-      comparisons.push(payload.info)
-    }
-  }
-
-  /**
-   * Returns a commit comparison given a repo and two commits.
-   * Returns null if not found.
-   *
-   * @readonly
-   * @memberof CommitComparisonModuleStore
-   */
-  get commitInfo(): (
-    repoId: string,
-    first: string | null,
-    second: string
-  ) => CommitInfo | null {
-    return (repoId: string, first: string | null, second: string) => {
-      let commitInfo = this.commitInfos[repoId]
-      if (!commitInfo) {
-        return null
-      }
-      let info = commitInfo.find(info => {
-        let comparison = info.comparison
-        if (!comparison.secondCommit) {
-          return false
-        }
-        if (!first) {
-          return info.comparison.secondCommit.hash === second
-        }
-        if (!comparison.firstCommit) {
-          return false
-        }
-        return (
-          comparison.firstCommit.hash === first &&
-          comparison.secondCommit.hash === second
-        )
-      })
-      return info || null
-    }
+    return commitInfoFromJson(response.data)
   }
 }
