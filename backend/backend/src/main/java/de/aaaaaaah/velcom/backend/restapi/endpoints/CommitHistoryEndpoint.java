@@ -176,6 +176,9 @@ public class CommitHistoryEndpoint {
 			return commits;
 		}
 
+		public int getOffset() {
+			return offset;
+		}
 	}
 
 }
