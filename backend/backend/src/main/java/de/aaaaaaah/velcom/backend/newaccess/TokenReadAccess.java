@@ -111,18 +111,29 @@ public class TokenReadAccess {
 	// Modifying tokens
 
 	protected void setTokenProtected(RepoId id, @Nullable AuthToken authToken) {
-		String hash = currentHashAlgorithm.generateHash(authToken);
+		Objects.requireNonNull(id);
 
-		// Insert hash into database
-		try (DSLContext db = databaseStorage.acquireContext()) {
-			db.insertInto(REPO_TOKEN)
-				.set(REPO_TOKEN.REPO_ID, id.getId().toString())
-				.set(REPO_TOKEN.HASH_ALGO, currentHashAlgorithmId)
-				.set(REPO_TOKEN.TOKEN, hash)
-				.onDuplicateKeyUpdate()
-				.set(REPO_TOKEN.HASH_ALGO, currentHashAlgorithmId)
-				.set(REPO_TOKEN.TOKEN, hash)
-				.execute();
+		if (authToken == null) {
+			// Remove from database
+			try (DSLContext db = databaseStorage.acquireContext()) {
+				db.deleteFrom(REPO_TOKEN)
+					.where(REPO_TOKEN.REPO_ID.eq(id.getId().toString()))
+					.execute();
+			}
+		} else {
+			String hash = currentHashAlgorithm.generateHash(authToken);
+
+			// Insert hash into database
+			try (DSLContext db = databaseStorage.acquireContext()) {
+				db.insertInto(REPO_TOKEN)
+					.set(REPO_TOKEN.REPO_ID, id.getId().toString())
+					.set(REPO_TOKEN.HASH_ALGO, currentHashAlgorithmId)
+					.set(REPO_TOKEN.TOKEN, hash)
+					.onDuplicateKeyUpdate()
+					.set(REPO_TOKEN.HASH_ALGO, currentHashAlgorithmId)
+					.set(REPO_TOKEN.TOKEN, hash)
+					.execute();
+			}
 		}
 	}
 }
