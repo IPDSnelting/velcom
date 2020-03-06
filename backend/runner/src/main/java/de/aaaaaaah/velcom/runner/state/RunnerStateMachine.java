@@ -1,6 +1,7 @@
 package de.aaaaaaah.velcom.runner.state;
 
 import de.aaaaaaah.velcom.runner.entity.RunnerConfiguration;
+import de.aaaaaaah.velcom.runner.entity.WorkExecutor.AbortionResult;
 import de.aaaaaaah.velcom.runner.shared.protocol.runnerbound.entities.RunnerWorkOrder;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkResults;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.RunnerInformation;
@@ -86,14 +87,13 @@ public class RunnerStateMachine {
 	 * @param configuration the runner configuration
 	 */
 	public void onResetRequested(String reason, RunnerConfiguration configuration) {
-		doWithErrorAndSwitch(
-			() -> {
-				LOGGER.info("Aborting current benchmark ('{}')", reason);
-				configuration.getWorkExecutor().abortExecution();
-				return new IdleState();
-			},
-			configuration
-		);
+		LOGGER.info("Aborting current benchmark ('{}')", reason);
+		if (configuration.getWorkExecutor().abortExecution() == AbortionResult.CANCEL_RIGHT_NOW) {
+			LOGGER.info("Abort already done, starting to idle!");
+			doWithErrorAndSwitch(IdleState::new, configuration);
+		} else {
+			LOGGER.info("Waiting for the executor to kill the program before idling!");
+		}
 	}
 
 	/**

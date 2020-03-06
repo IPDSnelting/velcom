@@ -20,6 +20,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,17 +32,26 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 	private static final Logger LOGGER = LoggerFactory.getLogger(BenchmarkscriptWorkExecutor.class);
 
 	private final BenchmarkScriptOutputParser benchmarkScriptOutputParser;
+	private final ReentrantLock cancelLock;
 	private FutureProgramResult programResult;
+	private volatile boolean cancelled;
 
 	public BenchmarkscriptWorkExecutor() {
 		benchmarkScriptOutputParser = new BenchmarkScriptOutputParser();
+		cancelLock = new ReentrantLock();
 	}
 
 	@Override
-	public void abortExecution() {
+	public AbortionResult abortExecution() {
+		cancelLock.lock();
+		cancelled = true;
 		if (programResult != null && !programResult.isDone()) {
 			programResult.cancel();
+			cancelLock.unlock();
+			return AbortionResult.CANCEL_IN_FUTURE;
 		}
+		cancelLock.unlock();
+		return AbortionResult.CANCEL_RIGHT_NOW;
 	}
 
 	@Override
@@ -66,7 +76,13 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 			failureInformation.addEscapedArrayToGeneral("Executed command", calledCommand);
 			failureInformation.addToGeneral("Start time", startTime.toString());
 
+			cancelLock.lock();
+			if (cancelled) {
+				cancelLock.unlock();
+				return;
+			}
 			programResult = new ProgramExecutor().execute(calledCommand);
+			cancelLock.unlock();
 
 			ProgramResult result = programResult.get();
 
@@ -185,6 +201,10 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 				),
 				configuration
 			);
+		} finally {
+			cancelLock.lock();
+			cancelled = false;
+			cancelLock.unlock();
 		}
 	}
 

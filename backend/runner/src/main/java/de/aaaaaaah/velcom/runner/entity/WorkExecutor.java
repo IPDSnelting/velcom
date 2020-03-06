@@ -10,8 +10,10 @@ public interface WorkExecutor {
 
 	/**
 	 * Aborts execution and discards all (potential) results.
+	 *
+	 * @return the result
 	 */
-	void abortExecution();
+	AbortionResult abortExecution();
 
 	/**
 	 * Starts execution.
@@ -22,4 +24,19 @@ public interface WorkExecutor {
 	 */
 	void startExecution(Path workPath, RunnerWorkOrder workOrder,
 		RunnerConfiguration configuration);
+
+	/**
+	 * The result of aborting.
+	 */
+	enum AbortionResult {
+		/**
+		 * Program was successfully cancelled when the method returns and any pending data was
+		 * sent.
+		 */
+		CANCEL_RIGHT_NOW,
+		/**
+		 * The program will be cancelled in the future.
+		 */
+		CANCEL_IN_FUTURE
+	}
 }

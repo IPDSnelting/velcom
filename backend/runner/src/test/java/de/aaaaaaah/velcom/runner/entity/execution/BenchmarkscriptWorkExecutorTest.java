@@ -4,11 +4,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import de.aaaaaaah.velcom.runner.entity.BenchmarkRepoOrganizer;
 import de.aaaaaaah.velcom.runner.entity.RunnerConfiguration;
+import de.aaaaaaah.velcom.runner.entity.WorkExecutor.AbortionResult;
 import de.aaaaaaah.velcom.runner.shared.protocol.runnerbound.entities.RunnerWorkOrder;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkResults;
 import de.aaaaaaah.velcom.runner.state.RunnerStateMachine;
@@ -48,11 +50,7 @@ class BenchmarkscriptWorkExecutorTest {
 		Path workDir = tempDir.resolve("work");
 		Files.createDirectory(workDir);
 		workTar = workDir.resolve("work.tar");
-		try (OutputStream outputStream = Files.newOutputStream(workTar)) {
-			var tarStream = new TarArchiveOutputStream(outputStream);
-			tarStream.putArchiveEntry(new TarArchiveEntry("Hello"));
-			tarStream.closeArchiveEntry();
-		}
+		writeWorkTar();
 
 		this.stateMachine = mock(RunnerStateMachine.class);
 		this.benchmarkRepoOrganizer = mock(BenchmarkRepoOrganizer.class);
@@ -64,6 +62,14 @@ class BenchmarkscriptWorkExecutorTest {
 		when(runnerConfiguration.getRunnerName()).thenReturn("Name");
 		when(runnerConfiguration.getBenchmarkRepoOrganizer()).thenReturn(benchmarkRepoOrganizer);
 		when(runnerConfiguration.getRunnerStateMachine()).thenReturn(stateMachine);
+	}
+
+	private void writeWorkTar() throws IOException {
+		try (OutputStream outputStream = Files.newOutputStream(workTar)) {
+			var tarStream = new TarArchiveOutputStream(outputStream);
+			tarStream.putArchiveEntry(new TarArchiveEntry("Hello"));
+			tarStream.closeArchiveEntry();
+		}
 	}
 
 	@Test
@@ -130,9 +136,50 @@ class BenchmarkscriptWorkExecutorTest {
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-			executor.abortExecution();
+			assertThat(executor.abortExecution()).isEqualTo(AbortionResult.CANCEL_IN_FUTURE);
 		}).start();
 		var value = executeScript("sleep 5");
+
+		assertThat(value.isError()).isTrue();
+		assertThat(value.getError()).containsIgnoringCase("aborted");
+	}
+
+	@Test
+	void abortWithoutWorkWorks() {
+		assertThat(executor.abortExecution()).isEqualTo(AbortionResult.CANCEL_RIGHT_NOW);
+	}
+
+	@Test
+	void multiAbortWithWait() throws IOException, InterruptedException {
+		Thread arborter = new Thread(() -> {
+			try {
+				Thread.sleep(400);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			assertThat(executor.abortExecution()).isEqualTo(AbortionResult.CANCEL_IN_FUTURE);
+		});
+		arborter.start();
+		var value = executeScript("sleep 5");
+		arborter.join();
+
+		assertThat(value.isError()).isTrue();
+		assertThat(value.getError()).containsIgnoringCase("aborted");
+
+		System.err.println("First one done!");
+
+		arborter = new Thread(() -> {
+			try {
+				Thread.sleep(400);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			assertThat(executor.abortExecution()).isEqualTo(AbortionResult.CANCEL_IN_FUTURE);
+		});
+		arborter.start();
+		value = executeScript("sleep 5", 2);
+
+		arborter.join();
 
 		assertThat(value.isError()).isTrue();
 		assertThat(value.getError()).containsIgnoringCase("aborted");
@@ -146,7 +193,7 @@ class BenchmarkscriptWorkExecutorTest {
 		Files.setPosixFilePermissions(benchScriptPath, perms);
 
 		executor.startExecution(workTar, dummyWorkOrder(), runnerConfiguration);
-		var value = verifyAndReturnResults();
+		var value = verifyAndReturnResults(1);
 
 		assertThat(value.isError()).isTrue();
 		assertThat(value.getError()).containsIgnoringCase("internal runner error");
@@ -154,17 +201,26 @@ class BenchmarkscriptWorkExecutorTest {
 		assertThat(value.getError()).containsIgnoringCase("at ");
 	}
 
-	private BenchmarkResults verifyAndReturnResults() {
+	private BenchmarkResults verifyAndReturnResults(int expectedInvocations) {
 		var resultCaptor = ArgumentCaptor.forClass(BenchmarkResults.class);
-		verify(stateMachine).onWorkDone(resultCaptor.capture(), eq(runnerConfiguration));
+		verify(stateMachine, times(expectedInvocations))
+			.onWorkDone(resultCaptor.capture(), eq(runnerConfiguration));
 
 		return resultCaptor.getValue();
 	}
 
 	private BenchmarkResults executeScript(String code) throws IOException {
+		return executeScript(code, 1);
+	}
+
+	private BenchmarkResults executeScript(String code, int expectedInvocations)
+		throws IOException {
 		writeScript(code);
+		if (Files.notExists(workTar)) {
+			writeWorkTar();
+		}
 		executor.startExecution(workTar, dummyWorkOrder(), runnerConfiguration);
-		return verifyAndReturnResults();
+		return verifyAndReturnResults(expectedInvocations);
 	}
 
 	private void writeScript(String code) throws IOException {
