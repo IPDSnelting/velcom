@@ -13,7 +13,7 @@
       <v-card-actions>
         <commit-benchmark-actions
           v-if="selectedDatapoint"
-          :hasExistingBenchmark="false"
+          :hasExistingBenchmark="selectedDatapoint.comparison && selectedDatapoint.comparison.second"
           :commit="selectedCommit"
         ></commit-benchmark-actions>
         <v-spacer></v-spacer>

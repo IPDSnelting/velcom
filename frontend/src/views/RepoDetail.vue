@@ -79,7 +79,7 @@
               <v-col v-show="referenceCommitSelected">
                 <v-row no-gutters>
                   <v-col cols="12">
-                    <span class="hint">reference commit</span>
+                    <span class="hint">reference line commit</span>
                   </v-col>
                   <v-col>
                     <commit-chip
