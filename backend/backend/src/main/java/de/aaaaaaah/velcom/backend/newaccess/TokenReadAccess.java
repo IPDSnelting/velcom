@@ -51,8 +51,10 @@ public class TokenReadAccess {
 	 * @return whether the token is valid for the specified repo. Defaults to false if the repo does
 	 * 	not exist or has no token
 	 */
-	public boolean isValidToken(
-		RepoId repoId, AuthToken token) {
+	public boolean isValidToken(RepoId repoId, AuthToken token) {
+		Objects.requireNonNull(repoId);
+		Objects.requireNonNull(token);
+
 		try (DSLContext db = databaseStorage.acquireContext()) {
 			RepoTokenRecord tokenRecord = db.selectFrom(REPO_TOKEN)
 				.where(REPO_TOKEN.REPO_ID.eq(repoId.getId().toString()))
@@ -93,6 +95,7 @@ public class TokenReadAccess {
 	 * @return whether the token should give admin powers
 	 */
 	public boolean isValidAdminToken(AuthToken token) {
+		Objects.requireNonNull(token);
 		return currentHashAlgorithm.matches(adminTokenHash, token);
 	}
 
@@ -101,6 +104,7 @@ public class TokenReadAccess {
 	 * @return whether the repo has a token associated with it
 	 */
 	public boolean hasToken(RepoId id) {
+		Objects.requireNonNull(id);
 		try (DSLContext db = databaseStorage.acquireContext()) {
 			return db.fetchExists(selectFrom(REPO_TOKEN)
 				.where(REPO_TOKEN.REPO_ID.eq(id.getId().toString()))

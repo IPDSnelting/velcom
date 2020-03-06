@@ -1,11 +1,13 @@
 package de.aaaaaaah.velcom.backend.newaccess.entities;
 
+import java.util.Objects;
+
 public class AuthToken {
 
 	private final String token;
 
 	public AuthToken(String token) {
-		this.token = token;
+		this.token = Objects.requireNonNull(token);
 	}
 
 	public String getToken() {
@@ -17,4 +19,5 @@ public class AuthToken {
 		// Auth token content censored so it doesn't appear in any logs
 		return "AuthToken{token=*******}";
 	}
+
 }
