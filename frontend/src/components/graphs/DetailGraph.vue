@@ -38,7 +38,6 @@ import {
 } from '../../store/types'
 import { vxm } from '../../store'
 import { formatDateUTC } from '../../util/TimeUtil'
-import CommitBenchmarkActions from '../CommitBenchmarkActions.vue'
 import DatapointDialog from '../dialogs/DatapointDialog.vue'
 
 type CommitInfo = { commit: Commit; comparison: CommitComparison }
@@ -48,139 +47,281 @@ type CommitInfo = { commit: Commit; comparison: CommitComparison }
     'datapoint-dialog': DatapointDialog
   }
 })
-export default class NewDetailGraph extends Vue {
+export default class DetailGraph extends Vue {
   @Prop({})
   measurement!: MeasurementID
-
-  // mdiCrosshairsGps as svg path
-  private crosshairIcon = {
-    draw: function(context: any, size: any) {
-      let scale: (x: number) => number = (x: number) => 0.02 * size * x
-
-      context.moveTo(scale(12), scale(8))
-      context.bezierCurveTo(
-        scale(14.209138999323173),
-        scale(8),
-        scale(16),
-        scale(9.790861000676827),
-        scale(16),
-        scale(12)
-      )
-      context.bezierCurveTo(
-        scale(16),
-        scale(14.209138999323173),
-        scale(14.209138999323173),
-        scale(16),
-        scale(12),
-        scale(16)
-      )
-      context.bezierCurveTo(
-        scale(9.790861000676827),
-        scale(16),
-        scale(8),
-        scale(14.209138999323173),
-        scale(8),
-        scale(12)
-      )
-      context.bezierCurveTo(
-        scale(8),
-        scale(9.790861000676827),
-        scale(9.790861000676827),
-        scale(8),
-        scale(12),
-        scale(8)
-      )
-      context.moveTo(scale(3.05), scale(13))
-      context.lineTo(scale(1), scale(13))
-      context.lineTo(scale(1), scale(11))
-      context.lineTo(scale(3.05), scale(11))
-      context.bezierCurveTo(
-        scale(3.5),
-        scale(6.83),
-        scale(6.83),
-        scale(3.5),
-        scale(11),
-        scale(3.05)
-      )
-      context.lineTo(scale(11), scale(1))
-      context.lineTo(scale(13), scale(1))
-      context.lineTo(scale(13), scale(3.05))
-      context.bezierCurveTo(
-        scale(17.17),
-        scale(3.5),
-        scale(20.5),
-        scale(6.83),
-        scale(20.95),
-        scale(11)
-      )
-      context.lineTo(scale(23), scale(11))
-      context.lineTo(scale(23), scale(13))
-      context.lineTo(scale(20.95), scale(13))
-      context.bezierCurveTo(
-        scale(20.5),
-        scale(17.17),
-        scale(17.17),
-        scale(20.5),
-        scale(13),
-        scale(20.95)
-      )
-      context.lineTo(scale(13), scale(23))
-      context.lineTo(scale(11), scale(23))
-      context.lineTo(scale(11), scale(20.95))
-      context.bezierCurveTo(
-        scale(6.83),
-        scale(20.5),
-        scale(3.5),
-        scale(17.17),
-        scale(3.05),
-        scale(13)
-      )
-      context.moveTo(scale(12), scale(5))
-      context.bezierCurveTo(
-        scale(8.134006751184447),
-        scale(5.000000000000001),
-        scale(4.999999999999999),
-        scale(8.134006751184447),
-        scale(5),
-        scale(12)
-      )
-      context.bezierCurveTo(
-        scale(5.000000000000001),
-        scale(15.865993248815553),
-        scale(8.134006751184447),
-        scale(19),
-        scale(12),
-        scale(19)
-      )
-      context.bezierCurveTo(
-        scale(15.865993248815553),
-        scale(19),
-        scale(19),
-        scale(15.865993248815553),
-        scale(19),
-        scale(12)
-      )
-      context.bezierCurveTo(
-        scale(19),
-        scale(8.134006751184447),
-        scale(15.865993248815553),
-        scale(5),
-        scale(12),
-        scale(5)
-      )
-      context.closePath()
-    }
-  }
-
-  private get amount(): number {
-    return Number.parseInt(vxm.repoDetailModule.selectedFetchAmount)
-  }
 
   @Prop({ default: true })
   beginYAtZero!: boolean
 
-  // interacting with datapoints
+  // dimensions
+  private width: number = 0
+  private height: number = 0
+  private datapointWidth: number = 50
 
+  private margin: {
+    left: number
+    right: number
+    top: number
+    bottom: number
+  } = {
+    left: 100,
+    right: 30,
+    top: 10,
+    bottom: 100
+  }
+
+  private get innerWidth() {
+    return this.width - this.margin.left - this.margin.right
+  }
+
+  private get innerHeight() {
+    return this.height - this.margin.top - this.margin.bottom
+  }
+
+  // retrieving and interpreting datapoints
+  private get amount(): number {
+    return Number.parseInt(vxm.repoDetailModule.selectedFetchAmount)
+  }
+
+  private get datapoints(): CommitInfo[] {
+    return vxm.repoDetailModule.repoHistory.slice().reverse()
+  }
+
+  // prettier-ignore
+  private get wantedMeasurementForDatapoint(): (comparison: CommitComparison) => Measurement | undefined {
+    return (comparison: CommitComparison) => {
+      if (
+        comparison.second &&
+        comparison.second.measurements
+      ) {
+        let wantedMeasurement: Measurement | undefined =
+          comparison.second.measurements.find(it => it.id.equals(this.measurement))
+        return wantedMeasurement
+      }
+      return undefined
+    }
+  }
+
+  private datapointValue(datapoint: {
+    commit: Commit
+    comparison: CommitComparison
+  }): number | undefined {
+    let wantedMeasurement = this.wantedMeasurementForDatapoint(
+      datapoint.comparison
+    )
+    if (wantedMeasurement !== undefined && wantedMeasurement.value !== null) {
+      return wantedMeasurement.value
+    }
+    return undefined
+  }
+
+  private get minVal(): number | undefined {
+    return d3.min(this.datapoints, this.datapointValue)
+  }
+
+  private get maxVal(): number | undefined {
+    return d3.max(this.datapoints, this.datapointValue)
+  }
+
+  private get dataAvailable(): boolean {
+    return this.measurement.metric !== '' && this.maxVal !== undefined
+  }
+
+  private lastValue: number = 0
+
+  get firstSuccessful(): number {
+    for (const datapoint of this.datapoints) {
+      let wantedMeasurement = this.wantedMeasurementForDatapoint(
+        datapoint.comparison
+      )
+      if (
+        wantedMeasurement !== undefined &&
+        wantedMeasurement.successful &&
+        wantedMeasurement.value
+      ) {
+        return wantedMeasurement.value
+      }
+    }
+    return this.height / 2
+  }
+
+  // scales and axes
+  private get xScale(): d3.ScaleLinear<number, number> {
+    return d3
+      .scaleLinear()
+      .domain([this.amount + 0.5, 0.5])
+      .range([0, this.innerWidth])
+  }
+
+  private currentXScale: d3.ScaleLinear<number, number> = this.xScale
+
+  private get yScale(): d3.ScaleLinear<number, number> {
+    let min: number = !this.beginYAtZero && this.minVal ? this.minVal : 0
+    let max: number = this.maxVal || 0
+    return d3
+      .scaleLinear()
+      .domain([min, max])
+      .range([this.innerHeight, 0])
+  }
+
+  private x(
+    comparison: CommitComparison,
+    xScale: d3.ScaleLinear<number, number>
+  ): number {
+    return xScale(
+      this.datapoints.length -
+        this.datapoints.findIndex(it => it.comparison === comparison)
+    )
+  }
+
+  private y(comparison: CommitComparison): number {
+    let wantedMeasurement = this.wantedMeasurementForDatapoint(comparison)
+    if (wantedMeasurement !== undefined && wantedMeasurement.value) {
+      this.lastValue = wantedMeasurement.value
+      return this.yScale(wantedMeasurement.value)
+    }
+    if (this.datapoints.findIndex(it => it.comparison === comparison) === 0) {
+      this.lastValue = this.firstSuccessful
+    }
+    return this.yScale(this.lastValue)
+  }
+
+  private valueFormat: any = d3.format('<.4')
+
+  private xAxisFormat(d: any) {
+    if (d % 1 === 0) {
+      return d3.format('.0f')(d)
+    } else {
+      return ''
+    }
+  }
+
+  private get xAxis(): d3.Axis<number | { valueOf(): number }> {
+    return d3.axisBottom(this.xScale).tickFormat(this.xAxisFormat)
+  }
+
+  private get yAxis(): d3.Axis<number | { valueOf(): number }> {
+    return d3.axisLeft(this.yScale)
+  }
+
+  get unit(): string | null {
+    for (const datapoint of this.datapoints) {
+      let wantedMeasurement = this.wantedMeasurementForDatapoint(
+        datapoint.comparison
+      )
+      if (wantedMeasurement !== undefined && wantedMeasurement.unit) {
+        return wantedMeasurement.unit
+      }
+    }
+    return null
+  }
+
+  private get yLabel(): string {
+    if (this.measurement.metric) {
+      return this.unit
+        ? this.measurement.metric + ' in ' + this.unit
+        : this.measurement.metric
+    } else {
+      return ''
+    }
+  }
+
+  // interacting with the graph via zooming and brushing
+  private get zoom() {
+    return d3
+      .zoom()
+      .scaleExtent([1, 50])
+      .extent([
+        [0, 0],
+        [this.innerWidth, this.innerHeight]
+      ])
+      .translateExtent([
+        [0, -Infinity],
+        [this.innerWidth, Infinity]
+      ])
+      .on('zoom', this.zoomed)
+  }
+
+  private zoomed() {
+    let transform = d3.event.transform
+    this.currentXScale = transform.rescaleX(this.xScale)
+
+    d3.select('#dataLayer')
+      .selectAll<SVGPathElement, unknown>('.datapoint')
+      .attr(
+        'transform',
+        (d: any) =>
+          'translate(' +
+          this.x(d.comparison, this.currentXScale) +
+          ', ' +
+          this.y(d.comparison) +
+          ') rotate(-45)'
+      )
+    if (vxm.repoDetailModule.referenceDatapoint) {
+      let crosshair = d3.select(
+        '#_' + vxm.repoDetailModule.referenceDatapoint.commit.hash
+      )
+      if (crosshair) {
+        let crosshairRect = (crosshair.node() as SVGElement).getBoundingClientRect()
+        let crosshairWidth: number = crosshairRect.width
+        let crosshairHeight: number = crosshairRect.height
+
+        d3.select(
+          '#_' + vxm.repoDetailModule.referenceDatapoint.commit.hash
+        ).attr(
+          'transform',
+          (d: any) =>
+            'translate(' +
+            (this.x(d.comparison, this.currentXScale) - crosshairWidth / 2) +
+            ', ' +
+            (this.y(d.comparison) - crosshairHeight / 2) +
+            ')'
+        )
+      }
+    }
+
+    d3.select('#dataLayer')
+      .selectAll<SVGPathElement, unknown>('#line')
+      .attr('d', this.line(this.currentXScale))
+
+    this.xAxis.scale(this.currentXScale)
+    d3.select('#xAxis')
+      .attr('transform', 'translate(0,' + this.innerHeight + ')')
+      .call(this.xAxis as any)
+  }
+
+  private get brush() {
+    return d3
+      .brushX()
+      .extent([
+        [0, 0],
+        [this.innerWidth, this.innerHeight]
+      ])
+      .filter(() => d3.event.ctrlKey)
+      .on('end', this.brushed)
+  }
+
+  private brushed() {
+    let selection = d3.event.selection
+
+    if (selection) {
+      let newMin: number = Math.floor(this.currentXScale.invert(selection[1]))
+      let newMax = Math.floor(this.currentXScale.invert(selection[0]))
+      let newAmount: number = newMax - newMin
+      let additionalSkip: number = newMin
+      this.$emit('selectionChanged', newAmount, additionalSkip)
+      d3.select('#brush').call(this.brush.move as any, null)
+    }
+  }
+
+  // listening for special key events that trigger resize or change cursor apperance
+
+  private resizeListener: () => void = () => {}
+  private keyupListener: (e: KeyboardEvent) => void = () => {}
+  private keydownListener: (e: KeyboardEvent) => void = () => {}
+
+  // interacting with data points via DatapointDialog
   private dialogOpen: boolean = false
   private selectedDatapoint: CommitInfo | null = null
   private commitToCompare: CommitInfo | null = null
@@ -338,273 +479,8 @@ export default class NewDetailGraph extends Vue {
     this.dialogOpen = false
   }
 
-  // anything with and height related
-
-  private width: number = 0
-  private height: number = 0
-  private datapointWidth: number = 50
-
-  private margin: {
-    left: number
-    right: number
-    top: number
-    bottom: number
-  } = {
-    left: 100,
-    right: 30,
-    top: 10,
-    bottom: 100
-  }
-
-  private get innerWidth() {
-    return this.width - this.margin.left - this.margin.right
-  }
-
-  private get innerHeight() {
-    return this.height - this.margin.top - this.margin.bottom
-  }
-
-  // interacting with the graph
-
-  private get zoom() {
-    return d3
-      .zoom()
-      .scaleExtent([1, 50])
-      .extent([
-        [0, 0],
-        [this.innerWidth, this.innerHeight]
-      ])
-      .translateExtent([
-        [0, -Infinity],
-        [this.innerWidth, Infinity]
-      ])
-      .on('zoom', this.zoomed)
-  }
-
-  private zoomed() {
-    let transform = d3.event.transform
-    this.currentXScale = transform.rescaleX(this.xScale)
-
-    d3.select('#dataLayer')
-      .selectAll<SVGPathElement, unknown>('.datapoint')
-      .attr(
-        'transform',
-        (d: any) =>
-          'translate(' +
-          this.x(d.comparison, this.currentXScale) +
-          ', ' +
-          this.y(d.comparison) +
-          ') rotate(-45)'
-      )
-    if (vxm.repoDetailModule.referenceDatapoint) {
-      let crosshair = d3.select(
-        '#_' + vxm.repoDetailModule.referenceDatapoint.commit.hash
-      )
-      if (crosshair) {
-        let crosshairRect = (crosshair.node() as SVGElement).getBoundingClientRect()
-        let crosshairWidth: number = crosshairRect.width
-        let crosshairHeight: number = crosshairRect.height
-
-        d3.select(
-          '#_' + vxm.repoDetailModule.referenceDatapoint.commit.hash
-        ).attr(
-          'transform',
-          (d: any) =>
-            'translate(' +
-            (this.x(d.comparison, this.currentXScale) - crosshairWidth / 2) +
-            ', ' +
-            (this.y(d.comparison) - crosshairHeight / 2) +
-            ')'
-        )
-      }
-    }
-
-    d3.select('#dataLayer')
-      .selectAll<SVGPathElement, unknown>('#line')
-      .attr('d', this.line(this.currentXScale))
-
-    this.xAxis.scale(this.currentXScale)
-    d3.select('#xAxis')
-      .attr('transform', 'translate(0,' + this.innerHeight + ')')
-      .call(this.xAxis as any)
-  }
-
-  private get brush() {
-    return d3
-      .brushX()
-      .extent([
-        [0, 0],
-        [this.innerWidth, this.innerHeight]
-      ])
-      .filter(() => d3.event.ctrlKey)
-      .on('end', this.brushed)
-  }
-
-  private brushed() {
-    let selection = d3.event.selection
-
-    if (selection) {
-      let newMin: number = Math.floor(this.currentXScale.invert(selection[1]))
-      let newMax = Math.floor(this.currentXScale.invert(selection[0]))
-      let newAmount: number = newMax - newMin
-      let additionalSkip: number = newMin
-      this.$emit('selectionChanged', newAmount, additionalSkip)
-      d3.select('#brush').call(this.brush.move as any, null)
-    }
-  }
-
-  private resizeListener: () => void = () => {}
-  private keyupListener: (e: KeyboardEvent) => void = () => {}
-  private keydownListener: (e: KeyboardEvent) => void = () => {}
-
-  // anything related with getting values
-
-  private get datapoints(): CommitInfo[] {
-    return vxm.repoDetailModule.repoHistory.slice().reverse()
-  }
-
-  // prettier-ignore
-  private get wantedMeasurementForDatapoint(): (comparison: CommitComparison) => Measurement | undefined {
-    return (comparison: CommitComparison) => {
-      if (
-        comparison.second &&
-        comparison.second.measurements
-      ) {
-        let wantedMeasurement: Measurement | undefined =
-          comparison.second.measurements.find(it => it.id.equals(this.measurement))
-        return wantedMeasurement
-      }
-      return undefined
-    }
-  }
-
-  private datapointValue(datapoint: {
-    commit: Commit
-    comparison: CommitComparison
-  }): number | undefined {
-    let wantedMeasurement = this.wantedMeasurementForDatapoint(
-      datapoint.comparison
-    )
-    if (wantedMeasurement !== undefined && wantedMeasurement.value) {
-      return wantedMeasurement.value
-    }
-    return undefined
-  }
-
-  private get minVal(): number | undefined {
-    return d3.min(this.datapoints, this.datapointValue)
-  }
-
-  private get maxVal(): number | undefined {
-    return d3.max(this.datapoints, this.datapointValue)
-  }
-
-  private get dataAvailable(): boolean {
-    return this.measurement.metric !== '' && this.maxVal !== undefined
-  }
-
-  private lastValue: number = 0
-
-  get firstSuccessful(): number {
-    for (const datapoint of this.datapoints) {
-      let wantedMeasurement = this.wantedMeasurementForDatapoint(
-        datapoint.comparison
-      )
-      if (
-        wantedMeasurement !== undefined &&
-        wantedMeasurement.successful &&
-        wantedMeasurement.value
-      ) {
-        return wantedMeasurement.value
-      }
-    }
-    return this.height / 2
-  }
-
+  // drawing the graph
   private graphDrawn: boolean = false
-
-  // anything axes related
-
-  private get xScale(): d3.ScaleLinear<number, number> {
-    return d3
-      .scaleLinear()
-      .domain([this.amount + 0.5, 0.5])
-      .range([0, this.innerWidth])
-  }
-
-  private currentXScale: d3.ScaleLinear<number, number> = this.xScale
-
-  private get yScale(): d3.ScaleLinear<number, number> {
-    let min: number = !this.beginYAtZero && this.minVal ? this.minVal : 0
-    let max: number = this.maxVal || 0
-    return d3
-      .scaleLinear()
-      .domain([min, max])
-      .range([this.innerHeight, 0])
-  }
-
-  private x(
-    comparison: CommitComparison,
-    xScale: d3.ScaleLinear<number, number>
-  ): number {
-    return xScale(
-      this.datapoints.length -
-        this.datapoints.findIndex(it => it.comparison === comparison)
-    )
-  }
-  private y(comparison: CommitComparison): number {
-    let wantedMeasurement = this.wantedMeasurementForDatapoint(comparison)
-    if (wantedMeasurement !== undefined && wantedMeasurement.value) {
-      this.lastValue = wantedMeasurement.value
-      return this.yScale(wantedMeasurement.value)
-    }
-    if (this.datapoints.findIndex(it => it.comparison === comparison) === 0) {
-      this.lastValue = this.firstSuccessful
-    }
-    return this.yScale(this.lastValue)
-  }
-
-  private valueFormat: any = d3.format('<.4')
-
-  private xAxisFormat(d: any) {
-    if (d % 1 === 0) {
-      return d3.format('.0f')(d)
-    } else {
-      return ''
-    }
-  }
-
-  private get xAxis(): d3.Axis<number | { valueOf(): number }> {
-    return d3.axisBottom(this.xScale).tickFormat(this.xAxisFormat)
-  }
-
-  private get yAxis(): d3.Axis<number | { valueOf(): number }> {
-    return d3.axisLeft(this.yScale)
-  }
-
-  get unit(): string | null {
-    for (const datapoint of this.datapoints) {
-      let wantedMeasurement = this.wantedMeasurementForDatapoint(
-        datapoint.comparison
-      )
-      if (wantedMeasurement !== undefined && wantedMeasurement.unit) {
-        return wantedMeasurement.unit
-      }
-    }
-    return null
-  }
-
-  private get yLabel(): string {
-    if (this.measurement.metric) {
-      return this.unit
-        ? this.measurement.metric + ' in ' + this.unit
-        : this.measurement.metric
-    } else {
-      return ''
-    }
-  }
-
-  // drawing the actual graph
 
   private drawGraph() {
     if (this.dataAvailable) {
@@ -981,8 +857,7 @@ export default class NewDetailGraph extends Vue {
     return vxm.repoDetailModule.selectedRepoId
   }
 
-  // updating
-
+  // updating ths graph
   private resize() {
     let chart = d3.select('#chart').node() as HTMLElement
     this.width = chart ? chart.getBoundingClientRect().width : 900
@@ -1113,6 +988,7 @@ export default class NewDetailGraph extends Vue {
       .style('opacity', 0)
   }
 
+  // initializing
   created() {
     this.resizeListener = () => {
       this.resize()
@@ -1146,6 +1022,126 @@ export default class NewDetailGraph extends Vue {
     window.removeEventListener('resize', this.resizeListener)
     document.removeEventListener('keydown', this.keydownListener)
     document.removeEventListener('keyup', this.keyupListener)
+  }
+
+  // mdiCrosshairsGps as svg path
+  private crosshairIcon = {
+    draw: function(context: any, size: any) {
+      let scale: (x: number) => number = (x: number) => 0.02 * size * x
+
+      context.moveTo(scale(12), scale(8))
+      context.bezierCurveTo(
+        scale(14.209138999323173),
+        scale(8),
+        scale(16),
+        scale(9.790861000676827),
+        scale(16),
+        scale(12)
+      )
+      context.bezierCurveTo(
+        scale(16),
+        scale(14.209138999323173),
+        scale(14.209138999323173),
+        scale(16),
+        scale(12),
+        scale(16)
+      )
+      context.bezierCurveTo(
+        scale(9.790861000676827),
+        scale(16),
+        scale(8),
+        scale(14.209138999323173),
+        scale(8),
+        scale(12)
+      )
+      context.bezierCurveTo(
+        scale(8),
+        scale(9.790861000676827),
+        scale(9.790861000676827),
+        scale(8),
+        scale(12),
+        scale(8)
+      )
+      context.moveTo(scale(3.05), scale(13))
+      context.lineTo(scale(1), scale(13))
+      context.lineTo(scale(1), scale(11))
+      context.lineTo(scale(3.05), scale(11))
+      context.bezierCurveTo(
+        scale(3.5),
+        scale(6.83),
+        scale(6.83),
+        scale(3.5),
+        scale(11),
+        scale(3.05)
+      )
+      context.lineTo(scale(11), scale(1))
+      context.lineTo(scale(13), scale(1))
+      context.lineTo(scale(13), scale(3.05))
+      context.bezierCurveTo(
+        scale(17.17),
+        scale(3.5),
+        scale(20.5),
+        scale(6.83),
+        scale(20.95),
+        scale(11)
+      )
+      context.lineTo(scale(23), scale(11))
+      context.lineTo(scale(23), scale(13))
+      context.lineTo(scale(20.95), scale(13))
+      context.bezierCurveTo(
+        scale(20.5),
+        scale(17.17),
+        scale(17.17),
+        scale(20.5),
+        scale(13),
+        scale(20.95)
+      )
+      context.lineTo(scale(13), scale(23))
+      context.lineTo(scale(11), scale(23))
+      context.lineTo(scale(11), scale(20.95))
+      context.bezierCurveTo(
+        scale(6.83),
+        scale(20.5),
+        scale(3.5),
+        scale(17.17),
+        scale(3.05),
+        scale(13)
+      )
+      context.moveTo(scale(12), scale(5))
+      context.bezierCurveTo(
+        scale(8.134006751184447),
+        scale(5.000000000000001),
+        scale(4.999999999999999),
+        scale(8.134006751184447),
+        scale(5),
+        scale(12)
+      )
+      context.bezierCurveTo(
+        scale(5.000000000000001),
+        scale(15.865993248815553),
+        scale(8.134006751184447),
+        scale(19),
+        scale(12),
+        scale(19)
+      )
+      context.bezierCurveTo(
+        scale(15.865993248815553),
+        scale(19),
+        scale(19),
+        scale(15.865993248815553),
+        scale(19),
+        scale(12)
+      )
+      context.bezierCurveTo(
+        scale(19),
+        scale(8.134006751184447),
+        scale(15.865993248815553),
+        scale(5),
+        scale(12),
+        scale(5)
+      )
+      context.closePath()
+    }
   }
 }
 </script>
