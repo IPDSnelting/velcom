@@ -363,6 +363,7 @@ export default class RepoDetail extends Vue {
   @Watch('selectedBenchmark')
   @Watch('skip')
   @Watch('amount')
+  @Watch('lockedToRelativeCommit')
   @Watch('relativeToCommit')
   @Watch('yScaleBeginsAtZero')
   updateUrl() {
