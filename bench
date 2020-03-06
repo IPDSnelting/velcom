@@ -84,6 +84,14 @@ def build_makefile():
         "MORE_IS_BETTER"
     )
 
+    guarded_try_metric(
+        "misc",
+        "always zero",
+        lambda: 0,
+        "cats",
+        "NEUTRAL"
+    )
+
 
 def build_error(message: str):
     global program_result
