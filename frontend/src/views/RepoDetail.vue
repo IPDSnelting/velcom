@@ -93,7 +93,6 @@
               </v-col>
               <v-col cols="auto" v-if="lockedToRelativeCommit">
                 <commit-selection
-                  v-on="on"
                   :commit="relativeToCommit"
                   @value="relativeToCommit = typeof $event === 'string' ? $event : $event.hash"
                   label="Reference frame anchor"
