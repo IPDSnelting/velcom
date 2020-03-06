@@ -139,8 +139,8 @@ public class CommitHistoryEndpoint {
 			List<Commit> commitList = new ArrayList<>(commits);
 			List<CommitComparison> commitComparisons = new ArrayList<>();
 			for (int i = 0; i < commitList.size() - 1; i++) {
-				Commit from = commitList.get(i);
-				Commit to = commitList.get(i + 1);
+				Commit from = commitList.get(i + 1);
+				Commit to = commitList.get(i);
 				CommitComparison comparison = comparer.compare(from, runs.get(from.getHash()), to,
 					runs.get(to.getHash()));
 				commitComparisons.add(comparison);
