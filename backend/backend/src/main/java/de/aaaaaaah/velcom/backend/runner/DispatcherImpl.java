@@ -103,6 +103,11 @@ public class DispatcherImpl implements Dispatcher {
 	private void cleanupCrashedRunners() {
 		StringJoiner checkedRunners = new StringJoiner(", ");
 		for (ActiveRunnerInformation runner : activeRunners) {
+			if (runner.getState() == RunnerStatusEnum.WORKING
+				&& runner.getCurrentCommit().isEmpty()) {
+				disconnectRemoveRunnerByInformation(runner);
+				continue;
+			}
 			if (runner.getState() != RunnerStatusEnum.DISCONNECTED) {
 				continue;
 			}
