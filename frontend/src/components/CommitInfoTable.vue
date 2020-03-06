@@ -20,7 +20,7 @@
         <span class="change-arrow">→</span>
       </template>
       <template #item.value="{ item, value }">
-        <span v-if="value">{{ formatNumber(value) }}</span>
+        <span v-if="value != null && value !== undefined">{{ formatNumber(value) }}</span>
         <v-btn
           v-else
           class="error-message error-message-tooltip"
@@ -30,7 +30,7 @@
         >{{ formatError(item.errorMessage) }}</v-btn>
       </template>
       <template #item.unit=" { value }">
-        <span v-if="value">{{ value }}</span>
+        <span v-if="value != null && value !== undefined">{{ value }}</span>
         <span v-else>-</span>
       </template>
       <template #item.change=" { item, value }">

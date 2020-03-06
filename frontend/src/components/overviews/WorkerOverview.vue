@@ -33,52 +33,7 @@ import { Store } from 'vuex'
 
 @Component
 export default class WorkerOverview extends Vue {
-  @Prop({
-    default: () => [
-      new Worker(
-        'Test Runner',
-        'Linux amd64 4.19.94-1-lts, 8 cores, 4167MB max RAM',
-        new Commit(
-          'repo1',
-          'iAmAHash',
-          'author',
-          123,
-          'committer',
-          123,
-          'I am a message',
-          []
-        )
-      ),
-      new Worker(
-        'Test Runner 1',
-        'Linux amd64dsdsdsds 4.19.94-1-lts, 8 cores, 4167MB max RAM',
-        new Commit(
-          'repo1',
-          'iAmASecondHash',
-          'author',
-          125,
-          'committer',
-          125,
-          'I am a second message',
-          ['parentHash']
-        )
-      ),
-      new Worker(
-        'Test Runner 2',
-        'Linux amd64 4.19.94dsdsdsds-1-lts, 8 cores, 4167MB max RAM',
-        new Commit(
-          'repo2',
-          'iAmAThirdHash',
-          'author',
-          127,
-          'committer',
-          127,
-          'I am a third message',
-          ['parent1hash', 'parent2hash']
-        )
-      )
-    ]
-  })
+  @Prop()
   private workers!: Worker[]
 
   @Prop({ default: false })
