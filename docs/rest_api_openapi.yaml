@@ -742,8 +742,13 @@ paths:
                       required:
                         - differences
                         - second_commit
+                  offset:
+                    type: integer
+                    description: the global offset (skip) of the first (newest) commit returned
+                    minimum: 0
                 required:
                   - commits
+                  - offset
         '404':
           description: On invalid repo id
           content:
@@ -766,19 +771,24 @@ paths:
           required: true
         - schema:
             type: integer
+            minimum: 0
+            default: 100
           in: query
-          name: before
+          name: amount
           description: number of (older) commits to fetch before the current commit
+          required: true
         - schema:
             type: integer
+            minimum: 0
+            default: 0
           in: query
-          name: after
-          description: number of (newer) commits to fetch after the current commit
+          name: skip
+          description: number of commits to skip over after the current commit (a skip of 0 includes the current commit)
         - schema:
             type: string
           in: query
           name: relative_to
-          description: "the commit that 'before' and 'after' are relative to"
+          description: "the commit that 'amount' and 'skip' are relative to"
   /test-token:
     post:
       summary: Test whether an auth token is valid
