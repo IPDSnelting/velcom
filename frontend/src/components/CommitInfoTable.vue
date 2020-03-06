@@ -272,6 +272,9 @@ export default class CommitInfoTable extends Vue {
 
   private formatError(error: string) {
     const MAX_ERROR_LENGTH = 30
+    if (error == null) {
+      return "no error message available";
+    }
     if (error.length < MAX_ERROR_LENGTH) {
       return error
     }
