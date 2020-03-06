@@ -873,6 +873,7 @@ export default class DetailGraph extends Vue {
       .append('g')
       .attr('id', 'brush')
       .call(this.brush)
+      .lower()
     d3.select('#listenerRect').call(this.zoom as any)
     d3.select('#mainSvg')
       .select('#clipRect')
