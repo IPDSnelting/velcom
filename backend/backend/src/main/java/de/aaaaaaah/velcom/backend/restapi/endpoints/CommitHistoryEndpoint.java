@@ -12,9 +12,7 @@ import de.aaaaaaah.velcom.backend.newaccess.entities.Repo;
 import de.aaaaaaah.velcom.backend.newaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.newaccess.entities.Run;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonCommitComparison;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -38,8 +36,8 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 public class CommitHistoryEndpoint {
 
-	public static final int DEFAULT_BEFORE = 10;
-	public static final int DEFAULT_AFTER = 10;
+	public static final int DEFAULT_AMOUNT = 100;
+	public static final int DEFAULT_SKIP = 0;
 
 	private final BenchmarkReadAccess benchmarkAccess;
 	private final RepoReadAccess repoAccess;
@@ -59,8 +57,8 @@ public class CommitHistoryEndpoint {
 	 * Returns a list of the selected commits in the given repo.
 	 *
 	 * @param repoUuid the id of the repository
-	 * @param before how many (older) commits before the current commit to return
-	 * @param after how many (newer) commits after the current commit to return
+	 * @param amount how many commits to return
+	 * @param skip how many commits to skip before beginning to return commits
 	 * @param relativeToString commits are returned relative to this commit
 	 * @return the selected commits
 	 * @throws LinearLogException if the repository could not be brought into a linear shape for
@@ -69,64 +67,75 @@ public class CommitHistoryEndpoint {
 	@GET
 	public GetReply get(
 		@NotNull @QueryParam("repo_id") UUID repoUuid,
-		@Min(0) @DefaultValue("" + DEFAULT_BEFORE) @QueryParam("before") int before,
-		@Min(0) @DefaultValue("" + DEFAULT_AFTER) @QueryParam("after") int after,
+		@Min(0) @DefaultValue("" + DEFAULT_AMOUNT) @QueryParam("amount") int amount,
+		@Min(0) @DefaultValue("" + DEFAULT_SKIP) @QueryParam("skip") int skip,
 		@QueryParam("relative_to") String relativeToString)
 		throws LinearLogException {
-
-		System.out.println(
-			"before: " + before + ", after: " + after + ", relative_to: " + relativeToString);
 
 		final RepoId repoId = new RepoId(repoUuid);
 		final Repo repo = repoAccess.getRepo(repoId);
 		final Optional<CommitHash> relativeTo = Optional.ofNullable(relativeToString)
 			.map(CommitHash::new);
 
-		Deque<Commit> commits = new ArrayDeque<>();
-
 		try (Stream<Commit> stream = linearLog.walkBranches(repoId, repo.getTrackedBranches())) {
 			Iterator<Commit> iterator = stream.iterator();
 
-			// This loop keeps "after + 1" elements in the "commits" deque.
+			// 'offset' stores the offset of 'currentCommit' and is increased each time
+			// 'iterator.next()' is called.
+			Commit currentCommit = null;
+			int offset = -1;
+			boolean foundRelativeTo = false;
+
+			// 1. Find the commit that relative_to refers to
 			while (iterator.hasNext()) {
-				Commit commit = iterator.next();
-				commits.addLast(commit);
-
-				// The "+ 1" is because the "relativeTo" commit does not count towards the "after"
-				// or "before" numbers.
-				if (commits.size() > after + 1) {
-					commits.removeFirst();
-				}
-
-				// If no "relativeTo" commit is given, it defaults to the newest commit.
-				if (relativeTo.map(commit.getHash()::equals).orElse(true)) {
+				currentCommit = iterator.next();
+				offset++;
+				if (relativeTo.map(currentCommit.getHash()::equals).orElse(true)) {
+					foundRelativeTo = true;
 					break;
 				}
 			}
+			if (!foundRelativeTo) {
+				return new GetReply(List.of(), 0);
+			}
+			// We can be sure that 'currentCommit' is not null at this point, because it contains
+			// the commit that relativeTo refers to, and 'offset' contains its offset.
 
-			// This loop then fills in the "before" commits
-			for (int i = 0; i < before; i++) {
+			// 2. Skip as many commits as necessary
+			for (int i = 0; i < skip; i++) {
 				if (iterator.hasNext()) {
-					commits.addLast(iterator.next());
+					currentCommit = iterator.next();
+					offset++;
 				} else {
-					break;
+					return new GetReply(List.of(), 0);
+				}
+			}
+			// Now, 'currentCommit' contains the first commit to be returned, and 'offset' contains
+			// its offset.
+
+			// 3. Take 'amount' commits. From this point on, 'currentCommit' is not used any more.
+			List<Commit> commits = new ArrayList<>();
+			commits.add(currentCommit);
+			for (int i = 0; i < amount - 1; i++) {
+				if (iterator.hasNext()) {
+					commits.add(iterator.next());
 				}
 			}
 
-			// We usually need one more commit, for the CommitComparison of the last commit
+			// 4. We usually need one more commit, for the CommitComparison of the last commit
 			boolean omitLastCommit = false;
 			if (iterator.hasNext()) {
 				omitLastCommit = true;
-				commits.addLast(iterator.next());
+				commits.add(iterator.next());
 			}
 
-			// Now, get all the runs.
+			// 5. Get all the runs.
 			List<CommitHash> commitHashes = commits.stream()
 				.map(Commit::getHash)
 				.collect(Collectors.toUnmodifiableList());
 			Map<CommitHash, Run> runs = benchmarkAccess.getLatestRuns(repoId, commitHashes);
 
-			// And compile the commit comparisons.
+			// 6. Compile the commit comparisons.
 			List<Commit> commitList = new ArrayList<>(commits);
 			List<CommitComparison> commitComparisons = new ArrayList<>();
 			for (int i = 0; i < commitList.size() - 1; i++) {
@@ -144,18 +153,23 @@ public class CommitHistoryEndpoint {
 				commitComparisons.add(comparison);
 			}
 
-			return new GetReply(commitComparisons);
+			// And the deed is done. Iterators are not nice to work with, but java streams don't
+			// easily support zipping, and for a one-off like this, it was easier to just use
+			// iterators.
+			return new GetReply(commitComparisons, offset);
 		}
 	}
 
 	private static class GetReply {
 
 		private final List<JsonCommitComparison> commits;
+		private final int offset;
 
-		public GetReply(List<CommitComparison> commits) {
+		public GetReply(List<CommitComparison> commits, int offset) {
 			this.commits = commits.stream()
 				.map(JsonCommitComparison::new)
 				.collect(Collectors.toUnmodifiableList());
+			this.offset = offset;
 		}
 
 		public List<JsonCommitComparison> getCommits() {
