@@ -9,33 +9,16 @@
     </v-row>
     <v-row>
       <v-col>
-        <v-dialog width="600" v-model="dialogOpen">
-          <v-card class="datapointDialog">
-            <v-card-title></v-card-title>
-            <v-card-text>
-              <v-radio-group v-model="datapointAction">
-                <v-radio label="use datapoint as reference" value="setReference"></v-radio>
-                <v-radio label="Select this commit to compare" value="selectCommitToCompare"></v-radio>
-                <v-radio
-                  v-show="selectedCommitToCompare"
-                  :label="compareLabel"
-                  value="compareCommits"
-                ></v-radio>
-                <v-radio label="remove reference line" value="removeReference"></v-radio>
-              </v-radio-group>
-            </v-card-text>
-            <v-card-actions>
-              <commit-benchmark-actions
-                :hasExistingBenchmark="false"
-                @benchmark="benchmarkSelectedCommit"
-                @benchmarkUpwards="benchmarkUpwardsOfSelectedCommit"
-              ></commit-benchmark-actions>
-              <v-spacer></v-spacer>
-              <v-btn color="error" @click="dialogOpen = false">Close</v-btn>
-              <v-btn color="primary" @click="onConfirm">Confirm</v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-dialog>
+        <datapoint-dialog
+          :dialogOpen="dialogOpen"
+          :selectedDatapoint="selectedDatapoint"
+          :commitToCompare="commitToCompare"
+          @setReference="setReference"
+          @selectCommitToCompare="selectCommitToCompare"
+          @compareCommits="compareCommits"
+          @removeReference="removeReference"
+          @close="closeDialog"
+        ></datapoint-dialog>
       </v-col>
     </v-row>
   </v-container>
@@ -56,12 +39,13 @@ import {
 import { vxm } from '../../store'
 import { formatDateUTC } from '../../util/TimeUtil'
 import CommitBenchmarkActions from '../CommitBenchmarkActions.vue'
+import DatapointDialog from '../dialogs/DatapointDialog.vue'
 
 type CommitInfo = { commit: Commit; comparison: CommitComparison }
 
 @Component({
   components: {
-    'commit-benchmark-actions': CommitBenchmarkActions
+    'datapoint-dialog': DatapointDialog
   }
 })
 export default class NewDetailGraph extends Vue {
@@ -200,53 +184,18 @@ export default class NewDetailGraph extends Vue {
   private dialogOpen: boolean = false
   private selectedDatapoint: CommitInfo | null = null
   private commitToCompare: CommitInfo | null = null
-  private datapointAction:
-    | 'setReference'
-    | 'selectCommitToCompare'
-    | 'compareCommits'
-    | 'removeReference' = 'setReference'
 
   private get selectedCommitToCompare(): boolean {
     return this.commitToCompare !== null
   }
 
-  private get compareLabel(): string {
-    return this.commitToCompare
-      ? 'Compare this commit to commit ' + this.commitToCompare!.commit.hash
-      : ''
-  }
-
   openDatapointMenu(datapoint: CommitInfo) {
-    this.dialogOpen = true
     this.selectedDatapoint = datapoint
-  }
-  private benchmarkSelectedCommit() {
-    vxm.queueModule.dispatchPrioritizeOpenTask(this.selectedDatapoint!.commit)
+    this.dialogOpen = true
   }
 
-  private benchmarkUpwardsOfSelectedCommit() {
-    vxm.queueModule.dispatchQueueUpwardsOf(this.selectedDatapoint!.commit)
-  }
-
-  private onConfirm() {
+  setReference() {
     this.dialogOpen = false
-    switch (this.datapointAction) {
-      case 'setReference':
-        this.setReference(this.xScale)
-        break
-      case 'selectCommitToCompare':
-        this.selectCommitToCompare()
-        break
-      case 'compareCommits':
-        this.compareCommits()
-        break
-      case 'removeReference':
-        this.removeReferenceLine()
-        break
-    }
-  }
-
-  setReference(xScale: d3.ScaleLinear<number, number>) {
     if (vxm.repoDetailModule.referenceDatapoint) {
       this.removeCrosshair(vxm.repoDetailModule.referenceDatapoint)
     }
@@ -257,7 +206,7 @@ export default class NewDetailGraph extends Vue {
       this.drawReferenceLine(vxm.repoDetailModule.referenceDatapoint)
       this.drawCrosshair(
         vxm.repoDetailModule.referenceDatapoint,
-        xScale,
+        this.xScale,
         'gray'
       )
     }
@@ -289,9 +238,9 @@ export default class NewDetailGraph extends Vue {
       .remove()
   }
 
-  private removeReferenceLine() {
+  private removeReference() {
+    this.dialogOpen = false
     d3.select('#referenceLine')
-      .exit()
       .transition()
       .attr('opacity', 0)
       .remove()
@@ -300,6 +249,7 @@ export default class NewDetailGraph extends Vue {
   }
 
   private selectCommitToCompare() {
+    this.dialogOpen = false
     if (this.commitToCompare) {
       this.removeCrosshair(this.commitToCompare)
     }
@@ -314,6 +264,7 @@ export default class NewDetailGraph extends Vue {
   }
 
   private compareCommits() {
+    this.dialogOpen = false
     if (this.commitToCompare && this.selectedDatapoint) {
       this.$router.push({
         name: 'commit-comparison',
@@ -360,7 +311,6 @@ export default class NewDetailGraph extends Vue {
         .attr('fill', color)
         .attr('stroke', color)
     }
-    console.log(d3.select('#_' + datapoint.commit.hash))
   }
 
   private removeCrosshair(datapoint: CommitInfo) {
@@ -382,6 +332,10 @@ export default class NewDetailGraph extends Vue {
       )
       .attr('fill', this.datapointColor(datapoint))
       .attr('stroke', this.strokeColor(datapoint))
+  }
+
+  private closeDialog() {
+    this.dialogOpen = false
   }
 
   // anything with and height related
@@ -673,7 +627,7 @@ export default class NewDetailGraph extends Vue {
           this.datapointColor(this.commitToCompare)
         )
       }
-      this.setReference(this.xScale)
+      this.setReference()
     } else {
       if (this.graphDrawn) {
         this.graphDrawn = false
@@ -800,7 +754,6 @@ export default class NewDetailGraph extends Vue {
         this.openDatapointMenu(d)
       })
       .on('mousedown', (d: CommitInfo) => {
-        console.log('hoho')
         if (d3.event.which === 2) {
           d3.event.preventDefault()
           let routeData = this.$router.resolve({
