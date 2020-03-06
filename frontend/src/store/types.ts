@@ -46,11 +46,11 @@ export class Measurement {
   ) {
     this.id = id
     this.successful = !errorMessage
-    this.unit = unit || null
-    this.interpretation = interpretation || null
-    this.values = values || null
-    this.value = value || null
-    this.errorMessage = errorMessage || null
+    this.unit = unit === undefined ? null : unit
+    this.interpretation = interpretation === undefined ? null : interpretation
+    this.values = values === undefined ? null : values
+    this.value = value === undefined ? null : value
+    this.errorMessage = errorMessage === undefined ? null : errorMessage
   }
 }
 
@@ -135,8 +135,8 @@ export class Run {
   ) {
     this.startTime = startTime
     this.stopTime = stopTime
-    this.measurements = (measurements && measurements) || null
-    this.errorMessage = (errorMessage && errorMessage) || null
+    this.measurements = measurements === undefined ? null : measurements
+    this.errorMessage = errorMessage === undefined ? null : errorMessage
   }
 }
 
