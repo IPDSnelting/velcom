@@ -150,7 +150,7 @@ export default class MultipleRunOverview extends Vue {
         let measurement = findMeasurement(difference.measurement)!
         let value = measurement.value!
         let valueDifference = difference.difference
-        let differencePercentage = valueDifference / value
+        let differencePercentage = value === 0 ? 0 : valueDifference / value
 
         let isNowBetter =
           (measurement.interpretation === 'LESS_IS_BETTER' &&
