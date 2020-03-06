@@ -8,9 +8,10 @@
     @input="$emit('value', $event)"
     item-value="hash"
     item-text="hash"
-    label="Commit"
+    :label="label"
     placeholder="Search for a hash or message"
     hide-selected
+    hide-details
     return-object
     clearable
   >
@@ -46,6 +47,9 @@ export default class CommitSelectionComponent extends Vue {
 
   @Model('value')
   private commit!: string | Commit
+
+  @Prop({ default: 'Commit' })
+  private label!: string
 
   private search: string = ''
 

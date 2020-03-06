@@ -16,6 +16,15 @@ export class RepoDetailStore extends VxModule {
   }[] = []
   private _selectedRepoId: string = ''
 
+  /**
+   * If true the user is locked to the relative commit, if false the
+   * relative commit will be ignored.
+   *
+   * @type {boolean}
+   * @memberof RepoDetailStore
+   */
+  lockedToRelativeCommit: boolean = false
+  relativeToCommit: string = ''
   selectedMetric: string = ''
   selectedBenchmark: string = ''
   selectedFetchAmount: string = '10'
@@ -36,7 +45,10 @@ export class RepoDetailStore extends VxModule {
       params: {
         repo_id: payload.repoId,
         amount: payload.amount,
-        skip: payload.skip
+        skip: payload.skip,
+        relative_to: this.lockedToRelativeCommit
+          ? this.relativeToCommit
+          : undefined
       }
     })
 
@@ -82,6 +94,24 @@ export class RepoDetailStore extends VxModule {
         // delete result
         .then(it => {})
     )
+  }
+
+  @action
+  fetchIndexOfCommit(payload: {
+    commitHash: string
+    repoId: string
+  }): Promise<number> {
+    return axios
+      .get('/commit-history', {
+        snackbarTag: 'commit-history',
+        params: {
+          repo_id: payload.repoId,
+          amount: 1,
+          skip: 0,
+          relative_to: payload.commitHash
+        }
+      })
+      .then(it => it.data.offset)
   }
 
   @mutation

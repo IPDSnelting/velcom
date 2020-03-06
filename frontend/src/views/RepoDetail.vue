@@ -21,7 +21,7 @@
       <v-col>
         <v-card>
           <v-card-text class="ma-0 pa-0">
-            <v-container fluid class="ma-0 px-4">
+            <v-container fluid class="ma-0 px-4 pb-0">
               <v-row align="center" justify="space-around" no-gutters>
                 <v-col md="5" sm="12" cols="12">
                   <v-row no-gutters>
@@ -91,6 +91,39 @@
                   </v-col>
                 </v-row>
               </v-col>
+              <v-col cols="auto" v-if="lockedToRelativeCommit">
+                <commit-selection
+                  v-on="on"
+                  :commit="relativeToCommit"
+                  @value="relativeToCommit = typeof $event === 'string' ? $event : $event.hash"
+                  label="Reference frame anchor"
+                  :allCommits="allCommits"
+                ></commit-selection>
+              </v-col>
+              <v-col cols="auto" align-self="end" class="mt-3">
+                <v-tooltip top v-if="!lockedToRelativeCommit">
+                  <template #activator="{ on }">
+                    <v-btn
+                      v-on="on"
+                      text
+                      color="primary"
+                      @click="lockReferenceFrame"
+                    >Lock reference frame</v-btn>
+                  </template>
+                  Make skip relative to the anchor commit. Good for permanent links, as it never changes!
+                </v-tooltip>
+                <v-tooltip top v-if="lockedToRelativeCommit">
+                  <template #activator="{ on }">
+                    <v-btn
+                      v-on="on"
+                      text
+                      color="primary"
+                      @click="unlockReferenceFrame"
+                    >Unlock reference frame</v-btn>
+                  </template>
+                  Make skip relative to the latest. Good for staying up to date!
+                </v-tooltip>
+              </v-col>
               <v-col cols="auto" align-self="end">
                 <v-btn text color="primary" @click="toggleYScale()">{{ yScaleButtonLabel }}</v-btn>
               </v-col>
@@ -98,7 +131,6 @@
                 <v-btn
                   color="error"
                   text
-                  outlined
                   :disabled="!selectedBenchmark || !selectedMetric"
                   @click="deleteMetric"
                 >Delete metric</v-btn>
@@ -128,13 +160,15 @@ import DetailGraph from '@/components/graphs/DetailGraph.vue'
 import { Route, RawLocation } from 'vue-router'
 import { Dictionary } from 'vue-router/types/router'
 import CommitChip from '../components/CommitChip.vue'
+import CommitSelectionComponent from '../components/CommitSelectionComponent.vue'
 
 @Component({
   components: {
     'repo-base-information': RepoBaseInformation,
     'repo-commit-overview': RepoCommitOverview,
     'detail-graph': DetailGraph,
-    'commit-chip': CommitChip
+    'commit-chip': CommitChip,
+    'commit-selection': CommitSelectionComponent
   }
 })
 export default class RepoDetail extends Vue {
@@ -183,6 +217,17 @@ export default class RepoDetail extends Vue {
     return new MeasurementID(this.selectedBenchmark, this.selectedMetric)
   }
 
+  private get relativeToCommit(): string {
+    return vxm.repoDetailModule.relativeToCommit
+  }
+
+  private set relativeToCommit(commitHash: string) {
+    vxm.repoDetailModule.relativeToCommit = commitHash
+    if (this.lockedToRelativeCommit) {
+      vxm.repoDetailModule.fetchHistoryForRepo(this.payload)
+    }
+  }
+
   private get amount() {
     return vxm.repoDetailModule.selectedFetchAmount
   }
@@ -197,6 +242,18 @@ export default class RepoDetail extends Vue {
 
   private set skip(skip: string) {
     vxm.repoDetailModule.selectedSkipAmount = skip
+  }
+
+  private get lockedToRelativeCommit(): boolean {
+    return vxm.repoDetailModule.lockedToRelativeCommit
+  }
+
+  private set lockedToRelativeCommit(lockedToRelativeCommit: boolean) {
+    vxm.repoDetailModule.lockedToRelativeCommit = lockedToRelativeCommit
+  }
+
+  private get allCommits(): Commit[] {
+    return vxm.repoDetailModule.repoHistory.map(it => it.commit)
   }
 
   private get id() {
@@ -244,6 +301,27 @@ export default class RepoDetail extends Vue {
     return true
   }
 
+  private async lockReferenceFrame() {
+    this.relativeToCommit = vxm.repoDetailModule.repoHistory[0].commit.hash
+    let index = await vxm.repoDetailModule.fetchIndexOfCommit({
+      repoId: this.repo.id,
+      commitHash: this.relativeToCommit
+    })
+    this.lockedToRelativeCommit = true
+    this.skip = '0'
+    vxm.repoDetailModule.fetchHistoryForRepo(this.payload)
+  }
+
+  private async unlockReferenceFrame() {
+    let index = await vxm.repoDetailModule.fetchIndexOfCommit({
+      repoId: this.repo.id,
+      commitHash: this.relativeToCommit
+    })
+    this.lockedToRelativeCommit = false
+    this.skip = '' + (parseInt(this.skip) + index)
+    vxm.repoDetailModule.fetchHistoryForRepo(this.payload)
+  }
+
   private toggleYScale() {
     this.yScaleBeginsAtZero = !this.yScaleBeginsAtZero
     if (this.yScaleButtonLabel === 'begin y-Scale at zero') {
@@ -286,12 +364,15 @@ export default class RepoDetail extends Vue {
   @Watch('selectedBenchmark')
   @Watch('skip')
   @Watch('amount')
+  @Watch('relativeToCommit')
   updateUrl() {
     let newQuery: { [param: string]: string } = {
       metric: this.selectedMetric,
       benchmark: this.selectedBenchmark,
       skip: this.skip,
-      fetchAmount: this.amount
+      fetchAmount: this.amount,
+      relativeToCommit: this.relativeToCommit,
+      lockedToRelativeCommit: this.lockedToRelativeCommit ? 'true' : 'false'
     }
 
     history.replaceState(
@@ -345,6 +426,12 @@ export default class RepoDetail extends Vue {
     }
     if (query.metric) {
       this.selectedMetric = query.metric as string
+    }
+    if (query.relativeToCommit) {
+      this.relativeToCommit = query.relativeToCommit as string
+    }
+    if (query.lockedToRelativeCommit) {
+      this.lockedToRelativeCommit = query.lockedToRelativeCommit === 'true'
     }
   }
 
