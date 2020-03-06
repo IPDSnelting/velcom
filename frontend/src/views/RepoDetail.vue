@@ -364,6 +364,7 @@ export default class RepoDetail extends Vue {
   @Watch('skip')
   @Watch('amount')
   @Watch('relativeToCommit')
+  @Watch('yScaleBeginsAtZero')
   updateUrl() {
     let newQuery: { [param: string]: string } = {
       metric: this.selectedMetric,
@@ -371,7 +372,8 @@ export default class RepoDetail extends Vue {
       skip: this.skip,
       fetchAmount: this.amount,
       relativeToCommit: this.relativeToCommit,
-      lockedToRelativeCommit: this.lockedToRelativeCommit ? 'true' : 'false'
+      lockedToRelativeCommit: this.lockedToRelativeCommit ? 'true' : 'false',
+      yScaleBeginsAtZero: this.yScaleBeginsAtZero ? 'true' : 'false'
     }
 
     history.replaceState(
@@ -431,6 +433,9 @@ export default class RepoDetail extends Vue {
     }
     if (query.lockedToRelativeCommit) {
       this.lockedToRelativeCommit = query.lockedToRelativeCommit === 'true'
+    }
+    if (query.yScaleBeginsAtZero) {
+      this.yScaleBeginsAtZero = query.yScaleBeginsAtZero === 'true'
     }
   }
 
