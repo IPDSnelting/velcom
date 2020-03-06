@@ -45,5 +45,32 @@ public class MeasurementValues {
 		return calculateAverage(values);
 	}
 
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) {
+			return true;
+		}
+		if (o == null || getClass() != o.getClass()) {
+			return false;
+		}
+		MeasurementValues that = (MeasurementValues) o;
+		return values.equals(that.values) &&
+			unit.equals(that.unit) &&
+			interpretation == that.interpretation;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(values, unit, interpretation);
+	}
+
+	@Override
+	public String toString() {
+		return "MeasurementValues{" +
+			"values=" + values +
+			", unit=" + unit +
+			", interpretation=" + interpretation +
+			'}';
+	}
 
 }

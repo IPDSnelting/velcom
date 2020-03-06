@@ -17,4 +17,28 @@ public class MeasurementError {
 		return errorMessage;
 	}
 
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) {
+			return true;
+		}
+		if (o == null || getClass() != o.getClass()) {
+			return false;
+		}
+		MeasurementError that = (MeasurementError) o;
+		return errorMessage.equals(that.errorMessage);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(errorMessage);
+	}
+
+	@Override
+	public String toString() {
+		return "MeasurementError{" +
+			"errorMessage='" + errorMessage + '\'' +
+			'}';
+	}
+
 }
