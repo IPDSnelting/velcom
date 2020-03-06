@@ -69,7 +69,7 @@ public class RecentBenchmarkCollector {
 			throw new BenchmarkCollectorException(e);
 		}
 
-		return resultList;
+		return resultList.subList(0, Math.min(amount, resultList.size()));
 	}
 
 	private void processBatch(List<CommitComparison> resultList, int skip,
