@@ -14,6 +14,9 @@ import org.jooq.DSLContext;
 import org.jooq.InsertValuesStep5;
 import org.jooq.codegen.db.tables.records.KnownCommitRecord;
 
+/**
+ * Provides access to known commits and their respective statuses.
+ */
 public class KnownCommitWriteAccess extends KnownCommitReadAccess {
 
 	public KnownCommitWriteAccess(DatabaseStorage databaseStorage) {
