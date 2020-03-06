@@ -1,5 +1,6 @@
 package de.aaaaaaah.velcom.backend.newaccess;
 
+import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static java.util.stream.Collectors.toUnmodifiableSet;
@@ -25,7 +26,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -49,14 +49,16 @@ public class BenchmarkReadAccess {
 	protected final DatabaseStorage databaseStorage;
 
 	protected final Map<RepoId, Cache<CommitHash, Run>> runCache = new ConcurrentHashMap<>();
-	protected final LinkedList<Run> recentRunCache = new LinkedList<>();
+	protected final List<Run> recentRunCache = new ArrayList<>();
+	protected final Comparator<Run> recentRunCacheOrder = comparing(Run::getStartTime).reversed();
 
 	public BenchmarkReadAccess(DatabaseStorage databaseStorage) {
 		this.databaseStorage = Objects.requireNonNull(databaseStorage);
 
 		// Populate recent run cache
-		for (Run recentRun : getRecentRuns(0, RECENT_RUN_CACHE_SIZE)) {
-			recentRunCache.addLast(recentRun);
+		synchronized (recentRunCache) {
+			recentRunCache.addAll(getRecentRuns(0, RECENT_RUN_CACHE_SIZE));
+			recentRunCache.sort(recentRunCacheOrder);
 		}
 	}
 
@@ -69,16 +71,24 @@ public class BenchmarkReadAccess {
 	 * @throws IllegalArgumentException if skip/amount is negative
 	 */
 	public List<Run> getRecentRuns(int skip, int amount) throws IllegalArgumentException {
-		if (skip < 0) { throw new IllegalArgumentException("skip must be positive"); }
-		if (amount < 0) { throw new IllegalArgumentException("amount must be positive"); }
-		if (amount == 0) { return Collections.emptyList(); }
+		if (skip < 0) {
+			throw new IllegalArgumentException("skip must be positive");
+		}
+		if (amount < 0) {
+			throw new IllegalArgumentException("amount must be positive");
+		}
+		if (amount == 0) {
+			return Collections.emptyList();
+		}
 
 		List<Run> runList = new ArrayList<>();
 
 		// Check cache
-		if (skip < recentRunCache.size()) {
-			// There are at least some relevant runs in cache
-			recentRunCache.stream().skip(skip).limit(amount).forEach(runList::add);
+		synchronized (recentRunCache) {
+			if (skip < recentRunCache.size()) {
+				// There are at least some relevant runs in cache
+				recentRunCache.stream().skip(skip).limit(amount).forEach(runList::add);
+			}
 		}
 
 		// Check database
@@ -98,7 +108,7 @@ public class BenchmarkReadAccess {
 			}
 		}
 
-		runList.sort(Comparator.comparing(Run::getStartTime).reversed());
+		runList.sort(recentRunCacheOrder);
 		return runList;
 	}
 
