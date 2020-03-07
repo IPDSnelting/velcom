@@ -1,6 +1,8 @@
 package de.aaaaaaah.velcom.backend.runner.single;
 
+import de.aaaaaaah.velcom.backend.newaccess.RepoWriteAccess;
 import de.aaaaaaah.velcom.backend.newaccess.entities.Commit;
+import de.aaaaaaah.velcom.backend.runner.single.state.PreparingRunnerForWorkState;
 import de.aaaaaaah.velcom.backend.runner.single.state.RunnerDisconnectedState;
 import de.aaaaaaah.velcom.backend.runner.single.state.RunnerIdleState;
 import de.aaaaaaah.velcom.backend.runner.single.state.RunnerInitializingState;
@@ -81,7 +83,18 @@ public class ServerRunnerStateMachine {
 	 */
 	public void onWorkDone(BenchmarkResults results) {
 		runnerInformation.setResults(results);
-		runnerInformation.clearCurrentCommit();
+
+		// Clear the commit if we got results for it
+		runnerInformation.getCurrentCommit().ifPresent(commit -> {
+			RunnerWorkOrder order = results.getWorkOrder();
+			if (!commit.getRepoId().getId().equals(order.getRepoId())) {
+				return;
+			}
+			if (!commit.getHash().getHash().equals(order.getCommitHash())) {
+				return;
+			}
+			runnerInformation.clearCurrentCommit();
+		});
 	}
 
 	/**
@@ -93,11 +106,13 @@ public class ServerRunnerStateMachine {
 	public void resetRunner(String reason) throws IOException {
 		runnerInformation.getConnectionManager().sendEntity(new ResetOrder(reason));
 		runnerInformation.clearCurrentCommit();
-		switchState(new RunnerIdleState());
 	}
 
 	/**
-	 * Starts the work.
+	 * Starts the work. Can only be called when the state is PREPARING_WORK.
+	 *
+	 * <p><br><strong>Please use {@link #dispatchCommit(Commit, RepoWriteAccess)} if you just want
+	 * to start work on a commit.</strong>
 	 *
 	 * @param commit the commit
 	 * @param workOrder the work order
@@ -107,7 +122,7 @@ public class ServerRunnerStateMachine {
 	public void startWork(Commit commit, RunnerWorkOrder workOrder,
 		CheckedConsumer<OutputStream, IOException> writer)
 		throws IOException {
-		if (runnerInformation.getState() != RunnerStatusEnum.IDLE) {
+		if (runnerInformation.getState() != RunnerStatusEnum.PREPARING_WORK) {
 			throw new IllegalStateException(
 				"Invalid state, runner is in " + runnerInformation.getState()
 			);
@@ -120,6 +135,25 @@ public class ServerRunnerStateMachine {
 		} catch (Exception e) {
 			// TODO: 12.01.20 Make nicer catch
 			throw new IOException(e);
+		}
+	}
+
+	/**
+	 * Dispatches a commit, updating the bench repo and performing related tasks.
+	 *
+	 * @param commit the commit
+	 * @param access the repo write access
+	 */
+	public void dispatchCommit(Commit commit, RepoWriteAccess access) {
+		switchState(new PreparingRunnerForWorkState(commit, access));
+	}
+
+	/**
+	 * Goes back to the idle state.
+	 */
+	public void backToIdle() {
+		if (getState().getStatus() != RunnerStatusEnum.IDLE) {
+			switchState(new RunnerIdleState());
 		}
 	}
 

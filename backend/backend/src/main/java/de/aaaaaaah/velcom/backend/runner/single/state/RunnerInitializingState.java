@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Runner is connected but not ready to accept jobs
+ * Runner is connected but not ready to accept jobs.
  */
 public class RunnerInitializingState implements RunnerState {
 
@@ -22,7 +22,7 @@ public class RunnerInitializingState implements RunnerState {
 	@Override
 	public RunnerState onMessage(String type, SentEntity entity,
 		ActiveRunnerInformation information) {
-		if ("RunnerInformation".equals(type)) {
+		if (RunnerInformation.class.getSimpleName().equals(type)) {
 			RunnerInformation runnerInformation = (RunnerInformation) entity;
 			information.setRunnerInformation(runnerInformation);
 			if (runnerInformation.getRunnerState() == RunnerStatusEnum.WORKING) {

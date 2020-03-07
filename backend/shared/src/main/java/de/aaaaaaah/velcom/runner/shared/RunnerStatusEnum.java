@@ -17,6 +17,10 @@ public enum RunnerStatusEnum {
 	 */
 	WORKING,
 	/**
+	 * Runner is preparing work, updating the repo or receiving a work binary.
+	 */
+	PREPARING_WORK,
+	/**
 	 * The runner is currently disconnected.
 	 */
 	DISCONNECTED

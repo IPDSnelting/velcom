@@ -36,21 +36,31 @@ public class RunnerStateMachine {
 		doWithErrorAndSwitch(
 			() -> {
 				LOGGER.info("Established connection with status {}", state.getStatus());
-				configuration.getConnectionManager().sendEntity(new RunnerInformation(
-					configuration.getRunnerName(),
-					System.getProperty("os.name")
-						+ " " + System.getProperty("os.arch")
-						+ " " + System.getProperty("os.version"),
-					Runtime.getRuntime().availableProcessors(),
-					Runtime.getRuntime().maxMemory(),
-					state.getStatus(),
-					configuration.getBenchmarkRepoOrganizer().getHeadHash().orElse(null)
-				));
+				sendRunnerInformation(configuration);
 				sendResultsIfAny(configuration);
 				return state;
 			},
 			configuration
 		);
+	}
+
+	/**
+	 * Sends runner information out to the server.
+	 *
+	 * @param configuration the runner configuration
+	 * @throws IOException if an error occurs
+	 */
+	private void sendRunnerInformation(RunnerConfiguration configuration) throws IOException {
+		configuration.getConnectionManager().sendEntity(new RunnerInformation(
+			configuration.getRunnerName(),
+			System.getProperty("os.name")
+				+ " " + System.getProperty("os.arch")
+				+ " " + System.getProperty("os.version"),
+			Runtime.getRuntime().availableProcessors(),
+			Runtime.getRuntime().maxMemory(),
+			state.getStatus(),
+			configuration.getBenchmarkRepoOrganizer().getHeadHash().orElse(null)
+		));
 	}
 
 	/**
@@ -140,6 +150,9 @@ public class RunnerStateMachine {
 			if (newState != state) {
 				LOGGER.debug("Switching from {} to {}", state, newState);
 				this.state = newState;
+			}
+			if (newState instanceof IdleState) {
+				sendRunnerInformation(configuration);
 			}
 		} catch (IOException e) {
 			LOGGER.warn("Got an exception while switching stages. Disconnecting myself!", e);

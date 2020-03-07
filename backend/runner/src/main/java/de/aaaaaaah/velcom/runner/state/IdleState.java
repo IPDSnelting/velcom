@@ -16,7 +16,7 @@ public class IdleState implements RunnerState {
 
 	@Override
 	public RunnerStatusEnum getStatus() {
-		return RunnerStatusEnum.IDLE;
+		return workOrder != null ? RunnerStatusEnum.PREPARING_WORK : RunnerStatusEnum.IDLE;
 	}
 
 	@Override

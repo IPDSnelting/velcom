@@ -178,6 +178,31 @@ public class DispatcherImpl implements Dispatcher {
 					}, 1, TimeUnit.SECONDS);
 				}
 				activeRunners.add(runnerInformation);
+			} else {
+				RunnerStatusEnum newState = newInformation.getRunnerState();
+				if (newState == RunnerStatusEnum.WORKING
+					|| newState == RunnerStatusEnum.PREPARING_WORK) {
+					if (runnerInformation.getCurrentCommit().isEmpty()) {
+						LOGGER.info("Runner reconnected as working without a commit, resetting...");
+						resetRunner(runnerInformation);
+					}
+				} else if (newState == RunnerStatusEnum.IDLE) {
+					if (runnerInformation.getState() == RunnerStatusEnum.PREPARING_WORK) {
+						LOGGER.info("Idling runner hopefully came back from updating its repo.");
+					} else if (runnerInformation.getCurrentCommit().isPresent()) {
+						LOGGER.info("Runner reconnected and forgot about its commit");
+						// Re-adds it to the queue and disconnects the runner
+						disconnectRemoveRunnerByInformation(runnerInformation);
+					} else {
+						LOGGER.info(
+							"Got idle information (maybe after reset), accepting the runner."
+						);
+						runnerInformation.getRunnerStateMachine().backToIdle();
+					}
+				} else if (runnerInformation.getCurrentCommit().isPresent()) {
+					LOGGER.info("Runner reconnected and forgot about its commit");
+					disconnectRemoveRunnerByInformation(runnerInformation);
+				}
 			}
 
 			LOGGER.info("Finished adding a runner {}.", newInformation);
@@ -388,44 +413,8 @@ public class DispatcherImpl implements Dispatcher {
 	private boolean dispatchCommit(ActiveRunnerInformation runner, Commit commit) {
 		LOGGER.info("Dispatching {} on {}", commit, runner.getRunnerInformation());
 
-		if (runner.getRunnerInformation().isEmpty()) {
-			LOGGER.warn("Tried to dispatch a commit to a runner without information! ({})", commit);
-			runner.getConnectionManager().disconnect();
-			return false;
-		}
-		runner.getRunnerStateMachine().markAsMyCommit(commit);
-
-		String runnerBenchmarkCommitHash = runner.getRunnerInformation()
-			.get()
-			.getCurrentBenchmarkRepoHash()
-			.orElse("");
-
-		String actualBenchmarkCommitHash = repoAccess.getLatestBenchmarkRepoHash().getHash();
-
 		try {
-			if (!runnerBenchmarkCommitHash.equals(actualBenchmarkCommitHash)) {
-				runner.getRunnerStateMachine().sendBenchmarkRepo(
-					repoAccess::streamBenchmarkRepoArchive,
-					actualBenchmarkCommitHash
-				);
-			}
-
-			RunnerWorkOrder workOrder = new RunnerWorkOrder(
-				commit.getRepoId().getId(), commit.getHash().getHash()
-			);
-
-			// Commit was cancelled
-			if (runner.getCurrentCommit().isEmpty()) {
-				return true;
-			}
-
-			runner.getRunnerStateMachine().startWork(
-				commit,
-				workOrder,
-				outputStream -> repoAccess.streamNormalRepoArchive(
-					commit.getRepoId(), commit.getHash(), outputStream
-				)
-			);
+			runner.getRunnerStateMachine().dispatchCommit(commit, repoAccess);
 			return true;
 		} catch (Throwable e) {
 			LOGGER.info("Dispatching commit not possible", e);

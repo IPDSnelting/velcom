@@ -26,7 +26,7 @@ public class UpdateBenchmarkRepoState implements RunnerState {
 
 	@Override
 	public RunnerStatusEnum getStatus() {
-		return RunnerStatusEnum.IDLE;
+		return RunnerStatusEnum.PREPARING_WORK;
 	}
 
 	@Override
