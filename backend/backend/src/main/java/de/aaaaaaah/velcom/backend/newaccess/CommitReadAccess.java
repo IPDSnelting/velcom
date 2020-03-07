@@ -5,7 +5,6 @@ import de.aaaaaaah.velcom.backend.newaccess.entities.BranchName;
 import de.aaaaaaah.velcom.backend.newaccess.entities.Commit;
 import de.aaaaaaah.velcom.backend.newaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.newaccess.entities.RepoId;
-import de.aaaaaaah.velcom.backend.newaccess.entities.Run;
 import de.aaaaaaah.velcom.backend.newaccess.exceptions.CommitAccessException;
 import de.aaaaaaah.velcom.backend.newaccess.exceptions.CommitLogException;
 import de.aaaaaaah.velcom.backend.newaccess.exceptions.RepoAccessException;
@@ -20,7 +19,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Objects;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.stream.Collectors;
@@ -98,11 +97,6 @@ public class CommitReadAccess {
 		}
 	}
 
-	public Optional<Commit> getCommit(Run run) {
-		List<Commit> commits = getCommits(run.getRepoId(), List.of(run.getCommitHash()));
-		return commits.isEmpty() ? Optional.empty() : Optional.of(commits.get(0));
-	}
-
 	/**
 	 * Fetch {@link Commit}s for a list of {@link CommitHash}es.
 	 *
@@ -114,6 +108,13 @@ public class CommitReadAccess {
 	 * 	collection.
 	 */
 	public List<Commit> getCommits(RepoId repoId, Collection<CommitHash> commitHashes) {
+		Objects.requireNonNull(repoId);
+		Objects.requireNonNull(commitHashes);
+
+		if (commitHashes.isEmpty()) {
+			return Collections.emptyList();
+		}
+
 		List<Commit> commits = new ArrayList<>();
 
 		try (
@@ -165,8 +166,8 @@ public class CommitReadAccess {
 	}
 
 	/**
-	 * Collects all commits from the specified repository that were authored between the given
-	 * startTime and stopTime.
+	 * Collects all commits from the specified repository that 1.) were authored between the given
+	 * startTime and stopTime and 2.) are reachable from the given branches
 	 *
 	 * <p>If no startTime or no stopTime are specified, the author date will not be limited
 	 * in that regard.</p>
@@ -176,9 +177,23 @@ public class CommitReadAccess {
 	 * @param startTime the start time
 	 * @param stopTime the stop time
 	 * @return a map with each commit hash pointing to its respective commit
+	 * @throws IllegalArgumentException if startTime is after stopTime
 	 */
 	public Map<CommitHash, Commit> getCommitsBetween(RepoId repoId,
 		Collection<BranchName> branches, @Nullable Instant startTime, @Nullable Instant stopTime) {
+
+		Objects.requireNonNull(repoId);
+		Objects.requireNonNull(branches);
+
+		if (startTime != null && stopTime != null && startTime.isAfter(stopTime)) {
+			throw new IllegalArgumentException(
+				"start time is after stop time: " + startTime + " > " + stopTime
+			);
+		}
+
+		if (branches.isEmpty()) {
+			return Collections.emptyMap();
+		}
 
 		try (Repository repo = repoStorage.acquireRepository(repoId.getDirectoryName())) {
 			RevWalk walk = new RevWalk(repo);
@@ -221,7 +236,9 @@ public class CommitReadAccess {
 	public Stream<Commit> getCommitLog(RepoId repoId, Collection<BranchName> branches)
 		throws CommitLogException {
 
-		// Step -1: Return nothing if no branches were selected
+		// Step -1: Check arguments
+		Objects.requireNonNull(repoId);
+		Objects.requireNonNull(branches);
 		if (branches.isEmpty()) {
 			return Stream.empty();
 		}
