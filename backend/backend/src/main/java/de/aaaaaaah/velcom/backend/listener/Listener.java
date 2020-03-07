@@ -3,17 +3,19 @@ package de.aaaaaaah.velcom.backend.listener;
 import static java.util.stream.Collectors.toList;
 
 import de.aaaaaaah.velcom.backend.GlobalConfig;
+import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.newaccess.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.KnownCommitWriteAccess;
 import de.aaaaaaah.velcom.backend.newaccess.RepoWriteAccess;
 import de.aaaaaaah.velcom.backend.newaccess.entities.BenchmarkStatus;
-import de.aaaaaaah.velcom.backend.newaccess.entities.Commit;
-import de.aaaaaaah.velcom.backend.newaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.newaccess.entities.Branch;
 import de.aaaaaaah.velcom.backend.newaccess.entities.BranchName;
+import de.aaaaaaah.velcom.backend.newaccess.entities.Commit;
+import de.aaaaaaah.velcom.backend.newaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.newaccess.entities.Repo;
 import de.aaaaaaah.velcom.backend.newaccess.entities.RepoId;
-import de.aaaaaaah.velcom.backend.data.queue.Queue;
+import de.aaaaaaah.velcom.backend.newaccess.exceptions.NoSuchRepoException;
+import de.aaaaaaah.velcom.backend.newaccess.exceptions.RepoAccessException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -26,7 +28,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.jooq.meta.jaxb.Strategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,13 +74,17 @@ public class Listener {
 	}
 
 	private void update() {
-		repoAccess.updateBenchmarkRepo();
+		try {
+			repoAccess.updateBenchmarkRepo();
+		} catch (RepoAccessException e) {
+			LOGGER.warn("Could not fetch updates from benchmark repo!", e);
+		}
 
 		for (Repo repo : repoAccess.getAllRepos()) {
 			try {
 				checkForUnknownCommits(repo.getRepoId());
-			} catch (CommitSearchException e) {
-				LOGGER.warn("Could not fetch updates for repo " + repo, e);
+			} catch (CommitSearchException | RepoAccessException | NoSuchRepoException e) {
+				LOGGER.warn("Could not fetch updates for repo: " + repo, e);
 			}
 		}
 	}
@@ -89,7 +94,9 @@ public class Listener {
 	 *
 	 * @param repoId the id of the repository to check for
 	 */
-	public void checkForUnknownCommits(RepoId repoId) throws CommitSearchException {
+	public void checkForUnknownCommits(RepoId repoId)
+		throws CommitSearchException, RepoAccessException, NoSuchRepoException {
+
 		long start = System.currentTimeMillis();
 
 		try {

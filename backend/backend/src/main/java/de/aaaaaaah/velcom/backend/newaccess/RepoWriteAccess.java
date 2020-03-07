@@ -61,7 +61,13 @@ public class RepoWriteAccess extends RepoReadAccess {
 
 		// Clone all repos if needed
 		for (RepoId repoId : getAllRepoIds()) {
-			updateRepo(repoId);
+			try {
+				updateRepo(repoId);
+			} catch (RepoAccessException e) {
+				// Failing to clone a single repository should not prevent
+				// instantiation of this class
+				LOGGER.warn("Could not clone repo: " + repoId, e);
+			}
 		}
 	}
 
@@ -284,7 +290,7 @@ public class RepoWriteAccess extends RepoReadAccess {
 	 *
 	 * @throws RepoAccessException if an error occurs during the fetch/clone operation
 	 */
-	public void updateBenchmarkRepo() {
+	public void updateBenchmarkRepo() throws RepoAccessException {
 		try {
 			if (repoStorage.containsRepository(benchRepoDirName)) {
 				// Check if remote url changed
