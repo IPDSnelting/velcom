@@ -252,6 +252,12 @@ public class RepoReadAccess {
 	private CommitHash loadLatestCommitHash(String dirName, String ref) {
 		try (Repository localRepo = repoStorage.acquireRepository(dirName)) {
 			ObjectId refPtr = localRepo.resolve(ref);
+
+			if (refPtr == null) {
+				throw new RepoAccessException("could not find commit referenced by '"
+					+ ref + "' from directory '" + dirName + "'");
+			}
+
 			return new CommitHash(refPtr.getName()); // returns sha-1 hash
 		} catch (NoSuchRepositoryException | RepositoryAcquisitionException | IOException e) {
 			throw new RepoAccessException("failed to access ref " + ref + " under local repo "
