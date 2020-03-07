@@ -38,7 +38,7 @@ export default class NewComparisonGraph extends Vue {
     between: number
   } = {
     left: 100,
-    right: 30,
+    right: 50,
     top: 10,
     bottom: 100,
     between: 50
@@ -163,14 +163,16 @@ export default class NewComparisonGraph extends Vue {
   }
 
   private get contextXAxis(): any {
-    return d3
-      .axisBottom(this.xScale([this.minTimestamp, this.maxTimestamp]))
-      .tickFormat(this.timeFormat)
+    return d3.axisBottom(this.xScale(this.context)).tickFormat(this.timeFormat)
   }
 
   private get yAxis(): any {
+    let domain: number[] =
+      this.minFocusVal !== undefined && this.maxFocusVal !== undefined
+        ? [this.minFocusVal, this.maxFocusVal]
+        : [0, 0]
     return d3
-      .axisLeft(this.yScale(this.focus, this.focusHeight))
+      .axisLeft(this.yScale(domain, this.focusHeight))
       .tickFormat(this.valueFormat)
   }
 
@@ -220,6 +222,7 @@ export default class NewComparisonGraph extends Vue {
   private graphDrawn: boolean = false
 
   private drawGraph() {
+    console.log('drawing graph')
     if (this.dataAvailable) {
       if (!this.graphDrawn) {
         d3.select('#dataLayer').remove()
@@ -231,12 +234,13 @@ export default class NewComparisonGraph extends Vue {
         return d.commit.repoID + '#' + d.commit.hash
       }
 
-      /* this.repos.forEach(repoID => {
-        this.drawPath(repoID)
+      this.repos.forEach(repoID => {
+        console.log('drawing ' + repoID)
+        this.drawPaths(repoID)
         this.drawDatapoints(repoID, keyFn)
-        this.appendTooltips(keyFn)
+        // this.appendTooltips(keyFn)
       })
-      this.setReference() */
+      // this.setReference() */
     } else {
       if (this.graphDrawn) {
         this.graphDrawn = false
@@ -262,6 +266,123 @@ export default class NewComparisonGraph extends Vue {
         .attr('class', 'information')
     }
   }
+
+  private drawPaths(repoID: string) {
+    let focusDomain: number[] =
+      this.minFocusVal !== undefined && this.maxFocusVal !== undefined
+        ? [this.minFocusVal, this.maxFocusVal]
+        : [0, 0]
+
+    let contextDomain: number[] =
+      this.minContextVal !== undefined && this.maxContextVal !== undefined
+        ? [this.minContextVal, this.maxContextVal]
+        : [0, 0]
+
+    this.drawPath(repoID, 'focus', this.focus, focusDomain, this.focusHeight)
+
+    this.drawPath(
+      repoID,
+      'context',
+      this.context,
+      contextDomain,
+      this.contextHeight
+    )
+  }
+
+  private drawPath(
+    repoID: string,
+    layer: string,
+    xDomain: number[],
+    yDomain: number[],
+    height: number
+  ) {
+    let path: any = d3
+      .select('#' + layer + 'Layer')
+      .selectAll<SVGPathElement, unknown>('#' + layer + 'line_' + repoID)
+      .data([this.datapoints[repoID]])
+    let newPath: any = path
+      .enter()
+      .append('path')
+      .attr('id', layer + 'line_' + repoID)
+      .merge(path)
+      .attr('d', this.line(xDomain, yDomain, height))
+      .attr('stroke', this.colorById(repoID))
+      .attr('stroke-width', 2)
+      .attr('fill', 'none')
+      .attr('pointer-events', 'none')
+    path
+      .exit()
+      .transition()
+      .attr('opacity', 0)
+      .attr('width', 0)
+      .remove()
+  }
+
+  get line(): (xDomain: number[], yDomain: number[], height: number) => any {
+    return (xDomain: number[], yDomain: number[], height: number) =>
+      d3
+        .line<Datapoint>()
+        .x((d: Datapoint) => {
+          return this.x(xDomain, d)
+        })
+        .y((d: Datapoint) => {
+          return this.y(yDomain, d, height)
+        })
+  }
+
+  private drawDatapoints(repoID: string, keyFn: d3.ValueFn<any, any, string>) {
+    let yDomain: number[] =
+      this.minFocusVal !== undefined && this.maxFocusVal !== undefined
+        ? [this.minFocusVal, this.maxFocusVal]
+        : [0, 0]
+
+    let datapoints: d3.Selection<
+      SVGPathElement,
+      Datapoint,
+      d3.BaseType,
+      unknown
+    > = d3
+      .select('#focusLayer')
+      // .attr('clip-path', 'url(#clip)')
+      .selectAll<SVGPathElement, unknown>('.datapoint')
+      .data(this.datapoints[repoID], keyFn)
+
+    let newDatapoints = datapoints
+      .enter()
+      .append('path')
+      .attr('class', 'datapoint')
+      .attr('id', (d: Datapoint) => repoID + '_' + d.commit.hash)
+      .merge(datapoints)
+      .attr(
+        'd',
+        d3
+          .symbol()
+          .type(d3.symbolCircle)
+          .size(this.datapointWidth)
+      )
+      .attr(
+        'transform',
+        (d: Datapoint) =>
+          'translate(' +
+          this.x(this.focus, d) +
+          ', ' +
+          this.y(yDomain, d, this.focusHeight) +
+          ')'
+      )
+      .attr('fill', (d: Datapoint) => this.colorById(repoID))
+      .attr('stroke', (d: Datapoint) => this.colorById(repoID))
+      .attr('stroke-width', 2)
+      .attr('opacity', 1)
+      .style('cursor', 'pointer')
+
+    datapoints
+      .exit()
+      .transition()
+      .attr('opacity', 0)
+      .attr('width', 0)
+      .remove()
+  }
+
   get colorById(): (repoID: string) => string {
     return (repoID: string) => {
       let index: number = vxm.repoModule.repoIndex(repoID)
@@ -273,6 +394,7 @@ export default class NewComparisonGraph extends Vue {
   private resizeListener: () => void = () => {}
 
   private resize() {
+    console.log('resizing')
     let chart = d3.select('#chart').node() as HTMLElement
     this.width = chart ? chart.getBoundingClientRect().width : 900
     this.height = this.width * 0.6
@@ -291,6 +413,11 @@ export default class NewComparisonGraph extends Vue {
       .call(this.brush)
       .call(this.brush.move, this.focus.map(this.xScale(this.context)))
 
+    d3.select('#mainSvg')
+      .select('#clipRect')
+      .attr('width', this.innerWidth)
+      .attr('height', this.innerHeight + 2 * this.datapointWidth)
+
     this.updateData()
   }
 
@@ -298,14 +425,10 @@ export default class NewComparisonGraph extends Vue {
   @Watch('minTimestamp')
   @Watch('maxTimestamp')
   @Watch('beginYAtZero')
-  private updateDatapoints() {
-    d3.select('#yLabel').text(this.yLabel)
-    this.updateData()
-  }
-
-  @Watch('beginYAtZero')
   @Watch('focus')
   private updateData() {
+    console.log('updating data')
+    d3.select('#yLabel').text(this.yLabel)
     this.updateAxes()
     this.drawGraph()
   }
@@ -348,9 +471,19 @@ export default class NewComparisonGraph extends Vue {
         'translate(' + this.margin.left + ',' + this.margin.top + ')'
       )
 
+    d3.select('#mainSvg')
+      .append('clipPath')
+      .attr('id', 'clip')
+      .append('rect')
+      .attr('id', 'clipRect')
+      .attr('y', -this.datapointWidth)
+      .attr('width', this.innerWidth)
+      .attr('height', this.focusHeight + 2 * this.datapointWidth)
+
     d3.select('#dataLayer')
       .append('g')
       .attr('id', 'focusLayer')
+      .attr('clip-path', 'url(#clip)')
 
     d3.select('#dataLayer')
       .append('g')
@@ -365,24 +498,6 @@ export default class NewComparisonGraph extends Vue {
       .attr('id', 'brush')
       .call(this.brush)
       .call(this.brush.move, this.context.map(this.xScale(this.context)))
-
-    d3.select('#mainSvg')
-      .append('clipPath')
-      .attr('id', 'focusClip')
-      .append('rect')
-      .attr('id', 'focusClipRect')
-      .attr('y', -this.datapointWidth)
-      .attr('width', this.innerWidth)
-      .attr('height', this.focusHeight + 2 * this.datapointWidth)
-
-    d3.select('#mainSvg')
-      .append('clipPath')
-      .attr('id', 'contextClip')
-      .append('rect')
-      .attr('id', 'contextClipRect')
-      .attr('y', this.focusHeight + this.margin.between - this.datapointWidth)
-      .attr('width', this.innerWidth)
-      .attr('height', this.focusHeight + 2 * this.datapointWidth)
 
     d3.select('#dataLayer')
       .append('g')
