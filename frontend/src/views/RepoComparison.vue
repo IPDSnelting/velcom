@@ -148,11 +148,9 @@
         <repo-selector v-on:selectionChanged="retrieveGraphData()"></repo-selector>
       </v-col>
       <v-col style="flex: 1 1 50%; min-width: 600px">
-        <comparison-graph
-          :metric="this.selectedMetric"
-          :beginYAtZero="this.yScaleBeginsAtZero"
-          @timeframeChanged="updateTimeframe"
-        ></comparison-graph>
+        <v-card>
+          <comparison-graph :beginYAtZero="this.yScaleBeginsAtZero"></comparison-graph>
+        </v-card>
       </v-col>
     </v-row>
   </v-container>
@@ -165,17 +163,17 @@ import { Watch } from 'vue-property-decorator'
 import { vxm } from '../store/index'
 import RepoAddDialog from '../components/dialogs/RepoAddDialog.vue'
 import RepoSelector from '../components/RepoSelector.vue'
-import ComparisonGraph from '../components/graphs/ComparisonGraph.vue'
 import { Repo, MeasurementID, Datapoint } from '../store/types'
 import { mdiCalendar } from '@mdi/js'
 import { Route, RawLocation } from 'vue-router'
 import { Dictionary } from 'vue-router/types/router'
+import NewComparisonGraph from '../components/graphs/NewComparisonGraph.vue'
 
 @Component({
   components: {
     'repo-add': RepoAddDialog,
     'repo-selector': RepoSelector,
-    'comparison-graph': ComparisonGraph
+    'comparison-graph': NewComparisonGraph
   }
 })
 export default class RepoComparison extends Vue {
