@@ -222,7 +222,6 @@ export default class NewComparisonGraph extends Vue {
   private graphDrawn: boolean = false
 
   private drawGraph() {
-    console.log('drawing graph')
     if (this.dataAvailable) {
       if (!this.graphDrawn) {
         d3.select('#dataLayer').remove()
@@ -235,7 +234,6 @@ export default class NewComparisonGraph extends Vue {
       }
 
       this.repos.forEach(repoID => {
-        console.log('drawing ' + repoID)
         this.drawPaths(repoID)
         this.drawDatapoints(repoID, keyFn)
         // this.appendTooltips(keyFn)
@@ -343,7 +341,6 @@ export default class NewComparisonGraph extends Vue {
       unknown
     > = d3
       .select('#focusLayer')
-      // .attr('clip-path', 'url(#clip)')
       .selectAll<SVGPathElement, unknown>('.datapoint')
       .data(this.datapoints[repoID], keyFn)
 
@@ -394,7 +391,6 @@ export default class NewComparisonGraph extends Vue {
   private resizeListener: () => void = () => {}
 
   private resize() {
-    console.log('resizing')
     let chart = d3.select('#chart').node() as HTMLElement
     this.width = chart ? chart.getBoundingClientRect().width : 900
     this.height = this.width * 0.6
@@ -414,9 +410,13 @@ export default class NewComparisonGraph extends Vue {
       .call(this.brush.move, this.focus.map(this.xScale(this.context)))
 
     d3.select('#mainSvg')
-      .select('#clipRect')
+      .select('#focusClipRect')
       .attr('width', this.innerWidth)
-      .attr('height', this.innerHeight + 2 * this.datapointWidth)
+      .attr('height', this.focusHeight + 2 * this.datapointWidth)
+    d3.select('#mainSvg')
+      .select('#contextClipRect')
+      .attr('width', this.innerWidth)
+      .attr('height', this.contextHeight + 2 * this.datapointWidth)
 
     this.updateData()
   }
@@ -473,17 +473,26 @@ export default class NewComparisonGraph extends Vue {
 
     d3.select('#mainSvg')
       .append('clipPath')
-      .attr('id', 'clip')
+      .attr('id', 'focusClip')
       .append('rect')
-      .attr('id', 'clipRect')
+      .attr('id', 'focusClipRect')
       .attr('y', -this.datapointWidth)
       .attr('width', this.innerWidth)
       .attr('height', this.focusHeight + 2 * this.datapointWidth)
 
+    d3.select('#mainSvg')
+      .append('clipPath')
+      .attr('id', 'contextClip')
+      .append('rect')
+      .attr('id', 'contextClipRect')
+      .attr('y', -this.datapointWidth)
+      .attr('width', this.innerWidth)
+      .attr('height', this.contextHeight + 2 * this.datapointWidth)
+
     d3.select('#dataLayer')
       .append('g')
       .attr('id', 'focusLayer')
-      .attr('clip-path', 'url(#clip)')
+      .attr('clip-path', 'url(#focusClip)')
 
     d3.select('#dataLayer')
       .append('g')
@@ -492,6 +501,7 @@ export default class NewComparisonGraph extends Vue {
         'transform',
         'translate(0,' + (this.focusHeight + this.margin.between) + ')'
       )
+      .attr('clip-path', 'url(#contextClip)')
 
     d3.select('#contextLayer')
       .append('g')
