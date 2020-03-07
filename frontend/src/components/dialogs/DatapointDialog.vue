@@ -4,9 +4,21 @@
       <v-card-title></v-card-title>
       <v-card-text>
         <v-radio-group v-model="datapointAction">
-          <v-radio label="use datapoint as reference" value="setReference"></v-radio>
-          <v-radio label="Select this commit to compare" value="selectCommitToCompare"></v-radio>
-          <v-radio v-show="commitToCompare" :label="compareLabel" value="compareCommits"></v-radio>
+          <v-radio
+            v-if="allowSelectAsReference"
+            label="use datapoint as reference"
+            value="setReference"
+          ></v-radio>
+          <v-radio
+            v-if="allowSelectAsReference"
+            label="Select this commit to compare"
+            value="selectCommitToCompare"
+          ></v-radio>
+          <v-radio
+            v-if="allowSelectAsReference && commitToCompare"
+            :label="compareLabel"
+            value="compareCommits"
+          ></v-radio>
           <v-radio label="remove reference line" value="removeReference"></v-radio>
         </v-radio-group>
       </v-card-text>
@@ -47,6 +59,9 @@ export default class DatapointDialog extends Vue {
 
   @Prop({})
   commitToCompare!: CommitInfo
+
+  @Prop({})
+  allowSelectAsReference!: boolean
 
   get selectedCommit(): Commit {
     return this.selectedDatapoint!.commit

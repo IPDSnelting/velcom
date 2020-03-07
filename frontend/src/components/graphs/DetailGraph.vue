@@ -13,6 +13,7 @@
           :dialogOpen="dialogOpen"
           :selectedDatapoint="selectedDatapoint"
           :commitToCompare="commitToCompare"
+          :allowSelectAsReference="isSelectedAllowedAsReference"
           @setReference="setReference"
           @selectCommitToCompare="selectCommitToCompare"
           @compareCommits="compareCommits"
@@ -325,6 +326,13 @@ export default class DetailGraph extends Vue {
   private dialogOpen: boolean = false
   private selectedDatapoint: CommitInfo | null = null
   private commitToCompare: CommitInfo | null = null
+
+  private get isSelectedAllowedAsReference() {
+    return (
+      this.selectedDatapoint &&
+      this.datapointValue(this.selectedDatapoint) !== undefined
+    )
+  }
 
   private get selectedCommitToCompare(): boolean {
     return this.commitToCompare !== null
