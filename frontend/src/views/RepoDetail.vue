@@ -8,18 +8,6 @@
     <v-row align="baseline" justify="center">
       <v-col>
         <v-card>
-          <detail-graph
-            :measurement="selectedMeasurement"
-            :amount="Number.parseInt(amount)"
-            :beginYAtZero="this.yScaleBeginsAtZero"
-            @selectionChanged="updateSelection"
-          ></detail-graph>
-        </v-card>
-      </v-col>
-    </v-row>
-    <v-row align="baseline" justify="center">
-      <v-col>
-        <v-card>
           <v-card-text class="ma-0 pa-0">
             <v-container fluid class="ma-0 px-4 pb-0">
               <v-row align="center" justify="space-around" no-gutters>
@@ -136,6 +124,18 @@
               </v-col>
             </v-row>
           </v-card-actions>
+        </v-card>
+      </v-col>
+    </v-row>
+    <v-row align="baseline" justify="center">
+      <v-col>
+        <v-card>
+          <detail-graph
+            :measurement="selectedMeasurement"
+            :amount="Number.parseInt(amount)"
+            :beginYAtZero="this.yScaleBeginsAtZero"
+            @selectionChanged="updateSelection"
+          ></detail-graph>
         </v-card>
       </v-col>
     </v-row>
