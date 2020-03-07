@@ -51,6 +51,10 @@ public class RunnerStateMachine {
 	 * @throws IOException if an error occurs
 	 */
 	private void sendRunnerInformation(RunnerConfiguration configuration) throws IOException {
+		if (!configuration.getConnectionManager().isConnected()) {
+			return;
+		}
+
 		configuration.getConnectionManager().sendEntity(new RunnerInformation(
 			configuration.getRunnerName(),
 			System.getProperty("os.name")
