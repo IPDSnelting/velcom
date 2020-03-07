@@ -862,8 +862,8 @@ export default class DetailGraph extends Vue {
     let chart = d3.select('#chart').node() as HTMLElement
     this.width = chart ? chart.getBoundingClientRect().width : 900
     this.height = this.width / 2
-    // FIXME: Keep zoom on resize
-    this.currentXScale = this.baseXScale
+    this.updateCurrentAxisAfterResize()
+
     d3.select<Element, unknown>('#listenerRect')
       .transition()
       .duration(750)
@@ -888,6 +888,11 @@ export default class DetailGraph extends Vue {
     this.updateData()
   }
 
+  private updateCurrentAxisAfterResize() {
+    // FIXME: Keep zoom on resize
+    this.currentXScale = this.baseXScale
+  }
+
   @Watch('datapoints')
   private updateDatapoints() {
     d3.select('#yLabel').text(this.yLabel)
@@ -897,6 +902,7 @@ export default class DetailGraph extends Vue {
   @Watch('beginYAtZero')
   @Watch('amount')
   private updateData() {
+    this.updateCurrentAxisAfterResize()
     this.updateAxes()
     this.drawGraph()
   }
