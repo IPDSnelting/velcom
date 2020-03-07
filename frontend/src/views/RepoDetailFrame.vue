@@ -15,6 +15,7 @@
           </repo-add>
         </v-col>
       </v-row>
+      <page-404 v-if="!repoSelected"></page-404>
       <router-view></router-view>
     </v-container>
   </div>
@@ -28,11 +29,13 @@ import { Repo } from '../store/types'
 import RepoSelectionComponent from '../components/RepoSelectionComponent.vue'
 import { mdiPlusCircleOutline } from '@mdi/js'
 import RepoAddDialog from '../components/dialogs/RepoAddDialog.vue'
+import NotFound404 from './NotFound404.vue'
 
 @Component({
   components: {
     'repo-select': RepoSelectionComponent,
-    'repo-add': RepoAddDialog
+    'repo-add': RepoAddDialog,
+    'page-404': NotFound404
   }
 })
 export default class RepoDetailFrame extends Vue {

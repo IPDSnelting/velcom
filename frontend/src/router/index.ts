@@ -5,6 +5,7 @@ import RepoComparison from '../views/RepoComparison.vue'
 import RepoDetailFrame from '../views/RepoDetailFrame.vue'
 import RepoDetail from '../views/RepoDetail.vue'
 import Queue from '../views/Queue.vue'
+import NotFound404 from '../views/NotFound404.vue'
 import CommitComparisonDisplay from '../views/CommitComparisonDisplay.vue'
 import CommitDetail from '../views/CommitDetail.vue'
 import {
@@ -105,6 +106,15 @@ const routes = [
       label: 'About',
       navigable: true,
       icon: mdiInformationOutline
+    }
+  },
+  {
+    path: '*',
+    name: '404',
+    component: NotFound404,
+    meta: {
+      label: 'Not found',
+      navigable: false
     }
   }
 ]
