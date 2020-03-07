@@ -193,7 +193,7 @@ public class RepoReadAccess {
 	 *
 	 * @return the commit hash
 	 */
-	public CommitHash getLatestBenchmarkRepoHash() {
+	public CommitHash getLatestBenchmarkRepoHash() throws RepoAccessException {
 		return loadLatestCommitHash(benchRepoDirName, Constants.HEAD);
 	}
 
@@ -249,7 +249,7 @@ public class RepoReadAccess {
 		);
 	}
 
-	private CommitHash loadLatestCommitHash(String dirName, String ref) {
+	private CommitHash loadLatestCommitHash(String dirName, String ref) throws RepoAccessException {
 		try (Repository localRepo = repoStorage.acquireRepository(dirName)) {
 			ObjectId refPtr = localRepo.resolve(ref);
 

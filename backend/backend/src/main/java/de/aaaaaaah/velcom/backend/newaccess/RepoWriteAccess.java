@@ -60,6 +60,14 @@ public class RepoWriteAccess extends RepoReadAccess {
 			}
 		}
 
+		try {
+			getLatestBenchmarkRepoHash();
+		} catch (RepoAccessException e) {
+			LOGGER.error("Failed to get latest commit hash from benchmark repo! "
+				+ "Please make sure that the benchmark repository has at least one commit.");
+			throw e;
+		}
+
 		// Clone all repos if needed
 		for (RepoId repoId : getAllRepoIds()) {
 			try {
