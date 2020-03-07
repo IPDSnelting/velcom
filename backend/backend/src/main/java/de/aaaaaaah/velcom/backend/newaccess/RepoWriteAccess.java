@@ -55,7 +55,8 @@ public class RepoWriteAccess extends RepoReadAccess {
 			try {
 				repoStorage.addRepository(benchRepoDirName, benchRepoRemoteUrl.getUrl());
 			} catch (AddRepositoryException e) {
-				throw new AddRepoException(benchRepoDirName, benchRepoRemoteUrl, e);
+				throw new AddRepoException(benchRepoDirName, benchRepoRemoteUrl,
+					"Failed to clone benchmark repo from: " + benchRepoUrl, e);
 			}
 		}
 

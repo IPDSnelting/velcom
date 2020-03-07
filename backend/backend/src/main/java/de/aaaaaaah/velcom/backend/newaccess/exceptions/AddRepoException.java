@@ -16,6 +16,12 @@ public class AddRepoException extends RuntimeException {
 		this.remoteUrl = remoteUrl;
 	}
 
+	public AddRepoException(String name, RemoteUrl remoteUrl, String message, Throwable cause) {
+		super(message, cause);
+		this.name = name;
+		this.remoteUrl = remoteUrl;
+	}
+
 	public String getName() {
 		return name;
 	}
