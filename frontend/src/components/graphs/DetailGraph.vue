@@ -174,7 +174,9 @@ export default class DetailGraph extends Vue {
   ): number {
     return xScale(
       this.datapoints.length -
-        this.datapoints.findIndex(it => it.comparison === comparison)
+        this.datapoints.findIndex(
+          it => it.comparison.secondCommit.hash === comparison.secondCommit.hash
+        )
     )
   }
 
@@ -349,17 +351,14 @@ export default class DetailGraph extends Vue {
     this.dialogOpen = false
     if (vxm.repoDetailModule.referenceDatapoint) {
       this.removeCrosshair(vxm.repoDetailModule.referenceDatapoint)
+      vxm.repoDetailModule.referenceDatapoint = null
     }
     if (this.selectedDatapoint) {
       vxm.repoDetailModule.referenceDatapoint = this.selectedDatapoint
     }
     if (vxm.repoDetailModule.referenceDatapoint) {
       this.drawReferenceLine(vxm.repoDetailModule.referenceDatapoint)
-      this.drawCrosshair(
-        vxm.repoDetailModule.referenceDatapoint,
-        this.currentXScale,
-        'gray'
-      )
+      this.drawCrosshair(vxm.repoDetailModule.referenceDatapoint, 'gray')
     }
   }
 
@@ -408,7 +407,6 @@ export default class DetailGraph extends Vue {
       this.commitToCompare = this.selectedDatapoint || null
       this.drawCrosshair(
         this.selectedDatapoint,
-        this.currentXScale,
         this.datapointColor(this.selectedDatapoint)
       )
     }
@@ -430,12 +428,9 @@ export default class DetailGraph extends Vue {
 
   private crosshairIcon = crosshairIcon
 
-  private drawCrosshair(
-    datapoint: CommitInfo,
-    xScale: d3.ScaleLinear<number, number>,
-    color: string
-  ) {
+  private drawCrosshair(datapoint: CommitInfo, color: string) {
     let crosshair = d3.select('#_' + datapoint.commit.hash)
+
     if (crosshair) {
       let crosshairRect = (crosshair.node() as SVGElement).getBoundingClientRect()
       let crosshairWidth: number = crosshairRect.width
@@ -455,7 +450,8 @@ export default class DetailGraph extends Vue {
         .attr(
           'transform',
           'translate(' +
-            (this.x(datapoint.comparison, xScale) - crosshairWidth / 2) +
+            (this.x(datapoint.comparison, this.currentXScale) -
+              crosshairWidth / 2) +
             ', ' +
             (this.y(datapoint.comparison) - crosshairHeight / 2) +
             ')'
@@ -511,7 +507,6 @@ export default class DetailGraph extends Vue {
       if (this.commitToCompare) {
         this.drawCrosshair(
           this.commitToCompare,
-          this.currentXScale,
           this.datapointColor(this.commitToCompare)
         )
       }
