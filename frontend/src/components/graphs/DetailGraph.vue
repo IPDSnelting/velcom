@@ -155,6 +155,7 @@ export default class DetailGraph extends Vue {
   }
 
   private currentXScale: d3.ScaleLinear<number, number> = this.xScale
+  private currentTransform: d3.ZoomTransform | null = null
 
   private get yScale(): d3.ScaleLinear<number, number> {
     let min: number = !this.beginYAtZero && this.minVal ? this.minVal : 0
@@ -244,7 +245,7 @@ export default class DetailGraph extends Vue {
   }
 
   private zoomed() {
-    let transform = d3.event.transform
+    let transform: d3.ZoomTransform = d3.event.transform
     this.currentXScale = transform.rescaleX(this.xScale)
 
     d3.select('#dataLayer')
@@ -862,6 +863,11 @@ export default class DetailGraph extends Vue {
     let chart = d3.select('#chart').node() as HTMLElement
     this.width = chart ? chart.getBoundingClientRect().width : 900
     this.height = this.width / 2
+    if (this.currentTransform) {
+      this.currentXScale = this.currentTransform.rescaleX(this.xScale)
+    } else {
+      this.currentXScale = this.xScale
+    }
 
     d3.select('#dataLayer')
       .select('#brush')
