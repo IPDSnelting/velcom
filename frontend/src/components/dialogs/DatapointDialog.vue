@@ -1,5 +1,5 @@
 <template>
-  <v-dialog width="600" :value="dialogOpen">
+  <v-dialog width="600" :value="dialogOpen" @input="onClose">
     <v-card class="datapointDialog">
       <v-card-title></v-card-title>
       <v-card-text>
