@@ -2,6 +2,13 @@ package de.aaaaaaah.velcom.backend;
 
 import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import de.aaaaaaah.velcom.backend.access.BenchmarkWriteAccess;
+import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
+import de.aaaaaaah.velcom.backend.access.KnownCommitWriteAccess;
+import de.aaaaaaah.velcom.backend.access.RepoWriteAccess;
+import de.aaaaaaah.velcom.backend.access.TokenWriteAccess;
+import de.aaaaaaah.velcom.backend.access.entities.AuthToken;
+import de.aaaaaaah.velcom.backend.access.entities.RemoteUrl;
 import de.aaaaaaah.velcom.backend.data.commitcomparison.CommitComparer;
 import de.aaaaaaah.velcom.backend.data.linearlog.CommitAccessBasedLinearLog;
 import de.aaaaaaah.velcom.backend.data.linearlog.LinearLog;
@@ -10,13 +17,6 @@ import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.data.repocomparison.RepoComparison;
 import de.aaaaaaah.velcom.backend.data.repocomparison.TimesliceComparison;
 import de.aaaaaaah.velcom.backend.listener.Listener;
-import de.aaaaaaah.velcom.backend.access.BenchmarkWriteAccess;
-import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
-import de.aaaaaaah.velcom.backend.access.KnownCommitWriteAccess;
-import de.aaaaaaah.velcom.backend.access.RepoWriteAccess;
-import de.aaaaaaah.velcom.backend.access.TokenWriteAccess;
-import de.aaaaaaah.velcom.backend.access.entities.AuthToken;
-import de.aaaaaaah.velcom.backend.access.entities.RemoteUrl;
 import de.aaaaaaah.velcom.backend.restapi.RepoAuthenticator;
 import de.aaaaaaah.velcom.backend.restapi.RepoUser;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.AllReposEndpoint;
@@ -28,6 +28,7 @@ import de.aaaaaaah.velcom.backend.restapi.endpoints.RecentlyBenchmarkedCommitsEn
 import de.aaaaaaah.velcom.backend.restapi.endpoints.RepoComparisonGraphEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.RepoEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.TestTokenEndpoint;
+import de.aaaaaaah.velcom.backend.restapi.exception.CommitAccessExceptionMapper;
 import de.aaaaaaah.velcom.backend.restapi.exception.NoSuchCommitExceptionMapper;
 import de.aaaaaaah.velcom.backend.restapi.exception.NoSuchRepoExceptionMapper;
 import de.aaaaaaah.velcom.backend.runner.Dispatcher;
@@ -96,6 +97,7 @@ public class ServerMain extends Application<GlobalConfig> {
 		// Exception mappers
 		environment.jersey().register(new NoSuchRepoExceptionMapper());
 		environment.jersey().register(new NoSuchCommitExceptionMapper());
+		environment.jersey().register(new CommitAccessExceptionMapper());
 
 		CollectorRegistry collectorRegistry = new CollectorRegistry();
 		collectorRegistry.register(new DropwizardExports(environment.metrics()));

@@ -126,7 +126,7 @@ public class CommitReadAccess {
 					ObjectId commitPtr = repo.resolve(hash.getHash());
 					RevCommit revCommit = walk.parseCommit(commitPtr);
 					commits.add(commitFromRevCommit(repoId, revCommit));
-				} catch (IOException ignored) {
+				} catch (IOException | NullPointerException ignored) {
 					// See javadoc
 				}
 			}
