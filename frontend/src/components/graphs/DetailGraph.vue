@@ -347,7 +347,7 @@ export default class DetailGraph extends Vue {
       this.drawReferenceLine(vxm.repoDetailModule.referenceDatapoint)
       this.drawCrosshair(
         vxm.repoDetailModule.referenceDatapoint,
-        this.xScale,
+        this.currentXScale,
         'gray'
       )
     }
@@ -466,7 +466,7 @@ export default class DetailGraph extends Vue {
       .attr(
         'transform',
         'translate(' +
-          this.x(datapoint.comparison, this.xScale) +
+          this.x(datapoint.comparison, this.currentXScale) +
           ', ' +
           this.y(datapoint.comparison) +
           ') rotate(-45)'
@@ -499,7 +499,7 @@ export default class DetailGraph extends Vue {
       if (this.commitToCompare) {
         this.drawCrosshair(
           this.commitToCompare,
-          this.xScale,
+          this.currentXScale,
           this.datapointColor(this.commitToCompare)
         )
       }
