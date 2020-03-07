@@ -111,5 +111,4 @@ public class PreparingRunnerForWorkState implements RunnerState {
 		);
 		return this;
 	}
-
 }
