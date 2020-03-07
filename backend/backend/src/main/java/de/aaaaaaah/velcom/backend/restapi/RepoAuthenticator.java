@@ -1,8 +1,8 @@
 package de.aaaaaaah.velcom.backend.restapi;
 
-import de.aaaaaaah.velcom.backend.newaccess.TokenReadAccess;
-import de.aaaaaaah.velcom.backend.newaccess.entities.AuthToken;
-import de.aaaaaaah.velcom.backend.newaccess.entities.RepoId;
+import de.aaaaaaah.velcom.backend.access.TokenReadAccess;
+import de.aaaaaaah.velcom.backend.access.entities.AuthToken;
+import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import io.dropwizard.auth.Authenticator;
 import io.dropwizard.auth.basic.BasicCredentials;
 import java.util.Optional;

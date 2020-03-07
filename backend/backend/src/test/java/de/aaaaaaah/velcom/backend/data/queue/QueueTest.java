@@ -7,11 +7,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import de.aaaaaaah.velcom.backend.newaccess.KnownCommitWriteAccess;
-import de.aaaaaaah.velcom.backend.newaccess.entities.BenchmarkStatus;
-import de.aaaaaaah.velcom.backend.newaccess.entities.Commit;
-import de.aaaaaaah.velcom.backend.newaccess.entities.CommitHash;
-import de.aaaaaaah.velcom.backend.newaccess.entities.RepoId;
+import de.aaaaaaah.velcom.backend.access.KnownCommitWriteAccess;
+import de.aaaaaaah.velcom.backend.access.entities.BenchmarkStatus;
+import de.aaaaaaah.velcom.backend.access.entities.Commit;
+import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;

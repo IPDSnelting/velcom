@@ -1,12 +1,12 @@
 package de.aaaaaaah.velcom.backend.data.linearlog;
 
-import de.aaaaaaah.velcom.backend.newaccess.CommitReadAccess;
-import de.aaaaaaah.velcom.backend.newaccess.RepoReadAccess;
-import de.aaaaaaah.velcom.backend.newaccess.entities.Branch;
-import de.aaaaaaah.velcom.backend.newaccess.entities.BranchName;
-import de.aaaaaaah.velcom.backend.newaccess.entities.Commit;
-import de.aaaaaaah.velcom.backend.newaccess.entities.RepoId;
-import de.aaaaaaah.velcom.backend.newaccess.exceptions.CommitLogException;
+import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
+import de.aaaaaaah.velcom.backend.access.RepoReadAccess;
+import de.aaaaaaah.velcom.backend.access.entities.Branch;
+import de.aaaaaaah.velcom.backend.access.entities.BranchName;
+import de.aaaaaaah.velcom.backend.access.entities.Commit;
+import de.aaaaaaah.velcom.backend.access.entities.RepoId;
+import de.aaaaaaah.velcom.backend.access.exceptions.CommitLogException;
 import de.aaaaaaah.velcom.backend.util.Pair;
 import java.util.Collection;
 import java.util.Iterator;

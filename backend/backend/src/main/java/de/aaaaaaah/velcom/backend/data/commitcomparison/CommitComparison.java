@@ -1,10 +1,10 @@
 package de.aaaaaaah.velcom.backend.data.commitcomparison;
 
-import de.aaaaaaah.velcom.backend.newaccess.entities.Commit;
-import de.aaaaaaah.velcom.backend.newaccess.entities.Measurement;
-import de.aaaaaaah.velcom.backend.newaccess.entities.MeasurementName;
-import de.aaaaaaah.velcom.backend.newaccess.entities.MeasurementValues;
-import de.aaaaaaah.velcom.backend.newaccess.entities.Run;
+import de.aaaaaaah.velcom.backend.access.entities.Commit;
+import de.aaaaaaah.velcom.backend.access.entities.Measurement;
+import de.aaaaaaah.velcom.backend.access.entities.MeasurementName;
+import de.aaaaaaah.velcom.backend.access.entities.MeasurementValues;
+import de.aaaaaaah.velcom.backend.access.entities.Run;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;

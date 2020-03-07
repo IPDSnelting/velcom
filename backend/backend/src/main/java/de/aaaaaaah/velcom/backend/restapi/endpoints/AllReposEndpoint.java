@@ -1,17 +1,15 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
-import de.aaaaaaah.velcom.backend.newaccess.BenchmarkReadAccess;
-import de.aaaaaaah.velcom.backend.newaccess.RepoReadAccess;
-import de.aaaaaaah.velcom.backend.newaccess.TokenReadAccess;
-import de.aaaaaaah.velcom.backend.newaccess.entities.Branch;
-import de.aaaaaaah.velcom.backend.newaccess.entities.MeasurementName;
-import de.aaaaaaah.velcom.backend.newaccess.entities.Repo;
-import de.aaaaaaah.velcom.backend.newaccess.entities.RepoId;
+import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
+import de.aaaaaaah.velcom.backend.access.RepoReadAccess;
+import de.aaaaaaah.velcom.backend.access.TokenReadAccess;
+import de.aaaaaaah.velcom.backend.access.entities.Branch;
+import de.aaaaaaah.velcom.backend.access.entities.MeasurementName;
+import de.aaaaaaah.velcom.backend.access.entities.Repo;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRepo;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;

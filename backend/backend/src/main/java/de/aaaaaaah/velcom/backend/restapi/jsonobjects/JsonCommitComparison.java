@@ -1,7 +1,7 @@
 package de.aaaaaaah.velcom.backend.restapi.jsonobjects;
 
 import de.aaaaaaah.velcom.backend.data.commitcomparison.CommitComparison;
-import de.aaaaaaah.velcom.backend.newaccess.entities.Commit;
+import de.aaaaaaah.velcom.backend.access.entities.Commit;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.stream.Collectors;

@@ -4,12 +4,12 @@ import static java.util.stream.Collectors.toList;
 
 import de.aaaaaaah.velcom.backend.data.linearlog.LinearLog;
 import de.aaaaaaah.velcom.backend.data.linearlog.LinearLogException;
-import de.aaaaaaah.velcom.backend.newaccess.RepoReadAccess;
-import de.aaaaaaah.velcom.backend.newaccess.entities.Branch;
-import de.aaaaaaah.velcom.backend.newaccess.entities.BranchName;
-import de.aaaaaaah.velcom.backend.newaccess.entities.Commit;
-import de.aaaaaaah.velcom.backend.newaccess.entities.CommitHash;
-import de.aaaaaaah.velcom.backend.newaccess.entities.RepoId;
+import de.aaaaaaah.velcom.backend.access.RepoReadAccess;
+import de.aaaaaaah.velcom.backend.access.entities.Branch;
+import de.aaaaaaah.velcom.backend.access.entities.BranchName;
+import de.aaaaaaah.velcom.backend.access.entities.Commit;
+import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;

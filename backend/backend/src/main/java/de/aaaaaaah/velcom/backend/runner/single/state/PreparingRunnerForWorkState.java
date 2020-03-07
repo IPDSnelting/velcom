@@ -1,7 +1,7 @@
 package de.aaaaaaah.velcom.backend.runner.single.state;
 
-import de.aaaaaaah.velcom.backend.newaccess.RepoWriteAccess;
-import de.aaaaaaah.velcom.backend.newaccess.entities.Commit;
+import de.aaaaaaah.velcom.backend.access.RepoWriteAccess;
+import de.aaaaaaah.velcom.backend.access.entities.Commit;
 import de.aaaaaaah.velcom.backend.runner.single.ActiveRunnerInformation;
 import de.aaaaaaah.velcom.runner.shared.RunnerStatusEnum;
 import de.aaaaaaah.velcom.runner.shared.protocol.SentEntity;

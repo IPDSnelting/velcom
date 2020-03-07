@@ -1,10 +1,10 @@
 package de.aaaaaaah.velcom.backend.listener;
 
-import de.aaaaaaah.velcom.backend.newaccess.CommitReadAccess;
-import de.aaaaaaah.velcom.backend.newaccess.CommitWalk;
-import de.aaaaaaah.velcom.backend.newaccess.KnownCommitReadAccess;
-import de.aaaaaaah.velcom.backend.newaccess.entities.Commit;
-import de.aaaaaaah.velcom.backend.newaccess.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
+import de.aaaaaaah.velcom.backend.access.CommitWalk;
+import de.aaaaaaah.velcom.backend.access.KnownCommitReadAccess;
+import de.aaaaaaah.velcom.backend.access.entities.Commit;
+import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;

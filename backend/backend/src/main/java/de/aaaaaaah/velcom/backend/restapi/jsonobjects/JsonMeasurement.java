@@ -1,8 +1,8 @@
 package de.aaaaaaah.velcom.backend.restapi.jsonobjects;
 
-import de.aaaaaaah.velcom.backend.newaccess.entities.Measurement;
-import de.aaaaaaah.velcom.backend.newaccess.entities.MeasurementError;
-import de.aaaaaaah.velcom.backend.newaccess.entities.MeasurementValues;
+import de.aaaaaaah.velcom.backend.access.entities.Measurement;
+import de.aaaaaaah.velcom.backend.access.entities.MeasurementError;
+import de.aaaaaaah.velcom.backend.access.entities.MeasurementValues;
 import de.aaaaaaah.velcom.backend.util.Either;
 import java.util.List;
 import javax.annotation.Nullable;

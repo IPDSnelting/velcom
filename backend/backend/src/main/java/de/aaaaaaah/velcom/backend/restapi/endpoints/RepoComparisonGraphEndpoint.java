@@ -2,9 +2,9 @@ package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import de.aaaaaaah.velcom.backend.newaccess.entities.MeasurementName;
-import de.aaaaaaah.velcom.backend.newaccess.entities.BranchName;
-import de.aaaaaaah.velcom.backend.newaccess.entities.RepoId;
+import de.aaaaaaah.velcom.backend.access.entities.MeasurementName;
+import de.aaaaaaah.velcom.backend.access.entities.BranchName;
+import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.data.repocomparison.ComparisonGraph;
 import de.aaaaaaah.velcom.backend.data.repocomparison.GraphEntry;
 import de.aaaaaaah.velcom.backend.data.repocomparison.RepoComparison;

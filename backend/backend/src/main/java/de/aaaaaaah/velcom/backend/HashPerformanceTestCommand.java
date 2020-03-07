@@ -1,6 +1,6 @@
 package de.aaaaaaah.velcom.backend;
 
-import de.aaaaaaah.velcom.backend.newaccess.hashalgorithm.Argon2Algorithm;
+import de.aaaaaaah.velcom.backend.access.hashalgorithm.Argon2Algorithm;
 import de.mkammerer.argon2.Argon2Factory;
 import de.mkammerer.argon2.Argon2Helper;
 import io.dropwizard.cli.Command;

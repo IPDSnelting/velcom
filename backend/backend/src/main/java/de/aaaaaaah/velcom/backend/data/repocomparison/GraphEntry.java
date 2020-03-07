@@ -1,6 +1,6 @@
 package de.aaaaaaah.velcom.backend.data.repocomparison;
 
-import de.aaaaaaah.velcom.backend.newaccess.entities.Commit;
+import de.aaaaaaah.velcom.backend.access.entities.Commit;
 
 public class GraphEntry {
 
