@@ -1,6 +1,8 @@
 package de.aaaaaaah.velcom.backend.runner.single.state;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -12,6 +14,7 @@ import de.aaaaaaah.velcom.backend.runner.single.ServerRunnerStateMachine;
 import de.aaaaaaah.velcom.runner.shared.RunnerStatusEnum;
 import de.aaaaaaah.velcom.runner.shared.protocol.runnerbound.entities.RunnerWorkOrder;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkResults;
+import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.RunnerInformation;
 import java.time.Instant;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -57,11 +60,26 @@ class RunnerWorkingStateTest {
 	}
 
 	@Test
+	void forwardsInformation() {
+		RunnerInformation information = new RunnerInformation(
+			"name", "os", 10, 20, RunnerStatusEnum.WORKING, "hash"
+		);
+		RunnerState state = workingState.onMessage(
+			RunnerInformation.class.getSimpleName(),
+			information,
+			this.runnerInformation
+		);
+
+		assertThat(state).isInstanceOf(RunnerWorkingState.class);
+		verify(runnerInformation).setRunnerInformation(information);
+	}
+
+	@Test
 	void disconnectsOnOtherMessage() {
 		RunnerState newState = workingState.onMessage("hello world", null, runnerInformation);
 
 		assertThat(newState).isEqualTo(workingState);
-		verify(connectionManager).disconnect();
+		verify(connectionManager).disconnect(anyInt(), anyString());
 	}
 
 }

@@ -6,16 +6,15 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import de.aaaaaaah.velcom.backend.newaccess.entities.Commit;
 import de.aaaaaaah.velcom.backend.runner.single.ActiveRunnerInformation;
 import de.aaaaaaah.velcom.backend.runner.single.RunnerConnectionManager;
 import de.aaaaaaah.velcom.backend.runner.single.ServerRunnerStateMachine;
 import de.aaaaaaah.velcom.runner.shared.RunnerStatusEnum;
 import de.aaaaaaah.velcom.runner.shared.protocol.runnerbound.entities.RunnerWorkOrder;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkResults;
+import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.RunnerInformation;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.WorkReceived;
 import java.time.Instant;
-import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,20 +35,6 @@ class RunnerIdleStateTest {
 	}
 
 	@Test
-	void switchesToExecutingWhenWorkReceived() {
-		WorkReceived workReceived = new WorkReceived(new RunnerWorkOrder(UUID.randomUUID(), "hey"));
-		when(runnerInformation.getCurrentCommit()).thenReturn(Optional.of(mock(Commit.class)));
-
-		RunnerState newState = idleState.onMessage(
-			WorkReceived.class.getSimpleName(),
-			workReceived,
-			runnerInformation
-		);
-
-		assertThat(newState).isInstanceOf(RunnerWorkingState.class);
-	}
-
-	@Test
 	void setsResults() {
 		RunnerWorkOrder workOrder = new RunnerWorkOrder(UUID.randomUUID(), "hash");
 		BenchmarkResults results = new BenchmarkResults(
@@ -67,6 +52,22 @@ class RunnerIdleStateTest {
 	}
 
 	@Test
+	void setsInformation() {
+		RunnerInformation information = new RunnerInformation(
+			"name", "os", 20, 20, RunnerStatusEnum.PREPARING_WORK, "hash"
+		);
+
+		RunnerState newState = idleState.onMessage(
+			RunnerInformation.class.getSimpleName(),
+			information,
+			runnerInformation
+		);
+
+		verify(runnerInformation).setRunnerInformation(information);
+		assertThat(newState).isEqualTo(idleState);
+	}
+
+	@Test
 	void disconnectsOnOtherMessageType() {
 		RunnerConnectionManager connectionManager = mock(RunnerConnectionManager.class);
 		when(runnerInformation.getConnectionManager()).thenReturn(connectionManager);
@@ -75,6 +76,27 @@ class RunnerIdleStateTest {
 
 		assertThat(newState).isEqualTo(idleState);
 		verify(connectionManager).disconnect();
+	}
+
+	@Test
+	void disconnectsOnWorkReceived() {
+		RunnerConnectionManager connectionManager = mock(RunnerConnectionManager.class);
+		when(runnerInformation.getConnectionManager()).thenReturn(connectionManager);
+
+		RunnerState newState = idleState.onMessage(
+			WorkReceived.class.getSimpleName(),
+			null,
+			runnerInformation
+		);
+
+		assertThat(newState).isEqualTo(idleState);
+		verify(connectionManager).disconnect();
+	}
+
+	@Test
+	void setsIdleStatus() {
+		idleState.onSelected(runnerInformation);
+		verify(runnerInformation).setIdle();
 	}
 
 	@Test

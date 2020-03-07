@@ -45,6 +45,15 @@ class IdleStateTest {
 	}
 
 	@Test
+	void statusChangesOnWorkReceive() {
+		idleState.onWorkArrived(
+			mock(RunnerWorkOrder.class),
+			mock(RunnerConfiguration.class)
+		);
+		assertThat(idleState.getStatus()).isEqualTo(RunnerStatusEnum.PREPARING_WORK);
+	}
+
+	@Test
 	void switchesOnWorkBinaryReceive() throws InterruptedException, IOException {
 		Path path = Path.of("hello");
 

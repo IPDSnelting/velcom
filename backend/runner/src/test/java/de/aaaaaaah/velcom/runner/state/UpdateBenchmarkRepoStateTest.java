@@ -17,7 +17,7 @@ class UpdateBenchmarkRepoStateTest {
 
 	@Test
 	void correctStatus() {
-		assertThat(updateBenchmarkRepoState.getStatus()).isEqualTo(RunnerStatusEnum.IDLE);
+		assertThat(updateBenchmarkRepoState.getStatus()).isEqualTo(RunnerStatusEnum.PREPARING_WORK);
 	}
 
 }

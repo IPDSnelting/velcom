@@ -9,6 +9,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import de.aaaaaaah.velcom.backend.newaccess.entities.Commit;
+import de.aaaaaaah.velcom.backend.newaccess.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.newaccess.entities.RepoId;
+import de.aaaaaaah.velcom.backend.runner.single.state.RunnerState;
 import de.aaaaaaah.velcom.runner.shared.RunnerStatusEnum;
 import de.aaaaaaah.velcom.runner.shared.protocol.SentEntity;
 import de.aaaaaaah.velcom.runner.shared.protocol.runnerbound.entities.ResetOrder;
@@ -44,12 +47,21 @@ class ServerRunnerStateMachineTest {
 
 	@Test
 	void onWorkDoneSetsResults() {
+		UUID repoId = UUID.randomUUID();
+		String commitHash = "hash";
+		Commit commit = mock(Commit.class);
+		when(commit.getRepoId()).thenReturn(new RepoId(repoId));
+		when(commit.getHash()).thenReturn(new CommitHash(commitHash));
+
 		BenchmarkResults results = new BenchmarkResults(
-			new RunnerWorkOrder(UUID.randomUUID(), "hash"),
+			new RunnerWorkOrder(repoId, commitHash),
 			"Error!",
 			Instant.now(),
 			Instant.now()
 		);
+
+		when(runnerInformation.getCurrentCommit()).thenReturn(Optional.of(commit));
+
 		stateMachine.onWorkDone(results);
 
 		verify(runnerInformation).setResults(eq(results));
@@ -65,6 +77,14 @@ class ServerRunnerStateMachineTest {
 	}
 
 	@Test
+	void resetDoesNotSwitchState() throws IOException {
+		RunnerState previousState = stateMachine.getState();
+		stateMachine.resetRunner("Test");
+
+		assertThat(stateMachine.getState()).isSameAs(previousState);
+	}
+
+	@Test
 	void startFailsIfRunnerIsNotIdle() {
 		when(runnerInformation.getState()).thenReturn(RunnerStatusEnum.WORKING);
 
@@ -77,7 +97,7 @@ class ServerRunnerStateMachineTest {
 
 	@Test
 	void startSetsCommit() throws IOException {
-		when(runnerInformation.getState()).thenReturn(RunnerStatusEnum.IDLE);
+		when(runnerInformation.getState()).thenReturn(RunnerStatusEnum.PREPARING_WORK);
 		Commit commit = mock(Commit.class);
 
 		stateMachine.startWork(
@@ -92,7 +112,7 @@ class ServerRunnerStateMachineTest {
 	void startSendsOnCorrectOutputStream() throws IOException {
 		OutputStream outputStream = mock(OutputStream.class);
 		Commit commit = mock(Commit.class);
-		when(runnerInformation.getState()).thenReturn(RunnerStatusEnum.IDLE);
+		when(runnerInformation.getState()).thenReturn(RunnerStatusEnum.PREPARING_WORK);
 		when(connectionManager.createBinaryOutputStream()).thenReturn(outputStream);
 
 		AtomicBoolean called = new AtomicBoolean();

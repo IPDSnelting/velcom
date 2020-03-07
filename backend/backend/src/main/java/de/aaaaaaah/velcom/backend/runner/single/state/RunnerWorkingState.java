@@ -28,7 +28,6 @@ public class RunnerWorkingState implements RunnerState {
 			information.getRunnerStateMachine().onWorkDone((BenchmarkResults) entity);
 			return new RunnerIdleState();
 		} else if (RunnerInformation.class.getSimpleName().equals(type)) {
-			LOGGER.info("I am in it!");
 			information.setRunnerInformation((RunnerInformation) entity);
 			return this;
 		}
