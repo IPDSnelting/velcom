@@ -264,26 +264,13 @@ export default class DetailGraph extends Vue {
           ') rotate(-45)'
       )
     if (vxm.repoDetailModule.referenceDatapoint) {
-      let crosshair = d3.select(
-        '#_' + vxm.repoDetailModule.referenceDatapoint.commit.hash
+      this.drawCrosshair(vxm.repoDetailModule.referenceDatapoint, 'gray')
+    }
+    if (this.commitToCompare) {
+      this.drawCrosshair(
+        this.commitToCompare,
+        this.datapointColor(this.commitToCompare)
       )
-      if (crosshair) {
-        let crosshairRect = (crosshair.node() as SVGElement).getBoundingClientRect()
-        let crosshairWidth: number = crosshairRect.width
-        let crosshairHeight: number = crosshairRect.height
-
-        d3.select(
-          '#_' + vxm.repoDetailModule.referenceDatapoint.commit.hash
-        ).attr(
-          'transform',
-          (d: any) =>
-            'translate(' +
-            (this.x(d.comparison, this.currentXScale) - crosshairWidth / 2) +
-            ', ' +
-            (this.y(d.comparison) - crosshairHeight / 2) +
-            ')'
-        )
-      }
     }
 
     d3.select('#dataLayer')
