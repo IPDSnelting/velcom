@@ -10,12 +10,12 @@
             value="setReference"
           ></v-radio>
           <v-radio
-            v-if="allowSelectAsReference && comparingAllowed"
+            v-if="allowSelectAsReference && comparingAllowed && !isCommitToCompare(this.selectedDatapoint)"
             label="Select this commit to compare"
             value="selectCommitToCompare"
           ></v-radio>
           <v-radio
-            v-if="allowSelectAsReference && commitToCompare"
+            v-if="allowSelectAsReference && commitToCompare && !isCommitToCompare(this.selectedDatapoint)"
             :label="compareLabel"
             value="compareCommits"
           ></v-radio>
@@ -66,8 +66,15 @@ export default class DatapointDialog extends Vue {
   @Prop({ default: false })
   comparingAllowed!: boolean
 
-  get selectedCommit(): Commit {
+  private get selectedCommit(): Commit {
     return this.selectedDatapoint!.commit
+  }
+
+  private isCommitToCompare(datapoint: CommitInfo): boolean {
+    if (this.commitToCompare) {
+      return datapoint.commit.hash === this.commitToCompare.commit.hash
+    }
+    return false
   }
 
   private datapointAction:
