@@ -1,31 +1,49 @@
 package de.aaaaaaah.velcom.backend;
 
+import java.time.Instant;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 public class TestCommit {
 
+	private static String dummyContent() {
+		return String.valueOf(System.currentTimeMillis());
+	}
+
 	private final String message;
 	private final String file;
 	private final String content;
-	private final String branch;
+	private final Optional<String> branch;
+	private final Optional<Instant> authorDate;
 
 	public TestCommit(String message) {
-		this(message, "afile.txt", String.valueOf(System.currentTimeMillis()));
+		this(message, "afile.txt", dummyContent(), null, null);
+	}
+
+	public TestCommit(String message, Instant authorDate) {
+		this(message, "afile.txt", dummyContent(), null, authorDate);
 	}
 
 	public TestCommit(String message, String branch) {
-		this(message, "afile.txt", String.valueOf(System.currentTimeMillis()), branch);
+		this(message, "afile.txt", dummyContent(), branch, null);
+	}
+
+	public TestCommit(String message, String branch, Instant authorDate) {
+		this(message, "afile.txt", dummyContent(), branch, authorDate);
 	}
 
 	public TestCommit(String message, String file, String content) {
-		this(message, file, content, null);
+		this(message, file, content, null, null);
 	}
 
-	public TestCommit(String message, String file, String content, @Nullable String branch) {
+	public TestCommit(String message, String file, String content,
+		@Nullable String branch, @Nullable Instant authorDate) {
+
 		this.message = message;
 		this.file = file;
 		this.content = content;
-		this.branch = branch;
+		this.branch = Optional.ofNullable(branch);
+		this.authorDate = Optional.ofNullable(authorDate);
 	}
 
 	public String getMessage() {
@@ -40,9 +58,12 @@ public class TestCommit {
 		return content;
 	}
 
-	@Nullable
-	public String getBranch() {
+	public Optional<String> getBranch() {
 		return branch;
+	}
+
+	public Optional<Instant> getAuthorDate() {
+		return authorDate;
 	}
 
 	@Override
@@ -51,6 +72,8 @@ public class TestCommit {
 			"message='" + message + '\'' +
 			", file='" + file + '\'' +
 			", content='" + content + '\'' +
+			", branch='" + branch + '\'' +
+			", authorDate=" + authorDate +
 			'}';
 	}
 

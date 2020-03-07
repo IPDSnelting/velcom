@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -11,8 +12,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TimeZone;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.revwalk.RevCommit;
 
 public class TestRepo {
@@ -20,6 +23,8 @@ public class TestRepo {
 	private final Path repoDir;
 	private final Set<String> branches = new HashSet<>();
 	private final Map<TestCommit, String> commitHashMap = new HashMap<>();
+	private final Map<TestCommit, RevCommit> revCommitMap = new HashMap<>();
+	private final Map<String, RevCommit> revByHashMap = new HashMap<>();
 	private String currentBranch = "master";
 
 	public TestRepo(Path repoDir) throws GitAPIException, IOException {
@@ -51,35 +56,34 @@ public class TestRepo {
 		return Optional.ofNullable(commitHashMap.get(testCommit));
 	}
 
+	public Optional<RevCommit> getRevCommit(TestCommit testCommit) {
+		return Optional.ofNullable(revCommitMap.get(testCommit));
+	}
+
+	public Optional<RevCommit> getRevCommit(String commitHash) {
+		return Optional.ofNullable(revByHashMap.get(commitHash));
+	}
+
 	public void commit(TestCommit[] commits) throws IOException, GitAPIException {
 		for (TestCommit commit : commits) {
 			this.commit(commit);
 		}
 	}
 
-	public RevCommit commit(TestCommit commit) throws IOException, GitAPIException {
-		RevCommit revCommit;
+	public RevCommit commit(TestCommit commit)
+		throws IOException, GitAPIException {
 
-		if (commit.getBranch() == null) {
-			revCommit = commit(commit.getMessage(), commit.getFile(), commit.getContent());
+		final String branch = commit.getBranch().orElse("master");
+		final PersonIdent author;
+
+		if (commit.getAuthorDate().isPresent()) {
+			Date date = Date.from(commit.getAuthorDate().get());
+			author = new PersonIdent("peter", "peter@email.com", date, TimeZone.getDefault());
 		} else {
-			revCommit = commit(commit.getMessage(), commit.getFile(), commit.getContent(),
-				commit.getBranch());
+			author = new PersonIdent("peter", "peter@gmail.com");
 		}
 
-		this.commitHashMap.put(commit, revCommit.getId().getName());
-
-		return revCommit;
-	}
-
-	private RevCommit commit(String message, String file, String content)
-		throws IOException, GitAPIException {
-		return this.commit(message, file, content, "master");
-	}
-
-	private RevCommit commit(String message, String file, String content, String branch)
-		throws IOException, GitAPIException {
-
+		// Checkout correct branch
 		try (Git git = Git.open(repoDir.toFile())) {
 			if (!currentBranch.equals(branch)) {
 				if (branches.contains(branch)) {
@@ -93,15 +97,27 @@ public class TestRepo {
 				currentBranch = branch;
 			}
 
-			Files.write(repoDir.resolve(file), content.getBytes(), StandardOpenOption.CREATE);
+			// Write file and stage it
+			Files.write(
+				repoDir.resolve(commit.getFile()),
+				commit.getContent().getBytes(),
+				StandardOpenOption.CREATE
+			);
 
-			git.add().addFilepattern(file).call();
+			git.add().addFilepattern(commit.getFile()).call();
 
-			return git.commit()
-				.setAuthor("Peter", "peter@email.com")
-				.setCommitter("Peter", "peter@email.com")
-				.setMessage(message)
+			// Create the commit
+			RevCommit revCommit = git.commit()
+				.setAuthor(author)
+				.setCommitter("peter", "peter@email.com")
+				.setMessage(commit.getMessage())
 				.call();
+
+			this.commitHashMap.put(commit, revCommit.getId().getName());
+			this.revCommitMap.put(commit, revCommit);
+			this.revByHashMap.put(revCommit.getId().getName(), revCommit);
+
+			return revCommit;
 		}
 	}
 
