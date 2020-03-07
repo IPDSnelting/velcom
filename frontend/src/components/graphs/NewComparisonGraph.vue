@@ -158,15 +158,15 @@ export default class NewComparisonGraph extends Vue {
   private timeFormat: any = d3.timeFormat('%Y-%m-%d')
   private valueFormat: any = d3.format('<.4')
 
-  private get focusXAxis(): any {
+  private get focusXAxis(): d3.Axis<number | Date | { valueOf(): number }> {
     return d3.axisBottom(this.xScale(this.focus)).tickFormat(this.timeFormat)
   }
 
-  private get contextXAxis(): any {
+  private get contextXAxis(): d3.Axis<number | Date | { valueOf(): number }> {
     return d3.axisBottom(this.xScale(this.context)).tickFormat(this.timeFormat)
   }
 
-  private get yAxis(): any {
+  private get yAxis(): d3.Axis<number | { valueOf(): number }> {
     let domain: number[] =
       this.minFocusVal !== undefined && this.maxFocusVal !== undefined
         ? [this.minFocusVal, this.maxFocusVal]
@@ -303,6 +303,7 @@ export default class NewComparisonGraph extends Vue {
       .append('path')
       .attr('id', layer + 'line_' + repoID)
       .merge(path)
+      .transition()
       .attr('d', this.line(xDomain, yDomain, height))
       .attr('stroke', this.colorById(repoID))
       .attr('stroke-width', 2)
@@ -350,6 +351,7 @@ export default class NewComparisonGraph extends Vue {
       .attr('class', 'datapoint')
       .attr('id', (d: Datapoint) => repoID + '_' + d.commit.hash)
       .merge(datapoints)
+      .transition()
       .attr(
         'd',
         d3
@@ -425,10 +427,16 @@ export default class NewComparisonGraph extends Vue {
   @Watch('minTimestamp')
   @Watch('maxTimestamp')
   @Watch('beginYAtZero')
-  @Watch('focus')
   private updateData() {
-    console.log('updating data')
+    this.context = [this.minTimestamp, this.maxTimestamp]
+    this.focus = this.context
     d3.select('#yLabel').text(this.yLabel)
+    this.updateAxes()
+    this.drawGraph()
+  }
+
+  @Watch('focus')
+  private updateFocus() {
     this.updateAxes()
     this.drawGraph()
   }
