@@ -862,8 +862,12 @@ export default class DetailGraph extends Vue {
     let chart = d3.select('#chart').node() as HTMLElement
     this.width = chart ? chart.getBoundingClientRect().width : 900
     this.height = this.width / 2
-    // FIXME: here
+    // FIXME: Keep zoom on resize
     this.currentXScale = this.baseXScale
+    d3.select<Element, unknown>('#listenerRect')
+      .transition()
+      .duration(750)
+      .call(this.zoom.transform, d3.zoomIdentity)
 
     d3.select('#dataLayer')
       .select('#brush')
@@ -876,7 +880,6 @@ export default class DetailGraph extends Vue {
       .attr('id', 'brush')
       .call(this.brush)
       .lower()
-    d3.select('#listenerRect').call(this.zoom as any)
     d3.select('#mainSvg')
       .select('#clipRect')
       .attr('width', this.innerWidth)
