@@ -39,9 +39,9 @@ import javax.annotation.Nullable;
 public class TimesliceComparison implements RepoComparison {
 
 	// Difference of start and end time (in seconds) below which the hourly grouper should be used.
-	private static final long HOURLY_THRESHOLD = 60 * 60 * 24 * 20; // 20 days
+	public static final long HOURLY_THRESHOLD = 60 * 60 * 24 * 20; // 20 days
 	// Difference of start and end time (in seconds) below which the daily grouper should be used.3
-	private static final long DAILY_THRESHOLD = 60 * 60 * 24 * 7 * 20; // 20 weeks
+	public static final long DAILY_THRESHOLD = 60 * 60 * 24 * 7 * 20; // 20 weeks
 	// If the start and end time difference is greater than this, the weekly grouper is used.
 
 	private static final CommitGrouper<Long> HOURLY_GROUPER = new GroupByHour();
