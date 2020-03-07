@@ -236,8 +236,8 @@ export default class NewComparisonGraph extends Vue {
       this.repos.forEach(repoID => {
         this.drawPaths(repoID)
         this.drawDatapoints(repoID, keyFn)
-        // this.appendTooltips(keyFn)
       })
+      this.appendTooltips(keyFn)
       // this.setReference() */
     } else {
       if (this.graphDrawn) {
@@ -380,6 +380,127 @@ export default class NewComparisonGraph extends Vue {
       .attr('opacity', 0)
       .attr('width', 0)
       .remove()
+  }
+
+  private appendTooltips(keyFn: d3.ValueFn<any, any, string>) {
+    let tooltip = d3
+      .selectAll('.datapoint')
+      .data(this.allDatapoints, keyFn)
+      .on('mouseover', this.mouseover)
+      .on('mousemove', this.mousemove)
+      .on('mouseleave', this.mouseleave)
+      .on('click', (d: Datapoint) => {
+        this.$router.push({
+          name: 'commit-detail',
+          params: { repoID: d.commit.repoID, hash: d.commit.hash }
+        })
+      })
+      /* .on('contextmenu', (d: Datapoint) => {
+        d3.event.preventDefault()
+        this.openDatapointMenu(d)
+      }) */
+      .on('mousedown', (d: Datapoint) => {
+        if (d3.event.which === 2) {
+          d3.event.preventDefault()
+          let routeData = this.$router.resolve({
+            name: 'commit-detail',
+            params: { repoID: d.commit.repoID, hash: d.commit.hash }
+          })
+          window.open(routeData.href, '_blank')
+        }
+      })
+  }
+
+  private mouseover(d: Datapoint) {
+    d3.select('#tooltip')
+      .transition()
+      .duration(300)
+      .style('opacity', 1)
+      .style('visibility', 'visible')
+  }
+
+  private mousemove(d: Datapoint) {
+    let tooltip: d3.Selection<
+      d3.BaseType,
+      unknown,
+      HTMLElement,
+      any
+    > = d3.select('#tooltip')
+    let tipWidth = (tooltip.node() as HTMLElement).getBoundingClientRect().width
+    let tipHeight = (tooltip.node() as HTMLElement).getBoundingClientRect()
+      .height
+
+    let date = d.commit.authorDate || 0
+
+    let htmlMessage = `
+        <table class="tooltip-table">
+          <tr>
+            <td>Commit</td>
+            <td>${d.commit.hash}</td>
+          </tr>
+          <tr>
+            <td>Author</td>
+            <td>${d.commit.author}</td>
+          </tr>
+          <tr>
+            <td>Date</td>
+            <td>${formatDateUTC(date)}</td>
+          </tr>
+          <tr>
+            <td>Exact value</td>
+            <td>${this.valueFormat(d.value)} ${this.unit}</td>
+          </tr>
+          <tr>
+            <td>Commit summary</td>
+            <td>${d.commit.summary!.trim()}</td>
+          </tr>
+        </table>
+      `
+    tooltip.html(htmlMessage)
+
+    let horizontalMousePos = d3.mouse(
+      d3.select('#mainSvg').node() as SVGSVGElement
+    )[0]
+    let verticalMousePos = d3.mouse(
+      d3.select('#mainSvg').node() as SVGSVGElement
+    )[1]
+
+    if (horizontalMousePos < this.width / 2) {
+      tooltip.style('left', horizontalMousePos - 20 + 'px')
+      ;(tooltip.node() as HTMLElement).style.setProperty('--tail-left', '15px')
+    } else {
+      tooltip.style('left', horizontalMousePos - tipWidth + 20 + 'px')
+      ;(tooltip.node() as HTMLElement).style.setProperty(
+        '--tail-left',
+        tipWidth - 25 + 'px'
+      )
+    }
+    if (verticalMousePos < this.height / 2) {
+      tooltip.style('top', verticalMousePos + 10 + 'px')
+      ;(tooltip.node() as HTMLElement).style.setProperty('--tail-top', '-10px')
+      ;(tooltip.node() as HTMLElement).style.setProperty(
+        '--tail-rotation',
+        'rotate(90deg)'
+      )
+    } else {
+      tooltip.style('top', verticalMousePos - tipHeight - 10 + 'px')
+      ;(tooltip.node() as HTMLElement).style.setProperty(
+        '--tail-top',
+        tipHeight - 5 + 'px'
+      )
+      ;(tooltip.node() as HTMLElement).style.setProperty(
+        '--tail-rotation',
+        'rotate(270deg)'
+      )
+    }
+  }
+
+  mouseleave(d: any) {
+    d3.select('#tooltip')
+      .transition()
+      .duration(500)
+      .style('opacity', 0)
+      .style('visibility', 'hidden')
   }
 
   get colorById(): (repoID: string) => string {
@@ -545,6 +666,12 @@ export default class NewComparisonGraph extends Vue {
       .attr('y', -this.margin.left + 30)
       .attr('x', -this.focusHeight / 2)
       .text(this.yLabel)
+
+    d3.select('#chart')
+      .append('div')
+      .attr('class', 'tooltip')
+      .attr('id', 'tooltip')
+      .style('opacity', 0)
   }
 
   // initializing
@@ -569,3 +696,72 @@ export default class NewComparisonGraph extends Vue {
   }
 }
 </script>
+<style>
+.axis text {
+  font-family: Roboto;
+  font-size: 13px;
+}
+
+.tooltip-table tr td {
+  padding: 2px;
+}
+
+.tooltip-table tr td:nth-child(2) {
+  font-family: monospace;
+}
+.tooltip-table tr td:first-child {
+  padding-right: 10px;
+}
+.tooltip-table tr td:only-child {
+  font-weight: bold;
+  padding-top: 1em;
+  font-size: 1.1em;
+}
+
+.tooltip {
+  font-size: 10pt;
+  position: absolute;
+  padding: 5px;
+  border-radius: 5px;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: rgba(255, 255, 255, 0.9);
+  text-align: center;
+  margin: 0;
+}
+
+.tooltip:after {
+  content: '';
+  display: block;
+  width: 0;
+  height: 0;
+  position: absolute;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-right: 8px solid black;
+  transform: var(--tail-rotation);
+  left: var(--tail-left);
+  top: var(--tail-top);
+}
+
+.information {
+  text-align: center;
+  font-family: Roboto;
+  font-size: 18px;
+  fill: dimgray;
+}
+
+#referenceLine {
+  fill: none;
+  stroke: dimgray;
+  stroke-width: 1px;
+  stroke-dasharray: 5 5;
+}
+
+#chart {
+  position: relative;
+}
+
+.datapointDialog .v-input .v-label {
+  height: unset !important;
+}
+</style>
