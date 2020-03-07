@@ -2,6 +2,7 @@ package de.aaaaaaah.velcom.runner.state;
 
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -40,10 +41,20 @@ class RunnerStateMachineTest {
 	}
 
 	@Test
-	void openSendsRunnerInformation() throws IOException {
+	void openSendsRunnerInformationWhenConnected() throws IOException {
+		when(socketConnectionManager.isConnected()).thenReturn(true);
 		runnerStateMachine.onConnectionEstablished(configuration);
 
 		verify(socketConnectionManager, atLeastOnce())
+			.sendEntity(Matchers.isA(RunnerInformation.class));
+	}
+
+	@Test
+	void openDoesNotSendRunnerInformationWhenNotConnected() throws IOException {
+		when(socketConnectionManager.isConnected()).thenReturn(false);
+		runnerStateMachine.onConnectionEstablished(configuration);
+
+		verify(socketConnectionManager, never())
 			.sendEntity(Matchers.isA(RunnerInformation.class));
 	}
 
