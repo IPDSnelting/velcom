@@ -147,15 +147,14 @@ export default class DetailGraph extends Vue {
   }
 
   // scales and axes
-  private get xScale(): d3.ScaleLinear<number, number> {
+  private get baseXScale(): d3.ScaleLinear<number, number> {
     return d3
       .scaleLinear()
       .domain([this.amount + 0.5, 0.5])
       .range([0, this.innerWidth])
   }
 
-  private currentXScale: d3.ScaleLinear<number, number> = this.xScale
-  private currentTransform: d3.ZoomTransform | null = null
+  private currentXScale: d3.ScaleLinear<number, number> = this.baseXScale
 
   private get yScale(): d3.ScaleLinear<number, number> {
     let min: number = !this.beginYAtZero && this.minVal ? this.minVal : 0
@@ -199,7 +198,7 @@ export default class DetailGraph extends Vue {
   }
 
   private get xAxis(): d3.Axis<number | { valueOf(): number }> {
-    return d3.axisBottom(this.xScale).tickFormat(this.xAxisFormat)
+    return d3.axisBottom(this.currentXScale).tickFormat(this.xAxisFormat)
   }
 
   private get yAxis(): d3.Axis<number | { valueOf(): number }> {
@@ -246,7 +245,7 @@ export default class DetailGraph extends Vue {
 
   private zoomed() {
     let transform: d3.ZoomTransform = d3.event.transform
-    this.currentXScale = transform.rescaleX(this.xScale)
+    this.currentXScale = transform.rescaleX(this.baseXScale)
 
     d3.select('#dataLayer')
       .selectAll<SVGPathElement, unknown>('.datapoint')
@@ -399,7 +398,7 @@ export default class DetailGraph extends Vue {
       this.commitToCompare = this.selectedDatapoint || null
       this.drawCrosshair(
         this.selectedDatapoint,
-        this.xScale,
+        this.currentXScale,
         this.datapointColor(this.selectedDatapoint)
       )
     }
@@ -549,7 +548,7 @@ export default class DetailGraph extends Vue {
       .transition()
       .duration(1000)
       .delay(100)
-      .attr('d', this.line(this.xScale))
+      .attr('d', this.line(this.currentXScale))
       .attr('stroke', this.colorById(this.selectedRepo))
       .attr('stroke-width', 2)
       .attr('fill', 'none')
@@ -594,7 +593,7 @@ export default class DetailGraph extends Vue {
         'transform',
         (d: CommitInfo) =>
           'translate(' +
-          this.x(d.comparison, this.xScale) +
+          this.x(d.comparison, this.currentXScale) +
           ', ' +
           this.y(d.comparison) +
           ') rotate(-45)'
@@ -863,11 +862,8 @@ export default class DetailGraph extends Vue {
     let chart = d3.select('#chart').node() as HTMLElement
     this.width = chart ? chart.getBoundingClientRect().width : 900
     this.height = this.width / 2
-    if (this.currentTransform) {
-      this.currentXScale = this.currentTransform.rescaleX(this.xScale)
-    } else {
-      this.currentXScale = this.xScale
-    }
+    // FIXME: here
+    this.currentXScale = this.baseXScale
 
     d3.select('#dataLayer')
       .select('#brush')
@@ -941,12 +937,13 @@ export default class DetailGraph extends Vue {
       .attr('pointer-events', 'all')
       .style('opacity', 0)
 
+    d3.select('#listenerRect').call(this.zoom as any)
+
     d3.select('#dataLayer')
       .append('g')
       .attr('id', 'brush')
       .call(this.brush)
-
-    d3.select('#dataLayer').call(this.zoom as any)
+      .lower()
 
     d3.select('#dataLayer')
       .append('g')
