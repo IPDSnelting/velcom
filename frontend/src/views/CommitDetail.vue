@@ -48,7 +48,7 @@
         </v-card>
       </v-col>
     </v-row>
-    <v-row v-if="!hasRun">
+    <v-row v-if="!hasRun && commit">
       <v-col>
         <v-card>
           <v-card-title>
@@ -66,6 +66,9 @@
           </v-card-text>
         </v-card>
       </v-col>
+    </v-row>
+    <v-row v-if="!commit && fetchDone">
+      <page-404></page-404>
     </v-row>
   </v-container>
 </template>
@@ -85,15 +88,18 @@ import { vxm } from '../store'
 import CommitInformation from '../components/CommitInformation.vue'
 import CommitInfoTable from '../components/CommitInfoTable.vue'
 import { Watch } from 'vue-property-decorator'
+import NotFound404 from './NotFound404.vue'
 
 @Component({
   components: {
     'commit-information': CommitInformation,
-    'commit-info-table': CommitInfoTable
+    'commit-info-table': CommitInfoTable,
+    'page-404': NotFound404
   }
 })
 export default class CommitDetail extends Vue {
   private info: CommitInfo | null = null
+  private fetchDone: boolean = false
 
   get repoID() {
     return this.$route.params.repoID
@@ -175,6 +181,7 @@ export default class CommitDetail extends Vue {
         second: this.hash
       })
       .then(it => (this.info = it))
+      .finally(() => (this.fetchDone = true))
   }
 
   created() {
