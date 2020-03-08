@@ -503,12 +503,6 @@ export default class RepoComparison extends Vue {
     }
     this.retrieveGraphData()
   }
-
-  /* mounted() {
-    if (!this.$route.query) {
-      this.updateUrl()
-    }
-  } */
 }
 </script>
 
