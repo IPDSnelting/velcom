@@ -20,6 +20,12 @@
             value="compareCommits"
           ></v-radio>
           <v-radio label="remove reference line" value="removeReference"></v-radio>
+          <v-radio
+            v-for="{ name, event } in this.extraOptions"
+            :key="event"
+            :label="name"
+            :value="event"
+          ></v-radio>
         </v-radio-group>
       </v-card-text>
       <v-card-actions>
@@ -45,6 +51,12 @@ import CommitBenchmarkActions from '../CommitBenchmarkActions.vue'
 
 type CommitInfo = { commit: Commit; comparison: CommitComparison }
 
+/**
+ * An extra option in the dialog. It will trigger an "extraOption" event
+ * with the "eventName" as value.
+ */
+export type ExtraOption = { text: string; eventName: string }
+
 @Component({
   components: {
     'commit-benchmark-actions': CommitBenchmarkActions
@@ -63,6 +75,9 @@ export default class DatapointDialog extends Vue {
   @Prop({})
   allowSelectAsReference!: boolean
 
+  @Prop({ default: () => [] })
+  extraOptions!: ExtraOption[]
+
   private get selectedCommit(): Commit {
     return this.selectedDatapoint!.commit
   }
@@ -74,11 +89,7 @@ export default class DatapointDialog extends Vue {
     return false
   }
 
-  private datapointAction:
-    | 'setReference'
-    | 'selectCommitToCompare'
-    | 'compareCommits'
-    | 'removeReference' = 'setReference'
+  private datapointAction: string = 'setReference'
 
   private get compareLabel(): string {
     return this.commitToCompare
@@ -87,33 +98,14 @@ export default class DatapointDialog extends Vue {
   }
 
   private onConfirm() {
-    switch (this.datapointAction) {
-      case 'setReference':
-        this.setReference()
-        break
-      case 'selectCommitToCompare':
-        this.selectCommitToCompare()
-        break
-      case 'compareCommits':
-        this.compareCommits()
-        break
-      case 'removeReference':
-        this.removeReference()
-        break
+    let matchingExtraOptions = this.extraOptions.filter(
+      it => it.eventName === this.datapointAction
+    )
+    if (matchingExtraOptions.length > 0) {
+      this.$emit('extraOption', this.datapointAction)
+    } else {
+      this.$emit(this.datapointAction)
     }
-  }
-
-  private setReference() {
-    this.$emit('setReference')
-  }
-  private selectCommitToCompare() {
-    this.$emit('selectCommitToCompare')
-  }
-  private compareCommits() {
-    this.$emit('compareCommits')
-  }
-  private removeReference() {
-    this.$emit('removeReference')
   }
 
   private onClose() {
