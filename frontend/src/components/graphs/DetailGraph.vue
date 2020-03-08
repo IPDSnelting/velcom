@@ -244,6 +244,7 @@ export default class DetailGraph extends Vue {
         [0, -Infinity],
         [this.innerWidth, Infinity]
       ])
+      .filter(() => !d3.event.ctrlKey)
       .on('zoom', this.zoomed)
   }
 
@@ -858,21 +859,14 @@ export default class DetailGraph extends Vue {
     this.height = this.width / 2
     this.updateCurrentAxisAfterResize()
 
-    d3.select<Element, unknown>('#listenerRect')
-      .transition()
-      .duration(750)
-      .call(this.zoom.transform, d3.zoomIdentity)
-
     d3.select('#dataLayer')
       .select('#brush')
       .remove()
-    d3.select('#listenerRect')
-      .attr('width', this.innerWidth)
-      .attr('height', this.innerHeight + 2 * this.datapointWidth)
     d3.select('#dataLayer')
       .append('g')
       .attr('id', 'brush')
       .call(this.brush)
+      .call(this.zoom as any)
       .lower()
     d3.select('#mainSvg')
       .select('#clipRect')
@@ -931,21 +925,10 @@ export default class DetailGraph extends Vue {
       )
 
     d3.select('#dataLayer')
-      .append('rect')
-      .attr('id', 'listenerRect')
-      .attr('x', 0)
-      .attr('y', 0)
-      .attr('width', this.innerWidth)
-      .attr('height', this.innerHeight)
-      .attr('pointer-events', 'all')
-      .style('opacity', 0)
-
-    d3.select('#listenerRect').call(this.zoom as any)
-
-    d3.select('#dataLayer')
       .append('g')
       .attr('id', 'brush')
       .call(this.brush)
+      .call(this.zoom as any)
       .lower()
 
     d3.select('#dataLayer')
