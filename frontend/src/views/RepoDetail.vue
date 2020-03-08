@@ -279,13 +279,18 @@ export default class RepoDetail extends Vue {
   }
 
   private async unlockReferenceFrame() {
-    let { index } = await vxm.repoDetailModule.fetchIndexOfCommit({
-      repoId: this.repo.id,
-      commitHash: this.relativeToCommit
-    })
-    this.lockedToRelativeCommit = false
-    this.skip = '' + (parseInt(this.skip) + index)
-    vxm.repoDetailModule.fetchHistoryForRepo(this.payload)
+    vxm.repoDetailModule
+      .fetchIndexOfCommit({
+        repoId: this.repo.id,
+        commitHash: this.relativeToCommit
+      })
+      .then(({ index }) => {
+        this.skip = '' + (parseInt(this.skip) + index)
+      })
+      .finally(() => {
+        this.lockedToRelativeCommit = false
+        vxm.repoDetailModule.fetchHistoryForRepo(this.payload)
+      })
   }
 
   private toggleYScale() {
