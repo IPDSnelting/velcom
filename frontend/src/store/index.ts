@@ -10,7 +10,7 @@ import { QueueStore } from './modules/queueStore'
 import { RepoComparisonStore } from './modules/repoComparisonStore'
 import { RepoDetailStore } from './modules/repoDetailStore'
 import VuexPersistence from 'vuex-persist'
-import { MeasurementID, CommitComparison, Commit } from './types'
+import { MeasurementID, CommitComparison, Commit, Datapoint } from './types'
 
 interface RootState {
   baseUrl: string
@@ -32,6 +32,7 @@ interface PersistedRepoStore {
 interface PersistedRepoComparisonStore {
   _selectedRepos: string[]
   _selectedBranchesByRepoID: { [key: string]: string[] }
+  _referenceDatapoint: Datapoint | null
   startTime: string
   stopTime: string
   selectedMetric: string
@@ -79,6 +80,7 @@ const persistenceSessionStorage = new VuexPersistence<RootState>({
         _selectedRepos: state.repoComparisonModule._selectedRepos,
         _selectedBranchesByRepoID:
           state.repoComparisonModule._selectedBranchesByRepoID,
+        _referenceDatapoint: state.repoComparisonModule._referenceDatapoint,
         startTime: state.repoComparisonModule.startTime,
         stopTime: state.repoComparisonModule.stopTime,
         selectedBenchmark: state.repoComparisonModule.selectedBenchmark,

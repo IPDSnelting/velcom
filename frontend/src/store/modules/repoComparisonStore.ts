@@ -22,11 +22,10 @@ export class RepoComparisonStore extends VxModule {
   private _interpretation: 'LESS_IS_BETTER' | 'MORE_IS_BETTER' | 'NEUTRAL' =
     'NEUTRAL'
   private _unit: string = ''
+  private _referenceDatapoint: Datapoint | null = null
 
   selectedBenchmark: string = ''
   selectedMetric: string = ''
-
-  referenceDatapoint: Datapoint | null = null
 
   // One week in the past
   private _defaultStartTime: string = new Date(
@@ -177,6 +176,18 @@ export class RepoComparisonStore extends VxModule {
 
   set stopDate(stop: Date) {
     this.stopTime = stop.toISOString().substring(0, 10)
+  }
+
+  get referenceDatapoint(): Datapoint | null {
+    if (this._referenceDatapoint === null) {
+      return null
+    }
+
+    return Datapoint.fromRawObject(this._referenceDatapoint)
+  }
+
+  set referenceDatapoint(datapoint: Datapoint | null) {
+    this._referenceDatapoint = datapoint
   }
 
   /**

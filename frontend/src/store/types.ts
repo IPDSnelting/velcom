@@ -304,6 +304,22 @@ export class Datapoint {
     this.commit = commit
     this.value = value
   }
+
+  /**
+   * Returns a real datapoint (prototypes set and all) from a normal JS
+   * object that happens to have all necessary properties.
+   *
+   * @static
+   * @param {Datapoint} datapoint the object to deconstruct it from
+   * @returns a real datapoint
+   * @memberof Datapoint
+   */
+  static fromRawObject(datapoint: Datapoint): Datapoint {
+    return new Datapoint(
+      Commit.fromRawObject(datapoint.commit),
+      datapoint.value
+    )
+  }
 }
 
 export class Worker {
