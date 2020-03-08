@@ -197,9 +197,12 @@ export default class DetailGraph extends Vue {
     let datapoints = this.groupedByMeasurement.get(
       datapoint.measurementId.toString()
     )
+    if (!datapoints) {
+      return 0
+    }
     return this.currentXScale(
-      datapoints!.length -
-        datapoints!.findIndex(
+      datapoints.length -
+        datapoints.findIndex(
           it =>
             it.comparison.secondCommit.hash ===
             datapoint.comparison.secondCommit.hash
@@ -456,7 +459,7 @@ export default class DetailGraph extends Vue {
   private drawCrosshair(datapoint: CommitInfo, color: string) {
     let crosshair = d3.select('#_' + this.keyFn(datapoint))
 
-    if (crosshair.node()) {
+    if (crosshair.node() && this.hasDataForPoint(datapoint)) {
       let crosshairRect = (crosshair.node() as SVGElement).getBoundingClientRect()
       let crosshairWidth: number = crosshairRect.width
       let crosshairHeight: number = crosshairRect.height
