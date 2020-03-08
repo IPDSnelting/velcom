@@ -16,7 +16,20 @@
           selectable
           :items="measurementItems"
           :value="selectedItems"
-        ></v-treeview>
+        >
+          <template #label="{ item, leaf }">
+            <v-chip
+              v-if="leaf"
+              outlined
+              label
+              :input-value="leaf"
+              :color="leaf ? metricColor(item) : 'accent'"
+            >
+              <span class="name">{{ item.name }}</span>
+            </v-chip>
+            <span v-else>{{ item.name}}</span>
+          </template>
+        </v-treeview>
       </v-col>
     </v-row>
   </v-container>
@@ -74,16 +87,36 @@ export default class MeasurementIdSelection extends Vue {
     })
   }
 
-  private get selectedItems(): MeasurementItem[] {
+  private get selectedMeasurementMap(): Map<string, MeasurementItem> {
     let allMeasurementItems: Map<string, MeasurementItem> = new Map()
     this.measurementItems
       .flatMap(it => it.children)
       .forEach(it => allMeasurementItems.set(it.measurementId.toString(), it))
+    return allMeasurementItems
+  }
 
+  private get selectedItems(): MeasurementItem[] {
     return this.selectedMeasurements
-      .map(measurementId => allMeasurementItems.get(measurementId.toString()))
+      .map(measurementId =>
+        this.selectedMeasurementMap.get(measurementId.toString())
+      )
       .filter(it => it)
       .map(it => it as MeasurementItem)
+  }
+
+  private metricColor(item: MeasurementItem | BenchmarkItem): string {
+    if (!this.selectedMeasurements) {
+      return 'accent'
+    }
+    if (item instanceof MeasurementItem) {
+      return vxm.colorModule.colorByIndex(
+        this.selectedMeasurements.findIndex(it => it.equals(item.measurementId))
+      )
+    } else if (item.children) {
+      return this.metricColor(item.children[0])
+    } else {
+      return 'accent'
+    }
   }
 
   private changed(measurements: MeasurementItem[]) {
@@ -99,5 +132,8 @@ export default class MeasurementIdSelection extends Vue {
 .wrapper {
   max-height: 300px;
   overflow: auto;
+}
+.name {
+  color: rgba(0, 0, 0, 0.87);
 }
 </style>
