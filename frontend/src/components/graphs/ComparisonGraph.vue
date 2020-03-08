@@ -57,7 +57,7 @@ export default class ComparisonGraph extends Vue {
     right: 50,
     top: 10,
     bottom: 100,
-    between: 50
+    between: 70
   }
 
   private get innerWidth(): number {
