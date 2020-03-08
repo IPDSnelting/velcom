@@ -3,9 +3,6 @@
     <v-row>
       <v-col>
         <v-card>
-          <v-card-title>
-            <v-toolbar color="primary darken-1" dark>Filter Data</v-toolbar>
-          </v-card-title>
           <v-card-text class="pa-1">
             <v-container fluid class="ma-0 pa-4">
               <v-row align="center" justify="space-around" no-gutters>
@@ -144,8 +141,29 @@
     </v-row>
 
     <v-row align="start" justify="start" class="d-flex">
-      <v-col cols="auto">
-        <repo-selector v-on:selectionChanged="retrieveGraphData()"></repo-selector>
+      <v-col>
+        <v-row no-gutters>
+          <v-card>
+            <v-col v-show="referenceCommitSelected">
+              <v-row no-gutters>
+                <v-col cols="12" class="ma-0 pa-0">
+                  <span class="hint pa-0">reference line commit</span>
+                </v-col>
+                <v-col class="pa-0">
+                  <commit-chip
+                    class="mr-2"
+                    :to="{ name: 'commit-detail', params: { repoID: referenceRepoID, hash: referenceHash } }"
+                    :commitHash="referenceHash"
+                    :copyOnClick="false"
+                  ></commit-chip>
+                </v-col>
+              </v-row>
+            </v-col>
+            <v-col class="ma-0 pa-0">
+              <repo-selector v-on:selectionChanged="retrieveGraphData()"></repo-selector>
+            </v-col>
+          </v-card>
+        </v-row>
       </v-col>
       <v-col style="flex: 1 1 50%; min-width: 600px">
         <v-card>
@@ -163,17 +181,19 @@ import { Watch } from 'vue-property-decorator'
 import { vxm } from '../store/index'
 import RepoAddDialog from '../components/dialogs/RepoAddDialog.vue'
 import RepoSelector from '../components/RepoSelector.vue'
-import { Repo, MeasurementID, Datapoint } from '../store/types'
+import { Repo, MeasurementID, Datapoint, Commit } from '../store/types'
 import { mdiCalendar } from '@mdi/js'
 import { Route, RawLocation } from 'vue-router'
 import { Dictionary } from 'vue-router/types/router'
 import ComparisonGraph from '../components/graphs/ComparisonGraph.vue'
+import CommitChip from '../components/CommitChip.vue'
 
 @Component({
   components: {
     'repo-add': RepoAddDialog,
     'repo-selector': RepoSelector,
-    'comparison-graph': ComparisonGraph
+    'comparison-graph': ComparisonGraph,
+    'commit-chip': CommitChip
   }
 })
 export default class RepoComparison extends Vue {
@@ -279,6 +299,22 @@ export default class RepoComparison extends Vue {
     return inputTime <= today.getTime()
       ? true
       : 'This date must not be after today!'
+  }
+
+  private get referenceHash(): string {
+    return vxm.repoComparisonModule.referenceDatapoint
+      ? vxm.repoComparisonModule.referenceDatapoint.commit.hash
+      : ''
+  }
+
+  private get referenceRepoID(): string {
+    return vxm.repoComparisonModule.referenceDatapoint
+      ? vxm.repoComparisonModule.referenceDatapoint.commit.repoID
+      : ''
+  }
+
+  private get referenceCommitSelected(): boolean {
+    return vxm.repoComparisonModule.referenceDatapoint !== null
   }
 
   @Watch('selectedBenchmark')
@@ -456,3 +492,11 @@ export default class RepoComparison extends Vue {
   }
 }
 </script>
+
+<style scoped>
+.hint {
+  font-size: 14px;
+  font-weight: 400;
+  color: rgba(0, 0, 0, 0.6);
+}
+</style>
