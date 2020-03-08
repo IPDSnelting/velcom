@@ -23,6 +23,7 @@
               label
               :input-value="leaf"
               :color="leaf ? metricColor(item) : 'accent'"
+              class="cool-chip"
             >
               <span class="name">{{ item.name }}</span>
             </v-chip>
@@ -147,5 +148,10 @@ export default class MeasurementIdSelection extends Vue {
 }
 .name {
   color: rgba(0, 0, 0, 0.87);
+}
+
+.cool-chip {
+  border-width: thick !important;
+  border-style: dotted !important;
 }
 </style>
