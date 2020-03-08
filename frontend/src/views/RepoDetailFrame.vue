@@ -15,7 +15,7 @@
           </repo-add>
         </v-col>
       </v-row>
-      <page-404 v-if="!repoSelected" title="Empty space" subtitle="No repository selected"></page-404>
+      <page-404 v-if="!repoSelected" title="kenós" subtitle="No repository selected"></page-404>
       <router-view></router-view>
     </v-container>
   </div>
