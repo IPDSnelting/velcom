@@ -257,13 +257,12 @@ export default class DetailGraph extends Vue {
   }
 
   private get yLabel(): string {
-    if (this.measurements.length > 0) {
+    if (this.measurements.length === 1) {
       return this.unit(this.measurements[0])
         ? this.measurements[0].metric + ' in ' + this.unit(this.measurements[0])
         : this.measurements[0].metric
-    } else {
-      return ''
     }
+    return ''
   }
 
   // interacting with the graph via zooming and brushing
