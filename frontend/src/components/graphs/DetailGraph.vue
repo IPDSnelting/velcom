@@ -187,7 +187,10 @@ export default class DetailGraph extends Vue {
   }
 
   private hasDataForPoint(datapoint: CommitInfo) {
-    return this.groupedByMeasurement.has(datapoint.measurementId.toString())
+    return (
+      datapoint !== null &&
+      this.groupedByMeasurement.has(datapoint.measurementId.toString())
+    )
   }
 
   private x(datapoint: CommitInfo): number {
@@ -371,9 +374,14 @@ export default class DetailGraph extends Vue {
     if (this.selectedDatapoint) {
       vxm.repoDetailModule.referenceDatapoint = this.selectedDatapoint
     }
-    if (vxm.repoDetailModule.referenceDatapoint) {
+    if (
+      vxm.repoDetailModule.referenceDatapoint &&
+      this.hasDataForPoint(vxm.repoDetailModule.referenceDatapoint)
+    ) {
       this.drawReferenceLine(vxm.repoDetailModule.referenceDatapoint)
       this.drawCrosshair(vxm.repoDetailModule.referenceDatapoint, 'gray')
+    } else {
+      this.removeReference(false)
     }
     this.closeDialog()
   }
@@ -404,13 +412,15 @@ export default class DetailGraph extends Vue {
       .remove()
   }
 
-  private removeReference() {
+  private removeReference(clearReferenceDataPoint: boolean = true) {
     d3.select('#referenceLine')
       .transition()
       .attr('opacity', 0)
       .remove()
     this.removeCrosshair(vxm.repoDetailModule.referenceDatapoint!)
-    vxm.repoDetailModule.referenceDatapoint = null
+    if (clearReferenceDataPoint) {
+      vxm.repoDetailModule.referenceDatapoint = null
+    }
     this.closeDialog()
   }
 
