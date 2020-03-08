@@ -9,6 +9,7 @@
         </v-radio-group>
       </v-card-text>
       <v-card-actions>
+        <v-spacer></v-spacer>
         <v-btn color="error" @click="onClose">Close</v-btn>
         <v-btn color="primary" @click="onConfirm">Confirm</v-btn>
       </v-card-actions>
