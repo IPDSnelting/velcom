@@ -15,6 +15,7 @@
           return-object
           selectable
           :items="measurementItems"
+          :value="selectedItems"
         ></v-treeview>
       </v-col>
     </v-row>
@@ -25,7 +26,7 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { vxm } from '../../store'
-import { Prop, Watch } from 'vue-property-decorator'
+import { Prop, Watch, Model } from 'vue-property-decorator'
 import { MeasurementID } from '../../store/types'
 
 class BenchmarkItem {
@@ -71,6 +72,18 @@ export default class MeasurementIdSelection extends Vue {
         )
       return new BenchmarkItem(benchmark, metrics)
     })
+  }
+
+  private get selectedItems(): MeasurementItem[] {
+    let allMeasurementItems: Map<string, MeasurementItem> = new Map()
+    this.measurementItems
+      .flatMap(it => it.children)
+      .forEach(it => allMeasurementItems.set(it.measurementId.toString(), it))
+
+    return this.selectedMeasurements
+      .map(measurementId => allMeasurementItems.get(measurementId.toString()))
+      .filter(it => it)
+      .map(it => it as MeasurementItem)
   }
 
   private changed(measurements: MeasurementItem[]) {

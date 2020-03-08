@@ -24,7 +24,11 @@
             <v-container fluid class="ma-0 px-4 pb-0">
               <v-row align="center" justify="space-around" no-gutters>
                 <v-col md="5" sm="12" cols="12">
-                  <measurement-id-selection v-model="selectedMeasurements" :repoId="id"></measurement-id-selection>
+                  <measurement-id-selection
+                    @input="selectedMeasurements = $event"
+                    :selectedMeasurements="selectedMeasurements"
+                    :repoId="id"
+                  ></measurement-id-selection>
                 </v-col>
                 <v-col md="5" sm="12" cols="12">
                   <v-form v-model="formValid" ref="form">
@@ -184,7 +188,7 @@ export default class RepoDetail extends Vue {
   }
 
   private set selectedMeasurements(selectedMeasurements: MeasurementID[]) {
-    vxm.repoDetailModule.selectedMeasurements = selectedMeasurements.slice()
+    vxm.repoDetailModule.selectedMeasurements = selectedMeasurements
   }
 
   private get relativeToCommit(): string {
