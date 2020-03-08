@@ -164,6 +164,7 @@ export default class DetailGraph extends Vue {
     return d3
       .scaleLinear()
       .domain([min, max])
+      .nice()
       .range([this.innerHeight, 0])
   }
 
@@ -870,7 +871,7 @@ export default class DetailGraph extends Vue {
     d3.select('#mainSvg')
       .select('#clipRect')
       .attr('width', this.innerWidth)
-      .attr('height', this.innerHeight + 2 * this.datapointWidth)
+      .attr('height', this.innerHeight + 12)
 
     this.updateData()
   }
@@ -946,9 +947,9 @@ export default class DetailGraph extends Vue {
       .attr('id', 'clip')
       .append('rect')
       .attr('id', 'clipRect')
-      .attr('y', -this.datapointWidth)
+      .attr('y', -6)
       .attr('width', this.innerWidth)
-      .attr('height', this.innerHeight + 2 * this.datapointWidth)
+      .attr('height', this.innerHeight + 12)
 
     d3.select('#dataLayer')
       .append('g')

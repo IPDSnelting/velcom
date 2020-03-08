@@ -700,11 +700,12 @@ export default class ComparisonGraph extends Vue {
     d3.select('#mainSvg')
       .select('#focusClipRect')
       .attr('width', this.innerWidth)
-      .attr('height', this.focusHeight + 2 * this.datapointWidth)
+      .attr('height', this.focusHeight + 12)
+
     d3.select('#mainSvg')
       .select('#contextClipRect')
       .attr('width', this.innerWidth)
-      .attr('height', this.contextHeight + 2 * this.datapointWidth)
+      .attr('height', this.contextHeight)
 
     this.updateFocus()
   }
@@ -798,9 +799,9 @@ export default class ComparisonGraph extends Vue {
       .attr('id', 'focusClip')
       .append('rect')
       .attr('id', 'focusClipRect')
-      .attr('y', -5)
+      .attr('y', -6)
       .attr('width', this.innerWidth)
-      .attr('height', this.focusHeight + 10)
+      .attr('height', this.focusHeight + 12)
 
     d3.select('#mainSvg')
       .append('clipPath')
