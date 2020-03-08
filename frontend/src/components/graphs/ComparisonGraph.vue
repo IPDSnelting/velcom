@@ -137,11 +137,15 @@ export default class ComparisonGraph extends Vue {
       }
     )
 
-    return inFocusMin !== undefined &&
-      this.selectedDatapoint &&
-      this.selectedDatapoint.value < inFocusMin
-      ? this.selectedDatapoint.value
-      : inFocusMin
+    if (inFocusMin) {
+      return vxm.repoComparisonModule.referenceDatapoint &&
+        vxm.repoComparisonModule.referenceDatapoint.value < inFocusMin
+        ? vxm.repoComparisonModule.referenceDatapoint.value
+        : inFocusMin
+    }
+    return vxm.repoComparisonModule.referenceDatapoint
+      ? vxm.repoComparisonModule.referenceDatapoint.value
+      : 0
   }
 
   private get maxFocusVal(): number | undefined {
@@ -153,11 +157,15 @@ export default class ComparisonGraph extends Vue {
       }
     )
 
-    return inFocusMax !== undefined &&
-      this.selectedDatapoint &&
-      this.selectedDatapoint.value > inFocusMax
-      ? this.selectedDatapoint.value
-      : inFocusMax
+    if (inFocusMax) {
+      return vxm.repoComparisonModule.referenceDatapoint &&
+        vxm.repoComparisonModule.referenceDatapoint.value > inFocusMax
+        ? vxm.repoComparisonModule.referenceDatapoint.value
+        : inFocusMax
+    }
+    return vxm.repoComparisonModule.referenceDatapoint
+      ? vxm.repoComparisonModule.referenceDatapoint.value
+      : 0
   }
 
   private get yFocusDomain(): number[] {
@@ -232,8 +240,8 @@ export default class ComparisonGraph extends Vue {
     return d3
       .brushX()
       .extent([
-        [0, 0],
-        [this.innerWidth, this.contextHeight]
+        [0, -2],
+        [this.innerWidth, this.contextHeight + 2]
       ])
       .on('brush', this.brushed)
       .on('end', this.brushended)
@@ -250,6 +258,11 @@ export default class ComparisonGraph extends Vue {
 
       this.focus = [newFocusMin, newFocusMax]
     }
+    console.log(
+      this.minFocusVal,
+      this.maxFocusVal,
+      vxm.repoComparisonModule.referenceDatapoint !== null
+    )
   }
 
   private brushended() {
@@ -705,7 +718,7 @@ export default class ComparisonGraph extends Vue {
     d3.select('#mainSvg')
       .select('#contextClipRect')
       .attr('width', this.innerWidth)
-      .attr('height', this.contextHeight)
+      .attr('height', this.contextHeight + 2)
 
     this.updateFocus()
   }
@@ -715,11 +728,9 @@ export default class ComparisonGraph extends Vue {
   @Watch('maxTimestamp')
   private updateData() {
     this.context = [this.minTimestamp, this.maxTimestamp]
-    this.focus = this.context
     this.resetBrush()
     d3.select('#yLabel').text(this.yLabel)
-    this.updateAxes()
-    this.drawGraph()
+    this.updateFocus()
   }
 
   @Watch('focus')
@@ -808,8 +819,9 @@ export default class ComparisonGraph extends Vue {
       .attr('id', 'contextClip')
       .append('rect')
       .attr('id', 'contextClipRect')
+      .attr('y', -2)
       .attr('width', this.innerWidth)
-      .attr('height', this.contextHeight)
+      .attr('height', this.contextHeight + 2)
 
     d3.select('#dataLayer')
       .append('g')
