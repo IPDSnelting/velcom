@@ -143,9 +143,9 @@ export class RepoDetailStore extends VxModule {
    * @memberof RepoDetailStore
    */
   get selectedMeasurements(): MeasurementID[] {
-    return this._selectedMeasurements.map(
-      ({ metric, benchmark }) => new MeasurementID(benchmark, metric)
-    )
+    return this._selectedMeasurements
+      .filter(it => it)
+      .map(({ metric, benchmark }) => new MeasurementID(benchmark, metric))
   }
 
   /**
@@ -154,7 +154,7 @@ export class RepoDetailStore extends VxModule {
    * @memberof RepoDetailStore
    */
   set selectedMeasurements(measurements: MeasurementID[]) {
-    this._selectedMeasurements = measurements.slice()
+    this._selectedMeasurements = measurements.filter(it => it)
   }
 
   /**

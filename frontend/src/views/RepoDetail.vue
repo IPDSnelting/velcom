@@ -188,6 +188,8 @@ export default class RepoDetail extends Vue {
   }
 
   private set selectedMeasurements(selectedMeasurements: MeasurementID[]) {
+    console.log(selectedMeasurements)
+
     vxm.repoDetailModule.selectedMeasurements = selectedMeasurements
   }
 
