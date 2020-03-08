@@ -501,7 +501,14 @@ export default class RepoComparison extends Vue {
     if (query.stop) {
       vxm.repoComparisonModule.stopDate = new Date(query.stop as string)
     }
+    this.retrieveGraphData()
   }
+
+  /* mounted() {
+    if (!this.$route.query) {
+      this.updateUrl()
+    }
+  } */
 }
 </script>
 
