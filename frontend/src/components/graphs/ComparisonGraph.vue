@@ -328,7 +328,7 @@ export default class ComparisonGraph extends Vue {
 
   private drawCrosshair(datapoint: Datapoint) {
     let crosshair = d3.select(
-      '#' + datapoint.commit.repoID + '_' + datapoint.commit.hash
+      '#' + '_' + datapoint.commit.repoID + '_' + datapoint.commit.hash
     )
 
     if (crosshair) {
@@ -336,7 +336,9 @@ export default class ComparisonGraph extends Vue {
       let crosshairWidth: number = crosshairRect.width
       let crosshairHeight: number = crosshairRect.height
 
-      d3.select('#' + datapoint.commit.repoID + '_' + datapoint.commit.hash)
+      d3.select(
+        '#' + '_' + datapoint.commit.repoID + '_' + datapoint.commit.hash
+      )
         .transition()
         .attr(
           'd',
@@ -361,7 +363,7 @@ export default class ComparisonGraph extends Vue {
   }
 
   private removeCrosshair(datapoint: Datapoint) {
-    d3.select('#' + datapoint.commit.repoID + '_' + datapoint.commit.hash)
+    d3.select('#' + '_' + datapoint.commit.repoID + '_' + datapoint.commit.hash)
       .attr(
         'd',
         d3
