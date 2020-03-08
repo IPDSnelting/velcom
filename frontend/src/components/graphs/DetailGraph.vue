@@ -197,12 +197,9 @@ export default class DetailGraph extends Vue {
     let datapoints = this.groupedByMeasurement.get(
       datapoint.measurementId.toString()
     )
-    if (!datapoints) {
-      return 0
-    }
     return this.currentXScale(
-      datapoints.length -
-        datapoints.findIndex(
+      datapoints!.length -
+        datapoints!.findIndex(
           it =>
             it.comparison.secondCommit.hash ===
             datapoint.comparison.secondCommit.hash
@@ -560,7 +557,7 @@ export default class DetailGraph extends Vue {
       let information: string =
         this.measurements.length === 0
           ? '<tspan x="0" dy="1.2em">No data available.</tspan><tspan x="0" dy="1.2em">Please select benchmark and metric.</tspan>'
-          : '<tspan x="0" dy="1.2em">There are no commits within the specified time period</tspan><tspan x="0" dy="1.2em"> that have been benchmarked with this metric.</tspan>'
+          : '<tspan x="0" dy="1.2em">There are no commits within the specified time period</tspan><tspan x="0" dy="1.2em"> that have been benchmarked with the selected metrics.</tspan>'
 
       d3.select('#mainSvg')
         .append('g')
