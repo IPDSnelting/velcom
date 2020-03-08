@@ -520,13 +520,16 @@ export default class DetailGraph extends Vue {
   private graphDrawn: boolean = false
 
   private keyFn(d: CommitInfo): string {
-    return (
+    return btoa(
       d.commit.hash +
-      '_' +
-      d.measurementId.benchmark +
-      '_' +
-      d.measurementId.metric
+        '_' +
+        d.measurementId.benchmark +
+        '_' +
+        d.measurementId.metric
     )
+      .replace('=', 'eq')
+      .replace('+', 'plus')
+      .replace('/', 'slash')
   }
 
   private drawGraph() {

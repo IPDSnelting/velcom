@@ -29,7 +29,7 @@ import { Prop, Watch } from 'vue-property-decorator'
 import * as d3 from 'd3'
 import { vxm } from '../../store'
 import { formatDateUTC } from '../../util/TimeUtil'
-import { Datapoint, Commit, Repo } from '../../store/types'
+import { Datapoint, Commit, Repo, MeasurementID } from '../../store/types'
 import ComparisonDatapointDialog from '../dialogs/ComparisonDatapointDialog.vue'
 import { crosshairIcon } from '../graphs/crosshairIcon'
 
@@ -899,7 +899,11 @@ export default class ComparisonGraph extends Vue {
 
         vxm.repoDetailModule.referenceDatapoint = {
           commit: selectedCommit,
-          comparison: comparison
+          comparison: comparison,
+          measurementId: new MeasurementID(
+            vxm.repoComparisonModule.selectedBenchmark,
+            vxm.repoComparisonModule.selectedMetric
+          )
         }
 
         this.$router.push({
