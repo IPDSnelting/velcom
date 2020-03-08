@@ -403,8 +403,8 @@ export default class ComparisonGraph extends Vue {
 
       this.repos.forEach(repoID => {
         this.drawPaths(repoID)
-        this.drawDatapoints(repoID, keyFn)
       })
+      this.drawDatapoints(keyFn)
       this.appendTooltips(keyFn)
       this.setReference()
     } else {
@@ -498,7 +498,7 @@ export default class ComparisonGraph extends Vue {
         })
   }
 
-  private drawDatapoints(repoID: string, keyFn: d3.ValueFn<any, any, string>) {
+  private drawDatapoints(keyFn: d3.ValueFn<any, any, string>) {
     let datapoints: d3.Selection<
       SVGPathElement,
       Datapoint,
@@ -507,7 +507,7 @@ export default class ComparisonGraph extends Vue {
     > = d3
       .select('#focusLayer')
       .selectAll<SVGPathElement, unknown>('.datapoint')
-      .data(this.datapoints[repoID], keyFn)
+      .data(this.allDatapoints, keyFn)
 
     let newDatapoints = datapoints
       .enter()
@@ -532,8 +532,8 @@ export default class ComparisonGraph extends Vue {
           this.y(this.yFocusDomain, d, this.focusHeight) +
           ')'
       )
-      .attr('fill', (d: Datapoint) => this.colorById(repoID))
-      .attr('stroke', (d: Datapoint) => this.colorById(repoID))
+      .attr('fill', (d: Datapoint) => this.colorById(d.commit.repoID))
+      .attr('stroke', (d: Datapoint) => this.colorById(d.commit.repoID))
       .attr('stroke-width', 2)
       .attr('opacity', 1)
       .style('cursor', 'pointer')
