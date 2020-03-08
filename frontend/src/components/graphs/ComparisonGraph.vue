@@ -675,6 +675,13 @@ export default class ComparisonGraph extends Vue {
     let chart = d3.select('#chart').node() as HTMLElement
     this.width = chart ? chart.getBoundingClientRect().width : 900
     this.height = this.width * 0.6
+    console.log('resizing...')
+    console.log(
+      this.width,
+      this.height,
+      d3.select('#chart'),
+      chart.getBoundingClientRect()
+    )
 
     d3.select('#contextLayer').attr(
       'transform',
@@ -708,7 +715,9 @@ export default class ComparisonGraph extends Vue {
   @Watch('beginYAtZero')
   private updateData() {
     this.context = [this.minTimestamp, this.maxTimestamp]
-    this.focus = this.context
+    if (this.focus[0] < this.context[0] || this.focus[1] > this.context[1]) {
+      this.focus = this.context
+    }
     d3.select('#yLabel').text(this.yLabel)
     this.updateAxes()
     this.drawGraph()
@@ -769,18 +778,18 @@ export default class ComparisonGraph extends Vue {
       .attr('id', 'focusClip')
       .append('rect')
       .attr('id', 'focusClipRect')
-      .attr('y', -this.datapointWidth)
-      .attr('width', this.innerWidth)
-      .attr('height', this.focusHeight + 2 * this.datapointWidth)
+      .attr('x', -5)
+      .attr('y', -5)
+      .attr('width', this.innerWidth + 10)
+      .attr('height', this.focusHeight + 10)
 
     d3.select('#mainSvg')
       .append('clipPath')
       .attr('id', 'contextClip')
       .append('rect')
       .attr('id', 'contextClipRect')
-      .attr('y', -this.datapointWidth)
       .attr('width', this.innerWidth)
-      .attr('height', this.contextHeight + 2 * this.datapointWidth)
+      .attr('height', this.contextHeight)
 
     d3.select('#dataLayer')
       .append('g')
@@ -852,7 +861,7 @@ export default class ComparisonGraph extends Vue {
       .attr('height', '100%')
       .attr('align', 'end')
       .attr('justify', 'end')
-    this.resize()
+    setTimeout(this.resize, 500)
   }
 
   beforeDestroy() {
