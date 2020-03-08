@@ -57,7 +57,7 @@ export default class ComparisonGraph extends Vue {
     left: 100,
     right: 50,
     top: 20,
-    bottom: 50,
+    bottom: 70,
     between: 70
   }
 
