@@ -69,7 +69,7 @@ public class ProgramExecutor {
 				} catch (IOException e) {
 					collectedException.set(new UncheckedIOException(e));
 				}
-			});
+			}, "ProgramExecutor-Reader");
 			readerThread.start();
 
 			try {
@@ -112,7 +112,7 @@ public class ProgramExecutor {
 					Duration.between(startTime, Instant.now())
 				)
 			);
-		});
+		}, "ProgramExecutor-Main");
 		thread.start();
 		return new FutureProgramResult() {
 			private volatile boolean done;

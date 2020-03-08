@@ -38,7 +38,8 @@ public class IdleState implements RunnerState {
 		}
 		// Spawn a new thread so this completes and does not overwrite the executing state again
 		new Thread(
-			() -> configuration.getWorkExecutor().startExecution(path, workOrder, configuration)
+			() -> configuration.getWorkExecutor().startExecution(path, workOrder, configuration),
+			"Benchmark-Executor"
 		).start();
 		return new ExecutingState();
 	}
