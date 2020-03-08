@@ -436,15 +436,15 @@ export default class DetailGraph extends Vue {
         .attr(
           'transform',
           'translate(' +
-            (this.x(datapoint.comparison, this.currentXScale) -
-              crosshairWidth / 2) +
+            (this.x(datapoint.comparison, this.currentXScale) - 12) +
             ', ' +
-            (this.y(datapoint.comparison) - crosshairHeight / 2) +
+            (this.y(datapoint.comparison) - 12) +
             ')'
         )
         .attr('opacity', 1)
         .attr('fill', color)
         .attr('stroke', color)
+        .attr('stroke-width', this.strokeWidth(datapoint))
     }
   }
 

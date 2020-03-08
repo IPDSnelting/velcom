@@ -1,6 +1,6 @@
 // mdiCrosshairsGps as svg path
 export var crosshairIcon = {
-  draw: function(context: any, size: any) {
+  draw: function(context: CanvasRenderingContext2D, size: any) {
     let scale: (x: number) => number = (x: number) => 0.02 * size * x
 
     context.moveTo(scale(12), scale(8))
