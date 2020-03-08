@@ -196,7 +196,10 @@ export default class DetailGraph extends Vue {
   private x(datapoint: CommitInfo): number {
     let datapoints = this.groupedByMeasurement.get(
       datapoint.measurementId.toString()
-    )!
+    )
+    if (!datapoints) {
+      return 0
+    }
     return this.currentXScale(
       datapoints.length -
         datapoints.findIndex(
@@ -995,6 +998,10 @@ export default class DetailGraph extends Vue {
     this.updateCurrentAxisAfterResize()
     this.updateAxes()
     this.drawGraph()
+
+    d3.select<Element, unknown>('#dataLayer')
+      .select<Element>('#brush')
+      .call(this.zoom.transform, d3.zoomIdentity)
   }
 
   @Watch('dialogOpen')
