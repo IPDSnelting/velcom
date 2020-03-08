@@ -94,15 +94,15 @@ export default class DetailGraph extends Vue {
     return vxm.repoDetailModule.repoHistory
       .slice()
       .reverse()
-      .flatMap(it =>
-        this.measurements.map(measurementId => {
+      .flatMap(it => {
+        return this.measurements.map(measurementId => {
           return {
             commit: it.commit,
             comparison: it.comparison,
             measurementId: measurementId
           }
         })
-      )
+      })
   }
 
   // prettier-ignore
@@ -186,6 +186,10 @@ export default class DetailGraph extends Vue {
       .range([this.innerHeight, 0])
   }
 
+  private hasDataForPoint(datapoint: CommitInfo) {
+    return this.groupedByMeasurement.has(datapoint.measurementId.toString())
+  }
+
   private x(datapoint: CommitInfo): number {
     let datapoints = this.groupedByMeasurement.get(
       datapoint.measurementId.toString()
@@ -250,7 +254,7 @@ export default class DetailGraph extends Vue {
   }
 
   private get yLabel(): string {
-    if (this.measurements.length === 0) {
+    if (this.measurements.length > 0) {
       return this.unit(this.measurements[0])
         ? this.measurements[0].metric + ' in ' + this.unit(this.measurements[0])
         : this.measurements[0].metric
@@ -443,7 +447,7 @@ export default class DetailGraph extends Vue {
   private drawCrosshair(datapoint: CommitInfo, color: string) {
     let crosshair = d3.select('#_' + this.keyFn(datapoint))
 
-    if (crosshair) {
+    if (crosshair.node()) {
       let crosshairRect = (crosshair.node() as SVGElement).getBoundingClientRect()
       let crosshairWidth: number = crosshairRect.width
       let crosshairHeight: number = crosshairRect.height
@@ -475,6 +479,9 @@ export default class DetailGraph extends Vue {
   }
 
   private removeCrosshair(datapoint: CommitInfo) {
+    if (!this.hasDataForPoint(datapoint)) {
+      return
+    }
     d3.select('#_' + this.keyFn(datapoint))
       .attr(
         'd',

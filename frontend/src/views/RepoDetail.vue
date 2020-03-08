@@ -8,15 +8,23 @@
     <v-row align="baseline" justify="center">
       <v-col>
         <v-card>
+          <detail-graph
+            :measurements="selectedMeasurements"
+            :amount="Number.parseInt(amount)"
+            :beginYAtZero="this.yScaleBeginsAtZero"
+            @selectionChanged="updateSelection"
+          ></detail-graph>
+        </v-card>
+      </v-col>
+    </v-row>
+    <v-row align="baseline" justify="center">
+      <v-col>
+        <v-card>
           <v-card-text class="ma-0 pa-0">
             <v-container fluid class="ma-0 px-4 pb-0">
               <v-row align="center" justify="space-around" no-gutters>
                 <v-col md="5" sm="12" cols="12">
-                  <measurement-id-selection
-                    @changeMeasurement="selectedMeasurements = [$event]"
-                    :repoId="id"
-                    :selectedMeasurement="selectedMeasurement"
-                  ></measurement-id-selection>
+                  <measurement-id-selection v-model="selectedMeasurements" :repoId="id"></measurement-id-selection>
                 </v-col>
                 <v-col md="5" sm="12" cols="12">
                   <v-form v-model="formValid" ref="form">
@@ -116,18 +124,6 @@
     </v-row>
     <v-row align="baseline" justify="center">
       <v-col>
-        <v-card>
-          <detail-graph
-            :measurements="selectedMeasurements"
-            :amount="Number.parseInt(amount)"
-            :beginYAtZero="this.yScaleBeginsAtZero"
-            @selectionChanged="updateSelection"
-          ></detail-graph>
-        </v-card>
-      </v-col>
-    </v-row>
-    <v-row align="baseline" justify="center">
-      <v-col>
         <repo-commit-overview :repo="repo"></repo-commit-overview>
       </v-col>
     </v-row>
@@ -185,10 +181,6 @@ export default class RepoDetail extends Vue {
 
   private get selectedMeasurements(): MeasurementID[] {
     return vxm.repoDetailModule.selectedMeasurements
-    // return [
-    // new MeasurementID('backend', 'build_time'),
-    // new MeasurementID('frontend', 'build_time')
-    // ]
   }
 
   private set selectedMeasurements(selectedMeasurements: MeasurementID[]) {
