@@ -12,9 +12,8 @@
           @input="changed"
           dense
           open-on-click
-          return-object
           selectable
-          :items="measurementItems"
+          :items="benchmarkItems"
           :value="selectedItems"
         >
           <template #label="{ item, leaf }">
@@ -76,7 +75,9 @@ export default class MeasurementIdSelection extends Vue {
   @Prop()
   private selectedMeasurements!: MeasurementID[]
 
-  private get measurementItems(): BenchmarkItem[] {
+  private selectedBenchmarkItems: string[] = []
+
+  private get benchmarkItems(): BenchmarkItem[] {
     return vxm.repoModule.occuringBenchmarks([this.repoId]).map(benchmark => {
       let metrics = vxm.repoModule
         .metricsForBenchmark(benchmark)
@@ -87,21 +88,26 @@ export default class MeasurementIdSelection extends Vue {
     })
   }
 
-  private get selectedMeasurementMap(): Map<string, MeasurementItem> {
-    let allMeasurementItems: Map<string, MeasurementItem> = new Map()
-    this.measurementItems
+  private get measurementItemMap(): Map<string, MeasurementItem> {
+    let map = new Map()
+    this.benchmarkItems
       .flatMap(it => it.children)
-      .forEach(it => allMeasurementItems.set(it.measurementId.toString(), it))
-    return allMeasurementItems
+      .forEach(it => map.set(it.measurementId.toString(), it))
+    return map
   }
 
-  private get selectedItems(): MeasurementItem[] {
-    return this.selectedMeasurements
-      .map(measurementId =>
-        this.selectedMeasurementMap.get(measurementId.toString())
-      )
+  private counter = 0
+
+  private get selectedItems(): string[] {
+    if (this.counter++ > 10) {
+      throw new Error('Aaaah')
+    }
+    let leafs = this.selectedMeasurements
+      .map(id => this.measurementItemMap.get(id.toString()))
       .filter(it => it)
-      .map(it => it as MeasurementItem)
+      .map(it => it!.id)
+
+    return [...leafs, ...this.selectedBenchmarkItems]
   }
 
   private metricColor(item: MeasurementItem | BenchmarkItem): string {
@@ -119,11 +125,17 @@ export default class MeasurementIdSelection extends Vue {
     }
   }
 
-  private changed(measurements: MeasurementItem[]) {
-    this.$emit(
-      'input',
-      measurements.map(it => it.measurementId)
+  private changed(measurements: string[]) {
+    this.selectedBenchmarkItems = measurements.filter(it =>
+      this.benchmarkItems.find(a => a.id === it)
     )
+
+    let ids = measurements
+      .map(it => this.measurementItemMap.get(it))
+      .filter(it => it && it instanceof MeasurementItem)
+      .map(it => it!.measurementId)
+
+    this.$emit('input', ids)
   }
 }
 </script>
