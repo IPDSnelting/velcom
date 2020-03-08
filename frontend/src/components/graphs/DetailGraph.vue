@@ -72,9 +72,9 @@ export default class DetailGraph extends Vue {
     bottom: number
   } = {
     left: 100,
-    right: 30,
-    top: 10,
-    bottom: 100
+    right: 50,
+    top: 20,
+    bottom: 30
   }
 
   private get innerWidth() {

@@ -56,8 +56,8 @@ export default class ComparisonGraph extends Vue {
   } = {
     left: 100,
     right: 50,
-    top: 10,
-    bottom: 100,
+    top: 20,
+    bottom: 50,
     between: 70
   }
 
@@ -258,11 +258,6 @@ export default class ComparisonGraph extends Vue {
 
       this.focus = [newFocusMin, newFocusMax]
     }
-    console.log(
-      this.minFocusVal,
-      this.maxFocusVal,
-      vxm.repoComparisonModule.referenceDatapoint !== null
-    )
   }
 
   private brushended() {
