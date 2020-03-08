@@ -105,6 +105,10 @@ export default class ComparisonGraph extends Vue {
   private context: number[] = [this.minTimestamp, this.maxTimestamp]
   private focus: number[] = this.context
 
+  brushedArea(): number[] {
+    return this.focus
+  }
+
   get allDatapoints(): Datapoint[] {
     return Array.from(Object.values(this.datapoints)).reduce(
       (acc, next) => acc.concat(next),
@@ -183,6 +187,7 @@ export default class ComparisonGraph extends Vue {
     return d3
       .scaleLinear()
       .domain([min, max])
+      .nice()
       .range([height, 0])
   }
 
@@ -197,18 +202,18 @@ export default class ComparisonGraph extends Vue {
 
   private valueFormat: any = d3.format('<.4')
 
-  private get focusXAxis(): d3.Axis<number | Date | { valueOf(): number }> {
+  private focusXAxis(): d3.Axis<number | Date | { valueOf(): number }> {
     return d3.axisBottom(this.xScale(this.focus)).ticks(this.innerWidth / 80)
   }
 
-  private get contextXAxis(): d3.Axis<number | Date | { valueOf(): number }> {
+  private contextXAxis(): d3.Axis<number | Date | { valueOf(): number }> {
     return d3
       .axisBottom(this.xScale(this.context))
       .ticks(this.innerWidth / 80)
       .tickSizeOuter(2)
   }
 
-  private get yAxis(): d3.Axis<number | { valueOf(): number }> {
+  private yAxis(): d3.Axis<number | { valueOf(): number }> {
     return d3
       .axisLeft(this.yScale(this.yFocusDomain, this.focusHeight))
       .tickFormat(this.valueFormat)
@@ -270,7 +275,6 @@ export default class ComparisonGraph extends Vue {
   }
 
   setReference() {
-    this.dialogOpen = false
     if (vxm.repoComparisonModule.referenceDatapoint) {
       this.removeCrosshair(vxm.repoComparisonModule.referenceDatapoint)
     }
@@ -281,6 +285,7 @@ export default class ComparisonGraph extends Vue {
       this.drawReferenceLine(vxm.repoComparisonModule.referenceDatapoint)
       this.drawCrosshair(vxm.repoComparisonModule.referenceDatapoint)
     }
+    this.closeDialog()
   }
 
   private drawReferenceLine(datapoint: Datapoint) {
@@ -310,13 +315,13 @@ export default class ComparisonGraph extends Vue {
   }
 
   private removeReference() {
-    this.dialogOpen = false
     d3.select('#referenceLine')
       .transition()
       .attr('opacity', 0)
       .remove()
     this.removeCrosshair(vxm.repoComparisonModule.referenceDatapoint!)
-    vxm.repoComparisonModule.referenceDatapoint = null
+    vxm.repoDetailModule.referenceDatapoint = null
+    this.closeDialog()
   }
 
   private crosshairIcon = crosshairIcon
@@ -325,6 +330,7 @@ export default class ComparisonGraph extends Vue {
     let crosshair = d3.select(
       '#' + datapoint.commit.repoID + '_' + datapoint.commit.hash
     )
+
     if (crosshair) {
       let crosshairRect = (crosshair.node() as SVGElement).getBoundingClientRect()
       let crosshairWidth: number = crosshairRect.width
@@ -332,8 +338,6 @@ export default class ComparisonGraph extends Vue {
 
       d3.select('#' + datapoint.commit.repoID + '_' + datapoint.commit.hash)
         .transition()
-        .duration(1000)
-        .delay(100)
         .attr(
           'd',
           d3
@@ -375,6 +379,7 @@ export default class ComparisonGraph extends Vue {
       )
       .attr('fill', this.colorById(datapoint.commit.repoID))
       .attr('stroke', this.colorById(datapoint.commit.repoID))
+      .attr('stroke-width', 2)
   }
 
   private closeDialog() {
@@ -676,27 +681,13 @@ export default class ComparisonGraph extends Vue {
     let chart = d3.select('#chart').node() as HTMLElement
     this.width = chart ? chart.getBoundingClientRect().width : 900
     this.height = this.width * 0.6
-    console.log('resizing...')
-    console.log(
-      this.width,
-      this.height,
-      d3.select('#chart'),
-      chart.getBoundingClientRect()
-    )
 
     d3.select('#contextLayer').attr(
       'transform',
       'translate(0,' + (this.focusHeight + this.margin.between) + ')'
     )
 
-    d3.select('#contextLayer')
-      .select('#brush')
-      .remove()
-    d3.select('#contextLayer')
-      .append('g')
-      .attr('id', 'brush')
-      .call(this.brush)
-      .call(this.brush.move, this.focus.map(this.xScale(this.context)))
+    this.resetBrush()
 
     d3.select('#mainSvg')
       .select('#focusClipRect')
@@ -707,27 +698,48 @@ export default class ComparisonGraph extends Vue {
       .attr('width', this.innerWidth)
       .attr('height', this.contextHeight + 2 * this.datapointWidth)
 
-    this.updateData()
+    this.updateFocus()
   }
 
   @Watch('datapoints')
   @Watch('minTimestamp')
   @Watch('maxTimestamp')
-  @Watch('beginYAtZero')
   private updateData() {
+    console.log('updating', this.minTimestamp, this.maxTimestamp)
     this.context = [this.minTimestamp, this.maxTimestamp]
-    if (this.focus[0] < this.context[0] || this.focus[1] > this.context[1]) {
-      this.focus = this.context
-    }
+    this.focus = this.context
+    this.resetBrush()
     d3.select('#yLabel').text(this.yLabel)
     this.updateAxes()
     this.drawGraph()
   }
 
   @Watch('focus')
+  @Watch('beginYAtZero')
   private updateFocus() {
+    if (this.focus[0] < this.context[0] || this.focus[1] > this.context[1]) {
+      this.focus = this.context
+    }
     this.updateAxes()
     this.drawGraph()
+  }
+
+  @Watch('dialogOpen')
+  private dialogClosed() {
+    if (!this.dialogOpen) {
+      this.selectedDatapoint = null
+    }
+  }
+
+  private resetBrush() {
+    d3.select('#contextLayer')
+      .select('#brush')
+      .remove()
+    d3.select('#contextLayer')
+      .append('g')
+      .attr('id', 'brush')
+      .call(this.brush)
+      .call(this.brush.move, this.focus.map(this.xScale(this.context)))
   }
 
   private updateAxes() {
@@ -738,7 +750,7 @@ export default class ComparisonGraph extends Vue {
       any
     >)
       .attr('transform', 'translate(0,' + this.focusHeight + ')')
-      .call(this.focusXAxis)
+      .call(this.focusXAxis())
       .selectAll('text')
       .attr('transform', 'translate(-10, 10) rotate(-35)')
       .style('text-anchor', 'end')
@@ -749,7 +761,7 @@ export default class ComparisonGraph extends Vue {
       any
     >)
       .attr('transform', 'translate(0,' + this.innerHeight + ')')
-      .call(this.contextXAxis)
+      .call(this.contextXAxis())
       .selectAll('text')
       .attr('transform', 'translate(-10, 10) rotate(-35)')
       .style('text-anchor', 'end')
@@ -758,7 +770,7 @@ export default class ComparisonGraph extends Vue {
       unknown,
       HTMLElement,
       any
-    >).call(this.yAxis)
+    >).call(this.yAxis())
 
     d3.select('#yLabel')
       .attr('y', -this.margin.left + 30)
@@ -779,9 +791,8 @@ export default class ComparisonGraph extends Vue {
       .attr('id', 'focusClip')
       .append('rect')
       .attr('id', 'focusClipRect')
-      .attr('x', -5)
       .attr('y', -5)
-      .attr('width', this.innerWidth + 10)
+      .attr('width', this.innerWidth)
       .attr('height', this.focusHeight + 10)
 
     d3.select('#mainSvg')
@@ -817,20 +828,20 @@ export default class ComparisonGraph extends Vue {
       .attr('class', 'axis')
       .attr('id', 'focusXAxis')
       .attr('transform', 'translate(0,' + this.focusHeight + ')')
-      .call(this.focusXAxis)
+      .call(this.focusXAxis())
 
     d3.select('#dataLayer')
       .append('g')
       .attr('class', 'axis')
       .attr('id', 'yAxis')
-      .call(this.yAxis)
+      .call(this.yAxis())
 
     d3.select('#dataLayer')
       .append('g')
       .attr('class', 'axis')
       .attr('id', 'contextXAxis')
       .attr('transform', 'translate(0,' + this.innerHeight + ')')
-      .call(this.contextXAxis)
+      .call(this.contextXAxis())
 
     d3.select('#dataLayer')
       .append('text')
@@ -904,7 +915,8 @@ export default class ComparisonGraph extends Vue {
       .attr('height', '100%')
       .attr('align', 'end')
       .attr('justify', 'end')
-    setTimeout(this.resize, 500)
+    this.resize()
+    // setTimeout(this.resize, 500)
   }
 
   beforeDestroy() {

@@ -131,6 +131,9 @@
                   @click="autoZoom()"
                 >Auto zoom</v-btn>
               </v-col>
+              <v-col>
+                <v-btn text color="primary" @click="zoomToBrush()">Zoom to brushed area</v-btn>
+              </v-col>
               <v-col cols="auto">
                 <v-btn text color="primary" @click="toggleYScale()">{{ yScaleButtonLabel }}</v-btn>
               </v-col>
@@ -167,7 +170,7 @@
       </v-col>
       <v-col style="flex: 1 1 50%; min-width: 600px">
         <v-card>
-          <comparison-graph :beginYAtZero="this.yScaleBeginsAtZero"></comparison-graph>
+          <comparison-graph ref="graph" :beginYAtZero="this.yScaleBeginsAtZero"></comparison-graph>
         </v-card>
       </v-col>
     </v-row>
@@ -396,6 +399,15 @@ export default class RepoComparison extends Vue {
         vxm.repoComparisonModule.startDate = new Date(min * 1000)
         vxm.repoComparisonModule.stopDate = new Date(max * 1000)
       })
+  }
+
+  private zoomToBrush() {
+    let brushedArea: number[] = (this.$refs
+      .graph as ComparisonGraph).brushedArea()
+    this.updateTimeframe(
+      new Date(brushedArea[0]),
+      new Date(brushedArea[1] - 60 * 60 * 24)
+    )
   }
 
   @Watch('selectedMetric')
