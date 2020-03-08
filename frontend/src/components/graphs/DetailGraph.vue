@@ -610,6 +610,7 @@ export default class DetailGraph extends Vue {
       .enter()
       .append('path')
       .attr('class', 'line')
+      .lower()
       .merge(path)
       .transition()
       .duration(animated ? 1000 : 0)
