@@ -29,7 +29,7 @@ import { Prop, Watch } from 'vue-property-decorator'
 import * as d3 from 'd3'
 import { vxm } from '../../store'
 import { formatDateUTC } from '../../util/TimeUtil'
-import { Datapoint, Commit } from '../../store/types'
+import { Datapoint, Commit, Repo } from '../../store/types'
 import ComparisonDatapointDialog from '../dialogs/ComparisonDatapointDialog.vue'
 import { crosshairIcon } from '../graphs/crosshairIcon'
 
@@ -83,7 +83,7 @@ export default class ComparisonGraph extends Vue {
   }
 
   private get repos(): string[] {
-    return Array.from(Object.keys(this.datapoints))
+    return vxm.repoModule.allRepos.map((repo: Repo) => repo.id)
   }
 
   private get metric(): string {
@@ -465,27 +465,33 @@ export default class ComparisonGraph extends Vue {
     yDomain: number[],
     height: number
   ) {
-    let path: any = d3
-      .select('#' + layer + 'Layer')
-      .selectAll<SVGPathElement, unknown>('#' + layer + 'line_' + repoID)
-      .data([this.datapoints[repoID]])
-    let newPath: any = path
-      .enter()
-      .append('path')
-      .attr('id', layer + 'line_' + repoID)
-      .merge(path)
-      .transition()
-      .attr('d', this.line(xDomain, yDomain, height))
-      .attr('stroke', this.colorById(repoID))
-      .attr('stroke-width', 2)
-      .attr('fill', 'none')
-      .attr('pointer-events', 'none')
-    path
-      .exit()
-      .transition()
-      .attr('opacity', 0)
-      .attr('width', 0)
-      .remove()
+    if (this.datapoints[repoID]) {
+      let path: any = d3
+        .select('#' + layer + 'Layer')
+        .selectAll<SVGPathElement, unknown>('#' + layer + 'line_' + repoID)
+        .data([this.datapoints[repoID]])
+      let newPath: any = path
+        .enter()
+        .append('path')
+        .attr('id', layer + 'line_' + repoID)
+        .merge(path)
+        .transition()
+        .attr('d', this.line(xDomain, yDomain, height))
+        .attr('stroke', this.colorById(repoID))
+        .attr('stroke-width', 2)
+        .attr('fill', 'none')
+        .attr('pointer-events', 'none')
+      path
+        .exit()
+        .transition()
+        .attr('opacity', 0)
+        .attr('width', 0)
+        .remove()
+    } else {
+      d3.select('#' + layer + 'Layer')
+        .select('#' + layer + 'line_' + repoID)
+        .remove()
+    }
   }
 
   get line(): (xDomain: number[], yDomain: number[], height: number) => any {
