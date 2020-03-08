@@ -344,15 +344,15 @@ export default class ComparisonGraph extends Vue {
         .attr(
           'transform',
           'translate(' +
-            (this.x(this.focus, datapoint) - crosshairWidth / 2) +
+            (this.x(this.focus, datapoint) - 12) +
             ', ' +
-            (this.y(this.yFocusDomain, datapoint, this.focusHeight) -
-              crosshairHeight / 2) +
+            (this.y(this.yFocusDomain, datapoint, this.focusHeight) - 12) +
             ')'
         )
         .attr('opacity', 1)
         .attr('fill', this.colorById(datapoint.commit.repoID))
         .attr('stroke', this.colorById(datapoint.commit.repoID))
+        .attr('stroke-width', 2)
     }
   }
 
