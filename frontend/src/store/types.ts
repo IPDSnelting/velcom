@@ -32,7 +32,7 @@ export class Measurement {
   successful: boolean
   unit: string | null
   interpretation: 'LESS_IS_BETTER' | 'MORE_IS_BETTER' | 'NEUTRAL' | null
-  values: Array<number> | null
+  values: number[] | null
   value: number | null
   errorMessage: string | null
 
@@ -40,7 +40,7 @@ export class Measurement {
     id: MeasurementID,
     unit?: string,
     interpretation?: 'LESS_IS_BETTER' | 'MORE_IS_BETTER' | 'NEUTRAL',
-    values?: Array<number>,
+    values?: number[],
     value?: number,
     errorMessage?: string
   ) {
@@ -51,6 +51,28 @@ export class Measurement {
     this.values = values === undefined ? null : values
     this.value = value === undefined ? null : value
     this.errorMessage = errorMessage === undefined ? null : errorMessage
+  }
+
+  /**
+   * Returns a real measurement (prototypes set and all) from a normal JS
+   * object that happens to have all necessary properties.
+   *
+   * @static
+   * @param {Measurement} measurement the object to deconstruct it from
+   * @returns a real measurement
+   * @memberof Measurement
+   */
+  static fromRawObject(measurement: Measurement): Measurement {
+    return new Measurement(
+      MeasurementID.fromRawObject(measurement.id),
+      measurement.unit === null ? undefined : measurement.unit,
+      measurement.interpretation === null
+        ? undefined
+        : measurement.interpretation,
+      measurement.values === null ? undefined : measurement.values,
+      measurement.value === null ? undefined : measurement.value,
+      measurement.errorMessage === null ? undefined : measurement.errorMessage
+    )
   }
 }
 
@@ -66,16 +88,29 @@ export class MeasurementID {
   equals(other: MeasurementID): boolean {
     return other.benchmark === this.benchmark && other.metric === this.metric
   }
+
+  /**
+   * Returns a real measurement id (prototypes set and all) from a normal JS
+   * object that happens to have all necessary properties.
+   *
+   * @static
+   * @param {MeasurementID} measurementId the object to deconstruct it from
+   * @returns a real measurement id
+   * @memberof MeasurementID
+   */
+  static fromRawObject(measurementId: MeasurementID): MeasurementID {
+    return new MeasurementID(measurementId.benchmark, measurementId.metric)
+  }
 }
 
 export class Commit {
   repoID: string
   hash: string
   author: string
-  authorDate: number | null
-  committer: string | null
+  authorDate: number
+  committer: string
   committerDate: number | number
-  message: string | null
+  message: string
   parents: string[]
 
   constructor(
@@ -86,7 +121,7 @@ export class Commit {
     committer: string,
     committerDate: number,
     message: string,
-    parents: Array<string>
+    parents: string[]
   ) {
     this.repoID = repoID
     this.hash = hash
@@ -119,6 +154,28 @@ export class Commit {
     }
     return this.message!.substring(summaryLength, this.message!.length)
   }
+
+  /**
+   * Returns a real commit (prototypes set and all) from a normal JS
+   * object that happens to have all necessary properties.
+   *
+   * @static
+   * @param {Commit} commit the object to deconstruct it from
+   * @returns a real Commit
+   * @memberof Commit
+   */
+  static fromRawObject(commit: Commit): Commit {
+    return new Commit(
+      commit.repoID,
+      commit.hash,
+      commit.author,
+      commit.authorDate,
+      commit.committer,
+      commit.committerDate,
+      commit.message,
+      commit.parents
+    )
+  }
 }
 
 export class Run {
@@ -138,6 +195,26 @@ export class Run {
     this.measurements = measurements === undefined ? null : measurements
     this.errorMessage = errorMessage === undefined ? null : errorMessage
   }
+
+  /**
+   * Returns a real run (prototypes set and all) from a normal JS
+   * object that happens to have all necessary properties.
+   *
+   * @static
+   * @param {Run} run the object to deconstruct it from
+   * @returns a real run
+   * @memberof Run
+   */
+  static fromRawObject(run: Run): Run {
+    return new Run(
+      run.startTime,
+      run.stopTime,
+      run.measurements
+        ? run.measurements.map(it => Measurement.fromRawObject(it))
+        : undefined,
+      run.errorMessage === null ? undefined : run.errorMessage
+    )
+  }
 }
 
 export class Difference {
@@ -147,6 +224,22 @@ export class Difference {
   constructor(measurement: MeasurementID, difference: number) {
     this.measurement = measurement
     this.difference = difference
+  }
+
+  /**
+   * Returns a real difference (prototypes set and all) from a normal JS
+   * object that happens to have all necessary properties.
+   *
+   * @static
+   * @param {Difference} difference the object to deconstruct it from
+   * @returns a real difference
+   * @memberof Difference
+   */
+  static fromRawObject(difference: Difference): Difference {
+    return new Difference(
+      MeasurementID.fromRawObject(difference.measurement),
+      difference.difference
+    )
   }
 }
 
@@ -179,6 +272,27 @@ export class CommitComparison {
     this.firstCommit = firstCommit
     this.secondCommit = secondCommit
     this.differences = differences
+  }
+
+  /**
+   * Returns a real comparison (prototypes set and all) from a normal JS
+   * object that happens to have all necessary properties.
+   *
+   * @static
+   * @param {CommitComparison} comparison the object to deconstruct it from
+   * @returns a real commit comparison
+   * @memberof CommitComparison
+   */
+  static fromRawObject(comparison: CommitComparison) {
+    return new CommitComparison(
+      comparison.first ? Run.fromRawObject(comparison.first) : null,
+      comparison.second ? Run.fromRawObject(comparison.second) : null,
+      comparison.firstCommit
+        ? Commit.fromRawObject(comparison.firstCommit)
+        : null,
+      Commit.fromRawObject(comparison.secondCommit),
+      comparison.differences.map(it => Difference.fromRawObject(it))
+    )
   }
 }
 

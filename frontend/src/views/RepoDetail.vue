@@ -361,7 +361,10 @@ export default class RepoDetail extends Vue {
   ) {
     next(component => {
       let vm = component as RepoDetail
+      console.log(vm.lockedToRelativeCommit)
+
       vm.updateToUrl(to.query)
+      console.log('After', vm.lockedToRelativeCommit)
 
       vxm.repoDetailModule.fetchHistoryForRepo(vm.payload)
       vm.updateUrl()
@@ -399,6 +402,8 @@ export default class RepoDetail extends Vue {
       this.relativeToCommit = query.relativeToCommit as string
     }
     if (query.lockedToRelativeCommit) {
+      console.log('Set from URL')
+
       this.lockedToRelativeCommit = query.lockedToRelativeCommit === 'true'
     }
     if (query.yScaleBeginsAtZero) {

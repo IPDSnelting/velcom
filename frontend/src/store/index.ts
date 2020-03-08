@@ -10,6 +10,7 @@ import { QueueStore } from './modules/queueStore'
 import { RepoComparisonStore } from './modules/repoComparisonStore'
 import { RepoDetailStore } from './modules/repoDetailStore'
 import VuexPersistence from 'vuex-persist'
+import { MeasurementID, CommitComparison, Commit } from './types'
 
 interface RootState {
   baseUrl: string
@@ -40,10 +41,15 @@ interface PersistedRepoComparisonStore {
 interface PersisteRepoDetailStore {
   _selectedRepoId: string
 
-  selectedMetric: string
-  selectedBenchmark: string
+  lockedToRelativeCommit: boolean
+  relativeToCommit: string
+  _selectedMeasurements: { metric: string; benchmakr: string }[]
   selectedFetchAmount: string
   selectedSkipAmount: string
+  _referenceDatapoint: {
+    commit: Commit
+    comparison: CommitComparison
+  } | null
 }
 
 interface PersistedSessionRootState {
@@ -80,8 +86,10 @@ const persistenceSessionStorage = new VuexPersistence<RootState>({
       },
       repoDetailModule: {
         _selectedRepoId: state.repoDetailModule._selectedRepoId,
-        selectedMetric: state.repoDetailModule.selectedMetric,
-        selectedBenchmark: state.repoDetailModule.selectedBenchmark,
+        lockedToRelativeCommit: state.repoDetailModule.lockedToRelativeCommit,
+        _selectedMeasurements: state.repoDetailModule._selectedMeasurements,
+        relativeToCommit: state.repoDetailModule.relativeToCommit,
+        _referenceDatapoint: state.repoDetailModule._referenceDatapoint,
         selectedFetchAmount: state.repoDetailModule.selectedFetchAmount,
         selectedSkipAmount: state.repoDetailModule.selectedSkipAmount
       }

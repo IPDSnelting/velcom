@@ -15,7 +15,13 @@ export class RepoDetailStore extends VxModule {
     comparison: CommitComparison
   }[] = []
   private _selectedRepoId: string = ''
-
+  // Needs to be a primitive so persistence works.
+  private _selectedMeasurements: { metric: string; benchmark: string }[] = []
+  // Not a real object, needs to be translated so persistence works.
+  private _referenceDatapoint: {
+    commit: Commit
+    comparison: CommitComparison
+  } | null = null
   /**
    * If true the user is locked to the relative commit, if false the
    * relative commit will be ignored.
@@ -25,13 +31,8 @@ export class RepoDetailStore extends VxModule {
    */
   lockedToRelativeCommit: boolean = false
   relativeToCommit: string = ''
-  selectedMeasurements: MeasurementID[] = []
   selectedFetchAmount: string = '10'
   selectedSkipAmount: string = '0'
-  referenceDatapoint: {
-    commit: Commit
-    comparison: CommitComparison
-  } | null = null
 
   @action
   async fetchHistoryForRepo(payload: {
@@ -131,6 +132,67 @@ export class RepoDetailStore extends VxModule {
    */
   get repoHistory(): { commit: Commit; comparison: CommitComparison }[] {
     return this._repoHistory
+  }
+
+  /**
+   * Returns all selected measurements.
+   *
+   * @readonly
+   * @type {MeasurementID[]}
+   * @memberof RepoDetailStore
+   */
+  get selectedMeasurements(): MeasurementID[] {
+    return this._selectedMeasurements.map(
+      ({ metric, benchmark }) => new MeasurementID(benchmark, metric)
+    )
+  }
+
+  /**
+   * Sets the selected measurements.
+   *
+   * @memberof RepoDetailStore
+   */
+  set selectedMeasurements(measurements: MeasurementID[]) {
+    this._selectedMeasurements = measurements.slice()
+  }
+
+  /**
+   * Returns the reference datapoint.
+   *
+   * @readonly
+   * @type {({
+   *     commit: Commit
+   *     comparison: CommitComparison
+   *   } | null)}
+   * @memberof RepoDetailStore
+   */
+  get referenceDatapoint(): {
+    commit: Commit
+    comparison: CommitComparison
+  } | null {
+    if (!this._referenceDatapoint) {
+      return null
+    }
+    return {
+      commit: Commit.fromRawObject(this._referenceDatapoint.commit),
+      comparison: CommitComparison.fromRawObject(
+        this._referenceDatapoint.comparison
+      )
+    }
+  }
+
+  /**
+   * Sets the reference data point.
+   *
+   * @memberof RepoDetailStore
+   */
+  set referenceDatapoint(
+    datapoint: {
+      commit: Commit
+      comparison: CommitComparison
+    } | null
+  ) {
+    this._referenceDatapoint = datapoint
   }
 
   /**
