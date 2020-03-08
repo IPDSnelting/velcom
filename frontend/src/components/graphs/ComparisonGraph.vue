@@ -398,7 +398,7 @@ export default class ComparisonGraph extends Vue {
       }
 
       let keyFn: d3.ValueFn<any, any, string> = (d: Datapoint) => {
-        return d.commit.repoID + '#' + d.commit.hash
+        return '_' + d.commit.repoID + '_' + d.commit.hash
       }
 
       this.repos.forEach(repoID => {
@@ -513,7 +513,7 @@ export default class ComparisonGraph extends Vue {
       .enter()
       .append('path')
       .attr('class', 'datapoint')
-      .attr('id', (d: Datapoint) => repoID + '_' + d.commit.hash)
+      .attr('id', (d: Datapoint) => '_' + d.commit.repoID + '_' + d.commit.hash)
       .merge(datapoints)
       .transition()
       .attr(
@@ -705,7 +705,6 @@ export default class ComparisonGraph extends Vue {
   @Watch('minTimestamp')
   @Watch('maxTimestamp')
   private updateData() {
-    console.log('updating', this.minTimestamp, this.maxTimestamp)
     this.context = [this.minTimestamp, this.maxTimestamp]
     this.focus = this.context
     this.resetBrush()
