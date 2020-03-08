@@ -5,8 +5,8 @@
         <v-col class="d-flex">
           <repo-select v-model="selectedRepoId" :repos="allRepos"></repo-select>
         </v-col>
-        <v-col cols="auto">
-          <repo-add v-if="isAdmin">
+        <v-col cols="auto" v-if="isAdmin">
+          <repo-add>
             <template #activator="{ on }">
               <v-btn color="success" v-on="on">
                 <v-icon left>{{ plusIcon }}</v-icon>Add Repo
@@ -15,7 +15,7 @@
           </repo-add>
         </v-col>
       </v-row>
-      <page-404 v-if="!repoSelected"></page-404>
+      <page-404 v-if="!repoSelected" title="Empty space" subtitle="No repository selected"></page-404>
       <router-view></router-view>
     </v-container>
   </div>

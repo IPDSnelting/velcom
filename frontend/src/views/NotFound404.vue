@@ -2,10 +2,10 @@
   <v-container fluid class="wrapper">
     <v-card class="ma-5">
       <v-card-title class="centered">
-        <span class="text-404">404</span>
+        <span class="text-404">{{ title }}</span>
       </v-card-title>
       <v-card-subtitle class="centered">
-        <span class="subtitle">Not found :/</span>
+        <span class="subtitle">{{ subtitle }}</span>
         <span class="subtitle wroom">*Wroooom*</span>
       </v-card-subtitle>
       <v-card-text class="mt-10">
@@ -22,9 +22,16 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
+import { Prop } from 'vue-property-decorator'
 
 @Component
-export default class NotFound404 extends Vue {}
+export default class NotFound404 extends Vue {
+  @Prop({ default: '404' })
+  private title!: string
+
+  @Prop({ default: 'Not found :/' })
+  private subtitle!: string
+}
 </script>
 
 <style scoped>
