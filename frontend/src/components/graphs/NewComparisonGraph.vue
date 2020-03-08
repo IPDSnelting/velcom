@@ -7,6 +7,17 @@
         </div>
       </v-col>
     </v-row>
+    <v-row>
+      <v-col>
+        <datapoint-dialog
+          :dialogOpen="dialogOpen"
+          :selectedCommit="selectedCommit"
+          @setReference="setReference"
+          @removeReference="removeReference"
+          @close="closeDialog"
+        ></datapoint-dialog>
+      </v-col>
+    </v-row>
   </v-container>
 </template>
 
@@ -17,15 +28,20 @@ import { Prop, Watch } from 'vue-property-decorator'
 import * as d3 from 'd3'
 import { vxm } from '../../store'
 import { formatDateUTC } from '../../util/TimeUtil'
-import { Datapoint } from '../../store/types'
+import { Datapoint, Commit } from '../../store/types'
+import ComparisonDatapointDialog from '../dialogs/ComparisonDatapointDialog.vue'
+import { crosshairIcon } from '../graphs/crosshairIcon'
 
-@Component({})
+@Component({
+  components: {
+    'datapoint-dialog': ComparisonDatapointDialog
+  }
+})
 export default class NewComparisonGraph extends Vue {
   @Prop({ default: true })
   beginYAtZero!: boolean
 
   // dimensions
-
   private width: number = 0
   private height: number = 0
   private datapointWidth: number = 50
@@ -61,7 +77,6 @@ export default class NewComparisonGraph extends Vue {
   }
 
   // retrieving and interpreting datapoints
-
   private get datapoints(): { [key: string]: Datapoint[] } {
     return vxm.repoComparisonModule.allDatapoints
   }
@@ -109,17 +124,41 @@ export default class NewComparisonGraph extends Vue {
   }
 
   private get minFocusVal(): number | undefined {
-    return d3.min(this.allDatapoints, (d: Datapoint) => {
-      let date: number = d.commit.authorDate ? d.commit.authorDate * 1000 : 0
-      return this.focus[0] <= date && date <= this.focus[1] ? d.value : NaN
-    })
+    let inFocusMin: number | undefined = d3.min(
+      this.allDatapoints,
+      (d: Datapoint) => {
+        let date: number = d.commit.authorDate ? d.commit.authorDate * 1000 : 0
+        return this.focus[0] <= date && date <= this.focus[1] ? d.value : NaN
+      }
+    )
+
+    return inFocusMin !== undefined &&
+      this.selectedDatapoint &&
+      this.selectedDatapoint.value < inFocusMin
+      ? this.selectedDatapoint.value
+      : inFocusMin
   }
 
   private get maxFocusVal(): number | undefined {
-    return d3.max(this.allDatapoints, (d: Datapoint) => {
-      let date: number = d.commit.authorDate ? d.commit.authorDate * 1000 : 0
-      return this.focus[0] <= date && date <= this.focus[1] ? d.value : NaN
-    })
+    let inFocusMax: number | undefined = d3.max(
+      this.allDatapoints,
+      (d: Datapoint) => {
+        let date: number = d.commit.authorDate ? d.commit.authorDate * 1000 : 0
+        return this.focus[0] <= date && date <= this.focus[1] ? d.value : NaN
+      }
+    )
+
+    return inFocusMax !== undefined &&
+      this.selectedDatapoint &&
+      this.selectedDatapoint.value > inFocusMax
+      ? this.selectedDatapoint.value
+      : inFocusMax
+  }
+
+  private get yFocusDomain(): number[] {
+    return this.minFocusVal !== undefined && this.maxFocusVal !== undefined
+      ? [this.minFocusVal, this.maxFocusVal]
+      : [0, 0]
   }
 
   private get dataAvailable(): boolean {
@@ -167,12 +206,8 @@ export default class NewComparisonGraph extends Vue {
   }
 
   private get yAxis(): d3.Axis<number | { valueOf(): number }> {
-    let domain: number[] =
-      this.minFocusVal !== undefined && this.maxFocusVal !== undefined
-        ? [this.minFocusVal, this.maxFocusVal]
-        : [0, 0]
     return d3
-      .axisLeft(this.yScale(domain, this.focusHeight))
+      .axisLeft(this.yScale(this.yFocusDomain, this.focusHeight))
       .tickFormat(this.valueFormat)
   }
 
@@ -218,6 +253,127 @@ export default class NewComparisonGraph extends Vue {
     }
   }
 
+  // interacting with data points via DatapointDialog
+  private dialogOpen: boolean = false
+  private selectedDatapoint: Datapoint | null = null
+
+  openDatapointMenu(datapoint: Datapoint) {
+    this.selectedDatapoint = datapoint
+    this.dialogOpen = true
+  }
+
+  setReference() {
+    this.dialogOpen = false
+    if (vxm.repoComparisonModule.referenceDatapoint) {
+      this.removeCrosshair(vxm.repoComparisonModule.referenceDatapoint)
+    }
+    if (this.selectedDatapoint) {
+      vxm.repoComparisonModule.referenceDatapoint = this.selectedDatapoint
+    }
+    if (vxm.repoComparisonModule.referenceDatapoint) {
+      this.drawReferenceLine(vxm.repoComparisonModule.referenceDatapoint)
+      this.drawCrosshair(vxm.repoComparisonModule.referenceDatapoint)
+    }
+  }
+
+  private drawReferenceLine(datapoint: Datapoint) {
+    let referenceLine = d3
+      .select('#focusLayer')
+      .selectAll<SVGPathElement, unknown>('#referenceLine')
+      .data([datapoint])
+
+    let newReferenceLine = referenceLine
+      .enter()
+      .append('line')
+      .attr('id', 'referenceLine')
+      .merge(referenceLine as any)
+      .transition()
+      .duration(1000)
+      .delay(100)
+      .attr('x1', this.innerWidth)
+      .attr('y1', this.y(this.yFocusDomain, datapoint, this.focusHeight))
+      .attr('x2', 0)
+      .attr('y2', this.y(this.yFocusDomain, datapoint, this.focusHeight))
+
+    referenceLine
+      .exit()
+      .transition()
+      .attr('opacity', 0)
+      .remove()
+  }
+
+  private removeReference() {
+    this.dialogOpen = false
+    d3.select('#referenceLine')
+      .transition()
+      .attr('opacity', 0)
+      .remove()
+    this.removeCrosshair(vxm.repoComparisonModule.referenceDatapoint!)
+    vxm.repoComparisonModule.referenceDatapoint = null
+  }
+
+  private crosshairIcon = crosshairIcon
+
+  private drawCrosshair(datapoint: Datapoint) {
+    let crosshair = d3.select(
+      '#' + datapoint.commit.repoID + '_' + datapoint.commit.hash
+    )
+    if (crosshair) {
+      let crosshairRect = (crosshair.node() as SVGElement).getBoundingClientRect()
+      let crosshairWidth: number = crosshairRect.width
+      let crosshairHeight: number = crosshairRect.height
+
+      d3.select('#' + datapoint.commit.repoID + '_' + datapoint.commit.hash)
+        .transition()
+        .duration(1000)
+        .delay(100)
+        .attr(
+          'd',
+          d3
+            .symbol()
+            .type(this.crosshairIcon)
+            .size(this.datapointWidth)
+        )
+        .attr(
+          'transform',
+          'translate(' +
+            (this.x(this.focus, datapoint) - crosshairWidth / 2) +
+            ', ' +
+            (this.y(this.yFocusDomain, datapoint, this.focusHeight) -
+              crosshairHeight / 2) +
+            ')'
+        )
+        .attr('opacity', 1)
+        .attr('fill', this.colorById(datapoint.commit.repoID))
+        .attr('stroke', this.colorById(datapoint.commit.repoID))
+    }
+  }
+
+  private removeCrosshair(datapoint: Datapoint) {
+    d3.select('#' + datapoint.commit.repoID + '_' + datapoint.commit.hash)
+      .attr(
+        'd',
+        d3
+          .symbol()
+          .type(d3.symbolCircle)
+          .size(this.datapointWidth)
+      )
+      .attr(
+        'transform',
+        'translate(' +
+          this.x(this.focus, datapoint) +
+          ', ' +
+          this.y(this.yFocusDomain, datapoint, this.focusHeight) +
+          ')'
+      )
+      .attr('fill', this.colorById(datapoint.commit.repoID))
+      .attr('stroke', this.colorById(datapoint.commit.repoID))
+  }
+
+  private closeDialog() {
+    this.dialogOpen = false
+  }
+
   // drawing the graph
   private graphDrawn: boolean = false
 
@@ -238,7 +394,7 @@ export default class NewComparisonGraph extends Vue {
         this.drawDatapoints(repoID, keyFn)
       })
       this.appendTooltips(keyFn)
-      // this.setReference() */
+      this.setReference()
     } else {
       if (this.graphDrawn) {
         this.graphDrawn = false
@@ -266,17 +422,18 @@ export default class NewComparisonGraph extends Vue {
   }
 
   private drawPaths(repoID: string) {
-    let focusDomain: number[] =
-      this.minFocusVal !== undefined && this.maxFocusVal !== undefined
-        ? [this.minFocusVal, this.maxFocusVal]
-        : [0, 0]
-
     let contextDomain: number[] =
       this.minContextVal !== undefined && this.maxContextVal !== undefined
         ? [this.minContextVal, this.maxContextVal]
         : [0, 0]
 
-    this.drawPath(repoID, 'focus', this.focus, focusDomain, this.focusHeight)
+    this.drawPath(
+      repoID,
+      'focus',
+      this.focus,
+      this.yFocusDomain,
+      this.focusHeight
+    )
 
     this.drawPath(
       repoID,
@@ -330,11 +487,6 @@ export default class NewComparisonGraph extends Vue {
   }
 
   private drawDatapoints(repoID: string, keyFn: d3.ValueFn<any, any, string>) {
-    let yDomain: number[] =
-      this.minFocusVal !== undefined && this.maxFocusVal !== undefined
-        ? [this.minFocusVal, this.maxFocusVal]
-        : [0, 0]
-
     let datapoints: d3.Selection<
       SVGPathElement,
       Datapoint,
@@ -365,7 +517,7 @@ export default class NewComparisonGraph extends Vue {
           'translate(' +
           this.x(this.focus, d) +
           ', ' +
-          this.y(yDomain, d, this.focusHeight) +
+          this.y(this.yFocusDomain, d, this.focusHeight) +
           ')'
       )
       .attr('fill', (d: Datapoint) => this.colorById(repoID))
@@ -395,10 +547,10 @@ export default class NewComparisonGraph extends Vue {
           params: { repoID: d.commit.repoID, hash: d.commit.hash }
         })
       })
-      /* .on('contextmenu', (d: Datapoint) => {
+      .on('contextmenu', (d: Datapoint) => {
         d3.event.preventDefault()
         this.openDatapointMenu(d)
-      }) */
+      })
       .on('mousedown', (d: Datapoint) => {
         if (d3.event.which === 2) {
           d3.event.preventDefault()

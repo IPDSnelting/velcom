@@ -4,7 +4,7 @@ import {
   action,
   getRawActionContext
 } from 'vuex-class-component'
-import { Datapoint, Repo } from '@/store/types'
+import { Datapoint, Repo, Commit } from '@/store/types'
 import Vue from 'vue'
 import axios from 'axios'
 import { vxm } from '..'
@@ -25,6 +25,8 @@ export class RepoComparisonStore extends VxModule {
 
   selectedBenchmark: string = ''
   selectedMetric: string = ''
+
+  referenceDatapoint: Datapoint | null = null
 
   // One week in the past
   private _defaultStartTime: string = new Date(

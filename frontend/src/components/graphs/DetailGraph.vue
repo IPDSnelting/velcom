@@ -14,7 +14,6 @@
           :selectedDatapoint="selectedDatapoint"
           :commitToCompare="commitToCompare"
           :allowSelectAsReference="isSelectedAllowedAsReference"
-          :comparingAllowed="true"
           @setReference="setReference"
           @selectCommitToCompare="selectCommitToCompare"
           @compareCommits="compareCommits"
