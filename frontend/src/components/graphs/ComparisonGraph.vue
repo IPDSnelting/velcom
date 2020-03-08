@@ -1,199 +1,214 @@
 <template>
-  <v-card ref="graph-card">
-    <v-container>
-      <v-row align="center" justify="center">
-        <v-col>
-          <div id="svg-container" :style="{'height': this.height + 'px'}"></div>
-        </v-col>
-      </v-row>
-    </v-container>
-  </v-card>
+  <v-container fluid>
+    <v-row align="center" justify="center">
+      <v-col>
+        <div id="chart" :style="{'height': this.height + 'px'}">
+          <svg id="mainSvg" />
+        </div>
+      </v-col>
+    </v-row>
+    <v-row>
+      <v-col>
+        <datapoint-dialog
+          :dialogOpen="dialogOpen"
+          :selectedCommit="selectedCommit"
+          @setReference="setReference"
+          @removeReference="removeReference"
+          @close="closeDialog"
+        ></datapoint-dialog>
+      </v-col>
+    </v-row>
+  </v-container>
 </template>
 
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
-import { vxm } from '@/store/index'
 import * as d3 from 'd3'
-import { Datapoint, Commit } from '@/store/types'
-import { formatDateUTC } from '@/util/TimeUtil'
+import { vxm } from '../../store'
+import { formatDateUTC } from '../../util/TimeUtil'
+import { Datapoint, Commit } from '../../store/types'
+import ComparisonDatapointDialog from '../dialogs/ComparisonDatapointDialog.vue'
+import { crosshairIcon } from '../graphs/crosshairIcon'
 
-@Component
+@Component({
+  components: {
+    'datapoint-dialog': ComparisonDatapointDialog
+  }
+})
 export default class ComparisonGraph extends Vue {
-  @Prop({})
-  metric!: string
-
   @Prop({ default: true })
   beginYAtZero!: boolean
 
-  private resizeTimeout: number | undefined
-  private resizeListener: () => void = () => {}
-
+  // dimensions
+  private width: number = 0
   private height: number = 0
-  private width: number = 900
-
-  created() {
-    this.resizeListener = () => {
-      this.debounce(this.updateYourself, 500)()
-    }
-    window.addEventListener('resize', this.resizeListener)
-  }
-
-  beforeDestroy() {
-    window.removeEventListener('resize', this.resizeListener)
-  }
-
-  debounce(func: Function, wait: number) {
-    return () => {
-      if (this.resizeTimeout) {
-        return
-      }
-      let context = this
-      let args = arguments
-      clearTimeout(this.resizeTimeout)
-      this.resizeTimeout = setTimeout(() => {
-        this.resizeTimeout = undefined
-        func.apply(context, args)
-      }, wait)
-    }
-  }
-
-  private svg: any = null
-  private tooltip: any = null
-  private brushArea: any = null
-  private zooming: boolean = false
-
-  private get brush() {
-    return d3
-      .brushX()
-      .extent([
-        [0, 0],
-        [this.innerWidth, this.innerHeight]
-      ])
-      .on('end', this.brushed)
-  }
-
-  brushed() {
-    let selection = d3.event.selection
-    let newMin: Date = d3.timeDay.floor(this.xScale.invert(selection[0]))
-    let newMax: Date = d3.timeDay.floor(this.xScale.invert(selection[1]))
-    if (selection) {
-      this.zooming = true
-      this.$emit('timeframeChanged', newMin, newMax)
-    }
-  }
+  private datapointWidth: number = 50
 
   private margin: {
     left: number
     right: number
     top: number
     bottom: number
+    between: number
   } = {
     left: 100,
-    right: 30,
+    right: 50,
     top: 10,
-    bottom: 100
+    bottom: 100,
+    between: 50
   }
 
-  private get innerWidth() {
+  private get innerWidth(): number {
     return this.width - this.margin.left - this.margin.right
   }
 
-  private get innerHeight() {
+  private get innerHeight(): number {
     return this.height - this.margin.top - this.margin.bottom
+  }
+
+  private get focusHeight(): number {
+    return 0.8 * (this.innerHeight - this.margin.between)
+  }
+
+  private get contextHeight(): number {
+    return this.innerHeight - this.margin.between - this.focusHeight
+  }
+
+  // retrieving and interpreting datapoints
+  private get datapoints(): { [key: string]: Datapoint[] } {
+    return vxm.repoComparisonModule.allDatapoints
+  }
+
+  private get repos(): string[] {
+    return Array.from(Object.keys(this.datapoints))
+  }
+
+  private get metric(): string {
+    return vxm.repoComparisonModule.selectedMetric
+  }
+
+  private get unit(): string {
+    return vxm.repoComparisonModule.unit
+  }
+
+  private get minTimestamp(): number {
+    return vxm.repoComparisonModule.startDate.getTime()
+  }
+
+  private get maxTimestamp(): number {
+    return vxm.repoComparisonModule.stopDate.getTime() + 1000 * 60 * 60 * 24
+  }
+
+  private context: number[] = [this.minTimestamp, this.maxTimestamp]
+  private focus: number[] = this.context
+
+  get allDatapoints(): Datapoint[] {
+    return Array.from(Object.values(this.datapoints)).reduce(
+      (acc, next) => acc.concat(next),
+      []
+    )
+  }
+
+  private get minContextVal(): number | undefined {
+    return d3.min(this.allDatapoints, (d: Datapoint) => {
+      return d.value
+    })
+  }
+
+  private get maxContextVal(): number | undefined {
+    return d3.max(this.allDatapoints, (d: Datapoint) => {
+      return d.value
+    })
+  }
+
+  private get minFocusVal(): number | undefined {
+    let inFocusMin: number | undefined = d3.min(
+      this.allDatapoints,
+      (d: Datapoint) => {
+        let date: number = d.commit.authorDate ? d.commit.authorDate * 1000 : 0
+        return this.focus[0] <= date && date <= this.focus[1] ? d.value : NaN
+      }
+    )
+
+    return inFocusMin !== undefined &&
+      this.selectedDatapoint &&
+      this.selectedDatapoint.value < inFocusMin
+      ? this.selectedDatapoint.value
+      : inFocusMin
+  }
+
+  private get maxFocusVal(): number | undefined {
+    let inFocusMax: number | undefined = d3.max(
+      this.allDatapoints,
+      (d: Datapoint) => {
+        let date: number = d.commit.authorDate ? d.commit.authorDate * 1000 : 0
+        return this.focus[0] <= date && date <= this.focus[1] ? d.value : NaN
+      }
+    )
+
+    return inFocusMax !== undefined &&
+      this.selectedDatapoint &&
+      this.selectedDatapoint.value > inFocusMax
+      ? this.selectedDatapoint.value
+      : inFocusMax
+  }
+
+  private get yFocusDomain(): number[] {
+    return this.minFocusVal !== undefined && this.maxFocusVal !== undefined
+      ? [this.minFocusVal, this.maxFocusVal]
+      : [0, 0]
+  }
+
+  private get dataAvailable(): boolean {
+    return this.metric !== '' && this.maxContextVal !== undefined
+  }
+
+  // scales and axes
+  private xScale(domain: number[]): d3.ScaleTime<number, number> {
+    return d3
+      .scaleTime()
+      .domain(domain)
+      .range([0, this.innerWidth])
+  }
+
+  private yScale(
+    domain: number[],
+    height: number
+  ): d3.ScaleLinear<number, number> {
+    let min: number = !this.beginYAtZero && domain[0] ? domain[0] : 0
+    let max: number = domain[1] || 0
+    return d3
+      .scaleLinear()
+      .domain([min, max])
+      .range([height, 0])
+  }
+
+  private x(domain: number[], datapoint: Datapoint): number {
+    return datapoint.commit.authorDate
+      ? this.xScale(domain)(datapoint.commit.authorDate * 1000)
+      : 0
+  }
+  private y(domain: number[], datapoint: Datapoint, height: number): number {
+    return this.yScale(domain, height)(datapoint.value)
   }
 
   private timeFormat: any = d3.timeFormat('%Y-%m-%d')
   private valueFormat: any = d3.format('<.4')
 
-  get interpretation() {
-    return vxm.repoComparisonModule.interpretation
+  private get focusXAxis(): d3.Axis<number | Date | { valueOf(): number }> {
+    return d3.axisBottom(this.xScale(this.focus)).tickFormat(this.timeFormat)
   }
 
-  get unit() {
-    return vxm.repoComparisonModule.unit
+  private get contextXAxis(): d3.Axis<number | Date | { valueOf(): number }> {
+    return d3.axisBottom(this.xScale(this.context)).tickFormat(this.timeFormat)
   }
 
-  get minTimestamp(): any {
-    return vxm.repoComparisonModule.startDate.getTime()
-  }
-
-  get maxTimestamp(): any {
-    return vxm.repoComparisonModule.stopDate.getTime() + 1000 * 60 * 60 * 24
-  }
-
-  private get xScale(): any {
+  private get yAxis(): d3.Axis<number | { valueOf(): number }> {
     return d3
-      .scaleTime()
-      .domain([this.minTimestamp, this.maxTimestamp])
-      .range([0, this.innerWidth])
-  }
-
-  get datapoints(): { [key: string]: Datapoint[] } {
-    return vxm.repoComparisonModule.allDatapoints
-  }
-
-  get datapointsBetweenAxes(): (repoID: string) => Datapoint[] {
-    return (repoID: string) => {
-      return this.datapoints[repoID].filter((datapoint: Datapoint) => {
-        let date = datapoint.commit.authorDate
-        if (date) {
-          date *= 1000
-        }
-        return date && date >= this.minTimestamp && date <= this.maxTimestamp
-      })
-    }
-  }
-
-  get repos(): string[] {
-    return Array.from(Object.keys(this.datapoints))
-  }
-
-  get colorById(): (repoID: string) => string {
-    return (repoID: string) => {
-      let index: number = vxm.repoModule.repoIndex(repoID)
-      return vxm.colorModule.colorByIndex(index)
-    }
-  }
-
-  get line(): any {
-    return d3
-      .line()
-      .x((datapoint: any) => {
-        return this.xScale(datapoint.commit.authorDate * 1000)
-      })
-      .y((datapoint: any) => {
-        return this.yScale(datapoint.value)
-      })
-  }
-
-  get valueRange(): { min: number; max: number } {
-    let min: number = Number.POSITIVE_INFINITY
-    let max: number = Number.NEGATIVE_INFINITY
-
-    this.repos.forEach((repoID: string) => {
-      this.datapoints[repoID].forEach(datapoint => {
-        min = Math.min(min, datapoint.value)
-        max = Math.max(max, datapoint.value)
-      })
-    })
-    min = this.beginYAtZero ? 0 : min
-    return { min: min, max: max }
-  }
-
-  private get yScale() {
-    if (this.interpretation === 'LESS_IS_BETTER') {
-      return d3
-        .scaleLinear()
-        .domain([this.valueRange.min, this.valueRange.max])
-        .range([this.innerHeight, 0])
-    } else {
-      return d3
-        .scaleLinear()
-        .domain([this.valueRange.min, this.valueRange.max])
-        .range([0, this.innerHeight])
-    }
+      .axisLeft(this.yScale(this.yFocusDomain, this.focusHeight))
+      .tickFormat(this.valueFormat)
   }
 
   get yLabel(): string {
@@ -204,234 +219,701 @@ export default class ComparisonGraph extends Vue {
     }
   }
 
-  sleep(ms: number) {
-    return new Promise(resolve => setTimeout(resolve, ms))
+  // interacting with the context graph via brushing, updating the foczs graph accordingly
+  private get brush() {
+    return d3
+      .brushX()
+      .extent([
+        [0, 0],
+        [this.innerWidth, this.contextHeight]
+      ])
+      .on('brush', this.brushed)
+      .on('end', this.brushended)
   }
+  private brushed() {
+    let selection = d3.event.selection
 
-  @Watch('datapoints')
-  @Watch('minTimestamp')
-  @Watch('maxTimestamp')
-  @Watch('beginYAtZero')
-  async updateYourself() {
-    let mainSvg = d3.select('#svg-container').node() as HTMLElement
-    this.width = mainSvg ? mainSvg.getBoundingClientRect().width : 900
-    this.height = this.width / 2
+    if (selection) {
+      let newMinDate: Date = this.xScale(this.context).invert(selection[0])
+      let newMaxDate: Date = this.xScale(this.context).invert(selection[1])
 
-    if (this.zooming) {
-      await this.sleep(700)
-      this.zooming = false
+      let newFocusMin: number = newMinDate.getTime()
+      let newFocusMax: number = newMaxDate.getTime()
+
+      this.focus = [newFocusMin, newFocusMax]
     }
-    d3.select('#svg-container')
-      .selectAll('*')
-      .remove()
-
-    this.svg = d3
-      .select('#svg-container')
-      .append('svg')
-      .attr('id', 'mainSVG')
-      .attr('align', 'end')
-      .attr('justify', 'end')
-      .attr('width', '100%')
-      .attr('height', '100%')
-      .append('g')
-      .attr(
-        'transform',
-        'translate(' + this.margin.left + ',' + this.margin.top + ')'
-      )
-
-    this.brushArea = d3
-      .select('#mainSVG')
-      .append('g')
-      .attr('id', 'brushArea')
-      .attr(
-        'transform',
-        'translate(' + this.margin.left + ',' + this.margin.top + ')'
-      )
-      .call(this.brush)
-
-    this.tooltip = d3
-      .select('#svg-container')
-      .append('div')
-      .style('opacity', 0)
-      .attr('class', 'tooltip')
-      .style('position', 'absolute')
-      .style('padding', '5px')
-      .style('border-radius', '5px')
-      .style('background-color', 'black')
-      .style('color', 'white')
-      .style('text-align', 'center')
-      .style('font-family', 'Roboto')
-      .style('font-size', '14px')
-
-    this.drawGraph()
   }
 
-  drawGraph() {
-    this.svg.selectAll('*').remove()
+  private brushended() {
+    if (!d3.event.selection) {
+      d3.select('#brush').call(
+        this.brush.move as any,
+        this.context.map(this.xScale(this.context))
+      )
+    }
+  }
 
-    if (
-      this.metric !== '' &&
-      this.valueRange.max !== Number.NEGATIVE_INFINITY
-    ) {
-      this.drawXAxis()
-      this.drawYAxis()
-      this.repos.forEach((repoID: string) => {
-        this.drawDatapoints(repoID)
+  // interacting with data points via DatapointDialog
+  private dialogOpen: boolean = false
+  private selectedDatapoint: Datapoint | null = null
+
+  openDatapointMenu(datapoint: Datapoint) {
+    this.selectedDatapoint = datapoint
+    this.dialogOpen = true
+  }
+
+  setReference() {
+    this.dialogOpen = false
+    if (vxm.repoComparisonModule.referenceDatapoint) {
+      this.removeCrosshair(vxm.repoComparisonModule.referenceDatapoint)
+    }
+    if (this.selectedDatapoint) {
+      vxm.repoComparisonModule.referenceDatapoint = this.selectedDatapoint
+    }
+    if (vxm.repoComparisonModule.referenceDatapoint) {
+      this.drawReferenceLine(vxm.repoComparisonModule.referenceDatapoint)
+      this.drawCrosshair(vxm.repoComparisonModule.referenceDatapoint)
+    }
+  }
+
+  private drawReferenceLine(datapoint: Datapoint) {
+    let referenceLine = d3
+      .select('#focusLayer')
+      .selectAll<SVGPathElement, unknown>('#referenceLine')
+      .data([datapoint])
+
+    let newReferenceLine = referenceLine
+      .enter()
+      .append('line')
+      .attr('id', 'referenceLine')
+      .merge(referenceLine as any)
+      .transition()
+      .duration(1000)
+      .delay(100)
+      .attr('x1', this.innerWidth)
+      .attr('y1', this.y(this.yFocusDomain, datapoint, this.focusHeight))
+      .attr('x2', 0)
+      .attr('y2', this.y(this.yFocusDomain, datapoint, this.focusHeight))
+
+    referenceLine
+      .exit()
+      .transition()
+      .attr('opacity', 0)
+      .remove()
+  }
+
+  private removeReference() {
+    this.dialogOpen = false
+    d3.select('#referenceLine')
+      .transition()
+      .attr('opacity', 0)
+      .remove()
+    this.removeCrosshair(vxm.repoComparisonModule.referenceDatapoint!)
+    vxm.repoComparisonModule.referenceDatapoint = null
+  }
+
+  private crosshairIcon = crosshairIcon
+
+  private drawCrosshair(datapoint: Datapoint) {
+    let crosshair = d3.select(
+      '#' + datapoint.commit.repoID + '_' + datapoint.commit.hash
+    )
+    if (crosshair) {
+      let crosshairRect = (crosshair.node() as SVGElement).getBoundingClientRect()
+      let crosshairWidth: number = crosshairRect.width
+      let crosshairHeight: number = crosshairRect.height
+
+      d3.select('#' + datapoint.commit.repoID + '_' + datapoint.commit.hash)
+        .transition()
+        .duration(1000)
+        .delay(100)
+        .attr(
+          'd',
+          d3
+            .symbol()
+            .type(this.crosshairIcon)
+            .size(this.datapointWidth)
+        )
+        .attr(
+          'transform',
+          'translate(' +
+            (this.x(this.focus, datapoint) - crosshairWidth / 2) +
+            ', ' +
+            (this.y(this.yFocusDomain, datapoint, this.focusHeight) -
+              crosshairHeight / 2) +
+            ')'
+        )
+        .attr('opacity', 1)
+        .attr('fill', this.colorById(datapoint.commit.repoID))
+        .attr('stroke', this.colorById(datapoint.commit.repoID))
+    }
+  }
+
+  private removeCrosshair(datapoint: Datapoint) {
+    d3.select('#' + datapoint.commit.repoID + '_' + datapoint.commit.hash)
+      .attr(
+        'd',
+        d3
+          .symbol()
+          .type(d3.symbolCircle)
+          .size(this.datapointWidth)
+      )
+      .attr(
+        'transform',
+        'translate(' +
+          this.x(this.focus, datapoint) +
+          ', ' +
+          this.y(this.yFocusDomain, datapoint, this.focusHeight) +
+          ')'
+      )
+      .attr('fill', this.colorById(datapoint.commit.repoID))
+      .attr('stroke', this.colorById(datapoint.commit.repoID))
+  }
+
+  private closeDialog() {
+    this.dialogOpen = false
+  }
+
+  // drawing the graph
+  private graphDrawn: boolean = false
+
+  private drawGraph() {
+    if (this.dataAvailable) {
+      if (!this.graphDrawn) {
+        d3.select('#dataLayer').remove()
+        this.defineSvgElements()
+        this.graphDrawn = true
+      }
+
+      let keyFn: d3.ValueFn<any, any, string> = (d: Datapoint) => {
+        return d.commit.repoID + '#' + d.commit.hash
+      }
+
+      this.repos.forEach(repoID => {
+        this.drawPaths(repoID)
+        this.drawDatapoints(repoID, keyFn)
       })
+      this.appendTooltips(keyFn)
+      this.setReference()
     } else {
+      if (this.graphDrawn) {
+        this.graphDrawn = false
+      }
+      d3.select('#dataLayer').remove()
+
       let information: string =
         this.metric === ''
-          ? 'No data available. Please select benchmark and metric.'
-          : 'There are no commits within the specified time period that have been benchmarked with this metric.'
+          ? '<tspan x="0" dy="1.2em">No data available.</tspan><tspan x="0" dy="1.2em">Please select benchmark and metric.</tspan>'
+          : '<tspan x="0" dy="1.2em">There are no commits within the specified time period</tspan><tspan x="0" dy="1.2em"> that have been benchmarked with this metric.</tspan>'
 
-      this.svg
+      d3.select('#mainSvg')
+        .append('g')
+        .attr('id', 'dataLayer')
+        .attr(
+          'transform',
+          'translate(' + this.margin.left + ',' + this.margin.top + ')'
+        )
         .append('text')
         .attr('y', this.innerHeight / 2)
-        .attr('x', this.margin.left)
-        .text(information)
-        .style('text-align', 'center')
-        .style('font-family', 'Roboto')
-        .style('font-size', '18px')
-        .style('fill', 'grey')
+        .attr('x', -this.margin.left)
+        .html(information)
+        .attr('class', 'information')
     }
   }
 
-  drawXAxis() {
-    this.svg
-      .append('g')
-      .attr('class', 'axis')
-      .attr('transform', 'translate(0,' + this.innerHeight + ')')
-      .call(d3.axisBottom(this.xScale).tickFormat(this.timeFormat))
-      .selectAll('text')
-      .attr('transform', 'translate(-10, 10) rotate(-45)')
-      .style('text-anchor', 'end')
+  private drawPaths(repoID: string) {
+    let contextDomain: number[] =
+      this.minContextVal !== undefined && this.maxContextVal !== undefined
+        ? [this.minContextVal, this.maxContextVal]
+        : [0, 0]
+
+    this.drawPath(
+      repoID,
+      'focus',
+      this.focus,
+      this.yFocusDomain,
+      this.focusHeight
+    )
+
+    this.drawPath(
+      repoID,
+      'context',
+      this.context,
+      contextDomain,
+      this.contextHeight
+    )
   }
 
-  drawYAxis() {
-    this.svg
-      .append('g')
-      .attr('class', 'axis')
-      .call(d3.axisLeft(this.yScale).tickFormat(this.valueFormat))
-
-    this.svg
-      .append('text')
-      .attr('text-anchor', 'middle')
-      .attr('transform', 'rotate(-90)')
-      .attr('y', -this.margin.left + 20)
-      .attr('x', -this.innerHeight / 2)
-      .text(this.yLabel)
-  }
-
-  drawDatapoints(repoID: string) {
-    let repoGroup = this.svg.append('g').attr('id', repoID)
-    let datapointsBetweenAxes = this.datapointsBetweenAxes(repoID)
-    // draw the connecting lines
-    this.brushArea
+  private drawPath(
+    repoID: string,
+    layer: string,
+    xDomain: number[],
+    yDomain: number[],
+    height: number
+  ) {
+    let path: any = d3
+      .select('#' + layer + 'Layer')
+      .selectAll<SVGPathElement, unknown>('#' + layer + 'line_' + repoID)
+      .data([this.datapoints[repoID]])
+    let newPath: any = path
+      .enter()
       .append('path')
-      .attr('d', this.line(datapointsBetweenAxes))
+      .attr('id', layer + 'line_' + repoID)
+      .merge(path)
+      .transition()
+      .attr('d', this.line(xDomain, yDomain, height))
       .attr('stroke', this.colorById(repoID))
       .attr('stroke-width', 2)
+      .attr('fill', 'none')
       .attr('pointer-events', 'none')
+    path
+      .exit()
+      .transition()
+      .attr('opacity', 0)
+      .attr('width', 0)
+      .remove()
+  }
 
-    // draw the scatterplot and add tooltips
-    this.brushArea
-      .selectAll('.dot')
-      .data(datapointsBetweenAxes)
+  get line(): (xDomain: number[], yDomain: number[], height: number) => any {
+    return (xDomain: number[], yDomain: number[], height: number) =>
+      d3
+        .line<Datapoint>()
+        .x((d: Datapoint) => {
+          return this.x(xDomain, d)
+        })
+        .y((d: Datapoint) => {
+          return this.y(yDomain, d, height)
+        })
+  }
+
+  private drawDatapoints(repoID: string, keyFn: d3.ValueFn<any, any, string>) {
+    let datapoints: d3.Selection<
+      SVGPathElement,
+      Datapoint,
+      d3.BaseType,
+      unknown
+    > = d3
+      .select('#focusLayer')
+      .selectAll<SVGPathElement, unknown>('.datapoint')
+      .data(this.datapoints[repoID], keyFn)
+
+    let newDatapoints = datapoints
       .enter()
-      .append('circle')
+      .append('path')
       .attr('class', 'datapoint')
-      .attr('z-index', 20) // lift it to top to properly capture mouse events
-      .attr('fill', this.colorById(repoID))
-      .attr('stroke', this.colorById(repoID))
-      .attr('r', 4)
-      .attr('cx', (d: any) => {
-        return this.xScale(d.commit.authorDate * 1000)
-      })
-      .attr('cy', (d: any) => {
-        return this.yScale(d.value)
-      })
+      .attr('id', (d: Datapoint) => repoID + '_' + d.commit.hash)
+      .merge(datapoints)
+      .transition()
+      .attr(
+        'd',
+        d3
+          .symbol()
+          .type(d3.symbolCircle)
+          .size(this.datapointWidth)
+      )
+      .attr(
+        'transform',
+        (d: Datapoint) =>
+          'translate(' +
+          this.x(this.focus, d) +
+          ', ' +
+          this.y(this.yFocusDomain, d, this.focusHeight) +
+          ')'
+      )
+      .attr('fill', (d: Datapoint) => this.colorById(repoID))
+      .attr('stroke', (d: Datapoint) => this.colorById(repoID))
+      .attr('stroke-width', 2)
+      .attr('opacity', 1)
       .style('cursor', 'pointer')
-      .data(datapointsBetweenAxes)
+
+    datapoints
+      .exit()
+      .transition()
+      .attr('opacity', 0)
+      .attr('width', 0)
+      .remove()
+  }
+
+  private appendTooltips(keyFn: d3.ValueFn<any, any, string>) {
+    let tooltip = d3
+      .selectAll('.datapoint')
+      .data(this.allDatapoints, keyFn)
       .on('mouseover', this.mouseover)
       .on('mousemove', this.mousemove)
       .on('mouseleave', this.mouseleave)
-      .on('click', (d: any) => {
+      .on('click', (d: Datapoint) => {
         this.$router.push({
           name: 'commit-detail',
-          params: { repoID: repoID, hash: d.commit.hash }
+          params: { repoID: d.commit.repoID, hash: d.commit.hash }
         })
+      })
+      .on('contextmenu', (d: Datapoint) => {
+        d3.event.preventDefault()
+        this.openDatapointMenu(d)
+      })
+      .on('mousedown', (d: Datapoint) => {
+        if (d3.event.which === 2) {
+          d3.event.preventDefault()
+          let routeData = this.$router.resolve({
+            name: 'commit-detail',
+            params: { repoID: d.commit.repoID, hash: d.commit.hash }
+          })
+          window.open(routeData.href, '_blank')
+        }
       })
   }
 
-  mouseover(d: any) {
-    // We need a transition here to overwrite possible exit transition
-    // happening in parallel
-    // If we don't do that, this update will be lost and no tooltip
-    // displayed
-    this.tooltip
+  private mouseover(d: Datapoint) {
+    d3.select('#tooltip')
       .transition()
       .duration(300)
-      .style('opacity', 0.8)
+      .style('opacity', 1)
       .style('visibility', 'visible')
   }
 
-  mousemove(d: any, i: any, n: any) {
-    if (d.commit.authorDate) {
-      this.tooltip
-        .html(
-          `
-          <table class="tooltip-table">
-            <tr>
-              <td>Commit</td>
-              <td>${d.commit.hash}</td>
-            </tr>
-            <tr>
-              <td>Author</td>
-              <td>${d.commit.author}</td>
-            </tr>
-            <tr>
-              <td>Date</td>
-              <td>${formatDateUTC(d.commit.authorDate)}</td>
-            </tr>
-            <tr>
-              <td>Exact value</td>
-              <td>${this.valueFormat(d.value)} ${this.unit}</td>
-            </tr>
-            <tr>
-              <td>Commit summary</td>
-              <td>${d.commit.summary.trim()}</td>
-            </tr>
-          </table>
-          `
-        )
-        .style('left', d3.mouse(n[i])[0] + 90 + 'px')
-        .style('top', d3.mouse(n[i])[1] + 60 + 'px')
-        .style('display', 'inline-block')
+  private mousemove(d: Datapoint) {
+    let tooltip: d3.Selection<
+      d3.BaseType,
+      unknown,
+      HTMLElement,
+      any
+    > = d3.select('#tooltip')
+    let tipWidth = (tooltip.node() as HTMLElement).getBoundingClientRect().width
+    let tipHeight = (tooltip.node() as HTMLElement).getBoundingClientRect()
+      .height
+
+    let date = d.commit.authorDate || 0
+
+    let htmlMessage = `
+        <table class="tooltip-table">
+          <tr>
+            <td>Commit</td>
+            <td>${d.commit.hash}</td>
+          </tr>
+          <tr>
+            <td>Author</td>
+            <td>${d.commit.author}</td>
+          </tr>
+          <tr>
+            <td>Date</td>
+            <td>${formatDateUTC(date)}</td>
+          </tr>
+          <tr>
+            <td>Exact value</td>
+            <td>${this.valueFormat(d.value)} ${this.unit}</td>
+          </tr>
+          <tr>
+            <td>Commit summary</td>
+            <td>${d.commit.summary!.trim()}</td>
+          </tr>
+        </table>
+      `
+    tooltip.html(htmlMessage)
+
+    let horizontalMousePos = d3.mouse(
+      d3.select('#mainSvg').node() as SVGSVGElement
+    )[0]
+    let verticalMousePos = d3.mouse(
+      d3.select('#mainSvg').node() as SVGSVGElement
+    )[1]
+
+    if (horizontalMousePos < this.width / 2) {
+      tooltip.style('left', horizontalMousePos - 20 + 'px')
+      ;(tooltip.node() as HTMLElement).style.setProperty('--tail-left', '15px')
+    } else {
+      tooltip.style('left', horizontalMousePos - tipWidth + 20 + 'px')
+      ;(tooltip.node() as HTMLElement).style.setProperty(
+        '--tail-left',
+        tipWidth - 25 + 'px'
+      )
+    }
+    if (verticalMousePos < this.height / 2) {
+      tooltip.style('top', verticalMousePos + 10 + 'px')
+      ;(tooltip.node() as HTMLElement).style.setProperty('--tail-top', '-10px')
+      ;(tooltip.node() as HTMLElement).style.setProperty(
+        '--tail-rotation',
+        'rotate(90deg)'
+      )
+    } else {
+      tooltip.style('top', verticalMousePos - tipHeight - 10 + 'px')
+      ;(tooltip.node() as HTMLElement).style.setProperty(
+        '--tail-top',
+        tipHeight - 5 + 'px'
+      )
+      ;(tooltip.node() as HTMLElement).style.setProperty(
+        '--tail-rotation',
+        'rotate(270deg)'
+      )
     }
   }
 
   mouseleave(d: any) {
-    this.tooltip
+    d3.select('#tooltip')
       .transition()
       .duration(500)
       .style('opacity', 0)
       .style('visibility', 'hidden')
   }
 
-  @Watch('innerHeight')
-  @Watch('innerWidth')
-  hm() {
-    this.updateYourself()
+  get colorById(): (repoID: string) => string {
+    return (repoID: string) => {
+      let index: number = vxm.repoModule.repoIndex(repoID)
+      return vxm.colorModule.colorByIndex(index)
+    }
+  }
+
+  // updating
+  private resizeListener: () => void = () => {}
+
+  private resize() {
+    let chart = d3.select('#chart').node() as HTMLElement
+    this.width = chart ? chart.getBoundingClientRect().width : 900
+    this.height = this.width * 0.6
+
+    d3.select('#contextLayer').attr(
+      'transform',
+      'translate(0,' + (this.focusHeight + this.margin.between) + ')'
+    )
+
+    d3.select('#contextLayer')
+      .select('#brush')
+      .remove()
+    d3.select('#contextLayer')
+      .append('g')
+      .attr('id', 'brush')
+      .call(this.brush)
+      .call(this.brush.move, this.focus.map(this.xScale(this.context)))
+
+    d3.select('#mainSvg')
+      .select('#focusClipRect')
+      .attr('width', this.innerWidth)
+      .attr('height', this.focusHeight + 2 * this.datapointWidth)
+    d3.select('#mainSvg')
+      .select('#contextClipRect')
+      .attr('width', this.innerWidth)
+      .attr('height', this.contextHeight + 2 * this.datapointWidth)
+
+    this.updateData()
+  }
+
+  @Watch('datapoints')
+  @Watch('minTimestamp')
+  @Watch('maxTimestamp')
+  @Watch('beginYAtZero')
+  private updateData() {
+    this.context = [this.minTimestamp, this.maxTimestamp]
+    this.focus = this.context
+    d3.select('#yLabel').text(this.yLabel)
+    this.updateAxes()
+    this.drawGraph()
+  }
+
+  @Watch('focus')
+  private updateFocus() {
+    this.updateAxes()
+    this.drawGraph()
+  }
+
+  private updateAxes() {
+    ;(d3.select('#focusXAxis') as d3.Selection<
+      SVGGElement,
+      unknown,
+      HTMLElement,
+      any
+    >)
+      .attr('transform', 'translate(0,' + this.focusHeight + ')')
+      .call(this.focusXAxis)
+    ;(d3.select('#contextXAxis') as d3.Selection<
+      SVGGElement,
+      unknown,
+      HTMLElement,
+      any
+    >)
+      .attr('transform', 'translate(0,' + this.innerHeight + ')')
+      .call(this.contextXAxis)
+    ;(d3.select('#yAxis') as d3.Selection<
+      SVGGElement,
+      unknown,
+      HTMLElement,
+      any
+    >).call(this.yAxis)
+
+    d3.select('#yLabel')
+      .attr('y', -this.margin.left + 30)
+      .attr('x', -this.focusHeight / 2)
+  }
+
+  private defineSvgElements() {
+    d3.select('#mainSvg')
+      .append('g')
+      .attr('id', 'dataLayer')
+      .attr(
+        'transform',
+        'translate(' + this.margin.left + ',' + this.margin.top + ')'
+      )
+
+    d3.select('#mainSvg')
+      .append('clipPath')
+      .attr('id', 'focusClip')
+      .append('rect')
+      .attr('id', 'focusClipRect')
+      .attr('y', -this.datapointWidth)
+      .attr('width', this.innerWidth)
+      .attr('height', this.focusHeight + 2 * this.datapointWidth)
+
+    d3.select('#mainSvg')
+      .append('clipPath')
+      .attr('id', 'contextClip')
+      .append('rect')
+      .attr('id', 'contextClipRect')
+      .attr('y', -this.datapointWidth)
+      .attr('width', this.innerWidth)
+      .attr('height', this.contextHeight + 2 * this.datapointWidth)
+
+    d3.select('#dataLayer')
+      .append('g')
+      .attr('id', 'focusLayer')
+      .attr('clip-path', 'url(#focusClip)')
+
+    d3.select('#dataLayer')
+      .append('g')
+      .attr('id', 'contextLayer')
+      .attr(
+        'transform',
+        'translate(0,' + (this.focusHeight + this.margin.between) + ')'
+      )
+      .attr('clip-path', 'url(#contextClip)')
+
+    d3.select('#contextLayer')
+      .append('g')
+      .attr('id', 'brush')
+      .call(this.brush)
+      .call(this.brush.move, this.context.map(this.xScale(this.context)))
+
+    d3.select('#dataLayer')
+      .append('g')
+      .attr('class', 'axis')
+      .attr('id', 'focusXAxis')
+      .attr('transform', 'translate(0,' + this.focusHeight + ')')
+      .call(this.focusXAxis)
+
+    d3.select('#dataLayer')
+      .append('g')
+      .attr('class', 'axis')
+      .attr('id', 'yAxis')
+      .call(this.yAxis)
+
+    d3.select('#dataLayer')
+      .append('g')
+      .attr('class', 'axis')
+      .attr('id', 'contextXAxis')
+      .attr('transform', 'translate(0,' + this.innerHeight + ')')
+      .call(this.contextXAxis)
+
+    d3.select('#dataLayer')
+      .append('text')
+      .attr('id', 'yLabel')
+      .attr('text-anchor', 'middle')
+      .attr('transform', 'rotate(-90)')
+      .attr('y', -this.margin.left + 30)
+      .attr('x', -this.focusHeight / 2)
+      .text(this.yLabel)
+
+    d3.select('#chart')
+      .append('div')
+      .attr('class', 'tooltip')
+      .attr('id', 'tooltip')
+      .style('opacity', 0)
+  }
+
+  // initializing
+  created() {
+    this.resizeListener = () => {
+      this.resize()
+    }
+    window.addEventListener('resize', this.resizeListener)
   }
 
   mounted() {
-    this.updateYourself()
+    d3.select('#mainSvg')
+      .attr('width', '100%')
+      .attr('height', '100%')
+      .attr('align', 'end')
+      .attr('justify', 'end')
+    this.resize()
+  }
+
+  beforeDestroy() {
+    window.removeEventListener('resize', this.resizeListener)
   }
 }
 </script>
 <style>
 .axis text {
   font-family: Roboto;
-  font-size: 12px;
+  font-size: 13px;
+}
+
+.tooltip-table tr td {
+  padding: 2px;
+}
+
+.tooltip-table tr td:nth-child(2) {
+  font-family: monospace;
+}
+.tooltip-table tr td:first-child {
+  padding-right: 10px;
+}
+.tooltip-table tr td:only-child {
+  font-weight: bold;
+  padding-top: 1em;
+  font-size: 1.1em;
+}
+
+.tooltip {
+  font-size: 10pt;
+  position: absolute;
+  padding: 5px;
+  border-radius: 5px;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: rgba(255, 255, 255, 0.9);
+  text-align: center;
+  margin: 0;
+}
+
+.tooltip:after {
+  content: '';
+  display: block;
+  width: 0;
+  height: 0;
+  position: absolute;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-right: 8px solid black;
+  transform: var(--tail-rotation);
+  left: var(--tail-left);
+  top: var(--tail-top);
+}
+
+.information {
+  text-align: center;
+  font-family: Roboto;
+  font-size: 18px;
+  fill: dimgray;
+}
+
+#referenceLine {
+  fill: none;
+  stroke: dimgray;
+  stroke-width: 1px;
+  stroke-dasharray: 5 5;
+}
+
+#chart {
+  position: relative;
+}
+
+.datapointDialog .v-input .v-label {
+  height: unset !important;
 }
 </style>

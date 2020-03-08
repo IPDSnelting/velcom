@@ -167,13 +167,13 @@ import { Repo, MeasurementID, Datapoint } from '../store/types'
 import { mdiCalendar } from '@mdi/js'
 import { Route, RawLocation } from 'vue-router'
 import { Dictionary } from 'vue-router/types/router'
-import NewComparisonGraph from '../components/graphs/NewComparisonGraph.vue'
+import ComparisonGraph from '../components/graphs/ComparisonGraph.vue'
 
 @Component({
   components: {
     'repo-add': RepoAddDialog,
     'repo-selector': RepoSelector,
-    'comparison-graph': NewComparisonGraph
+    'comparison-graph': ComparisonGraph
   }
 })
 export default class RepoComparison extends Vue {
