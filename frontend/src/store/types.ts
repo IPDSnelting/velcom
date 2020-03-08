@@ -85,6 +85,10 @@ export class MeasurementID {
     this.metric = metric
   }
 
+  toString(): string {
+    return this.benchmark + ' - ' + this.metric
+  }
+
   equals(other: MeasurementID): boolean {
     return other.benchmark === this.benchmark && other.metric === this.metric
   }

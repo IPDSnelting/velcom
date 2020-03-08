@@ -118,7 +118,7 @@
       <v-col>
         <v-card>
           <detail-graph
-            :measurement="selectedMeasurement"
+            :measurements="selectedMeasurements"
             :amount="Number.parseInt(amount)"
             :beginYAtZero="this.yScaleBeginsAtZero"
             @selectionChanged="updateSelection"
@@ -185,6 +185,10 @@ export default class RepoDetail extends Vue {
 
   private get selectedMeasurements(): MeasurementID[] {
     return vxm.repoDetailModule.selectedMeasurements
+    // return [
+    // new MeasurementID('backend', 'build_time'),
+    // new MeasurementID('frontend', 'build_time')
+    // ]
   }
 
   private set selectedMeasurements(selectedMeasurements: MeasurementID[]) {

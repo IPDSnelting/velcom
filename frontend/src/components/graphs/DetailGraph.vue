@@ -42,7 +42,11 @@ import { vxm } from '../../store'
 import { formatDateUTC } from '../../util/TimeUtil'
 import DatapointDialog from '../dialogs/DatapointDialog.vue'
 
-type CommitInfo = { commit: Commit; comparison: CommitComparison }
+type CommitInfo = {
+  commit: Commit
+  comparison: CommitComparison
+  measurementId: MeasurementID
+}
 
 @Component({
   components: {
@@ -51,7 +55,7 @@ type CommitInfo = { commit: Commit; comparison: CommitComparison }
 })
 export default class DetailGraph extends Vue {
   @Prop({})
-  measurement!: MeasurementID
+  measurements!: MeasurementID[]
 
   @Prop({ default: true })
   beginYAtZero!: boolean
@@ -87,18 +91,29 @@ export default class DetailGraph extends Vue {
   }
 
   private get datapoints(): CommitInfo[] {
-    return vxm.repoDetailModule.repoHistory.slice().reverse()
+    return vxm.repoDetailModule.repoHistory
+      .slice()
+      .reverse()
+      .flatMap(it =>
+        this.measurements.map(measurementId => {
+          return {
+            commit: it.commit,
+            comparison: it.comparison,
+            measurementId: measurementId
+          }
+        })
+      )
   }
 
   // prettier-ignore
-  private get wantedMeasurementForDatapoint(): (comparison: CommitComparison) => Measurement | undefined {
-    return (comparison: CommitComparison) => {
+  private get wantedMeasurementForDatapoint(): (comparison: CommitComparison, measurementId: MeasurementID) => Measurement | undefined {
+    return (comparison: CommitComparison, measurementId: MeasurementID) => {
       if (
         comparison.second &&
         comparison.second.measurements
       ) {
         let wantedMeasurement: Measurement | undefined =
-          comparison.second.measurements.find(it => it.id.equals(this.measurement))
+          comparison.second.measurements.find(it => it.id.equals(measurementId))
         return wantedMeasurement
       }
       return undefined
@@ -108,9 +123,11 @@ export default class DetailGraph extends Vue {
   private datapointValue(datapoint: {
     commit: Commit
     comparison: CommitComparison
+    measurementId: MeasurementID
   }): number | undefined {
     let wantedMeasurement = this.wantedMeasurementForDatapoint(
-      datapoint.comparison
+      datapoint.comparison,
+      datapoint.measurementId
     )
     if (wantedMeasurement !== undefined && wantedMeasurement.value !== null) {
       return wantedMeasurement.value
@@ -127,15 +144,16 @@ export default class DetailGraph extends Vue {
   }
 
   private get dataAvailable(): boolean {
-    return this.measurement.metric !== '' && this.maxVal !== undefined
+    return this.measurements.length > 0 && this.maxVal !== undefined
   }
 
-  private lastValue: number = 0
+  private lastValue: Map<MeasurementID, number> = new Map()
 
-  get firstSuccessful(): number {
+  private firstSuccessful(measurementId: MeasurementID): number {
     for (const datapoint of this.datapoints) {
       let wantedMeasurement = this.wantedMeasurementForDatapoint(
-        datapoint.comparison
+        datapoint.comparison,
+        measurementId
       )
       if (
         wantedMeasurement !== undefined &&
@@ -168,28 +186,36 @@ export default class DetailGraph extends Vue {
       .range([this.innerHeight, 0])
   }
 
-  private x(
-    comparison: CommitComparison,
-    xScale: d3.ScaleLinear<number, number>
-  ): number {
-    return xScale(
-      this.datapoints.length -
-        this.datapoints.findIndex(
-          it => it.comparison.secondCommit.hash === comparison.secondCommit.hash
+  private x(datapoint: CommitInfo): number {
+    let datapoints = this.groupedByMeasurement.get(
+      datapoint.measurementId.toString()
+    )!
+    return this.currentXScale(
+      datapoints.length -
+        datapoints.findIndex(
+          it =>
+            it.comparison.secondCommit.hash ===
+            datapoint.comparison.secondCommit.hash
         )
     )
   }
 
-  private y(comparison: CommitComparison): number {
-    let wantedMeasurement = this.wantedMeasurementForDatapoint(comparison)
+  private y(
+    comparison: CommitComparison,
+    measurementId: MeasurementID
+  ): number {
+    let wantedMeasurement = this.wantedMeasurementForDatapoint(
+      comparison,
+      measurementId
+    )
     if (wantedMeasurement !== undefined && wantedMeasurement.value) {
-      this.lastValue = wantedMeasurement.value
+      this.lastValue.set(measurementId, wantedMeasurement.value)
       return this.yScale(wantedMeasurement.value)
     }
     if (this.datapoints.findIndex(it => it.comparison === comparison) === 0) {
-      this.lastValue = this.firstSuccessful
+      this.lastValue.set(measurementId, this.firstSuccessful(measurementId))
     }
-    return this.yScale(this.lastValue)
+    return this.yScale(this.lastValue.get(measurementId) || 0)
   }
 
   private valueFormat: any = d3.format('<.4')
@@ -210,10 +236,11 @@ export default class DetailGraph extends Vue {
     return d3.axisLeft(this.yScale)
   }
 
-  get unit(): string | null {
+  private unit(measurementId: MeasurementID): string | null {
     for (const datapoint of this.datapoints) {
       let wantedMeasurement = this.wantedMeasurementForDatapoint(
-        datapoint.comparison
+        datapoint.comparison,
+        measurementId
       )
       if (wantedMeasurement !== undefined && wantedMeasurement.unit) {
         return wantedMeasurement.unit
@@ -223,10 +250,10 @@ export default class DetailGraph extends Vue {
   }
 
   private get yLabel(): string {
-    if (this.measurement.metric) {
-      return this.unit
-        ? this.measurement.metric + ' in ' + this.unit
-        : this.measurement.metric
+    if (this.measurements.length === 0) {
+      return this.unit(this.measurements[0])
+        ? this.measurements[0].metric + ' in ' + this.unit(this.measurements[0])
+        : this.measurements[0].metric
     } else {
       return ''
     }
@@ -254,14 +281,14 @@ export default class DetailGraph extends Vue {
     this.currentXScale = transform.rescaleX(this.baseXScale)
 
     d3.select('#dataLayer')
-      .selectAll<SVGPathElement, unknown>('.datapoint')
+      .selectAll<SVGPathElement, CommitInfo>('.datapoint')
       .attr(
         'transform',
-        (d: any) =>
+        d =>
           'translate(' +
-          this.x(d.comparison, this.currentXScale) +
+          this.x(d) +
           ', ' +
-          this.y(d.comparison) +
+          this.y(d.comparison, d.measurementId) +
           ') rotate(-45)'
       )
     if (vxm.repoDetailModule.referenceDatapoint) {
@@ -274,9 +301,7 @@ export default class DetailGraph extends Vue {
       )
     }
 
-    d3.select('#dataLayer')
-      .selectAll<SVGPathElement, unknown>('#line')
-      .attr('d', this.line(this.currentXScale))
+    this.drawPath(false)
 
     this.xAxis.scale(this.currentXScale)
     d3.select('#xAxis')
@@ -364,9 +389,9 @@ export default class DetailGraph extends Vue {
       .duration(1000)
       .delay(100)
       .attr('x1', this.innerWidth)
-      .attr('y1', this.y(datapoint.comparison))
+      .attr('y1', this.y(datapoint.comparison, datapoint.measurementId))
       .attr('x2', 0)
-      .attr('y2', this.y(datapoint.comparison))
+      .attr('y2', this.y(datapoint.comparison, datapoint.measurementId))
 
     referenceLine
       .exit()
@@ -416,14 +441,14 @@ export default class DetailGraph extends Vue {
   private crosshairIcon = crosshairIcon
 
   private drawCrosshair(datapoint: CommitInfo, color: string) {
-    let crosshair = d3.select('#_' + datapoint.commit.hash)
+    let crosshair = d3.select('#_' + this.keyFn(datapoint))
 
     if (crosshair) {
       let crosshairRect = (crosshair.node() as SVGElement).getBoundingClientRect()
       let crosshairWidth: number = crosshairRect.width
       let crosshairHeight: number = crosshairRect.height
 
-      d3.select('#_' + datapoint.commit.hash)
+      d3.select('#_' + this.keyFn(datapoint))
         .transition()
         .duration(1000)
         .delay(100)
@@ -437,9 +462,9 @@ export default class DetailGraph extends Vue {
         .attr(
           'transform',
           'translate(' +
-            (this.x(datapoint.comparison, this.currentXScale) - 12) +
+            (this.x(datapoint) - 12) +
             ', ' +
-            (this.y(datapoint.comparison) - 12) +
+            (this.y(datapoint.comparison, datapoint.measurementId) - 12) +
             ')'
         )
         .attr('opacity', 1)
@@ -450,7 +475,7 @@ export default class DetailGraph extends Vue {
   }
 
   private removeCrosshair(datapoint: CommitInfo) {
-    d3.select('#_' + datapoint.commit.hash)
+    d3.select('#_' + this.keyFn(datapoint))
       .attr(
         'd',
         d3
@@ -461,9 +486,9 @@ export default class DetailGraph extends Vue {
       .attr(
         'transform',
         'translate(' +
-          this.x(datapoint.comparison, this.currentXScale) +
+          this.x(datapoint) +
           ', ' +
-          this.y(datapoint.comparison) +
+          this.y(datapoint.comparison, datapoint.measurementId) +
           ') rotate(-45)'
       )
       .attr('fill', this.datapointColor(datapoint))
@@ -477,6 +502,16 @@ export default class DetailGraph extends Vue {
   // drawing the graph
   private graphDrawn: boolean = false
 
+  private keyFn(d: CommitInfo): string {
+    return (
+      d.commit.hash +
+      '_' +
+      d.measurementId.benchmark +
+      '_' +
+      d.measurementId.metric
+    )
+  }
+
   private drawGraph() {
     if (this.dataAvailable) {
       if (!this.graphDrawn) {
@@ -484,13 +519,9 @@ export default class DetailGraph extends Vue {
         this.defineSvgElements()
         this.graphDrawn = true
       }
-
-      let keyFn: d3.ValueFn<any, any, string> = (d: CommitInfo) => {
-        return d.commit.hash
-      }
       this.drawPath()
-      this.drawDatapoints(keyFn)
-      this.appendTooltips(keyFn)
+      this.drawDatapoints(this.keyFn)
+      this.appendTooltips(this.keyFn)
       if (this.commitToCompare) {
         this.drawCrosshair(
           this.commitToCompare,
@@ -505,7 +536,7 @@ export default class DetailGraph extends Vue {
       d3.select('#dataLayer').remove()
 
       let information: string =
-        this.measurement.metric === ''
+        this.measurements.length === 0
           ? '<tspan x="0" dy="1.2em">No data available.</tspan><tspan x="0" dy="1.2em">Please select benchmark and metric.</tspan>'
           : '<tspan x="0" dy="1.2em">There are no commits within the specified time period</tspan><tspan x="0" dy="1.2em"> that have been benchmarked with this metric.</tspan>'
 
@@ -524,7 +555,26 @@ export default class DetailGraph extends Vue {
     }
   }
 
-  private drawPath() {
+  // https://stackoverflow.com/questions/14446511/most-efficient-method-to-groupby-on-an-array-of-objects
+  private groupBy<K, V>(list: K[], keyGetter: (key: K) => V) {
+    const map = new Map()
+    list.forEach(item => {
+      const key = keyGetter(item)
+      const collection = map.get(key)
+      if (!collection) {
+        map.set(key, [item])
+      } else {
+        collection.push(item)
+      }
+    })
+    return map
+  }
+
+  private get groupedByMeasurement(): Map<string, CommitInfo[]> {
+    return this.groupBy(this.datapoints, it => it.measurementId.toString())
+  }
+
+  private drawPath(animated: boolean = true) {
     let path: d3.Selection<
       SVGPathElement,
       CommitInfo[],
@@ -532,18 +582,20 @@ export default class DetailGraph extends Vue {
       unknown
     > = d3
       .select('#graphArea')
-      .selectAll<SVGPathElement, unknown>('#line')
-      .data([this.datapoints])
+      .selectAll<SVGPathElement, unknown>('.line')
+      .data(Array.from(this.groupedByMeasurement.values()))
     let newPath = path
       .enter()
       .append('path')
-      .attr('id', 'line')
+      .attr('class', 'line')
       .merge(path)
       .transition()
-      .duration(1000)
-      .delay(100)
+      .duration(animated ? 1000 : 0)
+      .delay(animated ? 100 : 0)
       .attr('d', this.line(this.currentXScale))
-      .attr('stroke', this.colorById(this.selectedRepo))
+      .attr('stroke', commitInfos =>
+        this.metricColor(commitInfos[0].measurementId)
+      )
       .attr('stroke-width', 2)
       .attr('fill', 'none')
       .attr('pointer-events', 'none')
@@ -571,7 +623,7 @@ export default class DetailGraph extends Vue {
       .enter()
       .append('path')
       .attr('class', 'datapoint')
-      .attr('id', (d: CommitInfo) => '_' + d.commit.hash)
+      .attr('id', (d: CommitInfo) => '_' + this.keyFn(d))
       .merge(datapoints)
       .transition()
       .duration(1000)
@@ -587,9 +639,9 @@ export default class DetailGraph extends Vue {
         'transform',
         (d: CommitInfo) =>
           'translate(' +
-          this.x(d.comparison, this.currentXScale) +
+          this.x(d) +
           ', ' +
-          this.y(d.comparison) +
+          this.y(d.comparison, d.measurementId) +
           ') rotate(-45)'
       )
       .attr('fill', (d: CommitInfo) => this.datapointColor(d))
@@ -649,21 +701,33 @@ export default class DetailGraph extends Vue {
   }
 
   datapointColor(d: CommitInfo): string {
-    let wantedMeasurement = this.wantedMeasurementForDatapoint(d.comparison)
+    let wantedMeasurement = this.wantedMeasurementForDatapoint(
+      d.comparison,
+      d.measurementId
+    )
     if (this.benchmarkFailed(d)) {
       return 'grey'
     } else if (wantedMeasurement) {
-      return this.colorById(this.selectedRepo)
+      return this.metricColor(d.measurementId)
     }
     return 'white'
   }
 
   strokeColor(d: CommitInfo): string {
-    let wantedMeasurement = this.wantedMeasurementForDatapoint(d.comparison)
+    let wantedMeasurement = this.wantedMeasurementForDatapoint(
+      d.comparison,
+      d.measurementId
+    )
     if (wantedMeasurement && wantedMeasurement.successful) {
-      return this.colorById(this.selectedRepo)
+      return this.metricColor(d.measurementId)
     }
     return 'grey'
+  }
+
+  private metricColor(measurementId: MeasurementID) {
+    return vxm.colorModule.colorByIndex(
+      this.measurements.findIndex(it => it.equals(measurementId))
+    )
   }
 
   private strokeWidth(d: CommitInfo): number {
@@ -674,17 +738,13 @@ export default class DetailGraph extends Vue {
   }
 
   private benchmarkFailed(d: CommitInfo): boolean {
-    let wantedMeasurement = this.wantedMeasurementForDatapoint(d.comparison)
+    let wantedMeasurement = this.wantedMeasurementForDatapoint(
+      d.comparison,
+      d.measurementId
+    )
     let runFailed: boolean =
       !!d.comparison.second && !!d.comparison.second.errorMessage
     return runFailed || (!!wantedMeasurement && !wantedMeasurement.successful)
-  }
-
-  private get colorById(): (repoID: string) => string {
-    return (repoID: string) => {
-      let index: number = vxm.repoModule.repoIndex(repoID)
-      return vxm.colorModule.colorByIndex(index)
-    }
   }
 
   get line(): (xScale: d3.ScaleLinear<number, number>) => any {
@@ -692,10 +752,10 @@ export default class DetailGraph extends Vue {
       d3
         .line<CommitInfo>()
         .x((datapoint: CommitInfo) => {
-          return this.x(datapoint.comparison, xScale)
+          return this.x(datapoint)
         })
         .y((datapoint: CommitInfo) => {
-          return this.y(datapoint.comparison)
+          return this.y(datapoint.comparison, datapoint.measurementId)
         })
   }
 
@@ -718,13 +778,19 @@ export default class DetailGraph extends Vue {
     let tipHeight = (tooltip.node() as HTMLElement).getBoundingClientRect()
       .height
 
-    let wantedMeasurement = this.wantedMeasurementForDatapoint(d.comparison)
+    let measurementId =
+      d.measurementId.benchmark + ' - ' + d.measurementId.metric
+    let wantedMeasurement = this.wantedMeasurementForDatapoint(
+      d.comparison,
+      d.measurementId
+    )
     let htmlMessage: string = ''
     if (
       d.commit.authorDate &&
       wantedMeasurement &&
       wantedMeasurement.successful
     ) {
+      let unit = this.unit(wantedMeasurement.id)
       htmlMessage = `
         <table class="tooltip-table">
           <tr>
@@ -741,7 +807,11 @@ export default class DetailGraph extends Vue {
           </tr>
           <tr>
             <td>Exact value</td>
-            <td>${this.valueFormat(wantedMeasurement.value)} ${this.unit}</td>
+            <td>${this.valueFormat(wantedMeasurement.value)} ${unit}</td>
+          </tr>
+          <tr>
+            <td>Metric</td>
+            <td>${measurementId}</td>
           </tr>
           <tr>
             <td>Commit summary</td>
@@ -763,6 +833,10 @@ export default class DetailGraph extends Vue {
           <tr>
             <td>Date</td>
             <td>${formatDateUTC(d.commit.authorDate)}</td>
+          </tr>
+          <tr>
+            <td>Metric</td>
+            <td>${measurementId}</td>
           </tr>
           <tr>
             <td>Commit summary</td>
@@ -789,6 +863,10 @@ export default class DetailGraph extends Vue {
             <td>${formatDateUTC(d.commit.authorDate)}</td>
           </tr>
           <tr>
+            <td>Metric</td>
+            <td>${measurementId}</td>
+          </tr>
+          <tr>
             <td>Commit summary</td>
             <td>${d.commit.summary!.trim()}</td>
           </tr>
@@ -799,7 +877,12 @@ export default class DetailGraph extends Vue {
       `
     } else {
       htmlMessage =
-        'Commit ' + d.commit.hash + '<br />author:' + d.commit.author
+        'Commit ' +
+        d.commit.hash +
+        '<br />author:' +
+        d.commit.author +
+        '<br>metric: ' +
+        measurementId
     }
     tooltip.html(htmlMessage)
 

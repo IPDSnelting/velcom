@@ -21,6 +21,7 @@ export class RepoDetailStore extends VxModule {
   private _referenceDatapoint: {
     commit: Commit
     comparison: CommitComparison
+    measurementId: MeasurementID
   } | null = null
   /**
    * If true the user is locked to the relative commit, if false the
@@ -163,12 +164,14 @@ export class RepoDetailStore extends VxModule {
    * @type {({
    *     commit: Commit
    *     comparison: CommitComparison
+   *     measurementId: MeasurementID
    *   } | null)}
    * @memberof RepoDetailStore
    */
   get referenceDatapoint(): {
     commit: Commit
     comparison: CommitComparison
+    measurementId: MeasurementID
   } | null {
     if (!this._referenceDatapoint) {
       return null
@@ -177,6 +180,9 @@ export class RepoDetailStore extends VxModule {
       commit: Commit.fromRawObject(this._referenceDatapoint.commit),
       comparison: CommitComparison.fromRawObject(
         this._referenceDatapoint.comparison
+      ),
+      measurementId: MeasurementID.fromRawObject(
+        this._referenceDatapoint.measurementId
       )
     }
   }
@@ -190,6 +196,7 @@ export class RepoDetailStore extends VxModule {
     datapoint: {
       commit: Commit
       comparison: CommitComparison
+      measurementId: MeasurementID
     } | null
   ) {
     this._referenceDatapoint = datapoint
