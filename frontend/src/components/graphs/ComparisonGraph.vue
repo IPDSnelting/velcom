@@ -168,7 +168,7 @@ export default class ComparisonGraph extends Vue {
   // scales and axes
   private xScale(domain: number[]): d3.ScaleTime<number, number> {
     return d3
-      .scaleTime()
+      .scaleUtc()
       .domain(domain)
       .range([0, this.innerWidth])
   }
@@ -194,15 +194,17 @@ export default class ComparisonGraph extends Vue {
     return this.yScale(domain, height)(datapoint.value)
   }
 
-  private timeFormat: any = d3.timeFormat('%Y-%m-%d')
   private valueFormat: any = d3.format('<.4')
 
   private get focusXAxis(): d3.Axis<number | Date | { valueOf(): number }> {
-    return d3.axisBottom(this.xScale(this.focus)).tickFormat(this.timeFormat)
+    return d3.axisBottom(this.xScale(this.focus)).ticks(this.innerWidth / 80)
   }
 
   private get contextXAxis(): d3.Axis<number | Date | { valueOf(): number }> {
-    return d3.axisBottom(this.xScale(this.context)).tickFormat(this.timeFormat)
+    return d3
+      .axisBottom(this.xScale(this.context))
+      .ticks(this.innerWidth / 80)
+      .tickSizeOuter(2)
   }
 
   private get yAxis(): d3.Axis<number | { valueOf(): number }> {
@@ -256,6 +258,10 @@ export default class ComparisonGraph extends Vue {
   // interacting with data points via DatapointDialog
   private dialogOpen: boolean = false
   private selectedDatapoint: Datapoint | null = null
+
+  private get selectedCommit(): Commit | null {
+    return this.selectedDatapoint ? this.selectedDatapoint.commit : null
+  }
 
   openDatapointMenu(datapoint: Datapoint) {
     this.selectedDatapoint = datapoint
@@ -723,6 +729,9 @@ export default class ComparisonGraph extends Vue {
     >)
       .attr('transform', 'translate(0,' + this.focusHeight + ')')
       .call(this.focusXAxis)
+      .selectAll('text')
+      .attr('transform', 'translate(-10, 10) rotate(-35)')
+      .style('text-anchor', 'end')
     ;(d3.select('#contextXAxis') as d3.Selection<
       SVGGElement,
       unknown,
@@ -731,6 +740,9 @@ export default class ComparisonGraph extends Vue {
     >)
       .attr('transform', 'translate(0,' + this.innerHeight + ')')
       .call(this.contextXAxis)
+      .selectAll('text')
+      .attr('transform', 'translate(-10, 10) rotate(-35)')
+      .style('text-anchor', 'end')
     ;(d3.select('#yAxis') as d3.Selection<
       SVGGElement,
       unknown,
