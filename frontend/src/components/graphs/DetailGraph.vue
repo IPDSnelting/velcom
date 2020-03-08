@@ -335,10 +335,8 @@ export default class DetailGraph extends Vue {
   }
 
   setReference() {
-    this.dialogOpen = false
     if (vxm.repoDetailModule.referenceDatapoint) {
       this.removeCrosshair(vxm.repoDetailModule.referenceDatapoint)
-      vxm.repoDetailModule.referenceDatapoint = null
     }
     if (this.selectedDatapoint) {
       vxm.repoDetailModule.referenceDatapoint = this.selectedDatapoint
@@ -347,6 +345,7 @@ export default class DetailGraph extends Vue {
       this.drawReferenceLine(vxm.repoDetailModule.referenceDatapoint)
       this.drawCrosshair(vxm.repoDetailModule.referenceDatapoint, 'gray')
     }
+    this.closeDialog()
   }
 
   private drawReferenceLine(datapoint: CommitInfo) {
@@ -376,17 +375,16 @@ export default class DetailGraph extends Vue {
   }
 
   private removeReference() {
-    this.dialogOpen = false
     d3.select('#referenceLine')
       .transition()
       .attr('opacity', 0)
       .remove()
     this.removeCrosshair(vxm.repoDetailModule.referenceDatapoint!)
     vxm.repoDetailModule.referenceDatapoint = null
+    this.closeDialog()
   }
 
   private selectCommitToCompare() {
-    this.dialogOpen = false
     if (this.commitToCompare) {
       this.removeCrosshair(this.commitToCompare)
     }
@@ -397,10 +395,10 @@ export default class DetailGraph extends Vue {
         this.datapointColor(this.selectedDatapoint)
       )
     }
+    this.closeDialog()
   }
 
   private compareCommits() {
-    this.dialogOpen = false
     if (this.commitToCompare && this.selectedDatapoint) {
       this.$router.push({
         name: 'commit-comparison',
@@ -411,6 +409,7 @@ export default class DetailGraph extends Vue {
         }
       })
     }
+    this.closeDialog()
   }
 
   private crosshairIcon = crosshairIcon
@@ -893,6 +892,13 @@ export default class DetailGraph extends Vue {
     this.updateCurrentAxisAfterResize()
     this.updateAxes()
     this.drawGraph()
+  }
+
+  @Watch('dialogOpen')
+  private dialogClosed() {
+    if (!this.dialogOpen) {
+      this.selectedDatapoint = null
+    }
   }
 
   private updateAxes() {
