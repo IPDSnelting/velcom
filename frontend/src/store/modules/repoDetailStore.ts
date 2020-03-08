@@ -25,8 +25,7 @@ export class RepoDetailStore extends VxModule {
    */
   lockedToRelativeCommit: boolean = false
   relativeToCommit: string = ''
-  selectedMetric: string = ''
-  selectedBenchmark: string = ''
+  selectedMeasurements: MeasurementID[] = []
   selectedFetchAmount: string = '10'
   selectedSkipAmount: string = '0'
   referenceDatapoint: {

@@ -13,11 +13,9 @@
               <v-row align="center" justify="space-around" no-gutters>
                 <v-col md="5" sm="12" cols="12">
                   <measurement-id-selection
-                    @changeBenchmark="selectedBenchmark = $event"
-                    @changeMetric="selectedMetric = $event"
+                    @changeMeasurement="selectedMeasurements = [$event]"
                     :repoId="id"
-                    :selectedBenchmark="selectedBenchmark"
-                    :selectedMetric="selectedMetric"
+                    :selectedMeasurement="selectedMeasurement"
                   ></measurement-id-selection>
                 </v-col>
                 <v-col md="5" sm="12" cols="12">
@@ -107,7 +105,7 @@
                 <v-btn
                   color="error"
                   text
-                  :disabled="!selectedBenchmark || !selectedMetric"
+                  :disabled="!selectedMeasurements"
                   @click="deleteMetric"
                 >Delete metric</v-btn>
               </v-col>
@@ -179,24 +177,18 @@ export default class RepoDetail extends Vue {
     | 'begin y-Scale at zero'
     | 'begin y-Scale at minimum Value' = 'begin y-Scale at minimum Value'
 
-  private get selectedBenchmark(): string {
-    return vxm.repoDetailModule.selectedBenchmark
-  }
-
-  private set selectedBenchmark(selectedBenchmark: string) {
-    vxm.repoDetailModule.selectedBenchmark = selectedBenchmark
-  }
-
-  private get selectedMetric(): string {
-    return vxm.repoDetailModule.selectedMetric
-  }
-
-  private set selectedMetric(selectedMetric: string) {
-    vxm.repoDetailModule.selectedMetric = selectedMetric
-  }
-
   private get selectedMeasurement(): MeasurementID {
-    return new MeasurementID(this.selectedBenchmark, this.selectedMetric)
+    return this.selectedMeasurements[0]
+      ? this.selectedMeasurements[0]
+      : new MeasurementID('', '')
+  }
+
+  private get selectedMeasurements(): MeasurementID[] {
+    return vxm.repoDetailModule.selectedMeasurements
+  }
+
+  private set selectedMeasurements(selectedMeasurements: MeasurementID[]) {
+    vxm.repoDetailModule.selectedMeasurements = selectedMeasurements.slice()
   }
 
   private get relativeToCommit(): string {
@@ -306,36 +298,32 @@ export default class RepoDetail extends Vue {
   }
 
   private deleteMetric() {
-    if (!this.selectedBenchmark || !this.selectedMetric) {
+    if (!this.selectedMeasurements) {
       return
     }
+    let measurement = this.selectedMeasurements[0]
     if (
       window.confirm(
-        `Do you really want to delete metric '${this.selectedMetric}' in '${this.selectedBenchmark}'?
+        `Do you really want to delete metric '${measurement.metric}' in '${measurement.benchmark}'?
          This will also delete all measurements for this metric!`
       )
     ) {
       vxm.repoDetailModule.dispatchDeleteMeasurements({
-        measurementId: new MeasurementID(
-          this.selectedBenchmark,
-          this.selectedMetric
-        ),
+        measurementId: measurement,
         repoId: this.id
       })
     }
   }
 
   @Watch('id')
-  @Watch('selectedMetric')
-  @Watch('selectedBenchmark')
+  @Watch('selectedMeasurements')
   retrieveRuns() {
     if (this.$refs.form && (this.$refs.form as any).validate()) {
       vxm.repoDetailModule.fetchHistoryForRepo(this.payload)
     }
   }
 
-  @Watch('selectedMetric')
-  @Watch('selectedBenchmark')
+  @Watch('selectedMeasurements')
   @Watch('skip')
   @Watch('amount')
   @Watch('lockedToRelativeCommit')
@@ -343,8 +331,7 @@ export default class RepoDetail extends Vue {
   @Watch('yScaleBeginsAtZero')
   updateUrl() {
     let newQuery: { [param: string]: string } = {
-      metric: this.selectedMetric,
-      benchmark: this.selectedBenchmark,
+      selectedMeasurements: JSON.stringify(this.selectedMeasurements),
       skip: this.skip,
       fetchAmount: this.amount,
       relativeToCommit: this.relativeToCommit,
@@ -398,11 +385,15 @@ export default class RepoDetail extends Vue {
     if (query.fetchAmount) {
       this.amount = query.fetchAmount as string
     }
-    if (query.benchmark) {
-      this.selectedBenchmark = query.benchmark as string
-    }
-    if (query.metric) {
-      this.selectedMetric = query.metric as string
+    if (query.selectedMeasurements) {
+      let jsonified = JSON.parse(query.selectedMeasurements as string) as {
+        metric: string
+        benchmark: string
+      }[]
+
+      this.selectedMeasurements = jsonified.map(
+        ({ metric, benchmark }) => new MeasurementID(benchmark, metric)
+      )
     }
     if (query.relativeToCommit) {
       this.relativeToCommit = query.relativeToCommit as string

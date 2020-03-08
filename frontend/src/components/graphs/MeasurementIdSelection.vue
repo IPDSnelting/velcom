@@ -4,7 +4,7 @@
       <v-select
         class="mr-5"
         :items="occuringBenchmarks"
-        :value="selectedBenchmark"
+        :value="selectedMeasurement.benchmark"
         @input="selectBenchmark"
         label="benchmark"
       ></v-select>
@@ -12,8 +12,8 @@
     <v-col>
       <v-select
         class="mr-5"
-        :items="metricsForBenchmark(this.selectedBenchmark)"
-        :value="selectedMetric"
+        :items="metricsForBenchmark(selectedMeasurement.benchmark)"
+        :value="selectedMeasurement.metric"
         @input="selectMetric"
         label="metric"
       ></v-select>
@@ -26,6 +26,7 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { vxm } from '../../store'
 import { Prop, Watch } from 'vue-property-decorator'
+import { MeasurementID } from '../../store/types'
 
 @Component
 export default class MeasurementIdSelection extends Vue {
@@ -33,10 +34,7 @@ export default class MeasurementIdSelection extends Vue {
   private repoId!: string
 
   @Prop()
-  private selectedMetric!: string
-
-  @Prop()
-  private selectedBenchmark!: string
+  private selectedMeasurement!: MeasurementID
 
   get occuringBenchmarks(): string[] {
     return vxm.repoModule.occuringBenchmarks([this.repoId])
@@ -46,10 +44,13 @@ export default class MeasurementIdSelection extends Vue {
     return (benchmark: string) => vxm.repoModule.metricsForBenchmark(benchmark)
   }
 
-  @Watch('selectedBenchmark')
-  onBenchmarkChange() {
-    let newMetrics = this.metricsForBenchmark(this.selectedBenchmark)
-    if (!newMetrics.includes(this.selectedMetric)) {
+  @Watch('selectedMeasurement')
+  private onMeasurementChange() {
+    let newMetrics = this.metricsForBenchmark(
+      this.selectedMeasurement.benchmark
+    )
+
+    if (!newMetrics.includes(this.selectedMeasurement.metric)) {
       if (newMetrics) {
         this.selectMetric(newMetrics[0])
       }
@@ -57,11 +58,17 @@ export default class MeasurementIdSelection extends Vue {
   }
 
   private selectBenchmark(benchmark: string) {
-    this.$emit('changeBenchmark', benchmark)
+    this.$emit(
+      'changeMeasurement',
+      new MeasurementID(benchmark, this.selectedMeasurement.metric)
+    )
   }
 
   private selectMetric(metric: string) {
-    this.$emit('changeMetric', metric)
+    this.$emit(
+      'changeMeasurement',
+      new MeasurementID(this.selectedMeasurement.benchmark, metric)
+    )
   }
 }
 </script>
