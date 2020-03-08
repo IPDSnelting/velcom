@@ -99,7 +99,7 @@ export class RepoDetailStore extends VxModule {
   fetchIndexOfCommit(payload: {
     commitHash: string
     repoId: string
-  }): Promise<number> {
+  }): Promise<{ index: number; comparison: CommitComparison }> {
     return axios
       .get('/commit-history', {
         snackbarTag: 'commit-history',
@@ -110,7 +110,10 @@ export class RepoDetailStore extends VxModule {
           relative_to: payload.commitHash
         }
       })
-      .then(it => it.data.offset)
+      .then(it => ({
+        index: it.data.offset,
+        comparison: comparisonFromJson(it.data.commits[0])
+      }))
   }
 
   @mutation

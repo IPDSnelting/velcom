@@ -5,6 +5,7 @@
       <v-card-text>
         <v-radio-group v-model="datapointAction">
           <v-radio label="use datapoint as reference" value="setReference"></v-radio>
+          <v-radio label="view in detail graph" value="viewInDetailGraph"></v-radio>
           <v-radio label="remove reference line" value="removeReference"></v-radio>
         </v-radio-group>
       </v-card-text>
@@ -32,24 +33,13 @@ export default class DatapointDialog extends Vue {
   @Prop({})
   selectedCommit!: Commit | null
 
-  private datapointAction: 'setReference' | 'removeReference' = 'setReference'
+  private datapointAction:
+    | 'setReference'
+    | 'removeReference'
+    | 'viewInDetailGraph' = 'setReference'
 
   private onConfirm() {
-    switch (this.datapointAction) {
-      case 'setReference':
-        this.setReference()
-        break
-      case 'removeReference':
-        this.removeReference()
-        break
-    }
-  }
-
-  private setReference() {
-    this.$emit('setReference')
-  }
-  private removeReference() {
-    this.$emit('removeReference')
+    this.$emit(this.datapointAction)
   }
 
   private onClose() {

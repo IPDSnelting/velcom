@@ -14,6 +14,7 @@
           :selectedCommit="selectedCommit"
           @setReference="setReference"
           @removeReference="removeReference"
+          @viewInDetailGraph="showInDetailGraph"
           @close="closeDialog"
         ></datapoint-dialog>
       </v-col>
@@ -845,6 +846,48 @@ export default class ComparisonGraph extends Vue {
       .attr('class', 'tooltip')
       .attr('id', 'tooltip')
       .style('opacity', 0)
+  }
+
+  private showInDetailGraph() {
+    let selectedCommit = this.selectedDatapoint!.commit
+    let repoId = selectedCommit.repoID
+    vxm.repoDetailModule
+      .fetchIndexOfCommit({
+        commitHash: selectedCommit.hash,
+        repoId: repoId
+      })
+      .then(({ index, comparison }) => {
+        this.closeDialog()
+        console.log({
+          selectedMeasurements: JSON.stringify([{ metric: '', benchmark: '' }]),
+          skip: '' + Math.max(0, index - 20),
+          fetchAmount: '40',
+          relativeToCommit: selectedCommit.hash,
+          lockedToRelativeCommit: 'false'
+        })
+
+        vxm.repoDetailModule.referenceDatapoint = {
+          commit: selectedCommit,
+          comparison: comparison
+        }
+
+        this.$router.push({
+          name: 'repo-detail',
+          params: { id: repoId },
+          query: {
+            selectedMeasurements: JSON.stringify([
+              {
+                metric: vxm.repoComparisonModule.selectedMetric,
+                benchmark: vxm.repoComparisonModule.selectedBenchmark
+              }
+            ]),
+            skip: '' + Math.max(0, index - 20),
+            fetchAmount: '40',
+            relativeToCommit: selectedCommit.hash,
+            lockedToRelativeCommit: 'false'
+          }
+        })
+      })
   }
 
   // initializing

@@ -269,7 +269,7 @@ export default class RepoDetail extends Vue {
 
   private async lockReferenceFrame() {
     this.relativeToCommit = vxm.repoDetailModule.repoHistory[0].commit.hash
-    let index = await vxm.repoDetailModule.fetchIndexOfCommit({
+    let { index } = await vxm.repoDetailModule.fetchIndexOfCommit({
       repoId: this.repo.id,
       commitHash: this.relativeToCommit
     })
@@ -279,7 +279,7 @@ export default class RepoDetail extends Vue {
   }
 
   private async unlockReferenceFrame() {
-    let index = await vxm.repoDetailModule.fetchIndexOfCommit({
+    let { index } = await vxm.repoDetailModule.fetchIndexOfCommit({
       repoId: this.repo.id,
       commitHash: this.relativeToCommit
     })
