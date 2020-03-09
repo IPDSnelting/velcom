@@ -103,10 +103,7 @@ export default class MeasurementIdSelection extends Vue {
       .filter(it => it)
       .map(it => it!.id)
 
-    let got = [...this.selectedBenchmarkItems, ...leafs]
-    console.log('Got: ', got)
-
-    return got
+    return [...this.selectedBenchmarkItems, ...leafs]
   }
 
   private metricColor(item: MeasurementItem | BenchmarkItem): string {
@@ -133,15 +130,6 @@ export default class MeasurementIdSelection extends Vue {
       .map(it => this.measurementItemMap.get(it))
       .filter(it => it && it instanceof MeasurementItem)
       .map(it => it!.measurementId)
-
-    console.log(
-      'Wanted',
-      measurements,
-      'passing on',
-      ids,
-      'storing',
-      this.selectedBenchmarkItems
-    )
 
     this.$emit('input', ids)
   }
