@@ -481,7 +481,7 @@ export default class DetailGraph extends Vue {
 
       d3.select('#_' + this.keyFn(datapoint))
         .transition()
-        .duration(500)
+        .duration(50)
         .delay(0)
         .attr(
           'd',
