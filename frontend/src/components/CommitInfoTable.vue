@@ -110,6 +110,7 @@ export default class CommitInfoTable extends Vue {
         { text: 'Metric', value: 'id.metric', align: 'left' },
         { text: 'Unit', value: 'unit', align: 'left' },
         { text: 'Value', value: 'value', align: 'right' },
+        { text: 'Standard deviation', value: 'stddev', align: 'right' },
         { text: 'Change', value: 'change', align: 'right' }
       ]
     }
@@ -142,6 +143,7 @@ export default class CommitInfoTable extends Vue {
       return this.comparison.second.measurements.map(measurement => ({
         key: measurement.id.benchmark + '|' + measurement.id.metric,
         change: this.findChange(measurement.id),
+        stddev: this.findStandardDev(measurement.id),
         ...measurement
       }))
     }
@@ -164,6 +166,39 @@ export default class CommitInfoTable extends Vue {
         return this.formatNumber(measurement.value)
       } else {
         return measurement.errorMessage
+      }
+    } else {
+      throw new Error('I failed to find the measurement: ' + measId)
+    }
+  }
+
+  private findStandardDev(measId: MeasurementID) {
+    if (this.comparison.second == null) {
+      return '-'
+    } else if (this.comparison.second.measurements == null) {
+      return this.comparison.second.errorMessage
+    }
+
+    let measurement = this.comparison.second.measurements.find(m =>
+      m.id.equals(measId)
+    )
+
+    if (measurement) {
+      if (measurement.values != null) {
+        let n = measurement.values.length
+        if (n <= 1) {
+          return 0
+        }
+
+        let mean = measurement.value!
+        let stdDev =
+          (1 / (n - 1)) *
+          measurement.values
+            .map(it => Math.pow(it - mean, 2))
+            .reduce((a, b) => a + b)
+        return this.formatNumber(stdDev)
+      } else {
+        return ''
       }
     } else {
       throw new Error('I failed to find the measurement: ' + measId)
