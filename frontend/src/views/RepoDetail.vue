@@ -113,13 +113,29 @@
               <v-col cols="auto" align-self="end">
                 <v-btn text color="primary" @click="toggleYScale()">{{ yScaleButtonLabel }}</v-btn>
               </v-col>
-              <v-col cols="auto" align-self="end">
-                <v-btn
-                  color="error"
-                  text
-                  :disabled="!selectedMeasurements"
-                  @click="deleteMetric"
-                >Delete metric</v-btn>
+              <v-col cols="auto" align-self="end" v-if="isAdmin">
+                <v-tooltip top>
+                  <template #activator="{ on }">
+                    <v-btn
+                      v-on="on"
+                      :color="canDeleteMetric ? 'error' : '#d3d3d3'"
+                      text
+                      @click="deleteMetric"
+                    >Delete metric</v-btn>
+                  </template>
+                  <span v-if="!canDeleteMetric">Please only select a single metric.</span>
+                  <span v-else>
+                    Deletes metric
+                    '
+                    <span
+                      class="font-weight-bold"
+                    >{{ selectedMeasurements[0].benchmark }}</span>
+                    —
+                    <span
+                      class="font-weight-bold"
+                    >{{ selectedMeasurements[0].metric }}</span>'
+                  </span>
+                </v-tooltip>
               </v-col>
             </v-row>
           </v-card-actions>
@@ -296,8 +312,20 @@ export default class RepoDetail extends Vue {
     }
   }
 
+  private get isAdmin(): boolean {
+    return vxm.userModule.isAdmin
+  }
+
+  private get canDeleteMetric(): boolean {
+    return (
+      this.selectedMeasurements &&
+      this.selectedMeasurements.length === 1 &&
+      this.isAdmin
+    )
+  }
+
   private deleteMetric() {
-    if (!this.selectedMeasurements) {
+    if (!this.canDeleteMetric) {
       return
     }
     let measurement = this.selectedMeasurements[0]
