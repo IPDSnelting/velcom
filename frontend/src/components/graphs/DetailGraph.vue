@@ -325,7 +325,7 @@ export default class DetailGraph extends Vue {
       )
     }
 
-    this.drawPath({ delay: 0, duration: 500 })
+    this.drawPath({ delay: 0, duration: 50 })
 
     this.xAxis.scale(this.currentXScale)
     d3.select('#xAxis')
