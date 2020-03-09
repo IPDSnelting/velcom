@@ -291,15 +291,30 @@ export default class DetailGraph extends Vue {
 
     d3.select('#dataLayer')
       .selectAll<SVGPathElement, CommitInfo>('.datapoint')
+      .transition()
+      .duration(500)
+      .delay(0)
+      .attr(
+        'd',
+        d3
+          .symbol()
+          .type((d: CommitInfo) => this.datapointSymbol(d))
+          .size((d: CommitInfo) => this.datapointSize(d))
+      )
       .attr(
         'transform',
-        d =>
+        (d: CommitInfo) =>
           'translate(' +
           this.x(d) +
           ', ' +
           this.y(d.comparison, d.measurementId) +
           ') rotate(-45)'
       )
+      .attr('fill', (d: CommitInfo) => this.datapointColor(d))
+      .attr('stroke', (d: CommitInfo) => this.strokeColor(d))
+      .attr('stroke-width', (d: CommitInfo) => this.strokeWidth(d))
+      .attr('opacity', 1)
+      .style('cursor', 'pointer')
     if (vxm.repoDetailModule.referenceDatapoint) {
       this.drawCrosshair(vxm.repoDetailModule.referenceDatapoint, 'gray')
     }
@@ -310,7 +325,7 @@ export default class DetailGraph extends Vue {
       )
     }
 
-    this.drawPath(false)
+    this.drawPath({ delay: 0, duration: 500 })
 
     this.xAxis.scale(this.currentXScale)
     d3.select('#xAxis')
@@ -541,7 +556,7 @@ export default class DetailGraph extends Vue {
         this.defineSvgElements()
         this.graphDrawn = true
       }
-      this.drawPath()
+      this.drawPath({ delay: 100, duration: 1000 })
       this.drawDatapoints(this.keyFn)
       this.appendTooltips(this.keyFn)
       if (this.commitToCompare) {
@@ -596,7 +611,7 @@ export default class DetailGraph extends Vue {
     return this.groupBy(this.datapoints, it => it.measurementId.toString())
   }
 
-  private drawPath(animated: boolean = true) {
+  private drawPath(animation: { delay: number; duration: number }) {
     let path: d3.Selection<
       SVGPathElement,
       CommitInfo[],
@@ -613,8 +628,8 @@ export default class DetailGraph extends Vue {
       .lower()
       .merge(path)
       .transition()
-      .duration(animated ? 1000 : 0)
-      .delay(animated ? 100 : 0)
+      .duration(animation.duration)
+      .delay(animation.delay)
       .attr('d', this.line(this.currentXScale))
       .attr('stroke', commitInfos =>
         this.metricColor(commitInfos[0].measurementId)
