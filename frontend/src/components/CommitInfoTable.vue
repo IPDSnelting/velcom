@@ -196,7 +196,7 @@ export default class CommitInfoTable extends Vue {
           measurement.values
             .map(it => Math.pow(it - mean, 2))
             .reduce((a, b) => a + b)
-        return this.formatNumber(stdDev)
+        return this.formatNumber(Math.sqrt(stdDev))
       } else {
         return ''
       }
