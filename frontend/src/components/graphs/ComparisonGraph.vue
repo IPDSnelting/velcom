@@ -308,7 +308,7 @@ export default class ComparisonGraph extends Vue {
       .attr('id', 'referenceLine')
       .merge(referenceLine as any)
       .transition()
-      .duration(100)
+      .duration(50)
       .delay(0)
       .attr('x1', this.innerWidth)
       .attr('y1', this.y(this.yFocusDomain, datapoint, this.focusHeight))

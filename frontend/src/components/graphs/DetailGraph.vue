@@ -292,7 +292,7 @@ export default class DetailGraph extends Vue {
     d3.select('#dataLayer')
       .selectAll<SVGPathElement, CommitInfo>('.datapoint')
       .transition()
-      .duration(500)
+      .duration(50)
       .delay(0)
       .attr(
         'd',
@@ -415,8 +415,8 @@ export default class DetailGraph extends Vue {
       .attr('id', 'referenceLine')
       .merge(referenceLine as any)
       .transition()
-      .duration(1000)
-      .delay(100)
+      .duration(500)
+      .delay(0)
       .attr('x1', this.innerWidth)
       .attr('y1', this.y(datapoint.comparison, datapoint.measurementId))
       .attr('x2', 0)
@@ -481,8 +481,8 @@ export default class DetailGraph extends Vue {
 
       d3.select('#_' + this.keyFn(datapoint))
         .transition()
-        .duration(1000)
-        .delay(100)
+        .duration(500)
+        .delay(0)
         .attr(
           'd',
           d3
@@ -664,8 +664,8 @@ export default class DetailGraph extends Vue {
       .attr('id', (d: CommitInfo) => '_' + this.keyFn(d))
       .merge(datapoints)
       .transition()
-      .duration(1000)
-      .delay(100)
+      .duration(50)
+      .delay(0)
       .attr(
         'd',
         d3
