@@ -32,7 +32,7 @@ interface PersistedRepoStore {
 interface PersistedRepoComparisonStore {
   _selectedRepos: string[]
   _selectedBranchesByRepoID: { [key: string]: string[] }
-  _referenceDatapoint: Datapoint | null
+  _referenceCommit: Commit | null
   startTime: string
   stopTime: string
   selectedMetric: string
@@ -80,7 +80,7 @@ const persistenceSessionStorage = new VuexPersistence<RootState>({
         _selectedRepos: state.repoComparisonModule._selectedRepos,
         _selectedBranchesByRepoID:
           state.repoComparisonModule._selectedBranchesByRepoID,
-        _referenceDatapoint: state.repoComparisonModule._referenceDatapoint,
+        _referenceCommit: state.repoComparisonModule._referenceCommit,
         startTime: state.repoComparisonModule.startTime,
         stopTime: state.repoComparisonModule.stopTime,
         selectedBenchmark: state.repoComparisonModule.selectedBenchmark,

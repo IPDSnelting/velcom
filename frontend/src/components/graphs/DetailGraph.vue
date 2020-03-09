@@ -1136,6 +1136,9 @@ export default class DetailGraph extends Vue {
       .attr('align', 'end')
       .attr('justify', 'end')
       .on('mouseenter', () => this.keydownListener(d3.event))
+      .on('wheel', () => {
+        d3.event.preventDefault()
+      })
     this.resize()
     d3.select('#brush .overlay').attr('cursor', 'cursor')
   }
