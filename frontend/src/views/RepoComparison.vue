@@ -321,6 +321,7 @@ export default class RepoComparison extends Vue {
   }
 
   @Watch('selectedBenchmark')
+  @Watch('selectedMetric')
   clearMetricOnBenchmarkSelection() {
     if (
       this.metricsForBenchmark(this.selectedBenchmark).includes(
