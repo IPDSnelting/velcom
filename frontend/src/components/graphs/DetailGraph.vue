@@ -688,12 +688,7 @@ export default class DetailGraph extends Vue {
       .attr('opacity', 1)
       .style('cursor', 'pointer')
 
-    datapoints
-      .exit()
-      .transition()
-      .attr('opacity', 0)
-      .attr('width', 0)
-      .remove()
+    datapoints.exit().remove()
   }
 
   private appendTooltips(keyFn: d3.ValueFn<any, any, string>) {
