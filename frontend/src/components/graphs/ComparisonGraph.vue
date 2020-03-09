@@ -339,7 +339,7 @@ export default class ComparisonGraph extends Vue {
       '#' + '_' + datapoint.commit.repoID + '_' + datapoint.commit.hash
     )
 
-    if (crosshair) {
+    if (crosshair.node()) {
       let crosshairRect = (crosshair.node() as SVGElement).getBoundingClientRect()
       let crosshairWidth: number = crosshairRect.width
       let crosshairHeight: number = crosshairRect.height
