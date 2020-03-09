@@ -225,7 +225,9 @@ export class RepoComparisonStore extends VxModule {
           id: repo.id,
           branches:
             // all branches are selected if user has never selected any manually
-            this._selectedBranchesByRepoID[repo.id] || repo.branches.slice()
+            (
+              this._selectedBranchesByRepoID[repo.id] || repo.branches.slice()
+            ).filter(it => repo.trackedBranches.includes(it))
         }))
         // reduce list above to required object structure
         .reduce((accumulated, repoBranch) => {
