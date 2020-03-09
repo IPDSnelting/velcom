@@ -22,7 +22,8 @@ export class RepoComparisonStore extends VxModule {
   private _interpretation: 'LESS_IS_BETTER' | 'MORE_IS_BETTER' | 'NEUTRAL' =
     'NEUTRAL'
   private _unit: string = ''
-  private _referenceDatapoint: Datapoint | null = null
+
+  referenceCommit: Commit | null = null
 
   selectedBenchmark: string = ''
   selectedMetric: string = ''
@@ -178,16 +179,20 @@ export class RepoComparisonStore extends VxModule {
     this.stopTime = stop.toISOString().substring(0, 10)
   }
 
-  get referenceDatapoint(): Datapoint | null {
-    if (this._referenceDatapoint === null) {
-      return null
+  get referenceDatapoint(): Datapoint | undefined {
+    if (
+      this.referenceCommit === null ||
+      this._datapointsByRepoId[this.referenceCommit.repoID] === undefined
+    ) {
+      return undefined
     }
 
-    return Datapoint.fromRawObject(this._referenceDatapoint)
-  }
-
-  set referenceDatapoint(datapoint: Datapoint | null) {
-    this._referenceDatapoint = datapoint
+    return this._datapointsByRepoId[this.referenceCommit.repoID].find(it => {
+      return (
+        this.referenceCommit !== null &&
+        it.commit.hash === this.referenceCommit.hash
+      )
+    })
   }
 
   /**

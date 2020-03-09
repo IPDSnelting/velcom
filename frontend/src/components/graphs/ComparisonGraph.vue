@@ -138,12 +138,12 @@ export default class ComparisonGraph extends Vue {
     )
 
     if (inFocusMin) {
-      return vxm.repoComparisonModule.referenceDatapoint &&
+      return vxm.repoComparisonModule.referenceDatapoint !== undefined &&
         vxm.repoComparisonModule.referenceDatapoint.value < inFocusMin
         ? vxm.repoComparisonModule.referenceDatapoint.value
         : inFocusMin
     }
-    return vxm.repoComparisonModule.referenceDatapoint
+    return vxm.repoComparisonModule.referenceDatapoint !== undefined
       ? vxm.repoComparisonModule.referenceDatapoint.value
       : 0
   }
@@ -158,12 +158,12 @@ export default class ComparisonGraph extends Vue {
     )
 
     if (inFocusMax) {
-      return vxm.repoComparisonModule.referenceDatapoint &&
+      return vxm.repoComparisonModule.referenceDatapoint !== undefined &&
         vxm.repoComparisonModule.referenceDatapoint.value > inFocusMax
         ? vxm.repoComparisonModule.referenceDatapoint.value
         : inFocusMax
     }
-    return vxm.repoComparisonModule.referenceDatapoint
+    return vxm.repoComparisonModule.referenceDatapoint !== undefined
       ? vxm.repoComparisonModule.referenceDatapoint.value
       : 0
   }
@@ -283,13 +283,13 @@ export default class ComparisonGraph extends Vue {
   }
 
   setReference() {
-    if (vxm.repoComparisonModule.referenceDatapoint) {
+    if (vxm.repoComparisonModule.referenceDatapoint !== undefined) {
       this.removeCrosshair(vxm.repoComparisonModule.referenceDatapoint)
     }
     if (this.selectedDatapoint) {
-      vxm.repoComparisonModule.referenceDatapoint = this.selectedDatapoint
+      vxm.repoComparisonModule.referenceCommit = this.selectedDatapoint.commit
     }
-    if (vxm.repoComparisonModule.referenceDatapoint) {
+    if (vxm.repoComparisonModule.referenceDatapoint !== undefined) {
       this.drawReferenceLine(vxm.repoComparisonModule.referenceDatapoint)
       this.drawCrosshair(vxm.repoComparisonModule.referenceDatapoint)
     }
@@ -328,7 +328,7 @@ export default class ComparisonGraph extends Vue {
       .attr('opacity', 0)
       .remove()
     this.removeCrosshair(vxm.repoComparisonModule.referenceDatapoint!)
-    vxm.repoComparisonModule.referenceDatapoint = null
+    vxm.repoComparisonModule.referenceCommit = null
     this.closeDialog()
   }
 
@@ -722,11 +722,6 @@ export default class ComparisonGraph extends Vue {
   @Watch('minTimestamp')
   @Watch('maxTimestamp')
   private updateData() {
-    vxm.repoComparisonModule.referenceDatapoint = null
-    d3.select('#referenceLine')
-      .transition()
-      .attr('opacity', 0)
-      .remove()
     this.context = [this.minTimestamp, this.maxTimestamp]
     this.resetBrush()
     d3.select('#yLabel').text(this.yLabel)

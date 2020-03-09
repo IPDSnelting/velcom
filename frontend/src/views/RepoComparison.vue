@@ -305,19 +305,19 @@ export default class RepoComparison extends Vue {
   }
 
   private get referenceHash(): string {
-    return vxm.repoComparisonModule.referenceDatapoint
+    return vxm.repoComparisonModule.referenceDatapoint !== undefined
       ? vxm.repoComparisonModule.referenceDatapoint.commit.hash
       : ''
   }
 
   private get referenceRepoID(): string {
-    return vxm.repoComparisonModule.referenceDatapoint
+    return vxm.repoComparisonModule.referenceDatapoint !== undefined
       ? vxm.repoComparisonModule.referenceDatapoint.commit.repoID
       : ''
   }
 
   private get referenceCommitSelected(): boolean {
-    return vxm.repoComparisonModule.referenceDatapoint !== null
+    return vxm.repoComparisonModule.referenceDatapoint !== undefined
   }
 
   @Watch('selectedBenchmark')
