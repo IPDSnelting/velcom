@@ -177,12 +177,6 @@ export default class RepoDetail extends Vue {
     | 'begin y-Scale at zero'
     | 'begin y-Scale at minimum Value' = 'begin y-Scale at minimum Value'
 
-  private get selectedMeasurement(): MeasurementID {
-    return this.selectedMeasurements[0]
-      ? this.selectedMeasurements[0]
-      : new MeasurementID('', '')
-  }
-
   private get selectedMeasurements(): MeasurementID[] {
     return vxm.repoDetailModule.selectedMeasurements
   }
