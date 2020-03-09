@@ -218,7 +218,7 @@ export default class DetailGraph extends Vue {
       comparison,
       measurementId
     )
-    if (wantedMeasurement !== undefined && wantedMeasurement.value) {
+    if (wantedMeasurement !== undefined && wantedMeasurement.value !== null) {
       this.lastValue.set(measurementId, wantedMeasurement.value)
       return this.yScale(wantedMeasurement.value)
     }
