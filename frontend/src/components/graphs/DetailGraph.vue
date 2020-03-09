@@ -529,9 +529,9 @@ export default class DetailGraph extends Vue {
         '_' +
         d.measurementId.metric
     )
-      .replace('=', 'eq')
-      .replace('+', 'plus')
-      .replace('/', 'slash')
+      .replace(/[=]/g, 'eq')
+      .replace(/[+]/g, 'plus')
+      .replace(/[/]/g, 'slash')
   }
 
   private drawGraph() {
