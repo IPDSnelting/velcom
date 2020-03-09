@@ -21,8 +21,8 @@
       <v-col>
         <v-card>
           <v-card-text class="ma-0 pa-0">
-            <v-container fluid class="ma-0 px-4 pb-0">
-              <v-row align="center" justify="space-around" no-gutters>
+            <v-container fluid class="ma-0 px-5 pb-0">
+              <v-row align="center" justify="space-between" no-gutters>
                 <v-col md="5" sm="12" cols="12">
                   <measurement-id-selection
                     @input="selectedMeasurements = $event"
@@ -61,7 +61,7 @@
               </v-row>
             </v-container>
           </v-card-text>
-          <v-card-actions class="mx-2">
+          <v-card-actions class="mx-5 px-0">
             <v-row no-gutters justify="end">
               <v-col v-show="referenceCommitSelected">
                 <v-row no-gutters>
