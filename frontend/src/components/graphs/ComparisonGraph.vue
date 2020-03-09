@@ -328,7 +328,7 @@ export default class ComparisonGraph extends Vue {
       .attr('opacity', 0)
       .remove()
     this.removeCrosshair(vxm.repoComparisonModule.referenceDatapoint!)
-    vxm.repoDetailModule.referenceDatapoint = null
+    vxm.repoComparisonModule.referenceDatapoint = null
     this.closeDialog()
   }
 
@@ -884,13 +884,6 @@ export default class ComparisonGraph extends Vue {
       })
       .then(({ index, comparison }) => {
         this.closeDialog()
-        console.log({
-          selectedMeasurements: JSON.stringify([{ metric: '', benchmark: '' }]),
-          skip: '' + Math.max(0, index - 20),
-          fetchAmount: '40',
-          relativeToCommit: selectedCommit.hash,
-          lockedToRelativeCommit: 'false'
-        })
 
         vxm.repoDetailModule.referenceDatapoint = {
           commit: selectedCommit,
