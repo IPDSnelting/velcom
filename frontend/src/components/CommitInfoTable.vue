@@ -38,6 +38,11 @@
           :style="{ color: changeColor(item, value) }"
         >{{ value === '-' ? '-': formatNumber(value) }}</span>
       </template>
+      <template #item.changepercent=" { item, value }">
+        <span
+          :style="{ color: item.change != '-' ? changeColor(item, item.change) : undefined }"
+        >{{ value }}</span>
+      </template>
       <template #item.compareChange=" { item, value }">
         <span :style="{ color: changeColor(item, value) }">{{ formatNumber(value) }}</span>
       </template>
@@ -111,7 +116,8 @@ export default class CommitInfoTable extends Vue {
         { text: 'Unit', value: 'unit', align: 'left' },
         { text: 'Value', value: 'value', align: 'right' },
         { text: 'Standard deviation', value: 'stddev', align: 'right' },
-        { text: 'Change', value: 'change', align: 'right' }
+        { text: 'Change', value: 'change', align: 'right' },
+        { text: 'Change %', value: 'changepercent', align: 'right' }
       ]
     }
   }
@@ -140,12 +146,17 @@ export default class CommitInfoTable extends Vue {
         throw new Error('I was given a run with no measurements!')
       }
 
-      return this.comparison.second.measurements.map(measurement => ({
-        key: measurement.id.benchmark + '|' + measurement.id.metric,
-        change: this.findChange(measurement.id),
-        stddev: this.findStandardDev(measurement.id),
-        ...measurement
-      }))
+      return this.comparison.second.measurements.map(measurement => {
+        let change = this.findChange(measurement.id)
+        return {
+          key: measurement.id.benchmark + '|' + measurement.id.metric,
+          change: change,
+          changepercent:
+            change === '-' ? '-' : this.changeAsPercent(measurement, change),
+          stddev: this.findStandardDev(measurement.id),
+          ...measurement
+        }
+      })
     }
   }
 
@@ -198,7 +209,7 @@ export default class CommitInfoTable extends Vue {
             .reduce((a, b) => a + b)
         return this.formatNumber(Math.sqrt(stdDev))
       } else {
-        return ''
+        return '-'
       }
     } else {
       throw new Error('I failed to find the measurement: ' + measId)
@@ -311,6 +322,18 @@ export default class CommitInfoTable extends Vue {
       return error
     }
     return error.substring(0, MAX_ERROR_LENGTH) + '…'
+  }
+
+  private changeAsPercent(item: Measurement, change: number): string {
+    if (item.value === null) {
+      return ''
+    }
+    let percent = item.value === 0 ? 0 : change / item.value
+    let formatted = this.formatNumber(Math.round(percent * 100))
+    if (formatted.length === 1) {
+      formatted = ' ' + formatted
+    }
+    return `${formatted}%`
   }
 
   private changeColor(item: Measurement, change: number): string {
