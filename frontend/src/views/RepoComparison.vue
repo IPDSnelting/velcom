@@ -408,7 +408,6 @@ export default class RepoComparison extends Vue {
       new Date(brushedArea[0]),
       new Date(brushedArea[1] - 60 * 60 * 24)
     )
-    this.updateUrl(false)
   }
 
   @Watch('selectedMetric')
@@ -416,7 +415,7 @@ export default class RepoComparison extends Vue {
   @Watch('startTimeString')
   @Watch('stopTimeString')
   @Watch('selectedRepos')
-  updateUrl(replace: boolean = true) {
+  updateUrl() {
     let repos: { [repoId: string]: string[] } = {}
     vxm.repoComparisonModule.selectedReposWithBranches.forEach(
       ({ repo_id: repoId, branches }) => {
@@ -439,13 +438,7 @@ export default class RepoComparison extends Vue {
       stop: this.stopTimeString
     }
 
-    let historyFn: (
-      data: any,
-      title: string,
-      url?: string | null | undefined
-    ) => void = replace ? history.replaceState : history.pushState
-
-    historyFn(
+    history.replaceState(
       {},
       document.title,
       this.$route.path +
