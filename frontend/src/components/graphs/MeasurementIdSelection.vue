@@ -97,12 +97,7 @@ export default class MeasurementIdSelection extends Vue {
     return map
   }
 
-  private counter = 0
-
   private get selectedItems(): string[] {
-    if (this.counter++ > 10) {
-      throw new Error('Aaaah')
-    }
     let leafs = this.selectedMeasurements
       .map(id => this.measurementItemMap.get(id.toString()))
       .filter(it => it)
