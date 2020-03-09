@@ -29,7 +29,13 @@ import { Prop, Watch } from 'vue-property-decorator'
 import * as d3 from 'd3'
 import { vxm } from '../../store'
 import { formatDateUTC } from '../../util/TimeUtil'
-import { Datapoint, Commit, Repo, MeasurementID } from '../../store/types'
+import {
+  Datapoint,
+  Commit,
+  Repo,
+  MeasurementID,
+  CommitInfo
+} from '../../store/types'
 import ComparisonDatapointDialog from '../dialogs/ComparisonDatapointDialog.vue'
 import { crosshairIcon } from '../graphs/crosshairIcon'
 
@@ -296,7 +302,7 @@ export default class ComparisonGraph extends Vue {
     this.closeDialog()
   }
 
-  private drawReferenceLine(datapoint: Datapoint) {
+  private async drawReferenceLine(datapoint: Datapoint) {
     let referenceLine = d3
       .select('#focusLayer')
       .selectAll<SVGPathElement, unknown>('#referenceLine')
@@ -722,6 +728,11 @@ export default class ComparisonGraph extends Vue {
   @Watch('minTimestamp')
   @Watch('maxTimestamp')
   private updateData() {
+    vxm.repoComparisonModule.referenceDatapoint = null
+    d3.select('#referenceLine')
+      .transition()
+      .attr('opacity', 0)
+      .remove()
     this.context = [this.minTimestamp, this.maxTimestamp]
     this.resetBrush()
     d3.select('#yLabel').text(this.yLabel)
