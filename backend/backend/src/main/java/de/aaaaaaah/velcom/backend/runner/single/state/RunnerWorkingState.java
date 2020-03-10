@@ -6,6 +6,7 @@ import de.aaaaaaah.velcom.runner.shared.protocol.SentEntity;
 import de.aaaaaaah.velcom.runner.shared.protocol.StatusCodeMappings;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkResults;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.RunnerInformation;
+import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,6 +20,21 @@ public class RunnerWorkingState implements RunnerState {
 	@Override
 	public RunnerStatusEnum getStatus() {
 		return RunnerStatusEnum.WORKING;
+	}
+
+	@Override
+	public void onSelected(ActiveRunnerInformation information) {
+		if (information.getCurrentCommit().isEmpty()) {
+			try {
+				information.getRunnerStateMachine().resetRunner("Benchmark aborted manually");
+			} catch (IOException e) {
+				LOGGER.error("Error resetting runner", e);
+				information.getConnectionManager().disconnect(
+					StatusCodeMappings.SERVER_INITIATED_DISCONNECT,
+					"Reset failed"
+				);
+			}
+		}
 	}
 
 	@Override
