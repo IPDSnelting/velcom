@@ -180,6 +180,7 @@ public class DispatcherImpl implements Dispatcher {
 					lastCommits.forEach(queue::addCommit);
 				}
 				activeRunners.add(runnerInformation);
+				LOGGER.info("Finished adding a runner {}.", newInformation);
 			} else {
 				RunnerStatusEnum newState = newInformation.getRunnerState();
 				if (newState == RunnerStatusEnum.WORKING
@@ -206,8 +207,6 @@ public class DispatcherImpl implements Dispatcher {
 					disconnectRemoveRunnerByInformation(runnerInformation);
 				}
 			}
-
-			LOGGER.info("Finished adding a runner {}.", newInformation);
 		});
 		runnerInformation.setOnIdle(() -> {
 			freeRunners.add(runnerInformation);
