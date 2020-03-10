@@ -176,6 +176,8 @@ public class DispatcherImpl implements Dispatcher {
 							))
 							.forEach(queue::addCommit);
 					}, 1, TimeUnit.SECONDS);
+				} else if (!lastCommits.isEmpty()) {
+					lastCommits.forEach(queue::addCommit);
 				}
 				activeRunners.add(runnerInformation);
 			} else {
