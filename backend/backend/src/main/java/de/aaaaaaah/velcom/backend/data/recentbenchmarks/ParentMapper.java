@@ -2,14 +2,14 @@ package de.aaaaaaah.velcom.backend.data.recentbenchmarks;
 
 import static java.util.stream.Collectors.toList;
 
-import de.aaaaaaah.velcom.backend.data.linearlog.LinearLog;
-import de.aaaaaaah.velcom.backend.data.linearlog.LinearLogException;
 import de.aaaaaaah.velcom.backend.access.RepoReadAccess;
 import de.aaaaaaah.velcom.backend.access.entities.Branch;
 import de.aaaaaaah.velcom.backend.access.entities.BranchName;
 import de.aaaaaaah.velcom.backend.access.entities.Commit;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
+import de.aaaaaaah.velcom.backend.data.linearlog.LinearLog;
+import de.aaaaaaah.velcom.backend.data.linearlog.LinearLogException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -68,14 +68,16 @@ public class ParentMapper {
 			try (Stream<Commit> walk = linearLog.walk(repoId, branches)) {
 				Iterator<Commit> iterator = walk.iterator();
 
-				Commit currentCommit = iterator.next();
+				if (iterator.hasNext()) {
+					Commit currentCommit = iterator.next();
 
-				while (iterator.hasNext()) {
-					Commit nextCommit = iterator.next();
+					while (iterator.hasNext()) {
+						Commit nextCommit = iterator.next();
 
-					parentMap.put(currentCommit.getHash(), nextCommit.getHash());
+						parentMap.put(currentCommit.getHash(), nextCommit.getHash());
 
-					currentCommit = nextCommit;
+						currentCommit = nextCommit;
+					}
 				}
 			}
 		}
