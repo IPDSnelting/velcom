@@ -1,5 +1,5 @@
 <template>
-  <v-container fluid class="ma-0 pa-0 mb-4">
+  <v-container fluid class="ma-0 pa-0 mb-4 container">
     <table>
       <thead>
         <tr>
@@ -185,6 +185,11 @@ th.metric > div > span {
 
 .benchmark-header {
   text-align: end;
+}
+
+.container {
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .benchmark-header,

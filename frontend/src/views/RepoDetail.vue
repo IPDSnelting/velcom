@@ -23,7 +23,7 @@
           <v-card-text class="ma-0 pa-0">
             <v-container fluid class="ma-0 px-5 pb-0">
               <v-row align="center" justify="space-between" no-gutters>
-                <v-col :md="useMatrixSelector ? 'auto' : '5'" sm="12" cols="12">
+                <v-col :md="useMatrixSelector ? '' : '5'" sm="12" cols="12">
                   <v-btn @click="useMatrixSelector = !useMatrixSelector" text color="primary">
                     <span v-if="useMatrixSelector">Use tree selector</span>
                     <span v-if="!useMatrixSelector">Use matrix selector</span>
