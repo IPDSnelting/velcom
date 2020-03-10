@@ -2,9 +2,10 @@ package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
+import de.aaaaaaah.velcom.backend.access.BenchmarkWriteAccess;
 import de.aaaaaaah.velcom.backend.access.RepoWriteAccess;
 import de.aaaaaaah.velcom.backend.access.TokenWriteAccess;
+import de.aaaaaaah.velcom.backend.access.entities.AuthToken;
 import de.aaaaaaah.velcom.backend.access.entities.Branch;
 import de.aaaaaaah.velcom.backend.access.entities.BranchName;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementName;
@@ -12,7 +13,6 @@ import de.aaaaaaah.velcom.backend.access.entities.RemoteUrl;
 import de.aaaaaaah.velcom.backend.access.entities.Repo;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.exceptions.AddRepoException;
-import de.aaaaaaah.velcom.backend.access.entities.AuthToken;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.listener.CommitSearchException;
 import de.aaaaaaah.velcom.backend.listener.Listener;
@@ -54,13 +54,13 @@ public class RepoEndpoint {
 
 	private final RepoWriteAccess repoAccess;
 	private final TokenWriteAccess tokenAccess;
-	private final BenchmarkReadAccess benchmarkAccess;
+	private final BenchmarkWriteAccess benchmarkAccess;
 
 	private final Queue queue;
 	private final Listener listener;
 
 	public RepoEndpoint(RepoWriteAccess repoAccess, TokenWriteAccess tokenAccess, Queue queue,
-		Listener listener, BenchmarkReadAccess benchmarkAccess) {
+		Listener listener, BenchmarkWriteAccess benchmarkAccess) {
 
 		this.repoAccess = repoAccess;
 		this.tokenAccess = tokenAccess;
@@ -171,6 +171,7 @@ public class RepoEndpoint {
 		RepoId repoId = new RepoId(repoUuid);
 		user.guardRepoAccess(repoId);
 
+		benchmarkAccess.deleteAllRunsOfRepo(repoId);
 		repoAccess.deleteRepo(repoId);
 		queue.abortAllTasksOfRepo(repoId);
 	}

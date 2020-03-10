@@ -171,4 +171,18 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 		}
 	}
 
+	/**
+	 * Delete all runs and their respective measurements of the specified repository
+	 *
+	 * @param repoId the id of the repository
+	 */
+	public void deleteAllRunsOfRepo(RepoId repoId) {
+		try (DSLContext db = databaseStorage.acquireContext()) {
+			db.deleteFrom(RUN).where(RUN.REPO_ID.eq(repoId.getId().toString()));
+		}
+
+		// Invalidate recent run cache and reload it from database
+		this.reloadRecentRunCache();
+	}
+
 }

@@ -56,10 +56,7 @@ public class BenchmarkReadAccess {
 		this.databaseStorage = Objects.requireNonNull(databaseStorage);
 
 		// Populate recent run cache
-		synchronized (recentRunCache) {
-			recentRunCache.addAll(getRecentRuns(0, RECENT_RUN_CACHE_SIZE));
-			recentRunCache.sort(recentRunCacheOrder);
-		}
+		reloadRecentRunCache();
 	}
 
 	/**
@@ -264,6 +261,14 @@ public class BenchmarkReadAccess {
 				}
 			})
 			.collect(toList());
+	}
+
+	protected void reloadRecentRunCache() {
+		synchronized (this.recentRunCache) {
+			this.recentRunCache.clear();
+			this.recentRunCache.addAll(getRecentRuns(0, RECENT_RUN_CACHE_SIZE));
+			this.recentRunCache.sort(recentRunCacheOrder);
+		}
 	}
 
 }
