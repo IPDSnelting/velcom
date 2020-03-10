@@ -1,8 +1,11 @@
 <template>
   <v-container fluid class="ma-0 pa-0 wrapper">
-    <v-row no-gutters>
-      <v-col cols="autp">
+    <v-row no-gutters align="center" justify="start">
+      <v-col cols="12" sm="7" class="mr-4">
         <v-text-field label="Search" v-model="search"></v-text-field>
+      </v-col>
+      <v-col cols="auto mr-4 mb-2">
+        <v-btn text color="primary" @click="changed([])">Deselect all metrics</v-btn>
       </v-col>
     </v-row>
     <v-row no-gutters>
