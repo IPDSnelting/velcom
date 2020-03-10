@@ -13,6 +13,7 @@
           dense
           open-on-click
           selectable
+          :open.sync="openItems"
           :items="benchmarkItems"
           :value="selectedItems"
         >
@@ -77,6 +78,27 @@ export default class MeasurementIdSelection extends Vue {
   private selectedMeasurements!: MeasurementID[]
 
   private selectedBenchmarkItems: string[] = []
+
+  private openItems: string[] = []
+
+  @Watch('search')
+  private newSearch(search: string) {
+    if (!search) {
+      this.openItems = []
+      return
+    }
+
+    let containsIgnoreCase = (id: string, value: string) =>
+      id.toLocaleLowerCase().includes(value.toLocaleLowerCase())
+
+    this.openItems = this.benchmarkItems
+      .filter(
+        it =>
+          containsIgnoreCase(it.id, search) ||
+          it.children.some(child => containsIgnoreCase(child.id, search))
+      )
+      .map(it => it.id)
+  }
 
   private get benchmarkItems(): BenchmarkItem[] {
     return vxm.repoModule.occuringBenchmarks([this.repoId]).map(benchmark => {
