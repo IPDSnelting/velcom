@@ -76,6 +76,7 @@ public class PreparingRunnerForWorkState implements RunnerState {
 
 			// Commit was cancelled
 			if (information.getCurrentCommit().isEmpty()) {
+				information.getRunnerStateMachine().backToIdle();
 				return;
 			}
 
