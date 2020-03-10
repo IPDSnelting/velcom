@@ -372,6 +372,8 @@ public class RepoWriteAccess extends RepoReadAccess {
 	 * @param outputStream where to write the archive
 	 * @throws ArchiveException if the commit could not be compressed (or something else went wrong
 	 * 	during streaming)
+	 * @throws de.aaaaaaah.velcom.backend.access.exceptions.ArchiveFailedPermanently if it failed
+	 * 	with a more permanent cause
 	 */
 	public void streamNormalRepoArchive(RepoId repoId, CommitHash commitHash,
 		OutputStream outputStream) throws ArchiveException {

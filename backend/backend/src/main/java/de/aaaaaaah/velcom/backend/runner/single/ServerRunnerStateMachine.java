@@ -133,8 +133,7 @@ public class ServerRunnerStateMachine {
 		try (var out = runnerInformation.getConnectionManager().createBinaryOutputStream()) {
 			writer.accept(out);
 		} catch (Exception e) {
-			// TODO: 12.01.20 Make nicer catch
-			throw new IOException(e);
+			throw e;
 		}
 	}
 

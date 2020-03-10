@@ -2,6 +2,7 @@ package de.aaaaaaah.velcom.backend.runner.single.state;
 
 import de.aaaaaaah.velcom.backend.access.RepoWriteAccess;
 import de.aaaaaaah.velcom.backend.access.entities.Commit;
+import de.aaaaaaah.velcom.backend.access.exceptions.ArchiveFailedPermanently;
 import de.aaaaaaah.velcom.backend.runner.single.ActiveRunnerInformation;
 import de.aaaaaaah.velcom.runner.shared.RunnerStatusEnum;
 import de.aaaaaaah.velcom.runner.shared.protocol.SentEntity;
@@ -10,6 +11,10 @@ import de.aaaaaaah.velcom.runner.shared.protocol.runnerbound.entities.RunnerWork
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkResults;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.RunnerInformation;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.WorkReceived;
+import de.aaaaaaah.velcom.runner.shared.util.StringOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,6 +51,7 @@ public class PreparingRunnerForWorkState implements RunnerState {
 			information.getConnectionManager().disconnect();
 			return;
 		}
+		Instant start = Instant.now();
 
 		information.getRunnerStateMachine().markAsMyCommit(commit);
 
@@ -80,6 +86,29 @@ public class PreparingRunnerForWorkState implements RunnerState {
 					commit.getRepoId(), commit.getHash(), outputStream
 				)
 			);
+		} catch (ArchiveFailedPermanently e) {
+			LOGGER.error(
+				"Archiving repo failed with a more permanent cause! I am not trying again",
+				e
+			);
+			StringOutputStream stringOutputStream = new StringOutputStream();
+			e.printStackTrace(new PrintStream(stringOutputStream));
+			information.getRunnerStateMachine().onWorkDone(
+				new BenchmarkResults(
+					new RunnerWorkOrder(commit.getRepoId().getId(), commit.getHash().getHash()),
+					"Failed to archive the repo!\n" + stringOutputStream.getString(),
+					start,
+					Instant.now()
+				)
+			);
+			try {
+				information.getRunnerStateMachine().resetRunner("Dispatch failed permanently");
+			} catch (IOException ex) {
+				LOGGER.info("Error resetting runner after failed dispatch!", ex);
+				information.getConnectionManager().disconnect(
+					StatusCodeMappings.SERVER_INITIATED_DISCONNECT, "Failed to reset"
+				);
+			}
 		} catch (Throwable e) {
 			LOGGER.info("Dispatching commit not possible", e);
 			information.getConnectionManager().disconnect(

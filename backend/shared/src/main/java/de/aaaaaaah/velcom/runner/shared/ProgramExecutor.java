@@ -96,9 +96,17 @@ public class ProgramExecutor {
 				collectedException.set(new CancellationException("Killed process!"));
 			}
 			try {
-				LOGGER.debug("Waiting for reader thread to die...");
-				readerThread.join();
+				if (collectedException.get() == null) {
+					LOGGER.debug("Waiting for reader thread to die...");
+					readerThread.join();
+					LOGGER.debug("Reader thread dead!");
+				} else {
+					LOGGER.debug("Let reader die by itself, I already died with an exception!");
+				}
 			} catch (InterruptedException ignore) {
+			}
+			if (collectedException.get() != null) {
+				LOGGER.debug("Got a deferred exception", collectedException.get());
 			}
 			if (collectedException.get() != null) {
 				return;

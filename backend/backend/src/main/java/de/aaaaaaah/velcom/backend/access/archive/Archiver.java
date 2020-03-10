@@ -1,6 +1,7 @@
 package de.aaaaaaah.velcom.backend.access.archive;
 
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.access.exceptions.ArchiveFailedPermanently;
 import de.aaaaaaah.velcom.backend.storage.repo.GuickCloning;
 import de.aaaaaaah.velcom.backend.storage.repo.GuickCloning.CloneException;
 import de.aaaaaaah.velcom.backend.storage.repo.RepoStorage;
@@ -77,6 +78,8 @@ public class Archiver {
 	 * @param keepDeepClone whether or not to remove the clone of the local repository after the
 	 * 	archive process is finished
 	 * @throws ArchiveException if an error occurs while archiving or cloning the repository
+	 * @throws ArchiveFailedPermanently if an error occurs that will probably not get better when
+	 * 	retrying
 	 */
 	public synchronized void archive(String dirName, CommitHash commitHash, OutputStream out,
 		boolean keepDeepClone) throws ArchiveException {
@@ -89,7 +92,11 @@ public class Archiver {
 		try {
 			// (1): Clone repository
 			cloneRepo(dirName, cloneDir, commitHash);
+		} catch (IOException | RepositoryAcquisitionException | CloneException e) {
+			throw new ArchiveFailedPermanently(e, dirName, commitHash);
+		}
 
+		try {
 			// (2): Tar repository
 			tarDirectory(cloneDir, out);
 		} catch (Exception e) {
