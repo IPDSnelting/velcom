@@ -180,7 +180,6 @@ public class ActiveRunnerInformation {
 	 */
 	void setResults(BenchmarkResults results) {
 		this.resultListener.accept(results);
-		clearCurrentCommit();
 	}
 
 	/**
