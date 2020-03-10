@@ -3,8 +3,11 @@ package de.aaaaaaah.velcom.backend.runner.single;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import de.aaaaaaah.velcom.backend.access.entities.Commit;
+import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.runner.shared.protocol.runnerbound.entities.RunnerWorkOrder;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkResults;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.RunnerInformation;
@@ -79,7 +82,7 @@ class ActiveRunnerInformationTest {
 	}
 
 	@Test
-	void resultsClearsCommit() {
+	void resultsDoesNotClearsCommitIfCurrentDiffers() {
 		Commit commit = mock(Commit.class);
 		runnerInformation.setCurrentCommit(commit);
 
@@ -91,6 +94,25 @@ class ActiveRunnerInformationTest {
 		);
 		runnerInformation.setResults(results);
 
-		assertThat(runnerInformation.getCurrentCommit()).isEmpty();
+		assertThat(runnerInformation.getCurrentCommit()).isPresent();
+	}
+
+	@Test
+	void resultsDoesNotClearCommitIfItIsCurrent() {
+		UUID repoId = UUID.randomUUID();
+		Commit commit = mock(Commit.class);
+		when(commit.getHash()).thenReturn(new CommitHash("hash"));
+		when(commit.getRepoId()).thenReturn(new RepoId(repoId));
+		runnerInformation.setCurrentCommit(commit);
+
+		assertThat(runnerInformation.getCurrentCommit()).hasValue(commit);
+
+		BenchmarkResults results = new BenchmarkResults(
+			new RunnerWorkOrder(repoId, "hash"),
+			"error", Instant.now(), Instant.MAX
+		);
+		runnerInformation.setResults(results);
+
+		assertThat(runnerInformation.getCurrentCommit()).isPresent();
 	}
 }
