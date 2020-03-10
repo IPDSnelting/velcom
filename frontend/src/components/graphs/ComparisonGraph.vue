@@ -1001,6 +1001,10 @@ export default class ComparisonGraph extends Vue {
   position: relative;
 }
 
+#brush .handle {
+  width: 16px;
+}
+
 .datapointDialog .v-input .v-label {
   height: unset !important;
 }
