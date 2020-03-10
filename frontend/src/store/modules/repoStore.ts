@@ -23,8 +23,8 @@ export class RepoStore extends VxModule {
       // still show errors
     })
 
-    let repos: Array<Repo> = []
-    let jsonData: Array<any> = response.data.repos
+    let repos: Repo[] = []
+    let jsonData: any[] = response.data.repos
 
     jsonData.forEach((item: any) => {
       repos.push(
@@ -160,6 +160,9 @@ export class RepoStore extends VxModule {
 
   @mutation
   setRepos(repos: Repo[]) {
+    Array.from(Object.keys(this.repos)).forEach(it =>
+      Vue.delete(this.repos, it)
+    )
     repos.forEach(repo => vxm.repoModule.setRepo(repo))
   }
 
