@@ -23,12 +23,23 @@
           <v-card-text class="ma-0 pa-0">
             <v-container fluid class="ma-0 px-5 pb-0">
               <v-row align="center" justify="space-between" no-gutters>
-                <v-col md="5" sm="12" cols="12">
-                  <measurement-id-selection
+                <v-col :md="useMatrixSelector ? 'auto' : '5'" sm="12" cols="12">
+                  <v-btn @click="useMatrixSelector = !useMatrixSelector" text color="primary">
+                    <span v-if="useMatrixSelector">Use tree selector</span>
+                    <span v-if="!useMatrixSelector">Use matrix selector</span>
+                  </v-btn>
+                  <matrix-measurement-id-selection
+                    v-if="useMatrixSelector"
                     @input="selectedMeasurements = $event"
                     :selectedMeasurements="selectedMeasurements"
                     :repoId="id"
-                  ></measurement-id-selection>
+                  ></matrix-measurement-id-selection>
+                  <normal-measurement-id-selection
+                    v-if="!useMatrixSelector"
+                    @input="selectedMeasurements = $event"
+                    :selectedMeasurements="selectedMeasurements"
+                    :repoId="id"
+                  ></normal-measurement-id-selection>
                 </v-col>
                 <v-col md="5" sm="12" cols="12">
                   <v-form v-model="formValid" ref="form">
@@ -164,6 +175,7 @@ import { Dictionary } from 'vue-router/types/router'
 import CommitChip from '../components/CommitChip.vue'
 import CommitSelectionComponent from '../components/CommitSelectionComponent.vue'
 import MeasurementIdSelection from '../components/graphs/MeasurementIdSelection.vue'
+import MatrixMeasurementIdSelection from '../components/graphs/MatrixMeasurementIdSelection.vue'
 
 @Component({
   components: {
@@ -172,11 +184,14 @@ import MeasurementIdSelection from '../components/graphs/MeasurementIdSelection.
     'detail-graph': DetailGraph,
     'commit-chip': CommitChip,
     'commit-selection': CommitSelectionComponent,
-    'measurement-id-selection': MeasurementIdSelection
+    'matrix-measurement-id-selection': MatrixMeasurementIdSelection,
+    'normal-measurement-id-selection': MeasurementIdSelection
   }
 })
 export default class RepoDetail extends Vue {
   private formValid: boolean = true
+
+  private useMatrixSelector: boolean = false
 
   private get referenceCommit(): string {
     return vxm.repoDetailModule.referenceDatapoint
