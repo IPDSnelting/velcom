@@ -3,24 +3,54 @@
     <v-card class="datapointDialog">
       <v-card-title></v-card-title>
       <v-card-text>
-        <v-radio-group v-model="datapointAction">
-          <v-radio
-            v-if="allowSelectAsReference"
-            label="use datapoint as reference"
-            value="setReference"
-          ></v-radio>
-          <v-radio
-            v-if="allowSelectAsReference && !isCommitToCompare(this.selectedDatapoint)"
-            label="Select this commit to compare"
-            value="selectCommitToCompare"
-          ></v-radio>
-          <v-radio
-            v-if="allowSelectAsReference && commitToCompare && !isCommitToCompare(this.selectedDatapoint)"
-            :label="compareLabel"
-            value="compareCommits"
-          ></v-radio>
-          <v-radio label="remove reference line" value="removeReference"></v-radio>
-        </v-radio-group>
+        <v-row v-if="allowSelectAsReference" dense>
+          <v-col>
+            <v-btn
+              width="100%"
+              color="primary"
+              text
+              outlined
+              @click="emit('setReference')"
+            >use datapoint as reference</v-btn>
+          </v-col>
+        </v-row>
+        <v-row v-if="allowSelectAsReference && !isCommitToCompare(this.selectedDatapoint)">
+          <v-col>
+            <v-btn
+              width="100%"
+              color="primary"
+              text
+              outlined
+              @click="emit('selectCommitToCompare')"
+            >Select this commit to compare</v-btn>
+          </v-col>
+        </v-row>
+        <v-row
+          v-if="allowSelectAsReference && commitToCompare && !isCommitToCompare(this.selectedDatapoint)"
+          dense
+        >
+          <v-col class="mb-2">
+            <v-btn
+              width="100%"
+              color="primary"
+              text
+              outlined
+              class="reflow-button py-2"
+              @click="emit('compareCommits')"
+            >{{ compareLabel }}</v-btn>
+          </v-col>
+        </v-row>
+        <v-row dense>
+          <v-col>
+            <v-btn
+              width="100%"
+              color="primary"
+              text
+              outlined
+              @click="emit('removeReference')"
+            >remove reference line</v-btn>
+          </v-col>
+        </v-row>
       </v-card-text>
       <v-card-actions>
         <commit-benchmark-actions
@@ -30,7 +60,6 @@
         ></commit-benchmark-actions>
         <v-spacer></v-spacer>
         <v-btn color="error" @click="onClose">Close</v-btn>
-        <v-btn color="primary" @click="onConfirm">Confirm</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -74,16 +103,14 @@ export default class DatapointDialog extends Vue {
     return false
   }
 
-  private datapointAction: string = 'setReference'
-
   private get compareLabel(): string {
     return this.commitToCompare
       ? 'Compare this commit to commit ' + this.commitToCompare!.commit.hash
       : ''
   }
 
-  private onConfirm() {
-    this.$emit(this.datapointAction)
+  private emit(event: string) {
+    this.$emit(event)
   }
 
   private onClose() {
@@ -91,3 +118,17 @@ export default class DatapointDialog extends Vue {
   }
 }
 </script>
+
+<style scoped>
+.reflow-button {
+  word-wrap: normal;
+  white-space: normal;
+  height: 100% !important;
+}
+</style>
+
+<style>
+.reflow-button > span {
+  width: 100%;
+}
+</style>
