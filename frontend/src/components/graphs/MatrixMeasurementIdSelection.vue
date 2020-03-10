@@ -18,6 +18,7 @@
             <v-checkbox
               :input-value="isSelected(benchmark, metric)"
               v-if="combinationExists(benchmark, metric)"
+              :color="metricColor(benchmark, metric)"
               dense
               hide-details
               class="pa-0 ma-0"
@@ -132,6 +133,17 @@ export default class MatrixMeasurementIdSelection extends Vue {
     return Array.from(
       new Set(this.allBenchmarks.flatMap(it => this.metricsFor(it))).values()
     ).sort()
+  }
+
+  private metricColor(benchmark: string, metric: string): string {
+    if (this.selectedMeasurementsSet.has(benchmark + metric)) {
+      return vxm.colorModule.colorByIndex(
+        this.selectedMeasurements.findIndex(
+          it => it.benchmark === benchmark && it.metric === metric
+        )
+      )
+    }
+    return 'accent'
   }
 
   private changed(checked: boolean, benchmark: string, metric: string) {
