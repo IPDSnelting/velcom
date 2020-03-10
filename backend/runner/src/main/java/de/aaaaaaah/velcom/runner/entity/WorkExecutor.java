@@ -11,9 +11,10 @@ public interface WorkExecutor {
 	/**
 	 * Aborts execution and discards all (potential) results.
 	 *
+	 * @param reason the reason
 	 * @return the result
 	 */
-	AbortionResult abortExecution();
+	AbortionResult abortExecution(String reason);
 
 	/**
 	 * Starts execution.

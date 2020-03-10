@@ -62,7 +62,7 @@ class RunnerStateMachineTest {
 	void resetInitiatesReset() {
 		runnerStateMachine.onResetRequested("Hm", configuration);
 
-		verify(workExecutor).abortExecution();
+		verify(workExecutor).abortExecution("Hm");
 	}
 
 }

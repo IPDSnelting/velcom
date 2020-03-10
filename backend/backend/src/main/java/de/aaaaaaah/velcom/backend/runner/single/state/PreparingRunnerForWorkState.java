@@ -88,21 +88,23 @@ public class PreparingRunnerForWorkState implements RunnerState {
 			);
 		} catch (ArchiveFailedPermanently e) {
 			LOGGER.error(
-				"Archiving repo failed with a more permanent cause! I am not trying again",
+				"Archiving repo failed with a more permanent cause! I am not trying it again.",
 				e
 			);
 			StringOutputStream stringOutputStream = new StringOutputStream();
 			e.printStackTrace(new PrintStream(stringOutputStream));
+
 			information.getRunnerStateMachine().onWorkDone(
 				new BenchmarkResults(
 					new RunnerWorkOrder(commit.getRepoId().getId(), commit.getHash().getHash()),
-					"Failed to archive the repo!\n" + stringOutputStream.getString(),
+					archiveRepoErrorHeader() + stringOutputStream.getString(),
 					start,
 					Instant.now()
 				)
 			);
 			try {
-				information.getRunnerStateMachine().resetRunner("Dispatch failed permanently");
+				information.getRunnerStateMachine()
+					.resetRunner(StatusCodeMappings.DISPATCH_FAILED_DISCARD_RESULTS);
 			} catch (IOException ex) {
 				LOGGER.info("Error resetting runner after failed dispatch!", ex);
 				information.getConnectionManager().disconnect(
@@ -116,6 +118,18 @@ public class PreparingRunnerForWorkState implements RunnerState {
 				"Dispatching commit failed"
 			);
 		}
+	}
+
+	private String archiveRepoErrorHeader() {
+		String errorMessageHeader =
+			"##         Failed to archive the repo!        ##\n"
+				+ "## This message is not pretty, but I tried :( ##\n"
+				+ "## It is a stacktrace that hopefully includes ##\n"
+				+ "##               the git error.               ##";
+		String paddingHashString = "#".repeat(48);
+		errorMessageHeader =
+			paddingHashString + "\n" + errorMessageHeader + "\n" + paddingHashString + "\n\n";
+		return errorMessageHeader;
 	}
 
 	@Override

@@ -2,6 +2,7 @@ package de.aaaaaaah.velcom.runner.state;
 
 import de.aaaaaaah.velcom.runner.entity.RunnerConfiguration;
 import de.aaaaaaah.velcom.runner.entity.WorkExecutor.AbortionResult;
+import de.aaaaaaah.velcom.runner.shared.protocol.StatusCodeMappings;
 import de.aaaaaaah.velcom.runner.shared.protocol.runnerbound.entities.RunnerWorkOrder;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkResults;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.RunnerInformation;
@@ -102,7 +103,12 @@ public class RunnerStateMachine {
 	 */
 	public void onResetRequested(String reason, RunnerConfiguration configuration) {
 		LOGGER.info("Aborting current benchmark ('{}')", reason);
-		if (configuration.getWorkExecutor().abortExecution() == AbortionResult.CANCEL_RIGHT_NOW) {
+		AbortionResult abortionResult = configuration.getWorkExecutor().abortExecution(reason);
+
+		if (abortionResult == AbortionResult.CANCEL_RIGHT_NOW) {
+			if (reason.equals(StatusCodeMappings.DISPATCH_FAILED_DISCARD_RESULTS)) {
+				lastResults = null;
+			}
 			LOGGER.info("Abort already done, starting to idle!");
 			doWithErrorAndSwitch(IdleState::new, configuration);
 		} else {
@@ -113,7 +119,7 @@ public class RunnerStateMachine {
 	/**
 	 * Called when a benchmark was finished.
 	 *
-	 * @param results the benchmark results
+	 * @param results the benchmark results. Null if none.
 	 * @param configuration the runner configuration
 	 */
 	public void onWorkDone(BenchmarkResults results, RunnerConfiguration configuration) {

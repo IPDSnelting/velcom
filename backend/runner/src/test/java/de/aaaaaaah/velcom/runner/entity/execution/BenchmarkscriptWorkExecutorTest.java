@@ -136,7 +136,8 @@ class BenchmarkscriptWorkExecutorTest {
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-			assertThat(executor.abortExecution()).isEqualTo(AbortionResult.CANCEL_IN_FUTURE);
+			assertThat(executor.abortExecution("aborted"))
+				.isEqualTo(AbortionResult.CANCEL_IN_FUTURE);
 		}).start();
 		var value = executeScript("sleep 5");
 
@@ -146,7 +147,7 @@ class BenchmarkscriptWorkExecutorTest {
 
 	@Test
 	void abortWithoutWorkWorks() {
-		assertThat(executor.abortExecution()).isEqualTo(AbortionResult.CANCEL_RIGHT_NOW);
+		assertThat(executor.abortExecution("Aborted")).isEqualTo(AbortionResult.CANCEL_RIGHT_NOW);
 	}
 
 	@Test
@@ -157,7 +158,8 @@ class BenchmarkscriptWorkExecutorTest {
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-			assertThat(executor.abortExecution()).isEqualTo(AbortionResult.CANCEL_IN_FUTURE);
+			assertThat(executor.abortExecution("aborted"))
+				.isEqualTo(AbortionResult.CANCEL_IN_FUTURE);
 		});
 		arborter.start();
 		var value = executeScript("sleep 5");
@@ -174,7 +176,8 @@ class BenchmarkscriptWorkExecutorTest {
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-			assertThat(executor.abortExecution()).isEqualTo(AbortionResult.CANCEL_IN_FUTURE);
+			assertThat(executor.abortExecution("aborted"))
+				.isEqualTo(AbortionResult.CANCEL_IN_FUTURE);
 		});
 		arborter.start();
 		value = executeScript("sleep 5", 2);

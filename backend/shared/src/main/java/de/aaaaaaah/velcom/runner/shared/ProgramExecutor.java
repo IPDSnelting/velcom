@@ -1,12 +1,12 @@
 package de.aaaaaaah.velcom.runner.shared;
 
+import de.aaaaaaah.velcom.runner.shared.protocol.exceptions.ProgramCancelledException;
 import de.aaaaaaah.velcom.runner.shared.util.StringOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
@@ -93,7 +93,7 @@ public class ProgramExecutor {
 				} else {
 					LOGGER.info("Process was nice and died properly!");
 				}
-				collectedException.set(new CancellationException("Killed process!"));
+				collectedException.set(new ProgramCancelledException("Killed process!"));
 			}
 			try {
 				if (collectedException.get() == null) {
@@ -124,17 +124,22 @@ public class ProgramExecutor {
 		thread.start();
 		return new FutureProgramResult() {
 			private volatile boolean done;
+			private String cancelReason;
 
 			@Override
-			public void cancel() {
+			public void cancel(String reason) {
 				thread.interrupt();
+				this.cancelReason = reason;
 			}
 
 			@Override
-			public ProgramResult get() throws InterruptedException {
+			public ProgramResult get() throws InterruptedException, ProgramCancelledException {
 				thread.join();
 				done = true;
 				if (collectedException.get() != null) {
+					if (collectedException.get() instanceof ProgramCancelledException) {
+						throw new ProgramCancelledException(this.cancelReason);
+					}
 					throw collectedException.get();
 				}
 				return reference.get();
@@ -154,8 +159,10 @@ public class ProgramExecutor {
 
 		/**
 		 * Cancels the result.
+		 *
+		 * @param reason the reason
 		 */
-		void cancel();
+		void cancel(String reason);
 
 		/**
 		 * Returns the program result.
@@ -163,7 +170,7 @@ public class ProgramExecutor {
 		 * @return the program result
 		 * @throws InterruptedException if the thread was interrupted
 		 * @throws UncheckedIOException if an IO error occurs
-		 * @throws CancellationException if a cancel request is dutifully enforced
+		 * @throws ProgramCancelledException if a cancel request is dutifully enforced
 		 */
 		@SuppressWarnings("CheckStyle")
 		ProgramResult get() throws InterruptedException;

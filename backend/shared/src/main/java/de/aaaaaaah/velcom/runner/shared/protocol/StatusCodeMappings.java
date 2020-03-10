@@ -25,6 +25,11 @@ public final class StatusCodeMappings {
 	 */
 	public static final int CLIENT_FAILED_TO_CANCEL = 4004;
 
+	/**
+	 * Dispatching the commit failed. The runner should <em>not report its results back</em>!
+	 */
+	public static final String DISPATCH_FAILED_DISCARD_RESULTS = "Dispatch failed, discard results";
+
 	private StatusCodeMappings() {
 		throw new UnsupportedOperationException("No instantiation");
 	}

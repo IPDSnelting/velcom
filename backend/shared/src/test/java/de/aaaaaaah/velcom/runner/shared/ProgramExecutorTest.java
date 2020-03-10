@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import de.aaaaaaah.velcom.runner.shared.ProgramExecutor.FutureProgramResult;
 import de.aaaaaaah.velcom.runner.shared.ProgramExecutor.ProgramResult;
-import java.util.concurrent.CancellationException;
+import de.aaaaaaah.velcom.runner.shared.protocol.exceptions.ProgramCancelledException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -78,8 +78,11 @@ class ProgramExecutorTest {
 		);
 		Thread.sleep(100);
 
-		future.cancel();
-		assertThatThrownBy(future::get).isInstanceOf(CancellationException.class);
+		future.cancel("Manual abortion");
+		assertThatThrownBy(future::get)
+			.isInstanceOf(ProgramCancelledException.class)
+			.extracting(o -> ((ProgramCancelledException) o).getReason())
+			.isEqualTo("Manual abortion");
 	}
 
 	@Test
@@ -97,9 +100,11 @@ class ProgramExecutorTest {
 		);
 
 		Thread.sleep(100);
-		future.cancel();
+		future.cancel("Forceful abortion");
 
-		assertThatThrownBy(future::get).isInstanceOf(CancellationException.class);
+		assertThatThrownBy(future::get).isInstanceOf(ProgramCancelledException.class)
+			.extracting(o -> ((ProgramCancelledException) o).getReason())
+			.isEqualTo("Forceful abortion");
 	}
 
 }

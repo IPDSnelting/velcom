@@ -92,7 +92,7 @@ public class Archiver {
 		try {
 			// (1): Clone repository
 			cloneRepo(dirName, cloneDir, commitHash);
-		} catch (IOException | RepositoryAcquisitionException | CloneException e) {
+		} catch (Exception e) {
 			throw new ArchiveFailedPermanently(e, dirName, commitHash);
 		}
 

@@ -10,6 +10,8 @@ import de.aaaaaaah.velcom.runner.entity.execution.output.OutputParseException;
 import de.aaaaaaah.velcom.runner.shared.ProgramExecutor;
 import de.aaaaaaah.velcom.runner.shared.ProgramExecutor.FutureProgramResult;
 import de.aaaaaaah.velcom.runner.shared.ProgramExecutor.ProgramResult;
+import de.aaaaaaah.velcom.runner.shared.protocol.StatusCodeMappings;
+import de.aaaaaaah.velcom.runner.shared.protocol.exceptions.ProgramCancelledException;
 import de.aaaaaaah.velcom.runner.shared.protocol.runnerbound.entities.RunnerWorkOrder;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkResults;
 import de.aaaaaaah.velcom.runner.shared.util.compression.FileHelper;
@@ -19,7 +21,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,11 +43,11 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 	}
 
 	@Override
-	public AbortionResult abortExecution() {
+	public AbortionResult abortExecution(String reason) {
 		cancelLock.lock();
 		cancelled = true;
 		if (programResult != null && !programResult.isDone()) {
-			programResult.cancel();
+			programResult.cancel(reason);
 			cancelLock.unlock();
 			return AbortionResult.CANCEL_IN_FUTURE;
 		}
@@ -164,23 +165,24 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 				),
 				configuration
 			);
-		} catch (CancellationException e) {
-			LOGGER.info("Program for order {} aborted!", workOrder);
+		} catch (ProgramCancelledException e) {
+			LOGGER.info("Program for order {} aborted for reason '{}'!", workOrder, e.getReason());
 			failureInformation.addSection("End time", Instant.now().toString());
 			failureInformation.addSection(
 				"Reason",
-				"The benchmark process was manually aborted!"
+				"The benchmark process was explicitly aborted. (Reason " + e.getReason() + ")"
 			);
 
-			configuration.getRunnerStateMachine().onWorkDone(
-				new BenchmarkResults(
-					workOrder,
-					failureInformation.toString(),
-					startTime,
-					Instant.now()
-				),
-				configuration
+			BenchmarkResults results = new BenchmarkResults(
+				workOrder,
+				failureInformation.toString(),
+				startTime,
+				Instant.now()
 			);
+			if (e.getReason().equals(StatusCodeMappings.DISPATCH_FAILED_DISCARD_RESULTS)) {
+				results = null;
+			}
+			configuration.getRunnerStateMachine().onWorkDone(results, configuration);
 		} catch (Exception e) {
 			LOGGER.info("Error executing some work for {}", workOrder);
 			LOGGER.info("Stacktrace:", e);
