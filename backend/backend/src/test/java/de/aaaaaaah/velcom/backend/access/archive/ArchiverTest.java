@@ -1,12 +1,14 @@
 package de.aaaaaaah.velcom.backend.access.archive;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.access.exceptions.ArchiveFailedPermanently;
 import de.aaaaaaah.velcom.backend.storage.repo.RepoStorage;
 import de.aaaaaaah.velcom.backend.util.DirectoryRemover;
 import de.aaaaaaah.velcom.runner.shared.util.compression.TarHelper;
@@ -130,5 +132,21 @@ class ArchiverTest {
 			.isTrue();
 		assertThat(Files.readString(outDir.resolve(SUBMODULE_PATH + "/test.txt")))
 			.isEqualTo(version);
+	}
+
+	@Test
+	public void invalidSubmoduleArchiveFails() throws IOException {
+		DirectoryRemover.deleteDirectoryRecursive(tempDir.resolve("sub_module"));
+
+		assertThatThrownBy(() -> {
+			ObjectId head = Git.open(repoPath.toFile()).getRepository().resolve("HEAD");
+			archiver.archive(
+				"repo",
+				new CommitHash(head.getName()),
+				OutputStream.nullOutputStream(),
+				false
+			);
+		})
+			.isInstanceOf(ArchiveFailedPermanently.class);
 	}
 }
