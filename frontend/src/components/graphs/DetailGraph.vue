@@ -1087,6 +1087,7 @@ export default class DetailGraph extends Vue {
     d3.select('#dataLayer')
       .append('text')
       .attr('id', 'yLabel')
+      .attr('fill', 'currentcolor')
       .attr('text-anchor', 'middle')
       .attr('transform', 'rotate(-90)')
       .attr('y', -this.margin.left + 30)
