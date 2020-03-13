@@ -28,7 +28,7 @@
                   outlined
                   label
                   v-on="on"
-                  :color="isBranchTracked(branch) ? 'success' : 'darkgray'"
+                  :color="isBranchTracked(branch) ? 'success' : undefined"
                 >{{ branch }}</v-chip>
               </template>
               {{ isBranchTracked(branch) ? 'Tracked' : 'Not Tracked' }}
@@ -133,7 +133,10 @@ export default class RepoBaseInformation extends Vue {
 </script>
 
 <style scoped>
-.untracked {
-  color: rgba(0, 0, 0, 0.6);
+</style>
+
+<style>
+.untracked > span {
+  opacity: 0.7;
 }
 </style>
