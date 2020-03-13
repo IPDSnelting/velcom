@@ -4,6 +4,7 @@
       <nav-bar></nav-bar>
       <snackbar ref="global-snackbar"></snackbar>
       <router-view />
+      <theme-selector @useDarkTheme="setDarkTheme"></theme-selector>
     </v-content>
   </v-app>
 </template>
@@ -15,11 +16,14 @@ import NavigationBar from './components/NavigationBar.vue'
 import Snackbar from './components/Snackbar.vue'
 import { Store } from 'vuex'
 import { vxm, storeToLocalStorage } from './store'
+import { Watch } from 'vue-property-decorator'
+import ThemeSelector from './components/ThemeSelector.vue'
 
 @Component({
   components: {
     'nav-bar': NavigationBar,
-    snackbar: Snackbar
+    snackbar: Snackbar,
+    'theme-selector': ThemeSelector
   }
 })
 export default class App extends Vue {
@@ -44,7 +48,21 @@ export default class App extends Vue {
     storeToLocalStorage()
   }
 
+  private setDarkTheme(darkTheme: boolean) {
+    vxm.userModule.darkThemeSelected = darkTheme
+  }
+
+  @Watch('isDarkTheme')
+  private onDarkThemeChanged() {
+    this.$vuetify.theme.dark = this.isDarkTheme
+  }
+
+  private get isDarkTheme() {
+    return vxm.userModule.darkThemeSelected
+  }
+
   created() {
+    this.$vuetify.theme.dark = this.isDarkTheme
     document.addEventListener('click', this.clickHandler)
     document.addEventListener('mousedown', this.clickHandler)
 
