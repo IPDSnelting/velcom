@@ -19,7 +19,8 @@ export default new Vuetify({
         warning: '#c51162',
         graphBackground: 'white',
         graphFailedOrUnbenchmarked: 'dimgrey',
-        graphReferenceElements: 'grey'
+        graphReferenceElements: 'grey',
+        rowHighlight: '#d3d3d3'
       },
       dark: {
         primary: '#7f9bff',
@@ -31,7 +32,8 @@ export default new Vuetify({
         error: '#f2495c',
         graphBackground: '#424242',
         graphFailedOrUnbenchmarked: 'lightgrey',
-        graphReferenceElements: 'lightgrey'
+        graphReferenceElements: 'lightgrey',
+        rowHighlight: '#616161'
       }
     }
   },

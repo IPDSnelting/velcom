@@ -199,8 +199,13 @@ th.metric {
 
 /* HOVER ON ROW / COLUMN */
 
+table {
+  border-collapse: collapse;
+  border-spacing: 0px;
+}
+
 tbody tr:hover,
 .hovered {
-  background-color: #d3d3d3;
+  background: var(--v-rowHighlight-base);
 }
 </style>
