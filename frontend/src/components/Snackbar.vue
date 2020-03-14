@@ -12,7 +12,7 @@ import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 import { ISnackbar } from '../util/Snackbar'
 
-declare type Color = 'error' | 'success' | 'info'
+declare type Color = 'error' | 'snackbarSuccess' | 'info'
 
 @Component
 export default class Snackbar extends Vue implements ISnackbar {
@@ -35,7 +35,7 @@ export default class Snackbar extends Vue implements ISnackbar {
   setSuccess(tag: string, message: string, priority?: number) {
     this.displayNormalText(
       this.appendTag(message, `(${tag})`),
-      'success',
+      'snackbarSuccess',
       2 * 1000,
       priority
     )
@@ -54,7 +54,7 @@ export default class Snackbar extends Vue implements ISnackbar {
   finishedLoading(tag: string, priority?: number) {
     this.displayNormalText(
       this.appendTag('Success', `'${tag}'`, ' for ') + '!',
-      'success',
+      'snackbarSuccess',
       2 * 1000,
       priority
     )
