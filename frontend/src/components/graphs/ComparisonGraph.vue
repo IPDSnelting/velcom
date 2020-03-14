@@ -310,6 +310,10 @@ export default class ComparisonGraph extends Vue {
       .transition()
       .duration(50)
       .delay(0)
+      .attr(
+        'stroke',
+        vxm.userModule.darkThemeSelected ? 'lightgrey' : 'dimgrey'
+      )
       .attr('x1', this.innerWidth)
       .attr('y1', this.y(this.yFocusDomain, datapoint, this.focusHeight))
       .attr('x2', 0)
@@ -993,7 +997,6 @@ export default class ComparisonGraph extends Vue {
 
 #referenceLine {
   fill: none;
-  stroke: dimgray;
   stroke-width: 1px;
   stroke-dasharray: 5 5;
 }

@@ -316,7 +316,10 @@ export default class DetailGraph extends Vue {
       .attr('opacity', 1)
       .style('cursor', 'pointer')
     if (vxm.repoDetailModule.referenceDatapoint) {
-      this.drawCrosshair(vxm.repoDetailModule.referenceDatapoint, 'gray')
+      this.drawCrosshair(
+        vxm.repoDetailModule.referenceDatapoint,
+        vxm.userModule.darkThemeSelected ? 'lightgrey' : 'grey'
+      )
     }
     if (this.commitToCompare) {
       this.drawCrosshair(
@@ -396,7 +399,10 @@ export default class DetailGraph extends Vue {
       this.hasDataForPoint(vxm.repoDetailModule.referenceDatapoint)
     ) {
       this.drawReferenceLine(vxm.repoDetailModule.referenceDatapoint)
-      this.drawCrosshair(vxm.repoDetailModule.referenceDatapoint, 'gray')
+      this.drawCrosshair(
+        vxm.repoDetailModule.referenceDatapoint,
+        vxm.userModule.darkThemeSelected ? 'lightgrey' : 'gray'
+      )
     } else {
       this.removeReference(false)
     }
@@ -417,6 +423,10 @@ export default class DetailGraph extends Vue {
       .transition()
       .duration(500)
       .delay(0)
+      .attr(
+        'stroke',
+        vxm.userModule.darkThemeSelected ? 'lightgrey' : 'dimgrey'
+      )
       .attr('x1', this.innerWidth)
       .attr('y1', this.y(datapoint.comparison, datapoint.measurementId))
       .attr('x2', 0)
@@ -739,11 +749,11 @@ export default class DetailGraph extends Vue {
       d.measurementId
     )
     if (this.benchmarkFailed(d)) {
-      return 'grey'
+      return vxm.userModule.darkThemeSelected ? 'gray' : 'grey'
     } else if (wantedMeasurement) {
       return this.metricColor(d.measurementId)
     }
-    return 'white'
+    return vxm.userModule.darkThemeSelected ? '#424242' : 'white'
   }
 
   strokeColor(d: CommitInfo): string {
@@ -754,7 +764,7 @@ export default class DetailGraph extends Vue {
     if (wantedMeasurement && wantedMeasurement.successful) {
       return this.metricColor(d.measurementId)
     }
-    return 'grey'
+    return vxm.userModule.darkThemeSelected ? 'white' : 'grey'
   }
 
   private metricColor(measurementId: MeasurementID) {
@@ -765,7 +775,7 @@ export default class DetailGraph extends Vue {
 
   private strokeWidth(d: CommitInfo): number {
     if (this.benchmarkFailed(d)) {
-      return 0
+      return 1
     }
     return 2
   }
@@ -1202,7 +1212,6 @@ export default class DetailGraph extends Vue {
 
 #referenceLine {
   fill: none;
-  stroke: dimgray;
   stroke-width: 1px;
   stroke-dasharray: 5 5;
 }
