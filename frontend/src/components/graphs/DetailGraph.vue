@@ -1235,9 +1235,9 @@ export default class DetailGraph extends Vue {
 
 .information {
   text-align: center;
-  font-family: Roboto;
   font-size: 18px;
-  fill: dimgray;
+  fill: currentColor;
+  opacity: 0.8;
 }
 
 #referenceLine {
