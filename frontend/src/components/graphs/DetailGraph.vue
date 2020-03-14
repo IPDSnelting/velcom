@@ -318,7 +318,7 @@ export default class DetailGraph extends Vue {
     if (vxm.repoDetailModule.referenceDatapoint) {
       this.drawCrosshair(
         vxm.repoDetailModule.referenceDatapoint,
-        vxm.userModule.darkThemeSelected ? 'lightgrey' : 'grey',
+        this.graphReferenceElementsColor,
         {
           delay: 0,
           duration: 0
@@ -406,7 +406,7 @@ export default class DetailGraph extends Vue {
       this.drawReferenceLine(vxm.repoDetailModule.referenceDatapoint)
       this.drawCrosshair(
         vxm.repoDetailModule.referenceDatapoint,
-        vxm.userModule.darkThemeSelected ? 'lightgrey' : 'gray',
+        this.graphReferenceElementsColor,
         {
           delay: 100,
           duration: 500
@@ -432,10 +432,7 @@ export default class DetailGraph extends Vue {
       .transition()
       .duration(500)
       .delay(0)
-      .attr(
-        'stroke',
-        vxm.userModule.darkThemeSelected ? 'lightgrey' : 'dimgrey'
-      )
+      .attr('stroke', this.graphReferenceElementsColor)
       .attr('x1', this.innerWidth)
       .attr('y1', this.y(datapoint.comparison, datapoint.measurementId))
       .attr('x2', 0)
@@ -764,11 +761,13 @@ export default class DetailGraph extends Vue {
       d.measurementId
     )
     if (this.benchmarkFailed(d)) {
-      return vxm.userModule.darkThemeSelected ? 'gray' : 'grey'
+      return this.graphFailedOrUnbenchmarkedColor
     } else if (wantedMeasurement) {
       return this.metricColor(d.measurementId)
     }
-    return vxm.userModule.darkThemeSelected ? '#424242' : 'white'
+    // Fill of not benchmarked points is the background color so you do
+    // not see the line inside of it
+    return this.graphBackgroundColor
   }
 
   strokeColor(d: CommitInfo): string {
@@ -779,7 +778,8 @@ export default class DetailGraph extends Vue {
     if (wantedMeasurement && wantedMeasurement.successful) {
       return this.metricColor(d.measurementId)
     }
-    return vxm.userModule.darkThemeSelected ? 'white' : 'grey'
+    // Failed or unbenchmarked commits have a stroke around them
+    return this.graphFailedOrUnbenchmarkedColor
   }
 
   private metricColor(measurementId: MeasurementID) {
@@ -1164,6 +1164,25 @@ export default class DetailGraph extends Vue {
     window.removeEventListener('resize', this.resizeListener)
     document.removeEventListener('keydown', this.keydownListener)
     document.removeEventListener('keyup', this.keyupListener)
+  }
+
+  @Watch('graphBackgroundColor')
+  @Watch('graphFailedOrUnbenchmarkedColor')
+  @Watch('graphReferenceElementsColor')
+  private updateColors() {
+    this.updateData()
+  }
+
+  private get graphBackgroundColor() {
+    return this.$vuetify.theme.currentTheme.graphBackground as string
+  }
+
+  private get graphFailedOrUnbenchmarkedColor() {
+    return this.$vuetify.theme.currentTheme.graphFailedOrUnbenchmarked as string
+  }
+
+  private get graphReferenceElementsColor() {
+    return this.$vuetify.theme.currentTheme.graphReferenceElements as string
   }
 }
 </script>

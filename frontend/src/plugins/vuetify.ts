@@ -16,7 +16,10 @@ export default new Vuetify({
         error: '#e53935',
         info: '#3f51b5',
         success: '#1faa00',
-        warning: '#c51162'
+        warning: '#c51162',
+        graphBackground: 'white',
+        graphFailedOrUnbenchmarked: 'dimgrey',
+        graphReferenceElements: 'grey'
       },
       dark: {
         primary: '#7f9bff',
@@ -25,7 +28,10 @@ export default new Vuetify({
         info: '#3f51b5',
         success: '#73bf69',
         warning: '#ff9830',
-        error: '#f2495c'
+        error: '#f2495c',
+        graphBackground: '#424242',
+        graphFailedOrUnbenchmarked: 'lightgrey',
+        graphReferenceElements: 'lightgrey'
       }
     }
   },

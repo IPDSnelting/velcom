@@ -311,10 +311,7 @@ export default class ComparisonGraph extends Vue {
       .transition()
       .duration(50)
       .delay(0)
-      .attr(
-        'stroke',
-        vxm.userModule.darkThemeSelected ? 'lightgrey' : 'dimgrey'
-      )
+      .attr('stroke', this.graphReferenceElementsColor)
       .attr('x1', this.innerWidth)
       .attr('y1', this.y(this.yFocusDomain, datapoint, this.focusHeight))
       .attr('x2', 0)
@@ -959,6 +956,15 @@ export default class ComparisonGraph extends Vue {
 
   beforeDestroy() {
     window.removeEventListener('resize', this.resizeListener)
+  }
+
+  @Watch('graphReferenceElementsColor')
+  private updateColors() {
+    this.updateData()
+  }
+
+  private get graphReferenceElementsColor() {
+    return this.$vuetify.theme.currentTheme.graphReferenceElements as string
   }
 }
 </script>
