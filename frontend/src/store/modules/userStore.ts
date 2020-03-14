@@ -10,7 +10,7 @@ export class UserStore extends VxModule {
   private _role: string | null = null
   private _token: string | null = null
 
-  darkThemeSelected: boolean = true
+  darkThemeSelected: boolean = false
 
   @action
   async logIn(payload: { role: string; asRepoAdmin: boolean; token: string }) {
