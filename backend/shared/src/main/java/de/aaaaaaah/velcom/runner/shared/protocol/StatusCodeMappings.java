@@ -48,7 +48,7 @@ public final class StatusCodeMappings {
 	 * @return true if the runner should discard its results
 	 */
 	public static boolean discardResults(String message) {
-		return message.equals(NOT_WORKING_DISCARD_RESULTS)
-			|| message.equals(DISPATCH_FAILED_DISCARD_RESULTS);
+		return NOT_WORKING_DISCARD_RESULTS.equals(message)
+			|| DISPATCH_FAILED_DISCARD_RESULTS.equals(message);
 	}
 }
