@@ -243,6 +243,7 @@ export default class ComparisonGraph extends Vue {
         [0, -2],
         [this.innerWidth, this.contextHeight + 2]
       ])
+      .handleSize(15)
       .on('brush', this.brushed)
       .on('end', this.brushended)
   }
@@ -716,7 +717,7 @@ export default class ComparisonGraph extends Vue {
 
     d3.select('#mainSvg')
       .select('#contextClipRect')
-      .attr('width', this.innerWidth)
+      .attr('width', this.innerWidth + 1 /* 1 px stroke width? */)
       .attr('height', this.contextHeight + 2)
 
     this.updateFocus()
@@ -1003,10 +1004,6 @@ export default class ComparisonGraph extends Vue {
 
 #chart {
   position: relative;
-}
-
-#brush .handle {
-  width: 16px;
 }
 
 .datapointDialog .v-input .v-label {
