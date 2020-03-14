@@ -42,7 +42,7 @@ axios.interceptors.request.use(function(config) {
   return config
 })
 
-// Intercepts requests and show a loading indicator / errors
+// Intercept requests and show a loading indicator / errors
 axios.interceptors.request.use(
   function(config) {
     if (!config.hideLoadingSnackbar && !config.hideFromSnackbar) {

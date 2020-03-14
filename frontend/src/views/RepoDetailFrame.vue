@@ -8,7 +8,7 @@
         <v-col cols="auto" v-if="isAdmin">
           <repo-add>
             <template #activator="{ on }">
-              <v-btn color="success" v-on="on">
+              <v-btn color="success" :outlined="isDarkMode" v-on="on">
                 <v-icon left>{{ plusIcon }}</v-icon>Add Repo
               </v-btn>
             </template>
@@ -62,6 +62,10 @@ export default class RepoDetailFrame extends Vue {
 
   get isAdmin() {
     return vxm.userModule.isAdmin
+  }
+
+  get isDarkMode() {
+    return vxm.userModule.darkThemeSelected
   }
 
   get repoSelected(): boolean {
