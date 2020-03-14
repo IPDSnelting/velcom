@@ -44,4 +44,14 @@ public interface RunnerState {
 		throws IOException {
 		return this;
 	}
+
+	/**
+	 * Called when this state is selected.
+	 *
+	 * @param configuration the configuration
+	 * @implNote The default implementation does nothing
+	 */
+	default void onSelected(RunnerConfiguration configuration) {
+
+	}
 }

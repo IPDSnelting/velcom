@@ -1,8 +1,10 @@
 package de.aaaaaaah.velcom.runner.state;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -67,7 +69,7 @@ class IdleStateTest {
 		Thread.sleep(200);
 
 		verify(connectionManager).sendEntity(eq(new WorkReceived(workOrder)));
-		verify(workExecutor).startExecution(eq(path), eq(workOrder), eq(configuration));
+		verify(workExecutor, never()).startExecution(any(), any(), any());
 	}
 
 	@Test
