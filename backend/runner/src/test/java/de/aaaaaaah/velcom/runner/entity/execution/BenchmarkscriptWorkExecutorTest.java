@@ -204,6 +204,16 @@ class BenchmarkscriptWorkExecutorTest {
 		assertThat(value.getError()).containsIgnoringCase("at ");
 	}
 
+	@Test
+	void afterAbortWithoutStartedNextStartWorks() throws IOException {
+		executor.abortExecution("Garbage reason");
+
+		var x = executeScript("echo 'Hello world'");
+
+		assertThat(x.isError()).isTrue();
+		assertThat(x.toString()).containsIgnoringCase("Hello world");
+	}
+
 	private BenchmarkResults verifyAndReturnResults(int expectedInvocations) {
 		var resultCaptor = ArgumentCaptor.forClass(BenchmarkResults.class);
 		verify(stateMachine, times(expectedInvocations))

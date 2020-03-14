@@ -50,6 +50,8 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 			programResult.cancel(reason);
 			cancelLock.unlock();
 			return AbortionResult.CANCEL_IN_FUTURE;
+		} else {
+			cancelled = false;
 		}
 		cancelLock.unlock();
 		return AbortionResult.CANCEL_RIGHT_NOW;
