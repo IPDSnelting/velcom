@@ -42,12 +42,14 @@ class ExecutingStateTest {
 	}
 
 	@Test
-	void startsExecutionInSelected() {
+	void startsExecutionInSelected() throws InterruptedException {
 		RunnerConfiguration configuration = mock(RunnerConfiguration.class);
 		WorkExecutor executor = mock(WorkExecutor.class);
 		when(configuration.getWorkExecutor()).thenReturn(executor);
 
 		executingState.onSelected(configuration);
+
+		Thread.sleep(100);
 
 		verify(executor).startExecution(workPath, workOrder, configuration);
 	}
