@@ -819,7 +819,7 @@ export default class ComparisonGraph extends Vue {
       .append('rect')
       .attr('id', 'contextClipRect')
       .attr('y', -2)
-      .attr('width', this.innerWidth)
+      .attr('width', this.innerWidth + 1 /* 1 px stroke width? */)
       .attr('height', this.contextHeight + 2)
 
     d3.select('#dataLayer')
