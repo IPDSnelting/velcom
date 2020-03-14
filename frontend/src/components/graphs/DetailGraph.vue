@@ -292,8 +292,8 @@ export default class DetailGraph extends Vue {
     d3.select('#dataLayer')
       .selectAll<SVGPathElement, CommitInfo>('.datapoint')
       .transition()
-      .duration(50)
       .delay(0)
+      .duration(0)
       .attr(
         'd',
         d3
@@ -318,17 +318,22 @@ export default class DetailGraph extends Vue {
     if (vxm.repoDetailModule.referenceDatapoint) {
       this.drawCrosshair(
         vxm.repoDetailModule.referenceDatapoint,
-        vxm.userModule.darkThemeSelected ? 'lightgrey' : 'grey'
+        vxm.userModule.darkThemeSelected ? 'lightgrey' : 'grey',
+        {
+          delay: 0,
+          duration: 0
+        }
       )
     }
     if (this.commitToCompare) {
       this.drawCrosshair(
         this.commitToCompare,
-        this.datapointColor(this.commitToCompare)
+        this.datapointColor(this.commitToCompare),
+        { delay: 0, duration: 0 }
       )
     }
 
-    this.drawPath({ delay: 0, duration: 50 })
+    this.drawPath({ delay: 0, duration: 0 })
 
     this.xAxis.scale(this.currentXScale)
     d3.select('#xAxis')
@@ -401,7 +406,11 @@ export default class DetailGraph extends Vue {
       this.drawReferenceLine(vxm.repoDetailModule.referenceDatapoint)
       this.drawCrosshair(
         vxm.repoDetailModule.referenceDatapoint,
-        vxm.userModule.darkThemeSelected ? 'lightgrey' : 'gray'
+        vxm.userModule.darkThemeSelected ? 'lightgrey' : 'gray',
+        {
+          delay: 100,
+          duration: 500
+        }
       )
     } else {
       this.removeReference(false)
@@ -459,7 +468,8 @@ export default class DetailGraph extends Vue {
       this.commitToCompare = this.selectedDatapoint || null
       this.drawCrosshair(
         this.selectedDatapoint,
-        this.datapointColor(this.selectedDatapoint)
+        this.datapointColor(this.selectedDatapoint),
+        { delay: 100, duration: 500 }
       )
     }
     this.closeDialog()
@@ -481,7 +491,11 @@ export default class DetailGraph extends Vue {
 
   private crosshairIcon = crosshairIcon
 
-  private drawCrosshair(datapoint: CommitInfo, color: string) {
+  private drawCrosshair(
+    datapoint: CommitInfo,
+    color: string,
+    animation: { delay: number; duration: number }
+  ) {
     let crosshair = d3.select('#_' + this.keyFn(datapoint))
 
     if (crosshair.node() && this.hasDataForPoint(datapoint)) {
@@ -491,8 +505,8 @@ export default class DetailGraph extends Vue {
 
       d3.select('#_' + this.keyFn(datapoint))
         .transition()
-        .duration(50)
-        .delay(0)
+        .duration(animation.duration)
+        .delay(animation.delay)
         .attr(
           'd',
           d3
@@ -572,7 +586,8 @@ export default class DetailGraph extends Vue {
       if (this.commitToCompare) {
         this.drawCrosshair(
           this.commitToCompare,
-          this.datapointColor(this.commitToCompare)
+          this.datapointColor(this.commitToCompare),
+          { delay: 100, duration: 1000 }
         )
       }
       this.setReference()
@@ -674,8 +689,8 @@ export default class DetailGraph extends Vue {
       .attr('id', (d: CommitInfo) => '_' + this.keyFn(d))
       .merge(datapoints)
       .transition()
-      .duration(50)
-      .delay(0)
+      .duration(1000)
+      .delay(100)
       .attr(
         'd',
         d3
@@ -1019,10 +1034,6 @@ export default class DetailGraph extends Vue {
     this.updateCurrentAxisAfterResize()
     this.updateAxes()
     this.drawGraph()
-
-    d3.select<Element, unknown>('#dataLayer')
-      .select<Element>('#brush')
-      .call(this.zoom.transform, d3.zoomIdentity)
   }
 
   @Watch('dialogOpen')

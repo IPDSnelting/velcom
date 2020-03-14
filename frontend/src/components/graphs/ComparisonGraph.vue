@@ -283,7 +283,7 @@ export default class ComparisonGraph extends Vue {
     this.dialogOpen = true
   }
 
-  setReference() {
+  setReference(animation: { delay: number; duration: number }) {
     if (vxm.repoComparisonModule.referenceDatapoint !== undefined) {
       this.removeCrosshair(vxm.repoComparisonModule.referenceDatapoint)
     }
@@ -404,7 +404,7 @@ export default class ComparisonGraph extends Vue {
   // drawing the graph
   private graphDrawn: boolean = false
 
-  private drawGraph() {
+  private drawGraph(animation: { delay: number; duration: number }) {
     if (this.dataAvailable) {
       if (!this.graphDrawn) {
         d3.select('#dataLayer').remove()
@@ -417,11 +417,11 @@ export default class ComparisonGraph extends Vue {
       }
 
       this.repos.forEach(repoID => {
-        this.drawPaths(repoID)
+        this.drawPaths(repoID, animation)
       })
-      this.drawDatapoints(keyFn)
+      this.drawDatapoints(keyFn, animation)
       this.appendTooltips(keyFn)
-      this.setReference()
+      this.setReference(animation)
     } else {
       if (this.graphDrawn) {
         this.graphDrawn = false
@@ -448,7 +448,10 @@ export default class ComparisonGraph extends Vue {
     }
   }
 
-  private drawPaths(repoID: string) {
+  private drawPaths(
+    repoID: string,
+    animation: { delay: number; duration: number }
+  ) {
     let contextDomain: number[] =
       this.minContextVal !== undefined && this.maxContextVal !== undefined
         ? [this.minContextVal, this.maxContextVal]
@@ -459,7 +462,8 @@ export default class ComparisonGraph extends Vue {
       'focus',
       this.focus,
       this.yFocusDomain,
-      this.focusHeight
+      this.focusHeight,
+      animation
     )
 
     this.drawPath(
@@ -467,7 +471,8 @@ export default class ComparisonGraph extends Vue {
       'context',
       this.context,
       contextDomain,
-      this.contextHeight
+      this.contextHeight,
+      animation
     )
   }
 
@@ -476,7 +481,8 @@ export default class ComparisonGraph extends Vue {
     layer: string,
     xDomain: number[],
     yDomain: number[],
-    height: number
+    height: number,
+    animation: { delay: number; duration: number }
   ) {
     if (this.datapoints[repoID]) {
       let path: any = d3
@@ -489,6 +495,8 @@ export default class ComparisonGraph extends Vue {
         .attr('id', layer + 'line_' + repoID)
         .merge(path)
         .transition()
+        .duration(animation.duration)
+        .delay(animation.delay)
         .attr('d', this.line(xDomain, yDomain, height))
         .attr('stroke', this.colorById(repoID))
         .attr('stroke-width', 2)
@@ -519,7 +527,10 @@ export default class ComparisonGraph extends Vue {
         })
   }
 
-  private drawDatapoints(keyFn: d3.ValueFn<any, any, string>) {
+  private drawDatapoints(
+    keyFn: d3.ValueFn<any, any, string>,
+    animation: { delay: number; duration: number }
+  ) {
     let datapoints: d3.Selection<
       SVGPathElement,
       Datapoint,
@@ -537,6 +548,8 @@ export default class ComparisonGraph extends Vue {
       .attr('id', (d: Datapoint) => '_' + d.commit.repoID + '_' + d.commit.hash)
       .merge(datapoints)
       .transition()
+      .delay(animation.delay)
+      .duration(animation.duration)
       .attr(
         'd',
         d3
@@ -726,21 +739,32 @@ export default class ComparisonGraph extends Vue {
   @Watch('datapoints')
   @Watch('minTimestamp')
   @Watch('maxTimestamp')
+  @Watch('beginYAtZero')
   private updateData() {
     this.context = [this.minTimestamp, this.maxTimestamp]
-    this.resetBrush()
-    d3.select('#yLabel').text(this.yLabel)
-    this.updateFocus()
-  }
-
-  @Watch('focus')
-  @Watch('beginYAtZero')
-  private updateFocus() {
     if (this.focus[0] < this.context[0] || this.focus[1] > this.context[1]) {
       this.focus = this.context
     }
+    this.resetBrush()
+    d3.select('#yLabel').text(this.yLabel)
     this.updateAxes()
-    this.drawGraph()
+    this.drawGraph({ delay: 100, duration: 1000 })
+  }
+
+  private zooming: boolean = true
+
+  @Watch('focus')
+  private updateFocus() {
+    let animation: {
+      delay: number
+      duration: number
+    } = { delay: 0, duration: 0 }
+    if (!this.zooming) {
+      animation = { delay: 100, duration: 1000 }
+      this.zooming = true
+    }
+    this.updateAxes()
+    this.drawGraph(animation)
   }
 
   @Watch('dialogOpen')
@@ -751,14 +775,11 @@ export default class ComparisonGraph extends Vue {
   }
 
   private resetBrush() {
+    this.zooming = false
     d3.select('#contextLayer')
       .select('#brush')
-      .remove()
-    d3.select('#contextLayer')
-      .append('g')
-      .attr('id', 'brush')
-      .call(this.brush)
-      .call(this.brush.move, this.focus.map(this.xScale(this.context)))
+      .call(this.brush as any)
+      .call(this.brush.move as any, this.focus.map(this.xScale(this.context)))
   }
 
   private updateAxes() {
@@ -934,7 +955,6 @@ export default class ComparisonGraph extends Vue {
       .attr('align', 'end')
       .attr('justify', 'end')
     this.resize()
-    // setTimeout(this.resize, 500)
   }
 
   beforeDestroy() {
