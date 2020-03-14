@@ -10,7 +10,7 @@
     <v-tooltip left>
       <template #activator="{ on }">
         <v-btn v-on="on" icon @click="toggleDarkTheme" class="hidden-sm-and-down floater">
-          <v-icon>{{ darkThemeIcon }}</v-icon>
+          <v-icon :class="{'icon': true, 'light-icon': !isDarkTheme }">{{ darkThemeIcon }}</v-icon>
         </v-btn>
       </template>
       Use {{ isDarkTheme ? 'light' : 'dark' }} theme
@@ -44,5 +44,13 @@ export default class ThemeSelector extends Vue {
   position: fixed;
   bottom: 16px;
   right: 16px;
+}
+
+.icon {
+  transition: transform 0.5s linear;
+}
+
+.light-icon {
+  transform: matrix(-1, 0, 0, 1, 0, 0);
 }
 </style>
