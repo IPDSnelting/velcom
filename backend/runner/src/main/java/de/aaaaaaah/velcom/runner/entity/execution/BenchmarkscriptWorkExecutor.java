@@ -179,7 +179,7 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 				startTime,
 				Instant.now()
 			);
-			if (e.getReason().equals(StatusCodeMappings.DISPATCH_FAILED_DISCARD_RESULTS)) {
+			if (StatusCodeMappings.discardResults(e.getMessage())) {
 				results = null;
 			}
 			configuration.getRunnerStateMachine().onWorkDone(results, configuration);

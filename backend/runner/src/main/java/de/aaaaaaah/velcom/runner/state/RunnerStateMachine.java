@@ -106,7 +106,7 @@ public class RunnerStateMachine {
 		AbortionResult abortionResult = configuration.getWorkExecutor().abortExecution(reason);
 
 		if (abortionResult == AbortionResult.CANCEL_RIGHT_NOW) {
-			if (reason.equals(StatusCodeMappings.DISPATCH_FAILED_DISCARD_RESULTS)) {
+			if (StatusCodeMappings.discardResults(reason)) {
 				lastResults = null;
 			}
 			LOGGER.info("Abort already done, starting to idle!");

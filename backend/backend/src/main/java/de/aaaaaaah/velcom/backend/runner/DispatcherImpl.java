@@ -154,7 +154,7 @@ public class DispatcherImpl implements Dispatcher {
 				List<Commit> lastCommits = disconnectRemoveRunnerByName(newInformation.getName());
 
 				if (isWorking && lastCommits.isEmpty()) {
-					resetRunner(runnerInformation);
+					resetRunner(runnerInformation, StatusCodeMappings.NOT_WORKING_DISCARD_RESULTS);
 				}
 				// Runner doesn't even know it should be working
 				// Or it has finished its work and we will get a dedicated result packet soon
@@ -187,7 +187,10 @@ public class DispatcherImpl implements Dispatcher {
 					|| newState == RunnerStatusEnum.PREPARING_WORK) {
 					if (runnerInformation.getCurrentCommit().isEmpty()) {
 						LOGGER.info("Runner reconnected as working without a commit, resetting...");
-						resetRunner(runnerInformation);
+						resetRunner(
+							runnerInformation,
+							StatusCodeMappings.NOT_WORKING_DISCARD_RESULTS
+						);
 					}
 				} else if (newState == RunnerStatusEnum.IDLE) {
 					if (runnerInformation.getState() == RunnerStatusEnum.PREPARING_WORK) {
@@ -295,7 +298,7 @@ public class DispatcherImpl implements Dispatcher {
 				commitHash, repoId, runner.getRunnerInformation()
 			);
 			if (runner.getState() == RunnerStatusEnum.WORKING) {
-				resetRunner(runner);
+				resetRunner(runner, "Abort requested");
 			}
 			runner.clearCurrentCommit();
 			return true;
@@ -337,11 +340,11 @@ public class DispatcherImpl implements Dispatcher {
 	}
 
 
-	private void resetRunner(ActiveRunnerInformation runner) {
+	private void resetRunner(ActiveRunnerInformation runner, String reason) {
 		LOGGER.debug("Resetting runner {}", runner.getRunnerInformation());
 
 		try {
-			runner.getRunnerStateMachine().resetRunner("Abort requested");
+			runner.getRunnerStateMachine().resetRunner(reason);
 		} catch (IOException e) {
 			LOGGER.info("Failed to reset a runner", e);
 			// It is already disconnected, so force it now

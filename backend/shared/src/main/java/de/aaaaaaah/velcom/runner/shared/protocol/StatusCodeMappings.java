@@ -30,8 +30,25 @@ public final class StatusCodeMappings {
 	 */
 	public static final String DISPATCH_FAILED_DISCARD_RESULTS = "Dispatch failed, discard results";
 
+	/**
+	 * Reset after reconnect as the server thinks you are not working. The runner should
+	 * <em>not report its results back</em>!
+	 */
+	public static final String NOT_WORKING_DISCARD_RESULTS
+		= "Reconnect and server forgot about my commit, discard results";
+
 	private StatusCodeMappings() {
 		throw new UnsupportedOperationException("No instantiation");
 	}
 
+	/**
+	 * True if the runner should discard its results.
+	 *
+	 * @param message the message the runner got
+	 * @return true if the runner should discard its results
+	 */
+	public static boolean discardResults(String message) {
+		return message.equals(NOT_WORKING_DISCARD_RESULTS)
+			|| message.equals(DISPATCH_FAILED_DISCARD_RESULTS);
+	}
 }
