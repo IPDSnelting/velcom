@@ -25,7 +25,11 @@ public class ExecutingState implements RunnerState {
 
 	@Override
 	public void onSelected(RunnerConfiguration configuration) {
-		configuration.getWorkExecutor().startExecution(workPath, workOrder, configuration);
+		new Thread(
+			() -> configuration
+				.getWorkExecutor()
+				.startExecution(workPath, workOrder, configuration), "Work-Executor-Waiter"
+		).start();
 	}
 
 	@Override

@@ -164,6 +164,7 @@ public class RunnerStateMachine {
 			if (newState instanceof IdleState) {
 				sendRunnerInformation(configuration);
 			}
+			newState.onSelected(configuration);
 		} catch (IOException e) {
 			LOGGER.warn("Got an exception while switching stages. Disconnecting myself!", e);
 			configuration.getConnectionManager().disconnect();
