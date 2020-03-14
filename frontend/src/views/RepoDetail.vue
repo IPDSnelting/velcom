@@ -460,6 +460,6 @@ export default class RepoDetail extends Vue {
 .hint {
   font-size: 14px;
   font-weight: 400;
-  color: rgba(0, 0, 0, 0.6);
+  opacity: 0.7;
 }
 </style>

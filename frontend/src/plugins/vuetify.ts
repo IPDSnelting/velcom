@@ -17,6 +17,15 @@ export default new Vuetify({
         info: '#3f51b5',
         success: '#1faa00',
         warning: '#c51162'
+      },
+      dark: {
+        primary: '#7f9bff',
+        secondary: '#c51162',
+        accent: '#eb7b18',
+        info: '#3f51b5',
+        success: '#73bf69',
+        warning: '#ff9830',
+        error: '#f2495c'
       }
     }
   },
