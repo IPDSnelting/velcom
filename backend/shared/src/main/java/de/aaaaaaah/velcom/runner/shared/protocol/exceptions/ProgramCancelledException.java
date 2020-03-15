@@ -8,6 +8,7 @@ public class ProgramCancelledException extends RuntimeException {
 	private final String reason;
 
 	public ProgramCancelledException(String reason) {
+		super(reason);
 		this.reason = reason;
 	}
 
