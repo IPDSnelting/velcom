@@ -4,6 +4,7 @@ import de.aaaaaaah.velcom.runner.entity.RunnerConfiguration;
 import de.aaaaaaah.velcom.runner.shared.RunnerStatusEnum;
 import de.aaaaaaah.velcom.runner.shared.protocol.runnerbound.entities.RunnerWorkOrder;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.WorkReceived;
+import de.aaaaaaah.velcom.runner.shared.util.compression.FileHelper;
 import java.io.IOException;
 import java.nio.file.Path;
 
@@ -33,6 +34,7 @@ public class IdleState implements RunnerState {
 		if (workOrder == null) {
 			throw new IllegalStateException("Got a file without any work order first!");
 		}
+		FileHelper.deleteOnExit(path);
 		try {
 			configuration.getConnectionManager()
 				.sendEntity(new WorkReceived(workOrder));

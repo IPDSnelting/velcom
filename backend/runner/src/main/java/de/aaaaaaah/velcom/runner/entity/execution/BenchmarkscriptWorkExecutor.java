@@ -228,11 +228,14 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 					"Benchmark script file is not executable: " + executablePath.toAbsolutePath()
 				);
 			}
+
+			FileHelper.deleteOnExit(workBinaryPath);
 		}
 
 		public Path unpack(RunnerWorkOrder workOrder) throws IOException {
 			unarchivedWorkPath = Files.createTempDirectory(workOrder.getRepoId().toString());
 			TarHelper.untar(workBinaryPath, unarchivedWorkPath);
+			FileHelper.deleteOnExit(unarchivedWorkPath);
 
 			return unarchivedWorkPath;
 		}
