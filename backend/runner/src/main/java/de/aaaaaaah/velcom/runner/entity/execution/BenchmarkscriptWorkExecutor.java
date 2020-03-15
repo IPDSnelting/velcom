@@ -81,6 +81,7 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 
 			if (cancelNonce != currentWorkIdentifier.get()) {
 				LOGGER.info("Cancel nonce mismatch, skipping execution for {}", workOrder);
+				configuration.getRunnerStateMachine().backToIdle(configuration);
 				return;
 			}
 

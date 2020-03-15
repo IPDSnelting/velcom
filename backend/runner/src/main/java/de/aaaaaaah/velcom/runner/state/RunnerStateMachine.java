@@ -127,7 +127,11 @@ public class RunnerStateMachine {
 			() -> {
 				this.lastResults = results;
 				sendResultsIfAny(configuration);
-				return new IdleState();
+				if (!(state instanceof IdleState)) {
+					return new IdleState();
+				}
+				LOGGER.info("Resuing existing idle state...");
+				return state;
 			},
 			configuration
 		);
@@ -141,6 +145,20 @@ public class RunnerStateMachine {
 	 */
 	public void onUpdateBenchmarkRepo(String newCommitHash, RunnerConfiguration configuration) {
 		doWithErrorAndSwitch(() -> new UpdateBenchmarkRepoState(newCommitHash), configuration);
+	}
+
+	/**
+	 * Goes back to the idle state, if it isn't already idling.
+	 *
+	 * @param configuration the runner configuration
+	 */
+	public void backToIdle(RunnerConfiguration configuration) {
+		if (!(state instanceof IdleState)) {
+			LOGGER.info("Skipped back to idle!");
+			doWithErrorAndSwitch(IdleState::new, configuration);
+		} else {
+			LOGGER.info("Would have skipped back to idle, but was already!");
+		}
 	}
 
 
