@@ -25,8 +25,8 @@ public class PreparingRunnerForWorkState implements RunnerState {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(PreparingRunnerForWorkState.class);
 
-	private Commit commit;
-	private RepoWriteAccess repoAccess;
+	private final Commit commit;
+	private final RepoWriteAccess repoAccess;
 
 	/**
 	 * Creates a new state.

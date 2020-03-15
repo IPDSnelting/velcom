@@ -21,6 +21,9 @@ public class IdleState implements RunnerState {
 
 	@Override
 	public RunnerState onWorkArrived(RunnerWorkOrder workOrder, RunnerConfiguration configuration) {
+		if (getStatus() != RunnerStatusEnum.IDLE) {
+			throw new IllegalStateException("Runner already has an order!");
+		}
 		this.workOrder = workOrder;
 		return this;
 	}
