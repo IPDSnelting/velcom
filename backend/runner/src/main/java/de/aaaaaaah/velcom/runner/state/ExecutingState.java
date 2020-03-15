@@ -12,10 +12,12 @@ public class ExecutingState implements RunnerState {
 
 	private final Path workPath;
 	private final RunnerWorkOrder workOrder;
+	private final int cancelNonce;
 
-	public ExecutingState(Path workPath, RunnerWorkOrder workOrder) {
+	public ExecutingState(Path workPath, RunnerWorkOrder workOrder, int cancelNonce) {
 		this.workPath = workPath;
 		this.workOrder = workOrder;
+		this.cancelNonce = cancelNonce;
 	}
 
 	@Override
@@ -28,7 +30,8 @@ public class ExecutingState implements RunnerState {
 		new Thread(
 			() -> configuration
 				.getWorkExecutor()
-				.startExecution(workPath, workOrder, configuration), "Work-Executor-Waiter"
+				.startExecution(workPath, workOrder, configuration, cancelNonce),
+			"Work-Executor-Waiter"
 		).start();
 	}
 

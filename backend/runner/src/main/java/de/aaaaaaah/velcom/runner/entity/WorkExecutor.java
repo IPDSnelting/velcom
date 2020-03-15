@@ -22,9 +22,18 @@ public interface WorkExecutor {
 	 * @param workPath the path to the work (probably a tar)
 	 * @param workOrder the work order
 	 * @param configuration the runner configuration
+	 * @param cancelNonce the cancel nonce
 	 */
 	void startExecution(Path workPath, RunnerWorkOrder workOrder,
-		RunnerConfiguration configuration);
+		RunnerConfiguration configuration, int cancelNonce);
+
+	/**
+	 * Returns the current cancel nonce. If this value does not match the stored one, execution will
+	 * not be attempted.
+	 *
+	 * @return the current cancel nonce
+	 */
+	int getCancelNonce();
 
 	/**
 	 * The result of aborting.

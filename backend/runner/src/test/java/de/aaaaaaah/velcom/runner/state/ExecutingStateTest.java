@@ -25,7 +25,7 @@ class ExecutingStateTest {
 	void setUp() {
 		workPath = Path.of("/hello");
 		workOrder = new RunnerWorkOrder(UUID.randomUUID(), "hash");
-		executingState = new ExecutingState(workPath, workOrder);
+		executingState = new ExecutingState(workPath, workOrder, 0);
 	}
 
 	@Test
@@ -51,6 +51,6 @@ class ExecutingStateTest {
 
 		Thread.sleep(100);
 
-		verify(executor).startExecution(workPath, workOrder, configuration);
+		verify(executor).startExecution(workPath, workOrder, configuration, 0);
 	}
 }

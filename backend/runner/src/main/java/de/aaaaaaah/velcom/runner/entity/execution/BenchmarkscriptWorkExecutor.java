@@ -21,7 +21,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,33 +33,33 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 	private static final Logger LOGGER = LoggerFactory.getLogger(BenchmarkscriptWorkExecutor.class);
 
 	private final BenchmarkScriptOutputParser benchmarkScriptOutputParser;
-	private final ReentrantLock cancelLock;
 	private FutureProgramResult programResult;
-	private volatile boolean cancelled;
+	private AtomicInteger currentWorkIdentifier;
 
 	public BenchmarkscriptWorkExecutor() {
 		benchmarkScriptOutputParser = new BenchmarkScriptOutputParser();
-		cancelLock = new ReentrantLock();
+		currentWorkIdentifier = new AtomicInteger();
 	}
 
 	@Override
 	public AbortionResult abortExecution(String reason) {
-		cancelLock.lock();
-		cancelled = true;
+		currentWorkIdentifier.incrementAndGet();
+
 		if (programResult != null && !programResult.isDone()) {
 			programResult.cancel(reason);
-			cancelLock.unlock();
 			return AbortionResult.CANCEL_IN_FUTURE;
-		} else {
-			cancelled = false;
 		}
-		cancelLock.unlock();
 		return AbortionResult.CANCEL_RIGHT_NOW;
 	}
 
 	@Override
+	public int getCancelNonce() {
+		return currentWorkIdentifier.get();
+	}
+
+	@Override
 	public void startExecution(Path workPath, RunnerWorkOrder workOrder,
-		RunnerConfiguration configuration) {
+		RunnerConfiguration configuration, int cancelNonce) {
 		BenchmarkFailureInformation failureInformation = new BenchmarkFailureInformation();
 		failureInformation.addToGeneral("Runner name", '"' + configuration.getRunnerName() + '"');
 		failureInformation.addMachineInfo();
@@ -79,13 +79,12 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 			failureInformation.addEscapedArrayToGeneral("Executed command", calledCommand);
 			failureInformation.addToGeneral("Start time", startTime.toString());
 
-			cancelLock.lock();
-			if (cancelled) {
-				cancelLock.unlock();
+			if (cancelNonce != currentWorkIdentifier.get()) {
+				LOGGER.info("Cancel nonce mismatch, skipping execution for {}", workOrder);
 				return;
 			}
+
 			programResult = new ProgramExecutor().execute(calledCommand);
-			cancelLock.unlock();
 
 			ProgramResult result = programResult.get();
 
@@ -206,9 +205,7 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 				configuration
 			);
 		} finally {
-			cancelLock.lock();
-			cancelled = false;
-			cancelLock.unlock();
+			currentWorkIdentifier.incrementAndGet();
 		}
 	}
 

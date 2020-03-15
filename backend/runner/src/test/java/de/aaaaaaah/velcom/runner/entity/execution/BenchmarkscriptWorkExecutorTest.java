@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -75,7 +76,7 @@ class BenchmarkscriptWorkExecutorTest {
 	@Test
 	void executesBenchScript() throws IOException {
 		writeScript("echo -n {}");
-		executor.startExecution(workTar, dummyWorkOrder(), runnerConfiguration);
+		executor.startExecution(workTar, dummyWorkOrder(), runnerConfiguration, 0);
 
 		verify(benchmarkRepoOrganizer).getBenchmarkScript();
 		verify(stateMachine).onWorkDone(any(), Matchers.eq(runnerConfiguration));
@@ -83,14 +84,14 @@ class BenchmarkscriptWorkExecutorTest {
 
 	@Test
 	void benchscriptReturnsError() throws IOException {
-		var value = executeScript("echo -ne '{ \"error\": \"Hello world\" }'");
+		var value = executeScript("echo -ne '{ \"error\": \"Hello world\" }'", 0);
 
 		assertThat(value.isError()).isTrue();
 	}
 
 	@Test
 	void benchscriptReturnsHelpfulError() throws IOException {
-		var value = executeScript("echo -ne '{ \"error\": \"Hello world\" }'");
+		var value = executeScript("echo -ne '{ \"error\": \"Hello world\" }'", 0);
 
 		assertThat(value.isError()).isTrue();
 		assertThat(value.getError()).contains("{ \"error\": \"Hello world\" }");
@@ -108,7 +109,7 @@ class BenchmarkscriptWorkExecutorTest {
 
 	@Test
 	void benchscriptExitsWithExitCode() throws IOException {
-		var value = executeScript("exit 142");
+		var value = executeScript("exit 142", 0);
 
 		assertThat(value.isError()).isTrue();
 		assertThat(value.getError()).containsIgnoringCase("142");
@@ -119,7 +120,7 @@ class BenchmarkscriptWorkExecutorTest {
 		when(benchmarkRepoOrganizer.getBenchmarkScript()).thenAnswer(i -> {
 			throw new RuntimeException("AYYY 42");
 		});
-		var value = executeScript("exit 142");
+		var value = executeScript("exit 142", 0);
 
 		assertThat(value.isError()).isTrue();
 		assertThat(value.getError()).containsIgnoringCase("internal runner error");
@@ -139,7 +140,7 @@ class BenchmarkscriptWorkExecutorTest {
 			assertThat(executor.abortExecution("aborted"))
 				.isEqualTo(AbortionResult.CANCEL_IN_FUTURE);
 		}).start();
-		var value = executeScript("sleep 5");
+		var value = executeScript("sleep 5", 0);
 
 		assertThat(value.isError()).isTrue();
 		assertThat(value.getError()).containsIgnoringCase("aborted");
@@ -162,7 +163,7 @@ class BenchmarkscriptWorkExecutorTest {
 				.isEqualTo(AbortionResult.CANCEL_IN_FUTURE);
 		});
 		arborter.start();
-		var value = executeScript("sleep 5");
+		var value = executeScript("sleep 5", 0);
 		arborter.join();
 
 		assertThat(value.isError()).isTrue();
@@ -180,12 +181,22 @@ class BenchmarkscriptWorkExecutorTest {
 				.isEqualTo(AbortionResult.CANCEL_IN_FUTURE);
 		});
 		arborter.start();
-		value = executeScript("sleep 5", 2);
+		value = executeScript("sleep 5", 2, 2);
 
 		arborter.join();
 
 		assertThat(value.isError()).isTrue();
 		assertThat(value.getError()).containsIgnoringCase("aborted");
+	}
+
+	@Test
+	void respectsCancelNonce() throws IOException {
+		executor.abortExecution("Hm");
+		writeScript("sleep 5");
+
+		executor.startExecution(workTar, dummyWorkOrder(), runnerConfiguration, 0);
+
+		verify(stateMachine, never()).onWorkDone(any(), any());
 	}
 
 	@Test
@@ -195,7 +206,7 @@ class BenchmarkscriptWorkExecutorTest {
 		perms.remove(PosixFilePermission.OWNER_EXECUTE);
 		Files.setPosixFilePermissions(benchScriptPath, perms);
 
-		executor.startExecution(workTar, dummyWorkOrder(), runnerConfiguration);
+		executor.startExecution(workTar, dummyWorkOrder(), runnerConfiguration, 0);
 		var value = verifyAndReturnResults(1);
 
 		assertThat(value.isError()).isTrue();
@@ -208,7 +219,7 @@ class BenchmarkscriptWorkExecutorTest {
 	void afterAbortWithoutStartedNextStartWorks() throws IOException {
 		executor.abortExecution("Garbage reason");
 
-		var x = executeScript("echo 'Hello world'");
+		var x = executeScript("echo 'Hello world'", 1);
 
 		assertThat(x.isError()).isTrue();
 		assertThat(x.toString()).containsIgnoringCase("Hello world");
@@ -222,17 +233,17 @@ class BenchmarkscriptWorkExecutorTest {
 		return resultCaptor.getValue();
 	}
 
-	private BenchmarkResults executeScript(String code) throws IOException {
-		return executeScript(code, 1);
+	private BenchmarkResults executeScript(String code, int cancelNonce) throws IOException {
+		return executeScript(code, 1, cancelNonce);
 	}
 
-	private BenchmarkResults executeScript(String code, int expectedInvocations)
+	private BenchmarkResults executeScript(String code, int expectedInvocations, int cancelNonce)
 		throws IOException {
 		writeScript(code);
 		if (Files.notExists(workTar)) {
 			writeWorkTar();
 		}
-		executor.startExecution(workTar, dummyWorkOrder(), runnerConfiguration);
+		executor.startExecution(workTar, dummyWorkOrder(), runnerConfiguration, cancelNonce);
 		return verifyAndReturnResults(expectedInvocations);
 	}
 

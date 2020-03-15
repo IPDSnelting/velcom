@@ -41,6 +41,10 @@ public class IdleState implements RunnerState {
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
-		return new ExecutingState(path, workOrder);
+		return new ExecutingState(
+			path,
+			workOrder,
+			configuration.getWorkExecutor().getCancelNonce()
+		);
 	}
 }
