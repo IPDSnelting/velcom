@@ -72,6 +72,15 @@ export default class App extends Vue {
     })
   }
 
+  mounted() {
+    if (vxm.userModule.usesBrowsersThemePreferences && this.isDarkTheme) {
+      this.$globalSnackbar.setSuccess(
+        'theme',
+        'Selected dark mode based on your browser preferences.'
+      )
+    }
+  }
+
   beforeDestroy() {
     document.removeEventListener('click', this.clickHandler)
     document.removeEventListener('mousedown', this.clickHandler)

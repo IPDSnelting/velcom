@@ -10,7 +10,7 @@ export class UserStore extends VxModule {
   private _role: string | null = null
   private _token: string | null = null
 
-  darkThemeSelected: boolean = false
+  private _darkThemeSelected: boolean | undefined = undefined
 
   @action
   async logIn(payload: { role: string; asRepoAdmin: boolean; token: string }) {
@@ -68,6 +68,25 @@ export class UserStore extends VxModule {
       this.token !== null &&
       this.token.length > 0
     )
+  }
+
+  get darkThemeSelected(): boolean {
+    if (this._darkThemeSelected !== undefined) {
+      return this._darkThemeSelected
+    }
+    return this.browserPrefersDarkTheme
+  }
+
+  set darkThemeSelected(selected: boolean) {
+    this._darkThemeSelected = selected
+  }
+
+  get browserPrefersDarkTheme(): boolean {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches
+  }
+
+  get usesBrowsersThemePreferences(): boolean {
+    return this._darkThemeSelected === undefined
   }
 
   get isAdmin(): boolean {
