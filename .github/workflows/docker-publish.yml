@@ -1,0 +1,129 @@
+name: Build, publish and deploy
+
+# Run on everything. We conditionally skip deployment, but this way the build
+# is only run once. Testing could be a different workflow, but then the github
+# runners would need to build it twice, wasting resources.
+on: [push]
+
+env:
+  IMAGE_NAME: velcom-server
+  UID: 1004
+
+jobs:
+  # Runs the build.
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-java@v1
+        with:
+          java-version: '11'
+      - uses: actions/setup-node@v2-beta
+        with:
+          node-version: '12'
+      - uses: actions/cache@v2
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: "Build frontend"
+        run: "make frontend mode=production-single-port"
+      - name: "Build backend"
+        run: "make backend"
+      - name: "Upload frontend artifacts"
+        uses: actions/upload-artifact@v2
+        with:
+          name: frontend-artifacts
+          path: frontend/dist
+      - name: "Upload backend/backend artifacts"
+        uses: actions/upload-artifact@v2
+        with:
+          name: backend-artifacts
+          path: backend/backend/target/backend.jar
+      - name: "Upload backend/runner artifacts"
+        uses: actions/upload-artifact@v2
+        with:
+          name: backend-artifacts
+          path: backend/runner/target/runner.jar
+
+  # Push image to GitHub Packages.
+  push:
+    # Ensure build job passes before pushing image.
+    needs: [build]
+
+    runs-on: ubuntu-latest
+    if: "github.event_name == 'push' && github.ref == 'refs/heads/develop'"
+
+    steps:
+      # SETUP
+      - uses: actions/checkout@v2
+      - uses: actions/setup-java@v1
+        with:
+          java-version: '11'
+      - uses: actions/setup-node@v2-beta
+        with:
+          node-version: '12'
+
+      # CACHE
+      - name: "Download frontend artifacts"
+        uses: actions/download-artifact@v2
+        with:
+          name: frontend-artifacts
+          path: dist 
+      - name: "Download backend artifacts"
+        uses: actions/download-artifact@v2
+        with:
+          name: backend-artifacts
+
+      # BUILDING
+      - name: "Build image"
+        run: "make docker-github-ci USER_ID=$UID --trace"
+
+      - name: "Log into registry"
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
+
+      - name: Push image
+        run: |
+          IMAGE_ID=docker.pkg.github.com/${{ github.repository }}/$IMAGE_NAME
+
+          # Change all uppercase to lowercase
+          IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
+
+          # Strip git ref prefix from version
+          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+
+          # Strip "v" prefix from tag name
+          [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
+
+          # Use Docker `latest` tag convention
+          [ "$VERSION" == "master" ] && VERSION=latest
+
+          echo IMAGE_ID=$IMAGE_ID
+          echo VERSION=$VERSION
+
+          docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
+          docker push $IMAGE_ID:$VERSION
+
+  # Deploy it
+  deploy:
+    # Ensure build job passes before pushing image.
+    needs: [push]
+
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+
+    env:
+      CD_PORT: ${{ secrets.CD_PORT }}
+      CD_URL: ${{ secrets.CD_URL }}
+      CD_USER: ${{ secrets.CD_USER }}
+      SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: "Call deploy script"
+        run: "bash docs/deploy.sh ${{ github.actor }} ${{ secrets.GITHUB_TOKEN }}"
+
