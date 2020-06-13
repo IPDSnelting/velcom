@@ -29,6 +29,7 @@ import DatapointDialog from '../dialogs/DatapointDialog.vue'
 import EChartsComp from 'vue-echarts'
 import { EChartOption } from 'echarts'
 import 'echarts/lib/chart/line'
+import 'echarts/lib/chart/graph'
 import 'echarts/lib/component/polar'
 import 'echarts/lib/component/tooltip'
 import 'echarts/lib/component/legend'
@@ -38,7 +39,7 @@ import 'echarts/lib/component/dataZoom'
 import 'echarts/lib/component/dataZoomInside'
 
 class ItemInfo {
-  commitHash: string
+  name: string
   commitMessage: string
   symbol: string
   itemStyle: {
@@ -59,7 +60,7 @@ class ItemInfo {
   ) {
     this.value = [x, y]
     this.commitMessage = commitMessage
-    this.commitHash = commitHash
+    this.name = commitHash
     this.symbol = symbol
     this.itemStyle = {
       color: color,
@@ -274,7 +275,8 @@ export default class DetailGraph extends Vue {
         max: this.amount
       },
       yAxis: {
-        type: 'value'
+        type: 'value',
+        scale: !this.beginYAtZero
       },
       dataZoom: [
         {
@@ -286,9 +288,7 @@ export default class DetailGraph extends Vue {
       ],
       tooltip: {
         trigger: 'axis',
-        axisPointer: {
-          axis: 'x'
-        },
+        axisPointer: {},
         formatter: (val, params) => {
           let formats = Array.isArray(val) ? val : [val]
 
@@ -315,7 +315,7 @@ export default class DetailGraph extends Vue {
             <table>
               <tr>
                 <td>Hash</td>
-                <td>${sampleInfo.commitHash}</td>
+                <td>${sampleInfo.name}</td>
               </tr>
               ${parts}
             </table>
@@ -331,46 +331,67 @@ export default class DetailGraph extends Vue {
     }
   }
 
-  private createSeries(commitInfos: CommitInfo[]): EChartOption.SeriesLine {
+  private createSeries(commitInfos: CommitInfo[]): EChartOption.SeriesGraph {
     let lastSuccessfulValue: number = this.firstSuccessful(
       commitInfos[0].measurementId
     )
-    let data: ItemInfo[] = commitInfos.map((point, index) => {
+    let data: ItemInfo[] = []
+    let links: EChartOption.SeriesGraph.LinkObject[] = []
+
+    commitInfos.forEach((point, index) => {
+      point.commit.parents.forEach(parent => {
+        links.push({ source: point.commit.hash, target: parent })
+      })
       let value = this.datapointValue(point)
       if (value !== undefined) {
         lastSuccessfulValue = value
-        return new ItemInfo(
+        data.push(
+          new ItemInfo(
+            index + 1,
+            value,
+            point.commit.hash,
+            (point.commit.summary || '').trim(),
+            this.datapointSymbol(point),
+            this.datapointColor(point),
+            this.strokeColor(point)
+          )
+        )
+        return
+      }
+      data.push(
+        new ItemInfo(
           index + 1,
-          value,
+          lastSuccessfulValue,
           point.commit.hash,
           (point.commit.summary || '').trim(),
           this.datapointSymbol(point),
           this.datapointColor(point),
           this.strokeColor(point)
         )
-      }
-      return new ItemInfo(
-        index + 1,
-        lastSuccessfulValue,
-        point.commit.hash,
-        (point.commit.summary || '').trim(),
-        this.datapointSymbol(point),
-        this.datapointColor(point),
-        this.strokeColor(point)
       )
     })
 
     return {
-      type: 'line',
-      showSymbol: false,
+      type: 'graph',
+      coordinateSystem: 'cartesian2d',
+      label: {
+        show: false
+      },
+      emphasis: {
+        label: {
+          show: false
+        }
+      },
+      edgeSymbol: ['none', 'arrow'],
+      edgeSymbolSize: 10,
       symbol: ((value: ItemInfo) => {
         return value.symbol
       }) as any,
       lineStyle: {
         color: this.metricColor(commitInfos[0].measurementId)
       },
-      connectNulls: true,
       symbolSize: 6,
+      links: links,
       data: data as any
     }
   }
