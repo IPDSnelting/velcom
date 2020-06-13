@@ -319,6 +319,9 @@ export default class DetailGraph extends Vue {
                 <td>Hash</td>
                 <td>${sampleInfo.name}</td>
               </tr>
+                <td>Message</td>
+                <td>${sampleInfo.commitMessage}</td>
+              </tr>
               ${parts}
             </table>
           `
@@ -395,7 +398,7 @@ export default class DetailGraph extends Vue {
         }
       },
       edgeSymbol: ['none', 'arrow'],
-      edgeSymbolSize: 10,
+      edgeSymbolSize: 6,
       symbol: ((value: ItemInfo) => {
         return value.symbol
       }) as any,
