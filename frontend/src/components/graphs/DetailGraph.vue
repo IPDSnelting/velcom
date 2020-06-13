@@ -257,6 +257,18 @@ export default class DetailGraph extends Vue {
   }
 
   @Watch('beginYAtZero')
+  private beginAtZero() {
+    if (this.chartOptions.yAxis === undefined) {
+      return
+    }
+
+    if (Array.isArray(this.chartOptions.yAxis)) {
+      console.warn('Could not set y axis begins at 0, I have multiple :(')
+      return
+    }
+    this.chartOptions.yAxis!.scale = !this.beginYAtZero
+  }
+
   @Watch('amount')
   private updateData() {
     this.drawGraph()
