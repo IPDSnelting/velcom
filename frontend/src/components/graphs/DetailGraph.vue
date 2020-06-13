@@ -93,6 +93,7 @@ export default class DetailGraph extends Vue {
   private width: number = 0
   private height: number = 500
   private chartOptions: EChartOption = {}
+  private showGraph: boolean = false
 
   private numberFormat: Intl.NumberFormat = new Intl.NumberFormat(
     this.getLocaleString(),
@@ -236,11 +237,12 @@ export default class DetailGraph extends Vue {
     let endPercent: number = event.end / 100
 
     let visibleCommits = (endPercent - startPercent) * this.amount
-    let showSymbols = visibleCommits * this.groupedByMeasurement.size < 400
+    let showSymbols = visibleCommits * this.groupedByMeasurement.size < 200
 
-    this.chartOptions
-      .series!.map(series => series as EChartOption.SeriesLine)
-      .forEach(series => (series.showSymbol = showSymbols))
+    if (this.showGraph !== showSymbols) {
+      this.showGraph = showSymbols
+      this.addSeries()
+    }
   }
 
   @Watch('datapoints')
@@ -325,13 +327,23 @@ export default class DetailGraph extends Vue {
       series: []
     }
 
+    this.addSeries()
+  }
+
+  private addSeries() {
+    this.chartOptions.series = []
+
     for (let [key, value] of this.groupedByMeasurement.entries()) {
-      let newSeries = this.createSeries(value)
+      let newSeries = this.showGraph
+        ? this.createGraphSeries(value)
+        : this.createLineSeries(value)
       this.chartOptions.series!.push(newSeries)
     }
   }
 
-  private createSeries(commitInfos: CommitInfo[]): EChartOption.SeriesGraph {
+  private createGraphSeries(
+    commitInfos: CommitInfo[]
+  ): EChartOption.SeriesGraph {
     let lastSuccessfulValue: number = this.firstSuccessful(
       commitInfos[0].measurementId
     )
@@ -392,6 +404,49 @@ export default class DetailGraph extends Vue {
       },
       symbolSize: 6,
       links: links,
+      data: data as any
+    }
+  }
+
+  private createLineSeries(commitInfos: CommitInfo[]): EChartOption.SeriesLine {
+    let lastSuccessfulValue: number = this.firstSuccessful(
+      commitInfos[0].measurementId
+    )
+    let data: ItemInfo[] = commitInfos.map((point, index) => {
+      let value = this.datapointValue(point)
+      if (value !== undefined) {
+        lastSuccessfulValue = value
+        return new ItemInfo(
+          index + 1,
+          value,
+          point.commit.hash,
+          (point.commit.summary || '').trim(),
+          this.datapointSymbol(point),
+          this.datapointColor(point),
+          this.strokeColor(point)
+        )
+      }
+      return new ItemInfo(
+        index + 1,
+        lastSuccessfulValue,
+        point.commit.hash,
+        (point.commit.summary || '').trim(),
+        this.datapointSymbol(point),
+        this.datapointColor(point),
+        this.strokeColor(point)
+      )
+    })
+    return {
+      type: 'line',
+      showSymbol: false,
+      symbol: ((value: ItemInfo) => {
+        return value.symbol
+      }) as any,
+      lineStyle: {
+        color: this.metricColor(commitInfos[0].measurementId)
+      },
+      connectNulls: true,
+      symbolSize: 6,
       data: data as any
     }
   }
