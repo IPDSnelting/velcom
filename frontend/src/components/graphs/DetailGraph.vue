@@ -27,6 +27,7 @@ import { vxm } from '../../store'
 import { formatDateUTC } from '../../util/TimeUtil'
 import DatapointDialog from '../dialogs/DatapointDialog.vue'
 import EChartsComp from 'vue-echarts'
+
 import { EChartOption } from 'echarts'
 import 'echarts/lib/chart/line'
 import 'echarts/lib/chart/graph'
@@ -37,6 +38,8 @@ import 'echarts/lib/component/title'
 import 'echarts/lib/component/dataZoomSlider'
 import 'echarts/lib/component/dataZoom'
 import 'echarts/lib/component/dataZoomInside'
+import 'echarts/lib/component/toolbox'
+import 'echarts/lib/component/brush'
 
 class ItemInfo {
   name: string
@@ -227,14 +230,30 @@ export default class DetailGraph extends Vue {
   }
 
   private zoomed(e: any) {
-    let event: { start: number; end: number }
+    let event: {
+      start?: number
+      end?: number
+      startValue?: number
+      endValue?: number
+    }
     if (!e.batch || e.batch.length === 0) {
       event = e
     } else {
-      event = e.batch[e.batch.length - 1]
+      event = e.batch[0]
     }
-    let startPercent: number = event.start / 100
-    let endPercent: number = event.end / 100
+
+    let startPercent: number
+    let endPercent: number
+
+    if (event.start !== undefined && event.end !== undefined) {
+      startPercent = event.start / 100
+      endPercent = event.end / 100
+    } else if (event.startValue !== undefined && event.endValue !== undefined) {
+      startPercent = event.startValue / this.amount
+      endPercent = event.endValue / this.amount
+    } else {
+      return
+    }
 
     let visibleCommits = (endPercent - startPercent) * this.amount
     let showSymbols = visibleCommits * this.groupedByMeasurement.size < 200
@@ -277,6 +296,24 @@ export default class DetailGraph extends Vue {
   private drawGraph() {
     this.chartOptions = {
       backgroundColor: this.graphBackgroundColor,
+      toolbox: {
+        show: true,
+        showTitle: false, // hide the default text so they don't overlap each other
+        feature: {
+          mark: { show: true },
+          restore: { show: true, title: 'Reset' },
+          saveAsImage: { show: true, title: 'Save as Image' },
+          dataZoom: {
+            title: {
+              zoom: 'Zoom (brush)',
+              back: 'Reset zoom'
+            }
+          }
+        },
+        tooltip: {
+          show: true
+        }
+      },
       title: {
         text: 'A graph',
         left: '50%',
