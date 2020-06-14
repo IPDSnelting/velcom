@@ -266,7 +266,7 @@ export default class DetailGraph extends Vue {
       console.warn('Could not set y axis begins at 0, I have multiple :(')
       return
     }
-    this.chartOptions.yAxis!.scale = !this.beginYAtZero
+    this.chartOptions.yAxis!.scale = this.beginYAtZero
   }
 
   @Watch('amount')
@@ -290,7 +290,7 @@ export default class DetailGraph extends Vue {
       },
       yAxis: {
         type: 'value',
-        scale: !this.beginYAtZero
+        scale: this.beginYAtZero
       },
       dataZoom: [
         {
