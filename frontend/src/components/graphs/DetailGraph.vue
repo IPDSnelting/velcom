@@ -3,7 +3,7 @@
     <v-row align="center" justify="center">
       <v-col>
         <div id="chart" :style="{'height': this.height + 'px'}">
-          <v-chart @datazoom="zoomed" id="chart" :options="chartOptions" />
+          <v-chart @restore="restored" @datazoom="zoomed" id="chart" :options="chartOptions" />
         </div>
       </v-col>
     </v-row>
@@ -179,7 +179,7 @@ export default class DetailGraph extends Vue {
     return this.groupBy(this.datapoints, it => it.measurementId.toString())
   }
 
-  datapointColor(d: CommitInfo): string {
+  private datapointColor(d: CommitInfo): string {
     let wantedMeasurement = this.wantedMeasurementForDatapoint(
       d.comparison,
       d.measurementId
@@ -194,7 +194,7 @@ export default class DetailGraph extends Vue {
     return this.graphBackgroundColor
   }
 
-  strokeColor(d: CommitInfo): string {
+  private strokeColor(d: CommitInfo): string {
     let wantedMeasurement = this.wantedMeasurementForDatapoint(
       d.comparison,
       d.measurementId
@@ -229,6 +229,10 @@ export default class DetailGraph extends Vue {
     return runFailed || (!!wantedMeasurement && !wantedMeasurement.successful)
   }
 
+  private restored(e: any) {
+    this.updateGraphTyp(0, 1)
+  }
+
   private zoomed(e: any) {
     let event: {
       start?: number
@@ -255,6 +259,10 @@ export default class DetailGraph extends Vue {
       return
     }
 
+    this.updateGraphTyp(startPercent, endPercent)
+  }
+
+  private updateGraphTyp(startPercent: number, endPercent: number) {
     let visibleCommits = (endPercent - startPercent) * this.amount
     let showSymbols = visibleCommits * this.groupedByMeasurement.size < 200
 
@@ -300,7 +308,6 @@ export default class DetailGraph extends Vue {
         show: true,
         showTitle: false, // hide the default text so they don't overlap each other
         feature: {
-          mark: { show: true },
           restore: { show: true, title: 'Reset' },
           saveAsImage: { show: true, title: 'Save as Image' },
           dataZoom: {
