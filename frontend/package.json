@@ -9,9 +9,11 @@
   },
   "dependencies": {
     "@types/d3": "^5.7.2",
+    "@types/dygraphs": "^1.1.11",
     "axios": "^0.19.1",
     "core-js": "^3.4.4",
     "d3": "^5.15.0",
+    "dygraphs": "^2.1.0",
     "vue": "^2.6.10",
     "vue-class-component": "^7.2.2",
     "vue-property-decorator": "^8.3.0",

@@ -8,12 +8,19 @@
     <v-row align="baseline" justify="center">
       <v-col>
         <v-card>
-          <detail-graph
+          <!-- <detail-graph
             :measurements="selectedMeasurements"
             :amount="Number.parseInt(amount)"
             :beginYAtZero="this.yScaleBeginsAtZero"
             @selectionChanged="updateSelection"
-          ></detail-graph>
+          ></detail-graph> -->
+          <dytail-graph
+            :measurements="selectedMeasurements"
+            :amount="Number.parseInt(amount)"
+            :beginYAtZero="this.yScaleBeginsAtZero"
+            @selectionChanged="updateSelection"
+          >
+          </dytail-graph>
         </v-card>
       </v-col>
     </v-row>
@@ -24,7 +31,11 @@
             <v-container fluid class="ma-0 px-5 pb-0">
               <v-row align="center" justify="space-between" no-gutters>
                 <v-col :md="useMatrixSelector ? '' : '5'" sm="12" cols="12">
-                  <v-btn @click="useMatrixSelector = !useMatrixSelector" text color="primary">
+                  <v-btn
+                    @click="useMatrixSelector = !useMatrixSelector"
+                    text
+                    color="primary"
+                  >
                     <span v-if="useMatrixSelector">Use tree selector</span>
                     <span v-if="!useMatrixSelector">Use matrix selector</span>
                   </v-btn>
@@ -50,7 +61,12 @@
                             @blur="retrieveRuns"
                             @keyup.enter="retrieveRuns"
                             v-model="amount"
-                            :rules="[nonEmptyRunAmount, nonNegativeRunAmount, onlyNumericInput, noIntegerOverflow]"
+                            :rules="[
+                              nonEmptyRunAmount,
+                              nonNegativeRunAmount,
+                              onlyNumericInput,
+                              noIntegerOverflow
+                            ]"
                             label="number of commits to fetch"
                             class="mr-5"
                           ></v-text-field>
@@ -60,7 +76,12 @@
                             @blur="retrieveRuns"
                             @keyup.enter="retrieveRuns"
                             v-model="skip"
-                            :rules="[nonEmptyRunAmount, nonNegativeRunAmount, onlyNumericInput, noIntegerOverflow]"
+                            :rules="[
+                              nonEmptyRunAmount,
+                              nonNegativeRunAmount,
+                              onlyNumericInput,
+                              noIntegerOverflow
+                            ]"
                             label="number of commits to skip"
                             class="mr-5"
                           ></v-text-field>
@@ -82,7 +103,10 @@
                   <v-col>
                     <commit-chip
                       class="mr-2"
-                      :to="{ name: 'commit-detail', params: { repoID: id, hash: referenceCommit } }"
+                      :to="{
+                        name: 'commit-detail',
+                        params: { repoID: id, hash: referenceCommit }
+                      }"
                       :commitHash="referenceCommit"
                       :copyOnClick="false"
                     ></commit-chip>
@@ -92,7 +116,10 @@
               <v-col cols="auto" v-if="lockedToRelativeCommit">
                 <commit-selection
                   :commit="relativeToCommit"
-                  @value="relativeToCommit = typeof $event === 'string' ? $event : $event.hash"
+                  @value="
+                    relativeToCommit =
+                      typeof $event === 'string' ? $event : $event.hash
+                  "
                   label="Reference frame anchor"
                   :allCommits="allCommits"
                 ></commit-selection>
@@ -105,9 +132,11 @@
                       text
                       color="primary"
                       @click="lockReferenceFrame"
-                    >Lock reference frame</v-btn>
+                      >Lock reference frame</v-btn
+                    >
                   </template>
-                  Make skip relative to the anchor commit. Good for permanent links, as it never changes!
+                  Make skip relative to the anchor commit. Good for permanent
+                  links, as it never changes!
                 </v-tooltip>
                 <v-tooltip top v-if="lockedToRelativeCommit">
                   <template #activator="{ on }">
@@ -116,13 +145,16 @@
                       text
                       color="primary"
                       @click="unlockReferenceFrame"
-                    >Unlock reference frame</v-btn>
+                      >Unlock reference frame</v-btn
+                    >
                   </template>
                   Make skip relative to the latest. Good for staying up to date!
                 </v-tooltip>
               </v-col>
               <v-col cols="auto" align-self="end">
-                <v-btn text color="primary" @click="toggleYScale()">{{ yScaleButtonLabel }}</v-btn>
+                <v-btn text color="primary" @click="toggleYScale()">{{
+                  yScaleButtonLabel
+                }}</v-btn>
               </v-col>
               <v-col cols="auto" align-self="end" v-if="isAdmin">
                 <v-tooltip top>
@@ -132,19 +164,22 @@
                       :color="canDeleteMetric ? 'error' : '#d3d3d3'"
                       text
                       @click="deleteMetric"
-                    >Delete metric</v-btn>
+                      >Delete metric</v-btn
+                    >
                   </template>
-                  <span v-if="!canDeleteMetric">Please only select a single metric.</span>
+                  <span v-if="!canDeleteMetric"
+                    >Please only select a single metric.</span
+                  >
                   <span v-else>
-                    Deletes metric
-                    '
-                    <span
-                      class="font-weight-bold"
-                    >{{ selectedMeasurements[0].benchmark }}</span>
+                    Deletes metric '
+                    <span class="font-weight-bold">{{
+                      selectedMeasurements[0].benchmark
+                    }}</span>
                     —
-                    <span
-                      class="font-weight-bold"
-                    >{{ selectedMeasurements[0].metric }}</span>'
+                    <span class="font-weight-bold">{{
+                      selectedMeasurements[0].metric
+                    }}</span
+                    >'
                   </span>
                 </v-tooltip>
               </v-col>
@@ -176,12 +211,14 @@ import CommitChip from '../components/CommitChip.vue'
 import CommitSelectionComponent from '../components/CommitSelectionComponent.vue'
 import MeasurementIdSelection from '../components/graphs/MeasurementIdSelection.vue'
 import MatrixMeasurementIdSelection from '../components/graphs/MatrixMeasurementIdSelection.vue'
+import DytailGraph from '../components/graphs/Dygraph-Detail.vue'
 
 @Component({
   components: {
     'repo-base-information': RepoBaseInformation,
     'repo-commit-overview': RepoCommitOverview,
     'detail-graph': DetailGraph,
+    'dytail-graph': DytailGraph,
     'commit-chip': CommitChip,
     'commit-selection': CommitSelectionComponent,
     'matrix-measurement-id-selection': MatrixMeasurementIdSelection,
