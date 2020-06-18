@@ -194,11 +194,13 @@ export default class DytailGraph extends Vue {
         legend: 'follow',
         labelsSeparateLines: true,
         connectSeparatedPoints: true,
-        drawPoints: true,
+        drawPoints: false,
         animatedZooms: true,
-        timingName: 'x'
+        panEdgeFraction: 0.00001
       }
     )
+
+    this.up()
   }
 }
 </script>
