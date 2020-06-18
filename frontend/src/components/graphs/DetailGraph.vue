@@ -2,8 +2,25 @@
   <v-container fluid>
     <v-row align="center" justify="center">
       <v-col>
+        <datapoint-dialog
+          :dialogOpen="datapointDialogOpen"
+          :selectedDatapoint="selectedDatapoint"
+          :commitToCompare="commitToCompare"
+          :allowSelectAsReference="allowSelectAsReference"
+          @close="datapointDialogOpen = false"
+          @removeReference="referenceDatapoint = null"
+          @setReference="referenceDatapoint = selectedDatapoint"
+          @selectCommitToCompare="commitToCompare = selectedDatapoint"
+          @compareCommits="console.log('Comparing commits!')"
+        ></datapoint-dialog>
         <div id="chart" :style="{'height': this.height + 'px'}">
-          <v-chart @restore="restored" @datazoom="zoomed" id="chart" :options="chartOptions" />
+          <v-chart
+            @click="chartClicked"
+            @restore="restored"
+            @datazoom="zoomed"
+            id="chart"
+            :options="chartOptions"
+          />
         </div>
       </v-col>
     </v-row>
@@ -97,6 +114,10 @@ export default class DetailGraph extends Vue {
   private height: number = 500
   private chartOptions: EChartOption = {}
   private showGraph: boolean = false
+  private datapointDialogOpen = false
+  private selectedDatapoint: CommitInfo | null = null
+  private commitToCompare: CommitInfo | null = null
+  private allowSelectAsReference: boolean = true
 
   private numberFormat: Intl.NumberFormat = new Intl.NumberFormat(
     this.getLocaleString(),
@@ -105,6 +126,14 @@ export default class DetailGraph extends Vue {
 
   private getLocaleString() {
     return new Intl.NumberFormat().resolvedOptions().locale
+  }
+
+  private get referenceDatapoint(): CommitInfo | null {
+    return vxm.repoDetailModule.referenceDatapoint
+  }
+
+  private set referenceDatapoint(datapoint: CommitInfo | null) {
+    vxm.repoDetailModule.referenceDatapoint = datapoint
   }
 
   // retrieving and interpreting datapoints
@@ -270,6 +299,21 @@ export default class DetailGraph extends Vue {
       this.showGraph = showSymbols
       this.addSeries()
     }
+  }
+
+  private chartClicked(e: EChartOption.Tooltip.Format) {
+    if (e.data === undefined) {
+      return
+    }
+    this.selectedDatapoint =
+      this.datapoints.find(it => it.commit.hash === e.data.name) || null
+
+    if (this.selectedDatapoint === null) {
+      return
+    }
+    this.allowSelectAsReference =
+      this.datapointValue(this.selectedDatapoint) !== undefined
+    this.datapointDialogOpen = true
   }
 
   @Watch('datapoints')
@@ -495,6 +539,10 @@ export default class DetailGraph extends Vue {
         this.strokeColor(point)
       )
     })
+    let marklineData: any[] = []
+    if (this.selectedDatapoint) {
+      marklineData = [{ y: this.datapointValue(this.selectedDatapoint) }]
+    }
     return {
       type: 'line',
       showSymbol: false,
@@ -503,6 +551,9 @@ export default class DetailGraph extends Vue {
       }) as any,
       lineStyle: {
         color: this.metricColor(commitInfos[0].measurementId)
+      },
+      markLine: {
+        data: marklineData as any
       },
       connectNulls: true,
       symbolSize: 6,
