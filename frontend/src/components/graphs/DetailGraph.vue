@@ -4,12 +4,12 @@
       <v-col>
         <datapoint-dialog
           :dialogOpen="datapointDialogOpen"
-          :selectedDatapoint="selectedDatapoint"
-          :commitToCompare="commitToCompare"
+          :selectedDatapoint="selectedDatapoint ? selectedDatapoint.commitInfo : null"
+          :commitToCompare="commitToCompare ? commitToCompare.commitInfo : null"
           :allowSelectAsReference="allowSelectAsReference"
           @close="datapointDialogOpen = false"
           @removeReference="referenceDatapoint = null"
-          @setReference="referenceDatapoint = selectedDatapoint"
+          @setReference="referenceDatapoint = selectedDatapoint.commitInfo"
           @selectCommitToCompare="commitToCompare = selectedDatapoint"
           @compareCommits="console.log('Comparing commits!')"
         ></datapoint-dialog>
@@ -120,8 +120,14 @@ export default class DetailGraph extends Vue {
   private chartOptions: EChartOption = {}
   private showGraph: boolean = false
   private datapointDialogOpen = false
-  private selectedDatapoint: CommitInfo | null = null
-  private commitToCompare: CommitInfo | null = null
+  private selectedDatapoint: {
+    commitInfo: CommitInfo
+    itemInfo: ItemInfo
+  } | null = null
+  private commitToCompare: {
+    commitInfo: CommitInfo
+    itemInfo: ItemInfo
+  } | null = null
   private allowSelectAsReference: boolean = true
 
   private numberFormat: Intl.NumberFormat = new Intl.NumberFormat(
@@ -311,18 +317,23 @@ export default class DetailGraph extends Vue {
       return
     }
 
-    this.selectedDatapoint =
-      this.datapoints.find(
-        it =>
-          it.measurementId.equals(e.data.measurementId) &&
-          it.commit.hash === e.data.name
-      ) || null
+    let referencedCommitInfo = this.datapoints.find(
+      it =>
+        it.measurementId.equals(e.data.measurementId) &&
+        it.commit.hash === e.data.name
+    )
 
-    if (this.selectedDatapoint === null) {
+    if (!referencedCommitInfo) {
       return
     }
+
+    this.selectedDatapoint = {
+      commitInfo: referencedCommitInfo,
+      itemInfo: e.data
+    }
+
     this.allowSelectAsReference =
-      this.datapointValue(this.selectedDatapoint) !== undefined
+      this.datapointValue(this.selectedDatapoint.commitInfo) !== undefined
     this.datapointDialogOpen = true
   }
 
@@ -574,15 +585,34 @@ export default class DetailGraph extends Vue {
   }
 
   @Watch('referenceDatapoint')
+  @Watch('commitToCompare')
   private displayMarkers() {
     let marklineData: any[] = []
     if (this.referenceDatapoint) {
       marklineData = [{ yAxis: this.datapointValue(this.referenceDatapoint) }]
     }
+    let markPointData: any[] = []
+
+    if (this.commitToCompare) {
+      markPointData.push({
+        coord: this.commitToCompare.itemInfo.value,
+        label: {
+          show: true,
+          position: 'inside',
+          formatter: () => 'A'
+        }
+      })
+    }
 
     for (let series of this.chartOptions.series!) {
       // FIXME: Proper types?
       let asLine = series as EChartOption.SeriesLine | EChartOption.SeriesGraph
+
+      let markPointJson = {
+        silent: true,
+        data: markPointData as any // ts types are garbage :/
+      }
+      Vue.set(asLine, 'markPoint', markPointJson)
 
       let markLineJson = {
         symbol: 'none',
