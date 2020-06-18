@@ -338,6 +338,21 @@ export default class DetailGraph extends Vue {
       return
     }
 
+    if ((e as any).event && (e as any).event.event) {
+      let event = (e as any).event.event as MouseEvent
+      if (event.ctrlKey) {
+        let routeData = this.$router.resolve({
+          name: 'commit-detail',
+          params: {
+            repoID: vxm.repoDetailModule.selectedRepoId,
+            hash: referencedCommitInfo.commit.hash
+          }
+        })
+        window.open(routeData.href, '_blank')
+        return
+      }
+    }
+
     this.selectedDatapoint = {
       commitInfo: referencedCommitInfo,
       itemInfo: e.data
