@@ -11,7 +11,7 @@
           @removeReference="referenceDatapoint = null"
           @setReference="referenceDatapoint = selectedDatapoint.commitInfo"
           @selectCommitToCompare="commitToCompare = selectedDatapoint"
-          @compareCommits="console.log('Comparing commits!')"
+          @compareCommits="compareCommits"
         ></datapoint-dialog>
         <div id="chart" :style="{'height': this.height + 'px'}">
           <v-chart
@@ -145,6 +145,17 @@ export default class DetailGraph extends Vue {
 
   private set referenceDatapoint(datapoint: CommitInfo | null) {
     vxm.repoDetailModule.referenceDatapoint = datapoint
+  }
+
+  private compareCommits() {
+    this.$router.push({
+      name: 'commit-comparison',
+      params: {
+        repoID: vxm.repoDetailModule.selectedRepoId,
+        hashOne: this.commitToCompare!.itemInfo.name,
+        hashTwo: this.selectedDatapoint!.itemInfo.name
+      }
+    })
   }
 
   // retrieving and interpreting datapoints
