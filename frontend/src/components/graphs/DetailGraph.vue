@@ -57,6 +57,8 @@ import 'echarts/lib/component/dataZoom'
 import 'echarts/lib/component/dataZoomInside'
 import 'echarts/lib/component/toolbox'
 import 'echarts/lib/component/brush'
+import 'echarts/lib/component/markLine'
+import 'echarts/lib/component/markPoint'
 
 class ItemInfo {
   name: string
@@ -68,6 +70,7 @@ class ItemInfo {
     borderWidth: number
   }
   value: [number, number]
+  measurementId: MeasurementID
 
   constructor(
     x: number,
@@ -76,12 +79,14 @@ class ItemInfo {
     commitMessage: string,
     symbol: string,
     color: string,
-    borderColor: string
+    borderColor: string,
+    measurementId: MeasurementID
   ) {
     this.value = [x, y]
     this.commitMessage = commitMessage
     this.name = commitHash
     this.symbol = symbol
+    this.measurementId = measurementId
     this.itemStyle = {
       color: color,
       borderColor: borderColor,
@@ -231,7 +236,7 @@ export default class DetailGraph extends Vue {
     if (wantedMeasurement && wantedMeasurement.successful) {
       return this.metricColor(d.measurementId)
     }
-    // Failed or unbenchmarked commits have a stroke around them
+    // Failed or unbenchmarked commits have data stroke around them
     return this.graphFailedOrUnbenchmarkedColor
   }
 
@@ -297,7 +302,7 @@ export default class DetailGraph extends Vue {
 
     if (this.showGraph !== showSymbols) {
       this.showGraph = showSymbols
-      this.addSeries()
+      this.displaySeries()
     }
   }
 
@@ -305,8 +310,13 @@ export default class DetailGraph extends Vue {
     if (e.data === undefined) {
       return
     }
+
     this.selectedDatapoint =
-      this.datapoints.find(it => it.commit.hash === e.data.name) || null
+      this.datapoints.find(
+        it =>
+          it.measurementId.equals(e.data.measurementId) &&
+          it.commit.hash === e.data.name
+      ) || null
 
     if (this.selectedDatapoint === null) {
       return
@@ -430,18 +440,23 @@ export default class DetailGraph extends Vue {
       series: []
     }
 
-    this.addSeries()
+    this.displaySeries()
   }
 
-  private addSeries() {
+  private displaySeries() {
     this.chartOptions.series = []
+
+    let chartSeries = []
 
     for (let [key, value] of this.groupedByMeasurement.entries()) {
       let newSeries = this.showGraph
         ? this.createGraphSeries(value)
         : this.createLineSeries(value)
-      this.chartOptions.series!.push(newSeries)
+      chartSeries.push(newSeries)
     }
+
+    this.chartOptions.series = chartSeries
+    this.displayMarkers()
   }
 
   private createGraphSeries(
@@ -468,7 +483,8 @@ export default class DetailGraph extends Vue {
             (point.commit.summary || '').trim(),
             this.datapointSymbol(point),
             this.datapointColor(point),
-            this.strokeColor(point)
+            this.strokeColor(point),
+            point.measurementId
           )
         )
         return
@@ -481,7 +497,8 @@ export default class DetailGraph extends Vue {
           (point.commit.summary || '').trim(),
           this.datapointSymbol(point),
           this.datapointColor(point),
-          this.strokeColor(point)
+          this.strokeColor(point),
+          point.measurementId
         )
       )
     })
@@ -526,7 +543,8 @@ export default class DetailGraph extends Vue {
           (point.commit.summary || '').trim(),
           this.datapointSymbol(point),
           this.datapointColor(point),
-          this.strokeColor(point)
+          this.strokeColor(point),
+          point.measurementId
         )
       }
       return new ItemInfo(
@@ -536,13 +554,10 @@ export default class DetailGraph extends Vue {
         (point.commit.summary || '').trim(),
         this.datapointSymbol(point),
         this.datapointColor(point),
-        this.strokeColor(point)
+        this.strokeColor(point),
+        point.measurementId
       )
     })
-    let marklineData: any[] = []
-    if (this.selectedDatapoint) {
-      marklineData = [{ y: this.datapointValue(this.selectedDatapoint) }]
-    }
     return {
       type: 'line',
       showSymbol: false,
@@ -552,12 +567,39 @@ export default class DetailGraph extends Vue {
       lineStyle: {
         color: this.metricColor(commitInfos[0].measurementId)
       },
-      markLine: {
-        data: marklineData as any
-      },
       connectNulls: true,
       symbolSize: 6,
       data: data as any
+    }
+  }
+
+  @Watch('referenceDatapoint')
+  private displayMarkers() {
+    let marklineData: any[] = []
+    if (this.referenceDatapoint) {
+      marklineData = [{ yAxis: this.datapointValue(this.referenceDatapoint) }]
+    }
+
+    for (let series of this.chartOptions.series!) {
+      // FIXME: Proper types?
+      let asLine = series as EChartOption.SeriesLine | EChartOption.SeriesGraph
+
+      let markLineJson = {
+        symbol: 'none',
+        lineStyle: {
+          type: 'dotted',
+          width: 2
+        },
+        label: {
+          show: true,
+          formatter: () => {
+            return 'Reference'
+          }
+        },
+        silent: true,
+        data: marklineData as any
+      }
+      Vue.set(asLine, 'markLine', markLineJson)
     }
   }
 
