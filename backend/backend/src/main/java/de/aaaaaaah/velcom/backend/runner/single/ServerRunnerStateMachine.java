@@ -2,14 +2,14 @@ package de.aaaaaaah.velcom.backend.runner.single;
 
 import de.aaaaaaah.velcom.backend.access.RepoWriteAccess;
 import de.aaaaaaah.velcom.backend.access.entities.Commit;
-import de.aaaaaaah.velcom.backend.runner.single.state.PreparingRunnerForWorkState;
-import de.aaaaaaah.velcom.backend.runner.single.state.RunnerDisconnectedState;
-import de.aaaaaaah.velcom.backend.runner.single.state.RunnerIdleState;
-import de.aaaaaaah.velcom.backend.runner.single.state.RunnerInitializingState;
-import de.aaaaaaah.velcom.backend.runner.single.state.RunnerState;
+import de.aaaaaaah.velcom.backend.runner.Dispatcher;
+import de.aaaaaaah.velcom.backend.runner.single.state.RunnerWorkSender;
 import de.aaaaaaah.velcom.backend.util.CheckedConsumer;
 import de.aaaaaaah.velcom.runner.shared.RunnerStatusEnum;
 import de.aaaaaaah.velcom.runner.shared.protocol.SentEntity;
+import de.aaaaaaah.velcom.runner.shared.protocol.StatusCodeMappings;
+import de.aaaaaaah.velcom.runner.shared.protocol.runnerbound.entities.RequestResults;
+import de.aaaaaaah.velcom.runner.shared.protocol.runnerbound.entities.RequestStatus;
 import de.aaaaaaah.velcom.runner.shared.protocol.runnerbound.entities.ResetOrder;
 import de.aaaaaaah.velcom.runner.shared.protocol.runnerbound.entities.RunnerWorkOrder;
 import de.aaaaaaah.velcom.runner.shared.protocol.runnerbound.entities.UpdateBenchmarkRepoOrder;
@@ -17,6 +17,7 @@ import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkR
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.RunnerInformation;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,21 +28,13 @@ public class ServerRunnerStateMachine {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(ServerRunnerStateMachine.class);
 
+	private final Dispatcher dispatcher;
 	private ActiveRunnerInformation runnerInformation;
-	private RunnerState state;
+	private final AtomicBoolean registeredWithDispatcher;
 
-	/**
-	 * Creates a new server-side state machine for a single runner.
-	 */
-	public ServerRunnerStateMachine() {
-		this.state = new RunnerDisconnectedState();
-	}
-
-	/**
-	 * @return the current state
-	 */
-	public RunnerState getState() {
-		return state;
+	public ServerRunnerStateMachine(Dispatcher dispatcher) {
+		this.dispatcher = dispatcher;
+		this.registeredWithDispatcher = new AtomicBoolean(false);
 	}
 
 	/**
@@ -51,7 +44,6 @@ public class ServerRunnerStateMachine {
 	 */
 	public void onConnectionOpened(ActiveRunnerInformation information) {
 		this.runnerInformation = information;
-		switchState(new RunnerInitializingState());
 	}
 
 	/**
@@ -61,40 +53,45 @@ public class ServerRunnerStateMachine {
 	 * @param entity the sent entity
 	 */
 	public void onMessageReceived(String type, SentEntity entity) {
-		RunnerState previousState = state;
-		RunnerState newState = state.onMessage(type, entity, runnerInformation);
-		// Reference comparison is wanted here! Even if a new state of the same type is returned
-		// we want to init it
-		if (newState != state && previousState == state) {
-			switchState(newState);
+		switch (type) {
+			case "RunnerInformation": {
+				RunnerInformation runnerInformation = (RunnerInformation) entity;
+				this.runnerInformation.setRunnerInformation(runnerInformation);
+				if (runnerInformation.getResults() != null) {
+					requestResults();
+				}
+
+				LOGGER.info("Got info: " + runnerInformation);
+
+				if (!registeredWithDispatcher.getAndSet(true)) {
+					dispatcher.addRunner(this.runnerInformation);
+				}
+
+				break;
+			}
+			case "BenchmarkResults": {
+				dispatcher.onResultsReceived(runnerInformation, (BenchmarkResults) entity);
+				break;
+			}
+			case "BenchmarkDone": {
+				requestResults();
+				runnerInformation.clearCurrentCommit();
+				break;
+			}
+			case "ReadyForWork": {
+				dispatcher.runnerAvailable(runnerInformation);
+				break;
+			}
 		}
 	}
 
-	private void switchState(RunnerState newState) {
-		LOGGER.debug("Switching runner state from {} to {}", state, newState);
-		state = newState;
-		newState.onSelected(runnerInformation);
-	}
-
-	/**
-	 * Called when the runner has completed its work.
-	 *
-	 * @param results the benchmark results
-	 */
-	public void onWorkDone(BenchmarkResults results) {
-		runnerInformation.setResults(results);
-
-		// Clear the commit if we got results for it
-		runnerInformation.getCurrentCommit().ifPresent(commit -> {
-			RunnerWorkOrder order = results.getWorkOrder();
-			if (!commit.getRepoId().getId().equals(order.getRepoId())) {
-				return;
-			}
-			if (!commit.getHash().getHash().equals(order.getCommitHash())) {
-				return;
-			}
-			runnerInformation.clearCurrentCommit();
-		});
+	private void requestResults() {
+		try {
+			runnerInformation.getConnectionManager().sendEntity(new RequestResults());
+		} catch (IOException e) {
+			LOGGER.info("Failed to send requests results", e);
+			runnerInformation.getConnectionManager().disconnect();
+		}
 	}
 
 	/**
@@ -122,11 +119,6 @@ public class ServerRunnerStateMachine {
 	public void startWork(Commit commit, RunnerWorkOrder workOrder,
 		CheckedConsumer<OutputStream, IOException> writer)
 		throws IOException {
-		if (runnerInformation.getState() != RunnerStatusEnum.PREPARING_WORK) {
-			throw new IllegalStateException(
-				"Invalid state, runner is in " + runnerInformation.getState()
-			);
-		}
 		LOGGER.debug("Sending work {} to {}", workOrder, runnerInformation.getRunnerInformation());
 		markAsMyCommit(commit);
 		runnerInformation.getConnectionManager().sendEntity(workOrder);
@@ -137,23 +129,40 @@ public class ServerRunnerStateMachine {
 		}
 	}
 
+	public void requestStatusUpdate() {
+		LOGGER.info("Requesting status update");
+		try {
+			runnerInformation.getConnectionManager().sendEntity(new RequestStatus());
+		} catch (IOException e) {
+			LOGGER.info("Could not request status, disconnecting runner");
+			runnerInformation.getConnectionManager().disconnect(
+				StatusCodeMappings.SERVER_INITIATED_DISCONNECT, "Request status failed"
+			);
+		}
+	}
+
 	/**
 	 * Dispatches a commit, updating the bench repo and performing related tasks.
 	 *
 	 * @param commit the commit
 	 * @param access the repo write access
+	 * @throws de.aaaaaaah.velcom.backend.access.exceptions.ArchiveFailedPermanently if the archiving
+	 * 	fails
+	 * @throws IOException if any other network problem is detected
 	 */
-	public void dispatchCommit(Commit commit, RepoWriteAccess access) {
-		switchState(new PreparingRunnerForWorkState(commit, access));
-	}
-
-	/**
-	 * Goes back to the idle state.
-	 */
-	public void backToIdle() {
-		if (getState().getStatus() != RunnerStatusEnum.IDLE) {
-			switchState(new RunnerIdleState());
-		}
+	public void dispatchCommit(Commit commit, RepoWriteAccess access) throws IOException {
+		runnerInformation.getRunnerInformation().ifPresent(information -> {
+			runnerInformation.setRunnerInformation(new RunnerInformation(
+				information.getName(),
+				information.getOperatingSystem(),
+				information.getCoreCount(),
+				information.getAvailableMemory(),
+				RunnerStatusEnum.PREPARING_WORK,
+				information.getCurrentBenchmarkRepoHash().orElse(null),
+				information.getResults()
+			));
+		});
+		new RunnerWorkSender(commit, access).sendWork(runnerInformation);
 	}
 
 	/**
@@ -187,19 +196,5 @@ public class ServerRunnerStateMachine {
 			// TODO: 12.01.20 Make nicer catch
 			throw new IOException(e);
 		}
-
-		// TODO: Update the stored repo hash. Could also force a disconnect or re-send the
-		//       information?
-		runnerInformation.getRunnerInformation()
-			.ifPresent(infos -> runnerInformation.setRunnerInformation(
-				new RunnerInformation(
-					infos.getName(),
-					infos.getOperatingSystem(),
-					infos.getCoreCount(),
-					infos.getAvailableMemory(),
-					infos.getRunnerState(),
-					repoHeadHash
-				)
-			));
 	}
 }

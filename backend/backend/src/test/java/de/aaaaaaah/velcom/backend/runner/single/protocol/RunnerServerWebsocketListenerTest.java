@@ -17,7 +17,6 @@ import de.aaaaaaah.velcom.runner.shared.protocol.serialization.Serializer;
 import de.aaaaaaah.velcom.runner.shared.protocol.serialization.SimpleJsonSerializer;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkResults;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.RunnerInformation;
-import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.WorkReceived;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.UUID;
@@ -62,15 +61,8 @@ class RunnerServerWebsocketListenerTest {
 	@Test
 	void forwardsRunnerInformation() {
 		verifyForwardedEntity(new RunnerInformation(
-			"dsd", "OS", 20, 10, RunnerStatusEnum.IDLE, "dfsds"
-		));
-	}
-
-	@Test
-	void forwardsWorkReceived() {
-		verifyForwardedEntity(new WorkReceived(
-			new RunnerWorkOrder(UUID.randomUUID(), "ds")
-		));
+			"dsd", "OS", 20, 10, RunnerStatusEnum.IDLE, "dfsds",
+			null));
 	}
 
 	@Test

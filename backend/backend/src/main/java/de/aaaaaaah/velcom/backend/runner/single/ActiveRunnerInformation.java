@@ -2,7 +2,6 @@ package de.aaaaaaah.velcom.backend.runner.single;
 
 import de.aaaaaaah.velcom.backend.access.entities.Commit;
 import de.aaaaaaah.velcom.runner.shared.RunnerStatusEnum;
-import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkResults;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.RunnerInformation;
 import java.time.Instant;
 import java.util.Objects;
@@ -15,14 +14,12 @@ import java.util.function.IntConsumer;
  */
 public class ActiveRunnerInformation {
 
-	private RunnerConnectionManager connectionManager;
-	private ServerRunnerStateMachine runnerStateMachine;
+	private final RunnerConnectionManager connectionManager;
+	private final ServerRunnerStateMachine runnerStateMachine;
 
 	private RunnerInformation runnerInformation;
 
-	private Consumer<BenchmarkResults> resultListener;
 	private Consumer<RunnerInformation> runnerInformationListener;
-	private Runnable idleListener;
 	private IntConsumer disconnectedListener;
 
 	private Commit currentCommit;
@@ -40,13 +37,10 @@ public class ActiveRunnerInformation {
 		this.runnerStateMachine = runnerStateMachine;
 		this.lastReceivedMessage = Instant.now();
 
-		this.resultListener = it -> {
-		};
 		this.disconnectedListener = (statusCode) -> {
 		};
-		this.idleListener = () -> {
-		};
-		this.runnerInformationListener = ignored -> {
+		this.runnerInformationListener = (information) -> {
+
 		};
 	}
 
@@ -57,6 +51,10 @@ public class ActiveRunnerInformation {
 	 */
 	public Optional<RunnerInformation> getRunnerInformation() {
 		return Optional.ofNullable(runnerInformation);
+	}
+
+	public void setRunnerInformationListener(Consumer<RunnerInformation> runnerInformationListener) {
+		this.runnerInformationListener = runnerInformationListener;
 	}
 
 	/**
@@ -73,7 +71,7 @@ public class ActiveRunnerInformation {
 	 * @return the current runner state
 	 */
 	public RunnerStatusEnum getState() {
-		return runnerStateMachine.getState().getStatus();
+		return runnerInformation.getRunnerState();
 	}
 
 	/**
@@ -104,46 +102,12 @@ public class ActiveRunnerInformation {
 	}
 
 	/**
-	 * Marks the runner as idle.
-	 */
-	public void setIdle() {
-		idleListener.run();
-	}
-
-	/**
 	 * Sets the listener for disconnections.
 	 *
 	 * @param listener the listener. Receives the status code as a parameter.
 	 */
 	public void setOnDisconnected(IntConsumer listener) {
 		this.disconnectedListener = listener;
-	}
-
-	/**
-	 * Sets the listener to call when the runner switches to idle.
-	 *
-	 * @param idleListener the idle listener
-	 */
-	public void setOnIdle(Runnable idleListener) {
-		this.idleListener = idleListener;
-	}
-
-	/**
-	 * Sets the listener to call when the {@link RunnerInformation} are set or updated.
-	 *
-	 * @param listener the listener
-	 */
-	public void setOnRunnerInformation(Consumer<RunnerInformation> listener) {
-		this.runnerInformationListener = listener;
-	}
-
-	/**
-	 * Sets the listener for results.
-	 *
-	 * @param listener the listener
-	 */
-	public void setResultListener(Consumer<BenchmarkResults> listener) {
-		this.resultListener = listener;
 	}
 
 	/**
@@ -171,15 +135,6 @@ public class ActiveRunnerInformation {
 	 */
 	public void setDisconnected(int statusCode) {
 		disconnectedListener.accept(statusCode);
-	}
-
-	/**
-	 * Sets the last results.
-	 *
-	 * @param results the last results
-	 */
-	void setResults(BenchmarkResults results) {
-		this.resultListener.accept(results);
 	}
 
 	/**

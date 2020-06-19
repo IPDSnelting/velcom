@@ -17,6 +17,7 @@ public class RunnerInformation implements SentEntity {
 	private final long availableMemory;
 	private final RunnerStatusEnum runnerState;
 	private final String currentBenchmarkRepoHash;
+	private final BenchmarkResults results;
 
 	/**
 	 * Creates a new {@link RunnerInformation} packet.
@@ -27,16 +28,19 @@ public class RunnerInformation implements SentEntity {
 	 * @param availableMemory the available memory
 	 * @param runnerState the current state of the runner
 	 * @param currentBenchmarkRepoHash the current hash of the benchmark repository. May be null.
+	 * @param results the benchmark results, if any
 	 */
 	@JsonCreator
 	public RunnerInformation(String name, String operatingSystem, int coreCount,
-		long availableMemory, RunnerStatusEnum runnerState, String currentBenchmarkRepoHash) {
+		long availableMemory, RunnerStatusEnum runnerState, String currentBenchmarkRepoHash,
+		BenchmarkResults results) {
 		this.name = name;
 		this.operatingSystem = operatingSystem;
 		this.coreCount = coreCount;
 		this.availableMemory = availableMemory;
 		this.runnerState = runnerState;
 		this.currentBenchmarkRepoHash = currentBenchmarkRepoHash;
+		this.results = results;
 	}
 
 	/**
@@ -91,6 +95,15 @@ public class RunnerInformation implements SentEntity {
 	 */
 	public Optional<String> getCurrentBenchmarkRepoHash() {
 		return Optional.ofNullable(currentBenchmarkRepoHash);
+	}
+
+	/**
+	 * Returns the benchmark results.
+	 *
+	 * @return the becnhmark results
+	 */
+	public BenchmarkResults getResults() {
+		return results;
 	}
 
 	@Override

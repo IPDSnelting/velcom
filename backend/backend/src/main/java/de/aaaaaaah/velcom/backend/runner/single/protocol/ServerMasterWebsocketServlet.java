@@ -52,7 +52,7 @@ public class ServerMasterWebsocketServlet extends WebSocketServlet {
 				LOGGER.info("Runner from {} failed authentication!", req.getRemoteAddress());
 				return null;
 			}
-			ServerRunnerStateMachine stateMachine = new ServerRunnerStateMachine();
+			ServerRunnerStateMachine stateMachine = new ServerRunnerStateMachine(dispatcher);
 			RunnerServerWebsocketListener listener = new RunnerServerWebsocketListener(
 				serializer
 			);
@@ -61,8 +61,6 @@ public class ServerMasterWebsocketServlet extends WebSocketServlet {
 			);
 
 			listener.setRunnerInformation(runnerInformation);
-
-			dispatcher.addRunner(runnerInformation);
 
 			return listener;
 		});

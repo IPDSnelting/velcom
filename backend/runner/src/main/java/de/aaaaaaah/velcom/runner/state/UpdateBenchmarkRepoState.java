@@ -13,7 +13,7 @@ import java.nio.file.Path;
  */
 public class UpdateBenchmarkRepoState implements RunnerState {
 
-	private String newRepoHeadHash;
+	private final String newRepoHeadHash;
 
 	/**
 	 * Creates a new state.
@@ -43,6 +43,6 @@ public class UpdateBenchmarkRepoState implements RunnerState {
 
 		FileHelper.deleteDirectoryOrFile(tempDirectory);
 		FileHelper.deleteDirectoryOrFile(path);
-		return new IdleState();
+		return new IdleState(false);
 	}
 }

@@ -1,7 +1,5 @@
 package de.aaaaaaah.velcom.backend.runner;
 
-import static java.util.function.Predicate.not;
-
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
@@ -19,7 +17,6 @@ import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.runner.single.ActiveRunnerInformation;
 import de.aaaaaaah.velcom.runner.shared.RunnerStatusEnum;
 import de.aaaaaaah.velcom.runner.shared.protocol.StatusCodeMappings;
-import de.aaaaaaah.velcom.runner.shared.protocol.runnerbound.entities.RunnerWorkOrder;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkResults;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkResults.Benchmark;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkResults.Metric;
@@ -40,8 +37,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,6 +54,7 @@ public class DispatcherImpl implements Dispatcher {
 	private final BenchmarkWriteAccess benchmarkAccess;
 	private final Duration allowedRunnerDisconnectTime;
 	private final java.util.Queue<ActiveRunnerInformation> freeRunners;
+	@SuppressWarnings("FieldCanBeLocal") // Keep a strong reference to it
 	private final ScheduledExecutorService watchdogPool;
 	private final ExecutorService dispatcherExecutorPool;
 	private final Histogram durationsHistogram;
@@ -69,8 +65,8 @@ public class DispatcherImpl implements Dispatcher {
 	 * @param queue the queue to register to
 	 * @param repoAccess the repo access to use for fetching repositories
 	 * @param benchmarkAccess the benchmark access to store results in
-	 * @param allowedRunnerDisconnectTime the duration runners might be disconnected for before
-	 * 	they are given up on (removed and commit rescheduled)
+	 * @param allowedRunnerDisconnectTime the duration runners might be disconnected for before they
+	 * 	are given up on (removed and commit rescheduled)
 	 */
 	public DispatcherImpl(Queue queue, RepoWriteAccess repoAccess,
 		BenchmarkWriteAccess benchmarkAccess, Duration allowedRunnerDisconnectTime) {
@@ -85,6 +81,16 @@ public class DispatcherImpl implements Dispatcher {
 
 		queue.onSomethingAborted(task -> abort(task.getSecond(), task.getFirst()));
 		queue.onSomethingAdded(it -> dispatcherExecutorPool.submit(this::updateDispatching));
+
+		watchdogPool.scheduleAtFixedRate(
+			() -> {
+				LOGGER.info("Requesting update for runners");
+				activeRunners.forEach(runner -> runner.getRunnerStateMachine().requestStatusUpdate());
+			},
+			10,
+			10,
+			TimeUnit.SECONDS
+		);
 
 		watchdogPool.scheduleAtFixedRate(
 			this::cleanupCrashedRunners,
@@ -132,102 +138,27 @@ public class DispatcherImpl implements Dispatcher {
 
 	@Override
 	public void addRunner(ActiveRunnerInformation runnerInformation) {
-		AtomicBoolean initialConnect = new AtomicBoolean(true);
-		AtomicReference<BenchmarkResults> lastResults = new AtomicReference<>();
+		if (runnerInformation.getRunnerInformation().isEmpty()) {
+			throw new IllegalArgumentException("Runner info has no actual information");
+		}
 
-		runnerInformation.setOnRunnerInformation(newInformation -> {
-			boolean isWorking = newInformation.getRunnerState() == RunnerStatusEnum.WORKING;
+		RunnerInformation information = runnerInformation.getRunnerInformation().get();
+		disconnectRemoveRunnerByName(information.getName()).forEach(queue::addTask);
 
-			// the initialConnect is not needed atm, as the information is only transmitted at
-			// startup. But that might change in the future and people will not look in this class
-			// to fix it.
-			boolean isInitialConnect = initialConnect.getAndSet(false);
-
-			if (isInitialConnect) {
-				// 1. Kick runners with same name, re-adding their commits to the queue
-				// 2. Check if the runner says it is working but no commits were leftover from
-				//    the previous runner incarnation (after a hard disconnect)
-				// 3. If that was the case, reset the runner as the commit was probably aborted
-				//    as the dispatcher does not know about it
-				// 4. Add the runner to the managed activeRunners list
-
-				List<Commit> lastCommits = disconnectRemoveRunnerByName(newInformation.getName());
-
-				if (isWorking && lastCommits.isEmpty()) {
-					resetRunner(runnerInformation, StatusCodeMappings.NOT_WORKING_DISCARD_RESULTS);
-				}
-				// Runner doesn't even know it should be working
-				// Or it has finished its work and we will get a dedicated result packet soon
-				if (isWorking && !lastCommits.isEmpty()) {
-					// Give the runner a 1 second grace period in which it can send the results
-					watchdogPool.schedule(() -> {
-						// We got no results -> Re-benchmark all commits the runner should have been
-						// running
-						if (lastResults.get() == null) {
-							lastCommits.forEach(queue::addCommit);
-							return;
-						}
-						// Add all commits we did not get any results for to the queue
-						RunnerWorkOrder workOrder = lastResults.get().getWorkOrder();
-						lastCommits.stream()
-							.filter(not(it ->
-								it.getHash().getHash().equals(workOrder.getCommitHash())
-									&& it.getRepoId().getId().equals(workOrder.getRepoId())
-							))
-							.forEach(queue::addCommit);
-					}, 1, TimeUnit.SECONDS);
-				} else if (!lastCommits.isEmpty()) {
-					lastCommits.forEach(queue::addCommit);
-				}
-				activeRunners.add(runnerInformation);
-				LOGGER.info("Finished adding a runner {}.", newInformation);
-			} else {
-				RunnerStatusEnum newState = newInformation.getRunnerState();
-				if (newState == RunnerStatusEnum.WORKING
-					|| newState == RunnerStatusEnum.PREPARING_WORK) {
-					if (runnerInformation.getCurrentCommit().isEmpty()) {
-						LOGGER.info("Runner reconnected as working without a commit, resetting...");
-						resetRunner(
-							runnerInformation,
-							StatusCodeMappings.NOT_WORKING_DISCARD_RESULTS
-						);
-					}
-				} else if (newState == RunnerStatusEnum.IDLE) {
-					if (runnerInformation.getState() == RunnerStatusEnum.PREPARING_WORK) {
-						LOGGER.info("Idling runner hopefully came back from updating its repo.");
-					} else if (runnerInformation.getCurrentCommit().isPresent()) {
-						LOGGER.info("Runner reconnected and forgot about its commit");
-						// Re-adds it to the queue and disconnects the runner
-						disconnectRemoveRunnerByInformation(runnerInformation);
-					} else {
-						LOGGER.info(
-							"Got idle information (maybe after reset), accepting the runner."
-						);
-						runnerInformation.getRunnerStateMachine().backToIdle();
-					}
-				} else if (runnerInformation.getCurrentCommit().isPresent()) {
-					LOGGER.info("Runner reconnected and forgot about its commit");
-					disconnectRemoveRunnerByInformation(runnerInformation);
-				}
-			}
-		});
-		runnerInformation.setOnIdle(() -> {
-			freeRunners.add(runnerInformation);
-			dispatcherExecutorPool.submit(this::updateDispatching);
-		});
+		activeRunners.add(runnerInformation);
 		runnerInformation.setOnDisconnected(value -> {
 			if (value == StatusCodeMappings.CLIENT_ORDERLY_DISCONNECT) {
 				LOGGER.debug("Runner exited properly. Removing it without grace period.");
 				disconnectRemoveRunnerByInformation(runnerInformation);
 			}
 		});
-		runnerInformation.setResultListener(
-			results -> {
-				lastResults.set(results);
-				this.onResultsReceived(runnerInformation, results);
-			}
-		);
 		LOGGER.debug("Got add request for a runner {}", runnerInformation);
+	}
+
+	@Override
+	public void runnerAvailable(ActiveRunnerInformation runnerInformation) {
+		freeRunners.add(runnerInformation);
+		dispatcherExecutorPool.submit(this::updateDispatching);
 	}
 
 	/**
@@ -352,7 +283,7 @@ public class DispatcherImpl implements Dispatcher {
 		}
 	}
 
-	private void onResultsReceived(ActiveRunnerInformation runner, BenchmarkResults results) {
+	public void onResultsReceived(ActiveRunnerInformation runner, BenchmarkResults results) {
 		LOGGER.debug("Received runner results from {}", runner.getRunnerInformation());
 
 		RepoId repoId = new RepoId(results.getWorkOrder().getRepoId());

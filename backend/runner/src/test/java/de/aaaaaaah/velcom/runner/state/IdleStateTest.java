@@ -3,7 +3,6 @@ package de.aaaaaaah.velcom.runner.state;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -14,7 +13,6 @@ import de.aaaaaaah.velcom.runner.entity.WorkExecutor;
 import de.aaaaaaah.velcom.runner.protocol.SocketConnectionManager;
 import de.aaaaaaah.velcom.runner.shared.RunnerStatusEnum;
 import de.aaaaaaah.velcom.runner.shared.protocol.runnerbound.entities.RunnerWorkOrder;
-import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.WorkReceived;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.UUID;
@@ -69,7 +67,6 @@ class IdleStateTest {
 
 		Thread.sleep(200);
 
-		verify(connectionManager).sendEntity(eq(new WorkReceived(workOrder)));
 		verify(workExecutor, never()).startExecution(any(), any(), any(), anyInt());
 	}
 

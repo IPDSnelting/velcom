@@ -7,9 +7,10 @@ import de.aaaaaaah.velcom.runner.shared.protocol.HeartbeatHandler.HeartbeatWebso
 import de.aaaaaaah.velcom.runner.shared.protocol.SentEntity;
 import de.aaaaaaah.velcom.runner.shared.protocol.StatusCodeMappings;
 import de.aaaaaaah.velcom.runner.shared.protocol.serialization.Serializer;
+import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkDone;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkResults;
+import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.ReadyForWork;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.RunnerInformation;
-import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.WorkReceived;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
@@ -31,10 +32,10 @@ public class RunnerServerWebsocketListener implements WebSocketListener, WebSock
 	private static final Logger LOGGER = LoggerFactory.getLogger(
 		RunnerServerWebsocketListener.class);
 
-	private HeartbeatHandler heartbeatHandler;
+	private final HeartbeatHandler heartbeatHandler;
 	private Session session;
 	private ActiveRunnerInformation runnerInformation;
-	private Serializer serializer;
+	private final Serializer serializer;
 
 	/**
 	 * Creates a new websocket listener.
@@ -70,11 +71,14 @@ public class RunnerServerWebsocketListener implements WebSocketListener, WebSock
 		SentEntity entity;
 		String type = serializer.peekType(message);
 		switch (type) {
-			case "WorkReceived":
-				entity = serializer.deserialize(message, WorkReceived.class);
-				break;
 			case "BenchmarkResults":
 				entity = serializer.deserialize(message, BenchmarkResults.class);
+				break;
+			case "BenchmarkDone":
+				entity = serializer.deserialize(message, BenchmarkDone.class);
+				break;
+			case "ReadyForWork":
+				entity = serializer.deserialize(message, ReadyForWork.class);
 				break;
 			case "RunnerInformation":
 				entity = serializer.deserialize(message, RunnerInformation.class);

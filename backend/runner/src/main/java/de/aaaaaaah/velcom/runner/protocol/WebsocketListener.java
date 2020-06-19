@@ -93,6 +93,12 @@ public class WebsocketListener implements WebSocket.Listener, SocketConnectionMa
 				flushTextBuffer();
 				try {
 					switch (configuration.getSerializer().peekType(request)) {
+						case "RequestResults":
+							configuration.getRunnerStateMachine().onResultsRequested(configuration);
+							break;
+							case "RequestStatus":
+							configuration.getRunnerStateMachine().onStatusRequested(configuration);
+							break;
 						case "RunnerWorkOrder":
 							configuration.getRunnerStateMachine().onWorkArrived(
 								configuration.getSerializer()

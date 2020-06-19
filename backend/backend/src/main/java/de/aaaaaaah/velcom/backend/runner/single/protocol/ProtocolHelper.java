@@ -24,7 +24,9 @@ public class ProtocolHelper {
 	 */
 	public static void sendObject(Session session, SentEntity object, Serializer serializer)
 		throws IOException {
-		session.getRemote().sendString(serializer.serialize(object));
+		String serialize = serializer.serialize(object);
+		System.out.println("Sending " + serialize);
+		session.getRemote().sendString(serialize);
 	}
 
 	/**

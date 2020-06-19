@@ -4,10 +4,13 @@ import de.aaaaaaah.velcom.runner.entity.RunnerConfiguration;
 import de.aaaaaaah.velcom.runner.entity.WorkExecutor.AbortionResult;
 import de.aaaaaaah.velcom.runner.shared.protocol.StatusCodeMappings;
 import de.aaaaaaah.velcom.runner.shared.protocol.runnerbound.entities.RunnerWorkOrder;
+import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkDone;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkResults;
+import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.ReadyForWork;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.RunnerInformation;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,13 +22,14 @@ public class RunnerStateMachine {
 	private static final Logger LOGGER = LoggerFactory.getLogger(RunnerStateMachine.class);
 
 	private RunnerState state;
-	private BenchmarkResults lastResults;
+	private final AtomicReference<BenchmarkResults> lastResults;
 
 	/**
 	 * Creates a new state machine.
 	 */
 	public RunnerStateMachine() {
 		this.state = new IdleState();
+		this.lastResults = new AtomicReference<>();
 	}
 
 	/**
@@ -38,8 +42,7 @@ public class RunnerStateMachine {
 			() -> {
 				LOGGER.info("Established connection with status {}", state.getStatus());
 				sendRunnerInformation(configuration);
-				sendResultsIfAny(configuration);
-				return state;
+				return new IdleState();
 			},
 			configuration
 		);
@@ -64,7 +67,8 @@ public class RunnerStateMachine {
 			Runtime.getRuntime().availableProcessors(),
 			Runtime.getRuntime().maxMemory(),
 			state.getStatus(),
-			configuration.getBenchmarkRepoOrganizer().getHeadHash().orElse(null)
+			configuration.getBenchmarkRepoOrganizer().getHeadHash().orElse(null),
+			lastResults.get()
 		));
 	}
 
@@ -107,7 +111,7 @@ public class RunnerStateMachine {
 
 		if (abortionResult == AbortionResult.CANCEL_RIGHT_NOW) {
 			if (StatusCodeMappings.discardResults(reason)) {
-				lastResults = null;
+				lastResults.set(null);
 			}
 			LOGGER.info("Abort already done, starting to idle!");
 			doWithErrorAndSwitch(IdleState::new, configuration);
@@ -123,15 +127,11 @@ public class RunnerStateMachine {
 	 * @param configuration the runner configuration
 	 */
 	public void onWorkDone(BenchmarkResults results, RunnerConfiguration configuration) {
+		this.lastResults.set(results);
 		doWithErrorAndSwitch(
 			() -> {
-				this.lastResults = results;
-				sendResultsIfAny(configuration);
-				if (!(state instanceof IdleState)) {
-					return new IdleState();
-				}
-				LOGGER.info("Resuing existing idle state...");
-				return state;
+				configuration.getConnectionManager().sendEntity(new BenchmarkDone());
+				return new IdleState();
 			},
 			configuration
 		);
@@ -145,6 +145,20 @@ public class RunnerStateMachine {
 	 */
 	public void onUpdateBenchmarkRepo(String newCommitHash, RunnerConfiguration configuration) {
 		doWithErrorAndSwitch(() -> new UpdateBenchmarkRepoState(newCommitHash), configuration);
+	}
+
+	public void onResultsRequested(RunnerConfiguration configuration) {
+		BenchmarkResults results = this.lastResults.getAndSet(null);
+		if (results != null) {
+			doWithError(
+				() -> configuration.getConnectionManager().sendEntity(results),
+				configuration
+			);
+		}
+	}
+
+	public void onStatusRequested(RunnerConfiguration configuration) {
+		doWithError(() -> sendRunnerInformation(configuration), configuration);
 	}
 
 	/**
@@ -161,15 +175,6 @@ public class RunnerStateMachine {
 		}
 	}
 
-
-	private void sendResultsIfAny(RunnerConfiguration configuration) throws IOException {
-		if (lastResults != null && configuration.getConnectionManager().isConnected()) {
-			LOGGER.info("Sending results...");
-			configuration.getConnectionManager().sendEntity(lastResults);
-			lastResults = null;
-		}
-	}
-
 	private void doWithErrorAndSwitch(IOErrorCallable action, RunnerConfiguration configuration) {
 		try {
 			RunnerState newState = action.run();
@@ -178,13 +183,20 @@ public class RunnerStateMachine {
 			if (newState != state) {
 				LOGGER.debug("Switching from {} to {}", state, newState);
 				this.state = newState;
+				newState.onSelected(configuration);
 			}
-			if (newState instanceof IdleState) {
-				sendRunnerInformation(configuration);
-			}
-			newState.onSelected(configuration);
 		} catch (Exception e) {
 			LOGGER.warn("Got an exception while switching stages. Disconnecting myself!", e);
+			state = new IdleState();
+			configuration.getConnectionManager().disconnect();
+		}
+	}
+
+	private void doWithError(IOErrorRunnable action, RunnerConfiguration configuration) {
+		try {
+			action.run();
+		} catch (Exception e) {
+			LOGGER.warn("Got an exception while executing something. Disconnecting myself!", e);
 			configuration.getConnectionManager().disconnect();
 		}
 	}
@@ -192,5 +204,10 @@ public class RunnerStateMachine {
 	private interface IOErrorCallable {
 
 		RunnerState run() throws IOException;
+	}
+
+	private interface IOErrorRunnable {
+
+		void run() throws IOException;
 	}
 }

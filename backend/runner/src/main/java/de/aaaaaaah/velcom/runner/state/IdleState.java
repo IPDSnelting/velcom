@@ -3,21 +3,49 @@ package de.aaaaaaah.velcom.runner.state;
 import de.aaaaaaah.velcom.runner.entity.RunnerConfiguration;
 import de.aaaaaaah.velcom.runner.shared.RunnerStatusEnum;
 import de.aaaaaaah.velcom.runner.shared.protocol.runnerbound.entities.RunnerWorkOrder;
-import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.WorkReceived;
+import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.ReadyForWork;
 import de.aaaaaaah.velcom.runner.shared.util.compression.FileHelper;
 import java.io.IOException;
 import java.nio.file.Path;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The runner is idling or receiving work.
  */
 public class IdleState implements RunnerState {
 
+	private static final Logger LOGGER = LoggerFactory.getLogger(IdleState.class);
+
+	private final boolean broadcastAvailability;
+
 	private RunnerWorkOrder workOrder;
+
+	public IdleState() {
+		this(true);
+	}
+
+	public IdleState(boolean broadcastAvailability) {
+		this.broadcastAvailability = broadcastAvailability;
+	}
 
 	@Override
 	public RunnerStatusEnum getStatus() {
 		return workOrder != null ? RunnerStatusEnum.PREPARING_WORK : RunnerStatusEnum.IDLE;
+	}
+
+	@Override
+	public void onSelected(RunnerConfiguration configuration) {
+		if (broadcastAvailability) {
+			try {
+				configuration.getConnectionManager().sendEntity(new ReadyForWork());
+			} catch (IOException e) {
+				LOGGER.info("Could not send ready for work", e);
+				configuration.getConnectionManager().disconnect();
+			}
+		} else {
+			LOGGER.info("Keeping work for myself");
+		}
 	}
 
 	@Override
@@ -35,12 +63,6 @@ public class IdleState implements RunnerState {
 			throw new IllegalStateException("Got a file without any work order first!");
 		}
 		FileHelper.deleteOnExit(path);
-		try {
-			configuration.getConnectionManager()
-				.sendEntity(new WorkReceived(workOrder));
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
 		return new ExecutingState(
 			path,
 			workOrder,
