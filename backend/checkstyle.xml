@@ -22,8 +22,8 @@
     <module name="JavadocType"/>
 
     <module name="MissingJavadocMethod">
-      <!-- Ignore all getters, setters and constructors by default -->
-      <property name="ignoreMethodNamesRegex" value="^[gs]et[A-Z].*$"/>
+      <!-- Ignore all getters (including "isBla" getters), setters and constructors by default -->
+      <property name="ignoreMethodNamesRegex" value="^([gs]et|is)[A-Z].*$"/>
       <property name="tokens" value="METHOD_DEF, ANNOTATION_FIELD_DEF"/>
     </module>
 
