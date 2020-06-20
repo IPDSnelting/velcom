@@ -17,7 +17,7 @@ import net.jbock.Param;
 public abstract class RunnerCliSpec {
 
 	/**
-	 * The location to the config file
+	 * The path to the config file
 	 */
 	@Param(value = 1, mappedBy = ConfigFilePathMapper.class)
 	public abstract Path configFileLocation();

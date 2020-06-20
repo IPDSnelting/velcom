@@ -7,6 +7,7 @@ import de.aaaaaaah.velcom.runner.shared.protocol.SentEntity;
  * The server requests the runner status.
  */
 public class RequestStatus implements SentEntity {
+
 	private final String dummy;
 
 	@JsonCreator
