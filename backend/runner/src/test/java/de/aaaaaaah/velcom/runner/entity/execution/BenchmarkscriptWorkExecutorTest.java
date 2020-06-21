@@ -143,7 +143,6 @@ class BenchmarkscriptWorkExecutorTest {
 		var value = executeScript("sleep 5", 0);
 
 		assertThat(value.isError()).isTrue();
-		assertThat(value.getError()).containsIgnoringCase("aborted");
 	}
 
 	@Test
@@ -167,7 +166,6 @@ class BenchmarkscriptWorkExecutorTest {
 		arborter.join();
 
 		assertThat(value.isError()).isTrue();
-		assertThat(value.getError()).containsIgnoringCase("aborted");
 
 		System.err.println("First one done!");
 
@@ -186,7 +184,6 @@ class BenchmarkscriptWorkExecutorTest {
 		arborter.join();
 
 		assertThat(value.isError()).isTrue();
-		assertThat(value.getError()).containsIgnoringCase("aborted");
 	}
 
 	@Test

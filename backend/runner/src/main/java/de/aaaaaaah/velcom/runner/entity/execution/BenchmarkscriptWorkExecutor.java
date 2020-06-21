@@ -7,9 +7,8 @@ import de.aaaaaaah.velcom.runner.entity.WorkExecutor;
 import de.aaaaaaah.velcom.runner.entity.execution.output.BenchmarkScriptOutputParser;
 import de.aaaaaaah.velcom.runner.entity.execution.output.BenchmarkScriptOutputParser.BareResult;
 import de.aaaaaaah.velcom.runner.entity.execution.output.OutputParseException;
-import de.aaaaaaah.velcom.runner.shared.ProgramExecutor;
-import de.aaaaaaah.velcom.runner.shared.ProgramExecutor.FutureProgramResult;
-import de.aaaaaaah.velcom.runner.shared.ProgramExecutor.ProgramResult;
+import de.aaaaaaah.velcom.runner.shared.util.execution.ProgramExecutor;
+import de.aaaaaaah.velcom.runner.shared.util.execution.ProgramResult;
 import de.aaaaaaah.velcom.runner.shared.protocol.StatusCodeMappings;
 import de.aaaaaaah.velcom.runner.shared.protocol.exceptions.ProgramCancelledException;
 import de.aaaaaaah.velcom.runner.shared.protocol.runnerbound.entities.RunnerWorkOrder;
@@ -21,6 +20,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +33,7 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 	private static final Logger LOGGER = LoggerFactory.getLogger(BenchmarkscriptWorkExecutor.class);
 
 	private final BenchmarkScriptOutputParser benchmarkScriptOutputParser;
-	private FutureProgramResult programResult;
+	private Future<ProgramResult> programResult;
 	private AtomicInteger currentWorkIdentifier;
 
 	public BenchmarkscriptWorkExecutor() {
@@ -46,7 +46,7 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 		currentWorkIdentifier.incrementAndGet();
 
 		if (programResult != null && !programResult.isDone()) {
-			programResult.cancel(reason);
+			programResult.cancel(true);
 			return AbortionResult.CANCEL_IN_FUTURE;
 		}
 		return AbortionResult.CANCEL_RIGHT_NOW;

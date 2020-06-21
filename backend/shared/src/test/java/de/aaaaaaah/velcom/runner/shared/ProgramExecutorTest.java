@@ -3,30 +3,35 @@ package de.aaaaaaah.velcom.runner.shared;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import de.aaaaaaah.velcom.runner.shared.ProgramExecutor.FutureProgramResult;
-import de.aaaaaaah.velcom.runner.shared.ProgramExecutor.ProgramResult;
-import de.aaaaaaah.velcom.runner.shared.protocol.exceptions.ProgramCancelledException;
+import de.aaaaaaah.velcom.runner.shared.util.execution.ProgramExecutor;
+import de.aaaaaaah.velcom.runner.shared.util.execution.ProgramResult;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class ProgramExecutorTest {
 
 	private ProgramExecutor programExecutor;
+	private final int timeToForceKillMillis = 2000;
 
 	@BeforeEach
 	void setUp() {
-		programExecutor = new ProgramExecutor(100);
+		programExecutor = new ProgramExecutor(timeToForceKillMillis);
 	}
 
 	@Test
-	void capturesExitCode() throws InterruptedException {
+	void capturesExitCode() throws ExecutionException, InterruptedException {
 		ProgramResult result = programExecutor.execute("/usr/bin/env", "bash", "-c", "exit 120")
 			.get();
 		assertThat(result.getExitCode()).isEqualTo(120);
 	}
 
 	@Test
-	void capturesStandardOutput() throws InterruptedException {
+	void capturesStandardOutput() throws ExecutionException, InterruptedException {
 		String output = "HEY you there\nMy äöß‡friend";
 		ProgramResult result = programExecutor.execute(
 			"/usr/bin/env", "bash", "-c", "echo -ne '" + output + "'"
@@ -37,7 +42,7 @@ class ProgramExecutorTest {
 	}
 
 	@Test
-	void capturesStandardError() throws InterruptedException {
+	void capturesStandardError() throws ExecutionException, InterruptedException {
 		String output = "HEY you there\nMy äöß‡friend";
 		ProgramResult result = programExecutor.execute(
 			"/usr/bin/env", "bash", "-c", "echo -ne '" + output + "' 1>&2"
@@ -48,7 +53,7 @@ class ProgramExecutorTest {
 	}
 
 	@Test
-	void drainsStandardOut() throws InterruptedException {
+	void drainsStandardOut() throws ExecutionException, InterruptedException {
 		String output = "Hello".repeat(10_000);
 		ProgramResult result = programExecutor.execute(
 			"/usr/bin/env", "bash", "-c", "echo -ne '" + output + "'"
@@ -67,7 +72,7 @@ class ProgramExecutorTest {
 
 	@Test
 	void gracefullyStopProgram() throws InterruptedException {
-		FutureProgramResult future = programExecutor.execute(
+		Future<ProgramResult> future = programExecutor.execute(
 			"/usr/bin/env", "bash", "-c", "stuff() {\n"
 				+ "    while true ; do\n"
 				+ "        /usr/bin/sleep 1\n"
@@ -78,16 +83,20 @@ class ProgramExecutorTest {
 		);
 		Thread.sleep(100);
 
-		future.cancel("Manual abortion");
-		assertThatThrownBy(future::get)
-			.isInstanceOf(ProgramCancelledException.class)
-			.extracting(o -> ((ProgramCancelledException) o).getReason())
-			.isEqualTo("Manual abortion");
+		future.cancel(true);
+
+		Instant start = Instant.now();
+
+		assertThatThrownBy(future::get).isInstanceOf(CancellationException.class);
+
+		// TODO: 21.06.20 Is this too flaky?
+		assertThat(Duration.between(start, Instant.now()).toMillis())
+			.isLessThan(timeToForceKillMillis);
 	}
 
 	@Test
 	void forcefullyStopProgram() throws InterruptedException {
-		FutureProgramResult future = programExecutor.execute(
+		Future<ProgramResult> future = programExecutor.execute(
 			"/usr/bin/env", "bash", "-c", "stuff() {\n"
 				+ "    while true ; do\n"
 				+ "        /usr/bin/sleep 1\n"
@@ -100,11 +109,14 @@ class ProgramExecutorTest {
 		);
 
 		Thread.sleep(100);
-		future.cancel("Forceful abortion");
+		future.cancel(true);
 
-		assertThatThrownBy(future::get).isInstanceOf(ProgramCancelledException.class)
-			.extracting(o -> ((ProgramCancelledException) o).getReason())
-			.isEqualTo("Forceful abortion");
+		Instant start = Instant.now();
+
+		assertThatThrownBy(future::get).isInstanceOf(CancellationException.class);
+
+		assertThat(Duration.between(start, Instant.now()).toMillis())
+			.isGreaterThanOrEqualTo(timeToForceKillMillis);
 	}
 
 }
