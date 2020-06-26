@@ -8,19 +8,26 @@
     <v-row align="baseline" justify="center">
       <v-col>
         <v-card>
-          <!-- <detail-graph
-            :measurements="selectedMeasurements"
-            :amount="Number.parseInt(amount)"
-            :beginYAtZero="this.yScaleBeginsAtZero"
-            @selectionChanged="updateSelection"
-          ></detail-graph> -->
-          <dytail-graph
-            :measurements="selectedMeasurements"
-            :amount="Number.parseInt(amount)"
-            :beginYAtZero="this.yScaleBeginsAtZero"
-            @selectionChanged="updateSelection"
+          <v-btn
+            v-for="flavour in graphFlavours"
+            v-bind:key="flavour.name"
+            v-bind:class="[
+              'tab-button',
+              { active: currentFlavour.name === flavour.name }
+            ]"
+            v-on:click="currentFlavour = flavour"
           >
-          </dytail-graph>
+            {{ flavour.name }}
+          </v-btn>
+          <keep-alive>
+            <component
+              v-bind:is="currentFlavour.component"
+              :measurements="selectedMeasurements"
+              :amount="Number.parseInt(amount)"
+              :beginYAtZero="this.yScaleBeginsAtZero"
+              @selectionChanged="updateSelection"
+            ></component>
+          </keep-alive>
         </v-card>
       </v-col>
     </v-row>
@@ -212,6 +219,12 @@ import CommitSelectionComponent from '../components/CommitSelectionComponent.vue
 import MeasurementIdSelection from '../components/graphs/MeasurementIdSelection.vue'
 import MatrixMeasurementIdSelection from '../components/graphs/MatrixMeasurementIdSelection.vue'
 import DytailGraph from '../components/graphs/Dygraph-Detail.vue'
+import EchartsGraph from '@/components/graphs/ECharts-Detail.vue'
+
+type graphFlavour = {
+  name: string
+  component: any
+}
 
 @Component({
   components: {
@@ -219,6 +232,7 @@ import DytailGraph from '../components/graphs/Dygraph-Detail.vue'
     'repo-commit-overview': RepoCommitOverview,
     'detail-graph': DetailGraph,
     'dytail-graph': DytailGraph,
+    'echarts-graph': EchartsGraph,
     'commit-chip': CommitChip,
     'commit-selection': CommitSelectionComponent,
     'matrix-measurement-id-selection': MatrixMeasurementIdSelection,
@@ -229,6 +243,23 @@ export default class RepoDetail extends Vue {
   private formValid: boolean = true
 
   private useMatrixSelector: boolean = false
+
+  private graphFlavours: graphFlavour[] = [
+    {
+      name: 'd3',
+      component: DetailGraph
+    },
+    {
+      name: 'dygraphs',
+      component: DytailGraph
+    },
+    {
+      name: 'echarts',
+      component: EchartsGraph
+    }
+  ]
+
+  private currentFlavour: graphFlavour = this.graphFlavours[0]
 
   private get referenceCommit(): string {
     return vxm.repoDetailModule.referenceDatapoint

@@ -4,7 +4,9 @@
       <v-col>
         <datapoint-dialog
           :dialogOpen="datapointDialogOpen"
-          :selectedDatapoint="selectedDatapoint ? selectedDatapoint.commitInfo : null"
+          :selectedDatapoint="
+            selectedDatapoint ? selectedDatapoint.commitInfo : null
+          "
           :commitToCompare="commitToCompare ? commitToCompare.commitInfo : null"
           :allowSelectAsReference="allowSelectAsReference"
           @close="datapointDialogOpen = false"
@@ -13,7 +15,7 @@
           @selectCommitToCompare="commitToCompare = selectedDatapoint"
           @compareCommits="compareCommits"
         ></datapoint-dialog>
-        <div id="chart" :style="{'height': this.height + 'px'}">
+        <div id="chart" :style="{ height: this.height + 'px' }">
           <v-chart
             @click="chartClicked"
             @restore="restored"
@@ -107,7 +109,7 @@ type CommitInfo = {
     'v-chart': EChartsComp
   }
 })
-export default class DetailGraph extends Vue {
+export default class EchartsDetailGraph extends Vue {
   @Prop({})
   measurements!: MeasurementID[]
 
