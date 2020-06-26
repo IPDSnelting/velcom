@@ -8,26 +8,33 @@
     <v-row align="baseline" justify="center">
       <v-col>
         <v-card>
-          <v-btn
-            v-for="flavour in graphFlavours"
-            v-bind:key="flavour.name"
-            v-bind:class="[
-              'tab-button',
-              { active: currentFlavour.name === flavour.name }
-            ]"
-            v-on:click="currentFlavour = flavour"
-          >
-            {{ flavour.name }}
-          </v-btn>
-          <keep-alive>
-            <component
-              v-bind:is="currentFlavour.component"
-              :measurements="selectedMeasurements"
-              :amount="Number.parseInt(amount)"
-              :beginYAtZero="this.yScaleBeginsAtZero"
-              @selectionChanged="updateSelection"
-            ></component>
-          </keep-alive>
+          <v-btn-toggle>
+            <v-btn
+              group
+              tile
+              text
+              v-for="flavour in graphFlavours"
+              v-bind:key="flavour.name"
+              v-bind:class="[
+                'tab-button',
+                { active: currentFlavour.name === flavour.name }
+              ]"
+              v-on:click="currentFlavour = flavour"
+            >
+              {{ flavour.name }}
+            </v-btn>
+          </v-btn-toggle>
+          <v-card flat>
+            <keep-alive>
+              <component
+                v-bind:is="currentFlavour.component"
+                :measurements="selectedMeasurements"
+                :amount="Number.parseInt(amount)"
+                :beginYAtZero="this.yScaleBeginsAtZero"
+                @selectionChanged="updateSelection"
+              ></component>
+            </keep-alive>
+          </v-card>
         </v-card>
       </v-col>
     </v-row>
@@ -223,7 +230,7 @@ import EchartsGraph from '@/components/graphs/ECharts-Detail.vue'
 
 type graphFlavour = {
   name: string
-  component: any
+  component: typeof Vue
 }
 
 @Component({
