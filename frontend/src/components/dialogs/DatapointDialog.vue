@@ -10,7 +10,7 @@
               color="primary"
               text
               outlined
-              @click="emit('setReference')"
+              @click="emit('setReference'); emit('close')"
             >use datapoint as reference</v-btn>
           </v-col>
         </v-row>
@@ -21,7 +21,7 @@
               color="primary"
               text
               outlined
-              @click="emit('selectCommitToCompare')"
+              @click="emit('selectCommitToCompare'); emit('close')"
             >Select this commit to compare</v-btn>
           </v-col>
         </v-row>
@@ -36,7 +36,7 @@
               text
               outlined
               class="reflow-button py-2"
-              @click="emit('compareCommits')"
+              @click="emit('compareCommits'); emit('close')"
             >{{ compareLabel }}</v-btn>
           </v-col>
         </v-row>
@@ -47,7 +47,7 @@
               color="primary"
               text
               outlined
-              @click="emit('removeReference')"
+              @click="emit('removeReference'); emit('close')"
             >remove reference line</v-btn>
           </v-col>
         </v-row>
@@ -87,7 +87,7 @@ export default class DatapointDialog extends Vue {
   selectedDatapoint!: CommitInfo | null
 
   @Prop({})
-  commitToCompare!: CommitInfo
+  commitToCompare!: CommitInfo | null
 
   @Prop({})
   allowSelectAsReference!: boolean
