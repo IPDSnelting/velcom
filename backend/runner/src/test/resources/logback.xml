@@ -2,7 +2,7 @@
 
 <configuration scan="true">
   <!-- Configure my logging level -->
-  <logger name="de.aaaaaaah.velcom" level="WARN"/>
+  <logger name="de.aaaaaaah.velcom.runner" level="WARN"/>
 
   <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
     <encoder>
