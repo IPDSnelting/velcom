@@ -23,6 +23,7 @@ import java.util.UUID;
 import org.jooq.DSLContext;
 import org.jooq.codegen.db.tables.records.RunMeasurementRecord;
 import org.jooq.codegen.db.tables.records.RunRecord;
+import org.jooq.impl.DSL;
 
 public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 
@@ -36,61 +37,71 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 	 * @param run the run to insert
 	 */
 	public void insertRun(Run run) {
-		try (DSLContext db = databaseStorage.acquireContext()) {
-			// 1.) Insert run into database
-			RunRecord runRecord = db.newRecord(RUN);
-			runRecord.setId(run.getId().getId().toString());
-			runRecord.setRepoId(run.getRepoId().getId().toString());
-			runRecord.setCommitHash(run.getCommitHash().getHash());
-			runRecord.setStartTime(Timestamp.from(run.getStartTime()));
-			runRecord.setStopTime(Timestamp.from(run.getStopTime()));
-			runRecord.setErrorMessage(run.getErrorMessage().orElse(null));
+		try (DSLContext initialContext = databaseStorage.acquireContext()) {
+			initialContext.transaction(configuration -> {
+				try (DSLContext transaction = DSL.using(configuration)) {
+					// 1.) Insert run into database
+					RunRecord runRecord = transaction.newRecord(RUN);
+					runRecord.setId(run.getId().getId().toString());
+					runRecord.setRepoId(run.getRepoId().getId().toString());
+					runRecord.setCommitHash(run.getCommitHash().getHash());
+					runRecord.setStartTime(Timestamp.from(run.getStartTime()));
+					runRecord.setStopTime(Timestamp.from(run.getStopTime()));
+					runRecord.setErrorMessage(run.getErrorMessage().orElse(null));
 
-			runRecord.insert();
+					runRecord.insert();
 
-			// 2.) Insert measurements into database
-			if (run.getMeasurements().isPresent()) {
-				Collection<Measurement> measurements = run.getMeasurements().get();
+					// 2.) Insert measurements into database
+					if (run.getMeasurements().isPresent()) {
+						Collection<Measurement> measurements = run.getMeasurements().get();
 
-				for (Measurement measurement : measurements) {
-					String measurementId = UUID.randomUUID().toString();
+						for (Measurement measurement : measurements) {
+							String measurementId = UUID.randomUUID().toString();
 
-					RunMeasurementRecord measurementRecord = db.newRecord(RUN_MEASUREMENT);
-					measurementRecord.setId(measurementId);
-					measurementRecord.setRunId(run.getId().getId().toString());
-					measurementRecord.setBenchmark(measurement.getMeasurementName().getBenchmark());
-					measurementRecord.setMetric(measurement.getMeasurementName().getMetric());
+							RunMeasurementRecord measurementRecord = transaction.newRecord(
+								RUN_MEASUREMENT);
+							measurementRecord.setId(measurementId);
+							measurementRecord.setRunId(run.getId().getId().toString());
+							measurementRecord.setBenchmark(
+								measurement.getMeasurementName().getBenchmark());
+							measurementRecord.setMetric(
+								measurement.getMeasurementName().getMetric());
 
-					if (measurement.getContent().isLeft()) {
-						MeasurementError error = measurement.getContent().getLeft().orElseThrow();
+							if (measurement.getContent().isLeft()) {
+								MeasurementError error = measurement.getContent()
+									.getLeft()
+									.orElseThrow();
 
-						measurementRecord.setErrorMessage(error.getErrorMessage());
-						measurementRecord.insert();
-					} else {
-						MeasurementValues values = measurement.getContent().getRight()
-							.orElseThrow();
+								measurementRecord.setErrorMessage(error.getErrorMessage());
+								measurementRecord.insert();
+							} else {
+								MeasurementValues values = measurement.getContent()
+									.getRight()
+									.orElseThrow();
 
-						measurementRecord.setUnit(values.getUnit().getName());
-						measurementRecord.setInterpretation(
-							values.getInterpretation().getTextualRepresentation()
-						);
-						measurementRecord.insert();
+								measurementRecord.setUnit(values.getUnit().getName());
+								measurementRecord.setInterpretation(
+									values.getInterpretation().getTextualRepresentation()
+								);
+								measurementRecord.insert();
 
-						// 2.1.) Insert values into database
-						var valuesInsertStep = db.insertInto(RUN_MEASUREMENT_VALUE)
-							.columns(
-								RUN_MEASUREMENT_VALUE.MEASUREMENT_ID,
-								RUN_MEASUREMENT_VALUE.VALUE
-							);
+								// 2.1.) Insert values into database
+								var valuesInsertStep = transaction.insertInto(RUN_MEASUREMENT_VALUE)
+									.columns(
+										RUN_MEASUREMENT_VALUE.MEASUREMENT_ID,
+										RUN_MEASUREMENT_VALUE.VALUE
+									);
 
-						values.getValues().forEach(value -> valuesInsertStep.values(
-							measurementId, value
-						));
+								values.getValues().forEach(value -> valuesInsertStep.values(
+									measurementId, value
+								));
 
-						valuesInsertStep.execute();
+								valuesInsertStep.execute();
+							}
+						}
 					}
 				}
-			}
+			});
 
 			// 3.) Insert run into cache
 			synchronized (recentRunCache) {
