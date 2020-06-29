@@ -8,22 +8,33 @@
     <v-row align="baseline" justify="center">
       <v-col>
         <v-card>
-          <v-btn-toggle>
-            <v-btn
-              group
-              tile
-              text
-              v-for="flavour in graphFlavours"
-              v-bind:key="flavour.name"
-              v-bind:class="[
-                'tab-button',
-                { active: currentFlavour.name === flavour.name }
-              ]"
-              v-on:click="currentFlavour = flavour"
-            >
-              {{ flavour.name }}
-            </v-btn>
-          </v-btn-toggle>
+          <v-row align="center" no-gutters>
+            <v-col>
+              <v-btn-toggle>
+                <v-btn
+                  group
+                  tile
+                  text
+                  v-for="flavour in graphFlavours"
+                  v-bind:key="flavour.name"
+                  v-bind:class="[
+                    'tab-button',
+                    { active: currentFlavour.name === flavour.name }
+                  ]"
+                  v-on:click="currentFlavour = flavour"
+                >
+                  {{ flavour.name }}
+                </v-btn>
+              </v-btn-toggle>
+            </v-col>
+            <v-spacer></v-spacer>
+            <v-col>
+              <v-switch
+                v-model="dynamicFlavourSwitching"
+                label="switch dynamically"
+              ></v-switch>
+            </v-col>
+          </v-row>
           <v-card flat>
             <keep-alive>
               <component
@@ -268,6 +279,8 @@ export default class RepoDetail extends Vue {
 
   private currentFlavour: graphFlavour = this.graphFlavours[0]
 
+  private dynamicFlavourSwitching: boolean = true
+
   private get referenceCommit(): string {
     return vxm.repoDetailModule.referenceDatapoint
       ? vxm.repoDetailModule.referenceDatapoint.commit.hash
@@ -468,6 +481,19 @@ export default class RepoDetail extends Vue {
           })
           .join('&')
     )
+  }
+
+  @Watch('selectedMeasurements')
+  @Watch('skip')
+  @Watch('amount')
+  private switchGraphFlavour() {
+    if (this.dynamicFlavourSwitching) {
+      if (Number(this.amount) * this.selectedMeasurements.length >= 20000) {
+        this.currentFlavour = this.graphFlavours[1]
+      } else {
+        this.currentFlavour = this.graphFlavours[2]
+      }
+    }
   }
 
   beforeRouteEnter(
