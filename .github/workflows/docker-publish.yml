@@ -55,7 +55,7 @@ jobs:
     needs: [build]
 
     runs-on: ubuntu-latest
-    if: "github.event_name == 'push' && github.ref == 'refs/heads/develop'"
+    if: "github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/master')"
 
     steps:
       # SETUP
@@ -107,13 +107,13 @@ jobs:
           docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
           docker push $IMAGE_ID:$VERSION
 
-  # Deploy it
+  # Deploy develop branch to velcom.aaaaaaah.de
   deploy:
     # Ensure build job passes before pushing image.
     needs: [push]
 
     runs-on: ubuntu-latest
-    if: github.event_name == 'push'
+    if: "github.event_name == 'push' && github.ref == 'refs/heads/develop'"
 
     env:
       CD_PORT: ${{ secrets.CD_PORT }}
@@ -127,3 +127,22 @@ jobs:
       - name: "Call deploy script"
         run: "bash docs/deploy.sh ${{ github.actor }} ${{ secrets.GITHUB_TOKEN }}"
 
+
+  # Deploy master branch to speedcenter.informatik.kit.edu
+  deploy-kit:
+    # Ensure build job passes before pushing image.
+    needs: [push]
+
+    runs-on: ubuntu-latest
+    if: "github.event_name == 'push' && github.ref == 'refs/heads/master'"
+
+    env:
+      ENDPOINT: ${{ secrets.KIT_DEPLOY_ENDPOINT }}
+      DEPLOY_SECRET: ${{ secrets.KIT_DEPLOY_SECRET }}
+      GITHUB_NAME: ${{ github.actor }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: "Call deploy script"
+        run: "bash docs/deploy-kit.sh"
