@@ -55,7 +55,7 @@ jobs:
     needs: [build]
 
     runs-on: ubuntu-latest
-    if: "github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/master')"
+    if: "github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/kit-deployment')"
 
     steps:
       # SETUP
@@ -72,7 +72,7 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: frontend-artifacts
-          path: dist 
+          path: dist
       - name: "Download backend artifacts"
         uses: actions/download-artifact@v2
         with:
@@ -134,7 +134,7 @@ jobs:
     needs: [push]
 
     runs-on: ubuntu-latest
-    if: "github.event_name == 'push' && github.ref == 'refs/heads/master'"
+    if: "github.event_name == 'push' && github.ref == 'refs/heads/master' || github.ref == 'refs/heads/kit-deployment'"
 
     env:
       ENDPOINT: ${{ secrets.KIT_DEPLOY_ENDPOINT }}
