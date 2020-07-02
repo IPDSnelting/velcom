@@ -10,4 +10,5 @@ wget --ca-certificate=docs/kit-deployment.crt.pem \
      --header "X-Deploy-Secret: ${DEPLOY_SECRET}" \
      --header "X-Github-Name: ${GITHUB_NAME}" \
      --header "X-Github-Token: ${GITHUB_TOKEN}" \
+     --post-data="" \
      ${ENDPOINT}
