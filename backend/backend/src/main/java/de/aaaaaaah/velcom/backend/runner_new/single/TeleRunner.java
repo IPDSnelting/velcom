@@ -1,0 +1,82 @@
+package de.aaaaaaah.velcom.backend.runner_new.single;
+
+import de.aaaaaaah.velcom.backend.runner_new.KnownRunner;
+import de.aaaaaaah.velcom.runner.shared.protocol.serialization.Converter;
+import de.aaaaaaah.velcom.runner.shared.protocol.serialization.serverbound.GetStatusReply;
+import java.util.concurrent.atomic.AtomicReference;
+
+/**
+ * Server side class for a runner.
+ */
+public class TeleRunner {
+
+	private final AtomicReference<GetStatusReply> runnerInformation;
+	private final String runnerName;
+	private final Converter serializer;
+
+	private RunnerConnection connection;
+
+	public TeleRunner(String runnerName, Converter serializer) {
+		this.runnerName = runnerName;
+		this.serializer = serializer;
+		this.runnerInformation = new AtomicReference<>();
+
+		this.connection = createConnection();
+	}
+
+	/**
+	 * Creates a new connection, if none exists.
+	 *
+	 * @return the created connection
+	 * @throws IllegalStateException if this runner already has a connection
+	 */
+	public synchronized RunnerConnection createConnection() throws IllegalStateException {
+		if (connection != null) {
+			throw new IllegalStateException("I already have a connection");
+		}
+		connection = new RunnerConnection(serializer, this);
+		connection.addCloseListener(this::disposeConnection);
+
+		return connection;
+	}
+
+	private void disposeConnection() {
+		synchronized (this) {
+			this.connection = null;
+		}
+	}
+
+	/**
+	 * @return true if this runner has an active connection.
+	 */
+	public synchronized boolean hasConnection() {
+		return connection != null;
+	}
+
+	/**
+	 * Returns the unique name for this runner.
+	 *
+	 * @return the runner name
+	 */
+	public String getRunnerName() {
+		return runnerName;
+	}
+
+	/**
+	 * Sets the runner information.
+	 *
+	 * @param reply the reply
+	 */
+	public void setRunnerInformation(GetStatusReply reply) {
+		runnerInformation.set(reply);
+	}
+
+	/**
+	 * Returns the runner information. This must always be non-null from the moment the runner is
+	 * registered to the dispatcher. The value might be outdated.
+	 */
+	public KnownRunner getRunnerInformation() {
+		GetStatusReply reply = runnerInformation.get();
+		return new KnownRunner(reply.getName(), reply.getInfo(), reply.getState());
+	}
+}
