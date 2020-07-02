@@ -1,9 +1,10 @@
 package de.aaaaaaah.velcom.backend.storage.db;
 
 import de.aaaaaaah.velcom.backend.GlobalConfig;
+import de.aaaaaaah.velcom.backend.util.CheckedConsumer;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.sql.Statement;
+import java.util.Objects;
 import javax.sql.DataSource;
 import org.flywaydb.core.Flyway;
 import org.jooq.DSLContext;
@@ -70,6 +71,25 @@ public class DatabaseStorage {
 	 */
 	public DSLContext acquireContext() {
 		return this.context;
+	}
+
+	/**
+	 * Acquires a transaction and passes the {@link DSLContext} that is associated with the
+	 * transaction to the given handler. If an exception occurs during execution of the handler, the
+	 * transaction will be cancelled and the exception is passed back to the caller of this method.
+	 *
+	 * @param handler the handler used to pass queries to the transaction
+	 */
+	public void acquireTransaction(CheckedConsumer<DSLContext, Throwable> handler) {
+		Objects.requireNonNull(handler);
+
+		try (DSLContext dslContext = this.acquireContext()) {
+			dslContext.transaction(configuration -> {
+				try (DSLContext transactionContext = DSL.using(configuration)) {
+					handler.accept(transactionContext);
+				}
+			});
+		}
 	}
 
 	/**
