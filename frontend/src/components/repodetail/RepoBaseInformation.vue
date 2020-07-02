@@ -4,39 +4,55 @@
       <v-toolbar color="primary darken-1" dark>
         {{ repo.name }}
         <span class="ml-5 subtitle-1">{{ repo.id }}</span>
+        <v-spacer></v-spacer>
+        <v-btn icon @click="showDetails = !showDetails">
+          <v-icon>{{ showDetails ? upIcon : downIcon }}</v-icon>
+        </v-btn>
       </v-toolbar>
     </v-card-title>
-    <v-card-text>
-      <v-container fluid>
-        <v-row align="center">
-          <v-col cols="3" class="subtitle-2">Remote-URL:</v-col>
-          <v-col cols="9">
-            <a :href="repo.remoteURL">{{ repo.remoteURL }}</a>
-          </v-col>
-        </v-row>
-        <v-row align="center">
-          <v-col cols="3" class="subtitle-2">ID:</v-col>
-          <v-col cols="9">{{ repo.id }}</v-col>
-        </v-row>
-        <v-row align="center">
-          <v-col cols="3" class="subtitle-2">Branches:</v-col>
-          <v-col cols="9">
-            <v-tooltip top v-for="(branch, index) in branches" :key="branch + index">
-              <template v-slot:activator="{ on }">
-                <v-chip
-                  :class="{ 'ma-2': true, 'untracked': !isBranchTracked(branch) }"
-                  outlined
-                  label
-                  v-on="on"
-                  :color="isBranchTracked(branch) ? 'success' : undefined"
-                >{{ branch }}</v-chip>
-              </template>
-              {{ isBranchTracked(branch) ? 'Tracked' : 'Not Tracked' }}
-            </v-tooltip>
-          </v-col>
-        </v-row>
-      </v-container>
-    </v-card-text>
+    <v-expand-transition>
+      <div v-show="showDetails">
+        <v-card-text>
+          <v-container fluid>
+            <v-row align="center">
+              <v-col cols="3" class="subtitle-2">Remote-URL:</v-col>
+              <v-col cols="9">
+                <a :href="repo.remoteURL">{{ repo.remoteURL }}</a>
+              </v-col>
+            </v-row>
+            <v-row align="center">
+              <v-col cols="3" class="subtitle-2">ID:</v-col>
+              <v-col cols="9">{{ repo.id }}</v-col>
+            </v-row>
+            <v-row align="center">
+              <v-col cols="3" class="subtitle-2">Branches:</v-col>
+              <v-col cols="9">
+                <v-tooltip
+                  top
+                  v-for="(branch, index) in branches"
+                  :key="branch + index"
+                >
+                  <template v-slot:activator="{ on }">
+                    <v-chip
+                      :class="{
+                        'ma-2': true,
+                        untracked: !isBranchTracked(branch)
+                      }"
+                      outlined
+                      label
+                      v-on="on"
+                      :color="isBranchTracked(branch) ? 'success' : undefined"
+                      >{{ branch }}</v-chip
+                    >
+                  </template>
+                  {{ isBranchTracked(branch) ? 'Tracked' : 'Not Tracked' }}
+                </v-tooltip>
+              </v-col>
+            </v-row>
+          </v-container>
+        </v-card-text>
+      </div>
+    </v-expand-transition>
     <v-card-actions v-if="canEdit">
       <v-spacer></v-spacer>
       <repo-update :repoId="repo.id">
@@ -50,7 +66,8 @@
         outlined
         text
         @click="deleteRepository"
-      >Delete Repository</v-btn>
+        >Delete Repository</v-btn
+      >
     </v-card-actions>
   </v-card>
 </template>
@@ -62,6 +79,7 @@ import { Prop } from 'vue-property-decorator'
 import { Repo } from '@/store/types'
 import { vxm } from '@/store'
 import RepoUpdateDialog from '@/components/dialogs/RepoUpdateDialog.vue'
+import { mdiChevronUp, mdiChevronDown } from '@mdi/js'
 
 @Component({
   components: {
@@ -71,6 +89,10 @@ import RepoUpdateDialog from '@/components/dialogs/RepoUpdateDialog.vue'
 export default class RepoBaseInformation extends Vue {
   @Prop()
   private repo!: Repo
+
+  private showDetails: boolean = false
+  private upIcon = mdiChevronUp
+  private downIcon = mdiChevronDown
 
   private get branches() {
     return this.repo.branches
@@ -132,8 +154,7 @@ export default class RepoBaseInformation extends Vue {
 }
 </script>
 
-<style scoped>
-</style>
+<style scoped></style>
 
 <style>
 .untracked > span {
