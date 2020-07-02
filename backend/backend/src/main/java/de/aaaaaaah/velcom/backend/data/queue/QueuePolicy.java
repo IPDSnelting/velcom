@@ -1,10 +1,10 @@
 package de.aaaaaaah.velcom.backend.data.queue;
 
-import de.aaaaaaah.velcom.backend.access.entities.Commit;
-import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
-import java.util.Collection;
+import de.aaaaaaah.velcom.backend.access.entities.Task;
+import de.aaaaaaah.velcom.backend.access.entities.TaskId;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 /**
@@ -16,36 +16,31 @@ public interface QueuePolicy {
 	/**
 	 * A new task has been added to the queue.
 	 *
-	 * @param commit the commit that has been added as task
-	 * @return true if the commit was added, false if it was ignored because it is already contained
+	 * @param task the task that has been added
+	 * @return true if the task was added, false if it was ignored because it is already contained
 	 * 	in the policy
 	 */
-	boolean addTask(Commit commit);
+	boolean addTask(Task task);
 
 	/**
-	 * A new task has been manually added to the queue.
-	 *
-	 * @param commit the commit that has been added as task
-	 * @return true if the commit was added, false if it was ignored because it is already contained
-	 * 	in the policy
+	 * TODO: Docs
+	 * @return
 	 */
-	boolean addManualTask(Commit commit);
-
-	Optional<Commit> getNextTask();
+	Optional<Task> getNextTask();
 
 	/**
 	 * @return all tasks in the order they are to be executed in. See {@link
 	 *    Queue#viewAllCurrentTasks()} for more detail
 	 */
-	List<Commit> viewAllCurrentTasks();
+	List<Task> viewAllCurrentTasks();
 
 	/**
 	 * A task has been aborted.
 	 *
-	 * @param repoId the repo the commit is in
-	 * @param commitHash the commit the task is for
+	 * @param taskId the id of the task to abort
+	 * @throws NoSuchElementException if not task with the given id is currently in the queue
 	 */
-	void abortTask(RepoId repoId, CommitHash commitHash);
+	void abortTask(TaskId taskId) throws NoSuchElementException;
 
 	/**
 	 * Abort all tasks of a specific repo.
@@ -53,5 +48,12 @@ public interface QueuePolicy {
 	 * @param repoId the repo whose tasks to abort
 	 * @return the list of tasks that were aborted
 	 */
-	Collection<Commit> abortAllTasksOfRepo(RepoId repoId);
+	void abortAllTasksOfRepo(RepoId repoId);
+
+	/**
+	 * Aborts all tasks currently in the queue
+	 * @return the list of tasks that were aborted
+	 */
+	void abortAllTasks();
+
 }

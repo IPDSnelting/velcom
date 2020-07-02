@@ -17,48 +17,75 @@ import java.util.Optional;
 public class Run {
 
 	private final RunId id;
-	private final RepoId repoId;
-	private final CommitHash commitHash;
+	private final String author;
+	private final String runnerName;
+	private final String runnerInfo;
 	private final Instant startTime;
 	private final Instant stopTime;
+	private final Optional<RepoSource> repoSource;
+	private final Optional<String> errorMessage;
+	private final Optional<Collection<Measurement>> measurements;
 
-	@Nullable
-	private final String errorMessage;
-	@Nullable
-	private final Collection<Measurement> measurements;
+	public Run(RunId runId, String author, String runnerName, String runnerInfo, Instant startTime,
+		Instant stopTime, @Nullable RepoSource repoSource, Collection<Measurement> measurements) {
 
-	public Run(RunId id, RepoId repoId, CommitHash commitHash, Instant startTime, Instant stopTime,
-	           Collection<Measurement> measurements) {
-		this(id, repoId, commitHash, startTime, stopTime, null, measurements);
+		this(runId, author, runnerName, runnerInfo, startTime, stopTime, repoSource, null,
+			measurements);
 	}
 
-	public Run(RunId id, RepoId repoId, CommitHash commitHash, Instant startTime, Instant stopTime,
-	           String errorMessage) {
-		this(id, repoId, commitHash, startTime, stopTime, errorMessage, null);
+	public Run(RunId runId, String author, String runnerName, String runnerInfo, Instant startTime,
+		Instant stopTime, Collection<Measurement> measurements) {
+
+		this(runId, author, runnerName, runnerInfo, startTime, stopTime, null, null, measurements);
 	}
 
-	private Run(RunId id, RepoId repoId, CommitHash commitHash, Instant startTime, Instant stopTime,
-	            @Nullable String errorMessage, @Nullable Collection<Measurement> measurements) {
+	public Run(RunId runId, String author, String runnerName, String runnerInfo, Instant startTime,
+		Instant stopTime, @Nullable  RepoSource repoSource, String errorMessage) {
 
+		this(runId, author, runnerName, runnerInfo, startTime, stopTime, repoSource, errorMessage,
+			null);
+	}
+
+	public Run(RunId runId, String author, String runnerName, String runnerInfo, Instant startTime,
+		Instant stopTime, String errorMessage) {
+
+		this(runId, author, runnerName, runnerInfo, startTime, stopTime, null, errorMessage, null);
+	}
+
+	private Run(RunId id, String author, String runnerName, String runnerInfo,
+		Instant startTime, Instant stopTime,
+		@Nullable RepoSource repoSource, @Nullable String errorMessage,
+		@Nullable Collection<Measurement> measurements) {
 		this.id = Objects.requireNonNull(id);
-		this.repoId = Objects.requireNonNull(repoId);
-		this.commitHash = Objects.requireNonNull(commitHash);
+		this.author = Objects.requireNonNull(author);
+		this.runnerName = Objects.requireNonNull(runnerName);
+		this.runnerInfo = Objects.requireNonNull(runnerInfo);
 		this.startTime = Objects.requireNonNull(startTime);
 		this.stopTime = Objects.requireNonNull(stopTime);
-		this.errorMessage = errorMessage;
-		this.measurements = measurements;
+
+		this.repoSource = Optional.ofNullable(repoSource);
+		this.errorMessage = Optional.ofNullable(errorMessage);
+		this.measurements = Optional.ofNullable(measurements);
 	}
 
 	public RunId getId() {
 		return id;
 	}
 
-	public RepoId getRepoId() {
-		return repoId;
+	public String getAuthor() {
+		return author;
 	}
 
-	public CommitHash getCommitHash() {
-		return commitHash;
+	public String getRunnerName() {
+		return runnerName;
+	}
+
+	public String getRunnerInfo() {
+		return runnerInfo;
+	}
+
+	public Optional<RepoSource> getRepoSource() {
+		return repoSource;
 	}
 
 	public Instant getStartTime() {
@@ -70,22 +97,24 @@ public class Run {
 	}
 
 	public Optional<String> getErrorMessage() {
-		return Optional.ofNullable(errorMessage);
+		return errorMessage;
 	}
 
 	public Optional<Collection<Measurement>> getMeasurements() {
-		return Optional.ofNullable(measurements);
+		return measurements;
 	}
 
 	@Override
 	public String toString() {
 		return "Run{" +
 			"id=" + id +
-			", repoId=" + repoId +
-			", commitHash=" + commitHash +
+			", author='" + author + '\'' +
+			", runnerName='" + runnerName + '\'' +
+			", runnerInfo='" + runnerInfo + '\'' +
 			", startTime=" + startTime +
 			", stopTime=" + stopTime +
-			", errorMessage='" + errorMessage + '\'' +
+			", repoSource=" + repoSource +
+			", errorMessage=" + errorMessage +
 			", measurements=" + measurements +
 			'}';
 	}

@@ -6,13 +6,8 @@ import com.codahale.metrics.MetricRegistry;
 import de.aaaaaaah.velcom.backend.ServerMain;
 import de.aaaaaaah.velcom.backend.access.BenchmarkWriteAccess;
 import de.aaaaaaah.velcom.backend.access.RepoWriteAccess;
-import de.aaaaaaah.velcom.backend.access.entities.Commit;
-import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
-import de.aaaaaaah.velcom.backend.access.entities.Interpretation;
-import de.aaaaaaah.velcom.backend.access.entities.MeasurementName;
-import de.aaaaaaah.velcom.backend.access.entities.RepoId;
-import de.aaaaaaah.velcom.backend.access.entities.RunBuilder;
-import de.aaaaaaah.velcom.backend.access.entities.Unit;
+import de.aaaaaaah.velcom.backend.access.TaskWriteAccess;
+import de.aaaaaaah.velcom.backend.access.entities.*;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.runner.single.ActiveRunnerInformation;
 import de.aaaaaaah.velcom.runner.shared.RunnerStatusEnum;
@@ -50,7 +45,7 @@ public class DispatcherImpl implements Dispatcher {
 
 	private final Collection<ActiveRunnerInformation> activeRunners;
 	private final Queue queue;
-	private final RepoWriteAccess repoAccess;
+	private final TaskWriteAccess taskAccess;
 	private final BenchmarkWriteAccess benchmarkAccess;
 	private final Duration allowedRunnerDisconnectTime;
 	private final java.util.Queue<ActiveRunnerInformation> freeRunners;
@@ -63,15 +58,15 @@ public class DispatcherImpl implements Dispatcher {
 	 * Creates a new dispatcher.
 	 *
 	 * @param queue the queue to register to
-	 * @param repoAccess the repo access to use for fetching repositories
+	 * @param taskAccess the task access used to transfer tasks to the runners
 	 * @param benchmarkAccess the benchmark access to store results in
 	 * @param allowedRunnerDisconnectTime the duration runners might be disconnected for before they
 	 * 	are given up on (removed and commit rescheduled)
 	 */
-	public DispatcherImpl(Queue queue, RepoWriteAccess repoAccess,
+	public DispatcherImpl(Queue queue, TaskWriteAccess taskAccess,
 		BenchmarkWriteAccess benchmarkAccess, Duration allowedRunnerDisconnectTime) {
 		this.queue = queue;
-		this.repoAccess = repoAccess;
+		this.taskAccess = taskAccess;
 		this.benchmarkAccess = benchmarkAccess;
 		this.allowedRunnerDisconnectTime = allowedRunnerDisconnectTime;
 		this.activeRunners = Collections.newSetFromMap(new ConcurrentHashMap<>());
@@ -79,7 +74,7 @@ public class DispatcherImpl implements Dispatcher {
 		this.watchdogPool = Executors.newSingleThreadScheduledExecutor();
 		this.dispatcherExecutorPool = Executors.newFixedThreadPool(5);
 
-		queue.onSomethingAborted(task -> abort(task.getSecond(), task.getFirst()));
+		queue.onSomethingAborted(this::abort);
 		queue.onSomethingAdded(it -> dispatcherExecutorPool.submit(this::updateDispatching));
 
 		watchdogPool.scheduleAtFixedRate(
@@ -210,8 +205,8 @@ public class DispatcherImpl implements Dispatcher {
 	}
 
 	@Override
-	public boolean abort(CommitHash commitHash, RepoId repoId) {
-		LOGGER.debug("Aborting commit {} for repo {}!", commitHash, repoId);
+	public boolean abort(Task task) {
+		LOGGER.debug("Aborting task {}!", task);
 
 		for (ActiveRunnerInformation runner : activeRunners) {
 			Optional<Commit> currentCommit = runner.getCurrentCommit();
@@ -342,14 +337,14 @@ public class DispatcherImpl implements Dispatcher {
 	 * Dispatches a commit to the given runner. Directly marks the runner as working.
 	 *
 	 * @param runner the runner to dispatch it to
-	 * @param commit the commit to benchmark
+	 * @param task the task to dispatch
 	 * @return true if the commit was dispatched, false otherwise
 	 */
-	private boolean dispatchCommit(ActiveRunnerInformation runner, Commit commit) {
-		LOGGER.info("Dispatching {} on {}", commit, runner.getRunnerInformation());
+	private boolean dispatchTask(ActiveRunnerInformation runner, Task task) {
+		LOGGER.info("Dispatching {} on {}", task, runner.getRunnerInformation());
 
 		try {
-			runner.getRunnerStateMachine().dispatchCommit(commit, repoAccess);
+			runner.getRunnerStateMachine().dispatchTask(task);
 			return true;
 		} catch (Throwable e) {
 			LOGGER.info("Dispatching commit not possible", e);

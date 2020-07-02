@@ -48,7 +48,7 @@ public class BenchmarkReadAccess {
 
 	protected final DatabaseStorage databaseStorage;
 
-	protected final Map<RepoId, Cache<CommitHash, Run>> runCache = new ConcurrentHashMap<>();
+	protected final Map<RepoId, Cache<CommitHash, Run>> repoRunCache = new ConcurrentHashMap<>();
 	protected final List<Run> recentRunCache = new ArrayList<>();
 	protected final Comparator<Run> recentRunCacheOrder = comparing(Run::getStartTime).reversed();
 
@@ -134,7 +134,7 @@ public class BenchmarkReadAccess {
 		Map<CommitHash, Run> resultMap = new HashMap<>();
 
 		// Check cache
-		final Cache<CommitHash, Run> repoRunCache = runCache.computeIfAbsent(repoId,
+		final Cache<CommitHash, Run> repoRunCache = this.repoRunCache.computeIfAbsent(repoId,
 			r -> RUN_CACHE_BUILDER.build()
 		);
 

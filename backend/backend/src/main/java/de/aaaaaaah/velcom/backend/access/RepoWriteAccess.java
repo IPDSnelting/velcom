@@ -1,7 +1,7 @@
 package de.aaaaaaah.velcom.backend.access;
 
 import static java.util.stream.Collectors.toList;
-import static org.jooq.codegen.db.tables.Repository.REPOSITORY;
+import static org.jooq.codegen.db.Tables.REPO;
 import static org.jooq.codegen.db.tables.TrackedBranch.TRACKED_BRANCH;
 
 import de.aaaaaaah.velcom.backend.access.archive.ArchiveException;
@@ -13,6 +13,7 @@ import de.aaaaaaah.velcom.backend.access.entities.RemoteUrl;
 import de.aaaaaaah.velcom.backend.access.entities.Repo;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.exceptions.AddRepoException;
+import de.aaaaaaah.velcom.backend.access.exceptions.CloneRepoException;
 import de.aaaaaaah.velcom.backend.access.exceptions.DeleteRepoException;
 import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchRepoException;
 import de.aaaaaaah.velcom.backend.access.exceptions.RepoAccessException;
@@ -29,7 +30,7 @@ import java.util.Collection;
 import java.util.List;
 import org.eclipse.jgit.lib.Repository;
 import org.jooq.DSLContext;
-import org.jooq.codegen.db.tables.records.RepositoryRecord;
+import org.jooq.codegen.db.tables.records.RepoRecord;
 import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -90,8 +91,8 @@ public class RepoWriteAccess extends RepoReadAccess {
 	 */
 	public void setName(RepoId repoId, String newName) {
 		try (DSLContext db = databaseStorage.acquireContext()) {
-			db.update(REPOSITORY).set(REPOSITORY.NAME, newName)
-				.where(REPOSITORY.ID.eq(repoId.getId().toString()))
+			db.update(REPO).set(REPO.NAME, newName)
+				.where(REPO.ID.eq(repoId.getId().toString()))
 				.execute();
 		}
 
@@ -132,9 +133,9 @@ public class RepoWriteAccess extends RepoReadAccess {
 
 		// (3): Update database
 		try (DSLContext db = databaseStorage.acquireContext()) {
-			db.update(REPOSITORY)
-				.set(REPOSITORY.REMOTE_URL, newRemoteUrl.getUrl())
-				.where(REPOSITORY.ID.eq(repoId.getId().toString()))
+			db.update(REPO)
+				.set(REPO.REMOTE_URL, newRemoteUrl.getUrl())
+				.where(REPO.ID.eq(repoId.getId().toString()))
 				.execute();
 		}
 
@@ -173,7 +174,7 @@ public class RepoWriteAccess extends RepoReadAccess {
 
 				// Add new tracked branches
 				var insertStep = ts.insertInto(
-					TRACKED_BRANCH, TRACKED_BRANCH.REPO_ID, TRACKED_BRANCH.BRANCH_NAME
+					TRACKED_BRANCH, TRACKED_BRANCH.REPO_ID, TRACKED_BRANCH.NAME
 				);
 
 				branches.forEach(branchName -> insertStep.values(repoIdStr, branchName.getName()));
@@ -218,7 +219,7 @@ public class RepoWriteAccess extends RepoReadAccess {
 
 		// 2.) Insert repo into database
 		try (DSLContext db = databaseStorage.acquireContext()) {
-			RepositoryRecord record = db.newRecord(REPOSITORY);
+			RepoRecord record = db.newRecord(REPO);
 			record.setId(repoId.getId().toString());
 			record.setName(name);
 			record.setRemoteUrl(remoteUrl.getUrl());
@@ -258,8 +259,8 @@ public class RepoWriteAccess extends RepoReadAccess {
 	public void deleteRepo(RepoId repoId) throws DeleteRepoException {
 		// Delete from database
 		try (DSLContext db = databaseStorage.acquireContext()) {
-			db.deleteFrom(REPOSITORY)
-				.where(REPOSITORY.ID.eq(repoId.getId().toString()))
+			db.deleteFrom(REPO)
+				.where(REPO.ID.eq(repoId.getId().toString()))
 				.execute();
 		}
 
@@ -363,36 +364,44 @@ public class RepoWriteAccess extends RepoReadAccess {
 
 	// --- Archive Operations ---------------------------------------------------------------------
 
-	/**
-	 * Write an uncompressed tar archive containing the (recursively cloned) working directory for
-	 * the specified commit to the output stream.
-	 *
-	 * @param repoId the id of the repo
-	 * @param commitHash the hash of commit to send
-	 * @param outputStream where to write the archive
-	 * @throws ArchiveException if the commit could not be compressed (or something else went wrong
-	 * 	during streaming)
-	 * @throws de.aaaaaaah.velcom.backend.access.exceptions.ArchiveFailedPermanently if it failed
-	 * 	with a more permanent cause
-	 */
-	public void streamNormalRepoArchive(RepoId repoId, CommitHash commitHash,
-		OutputStream outputStream) throws ArchiveException {
 
-		String dirName = repoId.getDirectoryName();
-		archiver.archive(dirName, commitHash, outputStream, false);
+	public void cloneRepo(RepoId repoId, CommitHash repoState, Path destination) throws CloneRepoException  {
+		// TODO
 	}
 
-	/**
-	 * Does the same as {@link #streamNormalRepoArchive(RepoId, CommitHash, OutputStream)}, but for
-	 * the latest commit on the master branch in the benchmark repo.
-	 *
-	 * @param outputStream where to write the archive
-	 * @throws ArchiveException if the commit could not be compressed (or something else went wrong
-	 * 	during streaming)
-	 */
-	public void streamBenchmarkRepoArchive(OutputStream outputStream) throws ArchiveException {
-		CommitHash commitHash = getLatestBenchmarkRepoHash();
-		archiver.archive(this.benchRepoDirName, commitHash, outputStream, true);
+	public void cloneBenchmarkRepo(RepoId repoId, Path destination) throws CloneRepoException {
+		// TODO
 	}
 
+//	/**
+//	 * Write an uncompressed tar archive containing the (recursively cloned) working directory for
+//	 * the specified commit to the output stream.
+//	 *
+//	 * @param repoId the id of the repo
+//	 * @param commitHash the hash of commit to send
+//	 * @param outputStream where to write the archive
+//	 * @throws ArchiveException if the commit could not be compressed (or something else went wrong
+//	 * 	during streaming)
+//	 * @throws de.aaaaaaah.velcom.backend.access.exceptions.ArchiveFailedPermanently if it failed
+//	 * 	with a more permanent cause
+//	 */
+//	public void streamNormalRepoArchive(RepoId repoId, CommitHash commitHash,
+//		OutputStream outputStream) throws ArchiveException {
+//
+//		String dirName = repoId.getDirectoryName();
+//		archiver.archive(dirName, commitHash, outputStream, false);
+//	}
+//
+//	/**
+//	 * Does the same as {@link #streamNormalRepoArchive(RepoId, CommitHash, OutputStream)}, but for
+//	 * the latest commit on the master branch in the benchmark repo.
+//	 *
+//	 * @param outputStream where to write the archive
+//	 * @throws ArchiveException if the commit could not be compressed (or something else went wrong
+//	 * 	during streaming)
+//	 */
+//	public void streamBenchmarkRepoArchive(OutputStream outputStream) throws ArchiveException {
+//		CommitHash commitHash = getLatestBenchmarkRepoHash();
+//		archiver.archive(this.benchRepoDirName, commitHash, outputStream, true);
+//	}
 }
