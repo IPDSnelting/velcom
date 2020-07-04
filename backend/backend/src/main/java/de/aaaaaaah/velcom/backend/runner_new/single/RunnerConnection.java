@@ -89,28 +89,31 @@ public class RunnerConnection implements WebSocketListener, WebSocketFrameListen
 		Optional<String> serializedPacket = getSerializer().serialize(packet);
 
 		if (serializedPacket.isEmpty()) {
-			disconnect(5000, "Internal server error");
+			close(5000, "Internal server error");
 			throw new IllegalArgumentException("Could not serialize packet " + packet);
 		}
 		if (session == null) {
-			disconnect(5000, "Internal server error");
+			close(5000, "Internal server error");
 			throw new IllegalStateException("Can not yet send packets");
 		}
 		try {
 			session.getRemote().sendString(serializedPacket.get());
 		} catch (IOException e) {
-			disconnect(5000, "Error sending packet");
+			close(5000, "Error sending packet");
 			throw new RuntimeIOException(e);
 		}
 	}
 
 	/**
-	 * Disconnects the runner.
+	 * Closes the connecting, disconnecting the runner.
+	 * <br>
+	 * <p>If this is called before the session was opened, the session will be closed as soon as it is
+	 * opened.</p>
 	 *
 	 * @param code the disconnect code
 	 * @param reason the reason
 	 */
-	public synchronized void disconnect(int code, String reason) {
+	public synchronized void close(int code, String reason) {
 		if (session == null) {
 			closedBeforeConnect = new ClosedBeforeConnect(code, reason);
 			return;
@@ -146,7 +149,7 @@ public class RunnerConnection implements WebSocketListener, WebSocketFrameListen
 	@Override
 	public void onWebSocketBinary(byte[] payload, int offset, int len) {
 		// TODO: Disconnect codes
-		disconnect(5000, "Invalid binary payload received");
+		close(5000, "Invalid binary payload received");
 	}
 
 	@Override
@@ -174,7 +177,7 @@ public class RunnerConnection implements WebSocketListener, WebSocketFrameListen
 	public synchronized void onWebSocketConnect(Session session) {
 		this.session = session;
 		if (closedBeforeConnect != null) {
-			disconnect(closedBeforeConnect.code, closedBeforeConnect.reason);
+			close(closedBeforeConnect.code, closedBeforeConnect.reason);
 		}
 
 		this.periodicStatusRequester.start();
@@ -182,7 +185,7 @@ public class RunnerConnection implements WebSocketListener, WebSocketFrameListen
 
 	@Override
 	public void onTimeoutDetected() {
-		disconnect(5000, "Ping timeout detected");
+		close(5000, "Ping timeout detected");
 	}
 
 	@Override

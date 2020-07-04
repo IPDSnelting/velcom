@@ -91,7 +91,7 @@ public class TeleRunner {
 		GetStatusReply reply = runnerInformation.get();
 
 		if (!reply.getName().equals(getRunnerName())) {
-			connection.disconnect(5000, "Runner changed its name!");
+			connection.close(5000, "Runner changed its name!");
 		}
 
 		return new KnownRunner(getRunnerName(), reply.getInfo(), reply.getState());

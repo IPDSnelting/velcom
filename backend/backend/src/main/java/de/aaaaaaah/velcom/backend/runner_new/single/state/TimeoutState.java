@@ -18,7 +18,7 @@ public abstract class TimeoutState extends TeleRunnerState {
 
 		timeout = Timeout.after(TIMEOUT_DURATION);
 		timeout.getCompletionStage().thenRun(() -> {
-			connection.disconnect(5000, "Packet wait timed out!");
+			connection.close(5000, "Packet wait timed out!");
 		});
 	}
 

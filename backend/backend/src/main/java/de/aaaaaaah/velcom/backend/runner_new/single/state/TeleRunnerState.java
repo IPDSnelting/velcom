@@ -35,7 +35,7 @@ public class TeleRunnerState implements State {
 		// If a packet has been received that could not be deserialized or handled, that is invalid
 		// behaviour.
 		if (newState.isEmpty()) {
-			connection.disconnect(5000, "Invalid packet received.");
+			connection.close(5000, "Invalid packet received.");
 		}
 
 		return newState.orElse(this);
