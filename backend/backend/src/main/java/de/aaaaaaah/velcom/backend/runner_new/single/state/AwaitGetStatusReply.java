@@ -2,9 +2,9 @@ package de.aaaaaaah.velcom.backend.runner_new.single.state;
 
 import de.aaaaaaah.velcom.backend.runner_new.single.RunnerConnection;
 import de.aaaaaaah.velcom.backend.runner_new.single.TeleRunner;
-import de.aaaaaaah.velcom.runner.shared.protocol.serialization.clientbound.ClientBoundPacket;
-import de.aaaaaaah.velcom.runner.shared.protocol.serialization.clientbound.ClientBoundPacketType;
 import de.aaaaaaah.velcom.runner.shared.protocol.serialization.serverbound.GetStatusReply;
+import de.aaaaaaah.velcom.runner.shared.protocol.serialization.serverbound.ServerBoundPacket;
+import de.aaaaaaah.velcom.runner.shared.protocol.serialization.serverbound.ServerBoundPacketType;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
@@ -38,9 +38,9 @@ public class AwaitGetStatusReply extends TimeoutState {
 	}
 
 	@Override
-	protected Optional<TeleRunnerState> onPacket(ClientBoundPacket packet) {
+	protected Optional<TeleRunnerState> onPacket(ServerBoundPacket packet) {
 		return super.onPacket(packet).or(() -> Optional.of(packet)
-			.filter(it -> it.getType() == ClientBoundPacketType.GET_STATUS)
+			.filter(it -> it.getType() == ServerBoundPacketType.GET_STATUS_REPLY)
 			.flatMap(it -> connection.getSerializer().deserialize(it.getData(), GetStatusReply.class))
 			.map(reply -> {
 				replyFuture.complete(reply);

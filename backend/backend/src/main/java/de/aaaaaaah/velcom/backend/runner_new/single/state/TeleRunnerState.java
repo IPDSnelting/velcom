@@ -3,6 +3,7 @@ package de.aaaaaaah.velcom.backend.runner_new.single.state;
 import de.aaaaaaah.velcom.backend.runner_new.single.RunnerConnection;
 import de.aaaaaaah.velcom.backend.runner_new.single.TeleRunner;
 import de.aaaaaaah.velcom.runner.shared.protocol.serialization.clientbound.ClientBoundPacket;
+import de.aaaaaaah.velcom.runner.shared.protocol.serialization.serverbound.ServerBoundPacket;
 import de.aaaaaaah.velcom.runner.shared.protocol.statemachine.State;
 import java.util.Optional;
 
@@ -27,7 +28,7 @@ public class TeleRunnerState implements State {
 	 */
 	public TeleRunnerState onText(String text) {
 		Optional<TeleRunnerState> newState = connection.getSerializer()
-			.deserialize(text, ClientBoundPacket.class)
+			.deserialize(text, ServerBoundPacket.class)
 			.flatMap(this::onPacket);
 
 		// If a packet has been received that could not be deserialized or handled, that is invalid
@@ -41,12 +42,12 @@ public class TeleRunnerState implements State {
 
 	/**
 	 * Called by the default {@link #onText(String)} implementation if the text could be decoded to a
-	 * {@link ClientBoundPacket}.
+	 * {@link ServerBoundPacket}.
 	 *
 	 * @param packet the packet the text was deserialized into
 	 * @return whether this function call handled the packet
 	 */
-	protected Optional<TeleRunnerState> onPacket(ClientBoundPacket packet) {
+	protected Optional<TeleRunnerState> onPacket(ServerBoundPacket packet) {
 		// TODO respond to all server commands.
 		return Optional.empty();
 	}
