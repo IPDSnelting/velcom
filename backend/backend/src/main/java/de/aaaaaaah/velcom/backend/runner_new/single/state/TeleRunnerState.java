@@ -1,9 +1,10 @@
 package de.aaaaaaah.velcom.backend.runner_new.single.state;
 
+import de.aaaaaaah.velcom.backend.runner_new.Dispatcher;
 import de.aaaaaaah.velcom.backend.runner_new.single.RunnerConnection;
 import de.aaaaaaah.velcom.backend.runner_new.single.TeleRunner;
-import de.aaaaaaah.velcom.runner.shared.protocol.serialization.clientbound.ClientBoundPacket;
 import de.aaaaaaah.velcom.runner.shared.protocol.serialization.serverbound.ServerBoundPacket;
+import de.aaaaaaah.velcom.runner.shared.protocol.serialization.serverbound.ServerBoundPacketType;
 import de.aaaaaaah.velcom.runner.shared.protocol.statemachine.State;
 import java.util.Optional;
 
@@ -48,7 +49,13 @@ public class TeleRunnerState implements State {
 	 * @return whether this function call handled the packet
 	 */
 	protected Optional<TeleRunnerState> onPacket(ServerBoundPacket packet) {
-		// TODO respond to all server commands.
+		// Stay in the current state but prepare some work!
+		if (packet.getType() == ServerBoundPacketType.REQUEST_RUN) {
+			Dispatcher dispatcher = runner.getDispatcher();
+			// TODO: Send the work!
+			return Optional.of(this);
+		}
+
 		return Optional.empty();
 	}
 }

@@ -1,5 +1,6 @@
 package de.aaaaaaah.velcom.backend.runner_new.single;
 
+import de.aaaaaaah.velcom.backend.runner_new.Dispatcher;
 import de.aaaaaaah.velcom.backend.runner_new.KnownRunner;
 import de.aaaaaaah.velcom.runner.shared.protocol.serialization.Converter;
 import de.aaaaaaah.velcom.runner.shared.protocol.serialization.serverbound.GetStatusReply;
@@ -13,12 +14,14 @@ public class TeleRunner {
 	private final AtomicReference<GetStatusReply> runnerInformation;
 	private final String runnerName;
 	private final Converter serializer;
+	private final Dispatcher dispatcher;
 
 	private RunnerConnection connection;
 
-	public TeleRunner(String runnerName, Converter serializer) {
+	public TeleRunner(String runnerName, Converter serializer, Dispatcher dispatcher) {
 		this.runnerName = runnerName;
 		this.serializer = serializer;
+		this.dispatcher = dispatcher;
 		this.runnerInformation = new AtomicReference<>();
 
 		this.connection = createConnection();
@@ -60,6 +63,15 @@ public class TeleRunner {
 	 */
 	public String getRunnerName() {
 		return runnerName;
+	}
+
+	/**
+	 * Returns the dispatcher this runner is assigned to.
+	 *
+	 * @return the dispatcher
+	 */
+	public Dispatcher getDispatcher() {
+		return dispatcher;
 	}
 
 	/**
