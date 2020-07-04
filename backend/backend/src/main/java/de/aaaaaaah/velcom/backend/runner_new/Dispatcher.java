@@ -29,8 +29,8 @@ public class Dispatcher {
 	public boolean addRunner(TeleRunner teleRunner) {
 		synchronized (teleRunners) {
 			boolean alreadyKnown = teleRunners.stream()
-				.map(TeleRunner::getRunnerInformation)
-				.anyMatch(it -> it.getName().equals(teleRunner.getRunnerInformation().getName()));
+				.map(TeleRunner::getRunnerName)
+				.anyMatch(it -> it.equals(teleRunner.getRunnerName()));
 
 			if (alreadyKnown) {
 				return false;

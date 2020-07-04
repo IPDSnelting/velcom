@@ -89,6 +89,11 @@ public class TeleRunner {
 	 */
 	public KnownRunner getRunnerInformation() {
 		GetStatusReply reply = runnerInformation.get();
-		return new KnownRunner(reply.getName(), reply.getInfo(), reply.getState());
+
+		if (!reply.getName().equals(getRunnerName())) {
+			connection.disconnect(5000, "Runner changed its name!");
+		}
+
+		return new KnownRunner(getRunnerName(), reply.getInfo(), reply.getState());
 	}
 }
