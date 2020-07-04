@@ -3,10 +3,13 @@ package de.aaaaaaah.velcom.backend.runner_new.single;
 import de.aaaaaaah.velcom.backend.runner_new.single.state.IdleState;
 import de.aaaaaaah.velcom.backend.runner_new.single.state.TeleRunnerState;
 import de.aaaaaaah.velcom.runner.shared.Timeout;
+import de.aaaaaaah.velcom.runner.shared.protocol.HeartbeatHandler;
+import de.aaaaaaah.velcom.runner.shared.protocol.HeartbeatHandler.HeartbeatWebsocket;
 import de.aaaaaaah.velcom.runner.shared.protocol.serialization.Converter;
 import de.aaaaaaah.velcom.runner.shared.protocol.serialization.clientbound.ClientBoundPacket;
 import de.aaaaaaah.velcom.runner.shared.protocol.statemachine.StateMachine;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +27,8 @@ import org.slf4j.LoggerFactory;
 /**
  * A connection with a single runner.
  */
-public class RunnerConnection implements WebSocketListener, WebSocketFrameListener {
+public class RunnerConnection implements WebSocketListener, WebSocketFrameListener,
+	HeartbeatWebsocket {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(RunnerConnection.class);
 
@@ -37,6 +41,7 @@ public class RunnerConnection implements WebSocketListener, WebSocketFrameListen
 	private final StateMachine<TeleRunnerState> stateMachine;
 	private final PeriodicStatusRequester periodicStatusRequester;
 	private final List<Runnable> closeListeners;
+	private final HeartbeatHandler heartbeatHandler;
 
 	public RunnerConnection(Converter serializer, TeleRunner runner) {
 		this.serializer = serializer;
@@ -44,8 +49,10 @@ public class RunnerConnection implements WebSocketListener, WebSocketFrameListen
 		this.closeListeners = new ArrayList<>();
 
 		this.periodicStatusRequester = new PeriodicStatusRequester(runner, this, stateMachine);
+		this.heartbeatHandler = new HeartbeatHandler(this);
 
 		addCloseListener(this.periodicStatusRequester::cancel);
+		addCloseListener(this.heartbeatHandler::shutdown);
 	}
 
 	/**
@@ -132,8 +139,7 @@ public class RunnerConnection implements WebSocketListener, WebSocketFrameListen
 	@Override
 	public void onWebSocketFrame(Frame frame) {
 		if (frame.getType() == Type.PONG) {
-			// TODO: Implement ping pong
-			return;
+			heartbeatHandler.onPong();
 		}
 	}
 
@@ -172,6 +178,27 @@ public class RunnerConnection implements WebSocketListener, WebSocketFrameListen
 		}
 
 		this.periodicStatusRequester.start();
+	}
+
+	@Override
+	public void onTimeoutDetected() {
+		disconnect(5000, "Ping timeout detected");
+	}
+
+	@Override
+	public boolean sendPing() {
+		if (session == null) {
+			return false;
+		}
+		try {
+			session.getRemote().sendPing(ByteBuffer.wrap(
+				Long.toString(System.currentTimeMillis()).getBytes()
+			));
+		} catch (IOException e) {
+			LOGGER.warn("Could not send a ping", e);
+			return false;
+		}
+		return true;
 	}
 
 	private static class ClosedBeforeConnect {
