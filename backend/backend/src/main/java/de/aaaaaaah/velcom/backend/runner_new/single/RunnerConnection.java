@@ -5,9 +5,13 @@ import de.aaaaaaah.velcom.backend.runner_new.single.state.TeleRunnerState;
 import de.aaaaaaah.velcom.runner.shared.protocol.serialization.Converter;
 import de.aaaaaaah.velcom.runner.shared.protocol.serialization.clientbound.ClientBoundPacket;
 import de.aaaaaaah.velcom.runner.shared.protocol.statemachine.StateMachine;
+import java.io.IOException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import javax.annotation.Nullable;
+import org.eclipse.jetty.io.RuntimeIOException;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.WebSocketFrameListener;
 import org.eclipse.jetty.websocket.api.WebSocketListener;
@@ -61,11 +65,31 @@ public class RunnerConnection implements WebSocketListener, WebSocketFrameListen
 
 	/**
 	 * Sends a packet to the runner.
+	 * <br>
+	 * If any error occurs, the connection is closed.
 	 *
 	 * @param packet the packet to send
+	 * @throws IllegalArgumentException if the packet is not serializable
+	 * @throws IllegalStateException if the connection is not yet connected
+	 * @throws RuntimeIOException if an error occurred writing to the runner
 	 */
 	public void send(ClientBoundPacket packet) {
-		// TODO: Implement
+		Optional<String> serializedPacket = getSerializer().serialize(packet);
+
+		if (serializedPacket.isEmpty()) {
+			disconnect(5000, "Internal server error");
+			throw new IllegalArgumentException("Could not serialize packet " + packet);
+		}
+		if (session == null) {
+			disconnect(5000, "Internal server error");
+			throw new IllegalStateException("Can not yet send packets");
+		}
+		try {
+			session.getRemote().sendString(serializedPacket.get());
+		} catch (IOException e) {
+			disconnect(5000, "Error sending packet");
+			throw new RuntimeIOException(e);
+		}
 	}
 
 	/**
