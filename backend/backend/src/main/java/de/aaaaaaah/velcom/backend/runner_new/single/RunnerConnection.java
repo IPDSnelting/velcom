@@ -2,6 +2,7 @@ package de.aaaaaaah.velcom.backend.runner_new.single;
 
 import de.aaaaaaah.velcom.backend.runner_new.single.state.IdleState;
 import de.aaaaaaah.velcom.backend.runner_new.single.state.TeleRunnerState;
+import de.aaaaaaah.velcom.runner.shared.Timeout;
 import de.aaaaaaah.velcom.runner.shared.protocol.serialization.Converter;
 import de.aaaaaaah.velcom.runner.shared.protocol.serialization.clientbound.ClientBoundPacket;
 import de.aaaaaaah.velcom.runner.shared.protocol.statemachine.StateMachine;
@@ -17,11 +18,15 @@ import org.eclipse.jetty.websocket.api.WebSocketFrameListener;
 import org.eclipse.jetty.websocket.api.WebSocketListener;
 import org.eclipse.jetty.websocket.api.extensions.Frame;
 import org.eclipse.jetty.websocket.api.extensions.Frame.Type;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A connection with a single runner.
  */
 public class RunnerConnection implements WebSocketListener, WebSocketFrameListener {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(RunnerConnection.class);
 
 	@Nullable
 	private Session session;
@@ -99,11 +104,28 @@ public class RunnerConnection implements WebSocketListener, WebSocketFrameListen
 	 * @param reason the reason
 	 */
 	public synchronized void disconnect(int code, String reason) {
-		// TODO: Hard disconnect after timeout
-		if (session != null) {
-			session.close(code, reason);
-		} else {
+		if (session == null) {
 			closedBeforeConnect = new ClosedBeforeConnect(code, reason);
+			return;
+		}
+
+		Timeout closeTimeout = Timeout.after(Duration.ofSeconds(10));
+		closeTimeout.getCompletionStage().thenRun(this::hardDisconnect);
+		closeTimeout.start();
+
+		// Abort the timeout if we closed properly
+		addCloseListener(closeTimeout::cancel);
+
+		session.close(code, reason);
+	}
+
+	private synchronized void hardDisconnect() {
+		try {
+			if (session != null) {
+				session.disconnect();
+			}
+		} catch (IOException e) {
+			LOGGER.warn("Error in hard disconnect", e);
 		}
 	}
 
