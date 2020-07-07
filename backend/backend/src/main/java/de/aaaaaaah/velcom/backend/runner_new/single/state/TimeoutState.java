@@ -3,6 +3,7 @@ package de.aaaaaaah.velcom.backend.runner_new.single.state;
 import de.aaaaaaah.velcom.backend.runner_new.single.RunnerConnection;
 import de.aaaaaaah.velcom.backend.runner_new.single.TeleRunner;
 import de.aaaaaaah.velcom.runner.shared.Timeout;
+import de.aaaaaaah.velcom.runner.shared.protocol.StatusCode;
 import java.time.Duration;
 
 /**
@@ -18,7 +19,7 @@ public abstract class TimeoutState extends TeleRunnerState {
 
 		timeout = Timeout.after(TIMEOUT_DURATION);
 		timeout.getCompletionStage().thenRun(() -> {
-			connection.close(5000, "Packet wait timed out!");
+			connection.close(StatusCode.COMMAND_TIMEOUT);
 		});
 	}
 

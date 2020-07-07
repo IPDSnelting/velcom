@@ -5,6 +5,7 @@ import de.aaaaaaah.velcom.backend.runner_new.single.state.TeleRunnerState;
 import de.aaaaaaah.velcom.runner.shared.Timeout;
 import de.aaaaaaah.velcom.runner.shared.protocol.HeartbeatHandler;
 import de.aaaaaaah.velcom.runner.shared.protocol.HeartbeatHandler.HeartbeatWebsocket;
+import de.aaaaaaah.velcom.runner.shared.protocol.StatusCode;
 import de.aaaaaaah.velcom.runner.shared.protocol.serialization.Converter;
 import de.aaaaaaah.velcom.runner.shared.protocol.serialization.clientbound.ClientBoundPacket;
 import de.aaaaaaah.velcom.runner.shared.protocol.statemachine.StateMachine;
@@ -89,17 +90,17 @@ public class RunnerConnection implements WebSocketListener, WebSocketFrameListen
 		Optional<String> serializedPacket = getSerializer().serialize(packet);
 
 		if (serializedPacket.isEmpty()) {
-			close(5000, "Internal server error");
+			close(StatusCode.INTERNAL_ERROR);
 			throw new IllegalArgumentException("Could not serialize packet " + packet);
 		}
 		if (session == null) {
-			close(5000, "Internal server error");
+			close(StatusCode.INTERNAL_ERROR);
 			throw new IllegalStateException("Can not yet send packets");
 		}
 		try {
 			session.getRemote().sendString(serializedPacket.get());
 		} catch (IOException e) {
-			close(5000, "Error sending packet");
+			close(StatusCode.INTERNAL_ERROR);
 			throw new RuntimeIOException(e);
 		}
 	}
@@ -107,15 +108,14 @@ public class RunnerConnection implements WebSocketListener, WebSocketFrameListen
 	/**
 	 * Closes the connecting, disconnecting the runner.
 	 * <br>
-	 * <p>If this is called before the session was opened, the session will be closed as soon as it is
-	 * opened.</p>
+	 * <p>If this is called before the session was opened, the session will be closed as soon as it
+	 * is opened.</p>
 	 *
-	 * @param code the disconnect code
-	 * @param reason the reason
+	 * @param statusCode the status code to close it with
 	 */
-	public synchronized void close(int code, String reason) {
+	public synchronized void close(StatusCode statusCode) {
 		if (session == null) {
-			closedBeforeConnect = new ClosedBeforeConnect(code, reason);
+			closedBeforeConnect = new ClosedBeforeConnect(statusCode);
 			return;
 		}
 
@@ -126,7 +126,7 @@ public class RunnerConnection implements WebSocketListener, WebSocketFrameListen
 		// Abort the timeout if we closed properly
 		addCloseListener(closeTimeout::cancel);
 
-		session.close(code, reason);
+		session.close(statusCode.getCode(), statusCode.getDescriptionAsReason());
 	}
 
 	private synchronized void hardDisconnect() {
@@ -148,8 +148,7 @@ public class RunnerConnection implements WebSocketListener, WebSocketFrameListen
 
 	@Override
 	public void onWebSocketBinary(byte[] payload, int offset, int len) {
-		// TODO: Disconnect codes
-		close(5000, "Invalid binary payload received");
+		close(StatusCode.ILLEGAL_BINARY_PACKET);
 	}
 
 	@Override
@@ -177,7 +176,7 @@ public class RunnerConnection implements WebSocketListener, WebSocketFrameListen
 	public synchronized void onWebSocketConnect(Session session) {
 		this.session = session;
 		if (closedBeforeConnect != null) {
-			close(closedBeforeConnect.code, closedBeforeConnect.reason);
+			close(closedBeforeConnect.statusCode);
 		}
 
 		this.periodicStatusRequester.start();
@@ -185,7 +184,7 @@ public class RunnerConnection implements WebSocketListener, WebSocketFrameListen
 
 	@Override
 	public void onTimeoutDetected() {
-		close(5000, "Ping timeout detected");
+		close(StatusCode.PING_TIMEOUT);
 	}
 
 	@Override
@@ -206,12 +205,10 @@ public class RunnerConnection implements WebSocketListener, WebSocketFrameListen
 
 	private static class ClosedBeforeConnect {
 
-		final int code;
-		final String reason;
+		final StatusCode statusCode;
 
-		ClosedBeforeConnect(int code, String reason) {
-			this.code = code;
-			this.reason = reason;
+		ClosedBeforeConnect(StatusCode statusCode) {
+			this.statusCode = statusCode;
 		}
 	}
 }
