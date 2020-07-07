@@ -43,8 +43,8 @@ class SimpleJsonSerializerTest {
 
 	@ParameterizedTest
 	@CsvSource(value = {
-		"de.aaaaaaah.velcom.runner.shared.protocol.runnerbound.entities.RunnerWorkOrder | {",
-		"de.aaaaaaah.velcom.runner.shared.protocol.runnerbound.entities.RunnerWorkOrder | {\"payload\":\"hey\",\"identifier\":\"RunnerWorkOrder\"}\n"
+		"de.aaaaaaah.velcom.shared.protocol.runnerbound.entities.RunnerWorkOrder | {",
+		"de.aaaaaaah.velcom.shared.protocol.runnerbound.entities.RunnerWorkOrder | {\"payload\":\"hey\",\"identifier\":\"RunnerWorkOrder\"}\n"
 	}, delimiter = '|')
 	void deserializeInvalid(String className, String input) {
 		assertThatThrownBy(() -> {

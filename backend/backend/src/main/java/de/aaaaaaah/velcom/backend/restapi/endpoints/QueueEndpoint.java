@@ -18,7 +18,7 @@ import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.restapi.RepoUser;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonTask;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonWorker;
-import de.aaaaaaah.velcom.backend.runner.Dispatcher;
+import de.aaaaaaah.velcom.backend.runner_new.Dispatcher;
 import io.dropwizard.auth.Auth;
 import java.util.Collection;
 import java.util.List;
@@ -71,9 +71,9 @@ public class QueueEndpoint {
 			.map(JsonTask::new)
 			.collect(Collectors.toUnmodifiableList());
 
-		List<JsonWorker> workers = dispatcher.getKnownRunners().stream()
-			.map(JsonWorker::new)
-			.collect(Collectors.toUnmodifiableList());
+		// FIXME: 07.07.20 Obtain runners from dispatcher
+		// List<JsonWorker> workers = dispatcher.getKnownRunners().stream()
+		List<JsonWorker> workers = List.of();
 
 		return new GetReply(tasks, workers);
 	}

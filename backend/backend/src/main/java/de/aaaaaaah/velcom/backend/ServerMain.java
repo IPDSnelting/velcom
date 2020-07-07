@@ -31,8 +31,7 @@ import de.aaaaaaah.velcom.backend.restapi.endpoints.TestTokenEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.exception.CommitAccessExceptionMapper;
 import de.aaaaaaah.velcom.backend.restapi.exception.NoSuchCommitExceptionMapper;
 import de.aaaaaaah.velcom.backend.restapi.exception.NoSuchRepoExceptionMapper;
-import de.aaaaaaah.velcom.backend.runner.Dispatcher;
-import de.aaaaaaah.velcom.backend.runner.DispatcherImpl;
+import de.aaaaaaah.velcom.backend.runner_new.Dispatcher;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import de.aaaaaaah.velcom.backend.storage.repo.RepoStorage;
 import io.dropwizard.Application;
@@ -146,12 +145,7 @@ public class ServerMain extends Application<GlobalConfig> {
 		);
 
 		// Dispatcher
-		Dispatcher dispatcher = new DispatcherImpl(
-			queue,
-			taskAccess,
-			benchmarkAccess,
-			configuration.getDisconnectedRunnerGracePeriod()
-		);
+		Dispatcher dispatcher = new Dispatcher();
 		RunnerAwareServerFactory.getInstance().setDispatcher(dispatcher);
 
 		// API authentication
@@ -172,8 +166,9 @@ public class ServerMain extends Application<GlobalConfig> {
 		environment.jersey().register(
 			new CommitHistoryEndpoint(benchmarkAccess, repoAccess, linearLog, commitComparer));
 		environment.jersey().register(new MeasurementsEndpoint(benchmarkAccess));
+		// FIXME: 07.07.20 Fix this dispatcher
 		environment.jersey()
-			.register(new QueueEndpoint(commitAccess, queue, dispatcher, linearLog, repoAccess));
+			.register(new QueueEndpoint(commitAccess, queue, null, linearLog, repoAccess));
 		environment.jersey().register(
 			new RecentlyBenchmarkedCommitsEndpoint(repoAccess,
 				benchmarkAccess, commitAccess, commitComparer, linearLog));

@@ -1,9 +1,8 @@
 package de.aaaaaaah.velcom.backend;
 
-import de.aaaaaaah.velcom.backend.runner.Dispatcher;
-import de.aaaaaaah.velcom.backend.runner.single.protocol.ServerMasterWebsocketServlet;
-import de.aaaaaaah.velcom.shared.protocol.serialization.Serializer;
-import de.aaaaaaah.velcom.shared.protocol.serialization.SimpleJsonSerializer;
+import de.aaaaaaah.velcom.backend.runner_new.Dispatcher;
+import de.aaaaaaah.velcom.backend.runner_new.ServerMasterWebsocketServlet;
+import de.aaaaaaah.velcom.shared.protocol.serialization.Converter;
 import io.dropwizard.jetty.HttpConnectorFactory;
 import io.dropwizard.jetty.MutableServletContextHandler;
 import io.dropwizard.jetty.RoutingHandler;
@@ -26,15 +25,15 @@ public class RunnerAwareServerFactory implements ServerFactory {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(RunnerAwareServerFactory.class);
 
-	private static RunnerAwareServerFactory instance = new RunnerAwareServerFactory();
+	private static final RunnerAwareServerFactory instance = new RunnerAwareServerFactory();
 
 	private ServerFactory underlying;
 	private GlobalConfig config;
 	private Dispatcher dispatcher;
-	private final Serializer serializer;
+	private final Converter serializer;
 
 	private RunnerAwareServerFactory() {
-		this.serializer = new SimpleJsonSerializer();
+		this.serializer = new Converter();
 	}
 
 	@Override
