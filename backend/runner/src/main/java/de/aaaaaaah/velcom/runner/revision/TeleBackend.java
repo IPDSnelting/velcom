@@ -3,6 +3,7 @@ package de.aaaaaaah.velcom.runner.revision;
 // TODO update comment once backend is implemented
 
 import de.aaaaaaah.velcom.runner.revision.benchmarking.BenchResult;
+import de.aaaaaaah.velcom.runner.revision.benchmarking.Benchmarker;
 import de.aaaaaaah.velcom.runner.revision.states.AwaitingRequestRunReply;
 import de.aaaaaaah.velcom.runner.revision.states.RunnerState;
 import de.aaaaaaah.velcom.runner.revision.tmpdirs.BenchRepoDir;
@@ -37,7 +38,10 @@ public class TeleBackend {
 	private final BenchRepoDir benchRepoDir;
 	private final TaskRepoDir taskRepoDir;
 
-	// TODO add info for current run4
+	// Protects benchmarker
+	private final Object benchmarkerLock;
+	@Nullable
+	private Benchmarker benchmarker;
 
 	public TeleBackend(AtomicReference<Status> globalStatus, URI address, String token, Path path) {
 		this.globalStatus = globalStatus;
@@ -58,8 +62,9 @@ public class TeleBackend {
 			RunnerMain.die(e, "Could not load hash file of bench repo");
 		}
 		benchRepoDir = tmpBenchRepoDir;
-
 		taskRepoDir = new TaskRepoDir(path.resolve("task_repo"));
+
+		benchmarkerLock = new Object();
 	}
 
 	@Nullable
@@ -123,20 +128,38 @@ public class TeleBackend {
 	}
 
 	public Optional<BenchResult> getBenchResult() {
-		// TODO implement
-		return Optional.empty();
+		synchronized (benchmarkerLock) {
+			return Optional.ofNullable(benchmarker)
+				.flatMap(Benchmarker::getResult);
+		}
 	}
 
-	public void clearBenchResult() {
-		// TODO implement
+	public boolean clearBenchResult() {
+		synchronized (benchmarkerLock) {
+			if (benchmarker == null) {
+				return false;
+			}
+
+			if (benchmarker.getResult().isEmpty()) {
+				return false;
+			}
+
+			benchmarker = null;
+			return true;
+		}
 	}
 
 	public void abortCurrentRun() {
-		// TODO implement
+		synchronized (benchmarkerLock) {
+			if (benchmarker != null) {
+				benchmarker.abort();
+			}
+		}
 	}
 
 	public Optional<UUID> getCurrentRunId() {
-		// TODO implement
-		return Optional.empty();
+		synchronized (benchmarkerLock) {
+			return Optional.ofNullable(benchmarker).map(Benchmarker::getRunId);
+		}
 	}
 }

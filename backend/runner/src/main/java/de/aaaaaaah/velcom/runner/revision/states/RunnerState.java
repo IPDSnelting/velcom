@@ -12,6 +12,7 @@ import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.ClientBoundP
 import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.GetResult;
 import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.GetStatus;
 import de.aaaaaaah.velcom.shared.protocol.serialization.serverbound.AbortRunReply;
+import de.aaaaaaah.velcom.shared.protocol.serialization.serverbound.ClearResultReply;
 import de.aaaaaaah.velcom.shared.protocol.serialization.serverbound.GetResultReply;
 import de.aaaaaaah.velcom.shared.protocol.serialization.serverbound.GetStatusReply;
 import de.aaaaaaah.velcom.shared.protocol.statemachine.State;
@@ -111,13 +112,11 @@ public abstract class RunnerState implements State {
 	}
 
 	protected Optional<RunnerState> onClearResult(ClearResult clearResult) {
-		Optional<BenchResult> resultOptional = teleBackend.getBenchResult();
-		if (resultOptional.isEmpty()) {
+		if (!teleBackend.clearBenchResult()) {
 			connection.close(StatusCode.NO_RESULT);
 			return Optional.empty();
 		}
-
-		teleBackend.clearBenchResult();
+		connection.sendPacket(new ClearResultReply().asPacket(connection.getSerializer()));
 
 		return Optional.of(this);
 	}
