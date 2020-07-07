@@ -2,6 +2,9 @@ package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import de.aaaaaaah.velcom.backend.access.entities.Task;
+import de.aaaaaaah.velcom.backend.access.entities.TaskId;
+import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchTaskException;
 import de.aaaaaaah.velcom.backend.data.linearlog.LinearLog;
 import de.aaaaaaah.velcom.backend.data.linearlog.LinearLogException;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
@@ -13,7 +16,7 @@ import de.aaaaaaah.velcom.backend.access.entities.Commit;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.restapi.RepoUser;
-import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonCommit;
+import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonTask;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonWorker;
 import de.aaaaaaah.velcom.backend.runner.Dispatcher;
 import io.dropwizard.auth.Auth;
@@ -64,8 +67,8 @@ public class QueueEndpoint {
 	 */
 	@GET
 	public GetReply get() {
-		List<JsonCommit> tasks = queue.viewAllCurrentTasks().stream()
-			.map(JsonCommit::new)
+		List<JsonTask> tasks = queue.getTasksSorted().stream()
+			.map(JsonTask::new)
 			.collect(Collectors.toUnmodifiableList());
 
 		List<JsonWorker> workers = dispatcher.getKnownRunners().stream()
@@ -87,8 +90,9 @@ public class QueueEndpoint {
 
 		CommitHash commitHash = new CommitHash(postRequest.getCommitHash());
 
-		Commit commit = commitAccess.getCommit(repoId, commitHash);
-		queue.addManualTask(commit);
+		String author = "admin of repo " + repoId.getId().toString();
+
+		queue.addCommits(author, repoId, List.of(commitHash));
 
 		if (postRequest.isIncludeUpwards()) {
 			List<BranchName> branchNames = repoReadAccess.getBranches(repoId)
@@ -97,9 +101,13 @@ public class QueueEndpoint {
 				.collect(Collectors.toList());
 
 			try {
-				linearLog.walk(repoId, branchNames)
+				// Do we really need to load complete commit objects?
+				List<CommitHash> commits = linearLog.walk(repoId, branchNames)
 					.takeWhile(it -> !it.getHash().equals(commitHash))
-					.forEach(queue::addManualTask);
+					.map(Commit::getHash)
+					.collect(Collectors.toList());
+
+				queue.addCommits(author, repoId, commits);
 			} catch (LinearLogException e) {
 				LOGGER.error("Error fetching linear log for " + repoId + " - " + commitHash, e);
 			}
@@ -109,35 +117,40 @@ public class QueueEndpoint {
 	/**
 	 * Deletes a commit from the queue.
 	 *
-	 * @param repoUuid the id of the repo
-	 * @param hashString the hash of the commit
+	 * @param user user who authored this delete
+	 * @param taskId the id of the task to delete
+	 *
+	 * @throws NoSuchTaskException if no task with the given id exists
 	 */
 	@DELETE
-	public void delete(
-		@Auth RepoUser user,
-		@NotNull @QueryParam("repo_id") UUID repoUuid,
-		@NotNull @QueryParam("commit_hash") String hashString) {
+	public void delete(@Auth RepoUser user, @NotNull @QueryParam("task_id") UUID taskId)
+		throws NoSuchTaskException {
 
-		RepoId repoId = new RepoId(repoUuid);
-		user.guardRepoAccess(repoId);
+		Task task = queue.getTaskById(new TaskId(taskId));
 
-		CommitHash commitHash = new CommitHash(hashString);
+		if (task.getSource().getLeft().isPresent()) {
+			RepoId repoId = task.getSource().getLeft().get().getRepoId();
+			user.guardRepoAccess(repoId);
+		}
+		else {
+			// task is tar
+			user.guardAdminAccess();
+		}
 
-		queue.abortTask(repoId, commitHash);
-		dispatcher.abort(commitHash, repoId);
+		queue.abortTaskProcess(new TaskId(taskId));
 	}
 
 	private static class GetReply {
 
-		private final Collection<JsonCommit> tasks;
+		private final Collection<JsonTask> tasks;
 		private final Collection<JsonWorker> workers;
 
-		public GetReply(Collection<JsonCommit> tasks, Collection<JsonWorker> workers) {
+		public GetReply(Collection<JsonTask> tasks, Collection<JsonWorker> workers) {
 			this.tasks = tasks;
 			this.workers = workers;
 		}
 
-		public Collection<JsonCommit> getTasks() {
+		public Collection<JsonTask> getTasks() {
 			return tasks;
 		}
 
