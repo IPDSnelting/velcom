@@ -28,7 +28,7 @@ public class ArchiveAccess {
 
 		if (task.getSource().isRight()) {
 			TarSource tarSource = task.getSource().getRight().orElseThrow();
-			Path tarPath = tarSource.getTarPath();
+			Path tarPath = archiveRootDir.resolve("tars").resolve(tarSource.getTarName());
 
 			try {
 				Files.newInputStream(tarPath).transferTo(outputStream);

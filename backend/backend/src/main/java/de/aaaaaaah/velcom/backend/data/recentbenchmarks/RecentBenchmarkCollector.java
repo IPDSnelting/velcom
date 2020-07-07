@@ -17,6 +17,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Collects the most recent benchmarked commits and compares them against their previous commits.
@@ -78,23 +79,32 @@ public class RecentBenchmarkCollector {
 		// 0.) Get runs for this batch
 		List<Run> runs = benchmarkAccess.getRecentRuns(skip, BATCH_SIZE);
 
+		// 0.1.) Filter out runs that are not related to any repository
+		// TODO: Remove this by completely reworking the recent benchmark collector
+		// so that it also works with tars
+		runs = runs.stream()
+			.filter(run -> run.getRepoSource().isPresent())
+			.collect(Collectors.toList());
+
 		// 1.) Filter out runs that belong to the same commit
 		Map<RepoId, Map<CommitHash, Run>> commitToRunMap = new HashMap<>();
 
 		Iterator<Run> iterator = runs.iterator();
 		while (iterator.hasNext()) {
 			Run run = iterator.next();
+			RepoId repoId = run.getRepoSource().get().getRepoId();
+			CommitHash hash = run.getRepoSource().get().getHash();
 
-			if (!commitToRunMap.containsKey(run.getRepoId())) {
-				commitToRunMap.put(run.getRepoId(), new HashMap<>());
+			if (!commitToRunMap.containsKey(repoId)) {
+				commitToRunMap.put(repoId, new HashMap<>());
 			}
 
-			if (commitToRunMap.get(run.getRepoId()).containsKey(run.getCommitHash())) {
+			if (commitToRunMap.get(repoId).containsKey(hash)) {
 				// There is already an earlier run (more recent based on the lists ordering)
 				// for this commit => older run can be discarded
 				iterator.remove();
 			} else {
-				commitToRunMap.get(run.getRepoId()).put(run.getCommitHash(), run);
+				commitToRunMap.get(repoId).put(hash, run);
 			}
 		}
 
@@ -105,25 +115,27 @@ public class RecentBenchmarkCollector {
 
 		while (iterator.hasNext()) {
 			Run run = iterator.next();
+			RepoId repoId = run.getRepoSource().get().getRepoId();
+			CommitHash hash = run.getRepoSource().get().getHash();
 
-			missingParentRuns.computeIfAbsent(run.getRepoId(), i -> new ArrayList<>());
+			missingParentRuns.computeIfAbsent(repoId, i -> new ArrayList<>());
 
-			CommitHash parentHash = parentMapper.getParent(run.getRepoId(), run.getCommitHash())
+			CommitHash parentHash = parentMapper.getParent(repoId, hash)
 				.orElse(null);
 
 			if (parentHash == null && onlySignificant) {
 				// parent commit does not exist for this run/commit => no comparison can be made
 				// => if onlySignificant is true this run can never be significant => remove run
 				iterator.remove();
-				commitToRunMap.get(run.getRepoId()).remove(run.getCommitHash());
+				commitToRunMap.get(repoId).remove(hash);
 			} else if (parentHash != null) {
 				// Only insert into missingParentRuns if parent commit actually exists
 				// (since if it does not exist, no run for that commit can exist => not missing)
 
 				// Check if run of parent commit is already in memory
-				if (!commitToRunMap.get(run.getRepoId()).containsKey(parentHash)) {
+				if (!commitToRunMap.get(repoId).containsKey(parentHash)) {
 					// sadly, parent run either does not exist or is not in memory => need to load
-					missingParentRuns.get(run.getRepoId()).add(parentHash);
+					missingParentRuns.get(repoId).add(parentHash);
 				}
 			}
 		}
@@ -136,7 +148,9 @@ public class RecentBenchmarkCollector {
 				Map<CommitHash, Run> latestRuns = benchmarkAccess.getLatestRuns(repoId, runHashes);
 
 				for (Run run : latestRuns.values()) {
-					commitToRunMap.get(run.getRepoId()).put(run.getCommitHash(), run);
+					RepoId runRepoId = run.getRepoSource().get().getRepoId();
+					CommitHash runHash = run.getRepoSource().get().getHash();
+					commitToRunMap.get(runRepoId).put(runHash, run);
 				}
 			});
 		}
@@ -159,16 +173,17 @@ public class RecentBenchmarkCollector {
 		iterator = runs.iterator();
 		while (iterator.hasNext()) {
 			Run run = iterator.next();
+			RepoId repoId = run.getRepoSource().get().getRepoId();
+			CommitHash commitHash = run.getRepoSource().get().getHash();
 
-			CommitHash commitHash = run.getCommitHash();
-			CommitHash parentHash = parentMapper.getParent(run.getRepoId(), commitHash)
+			CommitHash parentHash = parentMapper.getParent(repoId, commitHash)
 				.orElse(null);
-			Commit commit = commitDataMap.get(run.getRepoId()).get(commitHash);
+			Commit commit = commitDataMap.get(repoId).get(commitHash);
 
 			if (commit == null) {
 				// No commit data available => no comparison possible
 				iterator.remove();
-				commitToRunMap.get(run.getRepoId()).remove(commitHash);
+				commitToRunMap.get(repoId).remove(commitHash);
 			} else {
 				CommitComparison comparison;
 
@@ -177,8 +192,8 @@ public class RecentBenchmarkCollector {
 					comparison = comparer.compare(null, null, commit, run);
 				} else {
 					// Parent is available => load it and its run
-					Commit parent = commitDataMap.get(run.getRepoId()).get(parentHash);
-					Run parentRun = commitToRunMap.get(run.getRepoId()).get(parentHash);
+					Commit parent = commitDataMap.get(repoId).get(parentHash);
+					Run parentRun = commitToRunMap.get(repoId).get(parentHash);
 
 					if (parent == null) {
 						// parent commit data not available => no comparison can be made with it

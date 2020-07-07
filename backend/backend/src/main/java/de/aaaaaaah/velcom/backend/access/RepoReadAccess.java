@@ -2,8 +2,8 @@ package de.aaaaaaah.velcom.backend.access;
 
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
-import static org.jooq.codegen.db.Tables.REPOSITORY;
 import static org.jooq.codegen.db.Tables.TRACKED_BRANCH;
+import static org.jooq.codegen.db.tables.Repo.REPO;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -33,7 +33,7 @@ import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.jooq.DSLContext;
 import org.jooq.Record1;
-import org.jooq.codegen.db.tables.records.RepositoryRecord;
+import org.jooq.codegen.db.tables.records.RepoRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,12 +80,10 @@ public class RepoReadAccess {
 		}
 
 		// Check database
-		RepositoryRecord repoRecord;
+		RepoRecord repoRecord;
 
 		try (DSLContext db = databaseStorage.acquireContext()) {
-			repoRecord = db.fetchOne(REPOSITORY,
-				REPOSITORY.ID.eq(repoId.getId().toString())
-			);
+			repoRecord = db.fetchOne(REPO, REPO.ID.eq(repoId.getId().toString()));
 
 			if (repoRecord == null) {
 				throw new NoSuchRepoException(repoId);
@@ -112,7 +110,7 @@ public class RepoReadAccess {
 			.collect(toList());
 
 		try (DSLContext db = databaseStorage.acquireContext()) {
-			db.fetch(REPOSITORY, REPOSITORY.ID.notIn(cachedRepoIdList))
+			db.fetch(REPO, REPO.ID.notIn(cachedRepoIdList))
 				.stream()
 				.map(record -> loadRepoData(db, record))
 				.forEach(repoList::add);
@@ -126,7 +124,7 @@ public class RepoReadAccess {
 	 */
 	public Collection<RepoId> getAllRepoIds() {
 		try (DSLContext db = databaseStorage.acquireContext()) {
-			return db.fetch(REPOSITORY)
+			return db.fetch(REPO)
 				.stream()
 				.map(record -> new RepoId(UUID.fromString(record.getId())))
 				.collect(toList());
@@ -147,7 +145,7 @@ public class RepoReadAccess {
 				.where(TRACKED_BRANCH.REPO_ID.eq(repoId.getId().toString()))
 				.fetch()
 				.stream()
-				.map(r -> BranchName.fromName(r.getBranchName()))
+				.map(r -> BranchName.fromName(r.getName()))
 				.map(b -> new Branch(repoId, b))
 				.collect(toSet());
 		}
@@ -215,9 +213,9 @@ public class RepoReadAccess {
 
 		// Check database
 		try (DSLContext db = databaseStorage.acquireContext()) {
-			return db.select(REPOSITORY.REMOTE_URL)
-				.from(REPOSITORY)
-				.where(REPOSITORY.ID.eq(repoId.getId().toString()))
+			return db.select(REPO.REMOTE_URL)
+				.from(REPO)
+				.where(REPO.ID.eq(repoId.getId().toString()))
 				.fetchOptional()
 				.map(Record1::value1)
 				.map(RemoteUrl::new)
@@ -227,7 +225,7 @@ public class RepoReadAccess {
 
 	// --- Additional Data Loading Methods --------------------------------------------------------
 
-	private Repo loadRepoData(DSLContext db, RepositoryRecord repoRecord)
+	private Repo loadRepoData(DSLContext db, RepoRecord repoRecord)
 		throws RepoAccessException {
 
 		RepoId repoId = new RepoId(UUID.fromString(repoRecord.getId()));
@@ -237,7 +235,7 @@ public class RepoReadAccess {
 			.where(TRACKED_BRANCH.REPO_ID.eq(repoId.getId().toString()))
 			.fetch()
 			.stream()
-			.map(r -> BranchName.fromName(r.getBranchName()))
+			.map(r -> BranchName.fromName(r.getName()))
 			.map(b -> new Branch(repoId, b))
 			.collect(toSet());
 
