@@ -26,7 +26,13 @@ public class RunnerMain {
 		}
 	}
 
-	private static void die(Throwable e, String message) {
+	/**
+	 * Die with an error message and an exception. Always dies with exit code 1.
+	 *
+	 * @param e the exception to print
+	 * @param message the message to print
+	 */
+	public static void die(Throwable e, String message) {
 		System.out.println(message);
 		System.out.println(e.toString());
 		System.exit(1);

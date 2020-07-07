@@ -3,6 +3,7 @@ package de.aaaaaaah.velcom.runner.shared.protocol.serialization.serverbound;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import de.aaaaaaah.velcom.runner.shared.protocol.serialization.Converter;
+import de.aaaaaaah.velcom.runner.shared.protocol.serialization.State;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -18,7 +19,7 @@ public class GetStatusReply implements ServerBound {
 	@Nullable
 	private final String benchHash;
 	private final boolean resultAvailable;
-	private final String state;
+	private final State state;
 	@Nullable
 	private final UUID runId;
 
@@ -28,7 +29,7 @@ public class GetStatusReply implements ServerBound {
 		@JsonProperty(required = true) String info,
 		@Nullable String benchHash,
 		@JsonProperty(required = true) boolean resultAvailable,
-		@JsonProperty(required = true) String state,
+		@JsonProperty(required = true) State state,
 		@Nullable UUID runId
 	) {
 		this.name = name;
@@ -55,7 +56,7 @@ public class GetStatusReply implements ServerBound {
 		return resultAvailable;
 	}
 
-	public String getState() {
+	public State getState() {
 		return state;
 	}
 

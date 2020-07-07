@@ -2,6 +2,7 @@ package de.aaaaaaah.velcom.runner.revision.tmpdirs;
 
 import de.aaaaaaah.velcom.runner.shared.util.compression.FileHelper;
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -16,25 +17,21 @@ public class BenchRepoDir {
 	@Nullable
 	private String currentHash;
 
-	public BenchRepoDir(Path dirPath, Path hashFilePath) {
+	public BenchRepoDir(Path dirPath) throws IOException {
 		this.dirPath = dirPath;
-		this.hashFilePath = hashFilePath;
+		this.hashFilePath = dirPath.getParent().resolve(dirPath.getFileName() + ".hash");
 
 		currentHash = readHash();
 	}
 
-	public BenchRepoDir(Path dirPath) {
-		this(dirPath, Path.of(dirPath.getParent().toString(), dirPath.getFileName() + ".hash"));
-	}
-
 	@Nullable
-	private String readHash() {
+	private String readHash() throws IOException {
 		try {
 			FileReader reader = new FileReader(hashFilePath.toFile());
 			BufferedReader bufferedReader = new BufferedReader(reader);
 			String line = bufferedReader.readLine();
 			return line.strip();
-		} catch (IOException ignore) {
+		} catch (FileNotFoundException ignore) {
 			// TODO maybe add some logging
 		}
 

@@ -4,12 +4,18 @@ package de.aaaaaaah.velcom.runner.revision;
 
 import de.aaaaaaah.velcom.runner.revision.states.AwaitingRequestRunReply;
 import de.aaaaaaah.velcom.runner.revision.states.RunnerState;
+import de.aaaaaaah.velcom.runner.revision.tmpdirs.BenchRepoDir;
+import de.aaaaaaah.velcom.runner.revision.tmpdirs.TaskRepoDir;
+import de.aaaaaaah.velcom.runner.shared.protocol.serialization.State;
 import de.aaaaaaah.velcom.runner.shared.protocol.serialization.serverbound.RequestRun;
+import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 
 /**
@@ -19,12 +25,39 @@ public class TeleBackend {
 
 	private static final Duration RECONNECT_DELAY = Duration.ofSeconds(10);
 
+	private final AtomicReference<State> globalState;
+
 	private final URI address;
 	private final String token;
+	private final Path path;
 
-	public TeleBackend(URI address, String token) {
+	private final BenchRepoDir benchRepoDir;
+	private final TaskRepoDir taskRepoDir;
+
+	@Nullable
+	private Thread benchThread;
+
+	public TeleBackend(AtomicReference<State> globalState, URI address, String token, Path path) {
+		this.globalState = globalState;
+
 		this.address = address;
 		this.token = token;
+		this.path = path;
+
+		// RunnerMain.die will stop the runner but java doesn't know that, so I need to do this
+		// little dance here...
+		BenchRepoDir tmpBenchRepoDir = null;
+		try {
+			tmpBenchRepoDir = new BenchRepoDir(path.resolve("bench_repo"));
+		} catch (IOException e) {
+			// Dying here is still okay since the main thread starts the TeleBackend threads only
+			// when all TeleBackends have been initialized successfully. That's why we don't need
+			// to close any open connections or stop running benchmarks here.
+			RunnerMain.die(e, "Could not load hash file of bench repo");
+		}
+		benchRepoDir = tmpBenchRepoDir;
+
+		taskRepoDir = new TaskRepoDir(path.resolve("task_repo"));
 	}
 
 	@Nullable
