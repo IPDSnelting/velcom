@@ -3,6 +3,7 @@ package de.aaaaaaah.velcom.runner.revision;
 import de.aaaaaaah.velcom.runner.revision.states.Idle;
 import de.aaaaaaah.velcom.runner.revision.states.RunnerState;
 import de.aaaaaaah.velcom.runner.shared.Timeout;
+import de.aaaaaaah.velcom.runner.shared.protocol.StatusCode;
 import de.aaaaaaah.velcom.runner.shared.protocol.serialization.Converter;
 import de.aaaaaaah.velcom.runner.shared.protocol.serialization.serverbound.ServerBoundPacket;
 import de.aaaaaaah.velcom.runner.shared.protocol.statemachine.StateMachine;
@@ -19,8 +20,6 @@ import java.util.concurrent.Future;
 public class Connection implements WebSocket.Listener {
 
 	private static final String AUTH_HEADER_NAME = "Authorization";
-	private static final int CLOSE_CONNECTION_STATUS_CODE = 4000;
-	private static final String CLOSE_CONNECTION_MESSAGE = "Client initiated close";
 	private static final Duration CLOSE_CONNECTION_TIMEOUT = Duration.ofSeconds(10);
 
 	private final StateMachine<RunnerState> stateMachine;
@@ -54,7 +53,7 @@ public class Connection implements WebSocket.Listener {
 
 		serializer.serialize(packet).ifPresentOrElse(
 			str -> socket.sendText(str, true),
-			this::close
+			() -> close(StatusCode.ILLEGAL_PACKET)
 		);
 	}
 
@@ -68,13 +67,12 @@ public class Connection implements WebSocket.Listener {
 		closedFuture.complete(null);
 	}
 
-	public synchronized void close() {
+	public synchronized void close(StatusCode statusCode) {
 		if (closed) {
 			return;
 		}
 
-		// TODO move codes and messages to class that's shared between backend and runner
-		socket.sendClose(CLOSE_CONNECTION_STATUS_CODE, CLOSE_CONNECTION_MESSAGE);
+		socket.sendClose(statusCode.getCode(), statusCode.getDescriptionAsReason());
 
 		Timeout disconnectTimeout = Timeout.after(CLOSE_CONNECTION_TIMEOUT);
 		disconnectTimeout.getCompletionStage().thenAccept(aVoid -> socket.abort());

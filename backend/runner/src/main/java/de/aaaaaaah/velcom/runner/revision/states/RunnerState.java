@@ -2,6 +2,7 @@ package de.aaaaaaah.velcom.runner.revision.states;
 
 import de.aaaaaaah.velcom.runner.revision.TeleBackend;
 import de.aaaaaaah.velcom.runner.revision.Connection;
+import de.aaaaaaah.velcom.runner.shared.protocol.StatusCode;
 import de.aaaaaaah.velcom.runner.shared.protocol.serialization.clientbound.ClientBoundPacket;
 import de.aaaaaaah.velcom.runner.shared.protocol.statemachine.State;
 import java.nio.ByteBuffer;
@@ -36,7 +37,7 @@ public abstract class RunnerState implements State {
 		// If a packet has been received that could not be deserialized or handled, that is invalid
 		// behaviour.
 		if (newState.isEmpty()) {
-			connection.close();
+			connection.close(StatusCode.ILLEGAL_PACKET);
 		}
 
 		return newState.orElse(this);
@@ -65,7 +66,7 @@ public abstract class RunnerState implements State {
 	public RunnerState onBinary(ByteBuffer data, boolean last) {
 		// Binary packets are only expected in certain circumstances, but usually they are invalid
 		// behaviour.
-		connection.close();
+		connection.close(StatusCode.ILLEGAL_BINARY_PACKET);
 		return this;
 	}
 }

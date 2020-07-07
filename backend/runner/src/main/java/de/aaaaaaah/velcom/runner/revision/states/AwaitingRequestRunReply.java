@@ -1,8 +1,9 @@
 package de.aaaaaaah.velcom.runner.revision.states;
 
-import de.aaaaaaah.velcom.runner.revision.TeleBackend;
 import de.aaaaaaah.velcom.runner.revision.Connection;
+import de.aaaaaaah.velcom.runner.revision.TeleBackend;
 import de.aaaaaaah.velcom.runner.shared.Timeout;
+import de.aaaaaaah.velcom.runner.shared.protocol.StatusCode;
 import de.aaaaaaah.velcom.runner.shared.protocol.serialization.Converter;
 import de.aaaaaaah.velcom.runner.shared.protocol.serialization.clientbound.ClientBoundPacket;
 import de.aaaaaaah.velcom.runner.shared.protocol.serialization.clientbound.ClientBoundPacketType;
@@ -32,7 +33,8 @@ public class AwaitingRequestRunReply extends RunnerState {
 		receivedDataPassedOn = false;
 
 		timeout = Timeout.after(AWAIT_REPLY_TIMEOUT);
-		timeout.getCompletionStage().thenAccept(aVoid -> connection.close());
+		timeout.getCompletionStage()
+			.thenAccept(aVoid -> connection.close(StatusCode.COMMAND_TIMEOUT));
 	}
 
 	@Override
