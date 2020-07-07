@@ -15,14 +15,14 @@ import javax.annotation.Nullable;
 /**
  * This class contains all the data and objects which are valid during the life of a backend.
  */
-public class Backend {
+public class TeleBackend {
 
 	private static final Duration RECONNECT_DELAY = Duration.ofSeconds(10);
 
 	private final URI address;
 	private final String token;
 
-	public Backend(URI address, String token) {
+	public TeleBackend(URI address, String token) {
 		this.address = address;
 		this.token = token;
 	}

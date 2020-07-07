@@ -1,6 +1,6 @@
 package de.aaaaaaah.velcom.runner.revision.states;
 
-import de.aaaaaaah.velcom.runner.revision.Backend;
+import de.aaaaaaah.velcom.runner.revision.TeleBackend;
 import de.aaaaaaah.velcom.runner.revision.Connection;
 import de.aaaaaaah.velcom.runner.shared.Timeout;
 import de.aaaaaaah.velcom.runner.shared.protocol.serialization.Converter;
@@ -23,10 +23,10 @@ public class AwaitingRequestRunReply extends RunnerState {
 	private boolean receivedDataPassedOn;
 	private final Timeout timeout;
 
-	public AwaitingRequestRunReply(Backend backend, Connection connection,
+	public AwaitingRequestRunReply(TeleBackend teleBackend, Connection connection,
 		CompletableFuture<Boolean> receivedData) {
 
-		super(backend, connection);
+		super(teleBackend, connection);
 
 		this.receivedData = receivedData;
 		receivedDataPassedOn = false;
@@ -50,10 +50,10 @@ public class AwaitingRequestRunReply extends RunnerState {
 			.map(p -> {
 				if (p.hasBench()) {
 					receivedDataPassedOn = true;
-					return new AwaitingBench(backend, connection, receivedData, p);
+					return new AwaitingBench(teleBackend, connection, receivedData, p);
 				} else if (p.hasRun()) {
 					receivedDataPassedOn = true;
-					return new AwaitingRun(backend, connection, receivedData, p);
+					return new AwaitingRun(teleBackend, connection, receivedData, p);
 				} else {
 					return this;
 				}

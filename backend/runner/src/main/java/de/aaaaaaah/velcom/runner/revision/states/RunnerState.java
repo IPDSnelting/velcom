@@ -1,6 +1,6 @@
 package de.aaaaaaah.velcom.runner.revision.states;
 
-import de.aaaaaaah.velcom.runner.revision.Backend;
+import de.aaaaaaah.velcom.runner.revision.TeleBackend;
 import de.aaaaaaah.velcom.runner.revision.Connection;
 import de.aaaaaaah.velcom.runner.shared.protocol.serialization.clientbound.ClientBoundPacket;
 import de.aaaaaaah.velcom.runner.shared.protocol.statemachine.State;
@@ -14,11 +14,11 @@ import java.util.Optional;
  */
 public abstract class RunnerState implements State {
 
-	protected final Backend backend;
+	protected final TeleBackend teleBackend;
 	protected final Connection connection;
 
-	public RunnerState(Backend backend, Connection connection) {
-		this.backend = backend;
+	public RunnerState(TeleBackend teleBackend, Connection connection) {
+		this.teleBackend = teleBackend;
 		this.connection = connection;
 	}
 

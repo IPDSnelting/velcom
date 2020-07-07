@@ -1,6 +1,6 @@
 package de.aaaaaaah.velcom.runner.revision.states;
 
-import de.aaaaaaah.velcom.runner.revision.Backend;
+import de.aaaaaaah.velcom.runner.revision.TeleBackend;
 import de.aaaaaaah.velcom.runner.revision.Connection;
 
 /**
@@ -9,8 +9,8 @@ import de.aaaaaaah.velcom.runner.revision.Connection;
  */
 public class Idle extends RunnerState {
 
-	public Idle(Backend backend, Connection connection) {
-		super(backend, connection);
+	public Idle(TeleBackend teleBackend, Connection connection) {
+		super(teleBackend, connection);
 	}
 
 	@Override

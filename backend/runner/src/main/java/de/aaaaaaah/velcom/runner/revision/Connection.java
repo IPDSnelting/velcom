@@ -31,10 +31,10 @@ public class Connection implements WebSocket.Listener {
 
 	private final WebSocket socket;
 
-	public Connection(Backend backend, URI address, String token)
+	public Connection(TeleBackend teleBackend, URI address, String token)
 		throws ExecutionException, InterruptedException {
 
-		stateMachine = new StateMachine<>(new Idle(backend, this));
+		stateMachine = new StateMachine<>(new Idle(teleBackend, this));
 		serializer = new Converter();
 		textPacketBuilder = new StringBuilder();
 		closedFuture = new CompletableFuture<>();
