@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -74,4 +75,15 @@ public class Dispatcher {
 		}
 	}
 
+	/**
+	 * Returns the {@link TeleRunner} for a given name.
+	 *
+	 * @param name the name of the runner
+	 * @return the runner or an empty optional otherwise
+	 */
+	Optional<TeleRunner> getTeleRunner(String name) {
+		return teleRunners.stream()
+			.filter(it -> it.getRunnerName().equals(name))
+			.findAny();
+	}
 }
