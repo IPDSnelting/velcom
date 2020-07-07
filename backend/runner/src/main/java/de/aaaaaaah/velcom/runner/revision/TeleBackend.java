@@ -6,7 +6,7 @@ import de.aaaaaaah.velcom.runner.revision.states.AwaitingRequestRunReply;
 import de.aaaaaaah.velcom.runner.revision.states.RunnerState;
 import de.aaaaaaah.velcom.runner.revision.tmpdirs.BenchRepoDir;
 import de.aaaaaaah.velcom.runner.revision.tmpdirs.TaskRepoDir;
-import de.aaaaaaah.velcom.runner.shared.protocol.serialization.State;
+import de.aaaaaaah.velcom.runner.shared.protocol.serialization.Status;
 import de.aaaaaaah.velcom.runner.shared.protocol.serialization.serverbound.RequestRun;
 import java.io.IOException;
 import java.net.URI;
@@ -25,7 +25,7 @@ public class TeleBackend {
 
 	private static final Duration RECONNECT_DELAY = Duration.ofSeconds(10);
 
-	private final AtomicReference<State> globalState;
+	private final AtomicReference<Status> globalStatus;
 
 	private final URI address;
 	private final String token;
@@ -37,8 +37,8 @@ public class TeleBackend {
 	@Nullable
 	private Thread benchThread;
 
-	public TeleBackend(AtomicReference<State> globalState, URI address, String token, Path path) {
-		this.globalState = globalState;
+	public TeleBackend(AtomicReference<Status> globalStatus, URI address, String token, Path path) {
+		this.globalStatus = globalStatus;
 
 		this.address = address;
 		this.token = token;

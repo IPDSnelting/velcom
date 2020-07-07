@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import de.aaaaaaah.velcom.runner.shared.protocol.serialization.EntityTest;
-import de.aaaaaaah.velcom.runner.shared.protocol.serialization.State;
+import de.aaaaaaah.velcom.runner.shared.protocol.serialization.Status;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
@@ -15,7 +15,7 @@ class GetStatusReplyTest extends EntityTest {
 		String json = "{\"info\": \"system info goes here\", \"result_available\": false, \"state\": \"IDLE\"}";
 		GetStatusReply result = objectMapper.readValue(json, GetStatusReply.class);
 		assertEquals(
-			new GetStatusReply("system info goes here", null, false, State.IDLE, null),
+			new GetStatusReply("system info goes here", null, false, Status.IDLE, null),
 			result
 		);
 	}
@@ -27,7 +27,7 @@ class GetStatusReplyTest extends EntityTest {
 
 		UUID uuid = UUID.fromString("576afdcb-eaf9-46b2-9287-fc3bf8df83df");
 		assertEquals(
-			new GetStatusReply("system info goes here", "blabla", false, State.ABORT, uuid),
+			new GetStatusReply("system info goes here", "blabla", false, Status.ABORT, uuid),
 			result
 		);
 	}

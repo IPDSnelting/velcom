@@ -1,5 +1,5 @@
 package de.aaaaaaah.velcom.runner.shared.protocol.serialization;
 
-public enum State {
+public enum Status {
 	RUN, ABORT, IDLE
 }

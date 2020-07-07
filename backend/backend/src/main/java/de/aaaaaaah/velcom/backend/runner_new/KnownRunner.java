@@ -1,6 +1,6 @@
 package de.aaaaaaah.velcom.backend.runner_new;
 
-import de.aaaaaaah.velcom.runner.shared.protocol.serialization.State;
+import de.aaaaaaah.velcom.runner.shared.protocol.serialization.Status;
 import java.util.Objects;
 
 /**
@@ -11,19 +11,19 @@ public class KnownRunner {
 
 	private final String name;
 	private final String information;
-	private final State state;
+	private final Status status;
 
 	/**
 	 * Creates a new known runner.
 	 *
 	 * @param name the name of the runner
 	 * @param information the runner information
-	 * @param state the runner state
+	 * @param status the runner state
 	 */
-	public KnownRunner(String name, String information, State state) {
+	public KnownRunner(String name, String information, Status status) {
 		this.name = Objects.requireNonNull(name, "name can not be null!");
 		this.information = Objects.requireNonNull(information, "information can not be null!");
-		this.state = Objects.requireNonNull(state, "state can not be null!");
+		this.status = Objects.requireNonNull(status, "status can not be null!");
 	}
 
 	public String getName() {
@@ -34,7 +34,7 @@ public class KnownRunner {
 		return information;
 	}
 
-	public State getState() {
-		return state;
+	public Status getStatus() {
+		return status;
 	}
 }

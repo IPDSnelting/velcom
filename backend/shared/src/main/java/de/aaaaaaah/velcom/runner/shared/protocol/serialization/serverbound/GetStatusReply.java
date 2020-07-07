@@ -3,7 +3,7 @@ package de.aaaaaaah.velcom.runner.shared.protocol.serialization.serverbound;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import de.aaaaaaah.velcom.runner.shared.protocol.serialization.Converter;
-import de.aaaaaaah.velcom.runner.shared.protocol.serialization.State;
+import de.aaaaaaah.velcom.runner.shared.protocol.serialization.Status;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -18,7 +18,7 @@ public class GetStatusReply implements ServerBound {
 	@Nullable
 	private final String benchHash;
 	private final boolean resultAvailable;
-	private final State state;
+	private final Status status;
 	@Nullable
 	private final UUID runId;
 
@@ -27,13 +27,13 @@ public class GetStatusReply implements ServerBound {
 		@JsonProperty(required = true) String info,
 		@Nullable String benchHash,
 		@JsonProperty(required = true) boolean resultAvailable,
-		@JsonProperty(required = true) State state,
+		@JsonProperty(required = true) Status status,
 		@Nullable UUID runId
 	) {
 		this.info = info;
 		this.benchHash = benchHash;
 		this.resultAvailable = resultAvailable;
-		this.state = state;
+		this.status = status;
 		this.runId = runId;
 	}
 
@@ -49,8 +49,8 @@ public class GetStatusReply implements ServerBound {
 		return resultAvailable;
 	}
 
-	public State getState() {
-		return state;
+	public Status getStatus() {
+		return status;
 	}
 
 	public Optional<UUID> getRunId() {
@@ -69,13 +69,13 @@ public class GetStatusReply implements ServerBound {
 		return resultAvailable == that.resultAvailable &&
 			info.equals(that.info) &&
 			Objects.equals(benchHash, that.benchHash) &&
-			state.equals(that.state) &&
+			status.equals(that.status) &&
 			Objects.equals(runId, that.runId);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(info, benchHash, resultAvailable, state, runId);
+		return Objects.hash(info, benchHash, resultAvailable, status, runId);
 	}
 
 	@Override

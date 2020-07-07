@@ -90,6 +90,6 @@ public class TeleRunner {
 	public KnownRunner getRunnerInformation() {
 		GetStatusReply reply = runnerInformation.get();
 
-		return new KnownRunner(getRunnerName(), reply.getInfo(), reply.getState());
+		return new KnownRunner(getRunnerName(), reply.getInfo(), reply.getStatus());
 	}
 }
