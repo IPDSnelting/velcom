@@ -2,7 +2,9 @@ package de.aaaaaaah.velcom.backend.listener;
 
 import static java.util.stream.Collectors.toList;
 
+import com.codahale.metrics.Histogram;
 import de.aaaaaaah.velcom.backend.GlobalConfig;
+import de.aaaaaaah.velcom.backend.ServerMain;
 import de.aaaaaaah.velcom.backend.access.entities.*;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
@@ -37,12 +39,14 @@ public class Listener {
 	private final RepoWriteAccess repoAccess;
 	private final CommitReadAccess commitAccess;
 	private final KnownCommitWriteAccess knownCommitAccess;
-	private final Queue queue;
 
 	private final ScheduledExecutorService executor;
 	private final Lock lock = new ReentrantLock();
 
 	private final UnknownCommitFinder unknownCommitFinder;
+
+	private final Histogram updateDurations = ServerMain.getMetricRegistry()
+		.histogram("listener-update-dur");
 
 	/**
 	 * Constructs a new listener instance.
@@ -51,14 +55,12 @@ public class Listener {
 	 * @param repoAccess used to read repo data
 	 * @param commitAccess used to read commit data
 	 * @param knownCommitAccess used to mark new commits as known
-	 * @param queue the queue into which unknown commits will be inserted
 	 */
 	public Listener(GlobalConfig config, RepoWriteAccess repoAccess, CommitReadAccess commitAccess,
-		KnownCommitWriteAccess knownCommitAccess, Queue queue) {
+		KnownCommitWriteAccess knownCommitAccess) {
 		this.repoAccess = repoAccess;
 		this.commitAccess = commitAccess;
 		this.knownCommitAccess = knownCommitAccess;
-		this.queue = queue;
 
 		long pollInterval = config.getPollInterval();
 
@@ -69,6 +71,8 @@ public class Listener {
 	}
 
 	private void update() {
+		long start = System.currentTimeMillis();
+
 		try {
 			repoAccess.updateBenchmarkRepo();
 		} catch (RepoAccessException e) {
@@ -82,6 +86,9 @@ public class Listener {
 				LOGGER.warn("Could not fetch updates for repo: " + repo, e);
 			}
 		}
+
+		long end = System.currentTimeMillis();
+		updateDurations.update(end - start);
 	}
 
 	/**
