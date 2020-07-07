@@ -25,8 +25,8 @@ public class KnownCommitWriteAccess extends KnownCommitReadAccess {
 		Collection<Task> tasks) {
 
 		databaseStorage.acquireTransaction(db -> {
-			taskAccess.insertTasks(tasks, db);
 			markCommitsAsKnown(repoId, commits, db);
+			taskAccess.insertTasks(tasks, db);
 		});
 	}
 
