@@ -3,7 +3,7 @@ package de.aaaaaaah.velcom.backend.runner;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.runner.single.ActiveRunnerInformation;
-import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkResults;
+import de.aaaaaaah.velcom.shared.protocol.serverbound.entities.BenchmarkResults;
 import java.util.List;
 
 /**

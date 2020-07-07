@@ -2,9 +2,9 @@ package de.aaaaaaah.velcom.runner.revision.states;
 
 import de.aaaaaaah.velcom.runner.revision.TeleBackend;
 import de.aaaaaaah.velcom.runner.revision.Connection;
-import de.aaaaaaah.velcom.runner.shared.protocol.StatusCode;
-import de.aaaaaaah.velcom.runner.shared.protocol.serialization.clientbound.ClientBoundPacket;
-import de.aaaaaaah.velcom.runner.shared.protocol.statemachine.State;
+import de.aaaaaaah.velcom.shared.protocol.StatusCode;
+import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.ClientBoundPacket;
+import de.aaaaaaah.velcom.shared.protocol.statemachine.State;
 import java.nio.ByteBuffer;
 import java.util.Optional;
 

@@ -4,7 +4,7 @@ import de.aaaaaaah.velcom.backend.access.RepoWriteAccess;
 import de.aaaaaaah.velcom.backend.access.entities.Commit;
 import de.aaaaaaah.velcom.backend.access.exceptions.ArchiveFailedPermanently;
 import de.aaaaaaah.velcom.backend.runner.single.ActiveRunnerInformation;
-import de.aaaaaaah.velcom.runner.shared.protocol.runnerbound.entities.RunnerWorkOrder;
+import de.aaaaaaah.velcom.shared.protocol.runnerbound.entities.RunnerWorkOrder;
 import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

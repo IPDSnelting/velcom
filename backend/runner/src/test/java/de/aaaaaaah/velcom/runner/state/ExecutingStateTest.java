@@ -7,8 +7,8 @@ import static org.mockito.Mockito.when;
 
 import de.aaaaaaah.velcom.runner.entity.RunnerConfiguration;
 import de.aaaaaaah.velcom.runner.entity.WorkExecutor;
-import de.aaaaaaah.velcom.runner.shared.RunnerStatusEnum;
-import de.aaaaaaah.velcom.runner.shared.protocol.runnerbound.entities.RunnerWorkOrder;
+import de.aaaaaaah.velcom.shared.RunnerStatusEnum;
+import de.aaaaaaah.velcom.shared.protocol.runnerbound.entities.RunnerWorkOrder;
 import java.nio.file.Path;
 import java.util.UUID;
 import org.assertj.core.api.Assertions;

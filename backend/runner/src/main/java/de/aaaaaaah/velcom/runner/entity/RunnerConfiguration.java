@@ -1,7 +1,7 @@
 package de.aaaaaaah.velcom.runner.entity;
 
 import de.aaaaaaah.velcom.runner.protocol.SocketConnectionManager;
-import de.aaaaaaah.velcom.runner.shared.protocol.serialization.Serializer;
+import de.aaaaaaah.velcom.shared.protocol.serialization.Serializer;
 import de.aaaaaaah.velcom.runner.state.RunnerStateMachine;
 import java.net.URI;
 

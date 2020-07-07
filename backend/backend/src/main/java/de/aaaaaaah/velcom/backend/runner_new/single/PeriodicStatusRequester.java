@@ -4,12 +4,12 @@ import de.aaaaaaah.velcom.backend.runner_new.single.state.AwaitClearResultReply;
 import de.aaaaaaah.velcom.backend.runner_new.single.state.AwaitGetResultReply;
 import de.aaaaaaah.velcom.backend.runner_new.single.state.AwaitGetStatusReply;
 import de.aaaaaaah.velcom.backend.runner_new.single.state.TeleRunnerState;
-import de.aaaaaaah.velcom.runner.shared.protocol.serialization.clientbound.ClearResult;
-import de.aaaaaaah.velcom.runner.shared.protocol.serialization.clientbound.GetResult;
-import de.aaaaaaah.velcom.runner.shared.protocol.serialization.clientbound.GetStatus;
-import de.aaaaaaah.velcom.runner.shared.protocol.serialization.serverbound.GetResultReply;
-import de.aaaaaaah.velcom.runner.shared.protocol.serialization.serverbound.GetStatusReply;
-import de.aaaaaaah.velcom.runner.shared.protocol.statemachine.StateMachine;
+import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.ClearResult;
+import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.GetResult;
+import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.GetStatus;
+import de.aaaaaaah.velcom.shared.protocol.serialization.serverbound.GetResultReply;
+import de.aaaaaaah.velcom.shared.protocol.serialization.serverbound.GetStatusReply;
+import de.aaaaaaah.velcom.shared.protocol.statemachine.StateMachine;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 

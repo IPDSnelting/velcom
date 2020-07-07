@@ -8,9 +8,9 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import de.aaaaaaah.velcom.runner.shared.protocol.runnerbound.entities.RunnerWorkOrder;
-import de.aaaaaaah.velcom.runner.shared.protocol.serialization.Serializer;
-import de.aaaaaaah.velcom.runner.shared.protocol.serialization.SimpleJsonSerializer;
+import de.aaaaaaah.velcom.shared.protocol.runnerbound.entities.RunnerWorkOrder;
+import de.aaaaaaah.velcom.shared.protocol.serialization.Serializer;
+import de.aaaaaaah.velcom.shared.protocol.serialization.SimpleJsonSerializer;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;

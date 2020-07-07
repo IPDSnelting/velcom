@@ -10,7 +10,7 @@ import de.aaaaaaah.velcom.runner.entity.BenchmarkRepoOrganizer;
 import de.aaaaaaah.velcom.runner.entity.RunnerConfiguration;
 import de.aaaaaaah.velcom.runner.entity.WorkExecutor;
 import de.aaaaaaah.velcom.runner.protocol.SocketConnectionManager;
-import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.RunnerInformation;
+import de.aaaaaaah.velcom.shared.protocol.serverbound.entities.RunnerInformation;
 import java.io.IOException;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;

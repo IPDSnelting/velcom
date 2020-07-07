@@ -2,7 +2,7 @@ package de.aaaaaaah.velcom.runner.revision.states;
 
 import de.aaaaaaah.velcom.runner.revision.TeleBackend;
 import de.aaaaaaah.velcom.runner.revision.Connection;
-import de.aaaaaaah.velcom.runner.shared.protocol.serialization.clientbound.RequestRunReply;
+import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.RequestRunReply;
 import java.util.concurrent.CompletableFuture;
 
 // TODO implement

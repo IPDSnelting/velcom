@@ -1,7 +1,7 @@
 package de.aaaaaaah.velcom.backend.runner.single.protocol;
 
-import de.aaaaaaah.velcom.runner.shared.protocol.SentEntity;
-import de.aaaaaaah.velcom.runner.shared.protocol.serialization.Serializer;
+import de.aaaaaaah.velcom.shared.protocol.SentEntity;
+import de.aaaaaaah.velcom.shared.protocol.serialization.Serializer;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;

@@ -1,7 +1,7 @@
 package de.aaaaaaah.velcom.runner.protocol;
 
 import de.aaaaaaah.velcom.runner.exceptions.ConnectionException;
-import de.aaaaaaah.velcom.runner.shared.protocol.SentEntity;
+import de.aaaaaaah.velcom.shared.protocol.SentEntity;
 import java.io.IOException;
 
 /**

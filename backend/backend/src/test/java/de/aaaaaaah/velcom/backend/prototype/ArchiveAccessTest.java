@@ -6,7 +6,7 @@ import de.aaaaaaah.velcom.backend.access.archive.Archiver;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.storage.repo.RepoStorage;
 import de.aaaaaaah.velcom.backend.storage.repo.exception.AddRepositoryException;
-import de.aaaaaaah.velcom.runner.shared.util.FileHelper;
+import de.aaaaaaah.velcom.shared.util.FileHelper;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;

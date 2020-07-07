@@ -2,8 +2,8 @@ package de.aaaaaaah.velcom.backend.runner_new.single;
 
 import de.aaaaaaah.velcom.backend.runner_new.Dispatcher;
 import de.aaaaaaah.velcom.backend.runner_new.KnownRunner;
-import de.aaaaaaah.velcom.runner.shared.protocol.serialization.Converter;
-import de.aaaaaaah.velcom.runner.shared.protocol.serialization.serverbound.GetStatusReply;
+import de.aaaaaaah.velcom.shared.protocol.serialization.Converter;
+import de.aaaaaaah.velcom.shared.protocol.serialization.serverbound.GetStatusReply;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 

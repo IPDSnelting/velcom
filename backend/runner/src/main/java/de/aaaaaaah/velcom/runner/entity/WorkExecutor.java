@@ -1,6 +1,6 @@
 package de.aaaaaaah.velcom.runner.entity;
 
-import de.aaaaaaah.velcom.runner.shared.protocol.runnerbound.entities.RunnerWorkOrder;
+import de.aaaaaaah.velcom.shared.protocol.runnerbound.entities.RunnerWorkOrder;
 import java.nio.file.Path;
 
 /**

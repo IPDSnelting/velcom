@@ -2,7 +2,7 @@ package de.aaaaaaah.velcom.runner.state;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import de.aaaaaaah.velcom.runner.shared.RunnerStatusEnum;
+import de.aaaaaaah.velcom.shared.RunnerStatusEnum;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

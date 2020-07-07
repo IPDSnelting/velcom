@@ -2,9 +2,9 @@ package de.aaaaaaah.velcom.backend.runner_new.single.state;
 
 import de.aaaaaaah.velcom.backend.runner_new.single.RunnerConnection;
 import de.aaaaaaah.velcom.backend.runner_new.single.TeleRunner;
-import de.aaaaaaah.velcom.runner.shared.protocol.serialization.serverbound.GetStatusReply;
-import de.aaaaaaah.velcom.runner.shared.protocol.serialization.serverbound.ServerBoundPacket;
-import de.aaaaaaah.velcom.runner.shared.protocol.serialization.serverbound.ServerBoundPacketType;
+import de.aaaaaaah.velcom.shared.protocol.serialization.serverbound.GetStatusReply;
+import de.aaaaaaah.velcom.shared.protocol.serialization.serverbound.ServerBoundPacket;
+import de.aaaaaaah.velcom.shared.protocol.serialization.serverbound.ServerBoundPacketType;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 

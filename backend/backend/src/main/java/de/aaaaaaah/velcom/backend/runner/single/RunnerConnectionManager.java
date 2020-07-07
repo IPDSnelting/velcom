@@ -1,6 +1,6 @@
 package de.aaaaaaah.velcom.backend.runner.single;
 
-import de.aaaaaaah.velcom.runner.shared.protocol.SentEntity;
+import de.aaaaaaah.velcom.shared.protocol.SentEntity;
 import java.io.IOException;
 import java.io.OutputStream;
 

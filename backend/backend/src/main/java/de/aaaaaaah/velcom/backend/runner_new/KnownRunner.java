@@ -1,6 +1,6 @@
 package de.aaaaaaah.velcom.backend.runner_new;
 
-import de.aaaaaaah.velcom.runner.shared.protocol.serialization.Status;
+import de.aaaaaaah.velcom.shared.protocol.serialization.Status;
 import java.util.Objects;
 
 /**

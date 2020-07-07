@@ -2,8 +2,8 @@ package de.aaaaaaah.velcom.backend;
 
 import de.aaaaaaah.velcom.backend.runner.Dispatcher;
 import de.aaaaaaah.velcom.backend.runner.single.protocol.ServerMasterWebsocketServlet;
-import de.aaaaaaah.velcom.runner.shared.protocol.serialization.Serializer;
-import de.aaaaaaah.velcom.runner.shared.protocol.serialization.SimpleJsonSerializer;
+import de.aaaaaaah.velcom.shared.protocol.serialization.Serializer;
+import de.aaaaaaah.velcom.shared.protocol.serialization.SimpleJsonSerializer;
 import io.dropwizard.jetty.HttpConnectorFactory;
 import io.dropwizard.jetty.MutableServletContextHandler;
 import io.dropwizard.jetty.RoutingHandler;

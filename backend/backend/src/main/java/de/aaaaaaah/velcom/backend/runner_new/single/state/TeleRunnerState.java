@@ -3,10 +3,10 @@ package de.aaaaaaah.velcom.backend.runner_new.single.state;
 import de.aaaaaaah.velcom.backend.runner_new.Dispatcher;
 import de.aaaaaaah.velcom.backend.runner_new.single.RunnerConnection;
 import de.aaaaaaah.velcom.backend.runner_new.single.TeleRunner;
-import de.aaaaaaah.velcom.runner.shared.protocol.StatusCode;
-import de.aaaaaaah.velcom.runner.shared.protocol.serialization.serverbound.ServerBoundPacket;
-import de.aaaaaaah.velcom.runner.shared.protocol.serialization.serverbound.ServerBoundPacketType;
-import de.aaaaaaah.velcom.runner.shared.protocol.statemachine.State;
+import de.aaaaaaah.velcom.shared.protocol.StatusCode;
+import de.aaaaaaah.velcom.shared.protocol.serialization.serverbound.ServerBoundPacket;
+import de.aaaaaaah.velcom.shared.protocol.serialization.serverbound.ServerBoundPacketType;
+import de.aaaaaaah.velcom.shared.protocol.statemachine.State;
 import java.util.Optional;
 
 /**

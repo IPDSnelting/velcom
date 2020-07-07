@@ -1,8 +1,8 @@
 package de.aaaaaaah.velcom.backend.runner.single;
 
 import de.aaaaaaah.velcom.backend.access.entities.Commit;
-import de.aaaaaaah.velcom.runner.shared.RunnerStatusEnum;
-import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.RunnerInformation;
+import de.aaaaaaah.velcom.shared.RunnerStatusEnum;
+import de.aaaaaaah.velcom.shared.protocol.serverbound.entities.RunnerInformation;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;

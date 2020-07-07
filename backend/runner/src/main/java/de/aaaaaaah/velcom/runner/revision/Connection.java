@@ -2,11 +2,11 @@ package de.aaaaaaah.velcom.runner.revision;
 
 import de.aaaaaaah.velcom.runner.revision.states.Idle;
 import de.aaaaaaah.velcom.runner.revision.states.RunnerState;
-import de.aaaaaaah.velcom.runner.shared.Timeout;
-import de.aaaaaaah.velcom.runner.shared.protocol.StatusCode;
-import de.aaaaaaah.velcom.runner.shared.protocol.serialization.Converter;
-import de.aaaaaaah.velcom.runner.shared.protocol.serialization.serverbound.ServerBoundPacket;
-import de.aaaaaaah.velcom.runner.shared.protocol.statemachine.StateMachine;
+import de.aaaaaaah.velcom.shared.Timeout;
+import de.aaaaaaah.velcom.shared.protocol.StatusCode;
+import de.aaaaaaah.velcom.shared.protocol.serialization.Converter;
+import de.aaaaaaah.velcom.shared.protocol.serialization.serverbound.ServerBoundPacket;
+import de.aaaaaaah.velcom.shared.protocol.statemachine.StateMachine;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.WebSocket;

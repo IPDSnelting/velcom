@@ -2,12 +2,12 @@ package de.aaaaaaah.velcom.runner.revision.states;
 
 import de.aaaaaaah.velcom.runner.revision.Connection;
 import de.aaaaaaah.velcom.runner.revision.TeleBackend;
-import de.aaaaaaah.velcom.runner.shared.Timeout;
-import de.aaaaaaah.velcom.runner.shared.protocol.StatusCode;
-import de.aaaaaaah.velcom.runner.shared.protocol.serialization.Converter;
-import de.aaaaaaah.velcom.runner.shared.protocol.serialization.clientbound.ClientBoundPacket;
-import de.aaaaaaah.velcom.runner.shared.protocol.serialization.clientbound.ClientBoundPacketType;
-import de.aaaaaaah.velcom.runner.shared.protocol.serialization.clientbound.RequestRunReply;
+import de.aaaaaaah.velcom.shared.Timeout;
+import de.aaaaaaah.velcom.shared.protocol.StatusCode;
+import de.aaaaaaah.velcom.shared.protocol.serialization.Converter;
+import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.ClientBoundPacket;
+import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.ClientBoundPacketType;
+import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.RequestRunReply;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;

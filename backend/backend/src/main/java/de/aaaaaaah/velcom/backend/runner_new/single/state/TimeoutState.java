@@ -2,8 +2,8 @@ package de.aaaaaaah.velcom.backend.runner_new.single.state;
 
 import de.aaaaaaah.velcom.backend.runner_new.single.RunnerConnection;
 import de.aaaaaaah.velcom.backend.runner_new.single.TeleRunner;
-import de.aaaaaaah.velcom.runner.shared.Timeout;
-import de.aaaaaaah.velcom.runner.shared.protocol.StatusCode;
+import de.aaaaaaah.velcom.shared.Timeout;
+import de.aaaaaaah.velcom.shared.protocol.StatusCode;
 import java.time.Duration;
 
 /**

@@ -3,7 +3,7 @@ package de.aaaaaaah.velcom.backend.runner.single.protocol;
 import de.aaaaaaah.velcom.backend.runner.Dispatcher;
 import de.aaaaaaah.velcom.backend.runner.single.ActiveRunnerInformation;
 import de.aaaaaaah.velcom.backend.runner.single.ServerRunnerStateMachine;
-import de.aaaaaaah.velcom.runner.shared.protocol.serialization.Serializer;
+import de.aaaaaaah.velcom.shared.protocol.serialization.Serializer;
 import java.io.IOException;
 import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.websocket.servlet.WebSocketServlet;

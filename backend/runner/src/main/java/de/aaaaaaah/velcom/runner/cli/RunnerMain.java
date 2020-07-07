@@ -16,7 +16,7 @@ import de.aaaaaaah.velcom.runner.exceptions.ConnectionException;
 import de.aaaaaaah.velcom.runner.exceptions.HandshakeFailureException;
 import de.aaaaaaah.velcom.runner.protocol.ReestablishConnectionListener;
 import de.aaaaaaah.velcom.runner.protocol.WebsocketListener;
-import de.aaaaaaah.velcom.runner.shared.protocol.serialization.SimpleJsonSerializer;
+import de.aaaaaaah.velcom.shared.protocol.serialization.SimpleJsonSerializer;
 import de.aaaaaaah.velcom.runner.state.RunnerStateMachine;
 import java.io.IOException;
 import java.net.URI;

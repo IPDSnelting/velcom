@@ -1,10 +1,10 @@
 package de.aaaaaaah.velcom.runner.state;
 
 import de.aaaaaaah.velcom.runner.entity.RunnerConfiguration;
-import de.aaaaaaah.velcom.runner.shared.RunnerStatusEnum;
-import de.aaaaaaah.velcom.runner.shared.protocol.runnerbound.entities.RunnerWorkOrder;
-import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.ReadyForWork;
-import de.aaaaaaah.velcom.runner.shared.util.FileHelper;
+import de.aaaaaaah.velcom.shared.RunnerStatusEnum;
+import de.aaaaaaah.velcom.shared.protocol.runnerbound.entities.RunnerWorkOrder;
+import de.aaaaaaah.velcom.shared.protocol.serverbound.entities.ReadyForWork;
+import de.aaaaaaah.velcom.shared.util.FileHelper;
 import java.io.IOException;
 import java.nio.file.Path;
 import org.slf4j.Logger;

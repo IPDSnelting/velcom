@@ -2,12 +2,11 @@ package de.aaaaaaah.velcom.runner.state;
 
 import de.aaaaaaah.velcom.runner.entity.RunnerConfiguration;
 import de.aaaaaaah.velcom.runner.entity.WorkExecutor.AbortionResult;
-import de.aaaaaaah.velcom.runner.shared.protocol.StatusCodeMappings;
-import de.aaaaaaah.velcom.runner.shared.protocol.runnerbound.entities.RunnerWorkOrder;
-import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkDone;
-import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkResults;
-import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.ReadyForWork;
-import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.RunnerInformation;
+import de.aaaaaaah.velcom.shared.protocol.StatusCodeMappings;
+import de.aaaaaaah.velcom.shared.protocol.runnerbound.entities.RunnerWorkOrder;
+import de.aaaaaaah.velcom.shared.protocol.serverbound.entities.BenchmarkDone;
+import de.aaaaaaah.velcom.shared.protocol.serverbound.entities.BenchmarkResults;
+import de.aaaaaaah.velcom.shared.protocol.serverbound.entities.RunnerInformation;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicReference;

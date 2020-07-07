@@ -7,7 +7,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import de.aaaaaaah.velcom.backend.runner.Dispatcher;
-import de.aaaaaaah.velcom.runner.shared.protocol.serialization.SimpleJsonSerializer;
+import de.aaaaaaah.velcom.shared.protocol.serialization.SimpleJsonSerializer;
 import java.io.IOException;
 import org.eclipse.jetty.websocket.api.WebSocketPolicy;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;

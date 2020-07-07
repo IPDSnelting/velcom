@@ -1,13 +1,12 @@
 package de.aaaaaaah.velcom.backend.storage.repo;
 
 import de.aaaaaaah.velcom.backend.KnownHostsIgnoringSshdFactory;
-import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.storage.repo.exception.AddRepositoryException;
 import de.aaaaaaah.velcom.backend.storage.repo.exception.DirectoryAlreadyExistsException;
 import de.aaaaaaah.velcom.backend.storage.repo.exception.NoSuchRepositoryException;
 import de.aaaaaaah.velcom.backend.storage.repo.exception.RepositoryAcquisitionException;
 import de.aaaaaaah.velcom.backend.util.CheckedConsumer;
-import de.aaaaaaah.velcom.runner.shared.util.FileHelper;
+import de.aaaaaaah.velcom.shared.util.FileHelper;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;

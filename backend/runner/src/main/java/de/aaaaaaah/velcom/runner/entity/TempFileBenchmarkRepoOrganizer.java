@@ -1,6 +1,6 @@
 package de.aaaaaaah.velcom.runner.entity;
 
-import de.aaaaaaah.velcom.runner.shared.util.FileHelper;
+import de.aaaaaaah.velcom.shared.util.FileHelper;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
