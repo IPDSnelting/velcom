@@ -1,0 +1,20 @@
+{
+  "_comment": {
+    "name": "The name of the runner. Must be unique across runners.",
+    "backends": {
+      "description": "A list of backends this runner will connect to.",
+      "address": "The address at which this backend can be reached.",
+      "token": "The token used to authenticate with the backend.",
+      "directory": "The runner will place all its files for this backend in this directory."
+    }
+  },
+
+  "name": "Test runner",
+  "backends": [
+    {
+      "address": "ws://localhost:3546/runner-connector",
+      "token": "Correct-Horse_Battery Staple",
+      "directory": "localhost/"
+    }
+  ]
+}
