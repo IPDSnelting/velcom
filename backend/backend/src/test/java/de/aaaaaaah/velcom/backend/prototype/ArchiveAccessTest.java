@@ -6,7 +6,7 @@ import de.aaaaaaah.velcom.backend.access.archive.Archiver;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.storage.repo.RepoStorage;
 import de.aaaaaaah.velcom.backend.storage.repo.exception.AddRepositoryException;
-import de.aaaaaaah.velcom.backend.util.DirectoryRemover;
+import de.aaaaaaah.velcom.runner.shared.util.FileHelper;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
@@ -34,7 +34,7 @@ class ArchiveAccessTest {
 	@BeforeEach
 	void setUp() throws IOException {
 		if (Files.exists(STORAGE_DIR)) {
-			DirectoryRemover.deleteDirectoryRecursive(STORAGE_DIR);
+			FileHelper.deleteDirectoryOrFile(STORAGE_DIR);
 		}
 
 		Files.createDirectory(STORAGE_DIR);
@@ -52,7 +52,7 @@ class ArchiveAccessTest {
 
 	@AfterEach
 	void tearDown() throws IOException {
-		DirectoryRemover.deleteDirectoryRecursive(STORAGE_DIR);
+		FileHelper.deleteDirectoryOrFile(STORAGE_DIR);
 	}
 
 	@Test

@@ -7,8 +7,8 @@ import de.aaaaaaah.velcom.backend.storage.repo.GuickCloning.CloneException;
 import de.aaaaaaah.velcom.backend.storage.repo.RepoStorage;
 import de.aaaaaaah.velcom.backend.storage.repo.exception.RepositoryAcquisitionException;
 import de.aaaaaaah.velcom.backend.util.CheckedConsumer;
-import de.aaaaaaah.velcom.backend.util.DirectoryRemover;
 import de.aaaaaaah.velcom.runner.shared.util.OSCheck;
+import de.aaaaaaah.velcom.runner.shared.util.FileHelper;
 import de.aaaaaaah.velcom.runner.shared.util.compression.PermissionsHelper;
 import java.io.IOException;
 import java.io.InputStream;
@@ -58,7 +58,7 @@ public class Archiver {
 		Path archivesDir = archivesRootDir.resolve(dirName);
 
 		try {
-			DirectoryRemover.deleteDirectoryRecursive(archivesDir);
+			FileHelper.deleteDirectoryOrFile(archivesDir);
 		} catch (IOException e) {
 			LOGGER.warn("Failed to delete archives in: {}", archivesDir);
 		}
@@ -106,7 +106,7 @@ public class Archiver {
 				// Regardless of whether or not the tar process failed,
 				// delete cloneDir if keepDeepClone is false
 				try {
-					DirectoryRemover.deleteDirectoryRecursive(cloneDir);
+					FileHelper.deleteDirectoryOrFile(cloneDir);
 				} catch (IOException ignore) {
 				}
 			}
@@ -179,7 +179,7 @@ public class Archiver {
 		} catch (Exception e) {
 			// clone operation failed => try to delete clone directory
 			try {
-				DirectoryRemover.deleteDirectoryRecursive(destinationCloneDir);
+				FileHelper.deleteDirectoryOrFile(destinationCloneDir);
 			} catch (Exception ignore) {
 			}
 

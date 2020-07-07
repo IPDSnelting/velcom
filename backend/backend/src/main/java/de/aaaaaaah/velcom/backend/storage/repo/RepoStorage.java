@@ -6,7 +6,7 @@ import de.aaaaaaah.velcom.backend.storage.repo.exception.DirectoryAlreadyExistsE
 import de.aaaaaaah.velcom.backend.storage.repo.exception.NoSuchRepositoryException;
 import de.aaaaaaah.velcom.backend.storage.repo.exception.RepositoryAcquisitionException;
 import de.aaaaaaah.velcom.backend.util.CheckedConsumer;
-import de.aaaaaaah.velcom.backend.util.DirectoryRemover;
+import de.aaaaaaah.velcom.runner.shared.util.FileHelper;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -138,7 +138,7 @@ public class RepoStorage {
 		} catch (Exception e) {
 			// try to clean up directory
 			try {
-				DirectoryRemover.deleteDirectoryRecursive(repoDir);
+				FileHelper.deleteDirectoryOrFile(repoDir);
 			} catch (Exception ignore) {
 			}
 
@@ -159,7 +159,7 @@ public class RepoStorage {
 		this.lock.writeLock().lock();
 
 		try {
-			DirectoryRemover.deleteDirectoryRecursive(rootDir.resolve(dirName));
+			FileHelper.deleteDirectoryOrFile(rootDir.resolve(dirName));
 		} finally {
 			this.lock.writeLock().unlock();
 		}

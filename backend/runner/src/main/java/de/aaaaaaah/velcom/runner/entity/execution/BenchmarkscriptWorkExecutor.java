@@ -13,7 +13,7 @@ import de.aaaaaaah.velcom.runner.shared.protocol.StatusCodeMappings;
 import de.aaaaaaah.velcom.runner.shared.protocol.exceptions.ProgramCancelledException;
 import de.aaaaaaah.velcom.runner.shared.protocol.runnerbound.entities.RunnerWorkOrder;
 import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.BenchmarkResults;
-import de.aaaaaaah.velcom.runner.shared.util.compression.FileHelper;
+import de.aaaaaaah.velcom.runner.shared.util.FileHelper;
 import de.aaaaaaah.velcom.runner.shared.util.compression.TarHelper;
 import de.aaaaaaah.velcom.runner.util.ExceptionHelper;
 import java.io.IOException;

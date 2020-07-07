@@ -2,7 +2,7 @@ package de.aaaaaaah.velcom.runner.state;
 
 import de.aaaaaaah.velcom.runner.entity.RunnerConfiguration;
 import de.aaaaaaah.velcom.runner.shared.RunnerStatusEnum;
-import de.aaaaaaah.velcom.runner.shared.util.compression.FileHelper;
+import de.aaaaaaah.velcom.runner.shared.util.FileHelper;
 import de.aaaaaaah.velcom.runner.shared.util.compression.TarHelper;
 import java.io.IOException;
 import java.nio.file.Files;

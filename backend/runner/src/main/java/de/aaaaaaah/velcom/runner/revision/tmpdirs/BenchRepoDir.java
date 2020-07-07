@@ -1,6 +1,6 @@
 package de.aaaaaaah.velcom.runner.revision.tmpdirs;
 
-import de.aaaaaaah.velcom.runner.shared.util.compression.FileHelper;
+import de.aaaaaaah.velcom.runner.shared.util.FileHelper;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;

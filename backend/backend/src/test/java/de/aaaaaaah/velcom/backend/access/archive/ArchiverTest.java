@@ -10,7 +10,7 @@ import ch.qos.logback.classic.Logger;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.exceptions.ArchiveFailedPermanently;
 import de.aaaaaaah.velcom.backend.storage.repo.RepoStorage;
-import de.aaaaaaah.velcom.backend.util.DirectoryRemover;
+import de.aaaaaaah.velcom.runner.shared.util.FileHelper;
 import de.aaaaaaah.velcom.runner.shared.util.compression.TarHelper;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -100,7 +100,7 @@ class ArchiverTest {
 
 	@AfterEach
 	void tearDown() throws IOException {
-		DirectoryRemover.deleteDirectoryRecursive(garbageDir);
+		FileHelper.deleteDirectoryOrFile(garbageDir);
 	}
 
 	@Test
@@ -136,7 +136,7 @@ class ArchiverTest {
 
 	@Test
 	public void invalidSubmoduleArchiveFails() throws IOException {
-		DirectoryRemover.deleteDirectoryRecursive(tempDir.resolve("sub_module"));
+		FileHelper.deleteDirectoryOrFile(tempDir.resolve("sub_module"));
 
 		assertThatThrownBy(() -> {
 			ObjectId head = Git.open(repoPath.toFile()).getRepository().resolve("HEAD");

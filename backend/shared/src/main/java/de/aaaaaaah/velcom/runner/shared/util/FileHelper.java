@@ -1,4 +1,4 @@
-package de.aaaaaaah.velcom.runner.shared.util.compression;
+package de.aaaaaaah.velcom.runner.shared.util;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -13,6 +13,10 @@ import java.nio.file.attribute.BasicFileAttributes;
  */
 public class FileHelper {
 
+	private FileHelper() {
+		throw new UnsupportedOperationException("No");
+	}
+
 	/**
 	 * Deletes a file or directory.
 	 *
@@ -23,10 +27,12 @@ public class FileHelper {
 		if (Files.notExists(path)) {
 			return;
 		}
+
 		Files.walkFileTree(path, new SimpleFileVisitor<>() {
 			@Override
 			public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
 				throws IOException {
+				file.toFile().setWritable(true);
 				Files.delete(file);
 				return FileVisitResult.CONTINUE;
 			}
