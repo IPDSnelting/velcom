@@ -7,6 +7,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 public class BenchRepoDir {
@@ -55,6 +56,10 @@ public class BenchRepoDir {
 	public void setHash(@Nullable String hash) throws IOException {
 		currentHash = hash;
 		writeHash(currentHash);
+	}
+
+	public Optional<String> getHash() {
+		return Optional.ofNullable(currentHash);
 	}
 
 }

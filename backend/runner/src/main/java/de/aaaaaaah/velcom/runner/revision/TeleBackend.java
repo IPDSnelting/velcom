@@ -2,6 +2,7 @@ package de.aaaaaaah.velcom.runner.revision;
 
 // TODO update comment once backend is implemented
 
+import de.aaaaaaah.velcom.runner.revision.benchmarking.BenchResult;
 import de.aaaaaaah.velcom.runner.revision.states.AwaitingRequestRunReply;
 import de.aaaaaaah.velcom.runner.revision.states.RunnerState;
 import de.aaaaaaah.velcom.runner.revision.tmpdirs.BenchRepoDir;
@@ -12,6 +13,8 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -34,8 +37,7 @@ public class TeleBackend {
 	private final BenchRepoDir benchRepoDir;
 	private final TaskRepoDir taskRepoDir;
 
-	@Nullable
-	private Thread benchThread;
+	// TODO add info for current run4
 
 	public TeleBackend(AtomicReference<Status> globalStatus, URI address, String token, Path path) {
 		this.globalStatus = globalStatus;
@@ -107,4 +109,34 @@ public class TeleBackend {
 		return benchmarkPerformed;
 	}
 
+	public RunnerInfo getInfo() {
+		// TODO add more info
+		return RunnerInfo.fromSystemInfo();
+	}
+
+	public Status getStatus() {
+		return globalStatus.get();
+	}
+
+	public Optional<String> getBenchHash() {
+		return benchRepoDir.getHash();
+	}
+
+	public Optional<BenchResult> getBenchResult() {
+		// TODO implement
+		return Optional.empty();
+	}
+
+	public void clearBenchResult() {
+		// TODO implement
+	}
+
+	public void abortCurrentRun() {
+		// TODO implement
+	}
+
+	public Optional<UUID> getCurrentRunId() {
+		// TODO implement
+		return Optional.empty();
+	}
 }

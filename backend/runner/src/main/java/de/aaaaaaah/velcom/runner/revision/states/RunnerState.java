@@ -1,9 +1,19 @@
 package de.aaaaaaah.velcom.runner.revision.states;
 
-import de.aaaaaaah.velcom.runner.revision.TeleBackend;
+import com.fasterxml.jackson.databind.JsonNode;
 import de.aaaaaaah.velcom.runner.revision.Connection;
+import de.aaaaaaah.velcom.runner.revision.TeleBackend;
+import de.aaaaaaah.velcom.runner.revision.benchmarking.BenchResult;
 import de.aaaaaaah.velcom.shared.protocol.StatusCode;
+import de.aaaaaaah.velcom.shared.protocol.serialization.Converter;
+import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.AbortRun;
+import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.ClearResult;
 import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.ClientBoundPacket;
+import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.GetResult;
+import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.GetStatus;
+import de.aaaaaaah.velcom.shared.protocol.serialization.serverbound.AbortRunReply;
+import de.aaaaaaah.velcom.shared.protocol.serialization.serverbound.GetResultReply;
+import de.aaaaaaah.velcom.shared.protocol.serialization.serverbound.GetStatusReply;
 import de.aaaaaaah.velcom.shared.protocol.statemachine.State;
 import java.nio.ByteBuffer;
 import java.util.Optional;
@@ -51,8 +61,72 @@ public abstract class RunnerState implements State {
 	 * @return whether this function call handled the packet
 	 */
 	protected Optional<RunnerState> onPacket(ClientBoundPacket packet) {
-		// TODO respond to all server commands.
-		return Optional.empty();
+		Converter serializer = connection.getSerializer();
+		JsonNode data = packet.getData();
+
+		switch (packet.getType()) {
+			case GET_STATUS:
+				return serializer.deserialize(data, GetStatus.class).flatMap(this::onGetStatus);
+
+			case GET_RESULT:
+				return serializer.deserialize(data, GetResult.class).flatMap(this::onGetResult);
+
+			case CLEAR_RESULT:
+				return serializer.deserialize(data, ClearResult.class).flatMap(this::onClearResult);
+
+			case ABORT_RUN:
+				return serializer.deserialize(data, AbortRun.class).flatMap(this::onAbortRun);
+
+			default:
+				return Optional.empty();
+		}
+	}
+
+	protected Optional<RunnerState> onGetStatus(GetStatus getStatus) {
+		GetStatusReply getStatusReply = new GetStatusReply(
+			teleBackend.getInfo().format(),
+			teleBackend.getBenchHash().orElse(null),
+			teleBackend.getBenchResult().isPresent(),
+			teleBackend.getStatus(),
+			teleBackend.getCurrentRunId().orElse(null)
+		);
+		connection.sendPacket(getStatusReply.asPacket(connection.getSerializer()));
+
+		return Optional.of(this);
+	}
+
+	protected Optional<RunnerState> onGetResult(GetResult getResult) {
+		Optional<BenchResult> resultOptional = teleBackend.getBenchResult();
+		if (resultOptional.isEmpty()) {
+			connection.close(StatusCode.NO_RESULT);
+			return Optional.empty();
+		}
+		BenchResult result = resultOptional.get();
+
+		GetResultReply getResultReply = new GetResultReply(result.getRunId(), result.isSuccess(),
+			result.getResult(), result.getError());
+		connection.sendPacket(getResultReply.asPacket(connection.getSerializer()));
+
+		return Optional.of(this);
+	}
+
+	protected Optional<RunnerState> onClearResult(ClearResult clearResult) {
+		Optional<BenchResult> resultOptional = teleBackend.getBenchResult();
+		if (resultOptional.isEmpty()) {
+			connection.close(StatusCode.NO_RESULT);
+			return Optional.empty();
+		}
+
+		teleBackend.clearBenchResult();
+
+		return Optional.of(this);
+	}
+
+	protected Optional<RunnerState> onAbortRun(AbortRun abortRun) {
+		teleBackend.abortCurrentRun();
+		connection.sendPacket(new AbortRunReply().asPacket(connection.getSerializer()));
+
+		return Optional.of(this);
 	}
 
 	/**

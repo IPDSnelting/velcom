@@ -14,7 +14,8 @@ public enum StatusCode {
 	ILLEGAL_PACKET(4002, "invalid packet or packet of illegal type"),
 	ILLEGAL_BINARY_PACKET(4003, "binary packet when none was allowed"),
 	PING_TIMEOUT(4004, "ping timed out"),
-	COMMAND_TIMEOUT(4005, "command reply timed out");
+	COMMAND_TIMEOUT(4005, "command reply timed out"),
+	NO_RESULT(4006, "tried to operate on absent result");
 
 	private final int code;
 	private final String description;
