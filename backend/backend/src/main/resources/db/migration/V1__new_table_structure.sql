@@ -11,7 +11,7 @@ CREATE TABLE tracked_branch
     name    TEXT     NOT NULL,
 
     PRIMARY KEY (repo_id, name),
-    FOREIGN KEY (repo_id) REFERENCES repository (id) ON DELETE CASCADE
+    FOREIGN KEY (repo_id) REFERENCES repo (id) ON DELETE CASCADE
 );
 
 CREATE TABLE known_commit
@@ -21,7 +21,7 @@ CREATE TABLE known_commit
     first_seen TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     PRIMARY KEY (repo_id, hash),
-    FOREIGN KEY (repo_id) REFERENCES repository (id) ON DELETE CASCADE
+    FOREIGN KEY (repo_id) REFERENCES repo (id) ON DELETE CASCADE
 );
 
 CREATE TABLE run
@@ -58,7 +58,7 @@ CREATE TABLE measurement_value
     measurement_id CHAR(36) NOT NULL,
     value          DOUBLE   NOT NULL,
 
-    FOREIGN KEY (measurement_id) REFERENCES run_measurement (id) ON DELETE CASCADE
+    FOREIGN KEY (measurement_id) REFERENCES measurement (id) ON DELETE CASCADE
 );
 
 CREATE TABLE task
@@ -69,8 +69,9 @@ CREATE TABLE task
     insert_time TIMESTAMP            NOT NULL,
     update_time TIMESTAMP            NOT NULL,
     tar_name    TEXT,
-    repo_id     CHAR(36)             NOT NULL,
-    commit_hash CHAR(40)             NOT NULL,
+    repo_id     CHAR(36),
+    commit_hash CHAR(40),
+    in_process  BOOLEAN              NOT NULL DEFAULT false,
 
     FOREIGN KEY (repo_id, commit_hash) REFERENCES known_commit (repo_id, hash) ON DELETE CASCADE
 );
@@ -81,7 +82,7 @@ CREATE TABLE repo_token
     token     TEXT                 NOT NULL,
     hash_algo INTEGER              NOT NULL,
 
-    FOREIGN KEY (repo_id) REFERENCES repository (id) ON DELETE CASCADE
+    FOREIGN KEY (repo_id) REFERENCES repo (id) ON DELETE CASCADE
 );
 
 CREATE INDEX idx_rm_rid ON measurement (run_id);
