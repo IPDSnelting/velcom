@@ -14,7 +14,6 @@ import javax.annotation.Nullable;
  */
 public class GetStatusReply implements ServerBound {
 
-	private final String name;
 	private final String info;
 	@Nullable
 	private final String benchHash;
@@ -25,23 +24,17 @@ public class GetStatusReply implements ServerBound {
 
 	@JsonCreator
 	public GetStatusReply(
-		@JsonProperty(required = true) String name,
 		@JsonProperty(required = true) String info,
 		@Nullable String benchHash,
 		@JsonProperty(required = true) boolean resultAvailable,
 		@JsonProperty(required = true) State state,
 		@Nullable UUID runId
 	) {
-		this.name = name;
 		this.info = info;
 		this.benchHash = benchHash;
 		this.resultAvailable = resultAvailable;
 		this.state = state;
 		this.runId = runId;
-	}
-
-	public String getName() {
-		return name;
 	}
 
 	public String getInfo() {
@@ -74,7 +67,6 @@ public class GetStatusReply implements ServerBound {
 		}
 		GetStatusReply that = (GetStatusReply) o;
 		return resultAvailable == that.resultAvailable &&
-			name.equals(that.name) &&
 			info.equals(that.info) &&
 			Objects.equals(benchHash, that.benchHash) &&
 			state.equals(that.state) &&
@@ -83,7 +75,7 @@ public class GetStatusReply implements ServerBound {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(name, info, benchHash, resultAvailable, state, runId);
+		return Objects.hash(info, benchHash, resultAvailable, state, runId);
 	}
 
 	@Override

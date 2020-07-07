@@ -7,6 +7,7 @@ import java.util.Optional;
  * The types of packets that can be sent to the backend by the runner.
  */
 public enum ServerBoundPacketType {
+	ABORT_RUN_REPLY("abort_run_reply", AbortRunReply.class),
 	CLEAR_RESULT_REPLY("clear_result_reply", ClearResultReply.class),
 	GET_RESULT_REPLY("get_result_reply", GetResultReply.class),
 	GET_STATUS_REPLY("get_status_reply", GetStatusReply.class),
