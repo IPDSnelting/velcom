@@ -1,5 +1,6 @@
 package de.aaaaaaah.velcom.backend.access;
 
+import static java.util.stream.Collectors.toList;
 import static org.jooq.codegen.db.Tables.TASK;
 
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
@@ -8,24 +9,33 @@ import de.aaaaaaah.velcom.backend.access.entities.RepoSource;
 import de.aaaaaaah.velcom.backend.access.entities.TarSource;
 import de.aaaaaaah.velcom.backend.access.entities.Task;
 import de.aaaaaaah.velcom.backend.access.entities.TaskId;
+import de.aaaaaaah.velcom.backend.access.policy.QueuePolicy;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 import org.jooq.DSLContext;
 
 public class TaskWriteAccess extends TaskReadAccess {
 
 	private final Collection<Consumer<Task>> insertHandlers = new ArrayList<>();
 	private final Collection<Consumer<TaskId>> deleteHandlers = new ArrayList<>();
+	private QueuePolicy policy;
 
 	public TaskWriteAccess(DatabaseStorage databaseStorage) {
 		super(databaseStorage);
+
+		// Reset "in process" status for all tasks
+		try (DSLContext db = databaseStorage.acquireContext()) {
+			db.update(TASK).set(TASK.IN_PROCESS, false).execute();
+		}
 	}
 
 	public void onTaskInsert(Consumer<Task> insertHandler) {
@@ -41,11 +51,25 @@ public class TaskWriteAccess extends TaskReadAccess {
 	}
 
 	void insertTasks(Collection<Task> tasks, DSLContext db) {
+		// Get tasks that are already in queue
+		List<String> idList = tasks.stream()
+			.map(Task::getId)
+			.map(TaskId::getId)
+			.map(UUID::toString)
+			.collect(toList());
+
+		Set<String> existingIds = db.selectFrom(TASK).where(TASK.ID.in(idList)).fetchSet(TASK.ID);
+
+		// Insert tasks that are not already in the queue
 		var insert = db.insertInto(TASK)
 			.columns(TASK.ID, TASK.AUTHOR, TASK.PRIORITY, TASK.TAR_NAME, TASK.COMMIT_HASH,
 				TASK.REPO_ID);
 
 		for (Task task : tasks) {
+			if (existingIds.contains(task.getId().getId().toString())) {
+				continue; // task is already in table => skip!
+			}
+
 			insert.values(
 				task.getId().getId().toString(),
 				task.getAuthor(),
@@ -80,7 +104,7 @@ public class TaskWriteAccess extends TaskReadAccess {
 		List<String> taskIdStrings = taskIds.stream()
 			.map(TaskId::getId)
 			.map(UUID::toString)
-			.collect(Collectors.toList());
+			.collect(toList());
 
 		db.deleteFrom(TASK).where(TASK.ID.in(taskIdStrings)).execute();
 
@@ -105,8 +129,18 @@ public class TaskWriteAccess extends TaskReadAccess {
 		try (DSLContext db = databaseStorage.acquireContext()) {
 			db.update(TASK)
 				.set(TASK.PRIORITY, newPriority)
+				.set(TASK.UPDATE_TIME, Timestamp.from(Instant.now()))
 				.where(TASK.ID.eq(taskId.getId().toString()))
 				.execute();
+		}
+	}
+
+	public void setTaskStatus(TaskId taskId, boolean taskInProcess) {
+		try (DSLContext db = databaseStorage.acquireContext()) {
+			db.update(TASK)
+				.set(TASK.IN_PROCESS, taskInProcess)
+				.where(TASK.ID.eq(taskId.getId().toString()))
+			.execute();
 		}
 	}
 

@@ -6,13 +6,13 @@ import de.aaaaaaah.velcom.backend.access.BenchmarkWriteAccess;
 import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.access.KnownCommitWriteAccess;
 import de.aaaaaaah.velcom.backend.access.RepoWriteAccess;
+import de.aaaaaaah.velcom.backend.access.TaskWriteAccess;
 import de.aaaaaaah.velcom.backend.access.TokenWriteAccess;
 import de.aaaaaaah.velcom.backend.access.entities.AuthToken;
 import de.aaaaaaah.velcom.backend.access.entities.RemoteUrl;
 import de.aaaaaaah.velcom.backend.data.commitcomparison.CommitComparer;
 import de.aaaaaaah.velcom.backend.data.linearlog.CommitAccessBasedLinearLog;
 import de.aaaaaaah.velcom.backend.data.linearlog.LinearLog;
-import de.aaaaaaah.velcom.backend.data.queue.PolicyManualFilo;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.data.repocomparison.RepoComparison;
 import de.aaaaaaah.velcom.backend.data.repocomparison.TimesliceComparison;
@@ -110,9 +110,16 @@ public class ServerMain extends Application<GlobalConfig> {
 		DatabaseStorage databaseStorage = new DatabaseStorage(configuration);
 
 		// Access layer
-		BenchmarkWriteAccess benchmarkAccess = new BenchmarkWriteAccess(databaseStorage);
+		TaskWriteAccess taskAccess = new TaskWriteAccess(databaseStorage);
+		BenchmarkWriteAccess benchmarkAccess = new BenchmarkWriteAccess(
+			databaseStorage,
+			taskAccess
+		);
 		CommitReadAccess commitAccess = new CommitReadAccess(repoStorage);
-		KnownCommitWriteAccess knownCommitAccess = new KnownCommitWriteAccess(databaseStorage);
+		KnownCommitWriteAccess knownCommitAccess = new KnownCommitWriteAccess(
+			databaseStorage,
+			taskAccess
+		);
 		RepoWriteAccess repoAccess = new RepoWriteAccess(
 			databaseStorage,
 			repoStorage,
@@ -131,23 +138,17 @@ public class ServerMain extends Application<GlobalConfig> {
 		LinearLog linearLog = new CommitAccessBasedLinearLog(commitAccess, repoAccess);
 		RepoComparison repoComparison = new TimesliceComparison(commitAccess, benchmarkAccess);
 
-		Queue queue = new Queue(knownCommitAccess, new PolicyManualFilo());
-		knownCommitAccess.getAllCommitsRequiringBenchmark()
-			.stream()
-			.map((repoIdHashPair ->
-				commitAccess.getCommit(repoIdHashPair.getFirst(), repoIdHashPair.getSecond()))
-			)
-			.forEach(queue::addCommit);
+		Queue queue = new Queue();
 
 		// Listener
 		Listener listener = new Listener(
-			configuration, repoAccess, commitAccess, knownCommitAccess, queue
+			configuration, repoAccess, commitAccess, knownCommitAccess
 		);
 
 		// Dispatcher
 		Dispatcher dispatcher = new DispatcherImpl(
 			queue,
-			repoAccess,
+			taskAccess,
 			benchmarkAccess,
 			configuration.getDisconnectedRunnerGracePeriod()
 		);

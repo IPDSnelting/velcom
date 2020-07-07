@@ -15,6 +15,7 @@ import de.aaaaaaah.velcom.backend.access.entities.MeasurementValues;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
 import de.aaaaaaah.velcom.backend.access.entities.Task;
+import de.aaaaaaah.velcom.backend.access.entities.TaskId;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -38,13 +39,13 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 	 * Inserts the specified run into the database.
 	 *
 	 * @param run the run to insert
-	 * @param task the task that prompted the run
 	 */
-	public void insertRun(Run run, Task task) {
+	public void insertRun(Run run) {
 		// Insert run into database and delete associated task
 		databaseStorage.acquireTransaction(db -> {
 			// 0.) Delete associated task
-			taskAccess.deleteTasks(List.of(task.getId()), db);
+			TaskId taskId = new TaskId(run.getId().getId());
+			taskAccess.deleteTasks(List.of(taskId), db);
 
 			// 1.) Insert run
 			RunRecord runRecord = db.newRecord(RUN);
