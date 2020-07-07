@@ -13,12 +13,12 @@ import java.util.stream.Collectors;
  */
 public class Dispatcher {
 
-	private final Map<String, UUID> runnerToWorkMap;
+	private final Map<UUID, TeleRunner> workToRunnerMap;
 	private final List<TeleRunner> teleRunners;
 
 	public Dispatcher() {
 		this.teleRunners = new ArrayList<>();
-		this.runnerToWorkMap = new HashMap<>();
+		this.workToRunnerMap = new HashMap<>();
 	}
 
 	/**
@@ -48,9 +48,16 @@ public class Dispatcher {
 	 * @return true if the commit was aborted, false if it wasn't being executed
 	 */
 	boolean abort(UUID runId) {
-		synchronized (runnerToWorkMap) {
-			// TODO: Send abort
-			return runnerToWorkMap.values().remove(runId);
+		synchronized (workToRunnerMap) {
+			TeleRunner runner = workToRunnerMap.remove(runId);
+
+			if (runner == null) {
+				return false;
+			}
+
+			runner.abort(runId);
+
+			return true;
 		}
 	}
 

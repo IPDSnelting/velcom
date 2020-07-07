@@ -4,6 +4,7 @@ import de.aaaaaaah.velcom.backend.runner_new.Dispatcher;
 import de.aaaaaaah.velcom.backend.runner_new.KnownRunner;
 import de.aaaaaaah.velcom.runner.shared.protocol.serialization.Converter;
 import de.aaaaaaah.velcom.runner.shared.protocol.serialization.serverbound.GetStatusReply;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -91,5 +92,14 @@ public class TeleRunner {
 		GetStatusReply reply = runnerInformation.get();
 
 		return new KnownRunner(getRunnerName(), reply.getInfo(), reply.getStatus());
+	}
+
+	/**
+	 * Aborts the current benchmark. If the runner is not connected and reconnects with a working
+	 * status and the same runId, the benchmark will be cancelled then. If the runner reconnects and
+	 * has a result for the runID available, the result will be discarded.
+	 */
+	public void abort(UUID runId) {
+		// TODO: 07.07.20 Implement
 	}
 }
