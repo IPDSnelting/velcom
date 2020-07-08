@@ -1,6 +1,7 @@
 package de.aaaaaaah.velcom.backend.runner_new;
 
 import de.aaaaaaah.velcom.backend.runner_new.single.TeleRunner;
+import de.aaaaaaah.velcom.shared.protocol.RunnerDenyReason;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Converter;
 import java.io.IOException;
 import java.util.Optional;
@@ -44,7 +45,7 @@ public class ServerMasterWebsocketServlet extends WebSocketServlet {
 
 			if (name == null || !runnerToken.equals(token)) {
 				LOGGER.info("Runner from {} failed authentication!", req.getRemoteAddress());
-				kickRunnerToken(resp);
+				kickRunner(resp, RunnerDenyReason.TOKEN_INVALID);
 				return null;
 			}
 
@@ -54,7 +55,7 @@ public class ServerMasterWebsocketServlet extends WebSocketServlet {
 			if (existingRunner.isPresent()) {
 				TeleRunner runner = existingRunner.get();
 				if (runner.hasConnection()) {
-					kickRunnerName(resp);
+					kickRunner(resp, RunnerDenyReason.NAME_ALREADY_USED);
 					return null;
 				}
 				myTeleRunner = runner;
@@ -66,22 +67,12 @@ public class ServerMasterWebsocketServlet extends WebSocketServlet {
 		});
 	}
 
-	private void kickRunnerToken(ServletUpgradeResponse response) {
-		// TODO: 07.07.20 Refactor headers into a Enum 
-		response.addHeader("Runner-Deny", "TOKEN");
-		kickRunner(response, 401, "Your token is invalid.");
-	}
-
-	private void kickRunnerName(ServletUpgradeResponse response) {
-		response.addHeader("Runner-Deny", "NAME");
-		kickRunner(response, 403, "Your name is already taken");
-	}
-
-	private void kickRunner(ServletUpgradeResponse response, int code, String description) {
+	private void kickRunner(ServletUpgradeResponse response, RunnerDenyReason reason) {
 		try {
-			response.sendError(code, description);
+			response.addHeader("Runner-Deny", reason.getHeaderValue());
+			response.sendError(reason.getCode(), reason.getMessage());
 		} catch (IOException e) {
-			LOGGER.info("Failed to kick runner", e);
+			LOGGER.warn("Failed to kick runner", e);
 		}
 	}
 }
