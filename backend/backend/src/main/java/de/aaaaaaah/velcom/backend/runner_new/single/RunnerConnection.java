@@ -77,6 +77,13 @@ public class RunnerConnection implements WebSocketListener, WebSocketFrameListen
 	}
 
 	/**
+	 * @return the internal state machine.
+	 */
+	public StateMachine<TeleRunnerState> getStateMachine() {
+		return stateMachine;
+	}
+
+	/**
 	 * Sends a packet to the runner.
 	 * <br>
 	 * If any error occurs, the connection is closed.

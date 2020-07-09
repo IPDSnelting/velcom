@@ -2,15 +2,20 @@ package de.aaaaaaah.velcom.backend.runner_new.single;
 
 import de.aaaaaaah.velcom.backend.runner_new.Dispatcher;
 import de.aaaaaaah.velcom.backend.runner_new.KnownRunner;
+import de.aaaaaaah.velcom.backend.runner_new.single.state.AwaitAbortRunReply;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Converter;
+import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.AbortRun;
 import de.aaaaaaah.velcom.shared.protocol.serialization.serverbound.GetStatusReply;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Server side class for a runner.
  */
 public class TeleRunner {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(TeleRunner.class);
 
 	private final AtomicReference<GetStatusReply> runnerInformation;
 	private final String runnerName;
@@ -95,11 +100,28 @@ public class TeleRunner {
 	}
 
 	/**
-	 * Aborts the current benchmark. If the runner is not connected and reconnects with a working
-	 * status and the same runId, the benchmark will be cancelled then. If the runner reconnects and
-	 * has a result for the runID available, the result will be discarded.
+	 * Aborts the current benchmark. This is a very rudimentary implementation at the moment.
+	 * <br>
+	 * The abort will do nothing, if
+	 * <ul>
+	 *   <li>The runner is not connected</li>
+	 *   <li>The send fails</li>
+	 *   <li>The runner reconnects and has results for that run</li>
+	 *   <li>The server sends a get_status before the abort and the runner has results</li>
+	 * </ul>
+	 * These limitations might be lifted in the future.
 	 */
-	public void abort(UUID runId) {
-		// TODO: 07.07.20 Implement
+	public void abort() {
+		if (!hasConnection()) {
+			LOGGER.info("Tried to abort commit but was not connected with a runner: {}", getRunnerName());
+			return;
+		}
+
+		try {
+			connection.getStateMachine().switchFromRestingState(new AwaitAbortRunReply(this, connection));
+			connection.send(new AbortRun().asPacket(serializer));
+		} catch (InterruptedException e) {
+			LOGGER.warn("Abort failed, I was interrupted {}", getRunnerName());
+		}
 	}
 }

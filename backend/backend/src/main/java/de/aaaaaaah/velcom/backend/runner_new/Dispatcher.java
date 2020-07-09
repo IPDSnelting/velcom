@@ -1,12 +1,14 @@
 package de.aaaaaaah.velcom.backend.runner_new;
 
+import de.aaaaaaah.velcom.backend.access.entities.Run;
+import de.aaaaaaah.velcom.backend.access.entities.RunId;
+import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.runner_new.single.TeleRunner;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -14,7 +16,7 @@ import java.util.stream.Collectors;
  */
 public class Dispatcher {
 
-	private final Map<UUID, TeleRunner> workToRunnerMap;
+	private final Map<RunId, TeleRunner> workToRunnerMap;
 	private final List<TeleRunner> teleRunners;
 
 	public Dispatcher() {
@@ -48,7 +50,7 @@ public class Dispatcher {
 	 * @param runId the id of the run
 	 * @return true if the commit was aborted, false if it wasn't being executed
 	 */
-	boolean abort(UUID runId) {
+	public boolean abort(RunId runId) {
 		synchronized (workToRunnerMap) {
 			TeleRunner runner = workToRunnerMap.remove(runId);
 
@@ -56,7 +58,8 @@ public class Dispatcher {
 				return false;
 			}
 
-			runner.abort(runId);
+			// TODO: 09.07.20 Should this be done on a new thread? 
+			runner.abort();
 
 			return true;
 		}
