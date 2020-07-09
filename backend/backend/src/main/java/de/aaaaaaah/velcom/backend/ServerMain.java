@@ -145,7 +145,7 @@ public class ServerMain extends Application<GlobalConfig> {
 		);
 
 		// Dispatcher
-		Dispatcher dispatcher = new Dispatcher();
+		Dispatcher dispatcher = new Dispatcher(queue);
 		RunnerAwareServerFactory.getInstance().setDispatcher(dispatcher);
 
 		// API authentication

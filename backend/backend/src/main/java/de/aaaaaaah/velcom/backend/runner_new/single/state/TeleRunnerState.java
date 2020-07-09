@@ -1,6 +1,5 @@
 package de.aaaaaaah.velcom.backend.runner_new.single.state;
 
-import de.aaaaaaah.velcom.backend.runner_new.Dispatcher;
 import de.aaaaaaah.velcom.backend.runner_new.single.RunnerConnection;
 import de.aaaaaaah.velcom.backend.runner_new.single.TeleRunner;
 import de.aaaaaaah.velcom.shared.protocol.StatusCode;
@@ -52,8 +51,8 @@ public class TeleRunnerState implements State {
 	protected Optional<TeleRunnerState> onPacket(ServerBoundPacket packet) {
 		// Stay in the current state but prepare some work!
 		if (packet.getType() == ServerBoundPacketType.REQUEST_RUN) {
-			Dispatcher dispatcher = runner.getDispatcher();
-			// TODO: Send the work!
+			// TODO: 09.07.20 Do this off-thread?
+			runner.sendAvailableWork();
 			return Optional.of(this);
 		}
 

@@ -1,11 +1,20 @@
 package de.aaaaaaah.velcom.backend.runner_new.single;
 
+import de.aaaaaaah.velcom.backend.access.entities.Task;
+import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchTaskException;
+import de.aaaaaaah.velcom.backend.access.exceptions.PrepareTransferException;
+import de.aaaaaaah.velcom.backend.access.exceptions.TransferException;
 import de.aaaaaaah.velcom.backend.runner_new.Dispatcher;
 import de.aaaaaaah.velcom.backend.runner_new.KnownRunner;
 import de.aaaaaaah.velcom.backend.runner_new.single.state.AwaitAbortRunReply;
+import de.aaaaaaah.velcom.shared.protocol.StatusCode;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Converter;
 import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.AbortRun;
+import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.RequestRunReply;
 import de.aaaaaaah.velcom.shared.protocol.serialization.serverbound.GetStatusReply;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -122,6 +131,42 @@ public class TeleRunner {
 			connection.send(new AbortRun().asPacket(serializer));
 		} catch (InterruptedException e) {
 			LOGGER.warn("Abort failed, I was interrupted {}", getRunnerName());
+		}
+	}
+
+	public void sendAvailableWork() {
+		Optional<Task> workOptional = dispatcher.getWork(this);
+
+		if (workOptional.isEmpty()) {
+			connection.send(
+				new RequestRunReply(false, null, false, null).asPacket(serializer)
+			);
+			return;
+		}
+		Task task = workOptional.get();
+
+		boolean benchRepoUpToDate = runnerInformation.get().getBenchHash()
+			.map(it -> it.equals("current"))
+			.orElse(false);
+		connection.send(
+			new RequestRunReply(!benchRepoUpToDate, "current", true, task.getId().getId())
+				.asPacket(serializer)
+		);
+
+		if (!benchRepoUpToDate) {
+			// TODO: Send bench repo
+		}
+
+		try (OutputStream outputStream = connection.createBinaryOutputStream()) {
+			dispatcher.getQueue().transferTask(task.getId(), outputStream);
+		} catch (PrepareTransferException e) {
+			LOGGER.info("Failed to transfer repo to runner: Archiving failed", e);
+			// This task is corrupted, we can not benchmark it.
+			// TODO: 09.07.20 Mark this task as done and attach an error, somehow 
+		} catch (TransferException | IOException | NoSuchTaskException e) {
+			LOGGER.info("Failed to transfer repo to runner: Sending failed", e);
+			// TODO: 09.07.20 Reinsert task to queue
+			connection.close(StatusCode.TRANSFER_FAILED);
 		}
 	}
 }

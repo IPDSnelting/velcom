@@ -10,6 +10,7 @@ import de.aaaaaaah.velcom.shared.protocol.serialization.Converter;
 import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.ClientBoundPacket;
 import de.aaaaaaah.velcom.shared.protocol.statemachine.StateMachine;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -110,6 +111,16 @@ public class RunnerConnection implements WebSocketListener, WebSocketFrameListen
 			close(StatusCode.INTERNAL_ERROR);
 			throw new RuntimeIOException(e);
 		}
+	}
+
+
+	/**
+	 * Streams binary data to the runner.
+	 *
+	 * @return an output stream that streams written data to the runner
+	 */
+	public OutputStream createBinaryOutputStream() {
+		return new TeleBinaryOutputStream(session);
 	}
 
 	/**

@@ -15,7 +15,8 @@ public enum StatusCode {
 	ILLEGAL_BINARY_PACKET(4003, "binary packet when none was allowed"),
 	PING_TIMEOUT(4004, "ping timed out"),
 	COMMAND_TIMEOUT(4005, "command reply timed out"),
-	NO_RESULT(4006, "tried to operate on absent result");
+	NO_RESULT(4006, "tried to operate on absent result"),
+	TRANSFER_FAILED(4007, "transferring (binary) data failed");
 
 	private final int code;
 	private final String description;

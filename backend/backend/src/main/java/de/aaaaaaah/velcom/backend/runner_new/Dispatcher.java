@@ -1,7 +1,7 @@
 package de.aaaaaaah.velcom.backend.runner_new;
 
-import de.aaaaaaah.velcom.backend.access.entities.Run;
-import de.aaaaaaah.velcom.backend.access.entities.RunId;
+import de.aaaaaaah.velcom.backend.access.entities.Task;
+import de.aaaaaaah.velcom.backend.access.entities.TaskId;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.runner_new.single.TeleRunner;
 import java.util.ArrayList;
@@ -14,12 +14,15 @@ import java.util.stream.Collectors;
 /**
  * The dispatcher interface.
  */
+// TODO: 09.07.20 Constrain method visibility? Use an Interface instead? 
 public class Dispatcher {
 
-	private final Map<RunId, TeleRunner> workToRunnerMap;
+	private final Map<TaskId, TeleRunner> workToRunnerMap;
 	private final List<TeleRunner> teleRunners;
+	private final Queue queue;
 
-	public Dispatcher() {
+	public Dispatcher(Queue queue) {
+		this.queue = queue;
 		this.teleRunners = new ArrayList<>();
 		this.workToRunnerMap = new HashMap<>();
 	}
@@ -47,10 +50,10 @@ public class Dispatcher {
 	/**
 	 * Aborts a given commit if it is currently being executed by a runner.
 	 *
-	 * @param runId the id of the run
+	 * @param runId the id of the task
 	 * @return true if the commit was aborted, false if it wasn't being executed
 	 */
-	public boolean abort(RunId runId) {
+	public boolean abort(TaskId runId) {
 		synchronized (workToRunnerMap) {
 			TeleRunner runner = workToRunnerMap.remove(runId);
 
@@ -70,12 +73,31 @@ public class Dispatcher {
 	 *
 	 * @return a list with all known runners
 	 */
-	List<KnownRunner> getKnownRunners() {
+	public List<KnownRunner> getKnownRunners() {
 		synchronized (teleRunners) {
 			return teleRunners.stream()
 				.map(TeleRunner::getRunnerInformation)
 				.collect(Collectors.toList());
 		}
+	}
+
+	/**
+	 * Returns the next work the given {@link TeleRunner} should execute and registers it as working.
+	 *
+	 * @param runner the runner to execute the work on
+	 * @return the next available task.
+	 */
+	public Optional<Task> getWork(TeleRunner runner) {
+		Optional<Task> nextTask = queue.fetchNextTask();
+		if (nextTask.isEmpty()) {
+			return Optional.empty();
+		}
+
+		synchronized (workToRunnerMap) {
+			workToRunnerMap.put(nextTask.get().getId(), runner);
+		}
+
+		return nextTask;
 	}
 
 	/**
@@ -88,5 +110,12 @@ public class Dispatcher {
 		return teleRunners.stream()
 			.filter(it -> it.getRunnerName().equals(name))
 			.findAny();
+	}
+
+	/**
+	 * @return the queue the dispatcher uses
+	 */
+	public Queue getQueue() {
+		return queue;
 	}
 }
