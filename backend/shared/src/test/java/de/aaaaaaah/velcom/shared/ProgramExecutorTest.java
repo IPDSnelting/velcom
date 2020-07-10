@@ -2,6 +2,7 @@ package de.aaaaaaah.velcom.shared;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.fail;
 
 import de.aaaaaaah.velcom.shared.util.execution.ProgramExecutor;
 import de.aaaaaaah.velcom.shared.util.execution.ProgramResult;
@@ -10,6 +11,7 @@ import java.time.Instant;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -61,6 +63,37 @@ class ProgramExecutorTest {
 			.get();
 		assertThat(result.getStdOut()).isEqualTo(output);
 		assertThat(result.getStdErr()).isEmpty();
+	}
+
+	@Test
+	void drainsStandardErr() throws ExecutionException, InterruptedException {
+		String output = "Hello".repeat(200_000);
+		Future<ProgramResult> future = programExecutor.execute(
+			"/usr/bin/env", "bash", "-c",
+			"for i in {1..200000}; do echo -ne 'Hello' ; done | tee /dev/stderr"
+		);
+
+		Thread thread = new Thread(() -> {
+			try {
+				Thread.sleep(TimeUnit.SECONDS.toMillis(20));
+				future.cancel(true);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		});
+		thread.start();
+
+		ProgramResult result;
+		try {
+			result = future.get();
+		} catch (CancellationException e) {
+			fail("Likely needed to be killed", e);
+			return;
+		}
+
+		thread.interrupt();
+		assertThat(result.getStdErr()).isEqualTo(output);
+		assertThat(result.getStdOut()).isEqualTo(output);
 	}
 
 	@Test
