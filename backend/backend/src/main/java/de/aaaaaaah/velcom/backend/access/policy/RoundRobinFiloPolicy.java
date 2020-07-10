@@ -19,6 +19,28 @@ import org.jooq.Cursor;
 import org.jooq.Record1;
 import org.jooq.codegen.db.tables.records.TaskRecord;
 
+/**
+ * A thread safe {@link QueuePolicy} that prioritizes tars and provides some kind of fairness to
+ * repo associated tasks by ordering them in a round robin type of way.
+ *
+ * <p>The ordering is based on three key decisions:</p>
+ * <p>
+ * 1.) Tasks with a higher than default priority are prioritized the most. Between tasks that have
+ * the same priority (but still higher than default), the task that got promoted to this priority
+ * most recently is preferred.
+ * </p>
+ * <p>
+ * 2.) Tasks with default priorities which are associated with tars are prioritized second most.
+ * Between tar tasks with default priority, the task that was inserted most recently is preferred.
+ * </p>
+ * <p>
+ * 3.) Tasks with default priorities which are associated with repositories are prioritized the
+ * least. This is where the round robin policy comes into play. Tasks on this level of importance
+ * are ordered in way that repositories take turns when iterating over the tasks from front to back
+ * such that a representative of each repository is iterated over until another task is found with
+ * the same repository of a previous task. The ordering of the repositories is lexicographical.
+ * </p>
+ */
 public class RoundRobinFiloPolicy implements QueuePolicy {
 
 	private DatabaseStorage databaseStorage;
