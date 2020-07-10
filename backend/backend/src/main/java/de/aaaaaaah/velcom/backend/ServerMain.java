@@ -46,7 +46,6 @@ import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.dropwizard.DropwizardExports;
 import io.prometheus.client.exporter.MetricsServlet;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.EnumSet;
 import javax.servlet.DispatcherType;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
@@ -142,18 +141,17 @@ public class ServerMain extends Application<GlobalConfig> {
 		CommitComparer commitComparer = new CommitComparer(configuration.getSignificantFactor());
 		LinearLog linearLog = new CommitAccessBasedLinearLog(commitAccess, repoAccess);
 		RepoComparison repoComparison = new TimesliceComparison(commitAccess, benchmarkAccess);
-
 		Queue queue = new Queue(repoAccess, taskAccess, archiveAccess, benchmarkAccess);
+		BenchRepo benchRepo = new BenchRepo(archiveAccess);
 
 		// Listener
-		Listener listener = new Listener(
-			configuration, repoAccess, commitAccess, knownCommitAccess
-		);
+		Listener listener = new Listener(configuration, repoAccess, commitAccess, knownCommitAccess,
+			benchRepo);
 
 		// Dispatcher
 		Dispatcher dispatcher = new Dispatcher(queue);
 		RunnerAwareServerFactory.getInstance().setDispatcher(dispatcher);
-		RunnerAwareServerFactory.getInstance().setBenchRepo(new BenchRepo(archiveAccess));
+		RunnerAwareServerFactory.getInstance().setBenchRepo(benchRepo);
 
 		// API authentication
 		environment.jersey().register(

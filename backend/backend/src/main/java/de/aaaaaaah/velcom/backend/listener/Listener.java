@@ -5,13 +5,20 @@ import static java.util.stream.Collectors.toList;
 import com.codahale.metrics.Histogram;
 import de.aaaaaaah.velcom.backend.GlobalConfig;
 import de.aaaaaaah.velcom.backend.ServerMain;
-import de.aaaaaaah.velcom.backend.access.entities.*;
-import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.access.KnownCommitWriteAccess;
 import de.aaaaaaah.velcom.backend.access.RepoWriteAccess;
+import de.aaaaaaah.velcom.backend.access.entities.Branch;
+import de.aaaaaaah.velcom.backend.access.entities.BranchName;
+import de.aaaaaaah.velcom.backend.access.entities.Commit;
+import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.access.entities.Repo;
+import de.aaaaaaah.velcom.backend.access.entities.RepoId;
+import de.aaaaaaah.velcom.backend.access.entities.RepoSource;
+import de.aaaaaaah.velcom.backend.access.entities.Task;
 import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchRepoException;
 import de.aaaaaaah.velcom.backend.access.exceptions.RepoAccessException;
+import de.aaaaaaah.velcom.backend.data.benchrepo.BenchRepo;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -39,6 +46,7 @@ public class Listener {
 	private final RepoWriteAccess repoAccess;
 	private final CommitReadAccess commitAccess;
 	private final KnownCommitWriteAccess knownCommitAccess;
+	private final BenchRepo benchRepo;
 
 	private final ScheduledExecutorService executor;
 	private final Lock lock = new ReentrantLock();
@@ -55,12 +63,15 @@ public class Listener {
 	 * @param repoAccess used to read repo data
 	 * @param commitAccess used to read commit data
 	 * @param knownCommitAccess used to mark new commits as known
+	 * @param benchRepo used to keep the bench repo up-to-date
 	 */
 	public Listener(GlobalConfig config, RepoWriteAccess repoAccess, CommitReadAccess commitAccess,
-		KnownCommitWriteAccess knownCommitAccess) {
+		KnownCommitWriteAccess knownCommitAccess,
+		BenchRepo benchRepo) {
 		this.repoAccess = repoAccess;
 		this.commitAccess = commitAccess;
 		this.knownCommitAccess = knownCommitAccess;
+		this.benchRepo = benchRepo;
 
 		long pollInterval = config.getPollInterval();
 
@@ -74,7 +85,7 @@ public class Listener {
 		long start = System.currentTimeMillis();
 
 		try {
-			repoAccess.updateBenchmarkRepo();
+			benchRepo.checkForUpdates();
 		} catch (RepoAccessException e) {
 			LOGGER.warn("Could not fetch updates from benchmark repo!", e);
 		}
