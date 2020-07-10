@@ -81,15 +81,6 @@ public class TeleRunner {
 	}
 
 	/**
-	 * Returns the dispatcher this runner is assigned to.
-	 *
-	 * @return the dispatcher
-	 */
-	public Dispatcher getDispatcher() {
-		return dispatcher;
-	}
-
-	/**
 	 * Sets the runner information.
 	 *
 	 * @param reply the reply
@@ -165,7 +156,7 @@ public class TeleRunner {
 			// TODO: 09.07.20 Mark this task as done and attach an error, somehow 
 		} catch (TransferException | IOException | NoSuchTaskException e) {
 			LOGGER.info("Failed to transfer repo to runner: Sending failed", e);
-			// TODO: 09.07.20 Reinsert task to queue
+			dispatcher.getQueue().abortTaskProcess(task.getId());
 			connection.close(StatusCode.TRANSFER_FAILED);
 		}
 	}
