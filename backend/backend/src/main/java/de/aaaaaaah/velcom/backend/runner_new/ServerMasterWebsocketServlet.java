@@ -40,6 +40,7 @@ public class ServerMasterWebsocketServlet extends WebSocketServlet {
 	public void configure(WebSocketServletFactory factory) {
 		factory.getPolicy().setMaxTextMessageSize(Integer.MAX_VALUE);
 		factory.setCreator((req, resp) -> {
+			// TODO: 10.07.20 Header in shared
 			String name = req.getHeader("Runner-Name");
 			String token = req.getHeader("Runner-Token");
 

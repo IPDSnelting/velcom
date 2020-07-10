@@ -4,12 +4,14 @@ import de.aaaaaaah.velcom.backend.runner_new.single.state.AwaitClearResultReply;
 import de.aaaaaaah.velcom.backend.runner_new.single.state.AwaitGetResultReply;
 import de.aaaaaaah.velcom.backend.runner_new.single.state.AwaitGetStatusReply;
 import de.aaaaaaah.velcom.backend.runner_new.single.state.TeleRunnerState;
+import de.aaaaaaah.velcom.shared.protocol.StatusCode;
 import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.ClearResult;
 import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.GetResult;
 import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.GetStatus;
 import de.aaaaaaah.velcom.shared.protocol.serialization.serverbound.GetResultReply;
 import de.aaaaaaah.velcom.shared.protocol.serialization.serverbound.GetStatusReply;
 import de.aaaaaaah.velcom.shared.protocol.statemachine.StateMachine;
+import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 
@@ -47,6 +49,7 @@ public class PeriodicStatusRequester {
 				//noinspection BusyWait
 				Thread.sleep(5000);
 
+				// TODO: 10.07.20 We can disconnect at any point. Handle it. 
 				GetStatusReply statusReply = requestStatus();
 				teleRunner.setRunnerInformation(statusReply);
 
@@ -55,6 +58,19 @@ public class PeriodicStatusRequester {
 				}
 
 				GetResultReply requestResults = requestResults();
+				UUID runId = requestResults.getRunId();
+
+				// The runner has a result - we don't know why :( Tell it to clear it and move on
+				if (teleRunner.getCurrentTask().isEmpty()) {
+					clearResults();
+					continue;
+				}
+				// The runner has a *different* result than we expected. Disconnect.
+				if (teleRunner.getCurrentTask().get().getId().getId().equals(runId)) {
+					clearResults();
+					connection.close(StatusCode.ILLEGAL_BEHAVIOUR);
+					continue;
+				}
 
 				teleRunner.handleResults(requestResults);
 

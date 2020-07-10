@@ -42,7 +42,7 @@ public class TeleRunner {
 	private final String runnerName;
 	private final Converter serializer;
 	private final Dispatcher dispatcher;
-	private final AtomicReference<Task> myLastTask;
+	private final AtomicReference<Task> myCurrentTask;
 
 	private RunnerConnection connection;
 
@@ -51,7 +51,7 @@ public class TeleRunner {
 		this.serializer = serializer;
 		this.dispatcher = dispatcher;
 		this.runnerInformation = new AtomicReference<>();
-		this.myLastTask = new AtomicReference<>();
+		this.myCurrentTask = new AtomicReference<>();
 
 		this.connection = createConnection();
 	}
@@ -104,6 +104,13 @@ public class TeleRunner {
 	}
 
 	/**
+	 * @return the current task of this runner, if any
+	 */
+	public Optional<Task> getCurrentTask() {
+		return Optional.ofNullable(myCurrentTask.get());
+	}
+
+	/**
 	 * Returns the runner information. This must always be non-null from the moment the runner is
 	 * registered to the dispatcher. The value might be outdated.
 	 */
@@ -126,7 +133,7 @@ public class TeleRunner {
 	 * These limitations might be lifted in the future.
 	 */
 	public void abort() {
-		myLastTask.set(null);
+		myCurrentTask.set(null);
 
 		if (!hasConnection()) {
 			LOGGER.info("Tried to abort commit but was not connected with a runner: {}", getRunnerName());
@@ -147,10 +154,11 @@ public class TeleRunner {
 	 * @param resultReply the results
 	 */
 	public void handleResults(GetResultReply resultReply) {
-		Task task = myLastTask.get();
+		Task task = myCurrentTask.get();
 		if (task == null) {
-			// Somehow we have no task but a result, retry that commit?
-			// TODO: 10.07.20 Retry or silently drop it?
+			// Somehow we have no task but a result, retry that commit. This should not happen, but if it
+			// does err on the side of caution. Retry that task if possible, better to benchmark twice
+			// than never
 			dispatcher.getQueue().abortTaskProcess(new TaskId(resultReply.getRunId()));
 			return;
 		}
@@ -201,7 +209,7 @@ public class TeleRunner {
 			dispatcher.completeTask(builder.build());
 		}
 
-		myLastTask.set(null);
+		myCurrentTask.set(null);
 	}
 
 	/**
@@ -217,7 +225,7 @@ public class TeleRunner {
 			return;
 		}
 		Task task = workOptional.get();
-		myLastTask.set(task);
+		myCurrentTask.set(task);
 
 		boolean benchRepoUpToDate = runnerInformation.get().getBenchHash()
 			.map(it -> it.equals("current"))
