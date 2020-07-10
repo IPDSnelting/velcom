@@ -212,6 +212,7 @@ jobs:
       DEPLOY_SECRET: ${{ secrets.KIT_DEPLOY_SECRET }}
       GITHUB_NAME: ${{ github.actor }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GITHUB_RUN_ID: ${{ github.run_id }}
 
     steps:
       - uses: actions/checkout@v2
