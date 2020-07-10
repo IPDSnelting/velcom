@@ -62,6 +62,7 @@ public class ServerMasterWebsocketServlet extends WebSocketServlet {
 				myTeleRunner = runner;
 			} else {
 				myTeleRunner = new TeleRunner(name, serializer, dispatcher);
+				dispatcher.addRunner(myTeleRunner);
 			}
 
 			return myTeleRunner.createConnection();

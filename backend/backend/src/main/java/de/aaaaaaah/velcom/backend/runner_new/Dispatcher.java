@@ -48,14 +48,15 @@ public class Dispatcher implements IDispatcher {
 	 *
 	 * @param teleRunner the runner to add
 	 */
-	public boolean addRunner(TeleRunner teleRunner) {
+	public void addRunner(TeleRunner teleRunner) {
 		synchronized (teleRunners) {
-			boolean alreadyKnown = teleRunners.stream()
+			boolean nameTaken = teleRunners.stream()
+				.filter(TeleRunner::hasConnection)
 				.map(TeleRunner::getRunnerName)
 				.anyMatch(it -> it.equals(teleRunner.getRunnerName()));
 
-			if (alreadyKnown) {
-				return false;
+			if (nameTaken) {
+				throw new IllegalArgumentException("The runner name is already taken!");
 			}
 
 			teleRunners.add(teleRunner);
