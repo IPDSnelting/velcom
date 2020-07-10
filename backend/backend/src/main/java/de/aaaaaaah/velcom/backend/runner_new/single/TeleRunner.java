@@ -169,52 +169,74 @@ public class TeleRunner {
 			return;
 		}
 
-		boolean successful = resultReply.getResult()
-			.flatMap(it -> Optional.ofNullable(it.getBenchmarks()))
-			.isPresent();
-
-		if (successful) {
-			Result result = resultReply.getResult().orElseThrow();
-			RunBuilder builder = RunBuilder.successful(
-				task,
-				getRunnerName(),
-				getRunnerInformation().getInformation(),
-				resultReply.getStartTime(),
-				resultReply.getStopTime()
-			);
-
-			//noinspection ConstantConditions
-			for (Benchmark benchmark : result.getBenchmarks()) {
-				for (Metric metric : benchmark.getMetrics()) {
-					MeasurementName name = new MeasurementName(benchmark.getName(), metric.getName());
-					if (metric.getError() != null) {
-						builder.addFailedMeasurement(name, metric.getError());
-					} else {
-						//noinspection ConstantConditions
-						builder.addSuccessfulMeasurement(
-							name,
-							Interpretation.fromSharedRepresentation(metric.getInterpretation()),
-							new Unit(metric.getUnit()),
-							metric.getValues()
-						);
-					}
-				}
-			}
-
-			dispatcher.completeTask(builder.build());
+		Run run;
+		if (resultReply.isSuccess()) {
+			// the benchmark script exited normally
+			run = handleSuccessful(resultReply, task);
 		} else {
-			RunBuilder builder = RunBuilder.failed(
+			// the benchmark script misbehaved
+			run = handleUnsuccessful(resultReply, task);
+		}
+		dispatcher.completeTask(run);
+
+		myCurrentTask.set(null);
+	}
+
+	private Run handleUnsuccessful(GetResultReply resultReply, Task task) {
+		RunBuilder builder = RunBuilder.failed(
+			task,
+			getRunnerName(),
+			getRunnerInformation().getInformation(),
+			resultReply.getStartTime(),
+			resultReply.getStopTime(),
+			resultReply.getError().orElseThrow()
+		);
+		return builder.build();
+	}
+
+	private Run handleSuccessful(GetResultReply resultReply, Task task) {
+		Result result = resultReply.getResult().orElseThrow();
+
+		// Global error
+		if (result.getError() != null) {
+			return RunBuilder.failed(
 				task,
 				getRunnerName(),
 				getRunnerInformation().getInformation(),
 				resultReply.getStartTime(),
 				resultReply.getStopTime(),
-				resultReply.getError().orElseThrow()
-			);
-			dispatcher.completeTask(builder.build());
+				result.getError()
+			).build();
 		}
 
-		myCurrentTask.set(null);
+		// No global error, but maybe individual ones failed
+		RunBuilder builder = RunBuilder.successful(
+			task,
+			getRunnerName(),
+			getRunnerInformation().getInformation(),
+			resultReply.getStartTime(),
+			resultReply.getStopTime()
+		);
+
+		//noinspection ConstantConditions
+		for (Benchmark benchmark : result.getBenchmarks()) {
+			for (Metric metric : benchmark.getMetrics()) {
+				MeasurementName name = new MeasurementName(benchmark.getName(), metric.getName());
+				if (metric.getError() != null) {
+					builder.addFailedMeasurement(name, metric.getError());
+				} else {
+					//noinspection ConstantConditions
+					builder.addSuccessfulMeasurement(
+						name,
+						Interpretation.fromSharedRepresentation(metric.getInterpretation()),
+						new Unit(metric.getUnit()),
+						metric.getValues()
+					);
+				}
+			}
+		}
+
+		return builder.build();
 	}
 
 	/**
