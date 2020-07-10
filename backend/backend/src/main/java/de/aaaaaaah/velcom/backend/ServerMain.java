@@ -166,9 +166,8 @@ public class ServerMain extends Application<GlobalConfig> {
 		environment.jersey().register(
 			new CommitHistoryEndpoint(benchmarkAccess, repoAccess, linearLog, commitComparer));
 		environment.jersey().register(new MeasurementsEndpoint(benchmarkAccess));
-		// FIXME: 07.07.20 Fix this dispatcher
 		environment.jersey()
-			.register(new QueueEndpoint(commitAccess, queue, null, linearLog, repoAccess));
+			.register(new QueueEndpoint(commitAccess, queue, dispatcher, linearLog, repoAccess));
 		environment.jersey().register(
 			new RecentlyBenchmarkedCommitsEndpoint(repoAccess,
 				benchmarkAccess, commitAccess, commitComparer, linearLog));
