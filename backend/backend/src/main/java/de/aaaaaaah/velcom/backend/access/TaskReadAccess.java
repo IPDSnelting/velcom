@@ -10,8 +10,8 @@ import de.aaaaaaah.velcom.backend.access.entities.Task;
 import de.aaaaaaah.velcom.backend.access.entities.TaskId;
 import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchTaskException;
 import de.aaaaaaah.velcom.backend.access.policy.QueuePolicy;
+import de.aaaaaaah.velcom.backend.access.policy.RoundRobinFiloPolicy;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
-
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -22,10 +22,11 @@ import org.jooq.codegen.db.tables.records.TaskRecord;
 public class TaskReadAccess {
 
 	protected final DatabaseStorage databaseStorage;
-	protected QueuePolicy policy;
+	protected final QueuePolicy policy;
 
 	public TaskReadAccess(DatabaseStorage databaseStorage) {
 		this.databaseStorage = Objects.requireNonNull(databaseStorage);
+		policy = new RoundRobinFiloPolicy(databaseStorage);
 	}
 
 	public List<Task> getTasksSorted() {
