@@ -2,12 +2,6 @@ package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import de.aaaaaaah.velcom.backend.access.entities.Task;
-import de.aaaaaaah.velcom.backend.access.entities.TaskId;
-import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchTaskException;
-import de.aaaaaaah.velcom.backend.data.linearlog.LinearLog;
-import de.aaaaaaah.velcom.backend.data.linearlog.LinearLogException;
-import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.access.RepoReadAccess;
 import de.aaaaaaah.velcom.backend.access.entities.Branch;
@@ -15,10 +9,16 @@ import de.aaaaaaah.velcom.backend.access.entities.BranchName;
 import de.aaaaaaah.velcom.backend.access.entities.Commit;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
+import de.aaaaaaah.velcom.backend.access.entities.Task;
+import de.aaaaaaah.velcom.backend.access.entities.TaskId;
+import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchTaskException;
+import de.aaaaaaah.velcom.backend.data.linearlog.LinearLog;
+import de.aaaaaaah.velcom.backend.data.linearlog.LinearLogException;
+import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.restapi.RepoUser;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonTask;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonWorker;
-import de.aaaaaaah.velcom.backend.runner_new.Dispatcher;
+import de.aaaaaaah.velcom.backend.runner_new.IDispatcher;
 import io.dropwizard.auth.Auth;
 import java.util.Collection;
 import java.util.List;
@@ -50,10 +50,10 @@ public class QueueEndpoint {
 	private final CommitReadAccess commitAccess;
 	private final RepoReadAccess repoReadAccess;
 	private final Queue queue;
-	private final Dispatcher dispatcher;
+	private final IDispatcher dispatcher;
 	private final LinearLog linearLog;
 
-	public QueueEndpoint(CommitReadAccess commitAccess, Queue queue, Dispatcher dispatcher,
+	public QueueEndpoint(CommitReadAccess commitAccess, Queue queue, IDispatcher dispatcher,
 		LinearLog linearLog, RepoReadAccess repoReadAccess) {
 		this.commitAccess = commitAccess;
 		this.queue = queue;

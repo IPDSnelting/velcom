@@ -15,8 +15,7 @@ import java.util.stream.Collectors;
 /**
  * The dispatcher interface.
  */
-// TODO: 09.07.20 Constrain method visibility? Use an Interface instead? 
-public class Dispatcher {
+public class Dispatcher implements IDispatcher {
 
 	private final Map<TaskId, TeleRunner> workToRunnerMap;
 	private final List<TeleRunner> teleRunners;
@@ -26,6 +25,22 @@ public class Dispatcher {
 		this.queue = queue;
 		this.teleRunners = new ArrayList<>();
 		this.workToRunnerMap = new HashMap<>();
+	}
+
+	@Override
+	public boolean abort(TaskId runId) {
+		synchronized (workToRunnerMap) {
+			TeleRunner runner = workToRunnerMap.remove(runId);
+
+			if (runner == null) {
+				return false;
+			}
+
+			// TODO: 09.07.20 Should this be done on a new thread?
+			runner.abort();
+
+			return true;
+		}
 	}
 
 	/**
@@ -45,27 +60,14 @@ public class Dispatcher {
 
 			teleRunners.add(teleRunner);
 		}
-		return true;
 	}
 
-	/**
-	 * Aborts a given commit if it is currently being executed by a runner.
-	 *
-	 * @param runId the id of the task
-	 * @return true if the commit was aborted, false if it wasn't being executed
-	 */
-	public boolean abort(TaskId runId) {
-		synchronized (workToRunnerMap) {
-			TeleRunner runner = workToRunnerMap.remove(runId);
-
-			if (runner == null) {
-				return false;
-			}
-
-			// TODO: 09.07.20 Should this be done on a new thread? 
-			runner.abort();
-
-			return true;
+	@Override
+	public List<KnownRunner> getKnownRunners() {
+		synchronized (teleRunners) {
+			return teleRunners.stream()
+				.map(TeleRunner::getRunnerInformation)
+				.collect(Collectors.toList());
 		}
 	}
 
@@ -76,19 +78,6 @@ public class Dispatcher {
 	 */
 	public void completeTask(Run result) {
 		queue.completeTask(result);
-	}
-
-	/**
-	 * Returns a list with all known runners.
-	 *
-	 * @return a list with all known runners
-	 */
-	public List<KnownRunner> getKnownRunners() {
-		synchronized (teleRunners) {
-			return teleRunners.stream()
-				.map(TeleRunner::getRunnerInformation)
-				.collect(Collectors.toList());
-		}
 	}
 
 	/**
