@@ -2,6 +2,7 @@ package de.aaaaaaah.velcom.backend;
 
 import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import de.aaaaaaah.velcom.backend.access.ArchiveAccess;
 import de.aaaaaaah.velcom.backend.access.BenchmarkWriteAccess;
 import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.access.KnownCommitWriteAccess;
@@ -43,6 +44,7 @@ import io.dropwizard.setup.Environment;
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.dropwizard.DropwizardExports;
 import io.prometheus.client.exporter.MetricsServlet;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.EnumSet;
 import javax.servlet.DispatcherType;
@@ -131,13 +133,18 @@ public class ServerMain extends Application<GlobalConfig> {
 			configuration.getHashMemory(),
 			configuration.getHashIterations()
 		);
+		ArchiveAccess archiveAccess = new ArchiveAccess(
+			Path.of(configuration.getArchivesRootDir()),
+			new RemoteUrl(configuration.getBenchmarkRepoRemoteUrl()),
+			repoStorage
+		);
 
 		// Data layer
 		CommitComparer commitComparer = new CommitComparer(configuration.getSignificantFactor());
 		LinearLog linearLog = new CommitAccessBasedLinearLog(commitAccess, repoAccess);
 		RepoComparison repoComparison = new TimesliceComparison(commitAccess, benchmarkAccess);
 
-		Queue queue = new Queue();
+		Queue queue = new Queue(repoAccess, taskAccess, archiveAccess, benchmarkAccess);
 
 		// Listener
 		Listener listener = new Listener(
