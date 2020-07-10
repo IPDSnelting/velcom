@@ -7,7 +7,7 @@ public class TransferException extends Exception {
 	private final Task task;
 
 	public TransferException(Throwable cause, Task task) {
-		super(cause);
+		super(cause.getMessage(), cause);
 		this.task = task;
 	}
 

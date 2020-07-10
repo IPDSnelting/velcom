@@ -1,5 +1,7 @@
 package de.aaaaaaah.velcom.backend.runner_new.single;
 
+import de.aaaaaaah.velcom.backend.access.entities.Run;
+import de.aaaaaaah.velcom.backend.access.entities.RunId;
 import de.aaaaaaah.velcom.backend.access.entities.Task;
 import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchTaskException;
 import de.aaaaaaah.velcom.backend.access.exceptions.PrepareTransferException;
@@ -14,6 +16,7 @@ import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.RequestRunRe
 import de.aaaaaaah.velcom.shared.protocol.serialization.serverbound.GetStatusReply;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.time.Instant;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
@@ -153,11 +156,24 @@ public class TeleRunner {
 		} catch (PrepareTransferException e) {
 			LOGGER.info("Failed to transfer repo to runner: Archiving failed", e);
 			// This task is corrupted, we can not benchmark it.
-			// TODO: 09.07.20 Mark this task as done and attach an error, somehow 
+			dispatcher.completeTask(prepareTransferFailed(Instant.now(), e));
 		} catch (TransferException | IOException | NoSuchTaskException e) {
 			LOGGER.info("Failed to transfer repo to runner: Sending failed", e);
 			dispatcher.getQueue().abortTaskProcess(task.getId());
 			connection.close(StatusCode.TRANSFER_FAILED);
 		}
 	}
+
+	public Run prepareTransferFailed(Instant start, PrepareTransferException exception) {
+		return new Run(
+			new RunId(exception.getTask().getId().getId()),
+			exception.getTask().getAuthor(),
+			getRunnerName(),
+			getRunnerInformation().getInformation(),
+			start,
+			Instant.now(),
+			"Archiving failed. Error: " + exception.getMessage()
+		);
+	}
+
 }

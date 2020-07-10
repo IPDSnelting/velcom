@@ -1,5 +1,6 @@
 package de.aaaaaaah.velcom.backend.runner_new;
 
+import de.aaaaaaah.velcom.backend.access.entities.Run;
 import de.aaaaaaah.velcom.backend.access.entities.Task;
 import de.aaaaaaah.velcom.backend.access.entities.TaskId;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
@@ -66,6 +67,15 @@ public class Dispatcher {
 
 			return true;
 		}
+	}
+
+	/**
+	 * Marks a task as completed.
+	 *
+	 * @param result the resulting run
+	 */
+	public void completeTask(Run result) {
+		queue.completeTask(result);
 	}
 
 	/**
