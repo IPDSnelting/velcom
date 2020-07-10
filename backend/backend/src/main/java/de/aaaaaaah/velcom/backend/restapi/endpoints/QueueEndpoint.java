@@ -119,7 +119,6 @@ public class QueueEndpoint {
 	 *
 	 * @param user user who authored this delete
 	 * @param taskId the id of the task to delete
-	 *
 	 * @throws NoSuchTaskException if no task with the given id exists
 	 */
 	@DELETE
@@ -129,15 +128,15 @@ public class QueueEndpoint {
 		Task task = queue.getTaskById(new TaskId(taskId));
 
 		if (task.getSource().getLeft().isPresent()) {
+			// task is commit
 			RepoId repoId = task.getSource().getLeft().get().getRepoId();
 			user.guardRepoAccess(repoId);
-		}
-		else {
+		} else {
 			// task is tar
 			user.guardAdminAccess();
 		}
 
-		queue.abortTaskProcess(new TaskId(taskId));
+		queue.deleteTask(List.of(new TaskId(taskId)));
 	}
 
 	private static class GetReply {
