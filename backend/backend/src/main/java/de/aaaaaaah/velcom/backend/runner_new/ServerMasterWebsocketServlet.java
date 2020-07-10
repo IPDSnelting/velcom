@@ -1,6 +1,7 @@
 package de.aaaaaaah.velcom.backend.runner_new;
 
 import de.aaaaaaah.velcom.backend.runner_new.single.TeleRunner;
+import de.aaaaaaah.velcom.shared.protocol.RunnerConnectionHeader;
 import de.aaaaaaah.velcom.shared.protocol.RunnerDenyReason;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Converter;
 import java.io.IOException;
@@ -40,9 +41,8 @@ public class ServerMasterWebsocketServlet extends WebSocketServlet {
 	public void configure(WebSocketServletFactory factory) {
 		factory.getPolicy().setMaxTextMessageSize(Integer.MAX_VALUE);
 		factory.setCreator((req, resp) -> {
-			// TODO: 10.07.20 Header in shared
-			String name = req.getHeader("Runner-Name");
-			String token = req.getHeader("Runner-Token");
+			String name = req.getHeader(RunnerConnectionHeader.CONNECT_RUNNER_NAME.getName());
+			String token = req.getHeader(RunnerConnectionHeader.CONNECT_RUNNER_TOKEN.getName());
 
 			if (name == null || !runnerToken.equals(token)) {
 				LOGGER.info("Runner from {} failed authentication!", req.getRemoteAddress());
@@ -70,7 +70,10 @@ public class ServerMasterWebsocketServlet extends WebSocketServlet {
 
 	private void kickRunner(ServletUpgradeResponse response, RunnerDenyReason reason) {
 		try {
-			response.addHeader("Runner-Deny", reason.getHeaderValue());
+			response.addHeader(
+				RunnerConnectionHeader.DISCONNECT_DENY_REASON.getName(),
+				reason.getHeaderValue()
+			);
 			response.sendError(reason.getCode(), reason.getMessage());
 		} catch (IOException e) {
 			LOGGER.warn("Failed to kick runner", e);
