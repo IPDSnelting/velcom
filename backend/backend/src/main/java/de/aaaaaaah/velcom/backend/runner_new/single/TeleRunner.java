@@ -11,6 +11,7 @@ import de.aaaaaaah.velcom.backend.access.entities.Unit;
 import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchTaskException;
 import de.aaaaaaah.velcom.backend.access.exceptions.PrepareTransferException;
 import de.aaaaaaah.velcom.backend.access.exceptions.TransferException;
+import de.aaaaaaah.velcom.backend.data.benchrepo.BenchRepo;
 import de.aaaaaaah.velcom.backend.runner_new.Dispatcher;
 import de.aaaaaaah.velcom.backend.runner_new.KnownRunner;
 import de.aaaaaaah.velcom.backend.runner_new.single.state.AwaitAbortRunReply;
@@ -43,13 +44,16 @@ public class TeleRunner {
 	private final Converter serializer;
 	private final Dispatcher dispatcher;
 	private final AtomicReference<Task> myCurrentTask;
+	private final BenchRepo benchRepo;
 
 	private RunnerConnection connection;
 
-	public TeleRunner(String runnerName, Converter serializer, Dispatcher dispatcher) {
+	public TeleRunner(String runnerName, Converter serializer, Dispatcher dispatcher,
+		BenchRepo benchRepo) {
 		this.runnerName = runnerName;
 		this.serializer = serializer;
 		this.dispatcher = dispatcher;
+		this.benchRepo = benchRepo;
 		this.runnerInformation = new AtomicReference<>();
 		this.myCurrentTask = new AtomicReference<>();
 
@@ -229,26 +233,28 @@ public class TeleRunner {
 		Task task = workOptional.get();
 		myCurrentTask.set(task);
 
+		String benchRepoHash = benchRepo.getCurrentHash().getHash();
 		boolean benchRepoUpToDate = runnerInformation.get().getBenchHash()
-			.map(it -> it.equals("current"))
+			.map(it -> it.equals(benchRepoHash))
 			.orElse(false);
+
 		connection.send(
-			new RequestRunReply(!benchRepoUpToDate, "current", true, task.getId().getId())
+			new RequestRunReply(!benchRepoUpToDate, benchRepoHash, true, task.getId().getId())
 				.asPacket(serializer)
 		);
 
-		if (!benchRepoUpToDate) {
-			// TODO: Send bench repo
-		}
-
 		try (OutputStream outputStream = connection.createBinaryOutputStream()) {
+			if (!benchRepoUpToDate) {
+				benchRepo.transfer(outputStream);
+			}
+
 			dispatcher.getQueue().transferTask(task.getId(), outputStream);
 		} catch (PrepareTransferException e) {
-			LOGGER.info("Failed to transfer repo to runner: Archiving failed", e);
+			LOGGER.info("Failed to transfer repo to runner " + getRunnerName() + ": Archiving failed", e);
 			// This task is corrupted, we can not benchmark it.
 			dispatcher.completeTask(prepareTransferFailed(task, Instant.now(), e));
 		} catch (TransferException | IOException | NoSuchTaskException e) {
-			LOGGER.info("Failed to transfer repo to runner: Sending failed", e);
+			LOGGER.info("Failed to transfer repo to runner " + getRunnerName() + ": Sending failed", e);
 			dispatcher.getQueue().abortTaskProcess(task.getId());
 			connection.close(StatusCode.TRANSFER_FAILED);
 		}

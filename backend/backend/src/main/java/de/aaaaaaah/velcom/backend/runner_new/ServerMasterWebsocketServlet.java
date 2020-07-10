@@ -1,5 +1,6 @@
 package de.aaaaaaah.velcom.backend.runner_new;
 
+import de.aaaaaaah.velcom.backend.data.benchrepo.BenchRepo;
 import de.aaaaaaah.velcom.backend.runner_new.single.TeleRunner;
 import de.aaaaaaah.velcom.shared.protocol.RunnerConnectionHeader;
 import de.aaaaaaah.velcom.shared.protocol.RunnerDenyReason;
@@ -22,6 +23,7 @@ public class ServerMasterWebsocketServlet extends WebSocketServlet {
 	private final Dispatcher dispatcher;
 	private final Converter serializer;
 	private final String runnerToken;
+	private final BenchRepo benchRepo;
 
 	/**
 	 * Creates a new runner servlet.
@@ -29,12 +31,14 @@ public class ServerMasterWebsocketServlet extends WebSocketServlet {
 	 * @param dispatcher the dispatcher to connect to
 	 * @param serializer the serializer to use for communication
 	 * @param runnerToken the token runners need to provide when connecting
+	 * @param benchRepo the benchmark repo
 	 */
 	public ServerMasterWebsocketServlet(Dispatcher dispatcher, Converter serializer,
-		String runnerToken) {
+		String runnerToken, BenchRepo benchRepo) {
 		this.dispatcher = dispatcher;
 		this.serializer = serializer;
 		this.runnerToken = runnerToken;
+		this.benchRepo = benchRepo;
 	}
 
 	@Override
@@ -61,7 +65,7 @@ public class ServerMasterWebsocketServlet extends WebSocketServlet {
 				}
 				myTeleRunner = runner;
 			} else {
-				myTeleRunner = new TeleRunner(name, serializer, dispatcher);
+				myTeleRunner = new TeleRunner(name, serializer, dispatcher, benchRepo);
 				dispatcher.addRunner(myTeleRunner);
 			}
 

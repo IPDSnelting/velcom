@@ -1,5 +1,6 @@
 package de.aaaaaaah.velcom.backend;
 
+import de.aaaaaaah.velcom.backend.data.benchrepo.BenchRepo;
 import de.aaaaaaah.velcom.backend.runner_new.Dispatcher;
 import de.aaaaaaah.velcom.backend.runner_new.ServerMasterWebsocketServlet;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Converter;
@@ -30,6 +31,7 @@ public class RunnerAwareServerFactory implements ServerFactory {
 	private ServerFactory underlying;
 	private GlobalConfig config;
 	private Dispatcher dispatcher;
+	private BenchRepo benchRepo;
 	private final Converter serializer;
 
 	private RunnerAwareServerFactory() {
@@ -58,7 +60,7 @@ public class RunnerAwareServerFactory implements ServerFactory {
 		MutableServletContextHandler handler = new MutableServletContextHandler();
 		handler.getServletContext().addServlet(
 			"Runner Websocket servlet",
-			new ServerMasterWebsocketServlet(dispatcher, serializer, config.getRunnerToken())
+			new ServerMasterWebsocketServlet(dispatcher, serializer, config.getRunnerToken(), benchRepo)
 		)
 			.addMapping("/runner-connector");
 		handlerMap.put(connector, handler);
@@ -111,6 +113,18 @@ public class RunnerAwareServerFactory implements ServerFactory {
 			throw new IllegalStateException("I already have a dispatcher!");
 		}
 		this.dispatcher = dispatcher;
+	}
+
+	/**
+	 * Sets the bench reo to use.
+	 *
+	 * @param benchRepo the bench repo
+	 */
+	public void setBenchRepo(BenchRepo benchRepo) {
+		if (this.benchRepo != null) {
+			throw new IllegalStateException("I already have a bench repo!");
+		}
+		this.benchRepo = benchRepo;
 	}
 
 	/**

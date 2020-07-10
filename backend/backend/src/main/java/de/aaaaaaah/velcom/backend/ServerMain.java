@@ -11,6 +11,7 @@ import de.aaaaaaah.velcom.backend.access.TaskWriteAccess;
 import de.aaaaaaah.velcom.backend.access.TokenWriteAccess;
 import de.aaaaaaah.velcom.backend.access.entities.AuthToken;
 import de.aaaaaaah.velcom.backend.access.entities.RemoteUrl;
+import de.aaaaaaah.velcom.backend.data.benchrepo.BenchRepo;
 import de.aaaaaaah.velcom.backend.data.commitcomparison.CommitComparer;
 import de.aaaaaaah.velcom.backend.data.linearlog.CommitAccessBasedLinearLog;
 import de.aaaaaaah.velcom.backend.data.linearlog.LinearLog;
@@ -154,6 +155,7 @@ public class ServerMain extends Application<GlobalConfig> {
 		// Dispatcher
 		Dispatcher dispatcher = new Dispatcher(queue);
 		RunnerAwareServerFactory.getInstance().setDispatcher(dispatcher);
+		RunnerAwareServerFactory.getInstance().setBenchRepo(new BenchRepo(archiveAccess));
 
 		// API authentication
 		environment.jersey().register(
