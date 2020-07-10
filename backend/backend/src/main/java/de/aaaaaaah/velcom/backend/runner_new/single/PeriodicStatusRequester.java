@@ -1,15 +1,24 @@
 package de.aaaaaaah.velcom.backend.runner_new.single;
 
+import de.aaaaaaah.velcom.backend.access.entities.Interpretation;
+import de.aaaaaaah.velcom.backend.access.entities.MeasurementName;
+import de.aaaaaaah.velcom.backend.access.entities.RunBuilder;
+import de.aaaaaaah.velcom.backend.access.entities.Unit;
 import de.aaaaaaah.velcom.backend.runner_new.single.state.AwaitClearResultReply;
 import de.aaaaaaah.velcom.backend.runner_new.single.state.AwaitGetResultReply;
 import de.aaaaaaah.velcom.backend.runner_new.single.state.AwaitGetStatusReply;
 import de.aaaaaaah.velcom.backend.runner_new.single.state.TeleRunnerState;
+import de.aaaaaaah.velcom.shared.protocol.serialization.Result;
+import de.aaaaaaah.velcom.shared.protocol.serialization.Result.Benchmark;
+import de.aaaaaaah.velcom.shared.protocol.serialization.Result.Metric;
 import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.ClearResult;
 import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.GetResult;
 import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.GetStatus;
 import de.aaaaaaah.velcom.shared.protocol.serialization.serverbound.GetResultReply;
 import de.aaaaaaah.velcom.shared.protocol.serialization.serverbound.GetStatusReply;
 import de.aaaaaaah.velcom.shared.protocol.statemachine.StateMachine;
+import java.time.Instant;
+import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 
@@ -56,6 +65,8 @@ public class PeriodicStatusRequester {
 
 				GetResultReply requestResults = requestResults();
 
+				handleResults(requestResults);
+
 				// TODO: Do sth with the result
 
 				clearResults();
@@ -89,6 +100,54 @@ public class PeriodicStatusRequester {
 		connection.send(new ClearResult().asPacket(connection.getSerializer()));
 
 		clearResultState.getReplyFuture().get();
+	}
+
+	private void handleResults(GetResultReply requestResults) {
+		boolean successful = requestResults.getResult()
+			.flatMap(it -> Optional.ofNullable(it.getBenchmarks()))
+			.isPresent();
+
+		// TODO: 10.07.20 Memorize TASK and Start/End Time 
+		if (successful) {
+			Result result = requestResults.getResult().orElseThrow();
+			RunBuilder builder = RunBuilder.successful(
+				null,
+				teleRunner.getRunnerName(),
+				teleRunner.getRunnerInformation().getInformation(),
+				Instant.EPOCH,
+				Instant.EPOCH
+			);
+
+			//noinspection ConstantConditions
+			for (Benchmark benchmark : result.getBenchmarks()) {
+				for (Metric metric : benchmark.getMetrics()) {
+					MeasurementName name = new MeasurementName(benchmark.getName(), metric.getName());
+					if (metric.getError() != null) {
+						builder.addFailedMeasurement(name, metric.getError());
+					} else {
+						//noinspection ConstantConditions
+						builder.addSuccessfulMeasurement(
+							name,
+							Interpretation.fromSharedRepresentation(metric.getInterpretation()),
+							new Unit(metric.getUnit()),
+							metric.getValues()
+						);
+					}
+				}
+			}
+
+			teleRunner.completeRun(builder.build());
+		} else {
+			RunBuilder builder = RunBuilder.failed(
+				null,
+				teleRunner.getRunnerName(),
+				teleRunner.getRunnerInformation().getInformation(),
+				Instant.EPOCH,
+				Instant.EPOCH,
+				requestResults.getError().orElseThrow()
+			);
+			teleRunner.completeRun(builder.build());
+		}
 	}
 
 	/**

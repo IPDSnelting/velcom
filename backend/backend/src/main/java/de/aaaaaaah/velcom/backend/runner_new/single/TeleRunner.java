@@ -128,6 +128,13 @@ public class TeleRunner {
 		}
 	}
 
+	public void completeRun(Run run) {
+
+	}
+
+	/**
+	 * Sends a {@link RequestRunReply} and any needed TARs.
+	 */
 	public void sendAvailableWork() {
 		Optional<Task> workOptional = dispatcher.getWork(this);
 

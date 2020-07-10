@@ -52,12 +52,10 @@ public class GetResultReply implements ServerBound {
 		return success;
 	}
 
-	@Nullable
 	public Optional<Result> getResult() {
 		return Optional.ofNullable(result);
 	}
 
-	@Nullable
 	public Optional<String> getError() {
 		return Optional.ofNullable(error);
 	}
