@@ -37,7 +37,12 @@ CREATE TABLE run
     error        TEXT,
     runner_error TEXT,
 
-    FOREIGN KEY (repo_id, commit_hash) REFERENCES known_commit (repo_id, hash) ON DELETE CASCADE
+    FOREIGN KEY (repo_id, commit_hash) REFERENCES known_commit (repo_id, hash) ON DELETE CASCADE,
+
+    CHECK ( (repo_id IS NOT NULL AND commit_hash IS NOT NULL) OR
+            (repo_id IS NULL AND commit_hash IS NULL) ),
+    CHECK ( (error IS NOT NULL AND runner_error IS NULL) OR
+            (error IS NULL AND runner_error IS NOT NULL) )
 );
 
 CREATE TABLE measurement
@@ -73,7 +78,12 @@ CREATE TABLE task
     commit_hash CHAR(40),
     in_process  BOOLEAN              NOT NULL DEFAULT false,
 
-    FOREIGN KEY (repo_id, commit_hash) REFERENCES known_commit (repo_id, hash) ON DELETE CASCADE
+    FOREIGN KEY (repo_id, commit_hash) REFERENCES known_commit (repo_id, hash) ON DELETE CASCADE,
+
+    CHECK ( (repo_id IS NOT NULL AND commit_hash IS NOT NULL) OR
+            (repo_id IS NULL AND commit_hash IS NULL) ),
+    CHECK ( (tar_name IS NOT NULL AND repo_id IS NULL) OR
+            (tar_name IS NULL AND repo_id IS NOT NULL) )
 );
 
 CREATE TABLE repo_token
