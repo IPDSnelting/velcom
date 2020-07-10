@@ -9,7 +9,6 @@ import de.aaaaaaah.velcom.backend.access.entities.RepoSource;
 import de.aaaaaaah.velcom.backend.access.entities.TarSource;
 import de.aaaaaaah.velcom.backend.access.entities.Task;
 import de.aaaaaaah.velcom.backend.access.entities.TaskId;
-import de.aaaaaaah.velcom.backend.access.policy.QueuePolicy;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -22,11 +21,13 @@ import java.util.UUID;
 import java.util.function.Consumer;
 import org.jooq.DSLContext;
 
+/**
+ * Provides write access to task objects stored in a database.
+ */
 public class TaskWriteAccess extends TaskReadAccess {
 
 	private final Collection<Consumer<Task>> insertHandlers = new ArrayList<>();
 	private final Collection<Consumer<TaskId>> deleteHandlers = new ArrayList<>();
-	private QueuePolicy policy;
 
 	public TaskWriteAccess(DatabaseStorage databaseStorage) {
 		super(databaseStorage);
@@ -37,14 +38,29 @@ public class TaskWriteAccess extends TaskReadAccess {
 		}
 	}
 
+	/**
+	 * Adds a handler that is called when a new task is inserted.
+	 *
+	 * @param insertHandler the handler
+	 */
 	public void onTaskInsert(Consumer<Task> insertHandler) {
 		this.insertHandlers.add(Objects.requireNonNull(insertHandler));
 	}
 
+	/**
+	 * Adds a new handler which is called when a task is deleted.
+	 *
+	 * @param deleteHandler the handler
+	 */
 	public void onTaskDelete(Consumer<TaskId> deleteHandler) {
 		this.deleteHandlers.add(Objects.requireNonNull(deleteHandler));
 	}
 
+	/**
+	 * Inserts the given tasks into the database.
+	 *
+	 * @param tasks the tasks to insert
+	 */
 	public void insertTasks(Collection<Task> tasks) {
 		insertTasks(tasks, databaseStorage.acquireContext());
 	}
@@ -97,6 +113,11 @@ public class TaskWriteAccess extends TaskReadAccess {
 		}
 	}
 
+	/**
+	 * Delets all tasks whose ids match the given task ids.
+	 *
+	 * @param taskIds the ids of the tasks to delete
+	 */
 	public void deleteTasks(Collection<TaskId> taskIds) {
 		deleteTasks(taskIds, databaseStorage.acquireContext());
 	}
@@ -114,12 +135,20 @@ public class TaskWriteAccess extends TaskReadAccess {
 		}
 	}
 
+	/**
+	 * Deletes all tasks.
+	 */
 	public void deleteAllTasks() {
 		try (DSLContext db = databaseStorage.acquireContext()) {
 			db.deleteFrom(TASK).execute();
 		}
 	}
 
+	/**
+	 * Deletes all tasks that are associated with the given repo id.
+	 *
+	 * @param repoId the repo id
+	 */
 	public void deleteAllTasksOfRepo(RepoId repoId) {
 		try (DSLContext db = databaseStorage.acquireContext()) {
 			db.deleteFrom(TASK).where(TASK.REPO_ID.eq(repoId.getId().toString())).execute();

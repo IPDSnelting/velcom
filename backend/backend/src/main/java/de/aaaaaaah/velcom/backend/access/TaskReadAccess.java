@@ -19,6 +19,9 @@ import java.util.UUID;
 import org.jooq.DSLContext;
 import org.jooq.codegen.db.tables.records.TaskRecord;
 
+/**
+ * Provides read access to task objects stored in a database.
+ */
 public class TaskReadAccess {
 
 	protected final DatabaseStorage databaseStorage;
@@ -26,17 +29,27 @@ public class TaskReadAccess {
 
 	public TaskReadAccess(DatabaseStorage databaseStorage) {
 		this.databaseStorage = Objects.requireNonNull(databaseStorage);
-		policy = new RoundRobinFiloPolicy(databaseStorage);
+		this.policy = new RoundRobinFiloPolicy(databaseStorage);
 	}
 
 	public List<Task> getTasksSorted() {
 		return policy.getTasksSorted();
 	}
 
+	/**
+	 * @return the task that should be the next to be processed and benchmarked.
+	 */
 	public Optional<Task> fetchNextTask() {
 		return policy.fetchNextTask();
 	}
 
+	/**
+	 * Gets the task with the specified id.
+	 *
+	 * @param taskId the id of  the task
+	 * @return the task
+	 * @throws NoSuchTaskException if no task with the specified id exists
+	 */
 	public Task getById(TaskId taskId) throws NoSuchTaskException {
 		try (DSLContext db = databaseStorage.acquireContext()) {
 			TaskRecord taskRecord = db.fetchOne(TASK, TASK.ID.eq(taskId.getId().toString()));
@@ -70,6 +83,12 @@ public class TaskReadAccess {
 		}
 	}
 
+	/**
+	 * Constructs a new {@link Task} instance from a given task record.
+	 *
+	 * @param taskRecord the task record
+	 * @return the task instance
+	 */
 	public static Task taskFromRecord(TaskRecord taskRecord) {
 		if (taskRecord.getTarName() != null) {
 			return new Task(
