@@ -11,7 +11,6 @@ import de.aaaaaaah.velcom.backend.access.entities.Task;
 import de.aaaaaaah.velcom.backend.access.entities.TaskId;
 import de.aaaaaaah.velcom.backend.access.policy.QueuePolicy;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
-
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -62,8 +61,8 @@ public class TaskWriteAccess extends TaskReadAccess {
 
 		// Insert tasks that are not already in the queue
 		var insert = db.insertInto(TASK)
-			.columns(TASK.ID, TASK.AUTHOR, TASK.PRIORITY, TASK.TAR_NAME, TASK.COMMIT_HASH,
-				TASK.REPO_ID);
+			.columns(TASK.ID, TASK.AUTHOR, TASK.PRIORITY, TASK.INSERT_TIME, TASK.UPDATE_TIME,
+				TASK.TAR_NAME, TASK.REPO_ID, TASK.COMMIT_HASH);
 
 		for (Task task : tasks) {
 			if (existingIds.contains(task.getId().getId().toString())) {
@@ -74,17 +73,19 @@ public class TaskWriteAccess extends TaskReadAccess {
 				task.getId().getId().toString(),
 				task.getAuthor(),
 				task.getPriority(),
+				Timestamp.from(task.getInsertTime()),
+				Timestamp.from(task.getUpdateTime()),
 				task.getSource().getRight().map(TarSource::getTarName).orElse(null),
-				task.getSource()
-					.getLeft()
-					.map(RepoSource::getHash)
-					.map(CommitHash::getHash)
-					.orElse(null),
 				task.getSource()
 					.getLeft()
 					.map(RepoSource::getRepoId)
 					.map(RepoId::getId)
 					.map(UUID::toString)
+					.orElse(null),
+				task.getSource()
+					.getLeft()
+					.map(RepoSource::getHash)
+					.map(CommitHash::getHash)
 					.orElse(null)
 			);
 		}
@@ -140,7 +141,7 @@ public class TaskWriteAccess extends TaskReadAccess {
 			db.update(TASK)
 				.set(TASK.IN_PROCESS, taskInProcess)
 				.where(TASK.ID.eq(taskId.getId().toString()))
-			.execute();
+				.execute();
 		}
 	}
 
