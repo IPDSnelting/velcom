@@ -25,13 +25,7 @@ class WaitingFutureTask<T> implements Future<T> {
 
 	@Override
 	public boolean cancel(boolean mayInterruptIfRunning) {
-		if (underlying.cancel(mayInterruptIfRunning)) {
-			if(mayInterruptIfRunning) {
-				worker.interrupt();
-			}
-			return true;
-		}
-		return false;
+		return underlying.cancel(mayInterruptIfRunning);
 	}
 
 	@Override

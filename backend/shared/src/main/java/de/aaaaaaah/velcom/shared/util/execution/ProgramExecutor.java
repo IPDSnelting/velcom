@@ -10,11 +10,15 @@ import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A small utility for executing programs.
  */
 public class ProgramExecutor {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(ProgramExecutor.class);
 
 	private final long timeToForceKillMillis;
 
@@ -57,7 +61,9 @@ public class ProgramExecutor {
 				try {
 					process.waitFor(timeToForceKillMillis, TimeUnit.MILLISECONDS);
 				} catch (InterruptedException ignored) {
+					LOGGER.warn("Interrupted while waiting for process to gracefully shutdown. Killing it");
 				}
+				LOGGER.debug("Waited " + timeToForceKillMillis + " killing it");
 
 				process.toHandle().descendants().forEach(ProcessHandle::destroyForcibly);
 				process.toHandle().destroyForcibly();
