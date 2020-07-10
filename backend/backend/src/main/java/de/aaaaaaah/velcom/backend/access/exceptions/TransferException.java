@@ -4,15 +4,12 @@ import de.aaaaaaah.velcom.backend.access.entities.Task;
 
 public class TransferException extends Exception {
 
-	private final Task task;
-
-	public TransferException(Throwable cause, Task task) {
-		super(cause.getMessage(), cause);
-		this.task = task;
+	public TransferException(Task task, Throwable cause) {
+		super("failed transfer task: " + task, cause);
 	}
 
-	public Task getTask() {
-		return task;
+	public TransferException(String message, Throwable cause) {
+		super(message, cause);
 	}
 
 }
