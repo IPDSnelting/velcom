@@ -173,15 +173,14 @@ public class TeleRunner {
 			.flatMap(it -> Optional.ofNullable(it.getBenchmarks()))
 			.isPresent();
 
-		// TODO: 10.07.20 Memorize Start/End Time
 		if (successful) {
 			Result result = resultReply.getResult().orElseThrow();
 			RunBuilder builder = RunBuilder.successful(
 				task,
 				getRunnerName(),
 				getRunnerInformation().getInformation(),
-				Instant.EPOCH,
-				Instant.EPOCH
+				resultReply.getStartTime(),
+				resultReply.getStopTime()
 			);
 
 			//noinspection ConstantConditions
@@ -208,8 +207,8 @@ public class TeleRunner {
 				task,
 				getRunnerName(),
 				getRunnerInformation().getInformation(),
-				Instant.EPOCH,
-				Instant.EPOCH,
+				resultReply.getStartTime(),
+				resultReply.getStopTime(),
 				resultReply.getError().orElseThrow()
 			);
 			dispatcher.completeTask(builder.build());

@@ -105,7 +105,7 @@ public abstract class RunnerState implements State {
 		BenchResult result = resultOptional.get();
 
 		GetResultReply getResultReply = new GetResultReply(result.getRunId(), result.isSuccess(),
-			result.getResult(), result.getError());
+			result.getResult(), result.getError(), startTime, stopTime);
 		connection.sendPacket(getResultReply.asPacket(connection.getSerializer()));
 
 		return Optional.of(this);

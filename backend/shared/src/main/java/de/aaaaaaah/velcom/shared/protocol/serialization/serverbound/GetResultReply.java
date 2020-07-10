@@ -5,14 +5,15 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Converter;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Result;
 import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.ClearResult;
+import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
 
 /**
- * Reply containing the runner's current result. To clear the result, use a {@link
- * ClearResult} command.
+ * Reply containing the runner's current result. To clear the result, use a {@link ClearResult}
+ * command.
  */
 public class GetResultReply implements ServerBound {
 
@@ -22,14 +23,17 @@ public class GetResultReply implements ServerBound {
 	private final Result result;
 	@Nullable
 	private final String error;
+	private final Instant startTime;
+	private final Instant stopTime;
 
 	@JsonCreator
 	public GetResultReply(
 		@JsonProperty(required = true) UUID runId,
 		@JsonProperty(required = true) boolean success,
 		@Nullable Result result,
-		@Nullable String error
-	) {
+		@Nullable String error,
+		@JsonProperty(required = true) Instant startTime,
+		@JsonProperty(required = true) Instant stopTime) {
 		if (success && (result == null || error != null)) {
 			throw new IllegalArgumentException(
 				"if successful, there must be a result and no error");
@@ -38,6 +42,8 @@ public class GetResultReply implements ServerBound {
 				"if not successful, there must be an error and no result");
 		}
 
+		this.startTime = startTime;
+		this.stopTime = stopTime;
 		this.runId = runId;
 		this.success = success;
 		this.result = result;
@@ -58,6 +64,14 @@ public class GetResultReply implements ServerBound {
 
 	public Optional<String> getError() {
 		return Optional.ofNullable(error);
+	}
+
+	public Instant getStartTime() {
+		return startTime;
+	}
+
+	public Instant getStopTime() {
+		return stopTime;
 	}
 
 	@Override
