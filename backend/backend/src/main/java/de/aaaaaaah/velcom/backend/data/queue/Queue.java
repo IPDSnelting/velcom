@@ -23,7 +23,16 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 /**
- * TODO: Javadoc
+ * The queue manages tasks that are passed to it from various sources and sorts these tasks to bring
+ * them into an order in which they will be fetched for execution by the dispatcher. This class is
+ * thread safe.
+ *
+ * <p>The order in which the tasks are sorted depends on the underlying {@link
+ * de.aaaaaaah.velcom.backend.access.policy.QueuePolicy QueuePolicy} used in the access layer and is
+ * not known to the queue itself.</p>
+ *
+ * <p>Initially upon construction, all tasks that are residing in the queue will have their
+ * status manually set to "not in process".</p>
  */
 public class Queue {
 
@@ -66,6 +75,8 @@ public class Queue {
 
 	/**
 	 * Adds a new handler to this queue which is called when a task is deleted from this queue.
+	 *
+	 * @param handler the handler
 	 */
 	public void onTaskDelete(Consumer<TaskId> handler) {
 		this.taskAccess.onTaskDelete(handler);
@@ -113,7 +124,7 @@ public class Queue {
 	}
 
 	/**
-	 * Changes the priority of the task that matches the given task id
+	 * Changes the priority of the task that matches the given task id.
 	 *
 	 * @param taskId the id of the task
 	 * @param newPriority the new priority
@@ -165,7 +176,7 @@ public class Queue {
 	 *
 	 * @param taskIds the ids of the tasks
 	 */
-	public void deleteTask(Collection<TaskId> taskIds) {
+	public void deleteTasks(Collection<TaskId> taskIds) {
 		taskAccess.deleteTasks(taskIds);
 	}
 
