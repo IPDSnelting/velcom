@@ -27,7 +27,6 @@ import java.util.Set;
 import java.util.UUID;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
@@ -47,20 +46,13 @@ public class RepoReadAccess {
 	protected final DatabaseStorage databaseStorage;
 	protected final RepoStorage repoStorage;
 
-	protected final String benchRepoDirName = "benchrepo";
-	protected final RemoteUrl benchRepoRemoteUrl;
-
 	protected final Cache<RepoId, Repo> repoCache = Caffeine.newBuilder()
 		.maximumSize(100)
 		.build();
 
-	public RepoReadAccess(DatabaseStorage databaseStorage, RepoStorage repoStorage,
-		RemoteUrl benchRepoUrl) {
-
+	public RepoReadAccess(DatabaseStorage databaseStorage, RepoStorage repoStorage) {
 		this.databaseStorage = databaseStorage;
 		this.repoStorage = repoStorage;
-
-		this.benchRepoRemoteUrl = benchRepoUrl;
 	}
 
 	// --- Repo Getters ---------------------------------------------------------------------------
@@ -156,6 +148,8 @@ public class RepoReadAccess {
 	 *
 	 * @param repoId the id of the repository
 	 * @return a list of all branches
+	 *
+	 * @throws RepoAccessException if access to the local repository failed
 	 */
 	public Collection<Branch> getBranches(RepoId repoId) {
 		try (Repository localRepo = repoStorage.acquireRepository(repoId.getDirectoryName())) {
@@ -172,8 +166,6 @@ public class RepoReadAccess {
 		}
 	}
 
-	// --- Latest Commit Hash Getters -------------------------------------------------------------
-
 	/**
 	 * Gets the commit hash that the given branch is pointing to.
 	 *
@@ -186,19 +178,10 @@ public class RepoReadAccess {
 		);
 	}
 
-	/**
-	 * Gets the commit hash that the benchmark repository's HEAD is pointing to.
-	 *
-	 * @return the commit hash
-	 */
-	public CommitHash getLatestBenchmarkRepoHash() throws RepoAccessException {
-		return loadLatestCommitHash(benchRepoDirName, Constants.HEAD);
-	}
-
 	// --- Additional Getters ---------------------------------------------------------------------
 
 	/**
-	 * Gets the remote url of the specified repository
+	 * Gets the remote url of the specified repository.
 	 *
 	 * @param repoId the id of the repository
 	 * @return the remote url

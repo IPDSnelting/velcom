@@ -124,9 +124,7 @@ public class ServerMain extends Application<GlobalConfig> {
 		);
 		RepoWriteAccess repoAccess = new RepoWriteAccess(
 			databaseStorage,
-			repoStorage,
-			new RemoteUrl(configuration.getBenchmarkRepoRemoteUrl()),
-			Paths.get(configuration.getArchivesRootDir())
+			repoStorage
 		);
 		TokenWriteAccess tokenAccess = new TokenWriteAccess(
 			databaseStorage,

@@ -42,32 +42,8 @@ public class RepoWriteAccess extends RepoReadAccess {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(RepoWriteAccess.class);
 
-	private final Archiver archiver;
-
-	public RepoWriteAccess(DatabaseStorage databaseStorage, RepoStorage repoStorage,
-		RemoteUrl benchRepoUrl, Path archivesRootDir) {
-
-		super(databaseStorage, repoStorage, benchRepoUrl);
-
-		this.archiver = new Archiver(repoStorage, archivesRootDir);
-
-		// Clone benchmark repo if needed
-		if (!repoStorage.containsRepository(benchRepoDirName)) {
-			try {
-				repoStorage.addRepository(benchRepoDirName, benchRepoRemoteUrl.getUrl());
-			} catch (AddRepositoryException e) {
-				throw new AddRepoException(benchRepoDirName, benchRepoRemoteUrl,
-					"Failed to clone benchmark repo from: " + benchRepoUrl, e);
-			}
-		}
-
-		try {
-			getLatestBenchmarkRepoHash();
-		} catch (RepoAccessException e) {
-			LOGGER.error("Failed to get latest commit hash from benchmark repo! "
-				+ "Please make sure that the benchmark repository has at least one commit.");
-			throw e;
-		}
+	public RepoWriteAccess(DatabaseStorage databaseStorage, RepoStorage repoStorage) {
+		super(databaseStorage, repoStorage);
 
 		// Clone all repos if needed
 		for (RepoId repoId : getAllRepoIds()) {
@@ -197,7 +173,7 @@ public class RepoWriteAccess extends RepoReadAccess {
 		}
 	}
 
-	// --- Add / Delete Repos ---------------------------------------------------------------------
+	// --- Add / Delete / Update Repos ---------------------------------------------------------------------
 
 	/**
 	 * Adds a new repository by cloning it to the local file system.
@@ -275,8 +251,6 @@ public class RepoWriteAccess extends RepoReadAccess {
 		this.repoCache.invalidate(repoId);
 	}
 
-	// --- Update Operations ----------------------------------------------------------------------
-
 	/**
 	 * Performs either a fetch operation on the specified repository, or a clone operation if the
 	 * repository has not been cloned to the local repo storage yet.
@@ -291,57 +265,6 @@ public class RepoWriteAccess extends RepoReadAccess {
 			fetchOrCloneLocalRepo(repoId.getDirectoryName(), remoteUrl);
 		} catch (RepositoryAcquisitionException | CloneException | AddRepositoryException e) {
 			throw new RepoAccessException(repoId, e);
-		}
-	}
-
-	/**
-	 * Performs either a fetch operation on the benchmark repository, or clones it to the local repo
-	 * storage, if it has not yet been cloned.
-	 *
-	 * @throws RepoAccessException if an error occurs during the fetch/clone operation
-	 */
-	public void updateBenchmarkRepo() throws RepoAccessException {
-		try {
-			if (repoStorage.containsRepository(benchRepoDirName)) {
-				// Check if remote url changed
-
-				final String remoteUrl;
-
-				try (Repository repo = repoStorage.acquireRepository(benchRepoDirName)) {
-					remoteUrl = repo.getConfig().getString("remote", "origin", "url");
-				}
-
-				if (!remoteUrl.equals(this.benchRepoRemoteUrl.getUrl())) {
-					// remote url changed! => delete repo so that fetchOrCloneLocalRepo
-					// completely clones it again
-					LOGGER.info("benchrepo remote url changed! cloning it again...");
-
-					repoStorage.deleteRepository(benchRepoDirName);
-					archiver.deleteArchives(benchRepoDirName);
-
-					fetchOrCloneLocalRepo(benchRepoDirName, benchRepoRemoteUrl);
-				} else {
-					// remote url has not changed => just fetch and check if hash changed
-					final CommitHash oldHash = getLatestBenchmarkRepoHash();
-					fetchOrCloneLocalRepo(benchRepoDirName, benchRepoRemoteUrl);
-					final CommitHash newHash = getLatestBenchmarkRepoHash();
-
-					if (!oldHash.equals(newHash)) {
-						// benchmark repo was updated => remove old cloned archives since a new
-						// clone will be created with the newest hash once it is required.
-						archiver.deleteArchives(benchRepoDirName);
-					}
-				}
-			} else {
-				// bench repo is currently not on disk => clone it
-				LOGGER.info("missing benchrepo on disk! cloning it...");
-				fetchOrCloneLocalRepo(benchRepoDirName, benchRepoRemoteUrl);
-			}
-		} catch (RepositoryAcquisitionException | AddRepositoryException | IOException |
-			CloneException e) {
-
-			throw new RepoAccessException("failed to fetch/clone benchmark repo with remote url: "
-				+ benchRepoRemoteUrl, e);
 		}
 	}
 
@@ -362,46 +285,4 @@ public class RepoWriteAccess extends RepoReadAccess {
 		}
 	}
 
-	// --- Archive Operations ---------------------------------------------------------------------
-
-
-	public void cloneRepo(RepoId repoId, CommitHash repoState, Path destination) throws CloneRepoException  {
-		// TODO
-	}
-
-	public void cloneBenchmarkRepo(RepoId repoId, Path destination) throws CloneRepoException {
-		// TODO
-	}
-
-//	/**
-//	 * Write an uncompressed tar archive containing the (recursively cloned) working directory for
-//	 * the specified commit to the output stream.
-//	 *
-//	 * @param repoId the id of the repo
-//	 * @param commitHash the hash of commit to send
-//	 * @param outputStream where to write the archive
-//	 * @throws ArchiveException if the commit could not be compressed (or something else went wrong
-//	 * 	during streaming)
-//	 * @throws de.aaaaaaah.velcom.backend.access.exceptions.ArchiveFailedPermanently if it failed
-//	 * 	with a more permanent cause
-//	 */
-//	public void streamNormalRepoArchive(RepoId repoId, CommitHash commitHash,
-//		OutputStream outputStream) throws ArchiveException {
-//
-//		String dirName = repoId.getDirectoryName();
-//		archiver.archive(dirName, commitHash, outputStream, false);
-//	}
-//
-//	/**
-//	 * Does the same as {@link #streamNormalRepoArchive(RepoId, CommitHash, OutputStream)}, but for
-//	 * the latest commit on the master branch in the benchmark repo.
-//	 *
-//	 * @param outputStream where to write the archive
-//	 * @throws ArchiveException if the commit could not be compressed (or something else went wrong
-//	 * 	during streaming)
-//	 */
-//	public void streamBenchmarkRepoArchive(OutputStream outputStream) throws ArchiveException {
-//		CommitHash commitHash = getLatestBenchmarkRepoHash();
-//		archiver.archive(this.benchRepoDirName, commitHash, outputStream, true);
-//	}
 }
