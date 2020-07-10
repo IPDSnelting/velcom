@@ -1,8 +1,13 @@
 package de.aaaaaaah.velcom.backend.runner_new.single;
 
+import de.aaaaaaah.velcom.backend.access.entities.Interpretation;
+import de.aaaaaaah.velcom.backend.access.entities.MeasurementName;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
+import de.aaaaaaah.velcom.backend.access.entities.RunBuilder;
 import de.aaaaaaah.velcom.backend.access.entities.RunId;
 import de.aaaaaaah.velcom.backend.access.entities.Task;
+import de.aaaaaaah.velcom.backend.access.entities.TaskId;
+import de.aaaaaaah.velcom.backend.access.entities.Unit;
 import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchTaskException;
 import de.aaaaaaah.velcom.backend.access.exceptions.PrepareTransferException;
 import de.aaaaaaah.velcom.backend.access.exceptions.TransferException;
@@ -11,8 +16,12 @@ import de.aaaaaaah.velcom.backend.runner_new.KnownRunner;
 import de.aaaaaaah.velcom.backend.runner_new.single.state.AwaitAbortRunReply;
 import de.aaaaaaah.velcom.shared.protocol.StatusCode;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Converter;
+import de.aaaaaaah.velcom.shared.protocol.serialization.Result;
+import de.aaaaaaah.velcom.shared.protocol.serialization.Result.Benchmark;
+import de.aaaaaaah.velcom.shared.protocol.serialization.Result.Metric;
 import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.AbortRun;
 import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.RequestRunReply;
+import de.aaaaaaah.velcom.shared.protocol.serialization.serverbound.GetResultReply;
 import de.aaaaaaah.velcom.shared.protocol.serialization.serverbound.GetStatusReply;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -33,6 +42,7 @@ public class TeleRunner {
 	private final String runnerName;
 	private final Converter serializer;
 	private final Dispatcher dispatcher;
+	private final AtomicReference<Task> myLastTask;
 
 	private RunnerConnection connection;
 
@@ -41,6 +51,7 @@ public class TeleRunner {
 		this.serializer = serializer;
 		this.dispatcher = dispatcher;
 		this.runnerInformation = new AtomicReference<>();
+		this.myLastTask = new AtomicReference<>();
 
 		this.connection = createConnection();
 	}
@@ -115,6 +126,8 @@ public class TeleRunner {
 	 * These limitations might be lifted in the future.
 	 */
 	public void abort() {
+		myLastTask.set(null);
+
 		if (!hasConnection()) {
 			LOGGER.info("Tried to abort commit but was not connected with a runner: {}", getRunnerName());
 			return;
@@ -128,8 +141,67 @@ public class TeleRunner {
 		}
 	}
 
-	public void completeRun(Run run) {
+	/**
+	 * Handles a result, saving the data in the DB if the task matches the stored one.
+	 *
+	 * @param resultReply the results
+	 */
+	public void handleResults(GetResultReply resultReply) {
+		Task task = myLastTask.get();
+		if (task == null) {
+			// Somehow we have no task but a result, retry that commit?
+			// TODO: 10.07.20 Retry or silently drop it?
+			dispatcher.getQueue().abortTaskProcess(new TaskId(resultReply.getRunId()));
+			return;
+		}
 
+		boolean successful = resultReply.getResult()
+			.flatMap(it -> Optional.ofNullable(it.getBenchmarks()))
+			.isPresent();
+
+		// TODO: 10.07.20 Memorize Start/End Time
+		if (successful) {
+			Result result = resultReply.getResult().orElseThrow();
+			RunBuilder builder = RunBuilder.successful(
+				task,
+				getRunnerName(),
+				getRunnerInformation().getInformation(),
+				Instant.EPOCH,
+				Instant.EPOCH
+			);
+
+			//noinspection ConstantConditions
+			for (Benchmark benchmark : result.getBenchmarks()) {
+				for (Metric metric : benchmark.getMetrics()) {
+					MeasurementName name = new MeasurementName(benchmark.getName(), metric.getName());
+					if (metric.getError() != null) {
+						builder.addFailedMeasurement(name, metric.getError());
+					} else {
+						//noinspection ConstantConditions
+						builder.addSuccessfulMeasurement(
+							name,
+							Interpretation.fromSharedRepresentation(metric.getInterpretation()),
+							new Unit(metric.getUnit()),
+							metric.getValues()
+						);
+					}
+				}
+			}
+
+			dispatcher.completeTask(builder.build());
+		} else {
+			RunBuilder builder = RunBuilder.failed(
+				task,
+				getRunnerName(),
+				getRunnerInformation().getInformation(),
+				Instant.EPOCH,
+				Instant.EPOCH,
+				resultReply.getError().orElseThrow()
+			);
+			dispatcher.completeTask(builder.build());
+		}
+
+		myLastTask.set(null);
 	}
 
 	/**
@@ -145,6 +217,7 @@ public class TeleRunner {
 			return;
 		}
 		Task task = workOptional.get();
+		myLastTask.set(task);
 
 		boolean benchRepoUpToDate = runnerInformation.get().getBenchHash()
 			.map(it -> it.equals("current"))
