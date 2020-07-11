@@ -25,20 +25,24 @@ import org.eclipse.jgit.lib.Repository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Manages the benchmark repository and all kinds of archives.
+ */
 public class ArchiveAccess {
 
 	//.../archive_root_dir/
-	//.../archive_root_dir/benchrepo/
+	//.../archive_root_dir/benchrepo/                               (<- copy clone)
 	//.../archive_root_dir/benchrepo.tar
 	//.../archive_root_dir/tars/<tar_id>.tar
 	//.../archive_root_dir/tars/...
-	//.../archive_root_dir/repos/<repo_dir_name>_<commit_hash>/
+	//.../archive_root_dir/repos/<repo_dir_name>_<commit_hash>/     (<- copy clone)
 	//.../archive_root_dir/repos/...
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(ArchiveAccess.class);
 	private static final String BENCH_REPO_DIR_NAME = "benchrepo";
 
-	private final Path archiveRootDir;
+	private final Path repoArchivesRootDir;
+	private final Path tarArchivesRootDir;
 	private final RepoStorage repoStorage;
 
 	private final Object benchRepoLock = new Object();
@@ -47,8 +51,11 @@ public class ArchiveAccess {
 	private final Path benchRepoTarPath;
 	private CommitHash currentBenchRepoHash;
 
-	public ArchiveAccess(Path archivesRootDir, RemoteUrl benchRepoUrl, RepoStorage repoStorage) {
-		this.archiveRootDir = archivesRootDir;
+	public ArchiveAccess(Path archivesRootDir, RemoteUrl benchRepoUrl, RepoStorage repoStorage)
+		throws IOException {
+
+		this.repoArchivesRootDir = archivesRootDir.resolve("repos");
+		this.tarArchivesRootDir = archivesRootDir.resolve("tars");
 		this.repoStorage = repoStorage;
 
 		this.benchRepoClonePath = archivesRootDir.resolve("benchrepo");
@@ -74,6 +81,12 @@ public class ArchiveAccess {
 			LOGGER.error("Failed to get latest commit hash from benchmark repo! "
 				+ "Please make sure that the benchmark repository has at least one commit.");
 		}
+
+		// Clean up any archives that exist at this moment
+		FileHelper.deleteDirectoryOrFile(repoArchivesRootDir);
+		FileHelper.deleteDirectoryOrFile(tarArchivesRootDir);
+		Files.createDirectories(repoArchivesRootDir);
+		Files.createDirectories(tarArchivesRootDir);
 	}
 
 	public CommitHash getBenchRepoCommitHash() {
@@ -83,7 +96,7 @@ public class ArchiveAccess {
 	/**
 	 * Updates the benchmark repo by checking if there is a new head commit.
 	 *
-	 * @throws RepoAccessException if an error occured while trying to update the bench repo
+	 * @throws RepoAccessException if an error occurred while trying to update the bench repo
 	 */
 	public void updateBenchRepo() throws RepoAccessException {
 		synchronized (this.benchRepoLock) {
@@ -133,6 +146,13 @@ public class ArchiveAccess {
 		}
 	}
 
+	/**
+	 * Transfers the benchmark repository to the provided output stream.
+	 *
+	 * @param outputStream the output stream
+	 * @throws PrepareTransferException if something goes wrong trying to prepare the transfer
+	 * @throws TransferException if the transfer itself fails
+	 */
 	public void transferBenchRepo(OutputStream outputStream)
 		throws PrepareTransferException, TransferException {
 
@@ -170,12 +190,20 @@ public class ArchiveAccess {
 		}
 	}
 
+	/**
+	 * Transfers the given task to the provided {@link OutputStream}.
+	 *
+	 * @param task the task to transfer
+	 * @param outputStream the output stream
+	 * @throws PrepareTransferException if something goes wrong trying to prepare the transfer
+	 * @throws TransferException if the transfer itself fails
+	 */
 	public void transferTask(Task task, OutputStream outputStream)
 		throws PrepareTransferException, TransferException {
 
 		if (task.getSource().isRight()) {
 			TarSource tarSource = task.getSource().getRight().orElseThrow();
-			Path tarPath = archiveRootDir.resolve("tars").resolve(tarSource.getTarName());
+			Path tarPath = tarArchivesRootDir.resolve(tarSource.getTarName());
 
 			try {
 				TransferUtils.transferTar(tarPath, outputStream);
@@ -187,15 +215,10 @@ public class ArchiveAccess {
 			CommitHash hash = task.getSource().getLeft().get().getHash();
 
 			// 1.) Create copy clone (and delete old one if there is one)
-			Path clonePath = archiveRootDir.resolve("repos").resolve(
-				dirName + "_" + hash.getHash()
-			);
+			Path clonePath = repoArchivesRootDir.resolve(dirName + "_" + hash.getHash());
 
 			try {
-				if (Files.exists(clonePath)) {
-					FileHelper.deleteDirectoryOrFile(clonePath);
-				}
-
+				FileHelper.deleteDirectoryOrFile(clonePath);
 				TransferUtils.cloneRepo(repoStorage, dirName, clonePath, hash);
 			} catch (Exception e) {
 				throw new PrepareTransferException(task, e);
