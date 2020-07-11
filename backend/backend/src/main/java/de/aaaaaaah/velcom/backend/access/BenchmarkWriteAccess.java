@@ -14,7 +14,7 @@ import de.aaaaaaah.velcom.backend.access.entities.MeasurementName;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementValues;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
-import de.aaaaaaah.velcom.backend.access.entities.Task;
+import de.aaaaaaah.velcom.backend.access.entities.RunError;
 import de.aaaaaaah.velcom.backend.access.entities.TaskId;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import java.sql.Timestamp;
@@ -61,15 +61,19 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 				runRecord.setCommitHash(repoSource.getHash().getHash());
 			});
 
-			run.getErrorMessage().ifPresent(runRecord::setError);
+			if (run.getResult().isRight()) {
+				RunError error = run.getResult().getRight().orElseThrow();
+				runRecord.setError(error.getMessage());
+				runRecord.setErrorType(error.getType().getTextualRepresentation());
+			} else {
+				Collection<Measurement> measurements = run.getResult().getLeft().orElseThrow();
 
-			runRecord.insert();
-
-			if (run.getMeasurements().isPresent()) {
-				for (Measurement measurement : run.getMeasurements().get()) {
+				for (Measurement measurement : measurements) {
 					insertMeasurement(db, measurement);
 				}
 			}
+
+			runRecord.insert();
 		});
 
 		// 2.) Insert run into recent cache
@@ -175,11 +179,11 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 
 		for (CommitHash copiedKey : copiedKeys) {
 			Run run = repoRunCache.getIfPresent(copiedKey);
-			if (run == null || run.getMeasurements().isEmpty()) {
+			if (run == null || run.getResult().isRight()) {
 				continue; // No measurements for this run => skip!
 			}
 
-			Collection<Measurement> measurements = run.getMeasurements().get();
+			Collection<Measurement> measurements = run.getResult().getLeft().get();
 
 			// Check if target measurement name is one of the measurements
 			List<MeasurementName> mNames = measurements.stream()

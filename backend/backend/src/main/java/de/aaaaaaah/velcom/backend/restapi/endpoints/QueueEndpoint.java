@@ -136,7 +136,7 @@ public class QueueEndpoint {
 			user.guardAdminAccess();
 		}
 
-		queue.deleteTask(List.of(new TaskId(taskId)));
+		queue.deleteTasks(List.of(new TaskId(taskId)));
 	}
 
 	private static class GetReply {

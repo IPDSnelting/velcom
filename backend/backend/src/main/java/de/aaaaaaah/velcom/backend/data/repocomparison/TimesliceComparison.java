@@ -208,8 +208,8 @@ public class TimesliceComparison implements RepoComparison {
 	}
 
 	private Optional<MeasurementValues> findMeasurement(MeasurementName name, Run run) {
-		if (run.getMeasurements().isPresent()) {
-			Collection<Measurement> measurements = run.getMeasurements().get();
+		if (run.getResult().isLeft()) {
+			Collection<Measurement> measurements = run.getResult().getLeft().get();
 
 			Measurement measurement = measurements.stream()
 				.filter(m -> m.getMeasurementName().equals(name))

@@ -26,23 +26,23 @@ CREATE TABLE known_commit
 
 CREATE TABLE run
 (
-    id           CHAR(36) PRIMARY KEY NOT NULL,
-    author       TEXT                 NOT NULL,
-    runner_name  TEXT                 NOT NULL,
-    runner_info  TEXT                 NOT NULL,
-    start_time   TIMESTAMP            NOT NULL,
-    stop_time    TIMESTAMP            NOT NULL,
-    repo_id      CHAR(36),
-    commit_hash  CHAR(40),
-    error        TEXT,
-    runner_error TEXT,
+    id          CHAR(36) PRIMARY KEY NOT NULL,
+    author      TEXT                 NOT NULL,
+    runner_name TEXT                 NOT NULL,
+    runner_info TEXT                 NOT NULL,
+    start_time  TIMESTAMP            NOT NULL,
+    stop_time   TIMESTAMP            NOT NULL,
+    repo_id     CHAR(36),
+    commit_hash CHAR(40),
+    error       TEXT,
+    error_type  TEXT CHECK ( error_type IN ('BENCH', 'VELCOM')),
 
     FOREIGN KEY (repo_id, commit_hash) REFERENCES known_commit (repo_id, hash) ON DELETE CASCADE,
 
     CHECK ( (repo_id IS NOT NULL AND commit_hash IS NOT NULL) OR
             (repo_id IS NULL AND commit_hash IS NULL) ),
-    CHECK ( (error IS NOT NULL AND runner_error IS NULL) OR
-            (error IS NULL AND runner_error IS NOT NULL) )
+    CHECK ( (error IS NOT NULL AND error_type IS NOT NULL) OR
+            (error IS NULL AND error_type IS NULL) )
 );
 
 CREATE TABLE measurement
@@ -52,7 +52,7 @@ CREATE TABLE measurement
     benchmark      TEXT                 NOT NULL,
     metric         TEXT                 NOT NULL,
     unit           TEXT,
-    interpretation TEXT,
+    interpretation TEXT CHECK ( interpretation IN ('NEUTRAL', 'LESS_IS_BETTER', 'MORE_IS_BETTER') ),
     error          TEXT,
 
     FOREIGN KEY (run_id) REFERENCES run (id) ON DELETE CASCADE

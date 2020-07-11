@@ -2,6 +2,7 @@ package de.aaaaaaah.velcom.backend.restapi.jsonobjects;
 
 import de.aaaaaaah.velcom.backend.access.entities.Commit;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
+import de.aaaaaaah.velcom.backend.access.entities.RunError;
 import java.util.Collection;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -25,13 +26,13 @@ public class JsonRun {
 		startTime = run.getStartTime().getEpochSecond();
 		stopTime = run.getStopTime().getEpochSecond();
 
-		measurements = run.getMeasurements().map(
+		measurements = run.getResult().getLeft().map(
 			m -> m.stream()
 				.map(JsonMeasurement::new)
 				.collect(Collectors.toUnmodifiableList())
 		).orElse(null);
 
-		errorMessage = run.getErrorMessage().orElse(null);
+		errorMessage = run.getResult().getRight().map(RunError::getMessage).orElse(null);
 	}
 
 	public JsonCommit getCommit() {

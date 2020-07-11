@@ -1,10 +1,10 @@
 package de.aaaaaaah.velcom.backend.runner_new.single;
 
+import de.aaaaaaah.velcom.backend.access.entities.ErrorType;
 import de.aaaaaaah.velcom.backend.access.entities.Interpretation;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementName;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
 import de.aaaaaaah.velcom.backend.access.entities.RunBuilder;
-import de.aaaaaaah.velcom.backend.access.entities.RunId;
 import de.aaaaaaah.velcom.backend.access.entities.Task;
 import de.aaaaaaah.velcom.backend.access.entities.TaskId;
 import de.aaaaaaah.velcom.backend.access.entities.Unit;
@@ -189,7 +189,8 @@ public class TeleRunner {
 			getRunnerInformation().getInformation(),
 			resultReply.getStartTime(),
 			resultReply.getStopTime(),
-			resultReply.getError().orElseThrow()
+			resultReply.getError().orElseThrow(),
+			ErrorType.BENCH_SCRIPT_ERROR
 		);
 		return builder.build();
 	}
@@ -205,7 +206,8 @@ public class TeleRunner {
 				getRunnerInformation().getInformation(),
 				resultReply.getStartTime(),
 				resultReply.getStopTime(),
-				result.getError()
+				result.getError(),
+				ErrorType.BENCH_SCRIPT_ERROR
 			).build();
 		}
 
@@ -281,16 +283,16 @@ public class TeleRunner {
 		}
 	}
 
-	public Run prepareTransferFailed(Task task, Instant start, PrepareTransferException exception) {
-		return new Run(
-			new RunId(task.getId().getId()),
-			task.getAuthor(),
+	private Run prepareTransferFailed(Task task, Instant start, PrepareTransferException exception) {
+		return RunBuilder.failed(
+			task,
 			getRunnerName(),
 			getRunnerInformation().getInformation(),
 			start,
 			Instant.now(),
-			"Archiving failed. Error: " + exception.getMessage()
-		);
+			"Archiving failed. Error: " + exception.getMessage(),
+			ErrorType.VELCOM_ERROR
+		).build();
 	}
 
 }

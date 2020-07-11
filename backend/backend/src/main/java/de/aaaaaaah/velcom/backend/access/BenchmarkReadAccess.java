@@ -11,6 +11,7 @@ import static org.jooq.codegen.db.tables.Run.RUN;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.access.entities.ErrorType;
 import de.aaaaaaah.velcom.backend.access.entities.Interpretation;
 import de.aaaaaaah.velcom.backend.access.entities.Measurement;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementError;
@@ -19,8 +20,8 @@ import de.aaaaaaah.velcom.backend.access.entities.MeasurementValues;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.entities.RepoSource;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
+import de.aaaaaaah.velcom.backend.access.entities.RunError;
 import de.aaaaaaah.velcom.backend.access.entities.RunId;
-import de.aaaaaaah.velcom.backend.access.entities.TarSource;
 import de.aaaaaaah.velcom.backend.access.entities.Unit;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import java.util.ArrayList;
@@ -112,7 +113,7 @@ public class BenchmarkReadAccess {
 	}
 
 	/**
-	 * Gets the latest run for the given commit
+	 * Gets the latest run for the given commit.
 	 *
 	 * @param repoId the id of the repository
 	 * @param commitHash the hash of the commit
@@ -252,6 +253,11 @@ public class BenchmarkReadAccess {
 				}
 
 				if (runRecord.getError() != null) {
+					RunError error = new RunError(
+						runRecord.getError(),
+						ErrorType.fromTextualRepresentation(runRecord.getErrorType())
+					);
+
 					return new Run(
 						runId,
 						runRecord.getAuthor(),
@@ -260,7 +266,7 @@ public class BenchmarkReadAccess {
 						runRecord.getStartTime().toInstant(),
 						runRecord.getStopTime().toInstant(),
 						nullableSource,
-						runRecord.getError()
+						error
 					);
 				} else {
 					List<Measurement> measurements = runToMeasurementMap.get(runId);

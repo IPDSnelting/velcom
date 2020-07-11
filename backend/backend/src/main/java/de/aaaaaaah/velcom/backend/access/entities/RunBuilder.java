@@ -1,6 +1,5 @@
 package de.aaaaaaah.velcom.backend.access.entities;
 
-import java.util.Collection;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import java.time.Instant;
@@ -47,10 +46,11 @@ public class RunBuilder {
 	 * @param startTime the start time
 	 * @param stopTime the stop time
 	 * @param errorMessage the error message
+	 * @param errorType what kind of error occured
 	 * @return a new builder instance
 	 */
 	public static RunBuilder failed(Task task, String runnerName, String runnerInfo,
-		Instant startTime, Instant stopTime, String errorMessage) {
+		Instant startTime, Instant stopTime, String errorMessage, ErrorType errorType) {
 		return new RunBuilder(
 			new RunId(task.getId().getId()),
 			task.getAuthor(),
@@ -59,7 +59,7 @@ public class RunBuilder {
 			startTime,
 			stopTime,
 			task.getSource().getLeft().orElse(null),
-			errorMessage
+			new RunError(errorMessage, errorType)
 		);
 	}
 
@@ -70,12 +70,12 @@ public class RunBuilder {
 	private final Instant startTime;
 	private final Instant stopTime;
 	private final Optional<RepoSource> repoSource;
-	private final Optional<String> errorMessage;
 	private final List<Measurement> measurementList;
+	private final Optional<RunError> error;
 
 	private RunBuilder(RunId runId, String author, String runnerName, String runnerInfo,
 		Instant startTime, Instant stopTime,
-		@Nullable RepoSource repoSource, @Nullable String errorMessage) {
+		@Nullable RepoSource repoSource, @Nullable RunError error) {
 
 		this.runId = runId;
 		this.author = Objects.requireNonNull(author);
@@ -84,8 +84,8 @@ public class RunBuilder {
 		this.startTime = Objects.requireNonNull(startTime);
 		this.stopTime = Objects.requireNonNull(stopTime);
 		this.repoSource = Optional.ofNullable(repoSource);
-		this.errorMessage = Optional.ofNullable(errorMessage);
-		this.measurementList = errorMessage != null ? Collections.emptyList() : new ArrayList<>();
+		this.error = Optional.ofNullable(error);
+		this.measurementList = error != null ? Collections.emptyList() : new ArrayList<>();
 	}
 
 	/**
@@ -124,7 +124,7 @@ public class RunBuilder {
 	 * @throws IllegalStateException if this run cannot be built yet.
 	 */
 	public Run build() throws IllegalStateException {
-		if (this.errorMessage.isPresent()) {
+		if (this.error.isPresent()) {
 			return new Run(
 				runId,
 				author,
@@ -133,7 +133,7 @@ public class RunBuilder {
 				startTime,
 				stopTime,
 				repoSource.orElse(null),
-				errorMessage.get()
+				this.error.get()
 			);
 		} else {
 			if (this.measurementList.isEmpty()) {
@@ -163,8 +163,8 @@ public class RunBuilder {
 			", startTime=" + startTime +
 			", stopTime=" + stopTime +
 			", repoSource=" + repoSource +
-			", errorMessage=" + errorMessage +
 			", measurementList=" + measurementList +
+			", error=" + error +
 			'}';
 	}
 
