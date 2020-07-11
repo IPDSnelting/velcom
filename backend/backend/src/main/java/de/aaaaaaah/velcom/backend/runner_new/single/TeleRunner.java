@@ -24,6 +24,7 @@ import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.AbortRun;
 import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.RequestRunReply;
 import de.aaaaaaah.velcom.shared.protocol.serialization.serverbound.GetResultReply;
 import de.aaaaaaah.velcom.shared.protocol.serialization.serverbound.GetStatusReply;
+import de.aaaaaaah.velcom.shared.util.ExceptionHelper;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.time.Instant;
@@ -297,7 +298,7 @@ public class TeleRunner {
 			getRunnerInformation().getInformation(),
 			start,
 			Instant.now(),
-			"Archiving failed. Error: " + exception.getMessage(),
+			"Archiving failed. Error:\n " + ExceptionHelper.getStackTrace(exception),
 			ErrorType.VELCOM_ERROR
 		).build();
 	}
