@@ -11,7 +11,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 /**
  * Helps with common file I/O Operations.
  */
-public class FileHelper {
+public final class FileHelper {
 
 	private FileHelper() {
 		throw new UnsupportedOperationException("No");

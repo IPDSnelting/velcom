@@ -150,4 +150,12 @@ class ProgramExecutorTest {
 			.isGreaterThanOrEqualTo(timeToForceKillMillis);
 	}
 
+	@Test
+	void hasSomewhatCorrectDuration() throws ExecutionException, InterruptedException {
+		ProgramExecutor executor = new ProgramExecutor();
+		ProgramResult result = executor.execute("/usr/bin/env", "bash", "-c", "sleep 3")
+			.get();
+
+		assertThat(result.getRuntime().toSeconds()).isBetween(3L, 6L);
+	}
 }
