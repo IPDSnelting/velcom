@@ -1,4 +1,4 @@
-package de.aaaaaaah.velcom.runner.util;
+package de.aaaaaaah.velcom.shared.util;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;

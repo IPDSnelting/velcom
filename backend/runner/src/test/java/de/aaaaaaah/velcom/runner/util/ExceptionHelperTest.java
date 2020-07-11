@@ -2,6 +2,7 @@ package de.aaaaaaah.velcom.runner.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import de.aaaaaaah.velcom.shared.util.ExceptionHelper;
 import org.junit.jupiter.api.Test;
 
 class ExceptionHelperTest {
