@@ -302,7 +302,7 @@ public class TeleRunner {
 		).build();
 	}
 
-	interface TransferConsumer {
+	private interface TransferConsumer {
 
 		void accept(OutputStream outputStream)
 			throws PrepareTransferException, TransferException, IOException, NoSuchTaskException;
