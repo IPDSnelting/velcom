@@ -137,6 +137,9 @@ public class Queue {
 	 * Transfers a task to the supplied {@link OutputStream} while also marking the task as "in
 	 * process".
 	 *
+	 * <p>Note that the provided output stream will be closed after the transfer operation is
+	 * done.</p>
+	 *
 	 * @param taskId the id of the task to be transferred
 	 * @param output the output to transfer the task to
 	 * @throws NoSuchTaskException if no task with the given id exists

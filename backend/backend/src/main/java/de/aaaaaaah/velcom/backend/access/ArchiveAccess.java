@@ -149,6 +149,9 @@ public class ArchiveAccess {
 	/**
 	 * Transfers the benchmark repository to the provided output stream.
 	 *
+	 * <p>Note that the provided output stream will be closed after the transfer operation is
+	 * done.</p>
+	 *
 	 * @param outputStream the output stream
 	 * @throws PrepareTransferException if something goes wrong trying to prepare the transfer
 	 * @throws TransferException if the transfer itself fails
@@ -192,6 +195,9 @@ public class ArchiveAccess {
 
 	/**
 	 * Transfers the given task to the provided {@link OutputStream}.
+	 *
+	 * <p>Note that the provided output stream will be closed after the transfer operation is
+	 * done.</p>
 	 *
 	 * @param task the task to transfer
 	 * @param outputStream the output stream

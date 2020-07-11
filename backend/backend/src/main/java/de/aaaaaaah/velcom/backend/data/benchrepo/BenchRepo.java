@@ -29,6 +29,9 @@ public class BenchRepo {
 	/**
 	 * Transfers the benchmark repository to the given {@link OutputStream}.
 	 *
+	 * <p>Note that the provided output stream will be closed after the transfer operation is
+	 * done.</p>
+	 *
 	 * @param outputStream the output stream
 	 * @throws TransferException if an error occurs while the benchmark repo is being written to
 	 * 	the output stream.
