@@ -77,8 +77,8 @@ class ProgramExecutorTest {
 			try {
 				Thread.sleep(TimeUnit.SECONDS.toMillis(20));
 				future.cancel(true);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
+			} catch (InterruptedException ignored) {
+				// Reached when everything works
 			}
 		});
 		thread.start();
