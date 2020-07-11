@@ -1,11 +1,9 @@
-package de.aaaaaaah.velcom.shared;
+package de.aaaaaaah.velcom.shared.util.execution;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
 
-import de.aaaaaaah.velcom.shared.util.execution.ProgramExecutor;
-import de.aaaaaaah.velcom.shared.util.execution.ProgramResult;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.CancellationException;
