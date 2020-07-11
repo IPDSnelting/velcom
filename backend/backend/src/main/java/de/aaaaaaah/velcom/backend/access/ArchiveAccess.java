@@ -1,6 +1,6 @@
 package de.aaaaaaah.velcom.backend.access;
 
-import de.aaaaaaah.velcom.backend.access.archive.TransferUtils;
+import de.aaaaaaah.velcom.backend.util.TransferUtils;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.entities.RemoteUrl;
 import de.aaaaaaah.velcom.backend.access.entities.TarSource;
