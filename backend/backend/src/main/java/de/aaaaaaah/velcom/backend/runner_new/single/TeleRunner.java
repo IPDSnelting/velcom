@@ -266,12 +266,19 @@ public class TeleRunner {
 				.asPacket(serializer)
 		);
 
-		try (OutputStream outputStream = connection.createBinaryOutputStream()) {
-			if (!benchRepoUpToDate) {
-				benchRepo.transfer(outputStream);
-			}
+		if (!benchRepoUpToDate) {
+			handleBinaryTransfer(task, benchRepo::transfer);
+		}
 
-			dispatcher.getQueue().transferTask(task.getId(), outputStream);
+		handleBinaryTransfer(
+			task,
+			outputStream -> dispatcher.getQueue().transferTask(task.getId(), outputStream)
+		);
+	}
+
+	private void handleBinaryTransfer(Task task, TransferConsumer consumer) {
+		try (OutputStream outputStream = connection.createBinaryOutputStream()) {
+			consumer.accept(outputStream);
 		} catch (PrepareTransferException e) {
 			LOGGER.info("Failed to transfer repo to runner " + getRunnerName() + ": Archiving failed", e);
 			// This task is corrupted, we can not benchmark it.
@@ -293,6 +300,12 @@ public class TeleRunner {
 			"Archiving failed. Error: " + exception.getMessage(),
 			ErrorType.VELCOM_ERROR
 		).build();
+	}
+
+	interface TransferConsumer {
+
+		void accept(OutputStream outputStream)
+			throws PrepareTransferException, TransferException, IOException, NoSuchTaskException;
 	}
 
 }
