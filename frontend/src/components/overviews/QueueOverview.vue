@@ -19,7 +19,8 @@
                   text
                   outlined
                   @click="cancelAllFetched()"
-                >Cancel all</v-btn>
+                  >Cancel all</v-btn
+                >
               </template>
               Cancels
               <strong>all</strong> tasks you can see in the queue.
@@ -37,30 +38,45 @@
           >
             <commit-overview-base :commit="commit">
               <template #body.top>
-                <v-progress-linear indeterminate v-if="inProgress(commit)" color="accent"></v-progress-linear>
+                <v-progress-linear
+                  indeterminate
+                  v-if="inProgress(commit)"
+                  color="accent"
+                ></v-progress-linear>
               </template>
               <template #avatar>
-                <v-list-item-avatar
-                  class="index-indicator"
-                >{{ (page - 1) * itemsPerPage + index + 1 }}</v-list-item-avatar>
+                <v-list-item-avatar class="index-indicator">{{
+                  (page - 1) * itemsPerPage + index + 1
+                }}</v-list-item-avatar>
               </template>
               <template #content v-if="getWorker(commit)">
                 <v-tooltip top>
                   <template #activator="{ on }">
                     <span style="flex: 0 0;" class="pt-3">
-                      <v-chip v-on="on" outlined label>Running on » {{ getWorker(commit).name }} «</v-chip>
+                      <v-chip v-on="on" outlined label
+                        >Running on » {{ getWorker(commit).name }} «</v-chip
+                      >
                     </span>
                   </template>
-                  <span
-                    style="white-space: pre; font-family: monospace;"
-                  >{{ getWorker(commit).osData }}</span>
+                  <span style="white-space: pre; font-family: monospace;">{{
+                    getWorker(commit).osData
+                  }}</span>
                 </v-tooltip>
               </template>
               <template #actions v-if="isAdmin">
-                <v-btn icon v-if="!inProgress(commit)" @click="liftToFront(commit, $event)">
+                <v-btn
+                  icon
+                  v-if="!inProgress(commit)"
+                  @click="liftToFront(commit, $event)"
+                >
                   <v-icon class="rocket">{{ liftToFrontIcon }}</v-icon>
                 </v-btn>
-                <v-progress-circular indeterminate color="accent" class="mx-1" v-else></v-progress-circular>
+                <v-progress-circular
+                  indeterminate
+                  color="accent"
+                  class="mx-1"
+                  v-else
+                ></v-progress-circular>
                 <v-btn icon @click="deleteCommit(commit)">
                   <v-icon color="red">{{ deleteIcon }}</v-icon>
                 </v-btn>
@@ -226,8 +242,7 @@ export default class QueueOverview extends Vue {
       vxm.queueModule.openTasks.map(it => {
         return vxm.queueModule.dispatchDeleteOpenTask({
           commit: it,
-          suppressRefetch: true,
-          suppressSnackbar: true
+          suppressRefetch: true
         })
       })
     )
@@ -246,7 +261,7 @@ export default class QueueOverview extends Vue {
         )
       })
       .finally(() => {
-        vxm.queueModule.fetchQueue({ hideFromSnackbar: true })
+        vxm.queueModule.fetchQueue()
       })
   }
 

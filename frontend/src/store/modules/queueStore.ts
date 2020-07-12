@@ -22,12 +22,8 @@ export class QueueStore extends VxModule {
    * @memberof QueueModuleStore
    */
   @action
-  async fetchQueue(payload?: {
-    hideFromSnackbar?: boolean
-  }): Promise<Commit[]> {
+  async fetchQueue(): Promise<Commit[]> {
     const response = await axios.get('/queue', {
-      hideLoadingSnackbar: payload && payload.hideFromSnackbar,
-      hideSuccessSnackbar: payload && payload.hideFromSnackbar,
       snackbarTag: 'queue'
     })
 
@@ -86,10 +82,14 @@ export class QueueStore extends VxModule {
   @action
   dispatchPrioritizeOpenTask(payload: Commit): Promise<void> {
     return axios
-      .post('/queue', {
-        repo_id: payload.repoID,
-        commit_hash: payload.hash
-      })
+      .post(
+        '/queue',
+        {
+          repo_id: payload.repoID,
+          commit_hash: payload.hash
+        },
+        { showSuccessSnackbar: true }
+      )
       .then(() => {
         this.prioritizeOpenTask(payload)
       })
@@ -105,11 +105,15 @@ export class QueueStore extends VxModule {
   @action
   dispatchQueueUpwardsOf(commit: Commit): Promise<void> {
     return axios
-      .post('/queue', {
-        repo_id: commit.repoID,
-        commit_hash: commit.hash,
-        include_all_commits_after: true
-      })
+      .post(
+        '/queue',
+        {
+          repo_id: commit.repoID,
+          commit_hash: commit.hash,
+          include_all_commits_after: true
+        },
+        { showSuccessSnackbar: true }
+      )
       .then(() => {
         this.prioritizeOpenTask(commit)
       })
@@ -130,12 +134,9 @@ export class QueueStore extends VxModule {
   dispatchDeleteOpenTask(payload: {
     commit: Commit
     suppressRefetch?: boolean
-    suppressSnackbar?: boolean
   }): Promise<void> {
     return axios
       .delete('/queue', {
-        hideSuccessSnackbar: payload.suppressSnackbar,
-        hideLoadingSnackbar: payload.suppressSnackbar,
         params: {
           repo_id: payload.commit.repoID,
           commit_hash: payload.commit.hash
