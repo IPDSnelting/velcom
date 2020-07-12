@@ -1,6 +1,15 @@
 <template>
-  <v-snackbar v-model="displaySnackbar" :timeout="timeout" :color="color">
-    <v-progress-circular v-if="loading" indeterminate></v-progress-circular>
+  <v-snackbar
+    shaped
+    v-model="displaySnackbar"
+    :timeout="timeout"
+    :color="color"
+  >
+    <v-progress-circular
+      class="mr-2"
+      v-if="loading"
+      indeterminate
+    ></v-progress-circular>
     {{ text }}
     <template v-slot:action="{ attrs }">
       <v-btn
