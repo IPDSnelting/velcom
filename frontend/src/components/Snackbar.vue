@@ -70,12 +70,11 @@ export default class Snackbar extends Vue implements ISnackbar {
   }
 
   finishedLoading(tag: string, priority?: number) {
-    this.displayNormalText(
-      this.appendTag('Success', `'${tag}'`, ' for ') + '!',
-      'snackbarSuccess',
-      2 * 1000,
-      priority
-    )
+    let shouldHideExisting = this.currentPriority <= (priority || 1)
+
+    if (shouldHideExisting && this.displaySnackbar) {
+      this.displaySnackbar = false
+    }
   }
 
   private appendTag(text: string, tag: string, interpolation?: string): string {

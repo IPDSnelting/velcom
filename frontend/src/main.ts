@@ -3,7 +3,7 @@ import './class-components-router-hooks' // Register custom hooks
 import App from './App.vue'
 import router from './router'
 import { store, vxm, restoreFromPassedSession } from './store'
-import axios from 'axios'
+import axios, { AxiosRequestConfig } from 'axios'
 import vuetify from './plugins/vuetify'
 import { extractErrorMessage } from './util/ErrorUtils'
 
@@ -64,13 +64,8 @@ axios.interceptors.request.use(
 // Intercept responses to show errors
 axios.interceptors.response.use(
   function(response) {
-    if (
-      !response.config.hideSuccessSnackbar &&
-      !response.config.hideFromSnackbar
-    ) {
-      let prefix = response.config.snackbarTag || ''
-      vue.$globalSnackbar.finishedLoading(prefix)
-    }
+    let prefix = response.config.snackbarTag || ''
+    vue.$globalSnackbar.finishedLoading(prefix)
     return response
   },
   function(error) {
