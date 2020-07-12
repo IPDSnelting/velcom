@@ -10,17 +10,16 @@
         <v-card>
           <v-row align="center" no-gutters>
             <v-col>
-              <v-btn-toggle>
+              <v-btn-toggle
+                mandatory
+                :value="graphFlavours.indexOf(currentFlavour)"
+              >
                 <v-btn
                   group
                   tile
                   text
                   v-for="flavour in graphFlavours"
                   v-bind:key="flavour.name"
-                  v-bind:class="[
-                    'tab-button',
-                    { active: currentFlavour.name === flavour.name }
-                  ]"
                   v-on:click="currentFlavour = flavour"
                 >
                   {{ flavour.name }}
