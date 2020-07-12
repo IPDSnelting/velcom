@@ -1,11 +1,11 @@
 <template>
   <v-app>
-    <v-content>
+    <v-main>
       <nav-bar></nav-bar>
       <snackbar ref="global-snackbar"></snackbar>
       <router-view />
       <theme-selector @useDarkTheme="setDarkTheme"></theme-selector>
-    </v-content>
+    </v-main>
   </v-app>
 </template>
 
