@@ -2,7 +2,16 @@
   <v-snackbar v-model="displaySnackbar" :timeout="timeout" :color="color">
     <v-progress-circular v-if="loading" indeterminate></v-progress-circular>
     {{ text }}
-    <v-btn dark color="ping" text @click="displaySnackbar = false">Close</v-btn>
+    <template v-slot:action="{ attrs }">
+      <v-btn
+        dark
+        color="ping"
+        text
+        v-bind="attrs"
+        @click="displaySnackbar = false"
+        >Close</v-btn
+      >
+    </template>
   </v-snackbar>
 </template>
 
