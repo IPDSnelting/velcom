@@ -108,6 +108,10 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 		measurementRecord.setRunId(measurement.getRunId().getId().toString());
 		measurementRecord.setBenchmark(measurement.getMeasurementName().getBenchmark());
 		measurementRecord.setMetric(measurement.getMeasurementName().getMetric());
+		measurementRecord.setUnit(measurement.getUnit().getName());
+		measurementRecord.setInterpretation(
+			measurement.getInterpretation().getTextualRepresentation()
+		);
 
 		if (measurement.getContent().isLeft()) {
 			MeasurementError error = measurement.getContent().getLeft().orElseThrow();
@@ -116,12 +120,6 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 			measurementRecord.insert();
 		} else {
 			MeasurementValues values = measurement.getContent().getRight().orElseThrow();
-
-			measurementRecord.setUnit(values.getUnit().getName());
-			measurementRecord.setInterpretation(
-				values.getInterpretation().getTextualRepresentation()
-			);
-
 			measurementRecord.insert();
 
 			// Insert values into database

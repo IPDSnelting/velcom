@@ -51,8 +51,9 @@ CREATE TABLE measurement
     run_id         CHAR(36)             NOT NULL,
     benchmark      TEXT                 NOT NULL,
     metric         TEXT                 NOT NULL,
-    unit           TEXT,
-    interpretation TEXT CHECK ( interpretation IN ('NEUTRAL', 'LESS_IS_BETTER', 'MORE_IS_BETTER') ),
+    unit           TEXT                 NOT NULL,
+    interpretation TEXT                 NOT NULL CHECK ( interpretation IN
+                                                         ('NEUTRAL', 'LESS_IS_BETTER', 'MORE_IS_BETTER') ),
     error          TEXT,
 
     FOREIGN KEY (run_id) REFERENCES run (id) ON DELETE CASCADE

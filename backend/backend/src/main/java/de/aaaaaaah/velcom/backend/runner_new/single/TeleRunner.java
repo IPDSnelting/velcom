@@ -226,9 +226,13 @@ public class TeleRunner {
 			for (Metric metric : benchmark.getMetrics()) {
 				MeasurementName name = new MeasurementName(benchmark.getName(), metric.getName());
 				if (metric.getError() != null) {
-					builder.addFailedMeasurement(name, metric.getError());
+					builder.addFailedMeasurement(
+						name,
+						new Unit(metric.getUnit()),
+						Interpretation.fromSharedRepresentation(metric.getInterpretation()),
+						metric.getError()
+					);
 				} else {
-					//noinspection ConstantConditions
 					builder.addSuccessfulMeasurement(
 						name,
 						Interpretation.fromSharedRepresentation(metric.getInterpretation()),

@@ -13,17 +13,25 @@ public class Measurement {
 
 	private final RunId runId;
 	private final MeasurementName measurementName;
+	private final Unit unit;
+	private final Interpretation interpretation;
 	private final Either<MeasurementError, MeasurementValues> content;
 
-	public Measurement(RunId runId, MeasurementName measurementName, MeasurementError error) {
+	public Measurement(RunId runId, MeasurementName measurementName, Unit unit,
+		Interpretation interpretation, MeasurementError error) {
 		this.runId = Objects.requireNonNull(runId);
 		this.measurementName = Objects.requireNonNull(measurementName);
+		this.unit = Objects.requireNonNull(unit);
+		this.interpretation = Objects.requireNonNull(interpretation);
 		this.content = Either.ofLeft(error);
 	}
 
-	public Measurement(RunId runId, MeasurementName measurementName, MeasurementValues values) {
+	public Measurement(RunId runId, MeasurementName measurementName, Unit unit,
+		Interpretation interpretation, MeasurementValues values) {
 		this.runId = Objects.requireNonNull(runId);
 		this.measurementName = Objects.requireNonNull(measurementName);
+		this.unit = Objects.requireNonNull(unit);
+		this.interpretation = Objects.requireNonNull(interpretation);
 		this.content = Either.ofRight(values);
 	}
 
@@ -33,6 +41,14 @@ public class Measurement {
 
 	public MeasurementName getMeasurementName() {
 		return measurementName;
+	}
+
+	public Unit getUnit() {
+		return unit;
+	}
+
+	public Interpretation getInterpretation() {
+		return interpretation;
 	}
 
 	public Either<MeasurementError, MeasurementValues> getContent() {

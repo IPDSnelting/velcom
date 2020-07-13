@@ -92,21 +92,24 @@ public class TimesliceComparison implements RepoComparison {
 			return Optional.empty(); // No graph data available
 		}
 
-		Map<CommitHash, MeasurementValues> valueMap = new HashMap<>();
+		Map<CommitHash, Measurement> measurementMap = new HashMap<>();
 
+		// Only get successful measurements
 		latestRuns.forEach((hash, run) -> {
-			findMeasurement(measurementName, run).ifPresent(values -> valueMap.put(hash, values));
+			findMeasurement(measurementName, run)
+				.filter(m -> m.getContent().isRight())
+				.ifPresent(values -> measurementMap.put(hash, values));
 		});
 
-		if (valueMap.isEmpty()) {
+		if (measurementMap.isEmpty()) {
 			return Optional.empty(); // No graph data available
 		}
 
 		Instant oldestAuthorDate = null;
 		Instant youngestAuthorDate = null;
-		MeasurementValues youngestValues = null;
+		Measurement youngestMeasurement = null;
 
-		for (CommitHash commitHash : valueMap.keySet()) {
+		for (CommitHash commitHash : measurementMap.keySet()) {
 			Commit commit = commitMap.get(commitHash);
 			Objects.requireNonNull(commit, "commit not found: " + commitHash);
 
@@ -118,12 +121,12 @@ public class TimesliceComparison implements RepoComparison {
 
 			if (youngestAuthorDate == null || authorDate.isAfter(youngestAuthorDate)) {
 				youngestAuthorDate = authorDate;
-				youngestValues = valueMap.get(commitHash);
+				youngestMeasurement = measurementMap.get(commitHash);
 			}
 		}
 
-		Interpretation interpretation = youngestValues.getInterpretation();
-		Unit unit = youngestValues.getUnit();
+		Interpretation interpretation = youngestMeasurement.getInterpretation();
+		Unit unit = youngestMeasurement.getUnit();
 
 		if (startTime == null) {
 			startTime = oldestAuthorDate;
@@ -135,10 +138,11 @@ public class TimesliceComparison implements RepoComparison {
 		// 3.) Build graph data (convert pairs to GraphEntry instances & group them)
 		List<GraphEntry> entries = new ArrayList<>();
 
-		valueMap.forEach((hash, values) -> {
+		measurementMap.forEach((hash, measurement) -> {
 			Commit commit = commitMap.get(hash);
 			Objects.requireNonNull(commit, "commit not found: " + hash);
 
+			MeasurementValues values = measurement.getContent().getRight().orElseThrow();
 			entries.add(new GraphEntry(commit, values.getAverageValue()));
 		});
 
@@ -207,7 +211,7 @@ public class TimesliceComparison implements RepoComparison {
 		return grouper;
 	}
 
-	private Optional<MeasurementValues> findMeasurement(MeasurementName name, Run run) {
+	private Optional<Measurement> findMeasurement(MeasurementName name, Run run) {
 		if (run.getResult().isLeft()) {
 			Collection<Measurement> measurements = run.getResult().getLeft().get();
 
@@ -216,10 +220,7 @@ public class TimesliceComparison implements RepoComparison {
 				.findAny()
 				.orElse(null);
 
-			if (measurement != null && measurement.getContent().getRight().isPresent()) {
-				MeasurementValues values = measurement.getContent().getRight().get();
-				return Optional.of(values);
-			}
+			return Optional.ofNullable(measurement);
 		}
 
 		return Optional.empty();

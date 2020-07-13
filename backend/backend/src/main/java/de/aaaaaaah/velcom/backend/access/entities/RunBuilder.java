@@ -99,8 +99,11 @@ public class RunBuilder {
 	public void addSuccessfulMeasurement(MeasurementName name, Interpretation interpretation,
 		Unit unit, List<Double> values) {
 
-		MeasurementValues measurementValues = new MeasurementValues(values, unit, interpretation);
-		Measurement measurement = new Measurement(this.runId, name, measurementValues);
+		MeasurementValues measurementValues = new MeasurementValues(values);
+		Measurement measurement = new Measurement(
+			this.runId, name, unit, interpretation, measurementValues
+		);
+
 		this.measurementList.add(measurement);
 	}
 
@@ -108,12 +111,18 @@ public class RunBuilder {
 	 * Adds a new failed measurement to the run.
 	 *
 	 * @param name the name of the measurement
+	 * @param unit the unit of the measurement
+	 * @param interpretation how the measurement is to be interpreted
 	 * @param errorMessage the error message
 	 */
-	public void addFailedMeasurement(MeasurementName name, String errorMessage) {
+	public void addFailedMeasurement(MeasurementName name, Unit unit, Interpretation interpretation,
+		String errorMessage) {
 
 		MeasurementError measurementError = new MeasurementError(errorMessage);
-		Measurement measurement = new Measurement(this.runId, name, measurementError);
+		Measurement measurement = new Measurement(
+			this.runId, name, unit, interpretation, measurementError
+		);
+
 		this.measurementList.add(measurement);
 	}
 

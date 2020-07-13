@@ -117,9 +117,7 @@ public class Result {
 		private final String name;
 		@Nullable
 		private final String error;
-		@Nullable
 		private final String unit;
-		@Nullable
 		private final Interpretation interpretation;
 		@Nullable
 		private final List<Double> values;
@@ -128,18 +126,18 @@ public class Result {
 		public Metric(
 			@JsonProperty(required = true) String name,
 			@Nullable String error,
-			@Nullable String unit,
-			@Nullable Interpretation interpretation,
+			String unit,
+			Interpretation interpretation,
 			@Nullable List<Double> values
 		) {
-			if (error == null && (unit == null || interpretation == null || values == null)) {
-				throw new IllegalArgumentException("if error is null, no other fields can be null");
+			if (error == null && values == null) {
+				throw new IllegalArgumentException("if error is null, values must not be null");
 			}
 
 			this.name = name;
 			this.error = error;
-			this.unit = unit;
-			this.interpretation = interpretation;
+			this.unit = Objects.requireNonNull(unit);
+			this.interpretation = Objects.requireNonNull(interpretation);
 			this.values = values;
 		}
 
@@ -152,12 +150,10 @@ public class Result {
 			return error;
 		}
 
-		@Nullable
 		public String getUnit() {
 			return unit;
 		}
 
-		@Nullable
 		public Interpretation getInterpretation() {
 			return interpretation;
 		}

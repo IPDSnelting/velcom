@@ -33,8 +33,8 @@ public class JsonMeasurement {
 		if (content.isRight()) {
 			//noinspection OptionalGetWithoutIsPresent
 			MeasurementValues measurementValues = content.getRight().get();
-			unit = measurementValues.getUnit().getName();
-			interpretation = measurementValues.getInterpretation().getTextualRepresentation();
+			unit = measurement.getUnit().getName();
+			interpretation = measurement.getInterpretation().getTextualRepresentation();
 			values = measurementValues.getValues();
 			value = measurementValues.getAverageValue();
 			errorMessage = null;

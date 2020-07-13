@@ -212,22 +212,27 @@ public class BenchmarkReadAccess {
 			MeasurementName measurementName = new MeasurementName(
 				measurementRecord.getBenchmark(), measurementRecord.getMetric()
 			);
+			Unit unit = new Unit(measurementRecord.getUnit());
+			Interpretation interpretation = Interpretation.fromTextualRepresentation(
+				measurementRecord.getInterpretation()
+			);
 
 			final Measurement measurement;
 
 			// Read measurement content
 			if (measurementRecord.getError() != null) {
 				var measurementError = new MeasurementError(measurementRecord.getError());
-				measurement = new Measurement(runId, measurementName, measurementError);
+
+				measurement = new Measurement(
+					runId, measurementName, unit, interpretation, measurementError
+				);
 			} else {
 				List<Double> values = valueMap.get(measurementRecord.getId());
-				Unit unit = new Unit(measurementRecord.getUnit());
-				Interpretation interpretation = Interpretation.fromTextualRepresentation(
-					measurementRecord.getInterpretation()
-				);
+				var measurementValues = new MeasurementValues(values);
 
-				var measurementValues = new MeasurementValues(values, unit, interpretation);
-				measurement = new Measurement(runId, measurementName, measurementValues);
+				measurement = new Measurement(
+					runId, measurementName, unit, interpretation, measurementValues
+				);
 			}
 
 			// Insert measurement into map
