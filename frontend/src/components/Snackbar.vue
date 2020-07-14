@@ -1,8 +1,26 @@
 <template>
-  <v-snackbar v-model="displaySnackbar" :timeout="timeout" :color="color">
-    <v-progress-circular v-if="loading" indeterminate></v-progress-circular>
+  <v-snackbar
+    shaped
+    v-model="displaySnackbar"
+    :timeout="timeout"
+    :color="color"
+  >
+    <v-progress-circular
+      class="mr-2"
+      v-if="loading"
+      indeterminate
+    ></v-progress-circular>
     {{ text }}
-    <v-btn dark color="ping" text @click="displaySnackbar = false">Close</v-btn>
+    <template v-slot:action="{ attrs }">
+      <v-btn
+        dark
+        color="ping"
+        text
+        v-bind="attrs"
+        @click="displaySnackbar = false"
+        >Close</v-btn
+      >
+    </template>
   </v-snackbar>
 </template>
 
@@ -52,12 +70,11 @@ export default class Snackbar extends Vue implements ISnackbar {
   }
 
   finishedLoading(tag: string, priority?: number) {
-    this.displayNormalText(
-      this.appendTag('Success', `'${tag}'`, ' for ') + '!',
-      'snackbarSuccess',
-      2 * 1000,
-      priority
-    )
+    let shouldHideExisting = this.currentPriority <= (priority || 1)
+
+    if (shouldHideExisting && this.displaySnackbar) {
+      this.displaySnackbar = false
+    }
   }
 
   private appendTag(text: string, tag: string, interpolation?: string): string {

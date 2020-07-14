@@ -24,7 +24,7 @@ declare module 'axios' {
      * @type {boolean}
      * @memberof AxiosRequestConfig
      */
-    hideSuccessSnackbar?: boolean
+    showSuccessSnackbar?: boolean
 
     /**
      * Whether to hide the error snackbar messages.
@@ -41,5 +41,13 @@ declare module 'axios' {
      * @memberof AxiosRequestConfig
      */
     snackbarTag?: string
+
+    /**
+     * A number uniquely identifying this request.
+     *
+     * @type {number}
+     * @memberof AxiosRequestConfig
+     */
+    randomTag?: number
   }
 }
