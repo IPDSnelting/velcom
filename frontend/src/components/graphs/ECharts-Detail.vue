@@ -401,6 +401,7 @@ export default class EchartsDetailGraph extends Vue {
         containLabel: true
       },
       toolbox: {
+        left: 'center',
         show: true,
         showTitle: false, // hide the default text so they don't overlap each other
         feature: {
@@ -416,12 +417,6 @@ export default class EchartsDetailGraph extends Vue {
         tooltip: {
           show: true
         }
-      },
-      title: {
-        text: 'A graph',
-        left: '50%',
-        textAlign: 'center',
-        top: '20px'
       },
       xAxis: {
         type: 'value',
