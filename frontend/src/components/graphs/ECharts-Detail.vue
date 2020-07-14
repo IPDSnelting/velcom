@@ -15,12 +15,12 @@
           @selectCommitToCompare="commitToCompare = selectedDatapoint"
           @compareCommits="compareCommits"
         ></datapoint-dialog>
-        <div id="chart" :style="{ height: this.height + 'px' }">
+        <div id="chart-container">
           <v-chart
+            :autoresize="true"
             @click="chartClicked"
             @restore="restored"
             @datazoom="zoomed"
-            id="chart"
             :options="chartOptions"
           />
         </div>
@@ -117,8 +117,6 @@ export default class EchartsDetailGraph extends Vue {
   beginYAtZero!: boolean
 
   // dimensions
-  private width: number = 0
-  private height: number = 500
   private chartOptions: EChartOption = {}
   private showGraph: boolean = false
   private datapointDialogOpen = false
@@ -397,6 +395,11 @@ export default class EchartsDetailGraph extends Vue {
   private drawGraph() {
     this.chartOptions = {
       backgroundColor: this.graphBackgroundColor,
+      grid: {
+        left: 20,
+        right: 20,
+        containLabel: true
+      },
       toolbox: {
         show: true,
         showTitle: false, // hide the default text so they don't overlap each other
@@ -764,8 +767,9 @@ export default class EchartsDetailGraph extends Vue {
   stroke-dasharray: 5 5;
 }
 
-#chart {
+#chart-container {
   position: relative;
+  height: 80vh;
 }
 
 .datapointDialog .v-input .v-label {
