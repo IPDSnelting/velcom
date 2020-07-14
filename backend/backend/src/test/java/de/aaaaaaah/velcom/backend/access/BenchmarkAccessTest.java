@@ -7,6 +7,9 @@ import static org.jooq.codegen.db.tables.Repository.REPOSITORY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.entities.Interpretation;
 import de.aaaaaaah.velcom.backend.access.entities.Measurement;
@@ -57,6 +60,7 @@ public class BenchmarkAccessTest {
 	@TempDir
 	Path testDir;
 	DatabaseStorage dbStorage;
+	RepoReadAccess repoAccess;
 	BenchmarkWriteAccess benchmarkAccess;
 
 	// All run lists will be ordered from most recent to least recent
@@ -69,7 +73,11 @@ public class BenchmarkAccessTest {
 	@BeforeEach
 	void setUp() throws SQLException {
 		dbStorage = new DatabaseStorage("jdbc:sqlite:file:" + testDir.resolve("data.db"));
-		benchmarkAccess = new BenchmarkWriteAccess(dbStorage);
+
+		repoAccess = mock(RepoReadAccess.class);
+		when(repoAccess.getAllRepoIds()).thenReturn(List.of(REPO_IDS));
+
+		benchmarkAccess = new BenchmarkWriteAccess(dbStorage, repoAccess);
 
 		Instant time = Instant.now();
 
