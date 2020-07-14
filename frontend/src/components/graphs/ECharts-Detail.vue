@@ -131,6 +131,8 @@ export default class EchartsDetailGraph extends Vue {
     itemInfo: ItemInfo
   } | null = null
   private allowSelectAsReference: boolean = true
+  private zoomStartPercent: number = 0
+  private zoomEndPercent: number = 1
 
   private numberFormat: Intl.NumberFormat = new Intl.NumberFormat(
     this.getLocaleString(),
@@ -283,7 +285,7 @@ export default class EchartsDetailGraph extends Vue {
   }
 
   private restored(e: any) {
-    this.updateGraphTyp(0, 1)
+    this.updateGraphType()
   }
 
   private zoomed(e: any) {
@@ -312,11 +314,14 @@ export default class EchartsDetailGraph extends Vue {
       return
     }
 
-    this.updateGraphTyp(startPercent, endPercent)
+    this.zoomStartPercent = startPercent
+    this.zoomEndPercent = endPercent
+    this.updateGraphType()
   }
 
-  private updateGraphTyp(startPercent: number, endPercent: number) {
-    let visibleCommits = (endPercent - startPercent) * this.amount
+  private updateGraphType() {
+    let visibleCommits =
+      (this.zoomEndPercent - this.zoomStartPercent) * this.amount
     let showSymbols = visibleCommits * this.groupedByMeasurement.size < 200
 
     if (this.showGraph !== showSymbols) {
@@ -392,6 +397,7 @@ export default class EchartsDetailGraph extends Vue {
   @Watch('amount')
   private updateData() {
     this.drawGraph()
+    this.updateGraphType()
   }
 
   private drawGraph() {
@@ -407,7 +413,9 @@ export default class EchartsDetailGraph extends Vue {
             title: {
               zoom: 'Zoom (brush)',
               back: 'Reset zoom'
-            }
+            },
+            start: this.zoomStartPercent * 100,
+            end: this.zoomEndPercent * 100
           }
         },
         tooltip: {
