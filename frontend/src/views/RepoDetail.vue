@@ -35,15 +35,13 @@
             </v-col>
           </v-row>
           <v-card flat>
-            <keep-alive>
-              <component
-                v-bind:is="currentFlavour.component"
-                :measurements="selectedMeasurements"
-                :amount="Number.parseInt(amount)"
-                :beginYAtZero="this.yScaleBeginsAtZero"
-                @selectionChanged="updateSelection"
-              ></component>
-            </keep-alive>
+            <component
+              v-bind:is="currentFlavour.component"
+              :measurements="selectedMeasurements"
+              :amount="Number.parseInt(amount)"
+              :beginYAtZero="this.yScaleBeginsAtZero"
+              @selectionChanged="updateSelection"
+            ></component>
           </v-card>
         </v-card>
       </v-col>
