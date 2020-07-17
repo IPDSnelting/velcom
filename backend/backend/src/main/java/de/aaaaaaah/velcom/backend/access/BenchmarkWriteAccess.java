@@ -26,8 +26,9 @@ import org.jooq.codegen.db.tables.records.RunRecord;
 
 public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 
-	public BenchmarkWriteAccess(DatabaseStorage databaseStorage) {
-		super(databaseStorage);
+	public BenchmarkWriteAccess(DatabaseStorage databaseStorage,
+		RepoReadAccess repoAccess) {
+		super(databaseStorage, repoAccess);
 	}
 
 	/**
@@ -55,7 +56,10 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 			}
 		});
 
-		// 2.) Insert run into cache
+		// 2.) Invalidate measurement cache
+		measurementCache.remove(run.getRepoId());
+
+		// 3.) Insert run into cache
 		synchronized (recentRunCache) {
 			recentRunCache.add(run);
 
@@ -139,6 +143,9 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 				.execute();
 		}
 
+		// Invalidate measurement cache
+		measurementCache.remove(repoId);
+
 		// Repopulate recent run cache
 		synchronized (recentRunCache) {
 			recentRunCache.clear();
@@ -173,7 +180,7 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 	}
 
 	/**
-	 * Delete all runs and their respective measurements of the specified repository
+	 * Delete all runs and their respective measurements of the specified repository.
 	 *
 	 * @param repoId the id of the repository
 	 */
@@ -181,6 +188,9 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 		try (DSLContext db = databaseStorage.acquireContext()) {
 			db.deleteFrom(RUN).where(RUN.REPO_ID.eq(repoId.getId().toString()));
 		}
+
+		// Invalidate measurement cache
+		measurementCache.remove(repoId);
 
 		// Invalidate recent run cache and reload it from database
 		this.reloadRecentRunCache();

@@ -110,7 +110,6 @@ public class ServerMain extends Application<GlobalConfig> {
 		DatabaseStorage databaseStorage = new DatabaseStorage(configuration);
 
 		// Access layer
-		BenchmarkWriteAccess benchmarkAccess = new BenchmarkWriteAccess(databaseStorage);
 		CommitReadAccess commitAccess = new CommitReadAccess(repoStorage);
 		KnownCommitWriteAccess knownCommitAccess = new KnownCommitWriteAccess(databaseStorage);
 		RepoWriteAccess repoAccess = new RepoWriteAccess(
@@ -124,6 +123,9 @@ public class ServerMain extends Application<GlobalConfig> {
 			new AuthToken(configuration.getWebAdminToken()),
 			configuration.getHashMemory(),
 			configuration.getHashIterations()
+		);
+		BenchmarkWriteAccess benchmarkAccess = new BenchmarkWriteAccess(
+			databaseStorage, repoAccess
 		);
 
 		// Data layer
