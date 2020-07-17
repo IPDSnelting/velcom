@@ -1,6 +1,6 @@
 openapi: 3.0.0
 info:
-  title: rest-api
+  title: public api
   version: '1.0'
 servers:
   - url: 'https://aaaaaaah.de:81'

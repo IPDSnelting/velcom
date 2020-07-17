@@ -1,0 +1,1033 @@
+openapi: 3.0.0
+info:
+  title: public api
+  version: '2.0'
+  description: "Velcom's public api. This api is also used by the frontend."
+  contact:
+    name: velcom
+    url: 'https://github.com/IPDSnelting/velcom'
+servers:
+  - url: 'http://localhost:3000'
+paths:
+  '/queue/{taskid}':
+    parameters:
+      - schema:
+          type: string
+        name: taskid
+        in: path
+        required: true
+    delete:
+      summary: delete task
+      tags:
+        - queue
+      responses:
+        '200':
+          description: OK
+      operationId: delete-queue-taskid
+      security:
+        - admin credentials: []
+      description: 'Delete a task from the queue. If the task is currently being benchmarked, this also tries to abort the task.'
+    patch:
+      summary: prioritize task
+      operationId: patch-queue-taskid
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Not Found
+      description: Prioritize a task such that it moves to (or near) the top of the queue.
+      security:
+        - admin credentials: []
+      tags:
+        - queue
+  /queue:
+    get:
+      summary: get tasks in queue
+      tags:
+        - queue
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tasks:
+                    type: array
+                    description: The tasks in the order they are/will be executed. Tasks which are currently being executed appear first.
+                    items:
+                      $ref: '#/components/schemas/Task'
+                  runners:
+                    type: array
+                    description: A list of the currently connected runners
+                    items:
+                      type: object
+                      description: A single runner
+                      properties:
+                        name:
+                          type: string
+                          description: "The runner's unique name"
+                        info:
+                          type: string
+                          description: Additional information sent by the runner
+                        working_on:
+                          $ref: '#/components/schemas/RunId'
+                        working_since:
+                          $ref: '#/components/schemas/Time'
+                      required:
+                        - name
+                        - info
+                required:
+                  - tasks
+                  - runners
+      operationId: get-queue
+      description: "Query the queue's current status"
+  /queue/upload/tar:
+    post:
+      summary: benchmark tar file
+      operationId: post-queue-upload
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  task:
+                    $ref: '#/components/schemas/Task'
+                required:
+                  - task
+      requestBody:
+        content:
+          application/x-tar:
+            schema: {}
+        description: The tar file to benchmark
+      security:
+        - admin credentials: []
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: description
+          description: Describes the tar file
+          required: true
+      description: This endpoint allows users to upload a tar file that the server should benchmark. The tar file is added to the queue with a relatively high priority.
+      tags:
+        - queue
+    parameters: []
+  '/commit/{repoid}/{hash}':
+    parameters:
+      - schema:
+          type: string
+          format: uuid
+        name: repoid
+        in: path
+        required: true
+      - schema:
+          type: string
+          pattern: '^[a-fA-F0-9]{40}$'
+        name: hash
+        in: path
+        required: true
+    get:
+      summary: get commit
+      tags:
+        - commit
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  commit:
+                    $ref: '#/components/schemas/Commit'
+                required:
+                  - commit
+        '404':
+          description: Not Found
+      operationId: get-commit-repoid-hash
+      description: Retrieve a commit by its repo id and hash.
+  '/run/{runid}':
+    parameters:
+      - schema:
+          type: string
+          format: uuid
+        name: runid
+        in: path
+        description: Interpreted as repo id if hash is set
+        required: true
+    get:
+      summary: get run
+      tags:
+        - run
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  run:
+                    $ref: '#/components/schemas/Run'
+                required:
+                  - run
+        '404':
+          description: Not Found
+      operationId: get-run-runid
+      description: |-
+        Retrieve a run by its id.
+
+        If a commit hash is specified, it instead interprets the run id as repo id and uses that commit's latest run, if one exists.
+      parameters:
+        - schema:
+            type: boolean
+          in: query
+          name: all_values
+          description: Whether the measurements should contain all values
+        - schema:
+            type: string
+            pattern: '^[a-fA-F0-9]{40}$'
+          in: query
+          name: hash
+          description: Commit hash
+  '/compare/{runid1}/to/{runid2}':
+    get:
+      summary: compare runs
+      tags:
+        - run
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  run1:
+                    $ref: '#/components/schemas/Run'
+                  run2:
+                    $ref: '#/components/schemas/Run'
+                  differences:
+                    type: array
+                    description: A list of differences between the runs
+                    items:
+                      type: object
+                      properties:
+                        benchmark:
+                          type: string
+                        metric:
+                          type: string
+                        difference:
+                          type: number
+                          description: The difference from run1 to run2
+                      required:
+                        - benchmark
+                        - metric
+                        - difference
+                required:
+                  - run1
+                  - run2
+                  - differences
+        '404':
+          description: Either one or both runs could not be found
+      operationId: get-compare-runid1-to-runid2
+      description: |-
+        Compare two runs.
+
+        If a commit hash is specified, it instead interprets the corresponding run id as repo id and uses that commit's latest run, if one exists.
+      parameters:
+        - schema:
+            type: boolean
+          in: query
+          name: all_values
+          description: Whether the measurements should contain all values
+        - schema:
+            type: string
+            pattern: '^[a-fA-F0-9]{40}$'
+          in: query
+          name: hash1
+          description: Commit hash
+        - schema:
+            type: string
+            pattern: '^[a-fA-F0-9]{40}$'
+          in: query
+          name: hash2
+          description: Commit hash
+    parameters:
+      - schema:
+          type: string
+          format: uuid
+        name: runid1
+        in: path
+        required: true
+        description: Interpreted as repo id if hash1 is set
+      - schema:
+          type: string
+          format: uuid
+        name: runid2
+        in: path
+        required: true
+        description: Interpreted as repo id if hash2 is set
+  '/queue/commit/{repoid}/{hash}':
+    post:
+      summary: benchmark commit
+      operationId: post-queue-commit-repoid-hash
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  task:
+                    $ref: '#/components/schemas/Task'
+                required:
+                  - task
+        '403':
+          description: There is already a task for this commit in the queue
+      description: 'This endpoint allows users to add a specific commit to the queue. If there is already a task for this commit in the queue, this endpoint fails.'
+      tags:
+        - queue
+      security:
+        - repo admin credentials: []
+    parameters:
+      - schema:
+          type: string
+          format: uuid
+        name: repoid
+        in: path
+        required: true
+      - schema:
+          type: string
+          pattern: '^[a-fA-F0-9]{40}$'
+        name: hash
+        in: path
+        required: true
+  '/repo/{repoid}':
+    parameters:
+      - schema:
+          type: string
+          format: uuid
+        name: repoid
+        in: path
+        required: true
+    get:
+      summary: get repo
+      tags:
+        - repo
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  repo:
+                    $ref: '#/components/schemas/Repo'
+                required:
+                  - repo
+        '404':
+          description: Not Found
+      operationId: get-repo-repoid
+      description: Retrieve a repo by its id.
+    delete:
+      summary: delete repo
+      operationId: delete-repo-repoid
+      responses:
+        '200':
+          description: OK
+      security:
+        - repo admin credentials: []
+      description: Delete an entire repository and its associated measurements.
+      tags:
+        - repo
+    patch:
+      summary: modify repo
+      operationId: patch-repo-repoid
+      responses:
+        '200':
+          description: OK
+      security:
+        - repo admin credentials: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  description: 'Set a new name for the repo. The name must not be unique, but it should still be unique so the UI does not look too confusing.'
+                tracked_branches:
+                  type: array
+                  description: Set the branches to be tracked
+                  uniqueItems: true
+                  minItems: 1
+                  items:
+                    type: string
+                    minLength: 1
+                token:
+                  type: string
+                  description: 'Set a new auth token, replacing the old one. If this is the empty string, auth tokens are disabled for this repo.'
+      tags:
+        - repo
+      description: Modify some parts of an existing repo.
+  /repo:
+    post:
+      summary: add new repo
+      operationId: post-repo
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  repo:
+                    $ref: '#/components/schemas/Repo'
+                required:
+                  - repo
+      description: Add a new repo.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: A human-readable name. This name must not be unique.
+                remote_url:
+                  $ref: '#/components/schemas/RemoteUrl'
+                token:
+                  type: string
+                  description: 'If the token is the empty string or no token is specified, auth tokens are disabled for this repo.'
+              required:
+                - name
+                - remote_url
+      security:
+        - admin credentials: []
+      tags:
+        - repo
+  /all-repos:
+    get:
+      summary: get all repos
+      tags:
+        - repo
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  repos:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Repo'
+                required:
+                  - repos
+      operationId: get-all-repos
+      description: Retrieve a list of all available repos.
+  /test-token:
+    get:
+      summary: test auth token
+      tags: []
+      responses:
+        '200':
+          description: OK
+        '401':
+          description: Unauthorized
+      operationId: get-test-token
+      description: |-
+        Test whether an auth token is valid.
+
+        If a repo id is specified, checks whether the auth token allows access to that repo.
+        If no repo id is specified, checks whether the auth token is valid as admin auth token.
+      security:
+        - repo admin credentials: []
+      parameters:
+        - schema:
+            type: string
+            format: uuid
+          in: query
+          name: repo_id
+          description: Repo id
+  '/graph/detail/{repoid}':
+    parameters:
+      - schema:
+          type: string
+        name: repoid
+        in: path
+        required: true
+    get:
+      summary: detail graph
+      tags:
+        - graph
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dimensions:
+                    type: array
+                    description: 'The dimensions, in the order they appear in the commits'
+                    items:
+                      $ref: '#/components/schemas/Dimension'
+                  commits:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        hash:
+                          $ref: '#/components/schemas/CommitHash'
+                        parents:
+                          type: array
+                          items:
+                            $ref: '#/components/schemas/CommitHash'
+                        author:
+                          type: string
+                        author_date:
+                          $ref: '#/components/schemas/Time'
+                        summary:
+                          type: string
+                        values:
+                          type: array
+                          description: 'One value for each dimension. For the order, see the `dimensions` field'
+                          items:
+                            type: number
+                      required:
+                        - hash
+                        - parents
+                        - author
+                        - author_date
+                        - summary
+                        - values
+                required:
+                  - dimensions
+                  - commits
+        '403':
+          description: 'The `start_time`, `end_time` and/or `duration` parameters are invalid'
+        '404':
+          description: "Repo doesn't exist"
+      operationId: get-graph-detail-repoid
+      description: |-
+        The `dimensions` query parameter consists of multiple sections separated by double colons (`::`).
+        Each section contains a benchmark name and a list of metric names, separated by a single colon (`:`).
+
+        For example, to select the `time` and `lines` metrics for the `parser` benchmark, as well as the `time` metric for the `compile` benchmark, use this string as your `dimensions` query parameter:
+        ```
+        parser:time:lines::compile:time
+        ```
+
+        If some of the dimensions don't exist, they may be omitted from the response.
+
+        In ambiguous situations, `start_time` defaults to the earliest commit's time and `end_time` defaults to the present time.
+        If only `duration` is set, `end_time` takes precedence over `start_time`.
+        `end_time` must be more recent than `start_time`.
+        `start_time`, `end_time` and `duration` must not all be set, otherwise the request is rejected.
+      parameters:
+        - schema:
+            type: integer
+            format: int64
+          in: query
+          name: start_time
+          description: Start time (epoch time in seconds)
+        - schema:
+            type: integer
+            format: int64
+          in: query
+          name: end_time
+          description: End time (epoch time in seconds)
+        - schema:
+            type: integer
+            minimum: 0
+          in: query
+          name: duration
+          description: Duration in seconds
+        - schema:
+            type: string
+            example: 'parser:time:lines::compile:time'
+          in: query
+          name: dimensions
+          description: Which benchmarks and metrics to return
+          required: true
+  /recent/runs:
+    get:
+      summary: get recent runs
+      tags:
+        - run
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  runs:
+                    type: array
+                    description: 'The most recent runs, ordered from new to old'
+                    items:
+                      $ref: '#/components/schemas/RunDescription'
+                required:
+                  - runs
+      operationId: get-recent-runs
+      description: Get a list of the most recent runs across all repositories.
+      parameters:
+        - schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 100
+          in: query
+          name: 'n'
+          description: Maximum number of runs to return
+        - schema:
+            type: boolean
+            default: 'false'
+          in: query
+          name: significant
+          description: Whether to only return significant runs
+  /graph/comparison:
+    get:
+      summary: repo comparison graph
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dimension:
+                    $ref: '#/components/schemas/Dimension'
+                  repos:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        repo_id:
+                          $ref: '#/components/schemas/RepoId'
+                        commits:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              hash:
+                                $ref: '../other/rest_api_stoplight_studio.yaml#/components/schemas/CommitHash'
+                              author:
+                                type: string
+                              author_date:
+                                $ref: '#/components/schemas/Time'
+                              summary:
+                                type: string
+                              value:
+                                type: number
+                                description: 'One value for each dimension. For the order, see the `dimensions` field'
+                            required:
+                              - hash
+                              - author
+                              - author_date
+                              - summary
+                              - value
+                      required:
+                        - repo_id
+                        - commits
+                required:
+                  - dimension
+                  - repos
+        '403':
+          description: 'The `start_time`, `end_time` and/or `duration` parameters are invalid'
+        '404':
+          description: "The dimension doesn't exist"
+      operationId: get-graph-comparison
+      parameters:
+        - schema:
+            type: string
+            example: '123e4567-e89b-12d3-a456-426614174000:master:foo/bar::00112233-4455-6677-8899-aabbccddeeff:master:develop'
+          in: query
+          name: repos
+          description: The repositories and corresponding branches that should be compared
+          required: true
+        - schema:
+            type: integer
+            format: int64
+          in: query
+          name: start_time
+          description: Start time (epoch time in seconds)
+        - schema:
+            type: integer
+            format: int64
+          in: query
+          name: end_time
+          description: End time (epoch time in seconds)
+        - schema:
+            type: integer
+            minimum: 0
+          in: query
+          name: duration
+          description: Duration in seconds
+        - schema:
+            type: string
+            example: 'parser:time'
+          in: query
+          name: dimension
+          description: Which benchmarks and metrics to return
+          required: true
+      description: |-
+        The `repos` query parameter consists of multiple sections separated by double colons (`::`).
+        Each section contains a repo id and a list of branch names, separated by a single colon (`:`).
+
+        For example, to select the repo `123e4567-e89b-12d3-a456-426614174000` with branches `master` and `foo/bar`, as well as the repo `00112233-4455-6677-8899-aabbccddeeff` with branches `master` and `develop`, use this string as your `repos` query parameter:
+        ```
+        123e4567-e89b-12d3-a456-426614174000:master:foo/bar::00112233-4455-6677-8899-aabbccddeeff:master:develop
+        ```
+
+        See also `man git-check-ref-format`.
+
+        The `dimension` query parameter has the format `benchmark:metric`.
+        In contrast to the `dimensions` parameter of the `/graph/detail/{repoid}` endpoint, this parameter only allows exactly one benchmark and exactly one metric.
+
+        For example, to select the `time` metric for the `parser` benchmark, use this string as your `dimension` query parameter:
+        ```
+        parser:time
+        ```
+
+        The `start_time`, `end_time` and `duration` parameters work the same as for the `/graph/detail/{repoid}` endpoint.
+        If some of the repos don't exist, they may be omitted from the response.
+components:
+  schemas:
+    CommitHash:
+      type: string
+      title: CommitHash
+      example: e148703fe729db437f178a68dca4f79cb785974a
+      pattern: '^[a-fA-F0-9]{40}$'
+      description: A git commit hash
+    RepoId:
+      type: string
+      title: RepoId
+      description: An id for a git repository known to velcom
+      format: uuid
+    RunId:
+      type: string
+      title: RunId
+      description: "A run's id (also used for tasks)"
+      format: uuid
+    Time:
+      type: integer
+      title: Time
+      format: int64
+      description: Unix/epoch time (seconds since 1970-01-01)
+    Task:
+      title: Task
+      type: object
+      description: 'A task is an entry in the queue that is yet to be benchmarked. When the benchmark process is complete, it is turned into a run with the same id.'
+      properties:
+        id:
+          $ref: '#/components/schemas/RunId'
+        author:
+          type: string
+          description: Who (or what) the task was created by
+        since:
+          $ref: '#/components/schemas/Time'
+        source:
+          $ref: '#/components/schemas/Source'
+      required:
+        - id
+        - author
+        - since
+        - source
+    Commit:
+      title: Commit
+      type: object
+      description: A full commit
+      properties:
+        repo_id:
+          $ref: '#/components/schemas/RepoId'
+        hash:
+          $ref: '#/components/schemas/RepoId'
+        parents:
+          type: array
+          items:
+            $ref: '#/components/schemas/CommitHash'
+        author:
+          type: string
+        author_date:
+          $ref: '#/components/schemas/Time'
+        committer:
+          type: string
+        committer_date:
+          $ref: '#/components/schemas/Time'
+        summary:
+          type: string
+          description: The first line of the commit message
+        message:
+          type: string
+          description: The remaining lines of the commit message
+        runs:
+          type: array
+          description: All the runs belonging to this commit
+          items:
+            $ref: '#/components/schemas/RunDescription'
+      required:
+        - repo_id
+        - hash
+        - parents
+        - author
+        - author_date
+        - committer
+        - committer_date
+        - summary
+        - runs
+    RunDescription:
+      title: RunDescription
+      type: object
+      description: A short description of a run
+      properties:
+        id:
+          $ref: '#/components/schemas/RunId'
+        start_time:
+          $ref: '#/components/schemas/Time'
+        success:
+          type: string
+          description: 'If all measurements succeeded, the run is a success. If some measurements failed but others succeeded, the run is only a partial success. If all measurements failed or other errors occurred, the run is a failure.'
+          enum:
+            - SUCCESS
+            - PARTIAL_SUCCESS
+            - FAILURE
+      required:
+        - id
+        - start_time
+        - success
+    CommitDescription:
+      title: CommitDescription
+      type: object
+      properties:
+        repo_id:
+          $ref: '#/components/schemas/RepoId'
+        hash:
+          $ref: '#/components/schemas/CommitHash'
+        author:
+          type: string
+        author_date:
+          $ref: '#/components/schemas/Time'
+        summary:
+          type: string
+      required:
+        - repo_id
+        - hash
+        - author
+        - author_date
+        - summary
+      description: A short description of a commit
+    Run:
+      title: Run
+      type: object
+      description: A full run
+      properties:
+        id:
+          $ref: '#/components/schemas/RunId'
+        author:
+          type: string
+          description: "Who (or what) this run's task was created by"
+        runner_name:
+          type: string
+          description: "The runner's unique name"
+        runner_info:
+          type: string
+          description: Additional information sent by the runner (at the time the run was executed)
+        start_time:
+          $ref: '#/components/schemas/Time'
+        stop_time:
+          $ref: '#/components/schemas/Time'
+        source:
+          $ref: '#/components/schemas/Source'
+        result:
+          oneOf:
+            - properties:
+                measurements:
+                  type: array
+                  description: The measurements returned by the benchmark script
+                  items:
+                    $ref: '#/components/schemas/Measurement'
+              description: The run executed successfully
+              required:
+                - measurements
+            - properties:
+                bench_error:
+                  type: string
+                  description: The error message returned by the benchmark script
+              description: The benchmark script returned a global error
+              required:
+                - bench_error
+            - properties:
+                velcom_error:
+                  type: string
+                  description: An error message describing what went wrong
+              description: Velcom encountered issues while trying to execute the run
+              required:
+                - velcom_error
+          description: How the run ended
+          type: object
+      required:
+        - id
+        - author
+        - runner_name
+        - runner_info
+        - start_time
+        - stop_time
+        - source
+        - result
+    Source:
+      title: Source
+      type: object
+      description: The source for a task or run
+      properties:
+        type:
+          type: string
+          enum:
+            - COMMIT
+            - UPLOADED_TAR
+          description: Determines whether the source field contains a commit or an uploaded file
+        source:
+          oneOf:
+            - $ref: '#/components/schemas/CommitDescription'
+            - type: object
+              description: An uploaded tar file
+              properties:
+                description:
+                  type: string
+                  description: The description given when the file was uploaded
+              required:
+                - description
+          description: The actual source
+      required:
+        - type
+        - source
+    Measurement:
+      title: Measurement
+      oneOf:
+        - description: The measurement was successful
+          properties:
+            dimension:
+              $ref: '#/components/schemas/Dimension'
+            value:
+              type: number
+              description: The average of all measured values
+            values:
+              type: string
+              description: All measured values
+          required:
+            - dimension
+            - value
+        - description: The measurement was not successful
+          properties:
+            dimension:
+              $ref: '#/components/schemas/Dimension'
+            error:
+              type: string
+              description: The error message returned by the benchmark script for this metric
+          required:
+            - dimension
+            - error
+      description: A full measurement
+      type: object
+    Repo:
+      title: Repo
+      type: object
+      description: A full repo
+      properties:
+        id:
+          $ref: '#/components/schemas/RepoId'
+        name:
+          type: string
+          description: The name given to the repo when it was created
+        remote_url:
+          $ref: '#/components/schemas/RemoteUrl'
+        untracked_branches:
+          type: array
+          description: "All of the repo's untracked branches"
+          uniqueItems: true
+          items:
+            type: string
+            minLength: 1
+        tracked_branches:
+          type: array
+          description: "All of the repo's tracked branches"
+          minItems: 1
+          uniqueItems: true
+          items:
+            type: string
+            minLength: 1
+        has_token:
+          type: boolean
+          description: Whether the repo has an individual authentication token
+        dimensions:
+          type: array
+          description: All types of measurements where at least one value exists for this repo
+          items:
+            $ref: '#/components/schemas/Dimension'
+      required:
+        - id
+        - name
+        - remote_url
+        - untracked_branches
+        - tracked_branches
+        - has_token
+        - dimensions
+    RemoteUrl:
+      type: string
+      title: RemoteUrl
+      format: uri
+      description: The URL of a remote repository
+    Dimension:
+      title: Dimension
+      type: object
+      properties:
+        benchmark:
+          type: string
+          pattern: "^\\w+$"
+          minLength: 1
+          example: parser
+        metric:
+          type: string
+          minLength: 1
+          pattern: "^\\w+$"
+          example: time
+        unit:
+          type: string
+          description: The unit the measured values are in
+        interpretation:
+          type: string
+          description: How to interpret values for this dimension
+          enum:
+            - LESS_IS_BETTER
+            - MORE_IS_BETTER
+            - NEUTRAL
+      required:
+        - benchmark
+        - metric
+        - unit
+        - interpretation
+  securitySchemes:
+    admin credentials:
+      type: http
+      scheme: basic
+    repo admin credentials:
+      type: http
+      scheme: basic
