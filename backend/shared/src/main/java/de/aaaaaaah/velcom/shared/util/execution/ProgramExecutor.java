@@ -6,8 +6,11 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import org.slf4j.Logger;
@@ -19,6 +22,17 @@ import org.slf4j.LoggerFactory;
 public class ProgramExecutor {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(ProgramExecutor.class);
+
+	// If multiple ProgramExecutors are used, could block the common fork join pool completely.
+	// We occupy 2 threads per execution (draining stderr and stdio)
+	// Using a cached thread pool allows the executor to scale, while also trimming down unused
+	// tasks after some delay specified in the JDK method (currently 60 seconds).
+	// As the threads are daemons, we do not need to shut down the pool at all. If nobody waits for
+	// the result, the threads will die as well, otherwise they will be kept alive and things work
+	// as expected.
+	private static final ExecutorService EXECUTOR = Executors.newCachedThreadPool(
+		new DaemonThreadFactory()
+	);
 
 	private final long timeToForceKillMillis;
 
@@ -79,11 +93,13 @@ public class ProgramExecutor {
 		StringOutputStream outputStream = new StringOutputStream();
 		return CompletableFuture
 			.supplyAsync(asUnchecked(() -> {
-				try (InputStream inputStream = input.get()) {
-					inputStream.transferTo(outputStream);
-				}
-				return outputStream.getString();
-			}))
+					try (InputStream inputStream = input.get()) {
+						inputStream.transferTo(outputStream);
+					}
+					return outputStream.getString();
+				}),
+				EXECUTOR
+			)
 			.exceptionally(throwable -> outputStream.getString());
 	}
 
@@ -100,6 +116,16 @@ public class ProgramExecutor {
 	private interface UncheckedSupplier<T> {
 
 		T get() throws Exception;
+	}
+
+	private static class DaemonThreadFactory implements ThreadFactory {
+
+		@Override
+		public Thread newThread(Runnable r) {
+			Thread thread = new Thread(r);
+			thread.setDaemon(true);
+			return thread;
+		}
 	}
 
 }
