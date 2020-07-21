@@ -75,6 +75,12 @@ public class Benchmarker {
 		information.addToGeneral("User", System.getProperty("user.name"));
 
 		Path benchScriptPath = benchRequest.getBenchRepoPath().resolve("bench");
+
+		if (!Files.isReadable(benchScriptPath)) {
+			information.addSection("Setup error", "`bench` script not found or not readable");
+			this.result.set(new BenchResult(getRunId(), false, null, information.toString()));
+			return;
+		}
 		if (!Files.isExecutable(benchScriptPath)) {
 			information.addSection("Setup error", "`bench` script is not executable");
 			this.result.set(new BenchResult(getRunId(), false, null, information.toString()));
@@ -176,9 +182,9 @@ public class Benchmarker {
 
 		return new BenchResult(
 			getRunId(),
-			bareResult.getError() == null,
+			true,
 			new Result(bareResult.getBenchmarks(), bareResult.getError()),
-			bareResult.getError()
+			null
 		);
 	}
 

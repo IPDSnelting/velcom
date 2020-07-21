@@ -11,10 +11,10 @@ import de.aaaaaaah.velcom.shared.protocol.serialization.Result.Benchmark;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Result.Interpretation;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Result.Metric;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,7 +54,7 @@ public class BenchmarkScriptOutputParser {
 			if (!root.get("error").isTextual()) {
 				throw new OutputParseException("Error is no string: " + root);
 			}
-			return new BareResult(Collections.emptyList(), root.get("error").asText());
+			return new BareResult(null, root.get("error").asText());
 		}
 
 		List<Benchmark> benchmarks = new ArrayList<>();
@@ -102,7 +102,7 @@ public class BenchmarkScriptOutputParser {
 				throw new OutputParseException("Error is no string: " + node);
 			}
 			return new Metric(
-				name, node.get("error").asText(), "", Interpretation.NEUTRAL, List.of()
+				name, node.get("error").asText(), "", Interpretation.NEUTRAL, null
 			);
 		}
 
@@ -173,6 +173,7 @@ public class BenchmarkScriptOutputParser {
 	 */
 	public static class BareResult {
 
+		@Nullable
 		private final List<Benchmark> benchmarks;
 		private final String error;
 
@@ -181,10 +182,12 @@ public class BenchmarkScriptOutputParser {
 			this.error = error;
 		}
 
+		@Nullable
 		public List<Benchmark> getBenchmarks() {
 			return benchmarks;
 		}
 
+		@Nullable
 		public String getError() {
 			return error;
 		}

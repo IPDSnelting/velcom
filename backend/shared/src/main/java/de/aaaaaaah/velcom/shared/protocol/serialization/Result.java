@@ -106,6 +106,14 @@ public class Result {
 		public int hashCode() {
 			return Objects.hash(name, metrics);
 		}
+
+		@Override
+		public String toString() {
+			return "Benchmark{" +
+				"name='" + name + '\'' +
+				", metrics=" + metrics +
+				'}';
+		}
 	}
 
 	/**
@@ -182,6 +190,17 @@ public class Result {
 		@Override
 		public int hashCode() {
 			return Objects.hash(error, name, unit, interpretation, values);
+		}
+
+		@Override
+		public String toString() {
+			return "Metric{" +
+				"name='" + name + '\'' +
+				", error='" + error + '\'' +
+				", unit='" + unit + '\'' +
+				", interpretation=" + interpretation +
+				", values=" + values +
+				'}';
 		}
 	}
 }
