@@ -15,9 +15,11 @@ import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.annotation.Nullable;
 
 /**
  * Executes the benchmark script and parses the result.
@@ -28,15 +30,19 @@ public class Benchmarker {
 
 	private final Thread thread;
 	private final BenchRequest benchRequest;
+	private final CompletableFuture<Void> finishFuture;
 	private boolean aborted;
 
 	/**
 	 * Creates a new Benchmarker <em>and starts the benchmark.</em>
 	 *
 	 * @param benchRequest the benchmark request
+	 * @param finishFuture the future the benchmarker completes when the benchmark is done (aborted,
+	 * 	failed or completed successfully)
 	 */
-	public Benchmarker(BenchRequest benchRequest) {
+	public Benchmarker(BenchRequest benchRequest, CompletableFuture<Void> finishFuture) {
 		this.benchRequest = benchRequest;
+		this.finishFuture = finishFuture;
 
 		result = new AtomicReference<>();
 
@@ -78,12 +84,12 @@ public class Benchmarker {
 
 		if (!Files.isReadable(benchScriptPath)) {
 			information.addSection("Setup error", "`bench` script not found or not readable");
-			this.result.set(new BenchResult(getRunId(), false, null, information.toString()));
+			setResult(new BenchResult(getRunId(), false, null, information.toString()));
 			return;
 		}
 		if (!Files.isExecutable(benchScriptPath)) {
 			information.addSection("Setup error", "`bench` script is not executable");
-			this.result.set(new BenchResult(getRunId(), false, null, information.toString()));
+			setResult(new BenchResult(getRunId(), false, null, information.toString()));
 			return;
 		}
 
@@ -104,23 +110,28 @@ public class Benchmarker {
 				// Ensure we do not wait if the benchmark was cancelled before this thread was ready
 				if (aborted) {
 					work.cancel(true);
-					this.result.set(null);
+					setResult(null);
 					return;
 				}
 				ProgramResult programResult = work.get();
 
 				addProgramOutput(information, programResult);
 
-				this.result.set(interpretResult(information, programResult));
+				setResult(interpretResult(information, programResult));
 			}
 		} catch (ExecutionException e) {
-			this.result.set(interpretExecutionException(information, e));
+			setResult(interpretExecutionException(information, e));
 		} catch (InterruptedException e) {
 			work.cancel(true);
-			this.result.set(null);
+			setResult(null);
 		} catch (CancellationException e) {
-			this.result.set(null);
+			setResult(null);
 		}
+	}
+
+	private void setResult(@Nullable BenchResult result) {
+		this.result.set(result);
+		finishFuture.complete(null);
 	}
 
 	private Future<ProgramResult> startBenchExecution(BenchmarkFailureInformation information,

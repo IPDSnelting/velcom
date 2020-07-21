@@ -17,8 +17,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -28,6 +33,7 @@ class BenchmarkerTest {
 	Path rootTempDir;
 	Path benchRepoPath;
 	Path workPath;
+	private CompletableFuture<Void> finishFuture;
 
 	@BeforeEach
 	void setUp() throws IOException {
@@ -35,15 +41,15 @@ class BenchmarkerTest {
 		workPath = rootTempDir.resolve("work");
 		Files.createDirectory(benchRepoPath);
 		Files.createDirectory(workPath);
+		finishFuture = new CompletableFuture<>();
 	}
 
 	@Test
-	void testBenchDoesNotExist() throws InterruptedException {
+	void testBenchDoesNotExist() throws Exception {
 		BenchRequest request = getBenchRequest();
-		Benchmarker benchmarker = new Benchmarker(request);
 
 		doWithResult(
-			benchmarker,
+			request,
 			result -> {
 				assertThat(result.getResult()).isNull();
 				assertThat(result.getError()).isNotNull();
@@ -54,7 +60,7 @@ class BenchmarkerTest {
 	}
 
 	@Test
-	void testBenchNotReadable() throws InterruptedException, IOException {
+	void testBenchNotReadable() throws Exception {
 		BenchRequest request = getBenchRequest();
 		Path benchScriptPath = request.getBenchRepoPath().resolve("bench");
 
@@ -68,9 +74,8 @@ class BenchmarkerTest {
 		permissions.add(PosixFilePermission.OWNER_EXECUTE);
 		Files.setPosixFilePermissions(benchScriptPath, permissions);
 
-		Benchmarker benchmarker = new Benchmarker(request);
 		doWithResult(
-			benchmarker,
+			request,
 			result -> {
 				assertThat(result.getResult()).isNull();
 				assertThat(result.getError()).isNotNull();
@@ -80,16 +85,14 @@ class BenchmarkerTest {
 	}
 
 	@Test
-	void testBenchNotExecutable() throws InterruptedException, IOException {
+	void testBenchNotExecutable() throws Exception {
 		BenchRequest request = getBenchRequest();
 		Path benchScriptPath = request.getBenchRepoPath().resolve("bench");
 
 		Files.createFile(benchScriptPath);
 
-		Benchmarker benchmarker = new Benchmarker(request);
-
 		doWithResult(
-			benchmarker,
+			request,
 			result -> {
 				assertThat(result.getResult()).isNull();
 				assertThat(result.getError()).isNotNull();
@@ -100,7 +103,7 @@ class BenchmarkerTest {
 	}
 
 	@Test
-	void testBenchScriptInvalidOutput() throws InterruptedException, IOException {
+	void testBenchScriptInvalidOutput() throws Exception {
 		BenchRequest request = getBenchRequest();
 
 		writeBenchScript(
@@ -108,10 +111,8 @@ class BenchmarkerTest {
 			"echo 'Hello'"
 		);
 
-		Benchmarker benchmarker = new Benchmarker(request);
-
 		doWithResult(
-			benchmarker,
+			request,
 			result -> {
 				assertThat(result.getResult()).isNull();
 				assertThat(result.getError()).isNotNull();
@@ -123,7 +124,7 @@ class BenchmarkerTest {
 	}
 
 	@Test
-	void testBenchScriptExitCodeFailure() throws InterruptedException, IOException {
+	void testBenchScriptExitCodeFailure() throws Exception {
 		BenchRequest request = getBenchRequest();
 
 		writeBenchScript(
@@ -131,10 +132,8 @@ class BenchmarkerTest {
 			"exit 1"
 		);
 
-		Benchmarker benchmarker = new Benchmarker(request);
-
 		doWithResult(
-			benchmarker,
+			request,
 			result -> {
 				assertThat(result.getResult()).isNull();
 				assertThat(result.getError()).isNotNull();
@@ -146,7 +145,7 @@ class BenchmarkerTest {
 	}
 
 	@Test
-	void testBenchScriptSignalCodeInterpretation() throws InterruptedException, IOException {
+	void testBenchScriptSignalCodeInterpretation() throws Exception {
 		BenchRequest request = getBenchRequest();
 
 		writeBenchScript(
@@ -154,10 +153,8 @@ class BenchmarkerTest {
 			"exit 130"
 		);
 
-		Benchmarker benchmarker = new Benchmarker(request);
-
 		doWithResult(
-			benchmarker,
+			request,
 			result -> {
 				assertThat(result.getResult()).isNull();
 				assertThat(result.getError()).isNotNull();
@@ -172,7 +169,7 @@ class BenchmarkerTest {
 	}
 
 	@Test
-	void testBenchScriptBenchmarkError() throws InterruptedException, IOException {
+	void testBenchScriptBenchmarkError() throws Exception {
 		BenchRequest request = getBenchRequest();
 
 		writeBenchScript(
@@ -180,10 +177,8 @@ class BenchmarkerTest {
 			"echo '{ \"error\": \"Halloooo\" }'"
 		);
 
-		Benchmarker benchmarker = new Benchmarker(request);
-
 		doWithResult(
-			benchmarker,
+			request,
 			result -> {
 				assertThat(result.getResult()).isNotNull();
 				assertThat(result.getError()).isNull();
@@ -195,7 +190,7 @@ class BenchmarkerTest {
 	}
 
 	@Test
-	void testBenchScriptMetricError() throws InterruptedException, IOException {
+	void testBenchScriptMetricError() throws Exception {
 		BenchRequest request = getBenchRequest();
 
 		writeBenchScript(
@@ -203,10 +198,8 @@ class BenchmarkerTest {
 			"echo '{ \"test\": { \"metric\": { \"error\": \"20\" } } }'"
 		);
 
-		Benchmarker benchmarker = new Benchmarker(request);
-
 		doWithResult(
-			benchmarker,
+			request,
 			result -> {
 				assertThat(result.getResult()).isNotNull();
 				assertThat(result.getError()).isNull();
@@ -223,7 +216,7 @@ class BenchmarkerTest {
 	}
 
 	@Test
-	void testBenchScriptMetricWithValue() throws InterruptedException, IOException {
+	void testBenchScriptMetricWithValue() throws Exception {
 		BenchRequest request = getBenchRequest();
 
 		writeBenchScript(
@@ -233,10 +226,8 @@ class BenchmarkerTest {
 				+ " } } }'"
 		);
 
-		Benchmarker benchmarker = new Benchmarker(request);
-
 		doWithResult(
-			benchmarker,
+			request,
 			result -> {
 				assertThat(result.getError()).isNull();
 				assertThat(result.getResult()).isNotNull();
@@ -252,21 +243,44 @@ class BenchmarkerTest {
 		);
 	}
 
-	private void doWithResult(Benchmarker benchmarker, Consumer<BenchResult> resultConsumer)
-		throws InterruptedException {
-		// we have no way of knowing the benchmarker finished
+	@Disabled("Abort is currently broken")
+	@Test
+	void testAbort() throws Exception {
+		BenchRequest request = getBenchRequest();
+
+		writeBenchScript(
+			"#!/usr/bin/sh",
+			"while true ; do sleep 1 ; done"
+		);
+
+		Benchmarker benchmarker = new Benchmarker(request, finishFuture);
+
+		Thread.sleep(400);
+		benchmarker.abort();
+
 		for (int i = 0; i < 10; i++) {
 			Thread.sleep(250);
-			Optional<BenchResult> resultOptional = benchmarker.getResult();
-			if (resultOptional.isEmpty()) {
-				continue;
+			if (finishFuture.isDone()) {
+				assertThat(benchmarker.getResult()).isEmpty();
+				assertThat(benchmarker.getRunId()).isEqualTo(request.getRunId());
+				return;
 			}
-			BenchResult result = resultOptional.get();
-			resultConsumer.accept(result);
-			return;
 		}
+		fail("Cancel should have been done by now");
+	}
 
-		fail("Timed out waiting for bench script result");
+	private void doWithResult(BenchRequest request, Consumer<BenchResult> resultConsumer)
+		throws InterruptedException, ExecutionException, TimeoutException {
+		Benchmarker benchmarker = new Benchmarker(request, finishFuture);
+
+		finishFuture.get(20, TimeUnit.SECONDS);
+
+		Optional<BenchResult> resultOptional = benchmarker.getResult();
+
+		assertThat(resultOptional).isPresent();
+
+		BenchResult result = resultOptional.get();
+		resultConsumer.accept(result);
 	}
 
 	private void writeBenchScript(String... lines) throws IOException {
