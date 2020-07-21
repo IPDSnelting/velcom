@@ -2,6 +2,7 @@ package de.aaaaaaah.velcom.runner.entity;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import de.aaaaaaah.velcom.shared.util.systeminfo.LinuxSystemInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -70,7 +71,7 @@ class BenchmarkFailureInformationTest {
 
 	@Test
 	void addMachineInfo() {
-		information.addMachineInfo();
+		information.addMachineInfo(LinuxSystemInfo.getCurrent());
 		assertThat(information.toString()).startsWith(
 			"#############\n" +
 				"## General ##\n" +
