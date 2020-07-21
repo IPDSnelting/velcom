@@ -18,7 +18,10 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.ReentrantLock;
 import javax.annotation.Nullable;
 
 /**
@@ -31,6 +34,7 @@ public class Benchmarker {
 	private final Thread thread;
 	private final BenchRequest benchRequest;
 	private final CompletableFuture<Void> finishFuture;
+	private final ReentrantLock abortLock;
 	private boolean aborted;
 
 	/**
@@ -44,10 +48,13 @@ public class Benchmarker {
 		this.benchRequest = benchRequest;
 		this.finishFuture = finishFuture;
 
-		result = new AtomicReference<>();
+		this.result = new AtomicReference<>();
+		// This lock NEEDS to be fair, otherwise aborts might not get through and the abort method
+		// will block for a long time
+		this.abortLock = new ReentrantLock(true);
 
-		thread = new Thread(this::runBenchmark);
-		thread.start();
+		this.thread = new Thread(this::runBenchmark);
+		this.thread.start();
 	}
 
 	/**
@@ -67,10 +74,14 @@ public class Benchmarker {
 	/**
 	 * Aborts the benchmark if it is running.
 	 */
-	public synchronized void abort() {
+	public void abort() {
+		abortLock.lock();
+
 		// The synchronization requirements are detailed in the runBenchmark method.
 		aborted = true;
 		thread.interrupt();
+
+		abortLock.unlock();
 	}
 
 	private void runBenchmark() {
@@ -106,18 +117,32 @@ public class Benchmarker {
 			// Synchronizing here ensures that the worker is either already waiting and receives the
 			// interrupted exception or aborted is set to true before the wait starts and the worker bails
 			// out and cancels the work.
-			synchronized (this) {
+
+			// This is really ugly, but waiting on a future does not release the monitor. Therefore
+			// we need to do this manually by looping and awaiting the result while only sleeping for
+			// a bit. If an abort comes, it will get the lock next (as the lock is fair) and we will
+			// notice the work was aborted.
+			while (true) {
+				abortLock.lock();
 				// Ensure we do not wait if the benchmark was cancelled before this thread was ready
 				if (aborted) {
 					work.cancel(true);
 					setResult(null);
 					return;
 				}
-				ProgramResult programResult = work.get();
+				try {
+					// The 500ms sleep time is an arbitrary compromise between performance (so many
+					// exceptions are slow-ish) and responsiveness (if we wait for too long, an abort caller
+					// will need to wait for at most that duration)
+					ProgramResult programResult = work.get(500, TimeUnit.MILLISECONDS);
 
-				addProgramOutput(information, programResult);
+					addProgramOutput(information, programResult);
 
-				setResult(interpretResult(information, programResult));
+					setResult(interpretResult(information, programResult));
+				} catch (TimeoutException ignored) {
+					// Will happen until the benchmark is done. This is sadly a feature, not a bug.
+				}
+				abortLock.unlock();
 			}
 		} catch (ExecutionException e) {
 			setResult(interpretExecutionException(information, e));

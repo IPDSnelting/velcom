@@ -23,7 +23,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -243,7 +242,6 @@ class BenchmarkerTest {
 		);
 	}
 
-	@Disabled("Abort is currently broken")
 	@Test
 	void testAbort() throws Exception {
 		BenchRequest request = getBenchRequest();
@@ -258,6 +256,7 @@ class BenchmarkerTest {
 		Thread.sleep(400);
 		benchmarker.abort();
 
+		// Give it a few seconds to really cancel it (though ~500ms should be enough currently)
 		for (int i = 0; i < 10; i++) {
 			Thread.sleep(250);
 			if (finishFuture.isDone()) {
