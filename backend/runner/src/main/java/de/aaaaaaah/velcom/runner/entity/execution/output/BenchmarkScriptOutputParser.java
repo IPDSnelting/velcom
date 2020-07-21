@@ -6,10 +6,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
-import de.aaaaaaah.velcom.shared.protocol.serverbound.entities.BenchmarkResults;
-import de.aaaaaaah.velcom.shared.protocol.serverbound.entities.BenchmarkResults.Benchmark;
-import de.aaaaaaah.velcom.shared.protocol.serverbound.entities.BenchmarkResults.Metric;
-import de.aaaaaaah.velcom.shared.protocol.serverbound.entities.BenchmarkResults.MetricInterpretation;
+import de.aaaaaaah.velcom.shared.protocol.serialization.Result;
+import de.aaaaaaah.velcom.shared.protocol.serialization.Result.Benchmark;
+import de.aaaaaaah.velcom.shared.protocol.serialization.Result.Interpretation;
+import de.aaaaaaah.velcom.shared.protocol.serialization.Result.Metric;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -25,12 +25,12 @@ public class BenchmarkScriptOutputParser {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(BenchmarkScriptOutputParser.class);
 
-	private ObjectMapper objectMapper = new ObjectMapper()
+	private final ObjectMapper objectMapper = new ObjectMapper()
 		.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE)
 		.registerModule(new ParameterNamesModule());
 
 	/**
-	 * Parses the benchmark output node to a {@link BenchmarkResults} object.
+	 * Parses the benchmark output node to a {@link Result} object.
 	 *
 	 * @param data the textual data
 	 * @return the parsed benchmark results
@@ -102,7 +102,7 @@ public class BenchmarkScriptOutputParser {
 				throw new OutputParseException("Error is no string: " + node);
 			}
 			return new Metric(
-				name, "", MetricInterpretation.NEUTRAL, List.of(), node.get("error").asText()
+				name, node.get("error").asText(), "", Interpretation.NEUTRAL, List.of()
 			);
 		}
 
@@ -120,12 +120,12 @@ public class BenchmarkScriptOutputParser {
 		}
 
 		String unit = node.get("unit").asText();
-		MetricInterpretation interpretation = parseInterpretation(
+		Interpretation interpretation = parseInterpretation(
 			node.get("resultInterpretation")
 		);
 
 		return new Metric(
-			name, unit, interpretation, parseResults(node.get("results")), null
+			name, null, unit, interpretation, parseResults(node.get("results"))
 		);
 	}
 
@@ -156,10 +156,10 @@ public class BenchmarkScriptOutputParser {
 		return results;
 	}
 
-	private MetricInterpretation parseInterpretation(JsonNode node) {
-		MetricInterpretation interpretation;
+	private Interpretation parseInterpretation(JsonNode node) {
+		Interpretation interpretation;
 		try {
-			interpretation = MetricInterpretation.valueOf(node.asText());
+			interpretation = Interpretation.valueOf(node.asText());
 		} catch (IllegalArgumentException e) {
 			throw new OutputParseException(
 				"Unknown result interpretation " + node.get("interpretation")
@@ -173,8 +173,8 @@ public class BenchmarkScriptOutputParser {
 	 */
 	public static class BareResult {
 
-		private List<Benchmark> benchmarks;
-		private String error;
+		private final List<Benchmark> benchmarks;
+		private final String error;
 
 		public BareResult(List<Benchmark> benchmarks, String error) {
 			this.benchmarks = benchmarks;

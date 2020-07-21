@@ -1,5 +1,6 @@
 package de.aaaaaaah.velcom.runner.entity;
 
+import de.aaaaaaah.velcom.shared.util.systeminfo.LinuxSystemInfo;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -11,8 +12,8 @@ import java.util.stream.Collectors;
  */
 public class BenchmarkFailureInformation {
 
-	private Section generalSection;
-	private List<Section> allSections;
+	private final Section generalSection;
+	private final List<Section> allSections;
 
 	public BenchmarkFailureInformation() {
 		this.generalSection = new Section("General");
@@ -33,13 +34,23 @@ public class BenchmarkFailureInformation {
 
 	/**
 	 * Adds the machine info to the general block.
+	 *
+	 * @param systemInfo the linux system information
 	 */
-	public void addMachineInfo() {
+	public void addMachineInfo(LinuxSystemInfo systemInfo) {
 		addToGeneral(
 			"Machine Info",
 			System.getProperty("os.name")
 				+ " " + System.getProperty("os.arch")
 				+ " " + System.getProperty("os.version")
+		);
+		addToGeneral(
+			"CPU",
+			systemInfo.getCpuInfo().toString()
+		);
+		addToGeneral(
+			"Memory",
+			systemInfo.getMemoryInfo().toString()
 		);
 		addToGeneral(
 			"Java version",
@@ -94,8 +105,8 @@ public class BenchmarkFailureInformation {
 	 */
 	private static class Section {
 
-		private String name;
-		private List<Row> data;
+		private final String name;
+		private final List<Row> data;
 
 		public Section(String name) {
 			this.name = name;
@@ -132,8 +143,8 @@ public class BenchmarkFailureInformation {
 
 	private static class Row {
 
-		private String name;
-		private String value;
+		private final String name;
+		private final String value;
 
 		public Row(String name, String value) {
 			this.name = name;
@@ -141,7 +152,7 @@ public class BenchmarkFailureInformation {
 		}
 
 		public Row(String content) {
-			this.value = content;
+			this(null, content);
 		}
 
 		public String getName() {

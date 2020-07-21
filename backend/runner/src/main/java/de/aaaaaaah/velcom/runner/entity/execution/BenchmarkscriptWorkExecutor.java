@@ -16,6 +16,7 @@ import de.aaaaaaah.velcom.shared.util.FileHelper;
 import de.aaaaaaah.velcom.shared.util.compression.TarHelper;
 import de.aaaaaaah.velcom.shared.util.execution.ProgramExecutor;
 import de.aaaaaaah.velcom.shared.util.execution.ProgramResult;
+import de.aaaaaaah.velcom.shared.util.systeminfo.LinuxSystemInfo;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -62,7 +63,7 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 		RunnerConfiguration configuration, int cancelNonce) {
 		BenchmarkFailureInformation failureInformation = new BenchmarkFailureInformation();
 		failureInformation.addToGeneral("Runner name", '"' + configuration.getRunnerName() + '"');
-		failureInformation.addMachineInfo();
+		failureInformation.addMachineInfo(LinuxSystemInfo.getCurrent());
 		failureInformation.addToGeneral("Bench-Repo Hash",
 			configuration.getBenchmarkRepoOrganizer().getHeadHash().orElse("<unknown>")
 		);
@@ -143,7 +144,7 @@ public class BenchmarkscriptWorkExecutor implements WorkExecutor {
 
 			BenchmarkResults results = new BenchmarkResults(
 				workOrder,
-				bareResult.getBenchmarks(),
+				null, //bareResult.getBenchmarks(),
 				error,
 				startTime, endTime
 			);

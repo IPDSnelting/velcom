@@ -6,8 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import de.aaaaaaah.velcom.runner.entity.execution.output.BenchmarkScriptOutputParser.BareResult;
-import de.aaaaaaah.velcom.shared.protocol.serverbound.entities.BenchmarkResults.Benchmark;
-import de.aaaaaaah.velcom.shared.protocol.serverbound.entities.BenchmarkResults.Metric;
+import de.aaaaaaah.velcom.shared.protocol.serialization.Result.Benchmark;
+import de.aaaaaaah.velcom.shared.protocol.serialization.Result.Metric;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -69,7 +69,6 @@ class BenchmarkScriptOutputParserTest {
 		assertThat(benchmark.getMetrics()).isNotEmpty();
 		Metric metric = benchmark.getMetrics().get(0);
 		assertThat(metric.getName()).isEqualTo("test");
-		assertThat(metric.isError()).isTrue();
 		assertThat(metric.getError()).isEqualTo("Hey");
 	}
 
@@ -127,7 +126,6 @@ class BenchmarkScriptOutputParserTest {
 		assertThat(benchmark.getMetrics()).isNotEmpty();
 		Metric metric = benchmark.getMetrics().get(0);
 		assertThat(metric.getName()).isEqualTo("test");
-		assertThat(metric.isError()).isTrue();
 		assertThat(metric.getError()).isEqualTo("Hey");
 	}
 }
