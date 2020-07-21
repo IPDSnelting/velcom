@@ -31,7 +31,6 @@ public class Benchmarker {
 
 	private final AtomicReference<BenchResult> result; // nullable inside the reference
 
-	private final Thread thread;
 	private final BenchRequest benchRequest;
 	private final CompletableFuture<Void> finishFuture;
 	private final ReentrantLock abortLock;
@@ -53,8 +52,8 @@ public class Benchmarker {
 		// will block for a long time
 		this.abortLock = new ReentrantLock(true);
 
-		this.thread = new Thread(this::runBenchmark);
-		this.thread.start();
+		Thread thread = new Thread(this::runBenchmark);
+		thread.start();
 	}
 
 	/**
@@ -77,9 +76,7 @@ public class Benchmarker {
 	public void abort() {
 		abortLock.lock();
 
-		// The synchronization requirements are detailed in the runBenchmark method.
 		aborted = true;
-		thread.interrupt();
 
 		abortLock.unlock();
 	}
@@ -107,17 +104,6 @@ public class Benchmarker {
 		Future<ProgramResult> work = startBenchExecution(information, benchScriptPath);
 
 		try {
-			// This part is synchronized with the abort method. This ensures the following scenario can
-			// not happen:
-			// 1. The worker thread is up and at the aborted check
-			// 2. The worker thread passes it
-			// 3. the abort method is invoked and interrupts the worker
-			// 4. the worker thread does not check the flag and calls work.get, blocking for the result
-			// ==> The abort is lost!
-			// Synchronizing here ensures that the worker is either already waiting and receives the
-			// interrupted exception or aborted is set to true before the wait starts and the worker bails
-			// out and cancels the work.
-
 			// This is really ugly, but waiting on a future does not release the monitor. Therefore
 			// we need to do this manually by looping and awaiting the result while only sleeping for
 			// a bit. If an abort comes, it will get the lock next (as the lock is fair) and we will

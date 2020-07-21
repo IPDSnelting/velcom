@@ -268,6 +268,32 @@ class BenchmarkerTest {
 		fail("Cancel should have been done by now");
 	}
 
+	@Test
+	void testAbortAfterLongTime() throws Exception {
+		BenchRequest request = getBenchRequest();
+
+		writeBenchScript(
+			"#!/usr/bin/sh",
+			"while true ; do sleep 1 ; done"
+		);
+
+		Benchmarker benchmarker = new Benchmarker(request, finishFuture);
+
+		Thread.sleep(1000);
+		benchmarker.abort();
+
+		// Give it a few seconds to really cancel it (though ~500ms should be enough currently)
+		for (int i = 0; i < 10; i++) {
+			Thread.sleep(250);
+			if (finishFuture.isDone()) {
+				assertThat(benchmarker.getResult()).isEmpty();
+				assertThat(benchmarker.getRunId()).isEqualTo(request.getRunId());
+				return;
+			}
+		}
+		fail("Cancel should have been done by now");
+	}
+
 	private void doWithResult(BenchRequest request, Consumer<BenchResult> resultConsumer)
 		throws InterruptedException, ExecutionException, TimeoutException {
 		Benchmarker benchmarker = new Benchmarker(request, finishFuture);
