@@ -32,15 +32,18 @@ public class Benchmarker {
 	private final CompletableFuture<Void> finishFuture;
 	private volatile boolean aborted;
 	private final Thread worker;
+	private final Instant startTime;
 
 	/**
 	 * Creates a new Benchmarker <em>and starts the benchmark.</em>
 	 *
 	 * @param benchRequest the benchmark request
-	 * @param finishFuture the future the benchmarker completes when the benchmark is done (aborted,
-	 * 	failed or completed successfully)
+	 * @param finishFuture the future the benchmarker completes when the benchmark is done
+	 * 	(aborted, failed or completed successfully)
 	 */
 	public Benchmarker(BenchRequest benchRequest, CompletableFuture<Void> finishFuture) {
+		startTime = Instant.now();
+
 		this.benchRequest = benchRequest;
 		this.finishFuture = finishFuture;
 
@@ -83,12 +86,12 @@ public class Benchmarker {
 
 		if (!Files.isReadable(benchScriptPath)) {
 			information.addSection("Setup error", "`bench` script not found or not readable");
-			setResult(new BenchResult(getRunId(), false, null, information.toString()));
+			setResult(failedBenchResult(information.toString()));
 			return;
 		}
 		if (!Files.isExecutable(benchScriptPath)) {
 			information.addSection("Setup error", "`bench` script is not executable");
-			setResult(new BenchResult(getRunId(), false, null, information.toString()));
+			setResult(failedBenchResult(information.toString()));
 			return;
 		}
 
@@ -170,20 +173,10 @@ public class Benchmarker {
 				"Reason",
 				"The benchmark script returned invalid output!"
 			);
-			return new BenchResult(
-				getRunId(),
-				false,
-				null,
-				information.toString()
-			);
+			return failedBenchResult(information.toString());
 		}
 
-		return new BenchResult(
-			getRunId(),
-			true,
-			new Result(bareResult.getBenchmarks(), bareResult.getError()),
-			null
-		);
+		return successfulBenchResult(new Result(bareResult.getBenchmarks(), bareResult.getError()));
 	}
 
 	private BenchResult interpretFailingExitCode(BenchmarkFailureInformation information,
@@ -200,12 +193,7 @@ public class Benchmarker {
 					+ "It's signal number is " + signal.getNumber() + " and it is caused by '"
 					+ signal.getExplanation() + "'."
 			));
-		return new BenchResult(
-			getRunId(),
-			false,
-			null,
-			information.toString()
-		);
+		return failedBenchResult(information.toString());
 	}
 
 	private BenchResult interpretExecutionException(BenchmarkFailureInformation information,
@@ -216,12 +204,15 @@ public class Benchmarker {
 			"Reason",
 			"Maybe an internal runner error. Rebenchmarking might solve the problem!"
 		);
-		return new BenchResult(
-			getRunId(),
-			false,
-			null,
-			information.toString()
-		);
+		return failedBenchResult(information.toString());
+	}
+
+	private BenchResult successfulBenchResult(Result result) {
+		return new BenchResult(getRunId(), true, result, null, startTime, Instant.now());
+	}
+
+	private BenchResult failedBenchResult(String error) {
+		return new BenchResult(getRunId(), false, null, error, startTime, Instant.now());
 	}
 
 }

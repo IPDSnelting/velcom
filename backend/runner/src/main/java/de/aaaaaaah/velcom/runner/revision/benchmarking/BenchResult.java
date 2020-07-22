@@ -1,6 +1,7 @@
 package de.aaaaaaah.velcom.runner.revision.benchmarking;
 
 import de.aaaaaaah.velcom.shared.protocol.serialization.Result;
+import java.time.Instant;
 import java.util.UUID;
 import javax.annotation.Nullable;
 
@@ -14,9 +15,11 @@ public class BenchResult {
 	private final Result result;
 	@Nullable
 	private final String error;
+	private final Instant startTime;
+	private final Instant stopTime;
 
 	public BenchResult(UUID runId, boolean success, @Nullable Result result,
-		@Nullable String error) {
+		@Nullable String error, Instant startTime, Instant stopTime) {
 
 		if (success && (result == null || error != null)) {
 			throw new IllegalArgumentException(
@@ -30,6 +33,8 @@ public class BenchResult {
 		this.success = success;
 		this.result = result;
 		this.error = error;
+		this.startTime = startTime;
+		this.stopTime = stopTime;
 	}
 
 	public UUID getRunId() {
@@ -48,5 +53,13 @@ public class BenchResult {
 	@Nullable
 	public String getError() {
 		return error;
+	}
+
+	public Instant getStartTime() {
+		return startTime;
+	}
+
+	public Instant getStopTime() {
+		return stopTime;
 	}
 }
