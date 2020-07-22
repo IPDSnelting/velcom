@@ -3,6 +3,7 @@ package de.aaaaaaah.velcom.runner.revision;
 import de.aaaaaaah.velcom.runner.revision.states.Idle;
 import de.aaaaaaah.velcom.runner.revision.states.RunnerState;
 import de.aaaaaaah.velcom.shared.Timeout;
+import de.aaaaaaah.velcom.shared.protocol.RunnerConnectionHeader;
 import de.aaaaaaah.velcom.shared.protocol.StatusCode;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Converter;
 import de.aaaaaaah.velcom.shared.protocol.serialization.serverbound.ServerBoundPacket;
@@ -23,7 +24,6 @@ public class Connection implements WebSocket.Listener {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(RunnerMain.class);
 
-	private static final String AUTH_HEADER_NAME = "Authorization";
 	private static final Duration CLOSE_CONNECTION_TIMEOUT = Duration.ofSeconds(10);
 
 	private final StateMachine<RunnerState> stateMachine;
@@ -34,7 +34,7 @@ public class Connection implements WebSocket.Listener {
 
 	private final WebSocket socket;
 
-	public Connection(TeleBackend teleBackend, URI address, String token)
+	public Connection(TeleBackend teleBackend, URI address, String name, String token)
 		throws ExecutionException, InterruptedException {
 
 		stateMachine = new StateMachine<>(new Idle(teleBackend, this));
@@ -46,7 +46,8 @@ public class Connection implements WebSocket.Listener {
 		LOGGER.debug("Opening connection to " + address);
 		socket = HttpClient.newHttpClient()
 			.newWebSocketBuilder()
-			.header(AUTH_HEADER_NAME, token)
+			.header(RunnerConnectionHeader.CONNECT_RUNNER_NAME.getName(), name)
+			.header(RunnerConnectionHeader.CONNECT_RUNNER_TOKEN.getName(), token)
 			.buildAsync(address, this)
 			.get();
 		LOGGER.debug("Successfully opened connection to " + address);

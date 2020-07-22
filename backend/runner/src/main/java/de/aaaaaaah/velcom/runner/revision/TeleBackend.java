@@ -35,6 +35,7 @@ public class TeleBackend {
 	private final AtomicReference<Status> globalStatus;
 
 	private final URI address;
+	private final String name;
 	private final String token;
 	private final Path path;
 
@@ -46,10 +47,13 @@ public class TeleBackend {
 	@Nullable
 	private Benchmarker benchmarker;
 
-	public TeleBackend(AtomicReference<Status> globalStatus, URI address, String token, Path path) {
+	public TeleBackend(AtomicReference<Status> globalStatus, URI address, String name, String token,
+		Path path) {
+
 		this.globalStatus = globalStatus;
 
 		this.address = address;
+		this.name = name;
 		this.token = token;
 		this.path = path;
 
@@ -77,7 +81,7 @@ public class TeleBackend {
 		//noinspection InfiniteLoopStatement
 		while (true) {
 			try {
-				Connection conn = new Connection(this, address, token);
+				Connection conn = new Connection(this, address, name, token);
 				connection = conn;
 				conn.getClosedFuture().get();
 			} catch (ExecutionException | InterruptedException e) {

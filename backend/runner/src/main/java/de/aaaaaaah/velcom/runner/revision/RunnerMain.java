@@ -29,6 +29,7 @@ public class RunnerMain {
 			.map(entry -> new TeleBackend(
 				globalStatus,
 				entry.getAddress(),
+				config.getName(),
 				entry.getToken(),
 				entry.getDirectory())
 			)
