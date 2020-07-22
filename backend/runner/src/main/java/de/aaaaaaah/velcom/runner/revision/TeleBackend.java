@@ -21,12 +21,15 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class contains all the data and objects which are valid during the life of a backend.
  */
 public class TeleBackend {
 
+	private static final Logger LOGGER = LoggerFactory.getLogger(TeleBackend.class);
 	private static final Duration RECONNECT_DELAY = Duration.ofSeconds(10);
 
 	private final AtomicReference<Status> globalStatus;
@@ -70,7 +73,7 @@ public class TeleBackend {
 	@Nullable
 	private volatile Connection connection;
 
-	public void run() {
+	public void run() throws InterruptedException {
 		//noinspection InfiniteLoopStatement
 		while (true) {
 			try {
@@ -78,11 +81,9 @@ public class TeleBackend {
 				connection = conn;
 				conn.getClosedFuture().get();
 			} catch (ExecutionException | InterruptedException e) {
-				try {
-					//noinspection BusyWait
-					Thread.sleep(RECONNECT_DELAY.toMillis());
-				} catch (InterruptedException ignore) {
-				}
+				LOGGER.warn("Failed to connect to " + address + ", retrying soon");
+				//noinspection BusyWait
+				Thread.sleep(RECONNECT_DELAY.toMillis());
 			}
 		}
 	}
@@ -161,5 +162,12 @@ public class TeleBackend {
 		synchronized (benchmarkerLock) {
 			return Optional.ofNullable(benchmarker).map(Benchmarker::getRunId);
 		}
+	}
+
+	@Override
+	public String toString() {
+		return "TeleBackend{" +
+			"address=" + address +
+			'}';
 	}
 }

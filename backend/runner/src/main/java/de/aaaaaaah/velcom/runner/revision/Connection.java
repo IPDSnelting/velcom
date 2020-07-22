@@ -16,8 +16,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Connection implements WebSocket.Listener {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(RunnerMain.class);
 
 	private static final String AUTH_HEADER_NAME = "Authorization";
 	private static final Duration CLOSE_CONNECTION_TIMEOUT = Duration.ofSeconds(10);
@@ -39,11 +43,13 @@ public class Connection implements WebSocket.Listener {
 		closedFuture = new CompletableFuture<>();
 		closed = false;
 
+		LOGGER.debug("Opening connection to " + address);
 		socket = HttpClient.newHttpClient()
 			.newWebSocketBuilder()
 			.header(AUTH_HEADER_NAME, token)
-			.buildAsync(address, null)
+			.buildAsync(address, this)
 			.get();
+		LOGGER.debug("Successfully opened connection to " + address);
 	}
 
 	public synchronized void sendPacket(ServerBoundPacket packet) {

@@ -2,17 +2,69 @@ package de.aaaaaaah.velcom.runner.revision;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
+import de.aaaaaaah.velcom.shared.protocol.serialization.Status;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RunnerMain {
 
-	public static void main(String[] args) {
+	private static final Logger LOGGER = LoggerFactory.getLogger(RunnerMain.class);
+	public static final int BACKEND_ROUNDTRIP_DELAY = 10000; // in milliseconds
+
+	public static void main(String[] args) throws InterruptedException {
 		RunnerCliSpec cliSpec = new RunnerCliSpec_Parser().parseOrExit(args);
 		RunnerConfig config = loadConfig(cliSpec.configFileLocation());
-		System.out.println(config);
+
+		AtomicReference<Status> globalStatus = new AtomicReference<>(Status.IDLE);
+
+		List<TeleBackend> backends = config.getBackends().stream()
+			.map(entry -> new TeleBackend(
+				globalStatus,
+				entry.getAddress(),
+				entry.getToken(),
+				entry.getDirectory())
+			)
+			.collect(Collectors.toList());
+
+		backends.forEach(backend -> new Thread(() -> {
+			try {
+				backend.run();
+			} catch (InterruptedException e) {
+				die(e, "Thread running " + backend + " was interrupted. This should never happen.");
+			}
+		}).start());
+
+		//noinspection InfiniteLoopStatement
+		while (true) {
+			for (TeleBackend backend : backends) {
+				LOGGER.debug("Asking " + backend + " for a benchmark");
+				Future<Void> future = backend.maybePerformBenchmark();
+
+				if (future != null) {
+					LOGGER.info(backend + " has a benchmark and/or bench repo update");
+					try {
+						future.get();
+					} catch (ExecutionException e) {
+						LOGGER.warn("Error executing benchmark from " + backend + ":", e);
+					}
+				} else {
+					LOGGER.debug(backend + " has no benchmark");
+				}
+			}
+
+			Thread.sleep(BACKEND_ROUNDTRIP_DELAY);
+		}
 	}
 
+	@Nonnull
 	private static RunnerConfig loadConfig(Path configFilePath) {
 		ObjectMapper objectMapper = new ObjectMapper()
 			.registerModule(new ParameterNamesModule());
@@ -22,6 +74,7 @@ public class RunnerMain {
 		} catch (IOException e) {
 			die(e, "Could not load config file at path " + configFilePath);
 			// never reached
+			//noinspection ConstantConditions
 			return null;
 		}
 	}
