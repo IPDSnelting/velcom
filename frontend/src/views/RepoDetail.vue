@@ -465,10 +465,16 @@ export default class RepoDetail extends Vue {
       yScaleBeginsAtZero: this.yScaleBeginsAtZero ? 'true' : 'false'
     }
 
+    let url: string = process.env.BASE_URL
+    if (url.endsWith('/')) {
+      url = url.substring(0, url.length - 1)
+    }
+    url += this.$route.path
+
     history.replaceState(
       {},
       document.title,
-      this.$route.path +
+      url +
         '?' +
         Object.keys(newQuery)
           .map(key => {
