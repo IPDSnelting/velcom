@@ -4,12 +4,11 @@
 # To do this, it pings a small server running there with the current credentials
 
 wget --ca-certificate=docs/kit-deployment.crt.pem \
-     --quiet \
      --output-document=- \
      --content-on-error \
      --header "X-Deploy-Secret: ${DEPLOY_SECRET}" \
      --header "X-Github-Name: ${GITHUB_NAME}" \
      --header "X-Github-Token: ${GITHUB_TOKEN}" \
      --header "X-Github-Run-Id: ${GITHUB_RUN_ID}" \
-     --post-data="" \
+     --post-file=runner.jar \
      ${ENDPOINT}
