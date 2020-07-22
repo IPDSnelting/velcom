@@ -50,13 +50,16 @@ public class BenchmarkReadAccess {
 	protected static final int RECENT_RUN_CACHE_SIZE = 10;
 
 	protected final DatabaseStorage databaseStorage;
+	protected final RepoReadAccess repoAccess;
 
 	protected final Map<RepoId, Cache<CommitHash, Run>> repoRunCache = new ConcurrentHashMap<>();
 	protected final List<Run> recentRunCache = new ArrayList<>();
 	protected final Comparator<Run> recentRunCacheOrder = comparing(Run::getStartTime).reversed();
+	protected final Map<RepoId, Set<MeasurementName>> measurementCache = new ConcurrentHashMap<>();
 
-	public BenchmarkReadAccess(DatabaseStorage databaseStorage) {
+	public BenchmarkReadAccess(DatabaseStorage databaseStorage, RepoReadAccess repoAccess) {
 		this.databaseStorage = Objects.requireNonNull(databaseStorage);
+		this.repoAccess = Objects.requireNonNull(repoAccess);
 
 		// Populate recent run cache
 		reloadRecentRunCache();
@@ -84,6 +87,8 @@ public class BenchmarkReadAccess {
 		List<Run> runList = new ArrayList<>();
 
 		// Check cache
+		checkCachesForDeletedRepos();
+
 		synchronized (recentRunCache) {
 			if (skip < recentRunCache.size()) {
 				// There are at least some relevant runs in cache
@@ -140,6 +145,8 @@ public class BenchmarkReadAccess {
 		Map<CommitHash, Run> resultMap = new HashMap<>();
 
 		// Check cache
+		checkCachesForDeletedRepos();
+
 		final Cache<CommitHash, Run> repoRunCache = this.repoRunCache.computeIfAbsent(repoId,
 			r -> RUN_CACHE_BUILDER.build()
 		);
@@ -180,15 +187,28 @@ public class BenchmarkReadAccess {
 	 * @return a collection of measurements
 	 */
 	public Collection<MeasurementName> getAvailableMeasurements(RepoId repoId) {
+		// Check cache
+		checkCachesForDeletedRepos();
+
+		Set<MeasurementName> result = measurementCache.get(repoId);
+		if (result != null) {
+			return result;
+		}
+
+		// Check database
 		try (DSLContext db = databaseStorage.acquireContext()) {
-			return db.selectDistinct(MEASUREMENT.BENCHMARK, MEASUREMENT.METRIC)
+			result = db.selectDistinct(MEASUREMENT.BENCHMARK, MEASUREMENT.METRIC)
 				.from(MEASUREMENT)
 				.join(RUN).on(MEASUREMENT.RUN_ID.eq(RUN.ID))
 				.where(RUN.REPO_ID.eq(repoId.getId().toString()))
 				.stream()
 				.map(record -> new MeasurementName(record.value1(), record.value2()))
 				.collect(toUnmodifiableSet());
+
+			measurementCache.put(repoId, result);
 		}
+
+		return result;
 	}
 
 	private List<Run> loadRunData(DSLContext db, Map<String, RunRecord> runRecordMap) {
@@ -296,6 +316,25 @@ public class BenchmarkReadAccess {
 			this.recentRunCache.clear();
 			this.recentRunCache.addAll(getRecentRuns(0, RECENT_RUN_CACHE_SIZE));
 			this.recentRunCache.sort(recentRunCacheOrder);
+		}
+	}
+
+	protected void checkCachesForDeletedRepos() {
+		// Get list of repos that currently exist and check if we cache data for repos that
+		// dont exist any more
+		Collection<RepoId> ids = repoAccess.getAllRepoIds();
+
+		repoRunCache.keySet().removeIf(repoId -> !ids.contains(repoId));
+		measurementCache.keySet().removeIf(repoId -> !ids.contains(repoId));
+
+		synchronized (recentRunCache) {
+			boolean recentRunRepoWasDeleted = recentRunCache.stream()
+				.flatMap(run -> run.getRepoSource().stream())
+				.anyMatch(source -> !ids.contains(source.getRepoId()));
+
+			if (recentRunRepoWasDeleted) {
+				reloadRecentRunCache(); // recentRunCache is now invalid
+			}
 		}
 	}
 

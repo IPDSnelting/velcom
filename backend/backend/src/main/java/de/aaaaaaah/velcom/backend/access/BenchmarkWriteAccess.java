@@ -30,8 +30,9 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 
 	private final TaskWriteAccess taskAccess;
 
-	public BenchmarkWriteAccess(DatabaseStorage databaseStorage, TaskWriteAccess taskAccess) {
-		super(databaseStorage);
+	public BenchmarkWriteAccess(DatabaseStorage databaseStorage, RepoReadAccess repoReadAccess,
+		TaskWriteAccess taskAccess) {
+		super(databaseStorage, repoReadAccess);
 		this.taskAccess = taskAccess;
 	}
 
@@ -76,7 +77,10 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 			runRecord.insert();
 		});
 
-		// 2.) Insert run into recent cache
+		// 2.) Invalidate measurement cache
+		run.getRepoSource().ifPresent(source -> measurementCache.remove(source.getRepoId()));
+
+		// 3.) Insert run into cache
 		synchronized (recentRunCache) {
 			recentRunCache.add(run);
 
@@ -162,6 +166,9 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 				.execute();
 		}
 
+		// Invalidate measurement cache
+		measurementCache.remove(repoId);
+
 		// Repopulate recent run cache
 		synchronized (recentRunCache) {
 			recentRunCache.clear();
@@ -199,7 +206,7 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 	}
 
 	/**
-	 * Delete all runs and their respective measurements of the specified repository
+	 * Delete all runs and their respective measurements of the specified repository.
 	 *
 	 * @param repoId the id of the repository
 	 */
@@ -207,6 +214,9 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 		try (DSLContext db = databaseStorage.acquireContext()) {
 			db.deleteFrom(RUN).where(RUN.REPO_ID.eq(repoId.getId().toString()));
 		}
+
+		// Invalidate measurement cache
+		measurementCache.remove(repoId);
 
 		// Invalidate recent run cache and reload it from database
 		this.reloadRecentRunCache();

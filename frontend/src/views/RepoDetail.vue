@@ -10,17 +10,16 @@
         <v-card>
           <v-row align="center" no-gutters>
             <v-col>
-              <v-btn-toggle>
+              <v-btn-toggle
+                mandatory
+                :value="graphFlavours.indexOf(currentFlavour)"
+              >
                 <v-btn
                   group
                   tile
                   text
                   v-for="flavour in graphFlavours"
                   v-bind:key="flavour.name"
-                  v-bind:class="[
-                    'tab-button',
-                    { active: currentFlavour.name === flavour.name }
-                  ]"
                   v-on:click="currentFlavour = flavour"
                 >
                   {{ flavour.name }}
@@ -36,15 +35,13 @@
             </v-col>
           </v-row>
           <v-card flat>
-            <keep-alive>
-              <component
-                v-bind:is="currentFlavour.component"
-                :measurements="selectedMeasurements"
-                :amount="Number.parseInt(amount)"
-                :beginYAtZero="this.yScaleBeginsAtZero"
-                @selectionChanged="updateSelection"
-              ></component>
-            </keep-alive>
+            <component
+              v-bind:is="currentFlavour.component"
+              :measurements="selectedMeasurements"
+              :amount="Number.parseInt(amount)"
+              :beginYAtZero="this.yScaleBeginsAtZero"
+              @selectionChanged="updateSelection"
+            ></component>
           </v-card>
         </v-card>
       </v-col>

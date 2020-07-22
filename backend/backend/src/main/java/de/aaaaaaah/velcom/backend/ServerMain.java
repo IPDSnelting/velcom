@@ -112,10 +112,6 @@ public class ServerMain extends Application<GlobalConfig> {
 
 		// Access layer
 		TaskWriteAccess taskAccess = new TaskWriteAccess(databaseStorage);
-		BenchmarkWriteAccess benchmarkAccess = new BenchmarkWriteAccess(
-			databaseStorage,
-			taskAccess
-		);
 		CommitReadAccess commitAccess = new CommitReadAccess(repoStorage);
 		KnownCommitWriteAccess knownCommitAccess = new KnownCommitWriteAccess(
 			databaseStorage,
@@ -135,6 +131,9 @@ public class ServerMain extends Application<GlobalConfig> {
 			Path.of(configuration.getArchivesRootDir()),
 			new RemoteUrl(configuration.getBenchmarkRepoRemoteUrl()),
 			repoStorage
+		);
+		BenchmarkWriteAccess benchmarkAccess = new BenchmarkWriteAccess(
+			databaseStorage, repoAccess, taskAccess
 		);
 
 		// Data layer

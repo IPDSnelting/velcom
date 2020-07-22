@@ -15,12 +15,12 @@
           @selectCommitToCompare="commitToCompare = selectedDatapoint"
           @compareCommits="compareCommits"
         ></datapoint-dialog>
-        <div id="chart" :style="{ height: this.height + 'px' }">
+        <div id="chart-container">
           <v-chart
+            :autoresize="true"
             @click="chartClicked"
             @restore="restored"
             @datazoom="zoomed"
-            id="chart"
             :options="chartOptions"
           />
         </div>
@@ -117,8 +117,6 @@ export default class EchartsDetailGraph extends Vue {
   beginYAtZero!: boolean
 
   // dimensions
-  private width: number = 0
-  private height: number = 500
   private chartOptions: EChartOption = {}
   private showGraph: boolean = false
   private datapointDialogOpen = false
@@ -131,6 +129,8 @@ export default class EchartsDetailGraph extends Vue {
     itemInfo: ItemInfo
   } | null = null
   private allowSelectAsReference: boolean = true
+  private zoomStartPercent: number = 0
+  private zoomEndPercent: number = 1
 
   private numberFormat: Intl.NumberFormat = new Intl.NumberFormat(
     this.getLocaleString(),
@@ -283,7 +283,7 @@ export default class EchartsDetailGraph extends Vue {
   }
 
   private restored(e: any) {
-    this.updateGraphTyp(0, 1)
+    this.updateGraphType()
   }
 
   private zoomed(e: any) {
@@ -312,11 +312,14 @@ export default class EchartsDetailGraph extends Vue {
       return
     }
 
-    this.updateGraphTyp(startPercent, endPercent)
+    this.zoomStartPercent = startPercent
+    this.zoomEndPercent = endPercent
+    this.updateGraphType()
   }
 
-  private updateGraphTyp(startPercent: number, endPercent: number) {
-    let visibleCommits = (endPercent - startPercent) * this.amount
+  private updateGraphType() {
+    let visibleCommits =
+      (this.zoomEndPercent - this.zoomStartPercent) * this.amount
     let showSymbols = visibleCommits * this.groupedByMeasurement.size < 200
 
     if (this.showGraph !== showSymbols) {
@@ -392,12 +395,19 @@ export default class EchartsDetailGraph extends Vue {
   @Watch('amount')
   private updateData() {
     this.drawGraph()
+    this.updateGraphType()
   }
 
   private drawGraph() {
     this.chartOptions = {
       backgroundColor: this.graphBackgroundColor,
+      grid: {
+        left: 20,
+        right: 20,
+        containLabel: true
+      },
       toolbox: {
+        left: 'center',
         show: true,
         showTitle: false, // hide the default text so they don't overlap each other
         feature: {
@@ -407,18 +417,14 @@ export default class EchartsDetailGraph extends Vue {
             title: {
               zoom: 'Zoom (brush)',
               back: 'Reset zoom'
-            }
+            },
+            start: this.zoomStartPercent * 100,
+            end: this.zoomEndPercent * 100
           }
         },
         tooltip: {
           show: true
         }
-      },
-      title: {
-        text: 'A graph',
-        left: '50%',
-        textAlign: 'center',
-        top: '20px'
       },
       xAxis: {
         type: 'value',
@@ -764,8 +770,9 @@ export default class EchartsDetailGraph extends Vue {
   stroke-dasharray: 5 5;
 }
 
-#chart {
+#chart-container {
   position: relative;
+  height: 80vh;
 }
 
 .datapointDialog .v-input .v-label {
