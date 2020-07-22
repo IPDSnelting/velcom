@@ -134,8 +134,8 @@ public class Result {
 		public Metric(
 			@JsonProperty(required = true) String name,
 			@Nullable String error,
-			String unit,
-			Interpretation interpretation,
+			@JsonProperty(required = true) String unit,
+			@JsonProperty(required = true) Interpretation interpretation,
 			@Nullable List<Double> values
 		) {
 			if (error == null && values == null) {

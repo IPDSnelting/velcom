@@ -103,6 +103,8 @@ class GetResultReplyTest extends EntityTest {
 			+ "        \"metrics\": ["
 			+ "          {"
 			+ "            \"name\": \"sample metric\","
+			+ "            \"unit\": \"barn\","
+			+ "            \"interpretation\": \"MORE_IS_BETTER\","
 			+ "            \"error\": \"something went wrong\""
 			+ "          },"
 			+ "          {"
@@ -133,7 +135,9 @@ class GetResultReplyTest extends EntityTest {
 								new Metric(
 									"sample metric",
 									"something went wrong",
-									null, null, null
+									"barn",
+									Interpretation.MORE_IS_BETTER,
+									null
 								),
 								new Metric(
 									"other metric",
