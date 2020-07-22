@@ -19,6 +19,7 @@ import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
 import de.aaaaaaah.velcom.backend.access.entities.RunId;
 import de.aaaaaaah.velcom.backend.access.entities.Unit;
+import de.aaaaaaah.velcom.backend.util.Either;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
@@ -93,22 +94,22 @@ class TimesliceComparisonTest {
 
 		unit = new Unit("unit");
 		interpretation = Interpretation.LESS_IS_BETTER;
-		m1 = new Measurement(mock(RunId.class), measurementName,
-			new MeasurementValues(List.of(1d, 2d, 3d), unit, interpretation));
-		m2 = new Measurement(mock(RunId.class), measurementName,
-			new MeasurementValues(List.of(4d, 5d, 6d), unit, interpretation));
-		m3 = new Measurement(mock(RunId.class), measurementName,
-			new MeasurementValues(List.of(7d, 8d, 9d), unit, interpretation));
-		m4 = new Measurement(mock(RunId.class), measurementName,
-			new MeasurementValues(List.of(10d, 11d, 12d), unit, interpretation));
+		m1 = new Measurement(mock(RunId.class), measurementName, unit, interpretation,
+			new MeasurementValues(List.of(1d, 2d, 3d)));
+		m2 = new Measurement(mock(RunId.class), measurementName, unit, interpretation,
+			new MeasurementValues(List.of(4d, 5d, 6d)));
+		m3 = new Measurement(mock(RunId.class), measurementName, unit, interpretation,
+			new MeasurementValues(List.of(7d, 8d, 9d)));
+		m4 = new Measurement(mock(RunId.class), measurementName, unit, interpretation,
+			new MeasurementValues(List.of(10d, 11d, 12d)));
 		r1 = mock(Run.class);
 		r2 = mock(Run.class);
 		r3 = mock(Run.class);
 		r4 = mock(Run.class);
-		when(r1.getMeasurements()).thenReturn(Optional.of(List.of(m1)));
-		when(r2.getMeasurements()).thenReturn(Optional.of(List.of(m2)));
-		when(r3.getMeasurements()).thenReturn(Optional.of(List.of(m3)));
-		when(r4.getMeasurements()).thenReturn(Optional.of(List.of(m4)));
+		when(r1.getResult()).thenReturn(Either.ofLeft(List.of(m1)));
+		when(r2.getResult()).thenReturn(Either.ofLeft(List.of(m2)));
+		when(r3.getResult()).thenReturn(Either.ofLeft(List.of(m3)));
+		when(r4.getResult()).thenReturn(Either.ofLeft(List.of(m4)));
 		runMap = new HashMap<>();
 		runMap.put(c1Hash, r1);
 		runMap.put(c2Hash, r2);
