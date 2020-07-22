@@ -175,9 +175,18 @@ public class BenchmarkScriptOutputParser {
 
 		@Nullable
 		private final List<Benchmark> benchmarks;
+		@Nullable
 		private final String error;
 
-		public BareResult(List<Benchmark> benchmarks, String error) {
+		public BareResult(@Nullable List<Benchmark> benchmarks, @Nullable String error) {
+			// TODO maybe use Either?
+			if (benchmarks == null && error == null) {
+				throw new IllegalArgumentException("benchmarks and error must not both be null");
+			} else if (benchmarks != null && error != null) {
+				throw new IllegalArgumentException(
+					"benchmarks and error can not both be set at the same time");
+			}
+
 			this.benchmarks = benchmarks;
 			this.error = error;
 		}

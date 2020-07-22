@@ -29,10 +29,10 @@ class BenchmarkScriptOutputParserTest {
 		BareResult result = parser.parse(line);
 		if (error) {
 			assertNotNull(result.getError(), "Error was null!");
-			assertThat(result.getBenchmarks()).isEmpty();
+			assertNull(result.getBenchmarks(), "Benchmarks was not null!");
 		} else {
 			assertNull(result.getError(), "Error was not null!");
-			assertThat(result.getBenchmarks()).isNotEmpty();
+			assertNotNull(result.getBenchmarks(), "Benchmarks was null!");
 		}
 	}
 
