@@ -106,7 +106,7 @@ class BenchmarkerTest {
 		BenchRequest request = getBenchRequest();
 
 		writeBenchScript(
-			"#!/usr/bin/sh",
+			"#!/bin/sh",
 			"echo 'Hello'"
 		);
 
@@ -127,7 +127,7 @@ class BenchmarkerTest {
 		BenchRequest request = getBenchRequest();
 
 		writeBenchScript(
-			"#!/usr/bin/sh",
+			"#!/bin/sh",
 			"exit 1"
 		);
 
@@ -148,7 +148,7 @@ class BenchmarkerTest {
 		BenchRequest request = getBenchRequest();
 
 		writeBenchScript(
-			"#!/usr/bin/sh",
+			"#!/bin/sh",
 			"exit 130"
 		);
 
@@ -172,7 +172,7 @@ class BenchmarkerTest {
 		BenchRequest request = getBenchRequest();
 
 		writeBenchScript(
-			"#!/usr/bin/sh",
+			"#!/bin/sh",
 			"echo '{ \"error\": \"Halloooo\" }'"
 		);
 
@@ -193,7 +193,7 @@ class BenchmarkerTest {
 		BenchRequest request = getBenchRequest();
 
 		writeBenchScript(
-			"#!/usr/bin/sh",
+			"#!/bin/sh",
 			"echo '{ \"test\": { \"metric\": { \"error\": \"20\" } } }'"
 		);
 
@@ -219,7 +219,7 @@ class BenchmarkerTest {
 		BenchRequest request = getBenchRequest();
 
 		writeBenchScript(
-			"#!/usr/bin/sh",
+			"#!/bin/sh",
 			"echo '{ \"test\": { \"metric\": {"
 				+ " \"unit\": \"cats\", \"resultInterpretation\": \"NEUTRAL\", \"results\": [20, 5]"
 				+ " } } }'"
@@ -247,7 +247,7 @@ class BenchmarkerTest {
 		BenchRequest request = getBenchRequest();
 
 		writeBenchScript(
-			"#!/usr/bin/sh",
+			"#!/bin/sh",
 			"while true ; do sleep 1 ; done"
 		);
 
@@ -273,7 +273,7 @@ class BenchmarkerTest {
 		BenchRequest request = getBenchRequest();
 
 		writeBenchScript(
-			"#!/usr/bin/sh",
+			"#!/bin/sh",
 			"while true ; do sleep 1 ; done"
 		);
 
