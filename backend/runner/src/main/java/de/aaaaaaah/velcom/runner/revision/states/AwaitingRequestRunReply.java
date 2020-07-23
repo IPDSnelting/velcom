@@ -57,7 +57,7 @@ public class AwaitingRequestRunReply extends RunnerState {
 					receivedDataPassedOn = true;
 					return new AwaitingRun(teleBackend, connection, receivedData, p);
 				} else {
-					return this;
+					return new Idle(teleBackend, connection);
 				}
 			})
 		);
