@@ -137,6 +137,8 @@ public class RunnerConnection implements WebSocketListener, WebSocketFrameListen
 			return;
 		}
 
+		LOGGER.info("Closing connection to {} due to {}", session.getRemoteAddress(), statusCode);
+
 		Timeout closeTimeout = Timeout.after(Duration.ofSeconds(10));
 		closeTimeout.getCompletionStage().thenRun(this::hardDisconnect);
 		closeTimeout.start();
