@@ -92,6 +92,19 @@ public class Connection implements WebSocket.Listener {
 		disconnectTimeout.start();
 	}
 
+	public synchronized void forceClose(StatusCode statusCode) {
+		if (closed) {
+			return;
+		}
+
+		LOGGER.warn("Force-closing connection: " + statusCode.getDescription());
+		socket.abort();
+
+		// Since neither onClose nor onError are called when the socket is aborted like this, we
+		// need to call cleanupAfterClosed here too.
+		cleanupAfterClosed();
+	}
+
 	// TODO maybe not expose the state machine?
 	public StateMachine<RunnerState> getStateMachine() {
 		return stateMachine;

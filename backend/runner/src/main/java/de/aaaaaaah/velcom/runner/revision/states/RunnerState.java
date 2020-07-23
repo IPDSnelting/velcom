@@ -153,7 +153,7 @@ public abstract class RunnerState implements State {
 
 		// Binary packets are only expected in certain circumstances, but usually they are invalid
 		// behaviour.
-		connection.close(StatusCode.ILLEGAL_BINARY_PACKET);
+		connection.forceClose(StatusCode.ILLEGAL_BINARY_PACKET);
 		return this;
 	}
 }
