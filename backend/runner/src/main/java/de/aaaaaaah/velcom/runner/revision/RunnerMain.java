@@ -51,11 +51,13 @@ public class RunnerMain {
 				Future<Void> future = backend.maybePerformBenchmark();
 
 				if (future != null) {
-					LOGGER.info(backend + " has a benchmark and/or bench repo update");
+					LOGGER.info(
+						"Waiting for " + backend + " benchmark (or maybe just bench repo update)");
+
 					try {
 						future.get();
 					} catch (ExecutionException e) {
-						LOGGER.warn("Error executing benchmark from " + backend + ":", e);
+						LOGGER.warn("Error waiting for " + backend + " benchmark:", e);
 					}
 				} else {
 					LOGGER.debug(backend + " has no benchmark");
