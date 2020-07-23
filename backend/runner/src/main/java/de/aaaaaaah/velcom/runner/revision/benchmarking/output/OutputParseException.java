@@ -1,4 +1,4 @@
-package de.aaaaaaah.velcom.runner.entity.execution.output;
+package de.aaaaaaah.velcom.runner.revision.benchmarking.output;
 
 /**
  * An exception detailing an error parsing the script output.

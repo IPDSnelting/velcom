@@ -1,4 +1,4 @@
-package de.aaaaaaah.velcom.runner.entity.execution;
+package de.aaaaaaah.velcom.runner.revision.benchmarking;
 
 import java.util.Arrays;
 import java.util.Optional;
@@ -39,8 +39,8 @@ public enum LinuxSignal {
 	SIGPWR(30, "Power failure"),
 	SIGSYS(31, "Bad system call");
 
-	private int number;
-	private String explanation;
+	private final int number;
+	private final String explanation;
 
 	LinuxSignal(int number, String explanation) {
 		this.number = number;

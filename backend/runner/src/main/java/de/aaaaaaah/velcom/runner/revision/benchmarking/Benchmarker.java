@@ -1,10 +1,8 @@
 package de.aaaaaaah.velcom.runner.revision.benchmarking;
 
-import de.aaaaaaah.velcom.runner.entity.BenchmarkFailureInformation;
-import de.aaaaaaah.velcom.runner.entity.execution.LinuxSignal;
-import de.aaaaaaah.velcom.runner.entity.execution.output.BenchmarkScriptOutputParser;
-import de.aaaaaaah.velcom.runner.entity.execution.output.BenchmarkScriptOutputParser.BareResult;
-import de.aaaaaaah.velcom.runner.entity.execution.output.OutputParseException;
+import de.aaaaaaah.velcom.runner.revision.benchmarking.output.BenchmarkScriptOutputParser;
+import de.aaaaaaah.velcom.runner.revision.benchmarking.output.BenchmarkScriptOutputParser.BareResult;
+import de.aaaaaaah.velcom.runner.revision.benchmarking.output.OutputParseException;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Result;
 import de.aaaaaaah.velcom.shared.util.ExceptionHelper;
 import de.aaaaaaah.velcom.shared.util.execution.ProgramExecutor;

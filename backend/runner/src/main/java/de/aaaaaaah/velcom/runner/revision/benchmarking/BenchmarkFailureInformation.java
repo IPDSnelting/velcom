@@ -1,4 +1,4 @@
-package de.aaaaaaah.velcom.runner.entity;
+package de.aaaaaaah.velcom.runner.revision.benchmarking;
 
 import de.aaaaaaah.velcom.shared.util.systeminfo.LinuxSystemInfo;
 import java.util.ArrayList;

@@ -1,11 +1,11 @@
-package de.aaaaaaah.velcom.runner.entity.execution.output;
+package de.aaaaaaah.velcom.runner.revision.benchmarking.output;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
-import de.aaaaaaah.velcom.runner.entity.execution.output.BenchmarkScriptOutputParser.BareResult;
+import de.aaaaaaah.velcom.runner.revision.benchmarking.output.BenchmarkScriptOutputParser.BareResult;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Result.Benchmark;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Result.Metric;
 import org.junit.jupiter.api.BeforeEach;
