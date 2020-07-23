@@ -47,6 +47,7 @@ public class RequestRunReply implements ClientBound {
 	/**
 	 * @return whether the backend will send a new benchmark repo
 	 */
+	@JsonProperty("bench")
 	public boolean hasBench() {
 		return bench;
 	}
@@ -58,6 +59,7 @@ public class RequestRunReply implements ClientBound {
 	/**
 	 * @return whether the backend will send a new repo for the runner to benchmark
 	 */
+	@JsonProperty("run")
 	public boolean hasRun() {
 		return run;
 	}
