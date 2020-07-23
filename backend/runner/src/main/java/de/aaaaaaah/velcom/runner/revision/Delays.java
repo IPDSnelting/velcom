@@ -29,16 +29,6 @@ public class Delays {
 	 */
 	public static final Duration AWAIT_COMMAND_REPLY = Duration.ofSeconds(10);
 
-	/**
-	 * How long to wait for the next partial packet in a stream of binary packets.
-	 */
-	public static final Duration NEXT_PARTIAL_BINARY_PACKET = Duration.ofSeconds(1);
-
-	/**
-	 * How long to wait between multiple packets that should be sent one after the other.
-	 */
-	public static final Duration FOLLOW_UP_PACKET = Duration.ofSeconds(1);
-
 	private Delays() {
 		throw new UnsupportedOperationException();
 	}
