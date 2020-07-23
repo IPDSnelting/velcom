@@ -44,6 +44,8 @@ public class RunnerMain {
 
 		//noinspection InfiniteLoopStatement
 		while (true) {
+			LOGGER.debug("Beginning new backend roundtrip");
+
 			for (TeleBackend backend : backends) {
 				LOGGER.debug("Asking " + backend + " for a benchmark");
 				Future<Void> future = backend.maybePerformBenchmark();
@@ -61,6 +63,7 @@ public class RunnerMain {
 			}
 
 			//noinspection BusyWait
+			LOGGER.debug("Waiting a bit before beginning new backend roundtrip");
 			Thread.sleep(Delays.BACKEND_ROUNDTRIP.toMillis());
 		}
 	}
