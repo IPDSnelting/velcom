@@ -57,8 +57,6 @@ public class TeleRunner {
 		this.benchRepo = benchRepo;
 		this.runnerInformation = new AtomicReference<>();
 		this.myCurrentTask = new AtomicReference<>();
-
-		this.connection = createConnection();
 	}
 
 	/**

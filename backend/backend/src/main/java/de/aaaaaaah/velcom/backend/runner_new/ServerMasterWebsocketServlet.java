@@ -61,12 +61,17 @@ public class ServerMasterWebsocketServlet extends WebSocketServlet {
 				TeleRunner runner = existingRunner.get();
 				if (runner.hasConnection()) {
 					kickRunner(resp, RunnerDenyReason.NAME_ALREADY_USED);
+					LOGGER.info(
+						"Kicked runner {} from {} as the name as taken!", name, req.getRemoteAddress()
+					);
 					return null;
 				}
+				LOGGER.info("Reused runner connection for {} to ip {}!", name, req.getRemoteAddress());
 				myTeleRunner = runner;
 			} else {
 				myTeleRunner = new TeleRunner(name, serializer, dispatcher, benchRepo);
 				dispatcher.addRunner(myTeleRunner);
+				LOGGER.info("Added runner {} from {}!", name, req.getRemoteAddress());
 			}
 
 			return myTeleRunner.createConnection();
