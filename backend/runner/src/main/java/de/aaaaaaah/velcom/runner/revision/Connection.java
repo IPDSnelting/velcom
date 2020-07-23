@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 
 public class Connection implements WebSocket.Listener {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(RunnerMain.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(Connection.class);
 
 	private static final Duration CLOSE_CONNECTION_TIMEOUT = Duration.ofSeconds(10);
 
@@ -64,12 +64,17 @@ public class Connection implements WebSocket.Listener {
 		);
 	}
 
+	/**
+	 * Do whatever needs to do when the connection transitions into the closed state. This function
+	 * is threadsafe and can be called multiple times.
+	 */
 	private synchronized void cleanupAfterClosed() {
 		if (closed) {
 			return;
 		}
 		closed = true;
 
+		LOGGER.debug("Cleaning up after closing the connection");
 		stateMachine.stop();
 		closedFuture.complete(null);
 	}
@@ -79,10 +84,11 @@ public class Connection implements WebSocket.Listener {
 			return;
 		}
 
+		LOGGER.warn("Closing connection: " + statusCode.getDescription());
 		socket.sendClose(statusCode.getCode(), statusCode.getDescriptionAsReason());
 
 		Timeout disconnectTimeout = Timeout.after(CLOSE_CONNECTION_TIMEOUT);
-		disconnectTimeout.getCompletionStage().thenAccept(aVoid -> socket.abort());
+		disconnectTimeout.getCompletionStage().thenAccept(aVoid -> forceClose(statusCode));
 		disconnectTimeout.start();
 	}
 
@@ -137,12 +143,15 @@ public class Connection implements WebSocket.Listener {
 	public synchronized CompletionStage<?> onClose(WebSocket webSocket, int statusCode,
 		String reason) {
 
+		LOGGER.debug("Connection closed normally");
 		cleanupAfterClosed();
 		return null;
 	}
 
 	@Override
 	public synchronized void onError(WebSocket webSocket, Throwable error) {
+		// For some reason, this function is not called after a socket.abort().
+		LOGGER.debug("Connection closed abnormally");
 		cleanupAfterClosed();
 	}
 }

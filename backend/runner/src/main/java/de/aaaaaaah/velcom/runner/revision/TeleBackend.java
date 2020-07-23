@@ -81,9 +81,11 @@ public class TeleBackend {
 		//noinspection InfiniteLoopStatement
 		while (true) {
 			try {
+				LOGGER.info("Connecting to " + address);
 				Connection conn = new Connection(this, address, name, token);
 				connection = conn;
 				conn.getClosedFuture().get();
+				LOGGER.info("Disconnected from " + address + ", reconnecting immediately");
 			} catch (ExecutionException | InterruptedException e) {
 				LOGGER.warn("Failed to connect to " + address + ", retrying soon");
 				//noinspection BusyWait
