@@ -75,7 +75,8 @@ public class ProgramExecutor {
 				try {
 					process.waitFor(timeToForceKillMillis, TimeUnit.MILLISECONDS);
 				} catch (InterruptedException ignored) {
-					LOGGER.warn("Interrupted while waiting for process to gracefully shutdown. Killing it");
+					LOGGER.warn(
+						"Interrupted while waiting for process to gracefully shutdown. Killing it");
 				}
 				LOGGER.debug("Waited " + timeToForceKillMillis + " killing it");
 

@@ -1,7 +1,7 @@
 package de.aaaaaaah.velcom.runner.revision.states;
 
-import de.aaaaaaah.velcom.runner.revision.TeleBackend;
 import de.aaaaaaah.velcom.runner.revision.Connection;
+import de.aaaaaaah.velcom.runner.revision.TeleBackend;
 
 /**
  * This is the (only) resting state in the runner state machine. It has no special behaviour

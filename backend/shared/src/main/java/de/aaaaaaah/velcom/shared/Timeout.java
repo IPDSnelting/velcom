@@ -58,7 +58,7 @@ public class Timeout {
 
 	/**
 	 * Cancel the timeout. Use this function instead of cancelling the {@link CompletionStage}
-	 * returned by getCompletionStage directly.
+	 * returned by getCompletionStage directly. Can be called multiple times.
 	 */
 	public void cancel() {
 		cancelled = true;
