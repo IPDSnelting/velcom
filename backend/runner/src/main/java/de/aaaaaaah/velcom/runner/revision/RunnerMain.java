@@ -17,7 +17,6 @@ import org.slf4j.LoggerFactory;
 public class RunnerMain {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(RunnerMain.class);
-	public static final int BACKEND_ROUNDTRIP_DELAY = 10000; // in milliseconds
 
 	public static void main(String[] args) throws InterruptedException {
 		RunnerCliSpec cliSpec = new RunnerCliSpec_Parser().parseOrExit(args);
@@ -61,7 +60,8 @@ public class RunnerMain {
 				}
 			}
 
-			Thread.sleep(BACKEND_ROUNDTRIP_DELAY);
+			//noinspection BusyWait
+			Thread.sleep(Delays.BACKEND_ROUNDTRIP.toMillis());
 		}
 	}
 

@@ -12,7 +12,6 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.WebSocket;
 import java.nio.ByteBuffer;
-import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
@@ -23,8 +22,6 @@ import org.slf4j.LoggerFactory;
 public class Connection implements WebSocket.Listener {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(Connection.class);
-
-	private static final Duration CLOSE_CONNECTION_TIMEOUT = Duration.ofSeconds(10);
 
 	private final StateMachine<RunnerState> stateMachine;
 	private final Converter serializer;
@@ -87,7 +84,7 @@ public class Connection implements WebSocket.Listener {
 		LOGGER.warn("Closing connection: " + statusCode.getDescription());
 		socket.sendClose(statusCode.getCode(), statusCode.getDescriptionAsReason());
 
-		Timeout disconnectTimeout = Timeout.after(CLOSE_CONNECTION_TIMEOUT);
+		Timeout disconnectTimeout = Timeout.after(Delays.CLOSE_CONNECTION_TIMEOUT);
 		disconnectTimeout.getCompletionStage().thenAccept(aVoid -> forceClose(statusCode));
 		disconnectTimeout.start();
 	}

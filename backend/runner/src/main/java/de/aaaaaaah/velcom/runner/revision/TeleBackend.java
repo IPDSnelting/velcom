@@ -30,7 +30,6 @@ import org.slf4j.LoggerFactory;
 public class TeleBackend {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(TeleBackend.class);
-	private static final Duration RECONNECT_DELAY = Duration.ofSeconds(10);
 
 	private final AtomicReference<Status> globalStatus;
 
@@ -89,7 +88,7 @@ public class TeleBackend {
 			} catch (ExecutionException | InterruptedException e) {
 				LOGGER.warn("Failed to connect to " + address + ", retrying soon");
 				//noinspection BusyWait
-				Thread.sleep(RECONNECT_DELAY.toMillis());
+				Thread.sleep(Delays.RECONNECT_AFTER_FAILED_CONNECTION.toMillis());
 			}
 		}
 	}

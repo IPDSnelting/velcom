@@ -1,6 +1,7 @@
 package de.aaaaaaah.velcom.runner.revision.states;
 
 import de.aaaaaaah.velcom.runner.revision.Connection;
+import de.aaaaaaah.velcom.runner.revision.Delays;
 import de.aaaaaaah.velcom.runner.revision.TeleBackend;
 import de.aaaaaaah.velcom.shared.Timeout;
 import de.aaaaaaah.velcom.shared.protocol.StatusCode;
@@ -8,7 +9,6 @@ import de.aaaaaaah.velcom.shared.protocol.serialization.Converter;
 import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.ClientBoundPacket;
 import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.ClientBoundPacketType;
 import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.RequestRunReply;
-import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
@@ -16,9 +16,6 @@ import java.util.concurrent.CompletableFuture;
  * Waiting for a {@link RequestRunReply} from the server.
  */
 public class AwaitingRequestRunReply extends RunnerState {
-
-	// TODO move protocol-related timeout durations to separate class
-	private static final Duration AWAIT_REPLY_TIMEOUT = Duration.ofSeconds(10);
 
 	private final CompletableFuture<Boolean> receivedData;
 	private boolean receivedDataPassedOn;
@@ -32,7 +29,7 @@ public class AwaitingRequestRunReply extends RunnerState {
 		this.receivedData = receivedData;
 		receivedDataPassedOn = false;
 
-		timeout = Timeout.after(AWAIT_REPLY_TIMEOUT);
+		timeout = Timeout.after(Delays.AWAIT_COMMAND_REPLY);
 		timeout.getCompletionStage()
 			.thenAccept(aVoid -> connection.close(StatusCode.COMMAND_TIMEOUT));
 	}
