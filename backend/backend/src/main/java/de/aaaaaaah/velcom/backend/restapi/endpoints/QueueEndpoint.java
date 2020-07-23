@@ -1,5 +1,8 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
@@ -16,13 +19,17 @@ import de.aaaaaaah.velcom.backend.data.linearlog.LinearLog;
 import de.aaaaaaah.velcom.backend.data.linearlog.LinearLogException;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.restapi.RepoUser;
+import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonCommit;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonTask;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonWorker;
 import de.aaaaaaah.velcom.backend.runner_new.IDispatcher;
 import io.dropwizard.auth.Auth;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.validation.constraints.NotNull;
@@ -75,7 +82,43 @@ public class QueueEndpoint {
 		// List<JsonWorker> workers = dispatcher.getKnownRunners().stream()
 		List<JsonWorker> workers = List.of();
 
-		return new GetReply(tasks, workers);
+		// Convert tasks to commits for now, change later when frontend is able to work with
+		// JsonTask instances properly. To use JsonCommit instances, we need to load real
+		// Commit instances from commitAccess, which we can only do per repo.
+		// The following code will completely ignore tar tasks.
+
+		// Map<RepoId, List<JsonTask>>
+		Map<UUID, List<JsonTask>> perRepoTaskMap = tasks.stream()
+			.filter(task -> task.getCommitHash() != null)
+			.collect(Collectors.groupingBy(JsonTask::getRepoId));
+
+		// Map<RepoId, Map<CommitHash, JsonCommit>>
+		Map<UUID, Map<String, JsonCommit>> commitMap = new HashMap<>();
+
+		// Load commits per repo and convert them into JsonCommit instances
+		perRepoTaskMap.forEach((repoIdAsUuid, taskGroup) -> {
+			RepoId repoId = new RepoId(repoIdAsUuid);
+			Set<CommitHash> hashes = taskGroup.stream()
+				.map(JsonTask::getCommitHash)
+				.map(CommitHash::new)
+				.collect(toSet());
+
+			commitAccess.getCommits(repoId, hashes)
+				.stream()
+				.map(JsonCommit::new)
+				.forEach(commit -> {
+					commitMap.computeIfAbsent(repoId.getId(), rid -> new HashMap<>());
+					commitMap.get(repoId.getId()).put(commit.getHash(), commit);
+				});
+		});
+
+		// Map each JsonTask instance to their respective JsonCommit instance
+		List<JsonCommit> commitList = tasks.stream()
+			.filter(task -> task.getCommitHash() != null)
+			.map(task -> commitMap.get(task.getRepoId()).get(task.getCommitHash()))
+			.collect(toList());
+
+		return new GetReply(commitList, workers);
 	}
 
 	/**
@@ -98,14 +141,14 @@ public class QueueEndpoint {
 			List<BranchName> branchNames = repoReadAccess.getBranches(repoId)
 				.stream()
 				.map(Branch::getName)
-				.collect(Collectors.toList());
+				.collect(toList());
 
 			try {
 				// Do we really need to load complete commit objects?
 				List<CommitHash> commits = linearLog.walk(repoId, branchNames)
 					.takeWhile(it -> !it.getHash().equals(commitHash))
 					.map(Commit::getHash)
-					.collect(Collectors.toList());
+					.collect(toList());
 
 				queue.addCommits(author, repoId, commits);
 			} catch (LinearLogException e) {
@@ -118,14 +161,32 @@ public class QueueEndpoint {
 	 * Deletes a commit from the queue.
 	 *
 	 * @param user user who authored this delete
-	 * @param taskId the id of the task to delete
-	 * @throws NoSuchTaskException if no task with the given id exists
+	 * @param repoUuid the id of the repo
+	 * @param hashString the hash of the commit
 	 */
 	@DELETE
-	public void delete(@Auth RepoUser user, @NotNull @QueryParam("task_id") UUID taskId)
+	public void delete(
+		@Auth RepoUser user,
+		@NotNull @QueryParam("repo_id") UUID repoUuid,
+		@NotNull @QueryParam("commit_hash") String hashString)
 		throws NoSuchTaskException {
 
-		Task task = queue.getTaskById(new TaskId(taskId));
+		RepoId repoId = new RepoId(repoUuid);
+		user.guardRepoAccess(repoId);
+
+		CommitHash commitHash = new CommitHash(hashString);
+
+		// We need to find the task that is associated with the commit hash and repo id
+		List<TaskId> tasks = queue.getTasksSorted().stream()
+			.filter(task -> task.getSource().isLeft())
+			.filter(task -> task.getSource().getLeft().get().getRepoId().equals(repoId))
+			.filter(task -> task.getSource().getLeft().get().getHash().equals(commitHash))
+			.map(Task::getId)
+			.collect(toList());
+
+		queue.deleteTasks(tasks);
+
+		/*Task task = queue.getTaskById(new TaskId(taskId));
 
 		if (task.getSource().getLeft().isPresent()) {
 			// task is commit
@@ -136,20 +197,21 @@ public class QueueEndpoint {
 			user.guardAdminAccess();
 		}
 
-		queue.deleteTasks(List.of(new TaskId(taskId)));
+		queue.deleteTasks(List.of(new TaskId(taskId)));*/
 	}
 
 	private static class GetReply {
 
-		private final Collection<JsonTask> tasks;
+		// only commits for now, change later
+		private final Collection<JsonCommit> tasks;
 		private final Collection<JsonWorker> workers;
 
-		public GetReply(Collection<JsonTask> tasks, Collection<JsonWorker> workers) {
+		public GetReply(Collection<JsonCommit> tasks, Collection<JsonWorker> workers) {
 			this.tasks = tasks;
 			this.workers = workers;
 		}
 
-		public Collection<JsonTask> getTasks() {
+		public Collection<JsonCommit> getTasks() {
 			return tasks;
 		}
 
