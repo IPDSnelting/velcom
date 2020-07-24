@@ -20,6 +20,5 @@ class RequestRunTest extends SerializerBasedTest {
 	void deserializeFromEmptyObject() {
 		Optional<RequestRun> result = serializer.deserialize("{}", RequestRun.class);
 		assertTrue(result.isPresent());
-		assertEquals(new RequestRun(), result.get());
 	}
 }

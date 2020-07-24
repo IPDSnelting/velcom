@@ -20,7 +20,6 @@ class AbortRunTest extends SerializerBasedTest {
 	void deserializeFromEmptyObject() {
 		Optional<AbortRun> result = serializer.deserialize("{}", AbortRun.class);
 		assertTrue(result.isPresent());
-		assertEquals(new AbortRun(), result.get());
 	}
 
 }

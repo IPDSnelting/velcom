@@ -20,6 +20,5 @@ class ClearResultReplyTest extends SerializerBasedTest {
 	void deserializeFromEmptyObject() {
 		Optional<ClearResultReply> result = serializer.deserialize("{}", ClearResultReply.class);
 		assertTrue(result.isPresent());
-		assertEquals(new ClearResultReply(), result.get());
 	}
 }

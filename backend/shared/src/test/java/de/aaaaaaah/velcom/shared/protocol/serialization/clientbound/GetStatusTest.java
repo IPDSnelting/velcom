@@ -20,6 +20,5 @@ class GetStatusTest extends SerializerBasedTest {
 	void deserializeFromEmptyObject() {
 		Optional<GetStatus> result = serializer.deserialize("{}", GetStatus.class);
 		assertTrue(result.isPresent());
-		assertEquals(new GetStatus(), result.get());
 	}
 }
