@@ -1,7 +1,7 @@
-package de.aaaaaaah.velcom.backend.runner_new;
+package de.aaaaaaah.velcom.backend.runner;
 
 import de.aaaaaaah.velcom.backend.data.benchrepo.BenchRepo;
-import de.aaaaaaah.velcom.backend.runner_new.single.TeleRunner;
+import de.aaaaaaah.velcom.backend.runner.single.TeleRunner;
 import de.aaaaaaah.velcom.shared.protocol.RunnerConnectionHeader;
 import de.aaaaaaah.velcom.shared.protocol.RunnerDenyReason;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Serializer;

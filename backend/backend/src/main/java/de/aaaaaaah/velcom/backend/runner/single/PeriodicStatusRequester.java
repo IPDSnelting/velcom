@@ -1,9 +1,9 @@
-package de.aaaaaaah.velcom.backend.runner_new.single;
+package de.aaaaaaah.velcom.backend.runner.single;
 
-import de.aaaaaaah.velcom.backend.runner_new.single.state.AwaitClearResultReply;
-import de.aaaaaaah.velcom.backend.runner_new.single.state.AwaitGetResultReply;
-import de.aaaaaaah.velcom.backend.runner_new.single.state.AwaitGetStatusReply;
-import de.aaaaaaah.velcom.backend.runner_new.single.state.TeleRunnerState;
+import de.aaaaaaah.velcom.backend.runner.single.state.AwaitClearResultReply;
+import de.aaaaaaah.velcom.backend.runner.single.state.AwaitGetResultReply;
+import de.aaaaaaah.velcom.backend.runner.single.state.AwaitGetStatusReply;
+import de.aaaaaaah.velcom.backend.runner.single.state.TeleRunnerState;
 import de.aaaaaaah.velcom.shared.protocol.StatusCode;
 import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.ClearResult;
 import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.GetResult;

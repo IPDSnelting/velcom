@@ -1,7 +1,7 @@
-package de.aaaaaaah.velcom.backend.runner_new.single;
+package de.aaaaaaah.velcom.backend.runner.single;
 
-import de.aaaaaaah.velcom.backend.runner_new.single.state.IdleState;
-import de.aaaaaaah.velcom.backend.runner_new.single.state.TeleRunnerState;
+import de.aaaaaaah.velcom.backend.runner.single.state.IdleState;
+import de.aaaaaaah.velcom.backend.runner.single.state.TeleRunnerState;
 import de.aaaaaaah.velcom.shared.Timeout;
 import de.aaaaaaah.velcom.shared.protocol.HeartbeatHandler;
 import de.aaaaaaah.velcom.shared.protocol.HeartbeatHandler.HeartbeatWebsocket;

@@ -33,7 +33,7 @@ import de.aaaaaaah.velcom.backend.restapi.endpoints.TestTokenEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.exception.CommitAccessExceptionMapper;
 import de.aaaaaaah.velcom.backend.restapi.exception.NoSuchCommitExceptionMapper;
 import de.aaaaaaah.velcom.backend.restapi.exception.NoSuchRepoExceptionMapper;
-import de.aaaaaaah.velcom.backend.runner_new.Dispatcher;
+import de.aaaaaaah.velcom.backend.runner.Dispatcher;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import de.aaaaaaah.velcom.backend.storage.repo.RepoStorage;
 import io.dropwizard.Application;

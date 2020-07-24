@@ -1,4 +1,4 @@
-package de.aaaaaaah.velcom.backend.runner_new.single;
+package de.aaaaaaah.velcom.backend.runner.single;
 
 import de.aaaaaaah.velcom.backend.access.entities.ErrorType;
 import de.aaaaaaah.velcom.backend.access.entities.Interpretation;
@@ -12,9 +12,9 @@ import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchTaskException;
 import de.aaaaaaah.velcom.backend.access.exceptions.PrepareTransferException;
 import de.aaaaaaah.velcom.backend.access.exceptions.TransferException;
 import de.aaaaaaah.velcom.backend.data.benchrepo.BenchRepo;
-import de.aaaaaaah.velcom.backend.runner_new.Dispatcher;
-import de.aaaaaaah.velcom.backend.runner_new.KnownRunner;
-import de.aaaaaaah.velcom.backend.runner_new.single.state.AwaitAbortRunReply;
+import de.aaaaaaah.velcom.backend.runner.Dispatcher;
+import de.aaaaaaah.velcom.backend.runner.KnownRunner;
+import de.aaaaaaah.velcom.backend.runner.single.state.AwaitAbortRunReply;
 import de.aaaaaaah.velcom.shared.protocol.StatusCode;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Serializer;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Result;

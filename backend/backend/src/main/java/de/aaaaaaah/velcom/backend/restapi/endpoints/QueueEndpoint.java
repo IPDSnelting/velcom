@@ -22,7 +22,7 @@ import de.aaaaaaah.velcom.backend.restapi.RepoUser;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonCommit;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonTask;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonWorker;
-import de.aaaaaaah.velcom.backend.runner_new.IDispatcher;
+import de.aaaaaaah.velcom.backend.runner.IDispatcher;
 import io.dropwizard.auth.Auth;
 import java.util.Collection;
 import java.util.HashMap;

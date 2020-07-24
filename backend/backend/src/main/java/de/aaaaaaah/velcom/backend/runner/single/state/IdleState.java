@@ -1,7 +1,7 @@
-package de.aaaaaaah.velcom.backend.runner_new.single.state;
+package de.aaaaaaah.velcom.backend.runner.single.state;
 
-import de.aaaaaaah.velcom.backend.runner_new.single.RunnerConnection;
-import de.aaaaaaah.velcom.backend.runner_new.single.TeleRunner;
+import de.aaaaaaah.velcom.backend.runner.single.RunnerConnection;
+import de.aaaaaaah.velcom.backend.runner.single.TeleRunner;
 
 /**
  * The tele-runner is in an idle state.

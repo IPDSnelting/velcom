@@ -1,8 +1,8 @@
 package de.aaaaaaah.velcom.backend;
 
 import de.aaaaaaah.velcom.backend.data.benchrepo.BenchRepo;
-import de.aaaaaaah.velcom.backend.runner_new.Dispatcher;
-import de.aaaaaaah.velcom.backend.runner_new.ServerMasterWebsocketServlet;
+import de.aaaaaaah.velcom.backend.runner.Dispatcher;
+import de.aaaaaaah.velcom.backend.runner.ServerMasterWebsocketServlet;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Serializer;
 import io.dropwizard.jetty.HttpConnectorFactory;
 import io.dropwizard.jetty.MutableServletContextHandler;
