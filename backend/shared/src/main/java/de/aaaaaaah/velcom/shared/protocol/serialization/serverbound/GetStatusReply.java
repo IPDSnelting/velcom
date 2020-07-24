@@ -85,4 +85,14 @@ public class GetStatusReply implements ServerBound {
 			serializer.serializeTree(this)
 		);
 	}
+
+	@Override
+	public String toString() {
+		return "GetStatusReply{" +
+			"benchHash='" + benchHash + '\'' +
+			", resultAvailable=" + resultAvailable +
+			", status=" + status +
+			", runId=" + runId +
+			'}';
+	}
 }

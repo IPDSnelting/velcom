@@ -133,12 +133,12 @@ public class TeleBackend {
 		// This future will complete as soon as all tar files have been downloaded.
 		CompletableFuture<RequestRunReply> replyFuture = sendRequestRun(conn);
 
-		RequestRunReply reply = null;
+		RequestRunReply reply;
 		try {
 			reply = replyFuture.get();
 		} catch (ExecutionException | CancellationException e) {
-			// Something went wrong while trying to receive files from the backend
-			LOGGER.warn("Something went wrong while requesting run: ", e);
+			LOGGER.debug(
+				"Backend has no new files or something went wrong while trying to download them");
 			return;
 		}
 

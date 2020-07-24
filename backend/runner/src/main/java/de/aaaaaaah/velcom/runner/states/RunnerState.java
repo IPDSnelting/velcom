@@ -1,8 +1,8 @@
 package de.aaaaaaah.velcom.runner.states;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import de.aaaaaaah.velcom.runner.TeleBackend;
 import de.aaaaaaah.velcom.runner.Connection;
+import de.aaaaaaah.velcom.runner.TeleBackend;
 import de.aaaaaaah.velcom.runner.benchmarking.BenchResult;
 import de.aaaaaaah.velcom.shared.protocol.StatusCode;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Serializer;
@@ -97,6 +97,7 @@ public abstract class RunnerState implements State {
 			teleBackend.getStatus(),
 			teleBackend.getCurrentRunId().orElse(null)
 		);
+		LOGGER.debug("Replying with " + getStatusReply);
 		connection.sendPacket(getStatusReply.asPacket(connection.getSerializer()));
 
 		return Optional.of(this);
@@ -111,9 +112,16 @@ public abstract class RunnerState implements State {
 			return Optional.empty();
 		}
 		BenchResult result = resultOptional.get();
+		LOGGER.debug("Replying with result for run" + result.getRunId());
 
-		GetResultReply getResultReply = new GetResultReply(result.getRunId(), result.isSuccess(),
-			result.getResult(), result.getError(), result.getStartTime(), result.getStopTime());
+		GetResultReply getResultReply = new GetResultReply(
+			result.getRunId(),
+			result.isSuccess(),
+			result.getResult(),
+			result.getError(),
+			result.getStartTime(),
+			result.getStopTime()
+		);
 		connection.sendPacket(getResultReply.asPacket(connection.getSerializer()));
 
 		return Optional.of(this);
