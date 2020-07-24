@@ -66,7 +66,7 @@ public class PeriodicStatusRequester {
 					continue;
 				}
 				// The runner has a *different* result than we expected. Disconnect.
-				if (teleRunner.getCurrentTask().get().getId().getId().equals(runId)) {
+				if (!teleRunner.getCurrentTask().get().getId().getId().equals(runId)) {
 					clearResults();
 					connection.close(StatusCode.ILLEGAL_BEHAVIOUR);
 					continue;
