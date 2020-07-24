@@ -74,7 +74,27 @@ public class ServerMasterWebsocketServlet extends WebSocketServlet {
 				LOGGER.info("Added runner {} from {}!", name, req.getRemoteAddress());
 			}
 
-			return myTeleRunner.createConnection();
+			// We synchronize on the runner object. A runner might join while the dispatcher cleans up
+			// disconnected runners.
+			// In this case we would remove the runner from the dispatchers teleRunners list but it
+			// would get a new connection and execute work ==> Bad
+			// So the dispatcher marks the runner as disposed and synchronizes on it. If the new runner
+			// connects while the dispatcher is removing the runner it will mark it as disposed.
+			// Either we come first, create a new connection and everything is well or the dispatcher
+			// comes first and disposes our runner object.
+			// In that case we detect that and create a new one...
+			//noinspection SynchronizationOnLocalVariableOrMethodParameter
+			synchronized (myTeleRunner) {
+				if (myTeleRunner.isDisposed()) {
+					myTeleRunner = new TeleRunner(name, serializer, dispatcher, benchRepo);
+					dispatcher.addRunner(myTeleRunner);
+					LOGGER.info(
+						"Revived runner {} connecting from {} with new instance!", name, req.getRemoteAddress()
+					);
+				}
+
+				return myTeleRunner.createConnection();
+			}
 		});
 	}
 

@@ -5,11 +5,14 @@ import de.aaaaaaah.velcom.backend.access.entities.Task;
 import de.aaaaaaah.velcom.backend.access.entities.TaskId;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.runner.single.TeleRunner;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
@@ -25,6 +28,35 @@ public class Dispatcher implements IDispatcher {
 		this.queue = queue;
 		this.teleRunners = new ArrayList<>();
 		this.workToRunnerMap = new HashMap<>();
+	}
+
+	private void cleanupDisconnectedRunners() {
+		// FIXME: 24.07.20 Use Delays class, actually call this
+		synchronized (teleRunners) {
+			Predicate<TeleRunner> outOfGracePeriod = runner ->
+				Duration.between(runner.getLastPing(), Instant.now()).toSeconds() > 60;
+
+			List<TeleRunner> runnersToRemove = new ArrayList<>();
+
+			for (TeleRunner runner : teleRunners) {
+				// We synchronize on the runner object. If a runner with this name joins the same object
+				// would be returned if the cleanup synchronized block was not yet entered.
+				// In this case we would remove the runner from the dispatchers teleRunners list but it
+				// would get a new connection and execute work ==> Bad
+				// So we mark the runner as disposed and synchronize on it. If the new runner connects
+				// while we are here, either we go first and dispose the runner or the listener comes first
+				// and sets a new connection. This leads us to bail out of the if and not delete the runner.
+				//noinspection SynchronizationOnLocalVariableOrMethodParameter
+				synchronized (runner) {
+					if (!runner.hasConnection() && outOfGracePeriod.test(runner)) {
+						runner.dispose();
+						runnersToRemove.add(runner);
+					}
+				}
+			}
+
+			teleRunners.removeAll(runnersToRemove);
+		}
 	}
 
 	@Override
@@ -107,9 +139,11 @@ public class Dispatcher implements IDispatcher {
 	 * @return the runner or an empty optional otherwise
 	 */
 	Optional<TeleRunner> getTeleRunner(String name) {
-		return teleRunners.stream()
-			.filter(it -> it.getRunnerName().equals(name))
-			.findAny();
+		synchronized (teleRunners) {
+			return teleRunners.stream()
+				.filter(it -> it.getRunnerName().equals(name))
+				.findAny();
+		}
 	}
 
 	/**

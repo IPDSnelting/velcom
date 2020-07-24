@@ -16,10 +16,10 @@ import de.aaaaaaah.velcom.backend.runner.Dispatcher;
 import de.aaaaaaah.velcom.backend.runner.KnownRunner;
 import de.aaaaaaah.velcom.backend.runner.single.state.AwaitAbortRunReply;
 import de.aaaaaaah.velcom.shared.protocol.StatusCode;
-import de.aaaaaaah.velcom.shared.protocol.serialization.Serializer;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Result;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Result.Benchmark;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Result.Metric;
+import de.aaaaaaah.velcom.shared.protocol.serialization.Serializer;
 import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.AbortRun;
 import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.RequestRunReply;
 import de.aaaaaaah.velcom.shared.protocol.serialization.serverbound.GetResultReply;
@@ -46,6 +46,9 @@ public class TeleRunner {
 	private final Dispatcher dispatcher;
 	private final AtomicReference<Task> myCurrentTask;
 	private final BenchRepo benchRepo;
+	private final AtomicReference<Instant> lastPing;
+
+	private volatile boolean disposed;
 
 	private RunnerConnection connection;
 
@@ -57,6 +60,7 @@ public class TeleRunner {
 		this.benchRepo = benchRepo;
 		this.runnerInformation = new AtomicReference<>();
 		this.myCurrentTask = new AtomicReference<>();
+		this.lastPing = new AtomicReference<>();
 	}
 
 	/**
@@ -69,8 +73,10 @@ public class TeleRunner {
 		if (connection != null) {
 			throw new IllegalStateException("I already have a connection");
 		}
-		connection = new RunnerConnection(serializer, this);
+		connection = new RunnerConnection(serializer, this, lastPing);
 		connection.addCloseListener(this::disposeConnection);
+
+		lastPing.set(Instant.now());
 
 		return connection;
 	}
@@ -111,6 +117,31 @@ public class TeleRunner {
 	 */
 	public Optional<Task> getCurrentTask() {
 		return Optional.ofNullable(myCurrentTask.get());
+	}
+
+	/**
+	 * @return the time the last ping was received
+	 */
+	public Instant getLastPing() {
+		return lastPing.get();
+	}
+
+	/**
+	 * Disposes this TeleRunner. It can not be used again.
+	 */
+	public synchronized void dispose() {
+		this.disposed = true;
+		if (hasConnection()) {
+			LOGGER.warn("Had a connection when I was disposed");
+			this.connection.close(StatusCode.INTERNAL_ERROR);
+		}
+	}
+
+	/**
+	 * @return true if this TeleRunner is disposed and can not be used again
+	 */
+	public synchronized boolean isDisposed() {
+		return disposed;
 	}
 
 	/**

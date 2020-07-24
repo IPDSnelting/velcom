@@ -13,9 +13,11 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 import org.eclipse.jetty.io.RuntimeIOException;
 import org.eclipse.jetty.websocket.api.Session;
@@ -41,13 +43,15 @@ public class RunnerConnection implements WebSocketListener, WebSocketFrameListen
 
 	private final Serializer serializer;
 	private final StateMachine<TeleRunnerState> stateMachine;
+	private final AtomicReference<Instant> lastPing;
 	private final PeriodicStatusRequester periodicStatusRequester;
 	private final List<Runnable> closeListeners;
 	private final HeartbeatHandler heartbeatHandler;
 
-	public RunnerConnection(Serializer serializer, TeleRunner runner) {
+	public RunnerConnection(Serializer serializer, TeleRunner runner, AtomicReference<Instant> lastPing) {
 		this.serializer = serializer;
 		this.stateMachine = new StateMachine<>(new IdleState(runner, this));
+		this.lastPing = lastPing;
 		this.closeListeners = new ArrayList<>();
 
 		this.periodicStatusRequester = new PeriodicStatusRequester(runner, this, stateMachine);
@@ -162,6 +166,7 @@ public class RunnerConnection implements WebSocketListener, WebSocketFrameListen
 	@Override
 	public void onWebSocketFrame(Frame frame) {
 		if (frame.getType() == Type.PONG) {
+			lastPing.set(Instant.now());
 			heartbeatHandler.onPong();
 		}
 	}
