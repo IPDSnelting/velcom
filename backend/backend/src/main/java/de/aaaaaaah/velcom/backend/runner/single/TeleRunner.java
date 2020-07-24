@@ -296,7 +296,12 @@ public class TeleRunner {
 			.orElse(false);
 
 		connection.send(
-			new RequestRunReply(!benchRepoUpToDate, benchRepoHash, true, task.getId().getId())
+			new RequestRunReply(
+				!benchRepoUpToDate,
+				benchRepoUpToDate ? null : benchRepoHash,
+				true,
+				task.getId().getId()
+			)
 				.asPacket(serializer)
 		);
 
