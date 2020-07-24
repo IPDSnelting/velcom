@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
@@ -39,7 +40,6 @@ public class TeleBackend {
 	private final URI address;
 	private final String name;
 	private final String token;
-	private final Path path;
 
 	private final BenchRepoDir benchRepoDir;
 	private final TaskRepoDir taskRepoDir;
@@ -57,7 +57,6 @@ public class TeleBackend {
 		this.address = address;
 		this.name = name;
 		this.token = token;
-		this.path = path;
 
 		// RunnerMain.die will stop the runner but java doesn't know that, so I need to do this
 		// little dance here...
@@ -137,7 +136,7 @@ public class TeleBackend {
 		RequestRunReply reply = null;
 		try {
 			reply = replyFuture.get();
-		} catch (ExecutionException e) {
+		} catch (ExecutionException | CancellationException e) {
 			// Something went wrong while trying to receive files from the backend
 			LOGGER.warn("Something went wrong while requesting run: ", e);
 			return;
@@ -145,6 +144,9 @@ public class TeleBackend {
 
 		try {
 			unpackTmpFiles(reply.hasBench(), reply.hasRun());
+			if (reply.getBenchHash().isPresent()) {
+				benchRepoDir.setHash(reply.getBenchHash().get());
+			}
 		} catch (IOException e) {
 			LOGGER.warn("Could not unpack tar files: ", e);
 			return;
@@ -157,7 +159,7 @@ public class TeleBackend {
 		}
 
 		if (reply.getRunId().isPresent()) {
-			startBenchmark(reply.getRunId().get()).wait();
+			startBenchmark(reply.getRunId().get()).get();
 		}
 
 		globalStatus.set(Status.IDLE);

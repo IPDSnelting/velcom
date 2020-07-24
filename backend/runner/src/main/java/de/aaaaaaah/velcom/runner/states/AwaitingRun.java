@@ -3,7 +3,7 @@ package de.aaaaaaah.velcom.runner.states;
 import de.aaaaaaah.velcom.runner.Connection;
 import de.aaaaaaah.velcom.runner.TeleBackend;
 import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.RequestRunReply;
-import java.io.FileNotFoundException;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -36,8 +36,11 @@ public class AwaitingRun extends RunnerState {
 		LOGGER.info("Receiving task repo from " + teleBackend);
 
 		try {
-			tmpFile = new FileOutputStream(teleBackend.getTaskRepoTmpPath().toFile());
-		} catch (FileNotFoundException e) {
+			File file = teleBackend.getTaskRepoTmpPath().toFile();
+			file.getParentFile().mkdirs();
+			file.createNewFile();
+			tmpFile = new FileOutputStream(file);
+		} catch (IOException e) {
 			LOGGER.warn("Could not open stream to task repo tmp file: ", e);
 		}
 	}
