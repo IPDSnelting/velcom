@@ -1,6 +1,5 @@
 package de.aaaaaaah.velcom.backend.restapi.jsonobjects;
 
-import de.aaaaaaah.velcom.backend.runner.KnownRunner;
 import javax.annotation.Nullable;
 
 /**
@@ -14,10 +13,10 @@ public class JsonWorker {
 	@Nullable
 	private final String machineInfo;
 
-	public JsonWorker(KnownRunner runner) {
-		name = runner.getName();
-		workingOn = runner.getCurrentCommit().map(JsonCommit::new).orElse(null);
-		machineInfo = runner.getMachineInfo();
+	public JsonWorker(String name, @Nullable JsonCommit workingOn, @Nullable String machineInfo) {
+		this.name = name;
+		this.workingOn = workingOn;
+		this.machineInfo = machineInfo;
 	}
 
 	public String getName() {
