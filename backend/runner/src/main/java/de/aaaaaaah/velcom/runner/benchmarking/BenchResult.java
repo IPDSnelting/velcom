@@ -1,4 +1,4 @@
-package de.aaaaaaah.velcom.runner.revision.benchmarking;
+package de.aaaaaaah.velcom.runner.benchmarking;
 
 import de.aaaaaaah.velcom.shared.protocol.serialization.Result;
 import java.time.Instant;

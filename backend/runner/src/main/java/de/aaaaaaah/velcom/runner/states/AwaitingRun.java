@@ -1,7 +1,7 @@
-package de.aaaaaaah.velcom.runner.revision.states;
+package de.aaaaaaah.velcom.runner.states;
 
-import de.aaaaaaah.velcom.runner.revision.Connection;
-import de.aaaaaaah.velcom.runner.revision.TeleBackend;
+import de.aaaaaaah.velcom.runner.Connection;
+import de.aaaaaaah.velcom.runner.TeleBackend;
 import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.RequestRunReply;
 import java.nio.ByteBuffer;
 import java.util.concurrent.CompletableFuture;

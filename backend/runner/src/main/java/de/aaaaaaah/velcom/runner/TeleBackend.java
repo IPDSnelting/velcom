@@ -1,13 +1,13 @@
-package de.aaaaaaah.velcom.runner.revision;
+package de.aaaaaaah.velcom.runner;
 
 // TODO update comment once backend is implemented
 
-import de.aaaaaaah.velcom.runner.revision.benchmarking.BenchResult;
-import de.aaaaaaah.velcom.runner.revision.benchmarking.Benchmarker;
-import de.aaaaaaah.velcom.runner.revision.states.AwaitingRequestRunReply;
-import de.aaaaaaah.velcom.runner.revision.states.RunnerState;
-import de.aaaaaaah.velcom.runner.revision.tmpdirs.BenchRepoDir;
-import de.aaaaaaah.velcom.runner.revision.tmpdirs.TaskRepoDir;
+import de.aaaaaaah.velcom.runner.benchmarking.BenchResult;
+import de.aaaaaaah.velcom.runner.benchmarking.Benchmarker;
+import de.aaaaaaah.velcom.runner.states.AwaitingRequestRunReply;
+import de.aaaaaaah.velcom.runner.states.RunnerState;
+import de.aaaaaaah.velcom.runner.tmpdirs.BenchRepoDir;
+import de.aaaaaaah.velcom.runner.tmpdirs.TaskRepoDir;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Status;
 import de.aaaaaaah.velcom.shared.protocol.serialization.serverbound.RequestRun;
 import java.io.IOException;

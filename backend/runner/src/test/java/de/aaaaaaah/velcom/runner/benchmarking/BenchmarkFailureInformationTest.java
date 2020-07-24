@@ -1,8 +1,7 @@
-package de.aaaaaaah.velcom.runner.revision.benchmarking;
+package de.aaaaaaah.velcom.runner.benchmarking;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import de.aaaaaaah.velcom.runner.revision.benchmarking.BenchmarkFailureInformation;
 import de.aaaaaaah.velcom.shared.util.systeminfo.LinuxSystemInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

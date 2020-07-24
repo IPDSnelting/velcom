@@ -1,8 +1,8 @@
-package de.aaaaaaah.velcom.runner.revision.states;
+package de.aaaaaaah.velcom.runner.states;
 
-import de.aaaaaaah.velcom.runner.revision.Connection;
-import de.aaaaaaah.velcom.runner.revision.Delays;
-import de.aaaaaaah.velcom.runner.revision.TeleBackend;
+import de.aaaaaaah.velcom.runner.Connection;
+import de.aaaaaaah.velcom.runner.Delays;
+import de.aaaaaaah.velcom.runner.TeleBackend;
 import de.aaaaaaah.velcom.shared.Timeout;
 import de.aaaaaaah.velcom.shared.protocol.StatusCode;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Converter;

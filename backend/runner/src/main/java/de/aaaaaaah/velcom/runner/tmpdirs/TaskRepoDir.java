@@ -1,4 +1,4 @@
-package de.aaaaaaah.velcom.runner.revision.tmpdirs;
+package de.aaaaaaah.velcom.runner.tmpdirs;
 
 import de.aaaaaaah.velcom.shared.util.FileHelper;
 import java.io.IOException;

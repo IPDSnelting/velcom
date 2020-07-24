@@ -1,9 +1,9 @@
-package de.aaaaaaah.velcom.runner.revision.states;
+package de.aaaaaaah.velcom.runner.states;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import de.aaaaaaah.velcom.runner.revision.Connection;
-import de.aaaaaaah.velcom.runner.revision.TeleBackend;
-import de.aaaaaaah.velcom.runner.revision.benchmarking.BenchResult;
+import de.aaaaaaah.velcom.runner.TeleBackend;
+import de.aaaaaaah.velcom.runner.Connection;
+import de.aaaaaaah.velcom.runner.benchmarking.BenchResult;
 import de.aaaaaaah.velcom.shared.protocol.StatusCode;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Converter;
 import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.AbortRun;

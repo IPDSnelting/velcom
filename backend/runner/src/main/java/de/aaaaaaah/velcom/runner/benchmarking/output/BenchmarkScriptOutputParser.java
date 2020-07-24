@@ -1,4 +1,4 @@
-package de.aaaaaaah.velcom.runner.revision.benchmarking.output;
+package de.aaaaaaah.velcom.runner.benchmarking.output;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;

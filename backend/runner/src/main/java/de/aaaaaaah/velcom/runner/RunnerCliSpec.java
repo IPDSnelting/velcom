@@ -1,4 +1,4 @@
-package de.aaaaaaah.velcom.runner.revision;
+package de.aaaaaaah.velcom.runner;
 
 import java.nio.file.Files;
 import java.nio.file.Path;

@@ -1,4 +1,4 @@
-package de.aaaaaaah.velcom.runner.revision.benchmarking;
+package de.aaaaaaah.velcom.runner.benchmarking;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
@@ -22,6 +22,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -302,7 +303,7 @@ class BenchmarkerTest {
 
 		Optional<BenchResult> resultOptional = benchmarker.getResult();
 
-		assertThat(resultOptional).isPresent();
+		Assertions.assertThat(resultOptional).isPresent();
 
 		BenchResult result = resultOptional.get();
 		resultConsumer.accept(result);

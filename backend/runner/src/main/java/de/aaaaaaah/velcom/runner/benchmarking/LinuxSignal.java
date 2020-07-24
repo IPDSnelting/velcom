@@ -1,4 +1,4 @@
-package de.aaaaaaah.velcom.runner.revision.benchmarking;
+package de.aaaaaaah.velcom.runner.benchmarking;
 
 import java.util.Arrays;
 import java.util.Optional;

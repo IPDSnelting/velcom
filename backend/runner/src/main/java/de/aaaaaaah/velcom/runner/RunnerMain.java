@@ -1,4 +1,4 @@
-package de.aaaaaaah.velcom.runner.revision;
+package de.aaaaaaah.velcom.runner;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;

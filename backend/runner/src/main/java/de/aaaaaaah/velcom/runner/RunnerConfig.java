@@ -1,4 +1,4 @@
-package de.aaaaaaah.velcom.runner.revision;
+package de.aaaaaaah.velcom.runner;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;

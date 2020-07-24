@@ -1,7 +1,7 @@
-package de.aaaaaaah.velcom.runner.revision;
+package de.aaaaaaah.velcom.runner;
 
-import de.aaaaaaah.velcom.runner.revision.states.Idle;
-import de.aaaaaaah.velcom.runner.revision.states.RunnerState;
+import de.aaaaaaah.velcom.runner.states.Idle;
+import de.aaaaaaah.velcom.runner.states.RunnerState;
 import de.aaaaaaah.velcom.shared.Timeout;
 import de.aaaaaaah.velcom.shared.protocol.RunnerConnectionHeader;
 import de.aaaaaaah.velcom.shared.protocol.StatusCode;

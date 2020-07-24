@@ -1,4 +1,4 @@
-package de.aaaaaaah.velcom.runner.revision.benchmarking;
+package de.aaaaaaah.velcom.runner.benchmarking;
 
 import de.aaaaaaah.velcom.shared.util.systeminfo.LinuxSystemInfo;
 import java.nio.file.Path;
