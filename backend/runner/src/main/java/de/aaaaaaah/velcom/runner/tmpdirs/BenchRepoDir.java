@@ -9,8 +9,12 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Optional;
 import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class BenchRepoDir {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(BenchRepoDir.class);
 
 	private final Path dirPath;
 	private final Path tmpFilePath;
@@ -30,20 +34,28 @@ public class BenchRepoDir {
 	@Nullable
 	private String readHash() throws IOException {
 		try {
+			LOGGER.debug("Trying to read hash from file " + hashFilePath);
 			FileReader reader = new FileReader(hashFilePath.toFile());
 			BufferedReader bufferedReader = new BufferedReader(reader);
 			String line = bufferedReader.readLine();
-			return line.strip();
-		} catch (FileNotFoundException ignore) {
-			// TODO maybe add some logging
-		}
+			if (line == null) {
+				LOGGER.debug("Could not read hash, file was empty");
+				return null;
+			}
 
-		return null;
+			String hash = line.strip();
+			LOGGER.debug("Read hash " + hash);
+			return hash;
+		} catch (FileNotFoundException e) {
+			LOGGER.debug("Could not read hash, file not found");
+			return null;
+		}
 	}
 
 	private void writeHash(String hash) throws IOException {
 		FileWriter writer = new FileWriter(hashFilePath.toFile());
 		writer.write(hash);
+		writer.flush();
 	}
 
 	public void clear() throws IOException {
