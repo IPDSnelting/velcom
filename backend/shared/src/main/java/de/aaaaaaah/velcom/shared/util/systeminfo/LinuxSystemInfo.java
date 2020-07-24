@@ -9,7 +9,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Identifying information about
+ * Information about the current system hardware and setup (as long as the current system is a linux
+ * system).
  */
 public class LinuxSystemInfo {
 

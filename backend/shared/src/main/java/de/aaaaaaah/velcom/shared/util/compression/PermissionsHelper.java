@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * A small helper for linux file permissions.
+ * A small helper for reading and manipulating linux file permissions.
  */
 public class PermissionsHelper {
 

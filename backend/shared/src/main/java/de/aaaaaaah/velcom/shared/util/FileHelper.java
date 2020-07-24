@@ -9,7 +9,7 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 
 /**
- * Helps with common file I/O Operations.
+ * Helps with common file I/O operations.
  */
 public final class FileHelper {
 

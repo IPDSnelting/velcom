@@ -15,6 +15,7 @@ public class BenchRequest {
 
 	public BenchRequest(LinuxSystemInfo systemInfo, UUID runId, String benchRepoHash,
 		Path benchRepoPath, Path workRepoPath, String runnerName) {
+
 		this.systemInfo = systemInfo;
 		this.runId = runId;
 		this.benchRepoHash = benchRepoHash;
