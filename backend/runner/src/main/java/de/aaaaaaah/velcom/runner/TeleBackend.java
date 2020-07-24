@@ -252,7 +252,10 @@ public class TeleBackend {
 	}
 
 	public void abortCurrentRun() {
-		getBenchmarker().ifPresent(Benchmarker::abort);
+		getBenchmarker().ifPresent(benchmarker -> {
+			globalStatus.set(Status.ABORT);
+			benchmarker.abort();
+		});
 	}
 
 	public Optional<UUID> getCurrentRunId() {
