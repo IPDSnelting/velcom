@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 /**
@@ -27,14 +28,12 @@ public class Result {
 		this.error = error;
 	}
 
-	@Nullable
-	public List<Benchmark> getBenchmarks() {
-		return benchmarks;
+	public Optional<List<Benchmark>> getBenchmarks() {
+		return Optional.ofNullable(benchmarks);
 	}
 
-	@Nullable
-	public String getError() {
-		return error;
+	public Optional<String> getError() {
+		return Optional.ofNullable(error);
 	}
 
 	@Override
@@ -153,9 +152,8 @@ public class Result {
 			return name;
 		}
 
-		@Nullable
-		public String getError() {
-			return error;
+		public Optional<String> getError() {
+			return Optional.ofNullable(error);
 		}
 
 		public String getUnit() {
@@ -166,9 +164,8 @@ public class Result {
 			return interpretation;
 		}
 
-		@Nullable
-		public List<Double> getValues() {
-			return values;
+		public Optional<List<Double>> getValues() {
+			return Optional.ofNullable(values);
 		}
 
 		@Override

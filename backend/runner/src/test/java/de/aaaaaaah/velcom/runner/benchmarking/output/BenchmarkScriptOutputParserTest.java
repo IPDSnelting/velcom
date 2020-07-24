@@ -2,8 +2,6 @@ package de.aaaaaaah.velcom.runner.benchmarking.output;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 
 import de.aaaaaaah.velcom.runner.benchmarking.output.BenchmarkScriptOutputParser.BareResult;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Result.Benchmark;
@@ -28,11 +26,11 @@ class BenchmarkScriptOutputParserTest {
 	void parseSomeValidInput(boolean error, String line) {
 		BareResult result = parser.parse(line);
 		if (error) {
-			assertNotNull(result.getError(), "Error was null!");
-			assertNull(result.getBenchmarks(), "Benchmarks was not null!");
+			assertThat(result.getError()).isNotNull();
+			assertThat(result.getBenchmarks()).isNull();
 		} else {
-			assertNull(result.getError(), "Error was not null!");
-			assertNotNull(result.getBenchmarks(), "Benchmarks was null!");
+			assertThat(result.getError()).isNull();
+			assertThat(result.getBenchmarks()).isNotNull();
 		}
 	}
 
@@ -69,7 +67,8 @@ class BenchmarkScriptOutputParserTest {
 		assertThat(benchmark.getMetrics()).isNotEmpty();
 		Metric metric = benchmark.getMetrics().get(0);
 		assertThat(metric.getName()).isEqualTo("test");
-		assertThat(metric.getError()).isEqualTo("Hey");
+		assertThat(metric.getError()).isPresent();
+		assertThat(metric.getError().get()).isEqualTo("Hey");
 	}
 
 	@Test
@@ -126,6 +125,7 @@ class BenchmarkScriptOutputParserTest {
 		assertThat(benchmark.getMetrics()).isNotEmpty();
 		Metric metric = benchmark.getMetrics().get(0);
 		assertThat(metric.getName()).isEqualTo("test");
-		assertThat(metric.getError()).isEqualTo("Hey");
+		assertThat(metric.getError()).isPresent();
+		assertThat(metric.getError().get()).isEqualTo("Hey");
 	}
 }

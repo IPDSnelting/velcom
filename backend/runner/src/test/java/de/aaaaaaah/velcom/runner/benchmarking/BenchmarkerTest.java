@@ -175,8 +175,9 @@ class BenchmarkerTest {
 				assertThat(result.getResult()).isNotNull();
 				assertThat(result.getError()).isNull();
 				assertThat(result.getRunId()).isEqualTo(taskId);
-				assertThat(result.getResult().getBenchmarks()).isNull();
-				assertThat(result.getResult().getError()).isEqualTo("Halloooo");
+				assertThat(result.getResult().getBenchmarks()).isEmpty();
+				assertThat(result.getResult().getError()).isPresent();
+				assertThat(result.getResult().getError().get()).isEqualTo("Halloooo");
 			}
 		);
 	}
@@ -193,13 +194,14 @@ class BenchmarkerTest {
 				assertThat(result.getResult()).isNotNull();
 				assertThat(result.getError()).isNull();
 				assertThat(result.getRunId()).isEqualTo(taskId);
-				assertThat(result.getResult().getBenchmarks()).containsExactly(new Benchmark(
+				assertThat(result.getResult().getBenchmarks()).isPresent();
+				assertThat(result.getResult().getBenchmarks().get()).containsExactly(new Benchmark(
 					"test",
 					List.of(
 						new Metric("metric", "20", "", Interpretation.NEUTRAL, null)
 					)
 				));
-				assertThat(result.getResult().getError()).isNull();
+				assertThat(result.getResult().getError()).isEmpty();
 			}
 		);
 	}
@@ -218,13 +220,14 @@ class BenchmarkerTest {
 				assertThat(result.getError()).isNull();
 				assertThat(result.getResult()).isNotNull();
 				assertThat(result.getRunId()).isEqualTo(taskId);
-				assertThat(result.getResult().getBenchmarks()).containsExactly(new Benchmark(
+				assertThat(result.getResult().getBenchmarks()).isPresent();
+				assertThat(result.getResult().getBenchmarks().get()).containsExactly(new Benchmark(
 					"test",
 					List.of(
 						new Metric("metric", null, "cats", Interpretation.NEUTRAL, List.of(20d, 5d))
 					)
 				));
-				assertThat(result.getResult().getError()).isNull();
+				assertThat(result.getResult().getError()).isEmpty();
 			}
 		);
 	}

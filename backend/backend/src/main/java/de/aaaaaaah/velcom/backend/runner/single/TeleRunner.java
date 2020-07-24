@@ -145,14 +145,15 @@ public class TeleRunner {
 	}
 
 	/**
-	 * Returns the runner information. This must always be non-null from the moment the runner is
-	 * registered to the dispatcher. The value might be outdated.
+	 * @return the runner information. This must always be non-null from the moment the runner is
+	 * 	registered to the dispatcher. The value might be outdated.
 	 */
 	public KnownRunner getRunnerInformation() {
 		GetStatusReply reply = runnerInformation.get();
 
-		return new KnownRunner(
-			getRunnerName(), reply.getInfo(), reply.getStatus(), myCurrentTask.get(), !hasConnection()
+		return new KnownRunner(getRunnerName(), reply.getInfo(), reply.getStatus(),
+			myCurrentTask.get(),
+			!hasConnection()
 		);
 	}
 
@@ -172,12 +173,14 @@ public class TeleRunner {
 		myCurrentTask.set(null);
 
 		if (!hasConnection()) {
-			LOGGER.info("Tried to abort commit but was not connected with a runner: {}", getRunnerName());
+			LOGGER.info("Tried to abort commit but was not connected with a runner: {}",
+				getRunnerName());
 			return;
 		}
 
 		try {
-			connection.getStateMachine().switchFromRestingState(new AwaitAbortRunReply(this, connection));
+			connection.getStateMachine()
+				.switchFromRestingState(new AwaitAbortRunReply(this, connection));
 			connection.send(new AbortRun().asPacket(serializer));
 		} catch (InterruptedException e) {
 			LOGGER.warn("Abort failed, I was interrupted {}", getRunnerName());
@@ -229,14 +232,14 @@ public class TeleRunner {
 		Result result = resultReply.getResult().orElseThrow();
 
 		// Global error
-		if (result.getError() != null) {
+		if (result.getError().isPresent()) {
 			return RunBuilder.failed(
 				task,
 				getRunnerName(),
 				getRunnerInformation().getInformation(),
 				resultReply.getStartTime(),
 				resultReply.getStopTime(),
-				result.getError(),
+				result.getError().get(),
 				ErrorType.BENCH_SCRIPT_ERROR
 			).build();
 		}
@@ -250,23 +253,22 @@ public class TeleRunner {
 			resultReply.getStopTime()
 		);
 
-		//noinspection ConstantConditions
-		for (Benchmark benchmark : result.getBenchmarks()) {
+		for (Benchmark benchmark : result.getBenchmarks().get()) {
 			for (Metric metric : benchmark.getMetrics()) {
 				MeasurementName name = new MeasurementName(benchmark.getName(), metric.getName());
-				if (metric.getError() != null) {
+				if (metric.getError().isPresent()) {
 					builder.addFailedMeasurement(
 						name,
 						new Unit(metric.getUnit()),
 						Interpretation.fromSharedRepresentation(metric.getInterpretation()),
-						metric.getError()
+						metric.getError().get()
 					);
 				} else {
 					builder.addSuccessfulMeasurement(
 						name,
 						Interpretation.fromSharedRepresentation(metric.getInterpretation()),
 						new Unit(metric.getUnit()),
-						metric.getValues()
+						metric.getValues().get()
 					);
 				}
 			}
@@ -319,17 +321,20 @@ public class TeleRunner {
 		try (OutputStream outputStream = connection.createBinaryOutputStream()) {
 			consumer.accept(outputStream);
 		} catch (PrepareTransferException e) {
-			LOGGER.info("Failed to transfer repo to runner " + getRunnerName() + ": Archiving failed", e);
+			LOGGER.info(
+				"Failed to transfer repo to runner " + getRunnerName() + ": Archiving failed", e);
 			// This task is corrupted, we can not benchmark it.
 			dispatcher.completeTask(prepareTransferFailed(task, Instant.now(), e));
 		} catch (TransferException | IOException | NoSuchTaskException e) {
-			LOGGER.info("Failed to transfer repo to runner " + getRunnerName() + ": Sending failed", e);
+			LOGGER.info("Failed to transfer repo to runner " + getRunnerName() + ": Sending failed",
+				e);
 			dispatcher.getQueue().abortTaskProcess(task.getId());
 			connection.close(StatusCode.TRANSFER_FAILED);
 		}
 	}
 
-	private Run prepareTransferFailed(Task task, Instant start, PrepareTransferException exception) {
+	private Run prepareTransferFailed(Task task, Instant start,
+		PrepareTransferException exception) {
 		return RunBuilder.failed(
 			task,
 			getRunnerName(),
