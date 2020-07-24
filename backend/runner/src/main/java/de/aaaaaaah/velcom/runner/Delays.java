@@ -29,6 +29,11 @@ public class Delays {
 	 */
 	public static final Duration AWAIT_COMMAND_REPLY = Duration.ofSeconds(10);
 
+	/**
+	 * How long to wait until the sigkilling begins (in the Benchmarker).
+	 */
+	public static final Duration TIME_TO_KILL = Duration.ofSeconds(10);
+
 	private Delays() {
 		throw new UnsupportedOperationException();
 	}

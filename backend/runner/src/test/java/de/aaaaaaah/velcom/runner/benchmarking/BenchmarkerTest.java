@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermission;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
@@ -29,11 +30,17 @@ import org.junit.jupiter.api.io.TempDir;
 
 class BenchmarkerTest {
 
+	public static final String BENCH_REPO_HASH = "hello";
+	public static final String RUNNER_NAME = "runner name";
 	@TempDir
 	Path rootTempDir;
 	Path benchRepoPath;
 	Path workPath;
 	private CompletableFuture<Void> finishFuture;
+
+	private UUID taskId;
+	private LinuxSystemInfo systemInfo;
+	private Instant startTime;
 
 	@BeforeEach
 	void setUp() throws IOException {
@@ -42,18 +49,19 @@ class BenchmarkerTest {
 		Files.createDirectory(benchRepoPath);
 		Files.createDirectory(workPath);
 		finishFuture = new CompletableFuture<>();
+
+		taskId = UUID.randomUUID();
+		systemInfo = LinuxSystemInfo.getCurrent();
+		startTime = Instant.now();
 	}
 
 	@Test
 	void testBenchDoesNotExist() throws Exception {
-		BenchRequest request = getBenchRequest();
-
 		doWithResult(
-			request,
 			result -> {
 				assertThat(result.getResult()).isNull();
 				assertThat(result.getError()).isNotNull();
-				assertThat(result.getRunId()).isEqualTo(request.getRunId());
+				assertThat(result.getRunId()).isEqualTo(taskId);
 				assertThat(result.getError()).containsIgnoringCase("not found");
 			}
 		);
@@ -61,8 +69,7 @@ class BenchmarkerTest {
 
 	@Test
 	void testBenchNotReadable() throws Exception {
-		BenchRequest request = getBenchRequest();
-		Path benchScriptPath = request.getBenchRepoPath().resolve("bench");
+		Path benchScriptPath = benchRepoPath.resolve("bench");
 
 		Files.createFile(benchScriptPath);
 		EnumSet<PosixFilePermission> permissions = EnumSet.copyOf(
@@ -75,28 +82,25 @@ class BenchmarkerTest {
 		Files.setPosixFilePermissions(benchScriptPath, permissions);
 
 		doWithResult(
-			request,
 			result -> {
 				assertThat(result.getResult()).isNull();
 				assertThat(result.getError()).isNotNull();
-				assertThat(result.getRunId()).isEqualTo(request.getRunId());
+				assertThat(result.getRunId()).isEqualTo(taskId);
 				assertThat(result.getError()).containsIgnoringCase("readable");
 			});
 	}
 
 	@Test
 	void testBenchNotExecutable() throws Exception {
-		BenchRequest request = getBenchRequest();
-		Path benchScriptPath = request.getBenchRepoPath().resolve("bench");
+		Path benchScriptPath = benchRepoPath.resolve("bench");
 
 		Files.createFile(benchScriptPath);
 
 		doWithResult(
-			request,
 			result -> {
 				assertThat(result.getResult()).isNull();
 				assertThat(result.getError()).isNotNull();
-				assertThat(result.getRunId()).isEqualTo(request.getRunId());
+				assertThat(result.getRunId()).isEqualTo(taskId);
 				assertThat(result.getError()).containsIgnoringCase("executable");
 			}
 		);
@@ -104,19 +108,16 @@ class BenchmarkerTest {
 
 	@Test
 	void testBenchScriptInvalidOutput() throws Exception {
-		BenchRequest request = getBenchRequest();
-
 		writeBenchScript(
 			"#!/bin/sh",
 			"echo 'Hello'"
 		);
 
 		doWithResult(
-			request,
 			result -> {
 				assertThat(result.getResult()).isNull();
 				assertThat(result.getError()).isNotNull();
-				assertThat(result.getRunId()).isEqualTo(request.getRunId());
+				assertThat(result.getRunId()).isEqualTo(taskId);
 				assertThat(result.getError()).containsIgnoringCase("invalid");
 				assertThat(result.getError()).containsIgnoringCase("output");
 			}
@@ -125,19 +126,16 @@ class BenchmarkerTest {
 
 	@Test
 	void testBenchScriptExitCodeFailure() throws Exception {
-		BenchRequest request = getBenchRequest();
-
 		writeBenchScript(
 			"#!/bin/sh",
 			"exit 1"
 		);
 
 		doWithResult(
-			request,
 			result -> {
 				assertThat(result.getResult()).isNull();
 				assertThat(result.getError()).isNotNull();
-				assertThat(result.getRunId()).isEqualTo(request.getRunId());
+				assertThat(result.getRunId()).isEqualTo(taskId);
 				assertThat(result.getError()).containsIgnoringCase("exit code");
 				assertThat(result.getError()).containsIgnoringCase("1");
 			}
@@ -146,19 +144,16 @@ class BenchmarkerTest {
 
 	@Test
 	void testBenchScriptSignalCodeInterpretation() throws Exception {
-		BenchRequest request = getBenchRequest();
-
 		writeBenchScript(
 			"#!/bin/sh",
 			"exit 130"
 		);
 
 		doWithResult(
-			request,
 			result -> {
 				assertThat(result.getResult()).isNull();
 				assertThat(result.getError()).isNotNull();
-				assertThat(result.getRunId()).isEqualTo(request.getRunId());
+				assertThat(result.getRunId()).isEqualTo(taskId);
 				assertThat(result.getError()).containsIgnoringCase("exit code");
 				assertThat(result.getError()).containsIgnoringCase("130");
 				assertThat(result.getError()).containsIgnoringCase("SIGINT");
@@ -170,19 +165,16 @@ class BenchmarkerTest {
 
 	@Test
 	void testBenchScriptBenchmarkError() throws Exception {
-		BenchRequest request = getBenchRequest();
-
 		writeBenchScript(
 			"#!/bin/sh",
 			"echo '{ \"error\": \"Halloooo\" }'"
 		);
 
 		doWithResult(
-			request,
 			result -> {
 				assertThat(result.getResult()).isNotNull();
 				assertThat(result.getError()).isNull();
-				assertThat(result.getRunId()).isEqualTo(request.getRunId());
+				assertThat(result.getRunId()).isEqualTo(taskId);
 				assertThat(result.getResult().getBenchmarks()).isNull();
 				assertThat(result.getResult().getError()).isEqualTo("Halloooo");
 			}
@@ -191,19 +183,16 @@ class BenchmarkerTest {
 
 	@Test
 	void testBenchScriptMetricError() throws Exception {
-		BenchRequest request = getBenchRequest();
-
 		writeBenchScript(
 			"#!/bin/sh",
 			"echo '{ \"test\": { \"metric\": { \"error\": \"20\" } } }'"
 		);
 
 		doWithResult(
-			request,
 			result -> {
 				assertThat(result.getResult()).isNotNull();
 				assertThat(result.getError()).isNull();
-				assertThat(result.getRunId()).isEqualTo(request.getRunId());
+				assertThat(result.getRunId()).isEqualTo(taskId);
 				assertThat(result.getResult().getBenchmarks()).containsExactly(new Benchmark(
 					"test",
 					List.of(
@@ -217,8 +206,6 @@ class BenchmarkerTest {
 
 	@Test
 	void testBenchScriptMetricWithValue() throws Exception {
-		BenchRequest request = getBenchRequest();
-
 		writeBenchScript(
 			"#!/bin/sh",
 			"echo '{ \"test\": { \"metric\": {"
@@ -227,11 +214,10 @@ class BenchmarkerTest {
 		);
 
 		doWithResult(
-			request,
 			result -> {
 				assertThat(result.getError()).isNull();
 				assertThat(result.getResult()).isNotNull();
-				assertThat(result.getRunId()).isEqualTo(request.getRunId());
+				assertThat(result.getRunId()).isEqualTo(taskId);
 				assertThat(result.getResult().getBenchmarks()).containsExactly(new Benchmark(
 					"test",
 					List.of(
@@ -245,14 +231,13 @@ class BenchmarkerTest {
 
 	@Test
 	void testAbort() throws Exception {
-		BenchRequest request = getBenchRequest();
-
 		writeBenchScript(
 			"#!/bin/sh",
 			"while true ; do sleep 1 ; done"
 		);
 
-		Benchmarker benchmarker = new Benchmarker(request, finishFuture);
+		Benchmarker benchmarker = new Benchmarker(finishFuture, taskId, workPath, BENCH_REPO_HASH,
+			benchRepoPath, startTime, RUNNER_NAME, systemInfo);
 
 		Thread.sleep(400);
 		benchmarker.abort();
@@ -261,8 +246,8 @@ class BenchmarkerTest {
 		for (int i = 0; i < 10; i++) {
 			Thread.sleep(250);
 			if (finishFuture.isDone()) {
-				assertThat(benchmarker.getResult()).isEmpty();
-				assertThat(benchmarker.getRunId()).isEqualTo(request.getRunId());
+				assertThat(benchmarker.getResult()).isNotEmpty();
+				assertThat(benchmarker.getTaskId()).isEqualTo(taskId);
 				return;
 			}
 		}
@@ -271,14 +256,13 @@ class BenchmarkerTest {
 
 	@Test
 	void testAbortAfterLongTime() throws Exception {
-		BenchRequest request = getBenchRequest();
-
 		writeBenchScript(
 			"#!/bin/sh",
 			"while true ; do sleep 1 ; done"
 		);
 
-		Benchmarker benchmarker = new Benchmarker(request, finishFuture);
+		Benchmarker benchmarker = new Benchmarker(finishFuture, taskId, workPath, BENCH_REPO_HASH,
+			benchRepoPath, startTime, RUNNER_NAME, systemInfo);
 
 		Thread.sleep(1000);
 		benchmarker.abort();
@@ -287,17 +271,19 @@ class BenchmarkerTest {
 		for (int i = 0; i < 10; i++) {
 			Thread.sleep(250);
 			if (finishFuture.isDone()) {
-				assertThat(benchmarker.getResult()).isEmpty();
-				assertThat(benchmarker.getRunId()).isEqualTo(request.getRunId());
+				assertThat(benchmarker.getResult()).isNotEmpty();
+				assertThat(benchmarker.getTaskId()).isEqualTo(taskId);
 				return;
 			}
 		}
 		fail("Cancel should have been done by now");
 	}
 
-	private void doWithResult(BenchRequest request, Consumer<BenchResult> resultConsumer)
+	private void doWithResult(Consumer<BenchResult> resultConsumer)
 		throws InterruptedException, ExecutionException, TimeoutException {
-		Benchmarker benchmarker = new Benchmarker(request, finishFuture);
+
+		Benchmarker benchmarker = new Benchmarker(finishFuture, taskId, workPath, BENCH_REPO_HASH,
+			benchRepoPath, startTime, RUNNER_NAME, systemInfo);
 
 		finishFuture.get(20, TimeUnit.SECONDS);
 
@@ -319,16 +305,5 @@ class BenchmarkerTest {
 		permissions.add(PosixFilePermission.OWNER_EXECUTE);
 
 		Files.setPosixFilePermissions(path, permissions);
-	}
-
-	private BenchRequest getBenchRequest() {
-		return new BenchRequest(
-			LinuxSystemInfo.getCurrent(),
-			UUID.randomUUID(),
-			"hello",
-			benchRepoPath,
-			workPath,
-			"Runner"
-		);
 	}
 }

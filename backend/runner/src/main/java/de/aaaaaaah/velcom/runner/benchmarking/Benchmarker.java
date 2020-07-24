@@ -1,5 +1,6 @@
 package de.aaaaaaah.velcom.runner.benchmarking;
 
+import de.aaaaaaah.velcom.runner.Delays;
 import de.aaaaaaah.velcom.runner.benchmarking.output.BenchmarkScriptOutputParser;
 import de.aaaaaaah.velcom.runner.benchmarking.output.BenchmarkScriptOutputParser.BareResult;
 import de.aaaaaaah.velcom.runner.benchmarking.output.OutputParseException;
@@ -7,9 +8,11 @@ import de.aaaaaaah.velcom.shared.protocol.serialization.Result;
 import de.aaaaaaah.velcom.shared.util.ExceptionHelper;
 import de.aaaaaaah.velcom.shared.util.execution.ProgramExecutor;
 import de.aaaaaaah.velcom.shared.util.execution.ProgramResult;
+import de.aaaaaaah.velcom.shared.util.systeminfo.LinuxSystemInfo;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
@@ -17,6 +20,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 /**
@@ -26,43 +30,79 @@ public class Benchmarker {
 
 	private final AtomicReference<BenchResult> result; // nullable inside the reference
 
-	private final BenchRequest benchRequest;
 	private final CompletableFuture<Void> finishFuture;
+
+	private final UUID taskId;
+	private final Path taskRepoPath;
+	@Nullable
+	private final String benchRepoHash;
+	private final Path benchRepoPath;
+
+	private final Instant startTime;
+	private final String runnerName;
+	private final LinuxSystemInfo systemInfo;
+
 	private volatile boolean aborted;
 	private final Thread worker;
-	private final Instant startTime;
 
 	/**
-	 * Creates a new Benchmarker <em>and starts the benchmark.</em>
+	 * Creates a new Benchmarker <em>and starts the benchmark</em>.
 	 *
-	 * @param benchRequest the benchmark request
-	 * @param finishFuture the future the benchmarker completes when the benchmark is done
-	 * 	(aborted, failed or completed successfully)
+	 * @param finishFuture the future the benchmarker will complete after the benchmark is done
+	 * 	(aborted, failed or completed successfully) and after a corresponding result has been set
+	 * @param taskId the UUID of the task/run this benchmarker will perform
+	 * @param taskRepoPath the path to the task repo directory
+	 * @param benchRepoHash the current hash of the bench repo, or null if the backend has not yet
+	 * 	sent us any bench repo.
+	 * @param benchRepoPath the path to the bench repo directory
+	 * @param startTime the time when the benchmark process started. When exactly this process
+	 * 	starts is not up to the benchmarker.
+	 * @param runnerName the name of this runner
+	 * @param systemInfo the system information of this runner
 	 */
-	public Benchmarker(BenchRequest benchRequest, CompletableFuture<Void> finishFuture) {
-		startTime = Instant.now();
+	public Benchmarker(CompletableFuture<Void> finishFuture, UUID taskId, Path taskRepoPath,
+		@Nullable String benchRepoHash, Path benchRepoPath, Instant startTime, String runnerName,
+		LinuxSystemInfo systemInfo) {
 
-		this.benchRequest = benchRequest;
+		result = new AtomicReference<>();
+
 		this.finishFuture = finishFuture;
 
-		this.result = new AtomicReference<>();
+		this.taskId = taskId;
+		this.taskRepoPath = taskRepoPath;
+		this.benchRepoHash = benchRepoHash;
+		this.benchRepoPath = benchRepoPath;
 
-		this.worker = new Thread(this::runBenchmark);
-		this.worker.start();
+		this.startTime = startTime;
+		this.runnerName = runnerName;
+		this.systemInfo = systemInfo;
+
+		aborted = false;
+		worker = new Thread(this::runBenchmark);
+		worker.start();
 	}
 
 	/**
-	 * @return the run id this benchmarker is benchmarking
+	 * @return the id of the task this benchmarker is benchmarking
 	 */
-	public UUID getRunId() {
-		return benchRequest.getRunId();
+	public UUID getTaskId() {
+		return taskId;
 	}
 
 	/**
-	 * @return the benchmark result. Will be null forever if the benchmark was aborted
+	 * @return the benchmark result.
 	 */
 	public Optional<BenchResult> getResult() {
 		return Optional.ofNullable(result.get());
+	}
+
+	private BenchmarkFailureInformation getBasicFailureInfo() {
+		BenchmarkFailureInformation info = new BenchmarkFailureInformation();
+		info.addToGeneral("Runner name", '"' + runnerName + '"');
+		info.addMachineInfo(systemInfo);
+		info.addToGeneral("User", System.getProperty("user.name"));
+		info.addToGeneral("Bench repo hash", Objects.requireNonNullElse(benchRepoHash, "none"));
+		return info;
 	}
 
 	/**
@@ -74,13 +114,9 @@ public class Benchmarker {
 	}
 
 	private void runBenchmark() {
-		BenchmarkFailureInformation information = new BenchmarkFailureInformation();
-		information.addToGeneral("Runner name", '"' + benchRequest.getRunnerName() + '"');
-		information.addMachineInfo(benchRequest.getSystemInfo());
-		information.addToGeneral("Bench-Repo Hash", benchRequest.getBenchRepoHash());
-		information.addToGeneral("User", System.getProperty("user.name"));
+		BenchmarkFailureInformation information = getBasicFailureInfo();
 
-		Path benchScriptPath = benchRequest.getBenchRepoPath().resolve("bench");
+		Path benchScriptPath = benchRepoPath.resolve("bench");
 
 		if (!Files.isReadable(benchScriptPath)) {
 			information.addSection("Setup error", "`bench` script not found or not readable");
@@ -99,8 +135,6 @@ public class Benchmarker {
 			// Ensure we do not wait if the benchmark was cancelled before this thread was ready
 			if (aborted) {
 				work.cancel(true);
-				setResult(null);
-				return;
 			}
 			ProgramResult programResult = work.get();
 
@@ -111,14 +145,21 @@ public class Benchmarker {
 			setResult(interpretExecutionException(information, e));
 		} catch (InterruptedException e) {
 			work.cancel(true);
-			setResult(null);
+			information.addSection("Failed", "The benchmark thread was interrupted");
+			setResult(failedBenchResult(information.toString()));
 		} catch (CancellationException e) {
-			setResult(null);
+			information.addSection("Failed", "The run was aborted");
+			setResult(failedBenchResult(information.toString()));
 		}
 	}
 
-	private void setResult(@Nullable BenchResult result) {
-		this.result.set(result);
+	/**
+	 * Sets the result if it hasn't already be set.
+	 *
+	 * @param result the result
+	 */
+	private void setResult(@Nonnull BenchResult result) {
+		this.result.compareAndSet(null, result);
 		finishFuture.complete(null);
 	}
 
@@ -128,12 +169,12 @@ public class Benchmarker {
 
 		String[] calledCommand = {
 			benchScriptPath.toAbsolutePath().toString(),
-			benchRequest.getWorkRepoPath().toAbsolutePath().toString()
+			taskRepoPath.toAbsolutePath().toString()
 		};
 		information.addEscapedArrayToGeneral("Executed command", calledCommand);
 		information.addToGeneral("Start time", startTime.toString());
 
-		return new ProgramExecutor().execute(calledCommand);
+		return new ProgramExecutor(Delays.TIME_TO_KILL.toMillis()).execute(calledCommand);
 	}
 
 	private void addProgramOutput(BenchmarkFailureInformation information,
@@ -206,11 +247,11 @@ public class Benchmarker {
 	}
 
 	private BenchResult successfulBenchResult(Result result) {
-		return new BenchResult(getRunId(), true, result, null, startTime, Instant.now());
+		return new BenchResult(taskId, true, result, null, startTime, Instant.now());
 	}
 
 	private BenchResult failedBenchResult(String error) {
-		return new BenchResult(getRunId(), false, null, error, startTime, Instant.now());
+		return new BenchResult(taskId, false, null, error, startTime, Instant.now());
 	}
 
 }
