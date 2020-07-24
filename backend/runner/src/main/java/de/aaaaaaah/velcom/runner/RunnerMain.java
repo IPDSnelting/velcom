@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
@@ -18,7 +17,15 @@ public class RunnerMain {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(RunnerMain.class);
 
-	public static void main(String[] args) throws InterruptedException {
+	public static void main(String[] args) {
+		try {
+			realMain(args);
+		} catch (InterruptedException | ExecutionException e) {
+			die(e, "Encountered irrecoverable exception");
+		}
+	}
+
+	private static void realMain(String[] args) throws ExecutionException, InterruptedException {
 		RunnerCliSpec cliSpec = new RunnerCliSpec_Parser().parseOrExit(args);
 		RunnerConfig config = loadConfig(cliSpec.configFileLocation());
 
@@ -44,28 +51,15 @@ public class RunnerMain {
 
 		//noinspection InfiniteLoopStatement
 		while (true) {
-			LOGGER.debug("Beginning new backend roundtrip");
+			LOGGER.debug("Beginning new backend round trip");
 
 			for (TeleBackend backend : backends) {
 				LOGGER.debug("Asking " + backend + " for a benchmark");
-				Future<Void> future = backend.maybePerformBenchmark();
-
-				if (future != null) {
-					LOGGER.info(
-						"Waiting for " + backend + " benchmark (or maybe just bench repo update)");
-
-					try {
-						future.get();
-					} catch (ExecutionException e) {
-						LOGGER.warn("Error waiting for " + backend + " benchmark:", e);
-					}
-				} else {
-					LOGGER.debug(backend + " has no benchmark");
-				}
+				backend.maybePerformBenchmark();
 			}
 
+			LOGGER.debug("Waiting a bit before beginning new backend round trip");
 			//noinspection BusyWait
-			LOGGER.debug("Waiting a bit before beginning new backend roundtrip");
 			Thread.sleep(Delays.BACKEND_ROUNDTRIP.toMillis());
 		}
 	}

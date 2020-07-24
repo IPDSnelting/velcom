@@ -13,6 +13,7 @@ import javax.annotation.Nullable;
 public class BenchRepoDir {
 
 	private final Path dirPath;
+	private final Path tmpFilePath;
 	private final Path hashFilePath;
 
 	@Nullable
@@ -20,6 +21,7 @@ public class BenchRepoDir {
 
 	public BenchRepoDir(Path dirPath) throws IOException {
 		this.dirPath = dirPath;
+		this.tmpFilePath = dirPath.getParent().resolve(dirPath.getFileName() + ".tmp");
 		this.hashFilePath = dirPath.getParent().resolve(dirPath.getFileName() + ".hash");
 
 		currentHash = readHash();
@@ -51,6 +53,10 @@ public class BenchRepoDir {
 
 	public Path getDirPath() {
 		return dirPath;
+	}
+
+	public Path getTmpFilePath() {
+		return tmpFilePath;
 	}
 
 	public void setHash(@Nullable String hash) throws IOException {

@@ -3,6 +3,10 @@ package de.aaaaaaah.velcom.runner.states;
 import de.aaaaaaah.velcom.runner.Connection;
 import de.aaaaaaah.velcom.runner.TeleBackend;
 import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.RequestRunReply;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.concurrent.CompletableFuture;
 import org.slf4j.Logger;
@@ -13,37 +17,69 @@ public class AwaitingRun extends RunnerState {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(AwaitingRun.class);
 
-	private final CompletableFuture<Boolean> receivedData;
+	private final CompletableFuture<RequestRunReply> replyFuture;
 	private final RequestRunReply reply;
 
+	private OutputStream tmpFile;
+
 	public AwaitingRun(TeleBackend teleBackend, Connection connection,
-		CompletableFuture<Boolean> receivedData, RequestRunReply reply) {
+		RequestRunReply reply, CompletableFuture<RequestRunReply> replyFuture) {
 
 		super(teleBackend, connection);
 
-		this.receivedData = receivedData;
+		this.replyFuture = replyFuture;
 		this.reply = reply;
 	}
 
 	@Override
 	public void onEnter() {
 		LOGGER.info("Receiving task repo from " + teleBackend);
+
+		try {
+			tmpFile = new FileOutputStream(teleBackend.getTaskRepoTmpPath().toFile());
+		} catch (FileNotFoundException e) {
+			LOGGER.warn("Could not open stream to task repo tmp file: ", e);
+		}
 	}
 
 	@Override
 	public RunnerState onBinary(ByteBuffer data, boolean last) {
-		// TODO actually receive data
+		if (tmpFile != null) {
+			byte[] bytes;
+			if (data.hasArray()) {
+				bytes = data.array();
+			} else {
+				bytes = new byte[data.remaining()];
+				data.get(bytes);
+			}
+			try {
+				tmpFile.write(bytes);
+			} catch (IOException e) {
+				LOGGER.warn("Could not stream to task repo tmp file: ", e);
+				tmpFile = null;
+			}
+		}
 
-		if (last) {
-			receivedData.complete(true);
+		if (!last) {
+			return this;
+		} else if (tmpFile == null) {
 			return new Idle(teleBackend, connection);
 		} else {
-			return this;
+			replyFuture.complete(reply);
+			return new Idle(teleBackend, connection);
 		}
 	}
 
 	@Override
 	public void onExit() {
-		receivedData.complete(false);
+		if (tmpFile != null) {
+			try {
+				tmpFile.close();
+			} catch (IOException e) {
+				LOGGER.warn("Could not close stream to task repo tmp file: ", e);
+			}
+		}
+
+		replyFuture.cancel(true);
 	}
 }

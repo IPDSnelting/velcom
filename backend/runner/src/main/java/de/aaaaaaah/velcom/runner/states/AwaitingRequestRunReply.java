@@ -21,17 +21,17 @@ public class AwaitingRequestRunReply extends RunnerState {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(AwaitingRequestRunReply.class);
 
-	private final CompletableFuture<Boolean> receivedData;
-	private boolean receivedDataPassedOn;
+	private final CompletableFuture<RequestRunReply> replyFuture;
+	private boolean owningReplyFuture;
 	private final Timeout timeout;
 
 	public AwaitingRequestRunReply(TeleBackend teleBackend, Connection connection,
-		CompletableFuture<Boolean> receivedData) {
+		CompletableFuture<RequestRunReply> replyFuture) {
 
 		super(teleBackend, connection);
 
-		this.receivedData = receivedData;
-		receivedDataPassedOn = false;
+		this.replyFuture = replyFuture;
+		owningReplyFuture = true;
 
 		timeout = Timeout.after(Delays.AWAIT_COMMAND_REPLY);
 		timeout.getCompletionStage()
@@ -54,11 +54,11 @@ public class AwaitingRequestRunReply extends RunnerState {
 			.map(p -> {
 				LOGGER.debug(teleBackend + ": hasBench " + p.hasBench() + ", hasRun " + p.hasRun());
 				if (p.hasBench()) {
-					receivedDataPassedOn = true;
-					return new AwaitingBench(teleBackend, connection, receivedData, p);
+					owningReplyFuture = false;
+					return new AwaitingBench(teleBackend, connection, p, replyFuture);
 				} else if (p.hasRun()) {
-					receivedDataPassedOn = true;
-					return new AwaitingRun(teleBackend, connection, receivedData, p);
+					owningReplyFuture = false;
+					return new AwaitingRun(teleBackend, connection, p, replyFuture);
 				} else {
 					return new Idle(teleBackend, connection);
 				}
@@ -70,8 +70,8 @@ public class AwaitingRequestRunReply extends RunnerState {
 	public void onExit() {
 		timeout.cancel();
 
-		if (!receivedDataPassedOn) {
-			receivedData.complete(false);
+		if (owningReplyFuture) {
+			replyFuture.cancel(true);
 		}
 	}
 }
