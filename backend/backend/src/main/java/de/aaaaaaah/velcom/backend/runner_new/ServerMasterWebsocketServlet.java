@@ -4,7 +4,7 @@ import de.aaaaaaah.velcom.backend.data.benchrepo.BenchRepo;
 import de.aaaaaaah.velcom.backend.runner_new.single.TeleRunner;
 import de.aaaaaaah.velcom.shared.protocol.RunnerConnectionHeader;
 import de.aaaaaaah.velcom.shared.protocol.RunnerDenyReason;
-import de.aaaaaaah.velcom.shared.protocol.serialization.Converter;
+import de.aaaaaaah.velcom.shared.protocol.serialization.Serializer;
 import java.io.IOException;
 import java.util.Optional;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeResponse;
@@ -21,7 +21,7 @@ public class ServerMasterWebsocketServlet extends WebSocketServlet {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ServerMasterWebsocketServlet.class);
 
 	private final Dispatcher dispatcher;
-	private final Converter serializer;
+	private final Serializer serializer;
 	private final String runnerToken;
 	private final BenchRepo benchRepo;
 
@@ -33,7 +33,7 @@ public class ServerMasterWebsocketServlet extends WebSocketServlet {
 	 * @param runnerToken the token runners need to provide when connecting
 	 * @param benchRepo the benchmark repo
 	 */
-	public ServerMasterWebsocketServlet(Dispatcher dispatcher, Converter serializer,
+	public ServerMasterWebsocketServlet(Dispatcher dispatcher, Serializer serializer,
 		String runnerToken, BenchRepo benchRepo) {
 		this.dispatcher = dispatcher;
 		this.serializer = serializer;

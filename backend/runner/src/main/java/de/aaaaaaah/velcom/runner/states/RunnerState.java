@@ -5,7 +5,7 @@ import de.aaaaaaah.velcom.runner.TeleBackend;
 import de.aaaaaaah.velcom.runner.Connection;
 import de.aaaaaaah.velcom.runner.benchmarking.BenchResult;
 import de.aaaaaaah.velcom.shared.protocol.StatusCode;
-import de.aaaaaaah.velcom.shared.protocol.serialization.Converter;
+import de.aaaaaaah.velcom.shared.protocol.serialization.Serializer;
 import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.AbortRun;
 import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.ClearResult;
 import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.ClientBoundPacket;
@@ -66,7 +66,7 @@ public abstract class RunnerState implements State {
 	 * @return whether this function call handled the packet
 	 */
 	protected Optional<RunnerState> onPacket(ClientBoundPacket packet) {
-		Converter serializer = connection.getSerializer();
+		Serializer serializer = connection.getSerializer();
 		JsonNode data = packet.getData();
 
 		switch (packet.getType()) {

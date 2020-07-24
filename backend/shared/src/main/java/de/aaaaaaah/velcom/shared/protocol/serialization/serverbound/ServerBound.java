@@ -1,6 +1,6 @@
 package de.aaaaaaah.velcom.shared.protocol.serialization.serverbound;
 
-import de.aaaaaaah.velcom.shared.protocol.serialization.Converter;
+import de.aaaaaaah.velcom.shared.protocol.serialization.Serializer;
 
 /**
  * Packets that can be converted into a {@link ServerBoundPacket}.
@@ -13,6 +13,6 @@ public interface ServerBound {
 	 * @param serializer the JSON serializer instance to use
 	 * @return the {@link ServerBoundPacket}
 	 */
-	ServerBoundPacket asPacket(Converter serializer);
+	ServerBoundPacket asPacket(Serializer serializer);
 
 }

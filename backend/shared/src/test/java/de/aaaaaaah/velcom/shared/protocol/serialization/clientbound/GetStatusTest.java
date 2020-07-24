@@ -1,24 +1,25 @@
 package de.aaaaaaah.velcom.shared.protocol.serialization.clientbound;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import de.aaaaaaah.velcom.shared.protocol.serialization.EntityTest;
+import de.aaaaaaah.velcom.shared.protocol.serialization.SerializerBasedTest;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
-class GetStatusTest extends EntityTest {
+class GetStatusTest extends SerializerBasedTest {
 
 	@Test
-	void serializeToEmptyObject() throws JsonProcessingException {
-		String result = objectMapper.writeValueAsString(new GetStatus());
-		JsonNode tree = objectMapper.readTree(result);
+	void serializeToEmptyObject() {
+		JsonNode tree = serializer.serializeTree(new GetStatus());
 		assertEquals(objectMapper.createObjectNode(), tree);
 	}
 
 	@Test
-	void deserializeFromEmptyObject() throws JsonProcessingException {
-		objectMapper.readValue("{}", GetStatus.class);
+	void deserializeFromEmptyObject() {
+		Optional<GetStatus> result = serializer.deserialize("{}", GetStatus.class);
+		assertTrue(result.isPresent());
+		assertEquals(new GetStatus(), result.get());
 	}
-
 }

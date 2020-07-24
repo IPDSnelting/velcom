@@ -5,7 +5,7 @@ import de.aaaaaaah.velcom.runner.Delays;
 import de.aaaaaaah.velcom.runner.TeleBackend;
 import de.aaaaaaah.velcom.shared.Timeout;
 import de.aaaaaaah.velcom.shared.protocol.StatusCode;
-import de.aaaaaaah.velcom.shared.protocol.serialization.Converter;
+import de.aaaaaaah.velcom.shared.protocol.serialization.Serializer;
 import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.ClientBoundPacket;
 import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.ClientBoundPacketType;
 import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.RequestRunReply;
@@ -46,7 +46,7 @@ public class AwaitingRequestRunReply extends RunnerState {
 
 	@Override
 	protected Optional<RunnerState> onPacket(ClientBoundPacket packet) {
-		Converter serializer = connection.getSerializer();
+		Serializer serializer = connection.getSerializer();
 
 		return super.onPacket(packet).or(() -> Optional.of(packet)
 			.filter(p -> p.getType() == ClientBoundPacketType.REQUEST_RUN_REPLY)

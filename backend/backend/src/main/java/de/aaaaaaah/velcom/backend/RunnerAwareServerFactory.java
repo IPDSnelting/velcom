@@ -3,7 +3,7 @@ package de.aaaaaaah.velcom.backend;
 import de.aaaaaaah.velcom.backend.data.benchrepo.BenchRepo;
 import de.aaaaaaah.velcom.backend.runner_new.Dispatcher;
 import de.aaaaaaah.velcom.backend.runner_new.ServerMasterWebsocketServlet;
-import de.aaaaaaah.velcom.shared.protocol.serialization.Converter;
+import de.aaaaaaah.velcom.shared.protocol.serialization.Serializer;
 import io.dropwizard.jetty.HttpConnectorFactory;
 import io.dropwizard.jetty.MutableServletContextHandler;
 import io.dropwizard.jetty.RoutingHandler;
@@ -32,10 +32,10 @@ public class RunnerAwareServerFactory implements ServerFactory {
 	private GlobalConfig config;
 	private Dispatcher dispatcher;
 	private BenchRepo benchRepo;
-	private final Converter serializer;
+	private final Serializer serializer;
 
 	private RunnerAwareServerFactory() {
-		this.serializer = new Converter();
+		this.serializer = new Serializer();
 	}
 
 	@Override

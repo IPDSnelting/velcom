@@ -2,7 +2,7 @@ package de.aaaaaaah.velcom.shared.protocol.serialization.clientbound;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import de.aaaaaaah.velcom.shared.protocol.serialization.Converter;
+import de.aaaaaaah.velcom.shared.protocol.serialization.Serializer;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -89,7 +89,7 @@ public class RequestRunReply implements ClientBound {
 	}
 
 	@Override
-	public ClientBoundPacket asPacket(Converter serializer) {
+	public ClientBoundPacket asPacket(Serializer serializer) {
 		return new ClientBoundPacket(
 			ClientBoundPacketType.REQUEST_RUN_REPLY,
 			serializer.serializeTree(this)

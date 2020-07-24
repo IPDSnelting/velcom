@@ -1,23 +1,23 @@
 package de.aaaaaaah.velcom.shared.protocol.serialization.serverbound;
 
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import de.aaaaaaah.velcom.shared.protocol.serialization.EntityTest;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Result;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Result.Benchmark;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Result.Interpretation;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Result.Metric;
+import de.aaaaaaah.velcom.shared.protocol.serialization.SerializerBasedTest;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
-class GetResultReplyTest extends EntityTest {
+class GetResultReplyTest extends SerializerBasedTest {
 
 	@Test
-	void deserializeRunnerError() throws JsonProcessingException {
+	void deserializeRunnerError() {
 		Instant targetInstant = Instant.parse("2020-02-10T00:00:00Z");
 		String string = "{"
 			+ "  \"run_id\": \"576afdcb-eaf9-46b2-9287-fc3bf8df83df\","
@@ -26,17 +26,18 @@ class GetResultReplyTest extends EntityTest {
 			+ "  \"start_time\": \"2020-02-10T00:00:00Z\","
 			+ "  \"stop_time\": \"2020-02-10T00:00:00Z\""
 			+ "}";
-		GetResultReply result = objectMapper.readValue(string, GetResultReply.class);
+		Optional<GetResultReply> result = serializer.deserialize(string, GetResultReply.class);
 
 		UUID uuid = UUID.fromString("576afdcb-eaf9-46b2-9287-fc3bf8df83df");
+		assertTrue(result.isPresent());
 		assertEquals(
 			new GetResultReply(uuid, false, null, "me not worky", targetInstant, targetInstant),
-			result
+			result.get()
 		);
 	}
 
 	@Test
-	void deserializeRunnerResultWithoutMetrics() throws JsonProcessingException {
+	void deserializeRunnerResultWithoutMetrics() {
 		Instant targetInstant = Instant.parse("2020-02-10T00:00:00Z");
 		String string = "{"
 			+ "  \"run_id\": \"576afdcb-eaf9-46b2-9287-fc3bf8df83df\","
@@ -45,9 +46,10 @@ class GetResultReplyTest extends EntityTest {
 			+ "  \"start_time\": \"2020-02-10T00:00:00Z\","
 			+ "  \"stop_time\": \"2020-02-10T00:00:00Z\""
 			+ "}";
-		GetResultReply result = objectMapper.readValue(string, GetResultReply.class);
+		Optional<GetResultReply> result = serializer.deserialize(string, GetResultReply.class);
 
 		UUID uuid = UUID.fromString("576afdcb-eaf9-46b2-9287-fc3bf8df83df");
+		assertTrue(result.isPresent());
 		assertEquals(
 			new GetResultReply(
 				uuid,
@@ -57,7 +59,7 @@ class GetResultReplyTest extends EntityTest {
 				targetInstant,
 				targetInstant
 			),
-			result
+			result.get()
 		);
 	}
 
@@ -69,10 +71,8 @@ class GetResultReplyTest extends EntityTest {
 			+ "  \"result\": {\"error\": \"me also not worky\"},"
 			+ "  \"start_time\": \"2020-02-10T00:00:00Z\""
 			+ "}";
-
-		assertThatThrownBy(() -> objectMapper.readValue(string, GetResultReply.class))
-			.isInstanceOf(JsonProcessingException.class)
-			.hasMessageContaining("stop_time");
+		Optional<GetResultReply> result = serializer.deserialize(string, GetResultReply.class);
+		assertTrue(result.isEmpty());
 	}
 
 	@Test
@@ -83,14 +83,12 @@ class GetResultReplyTest extends EntityTest {
 			+ "  \"result\": {\"error\": \"me also not worky\"},"
 			+ "  \"stop_time\": \"2020-02-10T00:00:00Z\""
 			+ "}";
-
-		assertThatThrownBy(() -> objectMapper.readValue(string, GetResultReply.class))
-			.isInstanceOf(JsonProcessingException.class)
-			.hasMessageContaining("start_time");
+		Optional<GetResultReply> result = serializer.deserialize(string, GetResultReply.class);
+		assertTrue(result.isEmpty());
 	}
 
 	@Test
-	void deserializeRunnerResultWithMetrics() throws JsonProcessingException {
+	void deserializeRunnerResultWithMetrics() {
 		Instant start = Instant.parse("2020-02-10T00:00:00Z");
 		Instant stop = Instant.parse("2020-05-10T00:00:20Z");
 		String string = "{"
@@ -120,9 +118,10 @@ class GetResultReplyTest extends EntityTest {
 			+ "  \"start_time\": \"2020-02-10T00:00:00Z\","
 			+ "  \"stop_time\": \"2020-05-10T00:00:20Z\""
 			+ "}";
-		GetResultReply result = objectMapper.readValue(string, GetResultReply.class);
+		Optional<GetResultReply> result = serializer.deserialize(string, GetResultReply.class);
 
 		UUID uuid = UUID.fromString("576afdcb-eaf9-46b2-9287-fc3bf8df83df");
+		assertTrue(result.isPresent());
 		assertEquals(
 			new GetResultReply(
 				uuid,
@@ -155,7 +154,7 @@ class GetResultReplyTest extends EntityTest {
 				start,
 				stop
 			),
-			result
+			result.get()
 		);
 	}
 }

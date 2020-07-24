@@ -1,19 +1,23 @@
 package de.aaaaaaah.velcom.shared.protocol.serialization.clientbound;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import de.aaaaaaah.velcom.shared.protocol.serialization.EntityTest;
+import de.aaaaaaah.velcom.shared.protocol.serialization.SerializerBasedTest;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
-class ClientBoundPacketTest extends EntityTest {
+class ClientBoundPacketTest extends SerializerBasedTest {
 
 	@Test
 	void serializeCorrectly() throws JsonProcessingException {
 		ClientBoundPacket packet = new ClientBoundPacket(
-			ClientBoundPacketType.CLEAR_RESULT, objectMapper.createArrayNode());
-		JsonNode packetTree = objectMapper.readTree(objectMapper.writeValueAsString(packet));
+			ClientBoundPacketType.CLEAR_RESULT,
+			objectMapper.createArrayNode()
+		);
+		JsonNode packetTree = serializer.serializeTree(packet);
 
 		String expected = "{\"type\": \"clear_result\", \"data\": []}";
 		JsonNode expectedTree = objectMapper.readTree(expected);
@@ -22,14 +26,18 @@ class ClientBoundPacketTest extends EntityTest {
 	}
 
 	@Test
-	void deserializeCorrectly() throws JsonProcessingException {
+	void deserializeCorrectly() {
 		String json = "{\"type\": \"request_run_reply\", \"data\": {}}";
-		ClientBoundPacket result = objectMapper.readValue(json, ClientBoundPacket.class);
+		Optional<ClientBoundPacket> result = serializer.deserialize(json,
+			ClientBoundPacket.class);
 
+		assertTrue(result.isPresent());
 		assertEquals(
-			new ClientBoundPacket(ClientBoundPacketType.REQUEST_RUN_REPLY,
-				objectMapper.createObjectNode()),
-			result
+			new ClientBoundPacket(
+				ClientBoundPacketType.REQUEST_RUN_REPLY,
+				objectMapper.createObjectNode()
+			),
+			result.get()
 		);
 	}
 }

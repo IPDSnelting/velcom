@@ -14,11 +14,11 @@ import java.util.Optional;
  * Serialize and deserialize client- and serverbound packets. This class is mainly a wrapper around
  * an {@link ObjectMapper} so it is easier to use and doesn't have to be configured every time.
  */
-public class Converter {
+public class Serializer {
 
 	private final ObjectMapper objectMapper;
 
-	public Converter() {
+	public Serializer() {
 		objectMapper = new ObjectMapper()
 			.registerModule(new ParameterNamesModule())
 			.registerModule(new Jdk8Module())

@@ -1,6 +1,6 @@
 package de.aaaaaaah.velcom.shared.protocol.serialization.clientbound;
 
-import de.aaaaaaah.velcom.shared.protocol.serialization.Converter;
+import de.aaaaaaah.velcom.shared.protocol.serialization.Serializer;
 
 /**
  * A command requesting the runner's current status.
@@ -8,7 +8,7 @@ import de.aaaaaaah.velcom.shared.protocol.serialization.Converter;
 public class GetStatus implements ClientBound {
 
 	@Override
-	public ClientBoundPacket asPacket(Converter serializer) {
+	public ClientBoundPacket asPacket(Serializer serializer) {
 		return new ClientBoundPacket(
 			ClientBoundPacketType.GET_STATUS,
 			serializer.serializeTree(this)

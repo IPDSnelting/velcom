@@ -6,7 +6,7 @@ import de.aaaaaaah.velcom.shared.Timeout;
 import de.aaaaaaah.velcom.shared.protocol.HeartbeatHandler;
 import de.aaaaaaah.velcom.shared.protocol.HeartbeatHandler.HeartbeatWebsocket;
 import de.aaaaaaah.velcom.shared.protocol.StatusCode;
-import de.aaaaaaah.velcom.shared.protocol.serialization.Converter;
+import de.aaaaaaah.velcom.shared.protocol.serialization.Serializer;
 import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.ClientBoundPacket;
 import de.aaaaaaah.velcom.shared.protocol.statemachine.StateMachine;
 import java.io.IOException;
@@ -39,13 +39,13 @@ public class RunnerConnection implements WebSocketListener, WebSocketFrameListen
 	@Nullable
 	private ClosedBeforeConnect closedBeforeConnect;
 
-	private final Converter serializer;
+	private final Serializer serializer;
 	private final StateMachine<TeleRunnerState> stateMachine;
 	private final PeriodicStatusRequester periodicStatusRequester;
 	private final List<Runnable> closeListeners;
 	private final HeartbeatHandler heartbeatHandler;
 
-	public RunnerConnection(Converter serializer, TeleRunner runner) {
+	public RunnerConnection(Serializer serializer, TeleRunner runner) {
 		this.serializer = serializer;
 		this.stateMachine = new StateMachine<>(new IdleState(runner, this));
 		this.closeListeners = new ArrayList<>();
@@ -73,7 +73,7 @@ public class RunnerConnection implements WebSocketListener, WebSocketFrameListen
 	 *
 	 * @return the used serializer
 	 */
-	public Converter getSerializer() {
+	public Serializer getSerializer() {
 		return serializer;
 	}
 

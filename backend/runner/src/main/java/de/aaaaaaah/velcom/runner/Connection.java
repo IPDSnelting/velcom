@@ -5,7 +5,7 @@ import de.aaaaaaah.velcom.runner.states.RunnerState;
 import de.aaaaaaah.velcom.shared.Timeout;
 import de.aaaaaaah.velcom.shared.protocol.RunnerConnectionHeader;
 import de.aaaaaaah.velcom.shared.protocol.StatusCode;
-import de.aaaaaaah.velcom.shared.protocol.serialization.Converter;
+import de.aaaaaaah.velcom.shared.protocol.serialization.Serializer;
 import de.aaaaaaah.velcom.shared.protocol.serialization.serverbound.ServerBoundPacket;
 import de.aaaaaaah.velcom.shared.protocol.statemachine.StateMachine;
 import java.net.URI;
@@ -24,7 +24,7 @@ public class Connection implements WebSocket.Listener {
 	private static final Logger LOGGER = LoggerFactory.getLogger(Connection.class);
 
 	private final StateMachine<RunnerState> stateMachine;
-	private final Converter serializer;
+	private final Serializer serializer;
 	private StringBuilder textPacketBuilder;
 	private final CompletableFuture<Void> closedFuture;
 	private boolean closed;
@@ -35,7 +35,7 @@ public class Connection implements WebSocket.Listener {
 		throws ExecutionException, InterruptedException {
 
 		stateMachine = new StateMachine<>(new Idle(teleBackend, this));
-		serializer = new Converter();
+		serializer = new Serializer();
 		textPacketBuilder = new StringBuilder();
 		closedFuture = new CompletableFuture<>();
 		closed = false;
@@ -107,7 +107,7 @@ public class Connection implements WebSocket.Listener {
 		return stateMachine;
 	}
 
-	public Converter getSerializer() {
+	public Serializer getSerializer() {
 		return serializer;
 	}
 

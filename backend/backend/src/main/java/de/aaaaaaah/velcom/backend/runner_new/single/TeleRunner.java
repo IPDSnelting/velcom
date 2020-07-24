@@ -16,7 +16,7 @@ import de.aaaaaaah.velcom.backend.runner_new.Dispatcher;
 import de.aaaaaaah.velcom.backend.runner_new.KnownRunner;
 import de.aaaaaaah.velcom.backend.runner_new.single.state.AwaitAbortRunReply;
 import de.aaaaaaah.velcom.shared.protocol.StatusCode;
-import de.aaaaaaah.velcom.shared.protocol.serialization.Converter;
+import de.aaaaaaah.velcom.shared.protocol.serialization.Serializer;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Result;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Result.Benchmark;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Result.Metric;
@@ -42,14 +42,14 @@ public class TeleRunner {
 
 	private final AtomicReference<GetStatusReply> runnerInformation;
 	private final String runnerName;
-	private final Converter serializer;
+	private final Serializer serializer;
 	private final Dispatcher dispatcher;
 	private final AtomicReference<Task> myCurrentTask;
 	private final BenchRepo benchRepo;
 
 	private RunnerConnection connection;
 
-	public TeleRunner(String runnerName, Converter serializer, Dispatcher dispatcher,
+	public TeleRunner(String runnerName, Serializer serializer, Dispatcher dispatcher,
 		BenchRepo benchRepo) {
 		this.runnerName = runnerName;
 		this.serializer = serializer;
