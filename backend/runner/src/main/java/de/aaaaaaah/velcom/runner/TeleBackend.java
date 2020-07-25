@@ -168,7 +168,9 @@ public class TeleBackend {
 		}
 
 		if (reply.getRunId().isPresent()) {
+			LOGGER.info(this + ": Starting benchmark");
 			startBenchmark(reply.getRunId().get()).get();
+			LOGGER.info(this + ": Benchmark completed");
 		}
 	}
 

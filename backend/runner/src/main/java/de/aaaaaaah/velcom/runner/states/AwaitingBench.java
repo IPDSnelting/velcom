@@ -36,7 +36,7 @@ public class AwaitingBench extends RunnerState {
 
 	@Override
 	public void onEnter() {
-		LOGGER.info("Receiving bench repo from " + teleBackend);
+		LOGGER.info(teleBackend + ": Receiving bench repo");
 
 		try {
 			File file = teleBackend.getBenchRepoTmpPath().toFile();

@@ -33,7 +33,7 @@ public class AwaitingRun extends RunnerState {
 
 	@Override
 	public void onEnter() {
-		LOGGER.info("Receiving task repo from " + teleBackend);
+		LOGGER.info(teleBackend + ": Receiving task repo");
 
 		try {
 			File file = teleBackend.getTaskRepoTmpPath().toFile();
