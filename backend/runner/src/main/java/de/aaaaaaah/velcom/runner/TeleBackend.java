@@ -105,8 +105,17 @@ public class TeleBackend {
 	 * @throws ExecutionException in an irrecoverable situation (runner must die)
 	 */
 	public void maybePerformBenchmark() throws InterruptedException, ExecutionException {
+		// This function is only here to ensure the globalStatus is always set correctly. The meat
+		// of the beast is in maybePerformBenchmarkHelper, of course.
 		globalStatus.set(Status.RUN);
+		try {
+			maybePerformBenchmarkHelper();
+		} finally {
+			globalStatus.set(Status.IDLE);
+		}
+	}
 
+	private void maybePerformBenchmarkHelper() throws InterruptedException, ExecutionException {
 		Optional<BenchResult> benchResult = getBenchResult();
 		if (benchResult.isPresent()) {
 			// The runner protocol forbids us from asking the backend for a new task while we still
@@ -161,8 +170,6 @@ public class TeleBackend {
 		if (reply.getRunId().isPresent()) {
 			startBenchmark(reply.getRunId().get()).get();
 		}
-
-		globalStatus.set(Status.IDLE);
 	}
 
 	private void clearTmpFiles() throws IOException {
