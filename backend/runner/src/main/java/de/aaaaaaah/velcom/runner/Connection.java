@@ -40,14 +40,14 @@ public class Connection implements WebSocket.Listener {
 		closedFuture = new CompletableFuture<>();
 		closed = false;
 
-		LOGGER.debug("Opening connection to " + address);
+		LOGGER.debug("Opening connection to {}", address);
 		socket = HttpClient.newHttpClient()
 			.newWebSocketBuilder()
 			.header(RunnerConnectionHeader.CONNECT_RUNNER_NAME.getName(), name)
 			.header(RunnerConnectionHeader.CONNECT_RUNNER_TOKEN.getName(), token)
 			.buildAsync(address, this)
 			.get();
-		LOGGER.debug("Successfully opened connection to " + address);
+		LOGGER.debug("Successfully opened connection to {}", address);
 	}
 
 	public synchronized void sendPacket(ServerBoundPacket packet) {
@@ -81,7 +81,7 @@ public class Connection implements WebSocket.Listener {
 			return;
 		}
 
-		LOGGER.warn("Closing connection: " + statusCode.getDescription());
+		LOGGER.warn("Closing connection: {}", statusCode.getDescription());
 		socket.sendClose(statusCode.getCode(), statusCode.getDescriptionAsReason());
 
 		Timeout disconnectTimeout = Timeout.after(Delays.CLOSE_CONNECTION_TIMEOUT);
@@ -94,7 +94,7 @@ public class Connection implements WebSocket.Listener {
 			return;
 		}
 
-		LOGGER.warn("Force-closing connection: " + statusCode.getDescription());
+		LOGGER.warn("Force-closing connection: {}", statusCode.getDescription());
 		socket.abort();
 
 		// Since neither onClose nor onError are called when the socket is aborted like this, we

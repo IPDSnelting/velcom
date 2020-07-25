@@ -34,7 +34,7 @@ public class BenchRepoDir {
 	@Nullable
 	private String readHash() throws IOException {
 		try {
-			LOGGER.debug("Trying to read hash from file " + hashFilePath);
+			LOGGER.debug("Trying to read hash from file {}", hashFilePath);
 			FileReader reader = new FileReader(hashFilePath.toFile());
 			BufferedReader bufferedReader = new BufferedReader(reader);
 			String line = bufferedReader.readLine();
@@ -44,7 +44,7 @@ public class BenchRepoDir {
 			}
 
 			String hash = line.strip();
-			LOGGER.debug("Read hash " + hash);
+			LOGGER.debug("Read hash {}", hash);
 			return hash;
 		} catch (FileNotFoundException e) {
 			LOGGER.debug("Could not read hash, file not found");

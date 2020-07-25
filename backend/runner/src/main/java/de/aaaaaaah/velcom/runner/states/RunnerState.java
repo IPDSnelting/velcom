@@ -88,7 +88,7 @@ public abstract class RunnerState implements State {
 	}
 
 	protected Optional<RunnerState> onGetStatus(GetStatus getStatus) {
-		LOGGER.debug("Replying to get_status for " + teleBackend);
+		LOGGER.debug("Replying to get_status for {}", teleBackend);
 
 		GetStatusReply getStatusReply = new GetStatusReply(
 			teleBackend.getInfo().format(),
@@ -97,14 +97,14 @@ public abstract class RunnerState implements State {
 			teleBackend.getStatus(),
 			teleBackend.getCurrentRunId().orElse(null)
 		);
-		LOGGER.debug("Replying with " + getStatusReply);
+		LOGGER.debug("Replying with {}", getStatusReply);
 		connection.sendPacket(getStatusReply.asPacket(connection.getSerializer()));
 
 		return Optional.of(this);
 	}
 
 	protected Optional<RunnerState> onGetResult(GetResult getResult) {
-		LOGGER.debug("Replying to get_result for " + teleBackend);
+		LOGGER.debug("Replying to get_result for {}", teleBackend);
 
 		Optional<BenchResult> resultOptional = teleBackend.getBenchResult();
 		if (resultOptional.isEmpty()) {
@@ -128,7 +128,7 @@ public abstract class RunnerState implements State {
 	}
 
 	protected Optional<RunnerState> onClearResult(ClearResult clearResult) {
-		LOGGER.debug("Replying to clear_result for " + teleBackend);
+		LOGGER.debug("Replying to clear_result for {}", teleBackend);
 
 		if (!teleBackend.clearBenchResult()) {
 			connection.close(StatusCode.NO_RESULT);
@@ -140,7 +140,7 @@ public abstract class RunnerState implements State {
 	}
 
 	protected Optional<RunnerState> onAbortRun(AbortRun abortRun) {
-		LOGGER.debug("Replying to abort_run for " + teleBackend);
+		LOGGER.debug("Replying to abort_run for {}", teleBackend);
 
 		teleBackend.abortCurrentRun();
 		connection.sendPacket(new AbortRunReply().asPacket(connection.getSerializer()));
@@ -157,7 +157,7 @@ public abstract class RunnerState implements State {
 	 * @return the state to switch to next
 	 */
 	public RunnerState onBinary(ByteBuffer data, boolean last) {
-		LOGGER.debug("Received invalid binary data from " + teleBackend);
+		LOGGER.debug("Received invalid binary data from {}", teleBackend);
 
 		// Binary packets are only expected in certain circumstances, but usually they are invalid
 		// behaviour.

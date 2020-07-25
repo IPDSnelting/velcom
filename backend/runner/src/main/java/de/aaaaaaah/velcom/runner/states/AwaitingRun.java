@@ -33,7 +33,7 @@ public class AwaitingRun extends RunnerState {
 
 	@Override
 	public void onEnter() {
-		LOGGER.info(teleBackend + ": Receiving task repo");
+		LOGGER.info("{}: Receiving task repo", teleBackend);
 
 		try {
 			File file = teleBackend.getTaskRepoTmpPath().toFile();
@@ -41,7 +41,7 @@ public class AwaitingRun extends RunnerState {
 			file.createNewFile();
 			tmpFile = new FileOutputStream(file);
 		} catch (IOException e) {
-			LOGGER.warn("Could not open stream to task repo tmp file: ", e);
+			LOGGER.warn("{}: Could not open stream to task repo tmp file", teleBackend, e);
 		}
 	}
 
@@ -58,7 +58,7 @@ public class AwaitingRun extends RunnerState {
 			try {
 				tmpFile.write(bytes);
 			} catch (IOException e) {
-				LOGGER.warn("Could not stream to task repo tmp file: ", e);
+				LOGGER.warn("{}: Could not stream to task repo tmp file", teleBackend, e);
 				tmpFile = null;
 			}
 		}
@@ -79,7 +79,7 @@ public class AwaitingRun extends RunnerState {
 			try {
 				tmpFile.close();
 			} catch (IOException e) {
-				LOGGER.warn("Could not close stream to task repo tmp file: ", e);
+				LOGGER.warn("{}: Could not close stream to task repo tmp file", teleBackend, e);
 			}
 		}
 

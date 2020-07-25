@@ -40,7 +40,7 @@ public class AwaitingRequestRunReply extends RunnerState {
 
 	@Override
 	public void onEnter() {
-		LOGGER.debug("Waiting for request_run_reply from " + teleBackend);
+		LOGGER.debug("Waiting for request_run_reply from {}", teleBackend);
 		timeout.start();
 	}
 
@@ -52,7 +52,7 @@ public class AwaitingRequestRunReply extends RunnerState {
 			.filter(p -> p.getType() == ClientBoundPacketType.REQUEST_RUN_REPLY)
 			.flatMap(p -> serializer.deserialize(p.getData(), RequestRunReply.class))
 			.map(p -> {
-				LOGGER.debug(teleBackend + ": hasBench " + p.hasBench() + ", hasRun " + p.hasRun());
+				LOGGER.debug("{}: hasBench {}, hasRun {}", teleBackend, p.hasBench(), p.hasRun());
 				if (p.hasBench()) {
 					owningReplyFuture = false;
 					return new AwaitingBench(teleBackend, connection, p, replyFuture);
