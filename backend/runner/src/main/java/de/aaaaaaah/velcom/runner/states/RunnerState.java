@@ -112,7 +112,7 @@ public abstract class RunnerState implements State {
 			return Optional.empty();
 		}
 		BenchResult result = resultOptional.get();
-		LOGGER.debug("Replying with result for run" + result.getRunId());
+		LOGGER.debug("Replying with result for run {}", result.getRunId());
 
 		GetResultReply getResultReply = new GetResultReply(
 			result.getRunId(),

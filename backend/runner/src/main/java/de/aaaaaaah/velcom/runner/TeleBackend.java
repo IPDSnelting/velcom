@@ -199,10 +199,14 @@ public class TeleBackend {
 		throws InterruptedException {
 
 		CompletableFuture<RequestRunReply> replyFuture = new CompletableFuture<>();
-
 		RunnerState newState = new AwaitingRequestRunReply(this, conn, replyFuture);
-		conn.getStateMachine().switchFromRestingState(newState);
-		conn.sendPacket(new RequestRun().asPacket(conn.getSerializer()));
+
+		boolean switchSuccessful = conn.getStateMachine().switchFromRestingState(newState);
+		if (switchSuccessful) {
+			conn.sendPacket(new RequestRun().asPacket(conn.getSerializer()));
+		} else {
+			replyFuture.cancel(true);
+		}
 
 		return replyFuture;
 	}

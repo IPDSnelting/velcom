@@ -33,15 +33,16 @@ public class StateMachine<S extends State> {
 	 *
 	 * @param modifier the function to decide the new state based on the current state. It receives
 	 * 	the current state as its argument and its return value will become the new state.
+	 * @return true if the state was switched successfully, false otherwise
 	 */
-	public void changeCurrentState(Function<S, S> modifier) {
+	public boolean changeCurrentState(Function<S, S> modifier) {
 		lock.lock();
 		try {
 			if (stopped) {
-				return;
+				return false;
 			}
 
-			switchUnconditionally(modifier.apply(currentState));
+			return switchUnconditionally(modifier.apply(currentState));
 		} finally {
 			lock.unlock();
 		}
@@ -51,12 +52,13 @@ public class StateMachine<S extends State> {
 	 * Switch to a new state, no matter what state the state machine is currently in.
 	 *
 	 * @param newState the state to switch to
+	 * @return true if the state was switched successfully, false otherwise
 	 */
-	private void switchUnconditionally(S newState) {
+	private boolean switchUnconditionally(S newState) {
 		lock.lock();
 		try {
 			if (stopped) {
-				return;
+				return false;
 			}
 
 			// Intentionally comparing objects via == instead of using .equals()
@@ -73,6 +75,8 @@ public class StateMachine<S extends State> {
 
 				inRestingStateOrStopped.signalAll();
 			}
+
+			return true;
 		} finally {
 			lock.unlock();
 		}
@@ -82,17 +86,18 @@ public class StateMachine<S extends State> {
 	 * Switch to a new state as soon as the state machine enters a resting state again.
 	 *
 	 * @param newState the state to switch to
+	 * @return true if the state was switched successfully, false otherwise
 	 * @throws InterruptedException if the thread got interrupted while waiting for the state
 	 * 	machine to enter a resting state
 	 */
-	public void switchFromRestingState(S newState) throws InterruptedException {
+	public boolean switchFromRestingState(S newState) throws InterruptedException {
 		lock.lock();
 		try {
 			while (!(stopped || currentState == null || currentState.isResting())) {
 				inRestingStateOrStopped.await();
 			}
 
-			switchUnconditionally(newState);
+			return switchUnconditionally(newState);
 		} finally {
 			lock.unlock();
 		}
