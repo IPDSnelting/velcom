@@ -5,6 +5,7 @@ import de.aaaaaaah.velcom.backend.access.entities.Task;
 import de.aaaaaaah.velcom.backend.access.entities.TaskId;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.runner.single.TeleRunner;
+import de.aaaaaaah.velcom.shared.util.execution.DaemonThreadFactory;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -12,29 +13,50 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The dispatcher interface.
  */
 public class Dispatcher implements IDispatcher {
 
+	private static final Logger LOGGER = LoggerFactory.getLogger(Dispatcher.class);
+
 	private final Map<TaskId, TeleRunner> workToRunnerMap;
 	private final List<TeleRunner> teleRunners;
 	private final Queue queue;
+	private final Duration disconnectedRunnerGracePeriod;
 
-	public Dispatcher(Queue queue) {
+	public Dispatcher(Queue queue, Duration disconnectedRunnerGracePeriod) {
 		this.queue = queue;
+		this.disconnectedRunnerGracePeriod = disconnectedRunnerGracePeriod;
 		this.teleRunners = new ArrayList<>();
 		this.workToRunnerMap = new HashMap<>();
+
+		ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(
+			new DaemonThreadFactory()
+		);
+		executor.scheduleAtFixedRate(
+			this::cleanupDisconnectedRunners,
+			0,
+			Math.max(disconnectedRunnerGracePeriod.toSeconds() / 2, 1),
+			TimeUnit.SECONDS
+		);
 	}
 
 	private void cleanupDisconnectedRunners() {
-		// FIXME: 24.07.20 Use Delays class, actually call this
 		synchronized (teleRunners) {
-			Predicate<TeleRunner> outOfGracePeriod = runner ->
-				Duration.between(runner.getLastPing(), Instant.now()).toSeconds() > 60;
+			LOGGER.debug("Checking for disconnected runners (I know {} runners)", teleRunners.size());
+			Predicate<TeleRunner> outOfGracePeriod = runner -> {
+				Duration timeSinceLastPing = Duration.between(runner.getLastPing(), Instant.now());
+				return timeSinceLastPing.toSeconds() > disconnectedRunnerGracePeriod.toSeconds();
+			};
 
 			List<TeleRunner> runnersToRemove = new ArrayList<>();
 
@@ -49,6 +71,7 @@ public class Dispatcher implements IDispatcher {
 				//noinspection SynchronizationOnLocalVariableOrMethodParameter
 				synchronized (runner) {
 					if (!runner.hasConnection() && outOfGracePeriod.test(runner)) {
+						LOGGER.info("Removing disconnected runner {}", runner.getRunnerName());
 						runner.dispose();
 						runnersToRemove.add(runner);
 					}

@@ -46,6 +46,7 @@ import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.dropwizard.DropwizardExports;
 import io.prometheus.client.exporter.MetricsServlet;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.EnumSet;
 import javax.servlet.DispatcherType;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
@@ -148,7 +149,10 @@ public class ServerMain extends Application<GlobalConfig> {
 			benchRepo);
 
 		// Dispatcher
-		Dispatcher dispatcher = new Dispatcher(queue);
+		Dispatcher dispatcher = new Dispatcher(
+			queue,
+			Duration.ofSeconds(configuration.getDisconnectedRunnerGracePeriodSeconds())
+		);
 		RunnerAwareServerFactory.getInstance().setDispatcher(dispatcher);
 		RunnerAwareServerFactory.getInstance().setBenchRepo(benchRepo);
 
