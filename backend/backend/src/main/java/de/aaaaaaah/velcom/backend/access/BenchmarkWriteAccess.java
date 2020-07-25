@@ -66,15 +66,15 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 				RunError error = run.getResult().getRight().orElseThrow();
 				runRecord.setError(error.getMessage());
 				runRecord.setErrorType(error.getType().getTextualRepresentation());
+				runRecord.insert();
 			} else {
-				Collection<Measurement> measurements = run.getResult().getLeft().orElseThrow();
+				runRecord.insert();
 
+				Collection<Measurement> measurements = run.getResult().getLeft().orElseThrow();
 				for (Measurement measurement : measurements) {
 					insertMeasurement(db, measurement);
 				}
 			}
-
-			runRecord.insert();
 		});
 
 		// 2.) Invalidate measurement cache
