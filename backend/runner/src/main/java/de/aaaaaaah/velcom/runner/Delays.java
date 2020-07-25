@@ -5,11 +5,11 @@ import java.time.Duration;
 /**
  * A class for keeping all kinds of runner-related delays and timeouts.
  */
-public class Delays {
+public final class Delays {
 
 	/**
-	 * How long to wait for a reconnect when creating a connection fails. This delay prevents
-	 * flooding the server on the other end with too many connection attempts.
+	 * How long to wait for a reconnect when creating a connection fails. This delay prevents flooding
+	 * the server on the other end with too many connection attempts.
 	 */
 	public static final Duration RECONNECT_AFTER_FAILED_CONNECTION = Duration.ofSeconds(10);
 

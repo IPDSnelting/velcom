@@ -1,5 +1,6 @@
 package de.aaaaaaah.velcom.backend.runner.single;
 
+import de.aaaaaaah.velcom.backend.runner.Delays;
 import de.aaaaaaah.velcom.backend.runner.single.state.IdleState;
 import de.aaaaaaah.velcom.backend.runner.single.state.TeleRunnerState;
 import de.aaaaaaah.velcom.shared.Timeout;
@@ -12,7 +13,6 @@ import de.aaaaaaah.velcom.shared.protocol.statemachine.StateMachine;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -143,7 +143,7 @@ public class RunnerConnection implements WebSocketListener, WebSocketFrameListen
 
 		LOGGER.info("Closing connection to {} due to {}", session.getRemoteAddress(), statusCode);
 
-		Timeout closeTimeout = Timeout.after(Duration.ofSeconds(10));
+		Timeout closeTimeout = Timeout.after(Delays.CLOSE_CONNECTION_TIMEOUT);
 		closeTimeout.getCompletionStage().thenRun(this::hardDisconnect);
 		closeTimeout.start();
 
