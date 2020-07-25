@@ -49,18 +49,28 @@ public class RunnerMain {
 			}
 		}).start());
 
+		LOGGER.debug("Waiting a bit before starting first backend round trip");
+		Thread.sleep(Delays.BACKEND_ROUNDTRIP.toMillis());
+
 		//noinspection InfiniteLoopStatement
 		while (true) {
-			LOGGER.debug("Beginning new backend round trip");
+			boolean didBenchmark = false;
 
 			for (TeleBackend backend : backends) {
 				LOGGER.debug("Asking " + backend + " for a benchmark");
-				backend.maybePerformBenchmark();
+				didBenchmark |= backend.maybePerformBenchmark();
 			}
 
-			LOGGER.debug("Waiting a bit before beginning new backend round trip");
-			//noinspection BusyWait
-			Thread.sleep(Delays.BACKEND_ROUNDTRIP.toMillis());
+			if (didBenchmark) {
+				LOGGER.debug("Did a benchmark in this iteration, there might be more");
+				LOGGER.debug("Starting new backend round trip immediately");
+			} else {
+				LOGGER.debug("No backend had any benchmark in this iteration");
+				LOGGER.debug("Delaying new backend round trip for a bit");
+				//noinspection BusyWait
+				Thread.sleep(Delays.BACKEND_ROUNDTRIP.toMillis());
+				LOGGER.debug("Starting new backend round trip");
+			}
 		}
 	}
 

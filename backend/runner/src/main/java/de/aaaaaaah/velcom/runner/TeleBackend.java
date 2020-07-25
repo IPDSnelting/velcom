@@ -101,26 +101,27 @@ public class TeleBackend {
 	 *
 	 * <em>This function must always be called from the same thread!</em>
 	 *
+	 * @return true if a benchmark was performed, false otherwise
 	 * @throws InterruptedException in an irrecoverable situation (runner must die)
 	 * @throws ExecutionException in an irrecoverable situation (runner must die)
 	 */
-	public void maybePerformBenchmark() throws InterruptedException, ExecutionException {
+	public boolean maybePerformBenchmark() throws InterruptedException, ExecutionException {
 		// This function is only here to ensure the globalStatus is always set correctly. The meat
 		// of the beast is in maybePerformBenchmarkHelper, of course.
 		globalStatus.set(Status.RUN);
 		try {
-			maybePerformBenchmarkHelper();
+			return maybePerformBenchmarkHelper();
 		} finally {
 			globalStatus.set(Status.IDLE);
 		}
 	}
 
-	private void maybePerformBenchmarkHelper() throws InterruptedException, ExecutionException {
+	private boolean maybePerformBenchmarkHelper() throws InterruptedException, ExecutionException {
 		Optional<BenchResult> benchResult = getBenchResult();
 		if (benchResult.isPresent()) {
 			// The runner protocol forbids us from asking the backend for a new task while we still
 			// have a result, so we just ignore the request.
-			return;
+			return false;
 		}
 		// Since this function is the only place where the benchmarker can be set to a non-null
 		// value, and this function only returns after the benchmarker has a result (or is still
@@ -129,14 +130,14 @@ public class TeleBackend {
 		Connection conn = connection;
 		if (conn == null) {
 			// We obviously can't ask the backend for a task if we aren't even connected to it.
-			return;
+			return false;
 		}
 
 		try {
 			clearTmpFiles();
 		} catch (IOException e) {
 			LOGGER.warn("Could not clear temporary files: ", e);
-			return;
+			return false;
 		}
 
 		// This future will complete as soon as all tar files have been downloaded.
@@ -148,7 +149,7 @@ public class TeleBackend {
 		} catch (ExecutionException | CancellationException e) {
 			LOGGER.debug(
 				"Backend has no new files or something went wrong while trying to download them");
-			return;
+			return false;
 		}
 
 		try {
@@ -158,20 +159,23 @@ public class TeleBackend {
 			}
 		} catch (IOException e) {
 			LOGGER.warn("Could not unpack tar files: ", e);
-			return;
+			return false;
 		}
 		try {
 			clearTmpFiles();
 		} catch (IOException e) {
 			LOGGER.warn("Could not clear temporary files: ", e);
-			return;
+			return false;
 		}
 
 		if (reply.getRunId().isPresent()) {
 			LOGGER.info(this + ": Starting benchmark");
 			startBenchmark(reply.getRunId().get()).get();
 			LOGGER.info(this + ": Benchmark completed");
+			return true;
 		}
+
+		return false;
 	}
 
 	private void clearTmpFiles() throws IOException {
