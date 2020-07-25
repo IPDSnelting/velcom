@@ -14,11 +14,15 @@ import de.aaaaaaah.velcom.shared.protocol.statemachine.StateMachine;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A thread that periodically asks a runner for its status.
  */
 public class PeriodicStatusRequester {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(PeriodicStatusRequester.class);
 
 	private final Thread worker;
 	private final TeleRunner teleRunner;
@@ -62,16 +66,24 @@ public class PeriodicStatusRequester {
 
 				// The runner has a result - we don't know why :( Tell it to clear it and move on
 				if (teleRunner.getCurrentTask().isEmpty()) {
+					LOGGER.info(
+						"{} had a result but we don't know why. Clearing it.", teleRunner.getRunnerName()
+					);
 					clearResults();
 					continue;
 				}
 				// The runner has a *different* result than we expected. Disconnect.
 				if (!teleRunner.getCurrentTask().get().getId().getId().equals(runId)) {
+					LOGGER.info(
+						"{} had a different result than we expected: {} instead of {}.",
+						teleRunner.getRunnerName(), runId, teleRunner.getCurrentTask().get().getId().getId()
+					);
 					clearResults();
 					connection.close(StatusCode.ILLEGAL_BEHAVIOUR);
 					continue;
 				}
 
+				LOGGER.info("Got results for run {} from {}", runId, teleRunner.getRunnerName());
 				teleRunner.handleResults(requestResults);
 
 				clearResults();

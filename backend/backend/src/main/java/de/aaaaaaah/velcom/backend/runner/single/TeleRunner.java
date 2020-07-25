@@ -151,9 +151,8 @@ public class TeleRunner {
 	public KnownRunner getRunnerInformation() {
 		GetStatusReply reply = runnerInformation.get();
 
-		return new KnownRunner(getRunnerName(), reply.getInfo(), reply.getStatus(),
-			myCurrentTask.get(),
-			!hasConnection()
+		return new KnownRunner(
+			getRunnerName(), reply.getInfo(), reply.getStatus(), myCurrentTask.get(), !hasConnection()
 		);
 	}
 
@@ -173,8 +172,9 @@ public class TeleRunner {
 		myCurrentTask.set(null);
 
 		if (!hasConnection()) {
-			LOGGER.info("Tried to abort commit but was not connected with a runner: {}",
-				getRunnerName());
+			LOGGER.info(
+				"Tried to abort commit but was not connected with a runner: {}", getRunnerName()
+			);
 			return;
 		}
 
@@ -195,6 +195,7 @@ public class TeleRunner {
 	public void handleResults(GetResultReply resultReply) {
 		Task task = myCurrentTask.get();
 		if (task == null) {
+			LOGGER.warn("{} has no task but got results :(", getRunnerName());
 			// Somehow we have no task but a result, retry that commit. This should not happen, but if it
 			// does err on the side of caution. Retry that task if possible, better to benchmark twice
 			// than never
@@ -297,6 +298,8 @@ public class TeleRunner {
 			.map(it -> it.equals(benchRepoHash))
 			.orElse(false);
 
+		LOGGER.info("Sending {} to runner {}", task.getId().getId(), getRunnerName());
+
 		connection.send(
 			new RequestRunReply(
 				!benchRepoUpToDate,
@@ -322,12 +325,14 @@ public class TeleRunner {
 			consumer.accept(outputStream);
 		} catch (PrepareTransferException e) {
 			LOGGER.info(
-				"Failed to transfer repo to runner " + getRunnerName() + ": Archiving failed", e);
+				"Failed to transfer repo to runner " + getRunnerName() + ": Archiving failed", e
+			);
 			// This task is corrupted, we can not benchmark it.
 			dispatcher.completeTask(prepareTransferFailed(task, Instant.now(), e));
 		} catch (TransferException | IOException | NoSuchTaskException e) {
-			LOGGER.info("Failed to transfer repo to runner " + getRunnerName() + ": Sending failed",
-				e);
+			LOGGER.info(
+				"Failed to transfer repo to runner " + getRunnerName() + ": Sending failed", e
+			);
 			dispatcher.getQueue().abortTaskProcess(task.getId());
 			connection.close(StatusCode.TRANSFER_FAILED);
 		}
