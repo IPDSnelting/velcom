@@ -57,7 +57,10 @@ public class RoundRobinFiloPolicy implements QueuePolicy {
 		databaseStorage.acquireTransaction(db -> {
 			// 1.) Find task with highest priority
 			Optional<TaskRecord> mostImportantRecord = db.selectFrom(TASK)
-				.where(TASK.PRIORITY.greaterThan(Task.DEFAULT_PRIORITY))
+				.where(
+					TASK.PRIORITY.greaterThan(Task.DEFAULT_PRIORITY)
+					.and(TASK.IN_PROCESS.eq(false))
+				)
 				.orderBy(
 					TASK.PRIORITY.desc(), TASK.UPDATE_TIME.desc()
 				)
@@ -71,7 +74,9 @@ public class RoundRobinFiloPolicy implements QueuePolicy {
 
 			// 2.) Check if there is a tar
 			Optional<TaskRecord> tarRecord = db.selectFrom(TASK)
-				.where(TASK.TAR_NAME.isNotNull())
+				.where(
+					TASK.TAR_NAME.isNotNull().and(TASK.IN_PROCESS.eq(false))
+				)
 				.orderBy(TASK.INSERT_TIME.desc())
 				.limit(1)
 				.fetchOptional();
@@ -85,6 +90,7 @@ public class RoundRobinFiloPolicy implements QueuePolicy {
 			if (lastRepo == null) {
 				// there was no last repo => just take the first repo available
 				Optional<TaskRecord> repoTaskRecord = db.selectFrom(TASK)
+					.where(TASK.IN_PROCESS.eq(false))
 					.orderBy(TASK.INSERT_TIME.desc())
 					.limit(1)
 					.fetchOptional();
@@ -107,6 +113,7 @@ public class RoundRobinFiloPolicy implements QueuePolicy {
 
 				try (Cursor<Record1<String>> cursor = db.selectDistinct(TASK.REPO_ID)
 					.from(TASK)
+					.where(TASK.IN_PROCESS.eq(false))
 					.orderBy(TASK.REPO_ID.asc())
 					.fetchLazy()) {
 
@@ -135,7 +142,10 @@ public class RoundRobinFiloPolicy implements QueuePolicy {
 
 				// Get newest task for next repo id
 				TaskRecord taskRecord = db.selectFrom(TASK)
-					.where(TASK.REPO_ID.eq(nextRepoId.getId().toString()))
+					.where(
+						TASK.REPO_ID.eq(nextRepoId.getId().toString())
+						.and(TASK.IN_PROCESS.eq(false))
+					)
 					.orderBy(TASK.INSERT_TIME.desc())
 					.limit(1)
 					.fetchOne();
