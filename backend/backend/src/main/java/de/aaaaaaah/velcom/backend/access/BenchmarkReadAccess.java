@@ -232,10 +232,12 @@ public class BenchmarkReadAccess {
 			MeasurementName measurementName = new MeasurementName(
 				measurementRecord.getBenchmark(), measurementRecord.getMetric()
 			);
-			Unit unit = new Unit(measurementRecord.getUnit());
-			Interpretation interpretation = Interpretation.fromTextualRepresentation(
-				measurementRecord.getInterpretation()
+			Unit unit = new Unit(
+				measurementRecord.getUnit() == null ? "" : measurementRecord.getUnit()
 			);
+			Interpretation interpretation = measurementRecord.getInterpretation() == null
+				? Interpretation.NEUTRAL
+				: Interpretation.fromTextualRepresentation(measurementRecord.getInterpretation());
 
 			final Measurement measurement;
 
