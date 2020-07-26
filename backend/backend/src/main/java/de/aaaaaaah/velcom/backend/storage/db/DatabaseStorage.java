@@ -5,7 +5,6 @@ import de.aaaaaaah.velcom.backend.util.CheckedConsumer;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Objects;
-import javax.sql.DataSource;
 import org.flywaydb.core.Flyway;
 import org.jooq.DSLContext;
 import org.jooq.SQLDialect;
@@ -29,6 +28,7 @@ public class DatabaseStorage {
 	 * Also performs database migrations, if necessary.
 	 *
 	 * @param config the config used to get the connection information for the database from
+	 * @throws SQLException if sql goes wrong
 	 */
 	public DatabaseStorage(GlobalConfig config) throws SQLException {
 		this(config.getJdbcUrl());
@@ -41,8 +41,11 @@ public class DatabaseStorage {
 	 * Also performs database migrations, if necessary.
 	 *
 	 * @param jdbcUrl the jdbc url used to connect to the database
+	 * @throws SQLException if sql goes wrong
 	 */
 	public DatabaseStorage(String jdbcUrl) throws SQLException {
+		migrate(jdbcUrl);
+
 		SQLiteConfig sqliteConfig = new SQLiteConfig();
 		sqliteConfig.enforceForeignKeys(true);
 		sqliteConfig.setJournalMode(JournalMode.WAL);
@@ -51,23 +54,28 @@ public class DatabaseStorage {
 		dataSource.setUrl(jdbcUrl);
 
 		this.connection = dataSource.getConnection();
-
 		this.context = DSL.using(this.connection, SQLDialect.SQLITE);
-
-		migrate(dataSource);
 	}
 
-	private void migrate(DataSource dataSource) {
+	/**
+	 * This function is called with the url to the db instead of the {@link SQLiteDataSource} because
+	 * that way, it doesn't perform any foreign key checking. This way, migrations are fast, but each
+	 * migration has to check for foreign key consistency itself using {@code PRAGMA
+	 * foreign_key_check}.
+	 *
+	 * @param jdbcUrl the url to the database
+	 */
+	private void migrate(String jdbcUrl) {
 		Flyway flyway = Flyway.configure()
-			.dataSource(dataSource)
-			.load();
+				.dataSource(jdbcUrl, "", "")
+				.load();
 
 		flyway.migrate();
 	}
 
 	/**
 	 * @return a {@link DSLContext} instance providing jooq functionality along with a connection to
-	 * 	the database
+	 * the database
 	 */
 	public DSLContext acquireContext() {
 		return this.context;

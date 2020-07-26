@@ -180,3 +180,9 @@ ALTER TABLE new_run RENAME TO run;
 CREATE INDEX idx_measurement_rid ON measurement(run_id);
 CREATE INDEX idx_measurement_id_rid ON measurement(id, run_id);
 CREATE INDEX idx_measurement_value_id_rid ON measurement(id, run_id);
+
+-----------------------------------
+-- Ensure foreign keys are valid --
+-----------------------------------
+
+PRAGMA foreign_key_check;
