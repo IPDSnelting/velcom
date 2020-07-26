@@ -31,7 +31,6 @@
           </execution>
         </executions>
         <configuration>
-          <minimizeJar>true</minimizeJar>
           <finalName>${project.name}</finalName>
           <transformers>
             <transformer
