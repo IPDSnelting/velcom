@@ -11,7 +11,6 @@ import org.jooq.SQLDialect;
 import org.jooq.impl.DSL;
 import org.sqlite.SQLiteConfig;
 import org.sqlite.SQLiteConfig.JournalMode;
-import org.sqlite.SQLiteDataSource;
 
 /**
  * Provides access to a database.
@@ -37,8 +36,7 @@ public class DatabaseStorage {
 	/**
 	 * Initializes the database storage.
 	 *
-	 * <p>
-	 * Also performs database migrations, if necessary.
+	 * <p> Also performs database migrations, if necessary.
 	 *
 	 * @param jdbcUrl the jdbc url used to connect to the database
 	 * @throws SQLException if sql goes wrong
@@ -50,32 +48,29 @@ public class DatabaseStorage {
 		sqliteConfig.enforceForeignKeys(true);
 		sqliteConfig.setJournalMode(JournalMode.WAL);
 
-		SQLiteDataSource dataSource = new SQLiteDataSource(sqliteConfig);
-		dataSource.setUrl(jdbcUrl);
-
-		this.connection = dataSource.getConnection();
-		this.context = DSL.using(this.connection, SQLDialect.SQLITE);
+		connection = sqliteConfig.createConnection(jdbcUrl);
+		context = DSL.using(connection, SQLDialect.SQLITE);
 	}
 
 	/**
-	 * This function is called with the url to the db instead of the {@link SQLiteDataSource} because
-	 * that way, it doesn't perform any foreign key checking. This way, migrations are fast, but each
-	 * migration has to check for foreign key consistency itself using {@code PRAGMA
-	 * foreign_key_check}.
+	 * By default, sqlite doesn't check for foreign key constraints. By opening a new db connection
+	 * only based on the db url, flyway can take advantage of this and migrations become much more
+	 * performant. This does however mean that each migration has to check foreign key consistency
+	 * itself using {@code PRAGMA foreign_key_check}.
 	 *
 	 * @param jdbcUrl the url to the database
 	 */
 	private void migrate(String jdbcUrl) {
 		Flyway flyway = Flyway.configure()
-				.dataSource(jdbcUrl, "", "")
-				.load();
+			.dataSource(jdbcUrl, "", "")
+			.load();
 
 		flyway.migrate();
 	}
 
 	/**
 	 * @return a {@link DSLContext} instance providing jooq functionality along with a connection to
-	 * the database
+	 * 	the database
 	 */
 	public DSLContext acquireContext() {
 		return this.context;
