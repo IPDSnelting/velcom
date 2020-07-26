@@ -13,7 +13,7 @@
   </parent>
 
   <properties>
-    <db.url>jdbc:sqlite:backend/data/data.db</db.url>
+    <db.url>jdbc:sqlite:${project.build.directory}/data.db</db.url>
     <dropwizard-core.version>1.3.17</dropwizard-core.version>
     <dropwizard-auth.version>1.3.17</dropwizard-auth.version>
     <jetty.version>9.4.20.v20190813</jetty.version>
@@ -24,6 +24,26 @@
 
   <build>
     <plugins>
+
+      <!-- Ensure that the target directory exists so that flyway can connect to ${db.url} -->
+      <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>3.0.0</version>
+        <executions>
+          <execution>
+            <phase>initialize</phase>
+            <configuration>
+              <target>
+                <mkdir dir="${project.build.directory}"/>
+              </target>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
       <plugin>
         <artifactId>maven-shade-plugin</artifactId>
         <configuration>
