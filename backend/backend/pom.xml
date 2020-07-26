@@ -20,6 +20,7 @@
     <jgit.version>5.5.1.201910021850-r</jgit.version>
     <jooq.version>3.12.3</jooq.version>
     <flyway.version>6.5.2</flyway.version>
+    <sqlite.version>3.32.3.1</sqlite.version>
   </properties>
 
   <build>
@@ -280,7 +281,7 @@
     <dependency>
       <artifactId>sqlite-jdbc</artifactId>
       <groupId>org.xerial</groupId>
-      <version>3.28.0</version>
+      <version>${sqlite.version}</version>
     </dependency>
     <!-- https://mvnrepository.com/artifact/com.zaxxer/HikariCP -->
     <dependency>
