@@ -35,7 +35,7 @@ CREATE TABLE run
     repo_id     CHAR(36),
     commit_hash CHAR(40),
     error       TEXT,
-    error_type  TEXT CHECK ( error_type IN ('BENCH', 'VELCOM')),
+    error_type  TEXT CHECK ( error_type IS NULL OR error_type IN ('BENCH', 'VELCOM')),
 
     FOREIGN KEY (repo_id, commit_hash) REFERENCES known_commit (repo_id, hash) ON DELETE CASCADE,
 
