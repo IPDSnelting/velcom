@@ -287,7 +287,8 @@ public class TeleRunner {
 	 */
 	public void sendAvailableWork() {
 		LOGGER.debug("Runner {} asks for work", getRunnerName());
-		Optional<Task> workOptional = dispatcher.getWork(this);
+		Optional<Task> workOptional = Optional.ofNullable(myCurrentTask.get())
+				.or(() -> dispatcher.getWork(this));
 
 		if (workOptional.isEmpty()) {
 			LOGGER.debug("Dispatcher gave me no work for {}", getRunnerName());
