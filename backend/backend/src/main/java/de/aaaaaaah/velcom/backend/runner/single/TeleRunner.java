@@ -247,29 +247,33 @@ public class TeleRunner {
 
 		// No global error, but maybe individual ones failed
 		RunBuilder builder = RunBuilder.successful(
-			task,
-			getRunnerName(),
-			getRunnerInformation().getInformation(),
-			resultReply.getStartTime(),
-			resultReply.getStopTime()
+				task,
+				getRunnerName(),
+				getRunnerInformation().getInformation(),
+				resultReply.getStartTime(),
+				resultReply.getStopTime()
 		);
 
+		// That get is okay, we check for `getError().isPresent()
+		//noinspection OptionalGetWithoutIsPresent
 		for (Benchmark benchmark : result.getBenchmarks().get()) {
 			for (Metric metric : benchmark.getMetrics()) {
 				MeasurementName name = new MeasurementName(benchmark.getName(), metric.getName());
 				if (metric.getError().isPresent()) {
 					builder.addFailedMeasurement(
-						name,
-						new Unit(metric.getUnit()),
-						Interpretation.fromSharedRepresentation(metric.getInterpretation()),
-						metric.getError().get()
+							name,
+							new Unit(metric.getUnit()),
+							Interpretation.fromSharedRepresentation(metric.getInterpretation()),
+							metric.getError().get()
 					);
 				} else {
+					// That get is okay, we check for metric.getError().isPresent()
+					//noinspection OptionalGetWithoutIsPresent
 					builder.addSuccessfulMeasurement(
-						name,
-						Interpretation.fromSharedRepresentation(metric.getInterpretation()),
-						new Unit(metric.getUnit()),
-						metric.getValues().get()
+							name,
+							Interpretation.fromSharedRepresentation(metric.getInterpretation()),
+							new Unit(metric.getUnit()),
+							metric.getValues().get()
 					);
 				}
 			}
@@ -282,11 +286,13 @@ public class TeleRunner {
 	 * Sends a {@link RequestRunReply} and any needed TARs.
 	 */
 	public void sendAvailableWork() {
+		LOGGER.debug("Runner {} asks for work", getRunnerName());
 		Optional<Task> workOptional = dispatcher.getWork(this);
 
 		if (workOptional.isEmpty()) {
+			LOGGER.debug("Dispatcher gave me no work for {}", getRunnerName());
 			connection.send(
-				new RequestRunReply(false, null, false, null).asPacket(serializer)
+					new RequestRunReply(false, null, false, null).asPacket(serializer)
 			);
 			return;
 		}
