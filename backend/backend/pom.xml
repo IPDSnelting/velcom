@@ -19,6 +19,7 @@
     <jetty.version>9.4.20.v20190813</jetty.version>
     <jgit.version>5.5.1.201910021850-r</jgit.version>
     <jooq.version>3.12.3</jooq.version>
+    <flyway.version>6.5.2</flyway.version>
   </properties>
 
   <build>
@@ -66,10 +67,10 @@
       <plugin>
         <artifactId>flyway-maven-plugin</artifactId>
         <configuration>
+          <url>${db.url}</url>
           <locations>
             <location>filesystem:src/main/resources/db/migration</location>
           </locations>
-          <url>${db.url}</url>
         </configuration>
         <executions>
           <execution>
@@ -82,7 +83,7 @@
 
         <groupId>org.flywaydb</groupId>
 
-        <version>6.1.0</version>
+        <version>${flyway.version}</version>
       </plugin>
 
       <!-- JOOQ -->
@@ -271,7 +272,7 @@
     <dependency>
       <artifactId>flyway-core</artifactId>
       <groupId>org.flywaydb</groupId>
-      <version>6.1.0</version>
+      <version>${flyway.version}</version>
     </dependency>
 
     <!-- misc dependencies -->
