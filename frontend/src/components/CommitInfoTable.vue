@@ -6,11 +6,19 @@
           <v-toolbar-title>Full error message</v-toolbar-title>
         </v-toolbar>
         <v-card-text>
-          <div class="ma-4 error-message">{{ detailMeasurementErrorMessage }}</div>
+          <div class="ma-4 error-message">
+            {{ detailMeasurementErrorMessage }}
+          </div>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="error" text outlined @click="showDetailErrorMessageDialog = false">Close</v-btn>
+          <v-btn
+            color="error"
+            text
+            outlined
+            @click="showDetailErrorMessageDialog = false"
+            >Close</v-btn
+          >
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -20,31 +28,43 @@
         <span class="change-arrow">→</span>
       </template>
       <template #item.value="{ item, value }">
-        <span v-if="value != null && value !== undefined">{{ formatNumber(value) }}</span>
+        <span v-if="value != null && value !== undefined">{{
+          formatNumber(value)
+        }}</span>
         <v-btn
           v-else
           class="error-message error-message-tooltip"
           text
           outlined
-          @click="showDetailErrorMessageDialog = true; detailMeasurementErrorMessage = item.errorMessage"
-        >{{ formatError(item.errorMessage) }}</v-btn>
+          @click="
+            showDetailErrorMessageDialog = true
+            detailMeasurementErrorMessage = item.errorMessage
+          "
+          >{{ formatError(item.errorMessage) }}</v-btn
+        >
       </template>
       <template #item.unit=" { value }">
         <span v-if="value != null && value !== undefined">{{ value }}</span>
         <span v-else>-</span>
       </template>
       <template #item.change=" { item, value }">
-        <span
-          :style="{ color: changeColor(item, value) }"
-        >{{ value === '-' ? '-': formatNumber(value) }}</span>
+        <span :style="{ color: changeColor(item, value) }">{{
+          value === '-' ? '-' : formatNumber(value)
+        }}</span>
       </template>
       <template #item.changepercent=" { item, value }">
         <span
-          :style="{ color: item.change != '-' ? changeColor(item, item.change) : undefined }"
-        >{{ value }}</span>
+          :style="{
+            color:
+              item.change != '-' ? changeColor(item, item.change) : undefined
+          }"
+          >{{ value }}</span
+        >
       </template>
       <template #item.compareChange=" { item, value }">
-        <span :style="{ color: changeColor(item, value) }">{{ formatNumber(value) }}</span>
+        <span :style="{ color: changeColor(item, value) }">{{
+          formatNumber(value)
+        }}</span>
       </template>
     </v-data-table>
   </v-container>
@@ -74,7 +94,7 @@ export default class CommitInfoTable extends Vue {
 
   private numberFormat: Intl.NumberFormat = new Intl.NumberFormat(
     this.getLocaleString(),
-    { maximumFractionDigits: 4 }
+    { maximumFractionDigits: 3, minimumFractionDigits: 3 }
   )
 
   private getLocaleString() {
@@ -115,7 +135,11 @@ export default class CommitInfoTable extends Vue {
         { text: 'Metric', value: 'id.metric', align: 'left' },
         { text: 'Unit', value: 'unit', align: 'left' },
         { text: 'Value', value: 'value', align: 'right' },
-        { text: 'Standard deviation', value: 'stddev', align: 'right' },
+        {
+          text: 'Standard deviation %',
+          value: 'stddev',
+          align: 'right'
+        },
         { text: 'Change', value: 'change', align: 'right' },
         { text: 'Change %', value: 'changepercent', align: 'right' }
       ]
@@ -183,11 +207,11 @@ export default class CommitInfoTable extends Vue {
     }
   }
 
-  private findStandardDev(measId: MeasurementID) {
+  private findStandardDev(measId: MeasurementID): string {
     if (this.comparison.second == null) {
       return '-'
     } else if (this.comparison.second.measurements == null) {
-      return this.comparison.second.errorMessage
+      return this.comparison.second.errorMessage!
     }
 
     let measurement = this.comparison.second.measurements.find(m =>
@@ -198,16 +222,24 @@ export default class CommitInfoTable extends Vue {
       if (measurement.values != null) {
         let n = measurement.values.length
         if (n <= 1) {
-          return 0
+          return '0 %'
         }
 
         let mean = measurement.value!
+        // let change = this.findChange(measurement.id)
         let stdDev =
           (1 / (n - 1)) *
           measurement.values
             .map(it => Math.pow(it - mean, 2))
             .reduce((a, b) => a + b)
-        return this.formatNumber(Math.sqrt(stdDev))
+        let absStdDev = (Math.sqrt(stdDev) / mean) * 100
+
+        /* let relStdDev = 0
+        if (change !== '-') {
+          relStdDev = (Math.sqrt(stdDev) / change) * 100
+        } */
+
+        return this.formatNumber(absStdDev) + ' %'
       } else {
         return '-'
       }
