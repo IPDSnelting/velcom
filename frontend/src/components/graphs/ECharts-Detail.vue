@@ -19,6 +19,7 @@
           <v-chart
             :autoresize="true"
             @click="chartClicked"
+            @contextmenu="chartContextMenu"
             @restore="restored"
             @datazoom="zoomed"
             :options="chartOptions"
@@ -328,6 +329,37 @@ export default class EchartsDetailGraph extends Vue {
     }
   }
 
+  private chartContextMenu(e: EChartOption.Tooltip.Format) {
+    if (e.data === undefined) {
+      return
+    }
+
+    let referencedCommitInfo = this.datapoints.find(
+      it =>
+        it.measurementId.equals(e.data.measurementId) &&
+        it.commit.hash === e.data.name
+    )
+
+    if (!referencedCommitInfo) {
+      return
+    }
+
+    // Hide browser right click context menu
+    if ((e as any).event && (e as any).event.event) {
+      let event = (e as any).event.event as Event
+      event.preventDefault()
+    }
+
+    this.selectedDatapoint = {
+      commitInfo: referencedCommitInfo,
+      itemInfo: e.data
+    }
+
+    this.allowSelectAsReference =
+      this.datapointValue(this.selectedDatapoint.commitInfo) !== undefined
+    this.datapointDialogOpen = true
+  }
+
   private chartClicked(e: EChartOption.Tooltip.Format) {
     if (e.data === undefined) {
       return
@@ -358,14 +390,13 @@ export default class EchartsDetailGraph extends Vue {
       }
     }
 
-    this.selectedDatapoint = {
-      commitInfo: referencedCommitInfo,
-      itemInfo: e.data
-    }
-
-    this.allowSelectAsReference =
-      this.datapointValue(this.selectedDatapoint.commitInfo) !== undefined
-    this.datapointDialogOpen = true
+    this.$router.push({
+      name: 'commit-detail',
+      params: {
+        repoID: vxm.repoDetailModule.selectedRepoId,
+        hash: referencedCommitInfo.commit.hash
+      }
+    })
   }
 
   @Watch('datapoints')
