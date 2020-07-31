@@ -58,11 +58,11 @@ public class RoundRobinFiloPolicy implements QueuePolicy {
 			// 1.) Find task with highest priority
 			Optional<TaskRecord> mostImportantRecord = db.selectFrom(TASK)
 				.where(
-					TASK.PRIORITY.greaterThan(Task.DEFAULT_PRIORITY)
-					.and(TASK.IN_PROCESS.eq(false))
+					TASK.PRIORITY.lessThan(Task.DEFAULT_PRIORITY)
+						.and(TASK.IN_PROCESS.eq(false))
 				)
 				.orderBy(
-					TASK.PRIORITY.desc(), TASK.UPDATE_TIME.desc()
+					TASK.PRIORITY.asc(), TASK.UPDATE_TIME.desc()
 				)
 				.limit(1)
 				.fetchOptional();
@@ -144,7 +144,7 @@ public class RoundRobinFiloPolicy implements QueuePolicy {
 				TaskRecord taskRecord = db.selectFrom(TASK)
 					.where(
 						TASK.REPO_ID.eq(nextRepoId.getId().toString())
-						.and(TASK.IN_PROCESS.eq(false))
+							.and(TASK.IN_PROCESS.eq(false))
 					)
 					.orderBy(TASK.INSERT_TIME.desc())
 					.limit(1)
@@ -174,8 +174,8 @@ public class RoundRobinFiloPolicy implements QueuePolicy {
 		databaseStorage.acquireTransaction(db -> {
 			// 1.) Get manual tasks
 			db.selectFrom(TASK)
-				.where(TASK.PRIORITY.greaterThan(Task.DEFAULT_PRIORITY))
-				.orderBy(TASK.PRIORITY.desc(), TASK.UPDATE_TIME.desc())
+				.where(TASK.PRIORITY.lessThan(Task.DEFAULT_PRIORITY))
+				.orderBy(TASK.PRIORITY.asc(), TASK.UPDATE_TIME.desc())
 				.forEach(record -> completeTaskList.addLast(taskFromRecord(record)));
 
 			// 2.) Get tar tasks

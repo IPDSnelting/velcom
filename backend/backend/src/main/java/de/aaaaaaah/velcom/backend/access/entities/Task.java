@@ -7,7 +7,7 @@ import java.util.Objects;
 
 public class Task {
 
-    public static final int DEFAULT_PRIORITY = 1;
+    public static final int DEFAULT_PRIORITY = 2;
 
     private final TaskId id;
     private final String author;
