@@ -9,13 +9,18 @@
           <repo-add>
             <template #activator="{ on }">
               <v-btn color="success" :outlined="isDarkMode" v-on="on">
-                <v-icon left>{{ plusIcon }}</v-icon>Add Repo
+                <v-icon left>{{ plusIcon }}</v-icon
+                >Add Repo
               </v-btn>
             </template>
           </repo-add>
         </v-col>
       </v-row>
-      <page-404 v-if="!repoSelected" title="kenós" subtitle="No repository selected"></page-404>
+      <page-404
+        v-if="!repoSelected"
+        title="kenós"
+        subtitle="No repository selected"
+      ></page-404>
       <router-view></router-view>
     </v-container>
   </div>
@@ -75,6 +80,9 @@ export default class RepoDetailFrame extends Vue {
   mounted() {
     if (!this.selectedRepoId && vxm.repoDetailModule.selectedRepoId) {
       this.selectedRepoId = vxm.repoDetailModule.selectedRepoId
+    }
+    if (vxm.repoModule.allRepos.length === 1) {
+      this.selectedRepoId = vxm.repoModule.allRepos[0].id
     }
   }
 
