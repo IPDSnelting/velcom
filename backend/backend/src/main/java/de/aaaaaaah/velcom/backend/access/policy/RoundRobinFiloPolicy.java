@@ -21,24 +21,26 @@ import org.jooq.codegen.db.tables.records.TaskRecord;
 
 /**
  * A thread safe {@link QueuePolicy} that prioritizes tars and provides some kind of fairness to
- * repo associated tasks by ordering them in a round robin type of way.
+ * repo associated tasks by ordering them in a round robin type of way while also allowing
+ * tasks to be manually prioritized over all other tasks.
  *
- * <p>The ordering is based on three key decisions:</p>
+ * <p>There are three priorities:</p>
  * <p>
- * 1.) Tasks with a higher than default priority are prioritized the most. Between tasks that have
- * the same priority (but still higher than default), the task that got promoted to this priority
- * most recently is preferred.
+ * Priority 0: Tasks that are prioritized at priority 0 are considered manual tasks and are regarded
+ * as the most important tasks. Comparing two tasks with priority 0 results in the task that got
+ * updated most recently being prioritized more.
  * </p>
  * <p>
- * 2.) Tasks with default priorities which are associated with tars are prioritized second most.
- * Between tar tasks with default priority, the task that was inserted most recently is preferred.
+ * Priority 1: Tasks that are prioritized at priority 1 are tasks that are associated with a tar
+ * file. Comparing two tasks with priority 1 results in the task that got updated most recently
+ * being prioritized more.
  * </p>
  * <p>
- * 3.) Tasks with default priorities which are associated with repositories are prioritized the
- * least. This is where the round robin policy comes into play. Tasks on this level of importance
- * are ordered in way that repositories take turns when iterating over the tasks from front to back
- * such that a representative of each repository is iterated over until another task is found with
- * the same repository of a previous task. The ordering of the repositories is lexicographical.
+ * Priority 2: Only tasks associated with a repository are allowed to have priority 2. All tasks
+ * under this priority are subject to the round robin ordering so that repositories take turns when
+ * iterating over the tasks from front to back such that one representative of each repository is
+ * iterated over, until another task is found with the same repository of a previous task. The
+ * ordering of the repositories is lexicographical.
  * </p>
  */
 public class RoundRobinFiloPolicy implements QueuePolicy {
@@ -55,7 +57,7 @@ public class RoundRobinFiloPolicy implements QueuePolicy {
 		AtomicReference<Task> result = new AtomicReference<>(null);
 
 		databaseStorage.acquireTransaction(db -> {
-			// 1.) Find task with highest priority
+			// 1.) Find manual or tar task with highest priority
 			Optional<TaskRecord> mostImportantRecord = db.selectFrom(TASK)
 				.where(
 					TASK.PRIORITY.lessThan(Task.DEFAULT_PRIORITY)
@@ -72,21 +74,7 @@ public class RoundRobinFiloPolicy implements QueuePolicy {
 				return;
 			}
 
-			// 2.) Check if there is a tar
-			Optional<TaskRecord> tarRecord = db.selectFrom(TASK)
-				.where(
-					TASK.TAR_NAME.isNotNull().and(TASK.IN_PROCESS.eq(false))
-				)
-				.orderBy(TASK.INSERT_TIME.desc())
-				.limit(1)
-				.fetchOptional();
-
-			if (tarRecord.isPresent()) {
-				result.set(taskFromRecord(tarRecord.get()));
-				return;
-			}
-
-			// 3.) Get newest task that is associated with the next repo id
+			// 2.) Get next task that has the default priority (round robin happens here)
 			if (lastRepo == null) {
 				// there was no last repo => just take the first repo available
 				Optional<TaskRecord> repoTaskRecord = db.selectFrom(TASK)
@@ -178,13 +166,7 @@ public class RoundRobinFiloPolicy implements QueuePolicy {
 				.orderBy(TASK.PRIORITY.asc(), TASK.UPDATE_TIME.desc())
 				.forEach(record -> completeTaskList.addLast(taskFromRecord(record)));
 
-			// 2.) Get tar tasks
-			db.selectFrom(TASK)
-				.where(TASK.TAR_NAME.isNotNull())
-				.orderBy(TASK.INSERT_TIME.desc())
-				.forEach(record -> completeTaskList.addLast(taskFromRecord(record)));
-
-			// 3.) Get default repo tasks that have to be ordered in a round robin way
+			// 2.) Get default repo tasks that have to be ordered in a round robin way
 			Map<RepoId, LinkedList<Task>> groupMap = new HashMap<>();
 			List<RepoId> repoIds = new ArrayList<>();
 
