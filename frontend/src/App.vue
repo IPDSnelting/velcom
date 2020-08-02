@@ -1,7 +1,7 @@
 <template>
   <v-app>
     <v-main>
-      <nav-bar @refresh-view="routerViewKey++"></nav-bar>
+      <nav-bar id="nav-bar" @refresh-view="routerViewKey++"></nav-bar>
       <snackbar ref="global-snackbar"></snackbar>
       <router-view :key="routerViewKey" />
       <theme-selector @use-dark-theme="setDarkTheme"></theme-selector>
