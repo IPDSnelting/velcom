@@ -1,0 +1,160 @@
+{
+  "commits": [
+    {
+      "first_commit": {
+        "repo_id": "44bb5c8d-b20d-4bef-bdad-c92767dfa489",
+        "hash": "70d3a3c8388109b328d2e624e0b1e99b9171b602",
+        "parents": [
+          "e57f1ffe3502a76302e004277c1ff73f4fe34e04",
+          "deabe002b2ae2e84f7845ae7cd05c1badecc8027"
+        ],
+        "author": "I-Al-Istannen <I-Al-Istannen@users.noreply.github.com>",
+        "author_date": 1595601474.0,
+        "committer": "GitHub <noreply@github.com>",
+        "committer_date": 1595601474.0,
+        "message": "Merge pull request #40 from IPDSnelting/fix-siteurl-on-repo-pages\n\nRespect site-url on manually updated pages"
+      },
+      "first_run": {
+        "commit": {
+          "repo_id": "44bb5c8d-b20d-4bef-bdad-c92767dfa489",
+          "hash": "70d3a3c8388109b328d2e624e0b1e99b9171b602",
+          "parents": [
+            "e57f1ffe3502a76302e004277c1ff73f4fe34e04",
+            "deabe002b2ae2e84f7845ae7cd05c1badecc8027"
+          ],
+          "author": "I-Al-Istannen <I-Al-Istannen@users.noreply.github.com>",
+          "author_date": 1595601474.0,
+          "committer": "GitHub <noreply@github.com>",
+          "committer_date": 1595601474.0,
+          "message": "Merge pull request #40 from IPDSnelting/fix-siteurl-on-repo-pages\n\nRespect site-url on manually updated pages"
+        },
+        "start_time": 1595601658,
+        "stop_time": 1595601848,
+        "measurements": [
+          {
+            "benchmark": "frontend",
+            "metric": "build_time",
+            "unit": "seconds",
+            "interpretation": "LESS_IS_BETTER",
+            "values": [103.55585646629333],
+            "value": 103.55585646629333,
+            "error_message": null
+          },
+          {
+            "benchmark": "backend",
+            "metric": "build_time",
+            "unit": "seconds",
+            "interpretation": "LESS_IS_BETTER",
+            "values": [86.14389443397522],
+            "value": 86.14389443397522,
+            "error_message": null
+          },
+          {
+            "benchmark": "backend",
+            "metric": "coverage",
+            "unit": "percent",
+            "interpretation": "MORE_IS_BETTER",
+            "values": [58.0],
+            "value": 58.0,
+            "error_message": null
+          },
+          {
+            "benchmark": "misc",
+            "metric": "always zero",
+            "unit": "cats",
+            "interpretation": "NEUTRAL",
+            "values": [0.0],
+            "value": 0.0,
+            "error_message": null
+          }
+        ],
+        "error_message": null
+      },
+      "second_commit": {
+        "repo_id": "44bb5c8d-b20d-4bef-bdad-c92767dfa489",
+        "hash": "051795dfafa7f78167cbb171ef643e22df746886",
+        "parents": ["70d3a3c8388109b328d2e624e0b1e99b9171b602"],
+        "author": "I-Al-Istannen <i-al-istannen@users.noreply.github.com>",
+        "author_date": 1595792700.0,
+        "committer": "I-Al-Istannen <i-al-istannen@users.noreply.github.com>",
+        "committer_date": 1595792700.0,
+        "message": "[frontend] Only show ECharts config menu on right click\n"
+      },
+      "second_run": {
+        "commit": {
+          "repo_id": "44bb5c8d-b20d-4bef-bdad-c92767dfa489",
+          "hash": "051795dfafa7f78167cbb171ef643e22df746886",
+          "parents": ["70d3a3c8388109b328d2e624e0b1e99b9171b602"],
+          "author": "I-Al-Istannen <i-al-istannen@users.noreply.github.com>",
+          "author_date": 1595792700.0,
+          "committer": "I-Al-Istannen <i-al-istannen@users.noreply.github.com>",
+          "committer_date": 1595792700.0,
+          "message": "[frontend] Only show ECharts config menu on right click\n"
+        },
+        "start_time": 1596187246,
+        "stop_time": 1596187438,
+        "measurements": [
+          {
+            "benchmark": "frontend",
+            "metric": "build_time",
+            "unit": "seconds",
+            "interpretation": "LESS_IS_BETTER",
+            "values": [104.7769763469696],
+            "value": 104.7769763469696,
+            "error_message": null
+          },
+          {
+            "benchmark": "backend",
+            "metric": "build_time",
+            "unit": "seconds",
+            "interpretation": "LESS_IS_BETTER",
+            "values": [86.48002123832703],
+            "value": 86.48002123832703,
+            "error_message": null
+          },
+          {
+            "benchmark": "backend",
+            "metric": "coverage",
+            "unit": "percent",
+            "interpretation": "MORE_IS_BETTER",
+            "values": [58.0],
+            "value": 58.0,
+            "error_message": null
+          },
+          {
+            "benchmark": "misc",
+            "metric": "always zero",
+            "unit": "cats",
+            "interpretation": "NEUTRAL",
+            "values": [0.0],
+            "value": 0.0,
+            "error_message": null
+          }
+        ],
+        "error_message": null
+      },
+      "differences": [
+        {
+          "benchmark": "frontend",
+          "metric": "build_time",
+          "difference": 1.2211198806762695
+        },
+        {
+          "benchmark": "backend",
+          "metric": "build_time",
+          "difference": 0.33612680435180664
+        },
+        {
+          "benchmark": "backend",
+          "metric": "coverage",
+          "difference": 0.0
+        },
+        {
+          "benchmark": "misc",
+          "metric": "always zero",
+          "difference": 0.0
+        }
+      ]
+    }
+  ]
+}

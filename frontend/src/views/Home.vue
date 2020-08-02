@@ -3,7 +3,7 @@
     <v-container>
       <v-row>
         <v-col>
-          <v-card>
+          <v-card data-cy="recent_significant">
             <v-card-title>
               <v-toolbar color="toolbarColor" dark>
                 Recent Significant Runs
@@ -37,7 +37,7 @@
       </v-row>
       <v-row>
         <v-col>
-          <v-card>
+          <v-card data-cy="recent_runs">
             <v-card-title>
               <v-toolbar color="toolbarColor" dark>Recent Runs</v-toolbar>
             </v-card-title>

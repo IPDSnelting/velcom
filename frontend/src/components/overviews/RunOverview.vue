@@ -5,6 +5,7 @@
     :source="run.source"
     :id="run.runId"
     :linkLocation="runLinkLocation"
+    data-cy="run_overview"
   >
     <template #avatar>
       <v-list-item-avatar>
