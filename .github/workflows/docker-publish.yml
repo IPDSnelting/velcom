@@ -67,7 +67,7 @@ jobs:
     needs: [build]
 
     runs-on: ubuntu-latest
-    if: "github.event_name == 'push' && github.ref == 'refs/heads/develop'"
+    if: "github.event_name == 'push' && github.ref == 'refs/heads/main'"
 
     steps:
       # SETUP
@@ -119,13 +119,13 @@ jobs:
           docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
           docker push $IMAGE_ID:$VERSION
 
-  # Deploy develop branch to velcom.aaaaaaah.de
+  # Deploy main branch to velcom.aaaaaaah.de
   deploy:
     # Ensure build job passes before pushing image.
     needs: [push]
 
     runs-on: ubuntu-latest
-    if: "github.event_name == 'push' && github.ref == 'refs/heads/develop'"
+    if: "github.event_name == 'push' && github.ref == 'refs/heads/main'"
 
     env:
       CD_PORT: ${{ secrets.CD_PORT }}
