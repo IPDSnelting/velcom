@@ -1,7 +1,10 @@
 <template>
   <nav>
     <v-toolbar dark color="primary darken-1">
-      <v-app-bar-nav-icon class="hidden-md-and-up" @click="drawerShown = !drawerShown"></v-app-bar-nav-icon>
+      <v-app-bar-nav-icon
+        class="hidden-md-and-up"
+        @click="drawerShown = !drawerShown"
+      ></v-app-bar-nav-icon>
       <v-tooltip bottom color="rgba(0,0,0,0)" class="logoTooltip">
         <template #activator="{ on }">
           <img
@@ -46,7 +49,12 @@
     </v-toolbar>
 
     <!-- Navigation drawer -->
-    <v-navigation-drawer class="hidden-md-and-up" v-model="drawerShown" app temporary>
+    <v-navigation-drawer
+      class="hidden-md-and-up"
+      v-model="drawerShown"
+      app
+      temporary
+    >
       <v-toolbar dark color="primary darken-1">
         <v-list>
           <v-list-item>
@@ -111,11 +119,21 @@ export default class NavigationBar extends Vue {
 
   get validRoutes() {
     return router.routes
-      .filter(route => route.meta.navigable)
+      .filter(this.filterRoute)
       .map(
         route =>
           new NavigationItem(route.name!, route.meta.icon, route.meta.label)
       )
+  }
+
+  private filterRoute(route: VueRouterEx.RouteConfig): boolean {
+    if (
+      vxm.repoModule.allRepos.length <= 1 &&
+      route.name === 'repo-comparison'
+    ) {
+      return false
+    }
+    return route.meta.navigable
   }
 
   get loggedIn() {
