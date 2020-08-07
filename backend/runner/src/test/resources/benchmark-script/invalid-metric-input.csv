@@ -31,3 +31,5 @@
 { "test": { "metric": { "results": [ 1341173530.8587837 ], "unit": "cats", "resultInterpretation": 20 } } }
 { "test": { "metric": { "results": [ 1341173530.8587837 ], "unit": "cats", "resultInterpretation": false } } }
 { "test": { "metric": { "results": [ 1341173530.8587837 ], "unit": "cats", "resultInterpretation": null } } }
+# Invalid interpretation in error
+{ "test": { "metric": { "error": "Yes", "interpretation": "WHO KNOWS" } } }

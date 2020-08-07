@@ -7,3 +7,6 @@ true | { "error": "jeeringly AVI raggeder elucidated murderess's dobermans strip
 true | { "error": "Hello\\n world!" }
 true | { "error": "Hello\\t world!" }
 true | { "error": "äöüß0ßß21gfaλΑ‡†č" }
+false | { "benchmark": { "metric": { "unit": "cats", "results": [1234, 123], "resultInterpretation": "NEUTRAL" } } }
+false | { "benchmark": { "metric": { "unit": "cats", "values": [1234, 123], "resultInterpretation": "NEUTRAL" } } }
+false | { "benchmark": { "metric": { "unit": "cats", "results": [1234, 123], "interpretation": "NEUTRAL" } } }

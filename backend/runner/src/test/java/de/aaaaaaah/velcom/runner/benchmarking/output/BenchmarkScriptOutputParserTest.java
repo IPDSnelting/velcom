@@ -5,7 +5,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import de.aaaaaaah.velcom.runner.benchmarking.output.BenchmarkScriptOutputParser.BareResult;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Result.Benchmark;
+import de.aaaaaaah.velcom.shared.protocol.serialization.Result.Interpretation;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Result.Metric;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -127,5 +129,61 @@ class BenchmarkScriptOutputParserTest {
 		assertThat(metric.getName()).isEqualTo("test");
 		assertThat(metric.getError()).isPresent();
 		assertThat(metric.getError().get()).isEqualTo("Hey");
+	}
+
+	@Test
+	void parseInvalidInterpretationInErrorMessage() {
+		assertThatThrownBy(() -> parser.parse(
+			"{ \"test\": { \"metric\": { \"error\": \"Yes\", \"interpretation\": \"WHO KNOWS\" } } }"
+		))
+			.isInstanceOf(OutputParseException.class)
+			.hasMessageContaining("WHO KNOWS");
+	}
+
+	@Test
+	void parseInvalidUnitInErrorMessage() {
+		assertThatThrownBy(() -> parser.parse(
+			"{ \"test\": { \"metric\": { \"error\": \"Yes\", \"unit\": 42 } } }"
+		))
+			.isInstanceOf(OutputParseException.class)
+			.hasMessageContaining("42")
+			.hasMessageContaining("NUMBER");
+	}
+
+	@Test
+	void parsedMixOldNew() {
+		// Old values, new interpretation
+		assertThat(parser.parse(
+			"{ \"test\": { \"metric\": { \"values\": [1,2], \"unit\": \"unit\","
+				+ " \"interpretation\": \"NEUTRAL\" } } }"
+		))
+			.isEqualTo(new BareResult(
+				List.of(
+					new Benchmark(
+						"test",
+						List.of(
+							new Metric("metric", null, "unit", Interpretation.NEUTRAL, List.of(1.0, 2.0))
+						)
+					)
+				),
+				null
+			));
+
+		// new results, old resultInterpretation
+		assertThat(parser.parse(
+			"{ \"test\": { \"metric\": { \"results\": [1,2], \"unit\": \"unit\","
+				+ " \"resultInterpretation\": \"NEUTRAL\" } } }"
+		))
+			.isEqualTo(new BareResult(
+				List.of(
+					new Benchmark(
+						"test",
+						List.of(
+							new Metric("metric", null, "unit", Interpretation.NEUTRAL, List.of(1.0, 2.0))
+						)
+					)
+				),
+				null
+			));
 	}
 }
