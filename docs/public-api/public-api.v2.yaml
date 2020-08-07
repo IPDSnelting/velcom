@@ -113,6 +113,12 @@ paths:
           name: description
           description: Describes the tar file
           required: true
+        - schema:
+            type: string
+            format: uuid
+          in: query
+          name: repo_id
+          description: The task can optionally be attached to a repo
       description: This endpoint allows users to upload a tar file that the server should benchmark. The tar file is added to the queue with a relatively high priority.
       tags:
         - queue
@@ -913,6 +919,8 @@ components:
                 description:
                   type: string
                   description: The description given when the file was uploaded
+                repo_id:
+                  $ref: '#/components/schemas/RepoId'
               required:
                 - description
           description: The actual source

@@ -34,9 +34,11 @@ CREATE TABLE task (
   in_process  BOOLEAN   NOT NULL DEFAULT false,
 
   FOREIGN KEY (repo_id) REFERENCES repo(id) ON DELETE CASCADE,
+  -- If at least one value in (repo_id, commit_hash) is null, no corresponding row needs to exist in
+  -- the foreign key table. See also https://sqlite.org/foreignkeys.html
   FOREIGN KEY (repo_id, commit_hash) REFERENCES new_known_commit(repo_id, hash) ON DELETE CASCADE,
 
-  CHECK ((repo_id IS NULL) = (commit_hash IS NULL)),
+  CHECK ((repo_id IS NOT NULL) OR (commit_hash IS NULL)),
   CHECK ((tar_name IS NULL) = (tar_desc IS NULL)),
   CHECK ((commit_hash IS NULL) = (tar_name IS NOT NULL))
 );
@@ -55,9 +57,11 @@ CREATE TABLE new_run (
   error       TEXT,
 
   FOREIGN KEY (repo_id) REFERENCES repo(id) ON DELETE CASCADE,
+  -- If at least one value in (repo_id, commit_hash) is null, no corresponding row needs to exist in
+  -- the foreign key table. See also https://sqlite.org/foreignkeys.html
   FOREIGN KEY (repo_id, commit_hash) REFERENCES new_known_commit(repo_id, hash) ON DELETE CASCADE,
 
-  CHECK ((repo_id IS NULL) = (commit_hash IS NULL)),
+  CHECK ((repo_id IS NOT NULL) OR (commit_hash IS NULL)),
   CHECK ((commit_hash IS NULL) = (tar_desc IS NOT NULL)),
   CHECK (error_type IS NULL OR error_type IN ('BENCH', 'VELCOM')),
   CHECK ((error_type IS NULL) = (error IS NULL))
