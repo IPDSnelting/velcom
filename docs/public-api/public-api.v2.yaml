@@ -25,7 +25,7 @@ paths:
           description: OK
       operationId: delete-queue-taskid
       security:
-        - admin credentials: []
+        - admin_credentials: []
       description: 'Delete a task from the queue. If the task is currently being benchmarked, this also tries to abort the task.'
     patch:
       summary: prioritize task
@@ -37,7 +37,7 @@ paths:
           description: Not Found
       description: Prioritize a task such that it moves to (or near) the top of the queue.
       security:
-        - admin credentials: []
+        - admin_credentials: []
       tags:
         - queue
   /queue:
@@ -105,7 +105,7 @@ paths:
             schema: {}
         description: The tar file to benchmark
       security:
-        - admin credentials: []
+        - admin_credentials: []
       parameters:
         - schema:
             type: string
@@ -295,7 +295,7 @@ paths:
       tags:
         - queue
       security:
-        - repo admin credentials: []
+        - repo_admin_credentials: []
     parameters:
       - schema:
           type: string
@@ -344,7 +344,7 @@ paths:
         '200':
           description: OK
       security:
-        - repo admin credentials: []
+        - repo_admin_credentials: []
       description: Delete an entire repository and its associated measurements.
       tags:
         - repo
@@ -355,7 +355,7 @@ paths:
         '200':
           description: OK
       security:
-        - repo admin credentials: []
+        - repo_admin_credentials: []
       requestBody:
         content:
           application/json:
@@ -415,7 +415,7 @@ paths:
                 - name
                 - remote_url
       security:
-        - admin credentials: []
+        - admin_credentials: []
       tags:
         - repo
   /all-repos:
@@ -455,7 +455,7 @@ paths:
         If a repo id is specified, checks whether the auth token allows access to that repo.
         If no repo id is specified, checks whether the auth token is valid as admin auth token.
       security:
-        - repo admin credentials: []
+        - repo_admin_credentials: []
       parameters:
         - schema:
             type: string
@@ -629,7 +629,7 @@ paths:
                             type: object
                             properties:
                               hash:
-                                $ref: '../other/rest_api_stoplight_studio.yaml#/components/schemas/CommitHash'
+                                $ref: '#/components/schemas/CommitHash'
                               author:
                                 type: string
                               author_date:
@@ -1025,9 +1025,9 @@ components:
         - unit
         - interpretation
   securitySchemes:
-    admin credentials:
+    admin_credentials:
       type: http
       scheme: basic
-    repo admin credentials:
+    repo_admin_credentials:
       type: http
       scheme: basic
