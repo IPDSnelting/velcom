@@ -488,7 +488,7 @@ export default class RepoComparison extends Vue {
           if (!repo) {
             return
           }
-          branches = repo.branches.slice()
+          branches = repo.branches.slice().map(it => it.name)
         }
         vxm.repoComparisonModule.setSelectedBranchesForRepo({
           repoID: repoId,

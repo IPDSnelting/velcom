@@ -1,29 +1,55 @@
+export class RepoBranch {
+  readonly name: string
+  readonly tracked: boolean
+
+  constructor(name: string, tracked: boolean) {
+    this.name = name
+    this.tracked = tracked
+  }
+}
 export class Repo {
-  id: string
+  readonly id: string
   name: string
-  branches: Array<string>
-  trackedBranches: Array<string>
-  measurements: Array<MeasurementID>
+  branches: RepoBranch[]
+  dimensions: Dimension[]
   remoteURL: string
+  hasToken: boolean
 
   constructor(
     id: string,
     name: string,
-    branches: Array<string>,
-    trackedBranches: Array<string>,
-    measurements: Array<MeasurementID>,
-    remoteURL: string
+    branches: RepoBranch[],
+    dimensions: Dimension[],
+    remoteURL: string,
+    hasToken: boolean
   ) {
     this.id = id
     this.name = name
-    this.branches = branches.sort((a, b) =>
-      a.localeCompare(b, undefined, { sensitivity: 'base' })
-    )
-    this.trackedBranches = trackedBranches.sort((a, b) =>
-      a.localeCompare(b, undefined, { sensitivity: 'base' })
-    )
-    this.measurements = measurements
+    this.dimensions = dimensions
     this.remoteURL = remoteURL
+    this.branches = branches.sort((a, b) =>
+      a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+    )
+    this.hasToken = hasToken
+  }
+}
+
+export class Dimension {
+  readonly benchmark: string
+  readonly metric: string
+  readonly unit: string
+  readonly interpretation: 'LESS_IS_BETTER' | 'MORE_IS_BETTER' | 'NEUTRAL'
+
+  constructor(
+    benchmark: string,
+    metric: string,
+    unit: string,
+    interpretation: 'LESS_IS_BETTER' | 'MORE_IS_BETTER' | 'NEUTRAL'
+  ) {
+    this.benchmark = benchmark
+    this.metric = metric
+    this.unit = unit
+    this.interpretation = interpretation
   }
 }
 

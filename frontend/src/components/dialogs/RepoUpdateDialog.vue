@@ -13,15 +13,24 @@
           <v-form v-model="formValid" ref="form">
             <div class="section-header mt-3 mb-2">GENERAL SETTINGS</div>
 
-            <v-text-field :rules="[notEmpty]" label="*Remote URL" v-model="remoteUrl"></v-text-field>
-            <v-text-field :rules="[notEmpty]" label="*Repository name" v-model="repoName"></v-text-field>
+            <v-text-field
+              :rules="[notEmpty]"
+              label="*Remote URL"
+              v-model="remoteUrl"
+            ></v-text-field>
+            <v-text-field
+              :rules="[notEmpty]"
+              label="*Repository name"
+              v-model="repoName"
+            ></v-text-field>
             <v-container class="pa-0" fluid>
               <v-row no-gutters align="center">
                 <transition name="fade">
                   <span
                     v-if="tokenState == 'delete'"
                     class="section-header mr-4"
-                  >TOKEN WILL BE DELETED</span>
+                    >TOKEN WILL BE DELETED</span
+                  >
                 </transition>
                 <transition name="fade">
                   <span>
@@ -32,7 +41,8 @@
                       outlined
                       class="mr-2"
                       color="primary"
-                    >Change token</v-btn>
+                      >Change token</v-btn
+                    >
                     <v-btn
                       v-if="tokenState == 'unchanged'"
                       @click="tokenState = 'delete'"
@@ -40,14 +50,18 @@
                       outlined
                       class="mr-2"
                       color="error"
-                    >Delete token</v-btn>
+                      >Delete token</v-btn
+                    >
                     <v-btn
                       v-if="tokenState == 'modify' || tokenState == 'delete'"
                       @click="tokenState = 'unchanged'"
                       text
                       outlined
                       color="error"
-                    >{{ tokenState == 'modify' ? "KEEP OLD TOKEN" : "UNDO"}}</v-btn>
+                      >{{
+                        tokenState == 'modify' ? 'KEEP OLD TOKEN' : 'UNDO'
+                      }}</v-btn
+                    >
                   </span>
                 </transition>
                 <transition name="fade">
@@ -83,7 +97,9 @@
                   dense
                   class="my-0 pt-0 font-italic"
                   label="Track all branches"
-                  :input-value="newTrackedBranches.length == repo.branches.length"
+                  :input-value="
+                    newTrackedBranches.length == repo.branches.length
+                  "
                   @change="toggleAll"
                 ></v-checkbox>
               </template>
@@ -116,8 +132,11 @@
             class="mr-3"
             :disabled="!formValid"
             @click="updateRepo"
-          >Update Repository</v-btn>
-          <v-btn color="error" text outlined @click="dialogOpen = false">Close</v-btn>
+            >Update Repository</v-btn
+          >
+          <v-btn color="error" text outlined @click="dialogOpen = false"
+            >Close</v-btn
+          >
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -127,7 +146,7 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { Repo } from '@/store/types'
+import { Repo, RepoBranch } from '@/store/types'
 import { Prop, Watch } from 'vue-property-decorator'
 import { vxm } from '@/store/index'
 import { mdiMagnify } from '@mdi/js'
@@ -154,8 +173,8 @@ export default class RepoUpdateDialog extends Vue {
 
   get branchObjects(): { name: string; lowerCased: string }[] {
     return this.repo.branches.map(it => ({
-      name: it,
-      lowerCased: it.toLowerCase()
+      name: it.name,
+      lowerCased: it.name.toLowerCase()
     }))
   }
 
@@ -182,7 +201,10 @@ export default class RepoUpdateDialog extends Vue {
     this.newToken = ''
     this.searchValue = ''
 
-    this.newTrackedBranches = Object.assign([], this.repo.trackedBranches)
+    this.newTrackedBranches = Object.assign(
+      [],
+      this.repo.branches.filter(it => it.tracked).map(it => it.name)
+    )
   }
 
   toggleAll() {
@@ -197,20 +219,32 @@ export default class RepoUpdateDialog extends Vue {
   }
 
   updateRepo() {
-    let newRepo = new Repo(
-      this.repo.id,
-      this.repoName,
-      this.repo.branches,
-      this.newTrackedBranches,
-      this.repo.measurements,
-      this.remoteUrl
+    const newBranches = this.repo.branches.map(
+      it => new RepoBranch(it.name, this.newTrackedBranches.includes(it.name))
     )
+
     let newToken
     if (this.tokenState === 'modify') {
       newToken = this.newToken
     } else if (this.tokenState === 'delete') {
       newToken = null
     }
+
+    let hasTokenNow = this.repo.hasToken
+    if (this.tokenState === 'delete') {
+      hasTokenNow = false
+    } else if (this.tokenState === 'modify') {
+      hasTokenNow = true
+    }
+
+    const newRepo = new Repo(
+      this.repo.id,
+      this.repoName,
+      newBranches,
+      this.repo.dimensions,
+      this.remoteUrl,
+      hasTokenNow
+    )
     vxm.repoModule
       .updateRepo({
         repoToken: newToken,

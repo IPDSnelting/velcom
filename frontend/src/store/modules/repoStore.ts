@@ -1,8 +1,9 @@
 import { createModule, mutation, action } from 'vuex-class-component'
-import { Repo } from '@/store/types'
+import { Repo, RepoBranch } from '@/store/types'
 import Vue from 'vue'
 import axios from 'axios'
 import { vxm } from '..'
+import { repoFromJson } from '@/util/RepoJsonHelper'
 
 const VxModule = createModule({
   namespaced: 'repoModule',
@@ -22,21 +23,12 @@ export class RepoStore extends VxModule {
       // still show errors
     })
 
-    let repos: Repo[] = []
-    let jsonData: any[] = response.data.repos
+    // FIXME: Remove this. But this keeps the API a bit more stable.
+    if (Object.keys(this.repos).length > 0) {
+      return
+    }
 
-    jsonData.forEach((item: any) => {
-      repos.push(
-        new Repo(
-          item.id,
-          item.name,
-          item.branches,
-          item.tracked_branches,
-          item.measurements,
-          item.remote_url
-        )
-      )
-    })
+    let repos: Repo[] = response.data.repos.map((it: any) => repoFromJson(it))
 
     this.setRepos(repos)
     return repos
@@ -147,10 +139,10 @@ export class RepoStore extends VxModule {
     if (this.repos[payload.id]) {
       const existing = this.repos[payload.id]
       existing.branches = payload.branches.slice()
-      existing.trackedBranches = payload.trackedBranches.slice()
       existing.name = payload.name
       existing.remoteURL = payload.remoteURL
-      existing.measurements = payload.measurements.slice()
+      existing.dimensions = payload.dimensions.slice()
+      existing.hasToken = payload.hasToken
     } else {
       Vue.set(this.repos, payload.id, { ...payload })
       vxm.repoModule.setIndexForRepo(payload.id)
@@ -178,10 +170,12 @@ export class RepoStore extends VxModule {
     return (payload: string) => this.repos[payload]
   }
 
-  get branchesByRepoID(): { [key: string]: string[] } {
+  get trackedBranchesByRepoID(): { [key: string]: string[] } {
     var branchesByRepoID: { [key: string]: string[] } = {}
     this.allRepos.forEach(repo => {
-      branchesByRepoID[repo.id] = repo.trackedBranches
+      branchesByRepoID[repo.id] = repo.branches
+        .filter(it => it.tracked)
+        .map(it => it.name)
     })
     return branchesByRepoID
   }
@@ -194,8 +188,8 @@ export class RepoStore extends VxModule {
     return (selectedRepos: string[]) => {
       let benchmarks = Object.values(this.repos)
         .filter(repo => selectedRepos.includes(repo.id))
-        .flatMap(repo => repo.measurements)
-        .map(measurement => measurement.benchmark)
+        .flatMap(repo => repo.dimensions)
+        .map(dimension => dimension.benchmark)
         .reduce(
           (benchmarks, newBenchmark) => benchmarks.add(newBenchmark),
           new Set<string>()
@@ -210,9 +204,9 @@ export class RepoStore extends VxModule {
   get metricsForBenchmark(): (benchmark: string) => string[] {
     return (benchmark: string) => {
       let metrics = Object.values(this.repos)
-        .flatMap(repo => repo.measurements)
-        .filter(measurement => measurement.benchmark === benchmark)
-        .map(measurement => measurement.metric)
+        .flatMap(repo => repo.dimensions)
+        .filter(dimension => dimension.benchmark === benchmark)
+        .map(dimension => dimension.metric)
         .reduce(
           (metrics, newMetric) => metrics.add(newMetric),
           new Set<string>()

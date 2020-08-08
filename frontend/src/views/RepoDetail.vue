@@ -87,7 +87,7 @@
                               nonEmptyRunAmount,
                               nonNegativeRunAmount,
                               onlyNumericInput,
-                              noIntegerOverflow
+                              noIntegerOverflow,
                             ]"
                             label="number of commits to fetch"
                             class="mr-5"
@@ -102,7 +102,7 @@
                               nonEmptyRunAmount,
                               nonNegativeRunAmount,
                               onlyNumericInput,
-                              noIntegerOverflow
+                              noIntegerOverflow,
                             ]"
                             label="number of commits to skip"
                             class="mr-5"
@@ -127,7 +127,7 @@
                       class="mr-2"
                       :to="{
                         name: 'commit-detail',
-                        params: { repoID: id, hash: referenceCommit }
+                        params: { repoID: id, hash: referenceCommit },
                       }"
                       :commitHash="referenceCommit"
                       :copyOnClick="false"
