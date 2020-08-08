@@ -5,10 +5,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 
@@ -18,13 +14,10 @@ public abstract class SerializingTest {
 
 	@BeforeEach
 	void setUp() {
+		// This mapper should be configured the same as the one in ServerMain.java
 		objectMapper = new ObjectMapper()
-			.registerModule(new ParameterNamesModule())
-			.registerModule(new Jdk8Module())
-			.registerModule(new JavaTimeModule())
 			.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE)
-			.setSerializationInclusion(Include.NON_NULL)
-			.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+			.setSerializationInclusion(Include.NON_NULL);
 	}
 
 	protected void serializedEquals(Object object, String json) throws JsonProcessingException {

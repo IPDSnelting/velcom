@@ -150,6 +150,7 @@ public class ServerMain extends Application<GlobalConfig> {
 
 	private void configureApi(Environment environment, TokenWriteAccess tokenAccess) {
 		// Serialization
+		// This mapper should be configured the same as the one in SerializingTest.java
 		environment.getObjectMapper()
 			.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE)
 			.setSerializationInclusion(Include.NON_NULL);
