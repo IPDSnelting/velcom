@@ -1,8 +1,8 @@
-package de.aaaaaaah.velcom.backend.restapi.newjsonobjects;
+package de.aaaaaaah.velcom.backend.restapi.jsonobjects;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import de.aaaaaaah.velcom.backend.restapi.SerializingTest;
-import de.aaaaaaah.velcom.backend.restapi.newjsonobjects.JsonRunDescription.JsonSuccess;
+import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRunDescription.JsonSuccess;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 

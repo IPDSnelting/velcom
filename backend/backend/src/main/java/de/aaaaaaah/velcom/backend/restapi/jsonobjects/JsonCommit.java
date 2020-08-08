@@ -1,39 +1,37 @@
 package de.aaaaaaah.velcom.backend.restapi.jsonobjects;
 
-import de.aaaaaaah.velcom.backend.access.entities.Commit;
-import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
-import java.time.Instant;
-import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 
-/**
- * A helper class for serialization representing a commit.
- */
 public class JsonCommit {
 
 	private final UUID repoId;
 	private final String hash;
-	private final Collection<String> parents;
+	private final List<String> parents;
 	private final String author;
-	private final Instant authorDate;
+	private final long authorDate;
 	private final String committer;
-	private final Instant committerDate;
+	private final long committerDate;
+	private final String summary;
+	@Nullable
 	private final String message;
+	private final List<JsonRunDescription> runs;
 
-	public JsonCommit(Commit commit) {
-		repoId = commit.getRepoId().getId();
-		hash = commit.getHash().getHash();
+	public JsonCommit(UUID repoId, String hash, List<String> parents, String author,
+		long authorDate, String committer, long committerDate, String summary, @Nullable String message,
+		List<JsonRunDescription> runs) {
 
-		parents = commit.getParentHashes().stream()
-			.map(CommitHash::getHash)
-			.collect(Collectors.toUnmodifiableList());
-
-		author = commit.getAuthor();
-		authorDate = commit.getAuthorDate();
-		committer = commit.getCommitter();
-		committerDate = commit.getCommitterDate();
-		message = commit.getMessage();
+		this.repoId = repoId;
+		this.hash = hash;
+		this.parents = parents;
+		this.author = author;
+		this.authorDate = authorDate;
+		this.committer = committer;
+		this.committerDate = committerDate;
+		this.summary = summary;
+		this.message = message;
+		this.runs = runs;
 	}
 
 	public UUID getRepoId() {
@@ -44,7 +42,7 @@ public class JsonCommit {
 		return hash;
 	}
 
-	public Collection<String> getParents() {
+	public List<String> getParents() {
 		return parents;
 	}
 
@@ -52,7 +50,7 @@ public class JsonCommit {
 		return author;
 	}
 
-	public Instant getAuthorDate() {
+	public long getAuthorDate() {
 		return authorDate;
 	}
 
@@ -60,11 +58,20 @@ public class JsonCommit {
 		return committer;
 	}
 
-	public Instant getCommitterDate() {
+	public long getCommitterDate() {
 		return committerDate;
 	}
 
+	public String getSummary() {
+		return summary;
+	}
+
+	@Nullable
 	public String getMessage() {
 		return message;
+	}
+
+	public List<JsonRunDescription> getRuns() {
+		return runs;
 	}
 }

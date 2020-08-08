@@ -1,4 +1,4 @@
-package de.aaaaaaah.velcom.backend.restapi.newjsonobjects;
+package de.aaaaaaah.velcom.backend.restapi.jsonobjects;
 
 import de.aaaaaaah.velcom.backend.access.entities.Interpretation;
 

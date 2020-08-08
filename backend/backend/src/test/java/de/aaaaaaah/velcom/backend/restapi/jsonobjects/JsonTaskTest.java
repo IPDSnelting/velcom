@@ -1,27 +1,28 @@
-package de.aaaaaaah.velcom.backend.restapi.newjsonobjects;
+package de.aaaaaaah.velcom.backend.restapi.jsonobjects;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import de.aaaaaaah.velcom.backend.restapi.SerializingTest;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
-class JsonCommitDescriptionTest extends SerializingTest {
+class JsonTaskTest extends SerializingTest {
 
 	@Test
 	void serialize() throws JsonProcessingException {
-		Object object = new JsonCommitDescription(
+		Object object = new JsonTask(
 			UUID.fromString("24dd4fd3-5c6d-4542-a7a4-b181f37295a6"),
-			"e16272feb472dc4d357cc19dd97112c036a67990",
 			"authorName",
 			1596881630,
-			"summaryText"
+			JsonSource.fromUploadedTar("descriptionText", null)
 		);
 		String json = "{"
-			+ "\"repo_id\": \"24dd4fd3-5c6d-4542-a7a4-b181f37295a6\","
-			+ "\"hash\": \"e16272feb472dc4d357cc19dd97112c036a67990\","
+			+ "\"id\": \"24dd4fd3-5c6d-4542-a7a4-b181f37295a6\","
 			+ "\"author\": \"authorName\","
-			+ "\"author_date\": 1596881630,"
-			+ "\"summary\": \"summaryText\""
+			+ "\"since\": 1596881630,"
+			+ "\"source\": {"
+			+ "  \"type\": \"UPLOADED_TAR\","
+			+ "  \"source\": {\"description\": \"descriptionText\"}"
+			+ "}"
 			+ "}";
 		serializedEquals(object, json);
 	}
