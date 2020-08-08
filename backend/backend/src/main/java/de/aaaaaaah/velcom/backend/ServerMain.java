@@ -1,6 +1,7 @@
 package de.aaaaaaah.velcom.backend;
 
 import com.codahale.metrics.MetricRegistry;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import de.aaaaaaah.velcom.backend.access.ArchiveAccess;
 import de.aaaaaaah.velcom.backend.access.BenchmarkWriteAccess;
@@ -19,8 +20,8 @@ import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.data.repocomparison.RepoComparison;
 import de.aaaaaaah.velcom.backend.data.repocomparison.TimesliceComparison;
 import de.aaaaaaah.velcom.backend.listener.Listener;
-import de.aaaaaaah.velcom.backend.restapi.RepoAuthenticator;
-import de.aaaaaaah.velcom.backend.restapi.RepoUser;
+import de.aaaaaaah.velcom.backend.restapi.authentication.RepoAuthenticator;
+import de.aaaaaaah.velcom.backend.restapi.authentication.RepoUser;
 import de.aaaaaaah.velcom.backend.restapi.exception.CommitAccessExceptionMapper;
 import de.aaaaaaah.velcom.backend.restapi.exception.NoSuchCommitExceptionMapper;
 import de.aaaaaaah.velcom.backend.restapi.exception.NoSuchRepoExceptionMapper;
@@ -84,14 +85,6 @@ public class ServerMain extends Application<GlobalConfig> {
 	public void run(GlobalConfig configuration, Environment environment) throws Exception {
 		metricRegistry = environment.metrics();
 
-		environment.getObjectMapper().setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
-		configureCors(environment);
-
-		// Exception mappers
-		environment.jersey().register(new NoSuchRepoExceptionMapper());
-		environment.jersey().register(new NoSuchCommitExceptionMapper());
-		environment.jersey().register(new CommitAccessExceptionMapper());
-
 		CollectorRegistry collectorRegistry = new CollectorRegistry();
 		collectorRegistry.register(new DropwizardExports(environment.metrics()));
 		environment.admin()
@@ -147,7 +140,26 @@ public class ServerMain extends Application<GlobalConfig> {
 		RunnerAwareServerFactory.getInstance().setDispatcher(dispatcher);
 		RunnerAwareServerFactory.getInstance().setBenchRepo(benchRepo);
 
-		// API authentication
+		// API
+		configureApi(environment, tokenAccess);
+		configureCors(environment);
+
+		// Endpoints
+		// environment.jersey().register(<endpoint>);
+	}
+
+	private void configureApi(Environment environment, TokenWriteAccess tokenAccess) {
+		// Serialization
+		environment.getObjectMapper()
+			.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE)
+			.setSerializationInclusion(Include.NON_NULL);
+
+		// Exceptions
+		environment.jersey().register(new NoSuchRepoExceptionMapper());
+		environment.jersey().register(new NoSuchCommitExceptionMapper());
+		environment.jersey().register(new CommitAccessExceptionMapper());
+
+		// Authentication
 		environment.jersey().register(
 			new AuthDynamicFeature(
 				new BasicCredentialAuthFilter.Builder<RepoUser>()
@@ -156,9 +168,6 @@ public class ServerMain extends Application<GlobalConfig> {
 			)
 		);
 		environment.jersey().register(new AuthValueFactoryProvider.Binder<>(RepoUser.class));
-
-		// API endpoints
-		// environment.jersey().register(<endpoint>);
 	}
 
 	private void configureCors(Environment environment) {

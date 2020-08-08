@@ -1,4 +1,4 @@
-package de.aaaaaaah.velcom.backend.restapi;
+package de.aaaaaaah.velcom.backend.restapi.authentication;
 
 import de.aaaaaaah.velcom.backend.access.TokenReadAccess;
 import de.aaaaaaah.velcom.backend.access.entities.AuthToken;
