@@ -21,15 +21,6 @@ import de.aaaaaaah.velcom.backend.data.repocomparison.TimesliceComparison;
 import de.aaaaaaah.velcom.backend.listener.Listener;
 import de.aaaaaaah.velcom.backend.restapi.RepoAuthenticator;
 import de.aaaaaaah.velcom.backend.restapi.RepoUser;
-import de.aaaaaaah.velcom.backend.restapi.endpoints.AllReposEndpoint;
-import de.aaaaaaah.velcom.backend.restapi.endpoints.CommitCompareEndpoint;
-import de.aaaaaaah.velcom.backend.restapi.endpoints.CommitHistoryEndpoint;
-import de.aaaaaaah.velcom.backend.restapi.endpoints.MeasurementsEndpoint;
-import de.aaaaaaah.velcom.backend.restapi.endpoints.QueueEndpoint;
-import de.aaaaaaah.velcom.backend.restapi.endpoints.RecentlyBenchmarkedCommitsEndpoint;
-import de.aaaaaaah.velcom.backend.restapi.endpoints.RepoComparisonGraphEndpoint;
-import de.aaaaaaah.velcom.backend.restapi.endpoints.RepoEndpoint;
-import de.aaaaaaah.velcom.backend.restapi.endpoints.TestTokenEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.exception.CommitAccessExceptionMapper;
 import de.aaaaaaah.velcom.backend.restapi.exception.NoSuchCommitExceptionMapper;
 import de.aaaaaaah.velcom.backend.restapi.exception.NoSuchRepoExceptionMapper;
@@ -167,22 +158,7 @@ public class ServerMain extends Application<GlobalConfig> {
 		environment.jersey().register(new AuthValueFactoryProvider.Binder<>(RepoUser.class));
 
 		// API endpoints
-		environment.jersey().register(
-			new AllReposEndpoint(repoAccess, benchmarkAccess, tokenAccess));
-		environment.jersey().register(
-			new CommitCompareEndpoint(benchmarkAccess, commitAccess, commitComparer, linearLog));
-		environment.jersey().register(
-			new CommitHistoryEndpoint(benchmarkAccess, repoAccess, linearLog, commitComparer));
-		environment.jersey().register(new MeasurementsEndpoint(benchmarkAccess));
-		environment.jersey()
-			.register(new QueueEndpoint(commitAccess, queue, dispatcher, linearLog, repoAccess));
-		environment.jersey().register(
-			new RecentlyBenchmarkedCommitsEndpoint(repoAccess,
-				benchmarkAccess, commitAccess, commitComparer, linearLog));
-		environment.jersey().register(new RepoComparisonGraphEndpoint(repoComparison));
-		environment.jersey().register(new RepoEndpoint(
-			repoAccess, tokenAccess, queue, listener, benchmarkAccess));
-		environment.jersey().register(new TestTokenEndpoint());
+		// environment.jersey().register(<endpoint>);
 	}
 
 	private void configureCors(Environment environment) {
