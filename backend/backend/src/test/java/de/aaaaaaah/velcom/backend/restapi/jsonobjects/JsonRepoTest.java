@@ -2,7 +2,6 @@ package de.aaaaaaah.velcom.backend.restapi.jsonobjects;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import de.aaaaaaah.velcom.backend.access.entities.Interpretation;
-import de.aaaaaaah.velcom.backend.restapi.SerializingTest;
 import java.net.URI;
 import java.util.List;
 import java.util.UUID;

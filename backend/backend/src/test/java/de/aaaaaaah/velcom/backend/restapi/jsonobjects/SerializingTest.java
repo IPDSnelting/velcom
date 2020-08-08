@@ -1,4 +1,4 @@
-package de.aaaaaaah.velcom.backend.restapi;
+package de.aaaaaaah.velcom.backend.restapi.jsonobjects;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonProcessingException;
