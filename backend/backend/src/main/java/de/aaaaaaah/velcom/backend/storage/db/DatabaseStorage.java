@@ -5,14 +5,12 @@ import de.aaaaaaah.velcom.backend.util.CheckedConsumer;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Objects;
-import javax.sql.DataSource;
 import org.flywaydb.core.Flyway;
 import org.jooq.DSLContext;
 import org.jooq.SQLDialect;
 import org.jooq.impl.DSL;
 import org.sqlite.SQLiteConfig;
 import org.sqlite.SQLiteConfig.JournalMode;
-import org.sqlite.SQLiteDataSource;
 
 /**
  * Provides access to a database.
@@ -29,6 +27,7 @@ public class DatabaseStorage {
 	 * Also performs database migrations, if necessary.
 	 *
 	 * @param config the config used to get the connection information for the database from
+	 * @throws SQLException if sql goes wrong
 	 */
 	public DatabaseStorage(GlobalConfig config) throws SQLException {
 		this(config.getJdbcUrl());
@@ -37,29 +36,33 @@ public class DatabaseStorage {
 	/**
 	 * Initializes the database storage.
 	 *
-	 * <p>
-	 * Also performs database migrations, if necessary.
+	 * <p> Also performs database migrations, if necessary.
 	 *
 	 * @param jdbcUrl the jdbc url used to connect to the database
+	 * @throws SQLException if sql goes wrong
 	 */
 	public DatabaseStorage(String jdbcUrl) throws SQLException {
+		migrate(jdbcUrl);
+
 		SQLiteConfig sqliteConfig = new SQLiteConfig();
 		sqliteConfig.enforceForeignKeys(true);
 		sqliteConfig.setJournalMode(JournalMode.WAL);
 
-		SQLiteDataSource dataSource = new SQLiteDataSource(sqliteConfig);
-		dataSource.setUrl(jdbcUrl);
-
-		this.connection = dataSource.getConnection();
-
-		this.context = DSL.using(this.connection, SQLDialect.SQLITE);
-
-		migrate(dataSource);
+		connection = sqliteConfig.createConnection(jdbcUrl);
+		context = DSL.using(connection, SQLDialect.SQLITE);
 	}
 
-	private void migrate(DataSource dataSource) {
+	/**
+	 * By default, sqlite doesn't check for foreign key constraints. By opening a new db connection
+	 * only based on the db url, flyway can take advantage of this and migrations become much more
+	 * performant. This does however mean that each migration has to check foreign key consistency
+	 * itself using {@code PRAGMA foreign_key_check}.
+	 *
+	 * @param jdbcUrl the url to the database
+	 */
+	private void migrate(String jdbcUrl) {
 		Flyway flyway = Flyway.configure()
-			.dataSource(dataSource)
+			.dataSource(jdbcUrl, "", "")
 			.load();
 
 		flyway.migrate();

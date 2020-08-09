@@ -1,201 +1,202 @@
 package de.aaaaaaah.velcom.backend.data.queue;
 
-import com.codahale.metrics.Gauge;
-import com.codahale.metrics.MetricRegistry;
-import de.aaaaaaah.velcom.backend.ServerMain;
-import de.aaaaaaah.velcom.backend.access.KnownCommitWriteAccess;
-import de.aaaaaaah.velcom.backend.access.entities.BenchmarkStatus;
-import de.aaaaaaah.velcom.backend.access.entities.Commit;
+import static java.util.stream.Collectors.toList;
+
+import de.aaaaaaah.velcom.backend.access.ArchiveAccess;
+import de.aaaaaaah.velcom.backend.access.BenchmarkWriteAccess;
+import de.aaaaaaah.velcom.backend.access.RepoReadAccess;
+import de.aaaaaaah.velcom.backend.access.TaskWriteAccess;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
-import de.aaaaaaah.velcom.backend.util.Pair;
+import de.aaaaaaah.velcom.backend.access.entities.RepoSource;
+import de.aaaaaaah.velcom.backend.access.entities.Run;
+import de.aaaaaaah.velcom.backend.access.entities.Task;
+import de.aaaaaaah.velcom.backend.access.entities.TaskId;
+import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchTaskException;
+import de.aaaaaaah.velcom.backend.access.exceptions.PrepareTransferException;
+import de.aaaaaaah.velcom.backend.access.exceptions.TransferException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
- * The queue is passed tasks from various sources. It keeps track of all tasks and updates their
- * benchmark status in the {@link KnownCommitWriteAccess}, and also passes all tasks to an internal
- * {@link QueuePolicy}. That policy keeps the tasks and decides in which order they should be
- * executed.
+ * The queue manages tasks that are passed to it from various sources and sorts these tasks to bring
+ * them into an order in which they will be fetched for execution by the dispatcher. This class is
+ * thread safe.
  *
- * <p> When the queue is loaded after a restart, all the known commits which still need to be
- * benchmarked as well as the manual commits need to be added one by one again. The queue does
- * <em>>not</em> do this itself.
+ * <p>The order in which the tasks are sorted depends on the underlying {@link
+ * de.aaaaaaah.velcom.backend.access.policy.QueuePolicy QueuePolicy} used in the access layer and is
+ * not known to the queue itself.</p>
  *
- * <p> All publicly available functions in the queue are synchronized, which should make the queue
- * threadsafe to use.
- *
- * <p> The policy must follow these rules:
- * <ul>
- *     <li>There is always at most one task per commit.</li>
- *     <li>The policy must never drop or ignore a commit.</li>
- *     <li>If a manual task is added for a commit, that always replaces a previous non-manual task.</li>
- *     <li>A non-manual task never replaces a manual task.</li>
- * </ul>
+ * <p>Initially upon construction, all tasks that are residing in the queue will have their
+ * status manually set to "not in process".</p>
  */
 public class Queue {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(Queue.class);
+	private final RepoReadAccess repoAccess;
+	private final TaskWriteAccess taskAccess;
+	private final ArchiveAccess archiveAccess;
+	private final BenchmarkWriteAccess benchAccess;
 
-	private final KnownCommitWriteAccess knownCommitAccess;
-	private final QueuePolicy queuePolicy;
+	private final Collection<Consumer<TaskId>> abortHandlers = new ArrayList<>();
 
-	private final Collection<Consumer<Commit>> somethingAddedListeners;
-	private final Collection<Consumer<Pair<RepoId, CommitHash>>> somethingAbortedListeners;
+	public Queue(RepoReadAccess repoAccess,
+		TaskWriteAccess taskAccess, ArchiveAccess archiveAccess,
+		BenchmarkWriteAccess benchAccess) {
 
-	public Queue(KnownCommitWriteAccess knownCommitAccess, QueuePolicy queuePolicy) {
-
-		this.knownCommitAccess = knownCommitAccess;
-		this.queuePolicy = queuePolicy;
-
-		somethingAddedListeners = new ArrayList<>();
-		somethingAbortedListeners = new ArrayList<>();
-
-		ServerMain.getMetricRegistry().register(
-			MetricRegistry.name(getClass(), "queue_length"),
-			(Gauge<Integer>) () -> viewAllCurrentTasks().size()
-		);
+		this.repoAccess = repoAccess;
+		this.taskAccess = taskAccess;
+		this.archiveAccess = archiveAccess;
+		this.benchAccess = benchAccess;
 	}
 
 	/**
-	 * Add a new non-manual task to the queue. This ignores and overwrites any existing {@link
-	 * BenchmarkStatus}.
+	 * Adds a handler to this queue that is called when a task process is aborted, which means that
+	 * the task was given to a runner but the processing of the task has been subsequently
+	 * cancelled. The task still remains in the queue.
 	 *
-	 * @param commit the commit that should be added as task
+	 * @param handler the handler
 	 */
-	public synchronized void addTask(Commit commit) {
-		if (queuePolicy.addTask(commit)) {
-			knownCommitAccess.setBenchmarkStatus(commit.getRepoId(), commit.getHash(),
-				BenchmarkStatus.BENCHMARK_REQUIRED);
-			callAllAddedListeners(commit);
-			LOGGER.info("Added task " + commit + " to queue and notified all listeners");
-		} else {
-			LOGGER.debug("Didn't add task " + commit + " as it was already added earlier");
-		}
+	public void onTaskProcessAbort(Consumer<TaskId> handler) {
+		this.abortHandlers.add(handler);
 	}
 
 	/**
-	 * Add a new manual task to the queue. Usually, manual tasks have a higher priority than other
-	 * tasks, though this is up to the queue policy. This ignores and overwrites any existing {@link
-	 * BenchmarkStatus}.
+	 * Adds a handler to this queue that is called when a new task is inserted into the queue.
 	 *
-	 * @param commit the commit that should be added as task
+	 * @param handler the handler
 	 */
-	public synchronized void addManualTask(Commit commit) {
-		if (queuePolicy.addManualTask(commit)) {
-			knownCommitAccess.setBenchmarkStatus(commit.getRepoId(), commit.getHash(),
-				BenchmarkStatus.BENCHMARK_REQUIRED_MANUAL_PRIORITY);
-			callAllAddedListeners(commit);
-			LOGGER.info("Added manual task " + commit + " to queue and notified all listeners");
-		} else {
-			LOGGER.debug("Didn't add manual task " + commit + " as it was already added earlier");
-		}
+	public void onTaskInsert(Consumer<Task> handler) {
+		this.taskAccess.onTaskInsert(handler);
 	}
 
 	/**
-	 * Add a commit either as a task or a manual task, based on its benchmark status.
+	 * Adds a new handler to this queue which is called when a task is deleted from this queue.
 	 *
-	 * @param commit the commit that should be added as a task
+	 * @param handler the handler
 	 */
-	public synchronized void addCommit(Commit commit) {
-		BenchmarkStatus status = knownCommitAccess.getBenchmarkStatus(commit.getRepoId(),
-			commit.getHash());
-
-		if (status.equals(BenchmarkStatus.BENCHMARK_REQUIRED_MANUAL_PRIORITY)) {
-			addManualTask(commit);
-		} else {
-			addTask(commit);
-		}
-	}
-
-	public synchronized Optional<Commit> getNextTask() {
-		final Optional<Commit> nextTask = queuePolicy.getNextTask();
-		nextTask.ifPresent(commit -> LOGGER.info("Task " + commit + " has been started"));
-		return nextTask;
+	public void onTaskDelete(Consumer<TaskId> handler) {
+		this.taskAccess.onTaskDelete(handler);
 	}
 
 	/**
-	 * This function must be called once a task was completed and should not be benchmarked again.
+	 * Gets the task associated with the given task id.
 	 *
-	 * @param repoId the repo the commit is in
-	 * @param commitHash the commit's hash
+	 * @param taskId the id of the task
+	 * @return the task
+	 * @throws NoSuchTaskException if no task with the given id exists
 	 */
-	public synchronized void finishTask(RepoId repoId, CommitHash commitHash) {
-		knownCommitAccess.setBenchmarkStatus(repoId, commitHash,
-			BenchmarkStatus.NO_BENCHMARK_REQUIRED);
-		LOGGER.info(
-			"Task with repoId " + repoId + " and commitHash " + commitHash
-				+ " was successfully finished");
+	public Task getTaskById(TaskId taskId) throws NoSuchTaskException {
+		return this.taskAccess.getById(taskId);
 	}
 
 	/**
-	 * Get all tasks currently in the queue, in the order they are going to be executed in. In other
-	 * words, repeated calls to {@link #getNextTask()} will result in this order of tasks, unless
-	 * new tasks are added or tasks removed during that time.
-	 *
-	 * @return the list of tasks in the order they will be executed
+	 * @return the next task in this queue to be processed
 	 */
-	public synchronized List<Commit> viewAllCurrentTasks() {
-		return queuePolicy.viewAllCurrentTasks();
+	public Optional<Task> fetchNextTask() {
+		return taskAccess.fetchNextTask();
 	}
 
 	/**
-	 * Abort a commit's task.
-	 *
-	 * @param repoId the repo the commit is in
-	 * @param commitHash the commit's hash
+	 * @return a list of all tasks that currently reside in the queue, sorted by their order of
+	 * 	processing.
 	 */
-	public synchronized void abortTask(RepoId repoId, CommitHash commitHash) {
-		queuePolicy.abortTask(repoId, commitHash);
-		knownCommitAccess.setBenchmarkStatus(
-			repoId, commitHash, BenchmarkStatus.NO_BENCHMARK_REQUIRED
-		);
-		callAllAbortedListeners(repoId, commitHash);
-		LOGGER.info("Task with repoId " + repoId + " and hash " + commitHash + " was aborted");
+	public List<Task> getTasksSorted() {
+		return taskAccess.getTasksSorted();
 	}
 
 	/**
-	 * Remove all tasks of a repo from the queue. This function should only be called <em>after</em>
-	 * the repo has already been deleted from the db.
+	 * Adds a new task to this queue.
 	 *
-	 * <p> <b>Warning</b>: This function does <em>not</em> update the database! It only removes
-	 * commits from the queue.
+	 * @param author the author of this addition
+	 * @param repoId the id of the repository that this task belongs to
+	 * @param commitHash the commit hash of this taks
 	 */
-	public synchronized void abortAllTasksOfRepo(RepoId repoId) {
-		queuePolicy.abortAllTasksOfRepo(repoId);
-		LOGGER.info("All tasks with repoId " + repoId + " were aborted");
+	public void addCommits(String author, RepoId repoId, List<CommitHash> commitHash) {
+		List<Task> tasks = commitHash.stream()
+			.map(hash -> new Task(author, new RepoSource(repoId, hash)))
+			.collect(toList());
+
+		taskAccess.insertTasks(tasks);
 	}
 
 	/**
-	 * Registers a listener that is called when something is added to the queue.
+	 * Changes the priority of the task that matches the given task id.
 	 *
-	 * @param listener the listener to call if something is added to the queue
+	 * @param taskId the id of the task
+	 * @param newPriority the new priority
 	 */
-	public synchronized void onSomethingAdded(Consumer<Commit> listener) {
-		somethingAddedListeners.add(listener);
-	}
-
-	private void callAllAddedListeners(Commit commit) {
-		somethingAddedListeners.forEach(taskConsumer -> taskConsumer.accept(commit));
+	public void prioritizeTask(TaskId taskId, int newPriority) {
+		taskAccess.setTaskPriority(taskId, newPriority);
 	}
 
 	/**
-	 * Registers a listener that is called when a task is aborted.
+	 * Transfers a task to the supplied {@link OutputStream} while also marking the task as "in
+	 * process".
 	 *
-	 * @param listener the listener to call if a task is aborted
+	 * <p>Note that the provided output stream will be closed after the transfer operation is
+	 * done.</p>
+	 *
+	 * @param taskId the id of the task to be transferred
+	 * @param output the output to transfer the task to
+	 * @throws NoSuchTaskException if no task with the given id exists
+	 * @throws TransferException if the transfer process itself failed
+	 * @throws PrepareTransferException if the preparation to transfer failed
 	 */
-	public synchronized void onSomethingAborted(Consumer<Pair<RepoId, CommitHash>> listener) {
-		somethingAbortedListeners.add(listener);
+	public void transferTask(TaskId taskId, OutputStream output)
+		throws NoSuchTaskException, TransferException, PrepareTransferException {
+
+		Task task = taskAccess.getById(taskId);
+		archiveAccess.transferTask(task, output);
 	}
 
-	private void callAllAbortedListeners(RepoId repoId, CommitHash commitHash) {
-		Pair<RepoId, CommitHash> pair = new Pair<>(repoId, commitHash);
-		somethingAbortedListeners.forEach(pairConsumer -> pairConsumer.accept(pair));
+	/**
+	 * Cancels the processing of the task with the given task id. This merely marks the task as "not
+	 * in process" anymore and will not delete the task from the queue.
+	 *
+	 * @param taskId the id of the task
+	 */
+	public void abortTaskProcess(TaskId taskId) {
+		taskAccess.setTaskStatus(taskId, false);
+		abortHandlers.forEach(handler -> handler.accept(taskId));
+	}
+
+	/**
+	 * Marks the task associated with the given run as complete which means that the task will be
+	 * deleted from the queue.
+	 *
+	 * @param result the result associated with the task
+	 */
+	public void completeTask(Run result) {
+		benchAccess.insertRun(result);
+	}
+
+	/**
+	 * Deletes the tasks that are associated with the given task ids from this queue.
+	 *
+	 * @param taskIds the ids of the tasks
+	 */
+	public void deleteTasks(Collection<TaskId> taskIds) {
+		taskAccess.deleteTasks(taskIds);
+	}
+
+	/**
+	 * Deletes all tasks that are associated with the given repository.
+	 *
+	 * @param repoId the id of the repo
+	 */
+	public void deleteAllTasksOfRepo(RepoId repoId) {
+		taskAccess.deleteAllTasksOfRepo(repoId);
+	}
+
+	/**
+	 * Deletes all tasks from this queue.
+	 */
+	public void deleteAllTasks() {
+		taskAccess.deleteAllTasks();
 	}
 
 }

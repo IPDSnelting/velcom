@@ -1,14 +1,11 @@
 package de.aaaaaaah.velcom.backend.access;
 
 import static java.util.stream.Collectors.toList;
-import static org.jooq.codegen.db.tables.Repository.REPOSITORY;
+import static org.jooq.codegen.db.Tables.REPO;
 import static org.jooq.codegen.db.tables.TrackedBranch.TRACKED_BRANCH;
 
-import de.aaaaaaah.velcom.backend.access.archive.ArchiveException;
-import de.aaaaaaah.velcom.backend.access.archive.Archiver;
 import de.aaaaaaah.velcom.backend.access.entities.Branch;
 import de.aaaaaaah.velcom.backend.access.entities.BranchName;
-import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.entities.RemoteUrl;
 import de.aaaaaaah.velcom.backend.access.entities.Repo;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
@@ -23,13 +20,11 @@ import de.aaaaaaah.velcom.backend.storage.repo.RepoStorage;
 import de.aaaaaaah.velcom.backend.storage.repo.exception.AddRepositoryException;
 import de.aaaaaaah.velcom.backend.storage.repo.exception.RepositoryAcquisitionException;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 import org.eclipse.jgit.lib.Repository;
 import org.jooq.DSLContext;
-import org.jooq.codegen.db.tables.records.RepositoryRecord;
+import org.jooq.codegen.db.tables.records.RepoRecord;
 import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,32 +36,8 @@ public class RepoWriteAccess extends RepoReadAccess {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(RepoWriteAccess.class);
 
-	private final Archiver archiver;
-
-	public RepoWriteAccess(DatabaseStorage databaseStorage, RepoStorage repoStorage,
-		RemoteUrl benchRepoUrl, Path archivesRootDir) {
-
-		super(databaseStorage, repoStorage, benchRepoUrl);
-
-		this.archiver = new Archiver(repoStorage, archivesRootDir);
-
-		// Clone benchmark repo if needed
-		if (!repoStorage.containsRepository(benchRepoDirName)) {
-			try {
-				repoStorage.addRepository(benchRepoDirName, benchRepoRemoteUrl.getUrl());
-			} catch (AddRepositoryException e) {
-				throw new AddRepoException(benchRepoDirName, benchRepoRemoteUrl,
-					"Failed to clone benchmark repo from: " + benchRepoUrl, e);
-			}
-		}
-
-		try {
-			getLatestBenchmarkRepoHash();
-		} catch (RepoAccessException e) {
-			LOGGER.error("Failed to get latest commit hash from benchmark repo! "
-				+ "Please make sure that the benchmark repository has at least one commit.");
-			throw e;
-		}
+	public RepoWriteAccess(DatabaseStorage databaseStorage, RepoStorage repoStorage) {
+		super(databaseStorage, repoStorage);
 
 		// Clone all repos if needed
 		for (RepoId repoId : getAllRepoIds()) {
@@ -90,8 +61,8 @@ public class RepoWriteAccess extends RepoReadAccess {
 	 */
 	public void setName(RepoId repoId, String newName) {
 		try (DSLContext db = databaseStorage.acquireContext()) {
-			db.update(REPOSITORY).set(REPOSITORY.NAME, newName)
-				.where(REPOSITORY.ID.eq(repoId.getId().toString()))
+			db.update(REPO).set(REPO.NAME, newName)
+				.where(REPO.ID.eq(repoId.getId().toString()))
 				.execute();
 		}
 
@@ -132,9 +103,9 @@ public class RepoWriteAccess extends RepoReadAccess {
 
 		// (3): Update database
 		try (DSLContext db = databaseStorage.acquireContext()) {
-			db.update(REPOSITORY)
-				.set(REPOSITORY.REMOTE_URL, newRemoteUrl.getUrl())
-				.where(REPOSITORY.ID.eq(repoId.getId().toString()))
+			db.update(REPO)
+				.set(REPO.REMOTE_URL, newRemoteUrl.getUrl())
+				.where(REPO.ID.eq(repoId.getId().toString()))
 				.execute();
 		}
 
@@ -173,7 +144,7 @@ public class RepoWriteAccess extends RepoReadAccess {
 
 				// Add new tracked branches
 				var insertStep = ts.insertInto(
-					TRACKED_BRANCH, TRACKED_BRANCH.REPO_ID, TRACKED_BRANCH.BRANCH_NAME
+					TRACKED_BRANCH, TRACKED_BRANCH.REPO_ID, TRACKED_BRANCH.NAME
 				);
 
 				branches.forEach(branchName -> insertStep.values(repoIdStr, branchName.getName()));
@@ -196,7 +167,7 @@ public class RepoWriteAccess extends RepoReadAccess {
 		}
 	}
 
-	// --- Add / Delete Repos ---------------------------------------------------------------------
+	// --- Add / Delete / Update Repos ---------------------------------------------------------------------
 
 	/**
 	 * Adds a new repository by cloning it to the local file system.
@@ -218,7 +189,7 @@ public class RepoWriteAccess extends RepoReadAccess {
 
 		// 2.) Insert repo into database
 		try (DSLContext db = databaseStorage.acquireContext()) {
-			RepositoryRecord record = db.newRecord(REPOSITORY);
+			RepoRecord record = db.newRecord(REPO);
 			record.setId(repoId.getId().toString());
 			record.setName(name);
 			record.setRemoteUrl(remoteUrl.getUrl());
@@ -258,8 +229,8 @@ public class RepoWriteAccess extends RepoReadAccess {
 	public void deleteRepo(RepoId repoId) throws DeleteRepoException {
 		// Delete from database
 		try (DSLContext db = databaseStorage.acquireContext()) {
-			db.deleteFrom(REPOSITORY)
-				.where(REPOSITORY.ID.eq(repoId.getId().toString()))
+			db.deleteFrom(REPO)
+				.where(REPO.ID.eq(repoId.getId().toString()))
 				.execute();
 		}
 
@@ -273,8 +244,6 @@ public class RepoWriteAccess extends RepoReadAccess {
 		// Remove from cache
 		this.repoCache.invalidate(repoId);
 	}
-
-	// --- Update Operations ----------------------------------------------------------------------
 
 	/**
 	 * Performs either a fetch operation on the specified repository, or a clone operation if the
@@ -293,57 +262,6 @@ public class RepoWriteAccess extends RepoReadAccess {
 		}
 	}
 
-	/**
-	 * Performs either a fetch operation on the benchmark repository, or clones it to the local repo
-	 * storage, if it has not yet been cloned.
-	 *
-	 * @throws RepoAccessException if an error occurs during the fetch/clone operation
-	 */
-	public void updateBenchmarkRepo() throws RepoAccessException {
-		try {
-			if (repoStorage.containsRepository(benchRepoDirName)) {
-				// Check if remote url changed
-
-				final String remoteUrl;
-
-				try (Repository repo = repoStorage.acquireRepository(benchRepoDirName)) {
-					remoteUrl = repo.getConfig().getString("remote", "origin", "url");
-				}
-
-				if (!remoteUrl.equals(this.benchRepoRemoteUrl.getUrl())) {
-					// remote url changed! => delete repo so that fetchOrCloneLocalRepo
-					// completely clones it again
-					LOGGER.info("benchrepo remote url changed! cloning it again...");
-
-					repoStorage.deleteRepository(benchRepoDirName);
-					archiver.deleteArchives(benchRepoDirName);
-
-					fetchOrCloneLocalRepo(benchRepoDirName, benchRepoRemoteUrl);
-				} else {
-					// remote url has not changed => just fetch and check if hash changed
-					final CommitHash oldHash = getLatestBenchmarkRepoHash();
-					fetchOrCloneLocalRepo(benchRepoDirName, benchRepoRemoteUrl);
-					final CommitHash newHash = getLatestBenchmarkRepoHash();
-
-					if (!oldHash.equals(newHash)) {
-						// benchmark repo was updated => remove old cloned archives since a new
-						// clone will be created with the newest hash once it is required.
-						archiver.deleteArchives(benchRepoDirName);
-					}
-				}
-			} else {
-				// bench repo is currently not on disk => clone it
-				LOGGER.info("missing benchrepo on disk! cloning it...");
-				fetchOrCloneLocalRepo(benchRepoDirName, benchRepoRemoteUrl);
-			}
-		} catch (RepositoryAcquisitionException | AddRepositoryException | IOException |
-			CloneException e) {
-
-			throw new RepoAccessException("failed to fetch/clone benchmark repo with remote url: "
-				+ benchRepoRemoteUrl, e);
-		}
-	}
-
 	private void fetchOrCloneLocalRepo(String dirName, RemoteUrl remoteUrl)
 		throws RepositoryAcquisitionException, AddRepositoryException, CloneException {
 
@@ -359,40 +277,6 @@ public class RepoWriteAccess extends RepoReadAccess {
 			LOGGER.info("local repository {} is missing! cloning it from: {}", dirName, remoteUrl);
 			repoStorage.addRepository(dirName, remoteUrl.getUrl());
 		}
-	}
-
-	// --- Archive Operations ---------------------------------------------------------------------
-
-	/**
-	 * Write an uncompressed tar archive containing the (recursively cloned) working directory for
-	 * the specified commit to the output stream.
-	 *
-	 * @param repoId the id of the repo
-	 * @param commitHash the hash of commit to send
-	 * @param outputStream where to write the archive
-	 * @throws ArchiveException if the commit could not be compressed (or something else went wrong
-	 * 	during streaming)
-	 * @throws de.aaaaaaah.velcom.backend.access.exceptions.ArchiveFailedPermanently if it failed
-	 * 	with a more permanent cause
-	 */
-	public void streamNormalRepoArchive(RepoId repoId, CommitHash commitHash,
-		OutputStream outputStream) throws ArchiveException {
-
-		String dirName = repoId.getDirectoryName();
-		archiver.archive(dirName, commitHash, outputStream, false);
-	}
-
-	/**
-	 * Does the same as {@link #streamNormalRepoArchive(RepoId, CommitHash, OutputStream)}, but for
-	 * the latest commit on the master branch in the benchmark repo.
-	 *
-	 * @param outputStream where to write the archive
-	 * @throws ArchiveException if the commit could not be compressed (or something else went wrong
-	 * 	during streaming)
-	 */
-	public void streamBenchmarkRepoArchive(OutputStream outputStream) throws ArchiveException {
-		CommitHash commitHash = getLatestBenchmarkRepoHash();
-		archiver.archive(this.benchRepoDirName, commitHash, outputStream, true);
 	}
 
 }

@@ -31,13 +31,12 @@
           </execution>
         </executions>
         <configuration>
-          <minimizeJar>true</minimizeJar>
           <finalName>${project.name}</finalName>
           <transformers>
             <transformer
               implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
               <manifestEntries>
-                <Main-Class>de.aaaaaaah.velcom.runner.cli.RunnerMain</Main-Class>
+                <Main-Class>de.aaaaaaah.velcom.runner.RunnerMain</Main-Class>
               </manifestEntries>
             </transformer>
           </transformers>

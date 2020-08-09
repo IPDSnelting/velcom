@@ -7,7 +7,7 @@ import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.storage.repo.RepoStorage;
 import de.aaaaaaah.velcom.backend.storage.repo.exception.AddRepositoryException;
 import de.aaaaaaah.velcom.backend.storage.repo.exception.RepositoryAcquisitionException;
-import de.aaaaaaah.velcom.backend.util.DirectoryRemover;
+import de.aaaaaaah.velcom.shared.util.FileHelper;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
@@ -55,7 +55,7 @@ class RepoStorageTest {
 
 	@AfterEach
 	void tearDown() throws IOException {
-		DirectoryRemover.deleteDirectoryRecursive(this.storageDir);
+		FileHelper.deleteDirectoryOrFile(this.storageDir);
 	}
 
 	@Test

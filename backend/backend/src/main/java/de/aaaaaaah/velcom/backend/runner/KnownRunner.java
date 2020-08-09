@@ -1,159 +1,60 @@
 package de.aaaaaaah.velcom.backend.runner;
 
-import de.aaaaaaah.velcom.backend.access.entities.Commit;
-import de.aaaaaaah.velcom.runner.shared.RunnerStatusEnum;
-import de.aaaaaaah.velcom.runner.shared.protocol.serverbound.entities.RunnerInformation;
+import de.aaaaaaah.velcom.backend.access.entities.Task;
+import de.aaaaaaah.velcom.shared.protocol.serialization.Status;
 import java.util.Objects;
 import java.util.Optional;
+import javax.annotation.Nullable;
 
 /**
- * A runner the dispatcher knows something about.
+ * A runner that is known to the dispatcher.
  */
 public class KnownRunner {
 
-	private final RunnerStatusEnum currentStatus;
 	private final String name;
-	private final String operatingSystem;
-	private final int coreCount;
-	private final long availableMemory;
-	private final Commit currentCommit;
+	private final String information;
+	private final Status lastStatus;
+	private final Task currentTask;
+	private final boolean lostConnection;
 
 	/**
 	 * Creates a new known runner.
 	 *
-	 * @param currentStatus the current runner status
 	 * @param name the name of the runner
-	 * @param operatingSystem the OS of the runner
-	 * @param coreCount the core count available to the JVM on the runner
-	 * @param availableMemory the total available memory measured in bytes
-	 * @param currentCommit the commit the runner is currently executing
+	 * @param information the runner information
+	 * @param lastStatus the las known runner status
+	 * @param task the task the runner is currently working on
+	 * @param lostConnection true if the connection to the runner is lost
 	 */
-	KnownRunner(RunnerStatusEnum currentStatus, String name, String operatingSystem,
-		int coreCount, long availableMemory, Commit currentCommit) {
-		this.currentStatus = currentStatus;
-		this.name = name;
-		this.operatingSystem = operatingSystem;
-		this.coreCount = coreCount;
-		this.availableMemory = availableMemory;
-		this.currentCommit = currentCommit;
+	public KnownRunner(String name, String information, Status lastStatus, @Nullable Task task,
+		boolean lostConnection) {
+		this.name = Objects.requireNonNull(name, "name can not be null!");
+		this.information = Objects.requireNonNull(information, "information can not be null!");
+		this.lastStatus = Objects.requireNonNull(lastStatus, "status can not be null!");
+		this.currentTask = task;
+		this.lostConnection = lostConnection;
 	}
 
-	/**
-	 * Returns the current runner status.
-	 *
-	 * @return the current runner status
-	 */
-	public RunnerStatusEnum getCurrentStatus() {
-		return currentStatus;
-	}
-
-	/**
-	 * Returns the name of the runner.
-	 *
-	 * @return the name of the runner
-	 */
 	public String getName() {
 		return name;
 	}
 
-	/**
-	 * Returns the OS of the runner.
-	 *
-	 * @return the OS of the runner
-	 */
-	public String getOperatingSystem() {
-		return operatingSystem;
+	public String getInformation() {
+		return information;
 	}
 
 	/**
-	 * Returns the core count available to the JVM on the runner.
-	 *
-	 * @return the core count available to the JVM on the runner
+	 * @return the last known status. Might be out of date if {@link #hasLostConnection()} is true
 	 */
-	public int getCoreCount() {
-		return coreCount;
+	public Status getLastStatus() {
+		return lastStatus;
 	}
 
-	/**
-	 * Returns the available memory.
-	 *
-	 * @return the total available memory measured in bytes
-	 */
-	public long getAvailableMemory() {
-		return availableMemory;
+	public Optional<Task> getCurrentTask() {
+		return Optional.ofNullable(currentTask);
 	}
 
-	/**
-	 * Returns an aggregated, human readable, string containing the runner's machine information
-	 * (Operating system, CPU cores, etc.).
-	 *
-	 * @return a description of the machine the runner runs on
-	 */
-	public String getMachineInfo() {
-		String memory = getAvailableMemory() / 1_000_000 + "MB";
-		return getOperatingSystem() + "\n" + getCoreCount() + " cores\n" + memory + " max RAM";
-	}
-
-	/**
-	 * Returns the commit the runner is currently executing.
-	 *
-	 * @return the commit the runner is currently executing
-	 */
-	public Optional<Commit> getCurrentCommit() {
-		return Optional.ofNullable(currentCommit);
-	}
-
-	/**
-	 * Converts some {@link RunnerInformation} to a {@link KnownRunner}.
-	 *
-	 * @param runnerInformation the runner information
-	 * @param commit the commit the runner is currently working on. Might be null.
-	 * @return a corresponding known runner
-	 */
-	static KnownRunner fromRunnerInformation(RunnerInformation runnerInformation, Commit commit) {
-		return new KnownRunner(
-			runnerInformation.getRunnerState(),
-			runnerInformation.getName(),
-			runnerInformation.getOperatingSystem(),
-			runnerInformation.getCoreCount(),
-			runnerInformation.getAvailableMemory(),
-			commit
-		);
-	}
-
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) {
-			return true;
-		}
-		if (o == null || getClass() != o.getClass()) {
-			return false;
-		}
-		KnownRunner that = (KnownRunner) o;
-		return coreCount == that.coreCount &&
-			availableMemory == that.availableMemory &&
-			currentStatus == that.currentStatus &&
-			Objects.equals(name, that.name) &&
-			Objects.equals(operatingSystem, that.operatingSystem) &&
-			Objects.equals(currentCommit, that.currentCommit);
-	}
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(currentStatus, name, operatingSystem, coreCount, availableMemory,
-			currentCommit);
-	}
-
-	@Override
-	public String toString() {
-		return "KnownRunner{" +
-			"currentStatus=" + currentStatus +
-			", name='" + name + '\'' +
-			", operatingSystem='" + operatingSystem + '\'' +
-			", coreCount=" + coreCount +
-			", availableMemory=" + availableMemory +
-			", machineInfo=" + getMachineInfo() +
-			", currentCommit=" + currentCommit +
-			'}';
+	public boolean hasLostConnection() {
+		return lostConnection;
 	}
 }

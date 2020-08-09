@@ -2,17 +2,19 @@ package de.aaaaaaah.velcom.backend;
 
 import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import de.aaaaaaah.velcom.backend.access.ArchiveAccess;
 import de.aaaaaaah.velcom.backend.access.BenchmarkWriteAccess;
 import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.access.KnownCommitWriteAccess;
 import de.aaaaaaah.velcom.backend.access.RepoWriteAccess;
+import de.aaaaaaah.velcom.backend.access.TaskWriteAccess;
 import de.aaaaaaah.velcom.backend.access.TokenWriteAccess;
 import de.aaaaaaah.velcom.backend.access.entities.AuthToken;
 import de.aaaaaaah.velcom.backend.access.entities.RemoteUrl;
+import de.aaaaaaah.velcom.backend.data.benchrepo.BenchRepo;
 import de.aaaaaaah.velcom.backend.data.commitcomparison.CommitComparer;
 import de.aaaaaaah.velcom.backend.data.linearlog.CommitAccessBasedLinearLog;
 import de.aaaaaaah.velcom.backend.data.linearlog.LinearLog;
-import de.aaaaaaah.velcom.backend.data.queue.PolicyManualFilo;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.data.repocomparison.RepoComparison;
 import de.aaaaaaah.velcom.backend.data.repocomparison.TimesliceComparison;
@@ -32,7 +34,6 @@ import de.aaaaaaah.velcom.backend.restapi.exception.CommitAccessExceptionMapper;
 import de.aaaaaaah.velcom.backend.restapi.exception.NoSuchCommitExceptionMapper;
 import de.aaaaaaah.velcom.backend.restapi.exception.NoSuchRepoExceptionMapper;
 import de.aaaaaaah.velcom.backend.runner.Dispatcher;
-import de.aaaaaaah.velcom.backend.runner.DispatcherImpl;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import de.aaaaaaah.velcom.backend.storage.repo.RepoStorage;
 import io.dropwizard.Application;
@@ -44,7 +45,8 @@ import io.dropwizard.setup.Environment;
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.dropwizard.DropwizardExports;
 import io.prometheus.client.exporter.MetricsServlet;
-import java.nio.file.Paths;
+import java.nio.file.Path;
+import java.time.Duration;
 import java.util.EnumSet;
 import javax.servlet.DispatcherType;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
@@ -110,13 +112,15 @@ public class ServerMain extends Application<GlobalConfig> {
 		DatabaseStorage databaseStorage = new DatabaseStorage(configuration);
 
 		// Access layer
+		TaskWriteAccess taskAccess = new TaskWriteAccess(databaseStorage);
 		CommitReadAccess commitAccess = new CommitReadAccess(repoStorage);
-		KnownCommitWriteAccess knownCommitAccess = new KnownCommitWriteAccess(databaseStorage);
+		KnownCommitWriteAccess knownCommitAccess = new KnownCommitWriteAccess(
+			databaseStorage,
+			taskAccess
+		);
 		RepoWriteAccess repoAccess = new RepoWriteAccess(
 			databaseStorage,
-			repoStorage,
-			new RemoteUrl(configuration.getBenchmarkRepoRemoteUrl()),
-			Paths.get(configuration.getArchivesRootDir())
+			repoStorage
 		);
 		TokenWriteAccess tokenAccess = new TokenWriteAccess(
 			databaseStorage,
@@ -124,36 +128,33 @@ public class ServerMain extends Application<GlobalConfig> {
 			configuration.getHashMemory(),
 			configuration.getHashIterations()
 		);
+		ArchiveAccess archiveAccess = new ArchiveAccess(
+			Path.of(configuration.getArchivesRootDir()),
+			new RemoteUrl(configuration.getBenchmarkRepoRemoteUrl()),
+			repoStorage
+		);
 		BenchmarkWriteAccess benchmarkAccess = new BenchmarkWriteAccess(
-			databaseStorage, repoAccess
+			databaseStorage, repoAccess, taskAccess
 		);
 
 		// Data layer
 		CommitComparer commitComparer = new CommitComparer(configuration.getSignificantFactor());
 		LinearLog linearLog = new CommitAccessBasedLinearLog(commitAccess, repoAccess);
 		RepoComparison repoComparison = new TimesliceComparison(commitAccess, benchmarkAccess);
-
-		Queue queue = new Queue(knownCommitAccess, new PolicyManualFilo());
-		knownCommitAccess.getAllCommitsRequiringBenchmark()
-			.stream()
-			.map((repoIdHashPair ->
-				commitAccess.getCommit(repoIdHashPair.getFirst(), repoIdHashPair.getSecond()))
-			)
-			.forEach(queue::addCommit);
+		Queue queue = new Queue(repoAccess, taskAccess, archiveAccess, benchmarkAccess);
+		BenchRepo benchRepo = new BenchRepo(archiveAccess);
 
 		// Listener
-		Listener listener = new Listener(
-			configuration, repoAccess, commitAccess, knownCommitAccess, queue
-		);
+		Listener listener = new Listener(configuration, repoAccess, commitAccess, knownCommitAccess,
+			benchRepo);
 
 		// Dispatcher
-		Dispatcher dispatcher = new DispatcherImpl(
+		Dispatcher dispatcher = new Dispatcher(
 			queue,
-			repoAccess,
-			benchmarkAccess,
-			configuration.getDisconnectedRunnerGracePeriod()
+			Duration.ofSeconds(configuration.getDisconnectedRunnerGracePeriodSeconds())
 		);
 		RunnerAwareServerFactory.getInstance().setDispatcher(dispatcher);
+		RunnerAwareServerFactory.getInstance().setBenchRepo(benchRepo);
 
 		// API authentication
 		environment.jersey().register(

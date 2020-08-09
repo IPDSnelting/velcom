@@ -3,7 +3,7 @@ package de.aaaaaaah.velcom.backend.access.entities;
 import java.util.Objects;
 import java.util.UUID;
 
-public class RepoId {
+public class RepoId implements Comparable<RepoId> {
 
 	private final UUID id;
 
@@ -46,4 +46,11 @@ public class RepoId {
 			"id=" + id +
 			'}';
 	}
+
+	@Override
+	public int compareTo(RepoId other) {
+		if (other == null) { return 1; }
+		return this.getId().toString().compareTo(other.getId().toString());
+	}
+
 }

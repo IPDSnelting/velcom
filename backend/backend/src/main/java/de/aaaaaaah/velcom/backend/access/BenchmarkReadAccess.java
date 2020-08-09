@@ -4,20 +4,23 @@ import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static java.util.stream.Collectors.toUnmodifiableSet;
+import static org.jooq.codegen.db.Tables.MEASUREMENT;
+import static org.jooq.codegen.db.Tables.MEASUREMENT_VALUE;
 import static org.jooq.codegen.db.tables.Run.RUN;
-import static org.jooq.codegen.db.tables.RunMeasurement.RUN_MEASUREMENT;
-import static org.jooq.codegen.db.tables.RunMeasurementValue.RUN_MEASUREMENT_VALUE;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.access.entities.ErrorType;
 import de.aaaaaaah.velcom.backend.access.entities.Interpretation;
 import de.aaaaaaah.velcom.backend.access.entities.Measurement;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementError;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementName;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementValues;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
+import de.aaaaaaah.velcom.backend.access.entities.RepoSource;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
+import de.aaaaaaah.velcom.backend.access.entities.RunError;
 import de.aaaaaaah.velcom.backend.access.entities.RunId;
 import de.aaaaaaah.velcom.backend.access.entities.Unit;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
@@ -34,7 +37,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import org.jooq.DSLContext;
-import org.jooq.codegen.db.tables.records.RunMeasurementRecord;
+import org.jooq.codegen.db.tables.records.MeasurementRecord;
 import org.jooq.codegen.db.tables.records.RunRecord;
 
 /**
@@ -49,7 +52,7 @@ public class BenchmarkReadAccess {
 	protected final DatabaseStorage databaseStorage;
 	protected final RepoReadAccess repoAccess;
 
-	protected final Map<RepoId, Cache<CommitHash, Run>> runCache = new ConcurrentHashMap<>();
+	protected final Map<RepoId, Cache<CommitHash, Run>> repoRunCache = new ConcurrentHashMap<>();
 	protected final List<Run> recentRunCache = new ArrayList<>();
 	protected final Comparator<Run> recentRunCacheOrder = comparing(Run::getStartTime).reversed();
 	protected final Map<RepoId, Set<MeasurementName>> measurementCache = new ConcurrentHashMap<>();
@@ -136,12 +139,15 @@ public class BenchmarkReadAccess {
 	 * @return a map that maps each commit hash to its latest run
 	 */
 	public Map<CommitHash, Run> getLatestRuns(RepoId repoId, Collection<CommitHash> commitHashes) {
+		Objects.requireNonNull(repoId);
+		Objects.requireNonNull(commitHashes);
+
 		Map<CommitHash, Run> resultMap = new HashMap<>();
 
 		// Check cache
 		checkCachesForDeletedRepos();
 
-		final Cache<CommitHash, Run> repoRunCache = runCache.computeIfAbsent(repoId,
+		final Cache<CommitHash, Run> repoRunCache = this.repoRunCache.computeIfAbsent(repoId,
 			r -> RUN_CACHE_BUILDER.build()
 		);
 
@@ -162,10 +168,11 @@ public class BenchmarkReadAccess {
 					.fetchMap(RUN.ID);
 
 				loadRunData(db, runRecordMap).forEach(run -> {
-					resultMap.put(run.getCommitHash(), run);
+					CommitHash hash = run.getRepoSource().orElseThrow().getHash();
+					resultMap.put(hash, run);
 
 					// Insert run into cache
-					repoRunCache.put(run.getCommitHash(), run);
+					repoRunCache.put(hash, run);
 				});
 			}
 		}
@@ -190,9 +197,9 @@ public class BenchmarkReadAccess {
 
 		// Check database
 		try (DSLContext db = databaseStorage.acquireContext()) {
-			result = db.selectDistinct(RUN_MEASUREMENT.BENCHMARK, RUN_MEASUREMENT.METRIC)
-				.from(RUN_MEASUREMENT)
-				.join(RUN).on(RUN_MEASUREMENT.RUN_ID.eq(RUN.ID))
+			result = db.selectDistinct(MEASUREMENT.BENCHMARK, MEASUREMENT.METRIC)
+				.from(MEASUREMENT)
+				.join(RUN).on(MEASUREMENT.RUN_ID.eq(RUN.ID))
 				.where(RUN.REPO_ID.eq(repoId.getId().toString()))
 				.stream()
 				.map(record -> new MeasurementName(record.value1(), record.value2()))
@@ -206,14 +213,14 @@ public class BenchmarkReadAccess {
 
 	private List<Run> loadRunData(DSLContext db, Map<String, RunRecord> runRecordMap) {
 		// 1.) Load measurements from database
-		Map<String, RunMeasurementRecord> measurementRecordMap = db.selectFrom(RUN_MEASUREMENT)
-			.where(RUN_MEASUREMENT.RUN_ID.in(runRecordMap.keySet()))
-			.fetchMap(RUN_MEASUREMENT.ID);
+		Map<String, MeasurementRecord> measurementRecordMap = db.selectFrom(MEASUREMENT)
+			.where(MEASUREMENT.RUN_ID.in(runRecordMap.keySet()))
+			.fetchMap(MEASUREMENT.ID);
 
 		// 2.) Load measurement values from database
-		Map<String, List<Double>> valueMap = db.selectFrom(RUN_MEASUREMENT_VALUE)
-			.where(RUN_MEASUREMENT_VALUE.MEASUREMENT_ID.in(measurementRecordMap.keySet()))
-			.fetchGroups(RUN_MEASUREMENT_VALUE.MEASUREMENT_ID, RUN_MEASUREMENT_VALUE.VALUE);
+		Map<String, List<Double>> valueMap = db.selectFrom(MEASUREMENT_VALUE)
+			.where(MEASUREMENT_VALUE.MEASUREMENT_ID.in(measurementRecordMap.keySet()))
+			.fetchGroups(MEASUREMENT_VALUE.MEASUREMENT_ID, MEASUREMENT_VALUE.VALUE);
 
 		// 3.) Create measurement entities
 		Map<RunId, List<Measurement>> runToMeasurementMap = new HashMap<>();
@@ -225,22 +232,29 @@ public class BenchmarkReadAccess {
 			MeasurementName measurementName = new MeasurementName(
 				measurementRecord.getBenchmark(), measurementRecord.getMetric()
 			);
+			Unit unit = new Unit(
+				measurementRecord.getUnit() == null ? "" : measurementRecord.getUnit()
+			);
+			Interpretation interpretation = measurementRecord.getInterpretation() == null
+				? Interpretation.NEUTRAL
+				: Interpretation.fromTextualRepresentation(measurementRecord.getInterpretation());
 
 			final Measurement measurement;
 
 			// Read measurement content
-			if (measurementRecord.getErrorMessage() != null) {
-				var measurementError = new MeasurementError(measurementRecord.getErrorMessage());
-				measurement = new Measurement(runId, measurementName, measurementError);
+			if (measurementRecord.getError() != null) {
+				var measurementError = new MeasurementError(measurementRecord.getError());
+
+				measurement = new Measurement(
+					runId, measurementName, unit, interpretation, measurementError
+				);
 			} else {
 				List<Double> values = valueMap.get(measurementRecord.getId());
-				Unit unit = new Unit(measurementRecord.getUnit());
-				Interpretation interpretation = Interpretation.fromTextualRepresentation(
-					measurementRecord.getInterpretation()
-				);
+				var measurementValues = new MeasurementValues(values);
 
-				var measurementValues = new MeasurementValues(values, unit, interpretation);
-				measurement = new Measurement(runId, measurementName, measurementValues);
+				measurement = new Measurement(
+					runId, measurementName, unit, interpretation, measurementValues
+				);
 			}
 
 			// Insert measurement into map
@@ -255,27 +269,43 @@ public class BenchmarkReadAccess {
 		return runRecordMap.values().stream()
 			.map(runRecord -> {
 				RunId runId = new RunId(UUID.fromString(runRecord.getId()));
-				RepoId repoId = new RepoId(UUID.fromString(runRecord.getRepoId()));
-				CommitHash commitHash = new CommitHash(runRecord.getCommitHash());
 
-				if (runRecord.getErrorMessage() != null) {
+				RepoSource nullableSource = null;
+
+				if (runRecord.getRepoId() != null) {
+					nullableSource = new RepoSource(
+						new RepoId(UUID.fromString(runRecord.getRepoId())),
+						new CommitHash(runRecord.getCommitHash())
+					);
+				}
+
+				if (runRecord.getError() != null) {
+					RunError error = new RunError(
+						runRecord.getError(),
+						ErrorType.fromTextualRepresentation(runRecord.getErrorType())
+					);
+
 					return new Run(
 						runId,
-						repoId,
-						commitHash,
+						runRecord.getAuthor(),
+						runRecord.getRunnerName(),
+						runRecord.getRunnerInfo(),
 						runRecord.getStartTime().toInstant(),
 						runRecord.getStopTime().toInstant(),
-						runRecord.getErrorMessage()
+						nullableSource,
+						error
 					);
 				} else {
 					List<Measurement> measurements = runToMeasurementMap.get(runId);
 
 					return new Run(
 						runId,
-						repoId,
-						commitHash,
+						runRecord.getAuthor(),
+						runRecord.getRunnerName(),
+						runRecord.getRunnerInfo(),
 						runRecord.getStartTime().toInstant(),
 						runRecord.getStopTime().toInstant(),
+						nullableSource,
 						measurements
 					);
 				}
@@ -296,12 +326,13 @@ public class BenchmarkReadAccess {
 		// dont exist any more
 		Collection<RepoId> ids = repoAccess.getAllRepoIds();
 
-		runCache.keySet().removeIf(repoId -> !ids.contains(repoId));
+		repoRunCache.keySet().removeIf(repoId -> !ids.contains(repoId));
 		measurementCache.keySet().removeIf(repoId -> !ids.contains(repoId));
 
 		synchronized (recentRunCache) {
 			boolean recentRunRepoWasDeleted = recentRunCache.stream()
-				.anyMatch(run -> !ids.contains(run.getRepoId()));
+				.flatMap(run -> run.getRepoSource().stream())
+				.anyMatch(source -> !ids.contains(source.getRepoId()));
 
 			if (recentRunRepoWasDeleted) {
 				reloadRecentRunCache(); // recentRunCache is now invalid

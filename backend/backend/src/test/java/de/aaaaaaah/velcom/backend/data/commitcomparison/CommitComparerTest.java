@@ -8,13 +8,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import de.aaaaaaah.velcom.backend.access.entities.Commit;
-import de.aaaaaaah.velcom.backend.access.entities.Interpretation;
 import de.aaaaaaah.velcom.backend.access.entities.Measurement;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementError;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementName;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementValues;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
-import de.aaaaaaah.velcom.backend.access.entities.Unit;
 import de.aaaaaaah.velcom.backend.util.Either;
 import java.util.ArrayList;
 import java.util.List;
@@ -48,21 +46,19 @@ class CommitComparerTest {
 		when(successfulMeasurement1.getMeasurementName()).thenReturn(
 			new MeasurementName("bench1", "metric1"));
 		when(successfulMeasurement1.getContent()).thenReturn(Either.ofRight(
-			new MeasurementValues(List.of(1d, 2d, 3d), new Unit("s"),
-				Interpretation.LESS_IS_BETTER)));
+			new MeasurementValues(List.of(1d, 2d, 3d))));
 
 		successfulMeasurement2 = mock(Measurement.class);
 		when(successfulMeasurement2.getMeasurementName()).thenReturn(
 			new MeasurementName("bench1", "metric2"));
 		when(successfulMeasurement2.getContent()).thenReturn(Either.ofRight(
-			new MeasurementValues(List.of(4d, 5d, 6d, 7d, 8d), new Unit("m"),
-				Interpretation.MORE_IS_BETTER)));
+			new MeasurementValues(List.of(4d, 5d, 6d, 7d, 8d))));
 
 		successfulMeasurement3 = mock(Measurement.class);
 		when(successfulMeasurement3.getMeasurementName()).thenReturn(
 			new MeasurementName("bench2", "metric1"));
 		when(successfulMeasurement3.getContent()).thenReturn(Either.ofRight(
-			new MeasurementValues(List.of(3d, -7d), new Unit("s"), Interpretation.LESS_IS_BETTER)));
+			new MeasurementValues(List.of(3d, -7d))));
 
 		failedMeasurement2 = mock(Measurement.class);
 		when(failedMeasurement2.getMeasurementName()).thenReturn(
@@ -100,11 +96,11 @@ class CommitComparerTest {
 
 	@Test
 	void compareRunsWithMeasurements() {
-		when(firstRun.getMeasurements()).thenReturn(
-			Optional.of(
+		when(firstRun.getResult()).thenReturn(
+			Either.ofLeft(
 				List.of(successfulMeasurement1, successfulMeasurement2, failedMeasurement3)));
-		when(secondRun.getMeasurements()).thenReturn(
-			Optional.of(
+		when(secondRun.getResult()).thenReturn(
+			Either.ofLeft(
 				List.of(failedMeasurement2, successfulMeasurement1, successfulMeasurement3)));
 
 		CommitComparison comparison = comparer.compare(firstCommit, firstRun, secondCommit,

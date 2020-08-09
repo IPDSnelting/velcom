@@ -2,20 +2,23 @@ package de.aaaaaaah.velcom.backend.listener;
 
 import static java.util.stream.Collectors.toList;
 
+import com.codahale.metrics.Histogram;
 import de.aaaaaaah.velcom.backend.GlobalConfig;
-import de.aaaaaaah.velcom.backend.data.queue.Queue;
+import de.aaaaaaah.velcom.backend.ServerMain;
 import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.access.KnownCommitWriteAccess;
 import de.aaaaaaah.velcom.backend.access.RepoWriteAccess;
-import de.aaaaaaah.velcom.backend.access.entities.BenchmarkStatus;
 import de.aaaaaaah.velcom.backend.access.entities.Branch;
 import de.aaaaaaah.velcom.backend.access.entities.BranchName;
 import de.aaaaaaah.velcom.backend.access.entities.Commit;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.entities.Repo;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
+import de.aaaaaaah.velcom.backend.access.entities.RepoSource;
+import de.aaaaaaah.velcom.backend.access.entities.Task;
 import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchRepoException;
 import de.aaaaaaah.velcom.backend.access.exceptions.RepoAccessException;
+import de.aaaaaaah.velcom.backend.data.benchrepo.BenchRepo;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -38,16 +41,20 @@ import org.slf4j.LoggerFactory;
 public class Listener {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(Listener.class);
+	private static final String AUTHOR = "Listener";
 
 	private final RepoWriteAccess repoAccess;
 	private final CommitReadAccess commitAccess;
 	private final KnownCommitWriteAccess knownCommitAccess;
-	private final Queue queue;
+	private final BenchRepo benchRepo;
 
 	private final ScheduledExecutorService executor;
 	private final Lock lock = new ReentrantLock();
 
 	private final UnknownCommitFinder unknownCommitFinder;
+
+	private final Histogram updateDurations = ServerMain.getMetricRegistry()
+		.histogram("listener-update-dur");
 
 	/**
 	 * Constructs a new listener instance.
@@ -56,14 +63,15 @@ public class Listener {
 	 * @param repoAccess used to read repo data
 	 * @param commitAccess used to read commit data
 	 * @param knownCommitAccess used to mark new commits as known
-	 * @param queue the queue into which unknown commits will be inserted
+	 * @param benchRepo used to keep the bench repo up-to-date
 	 */
 	public Listener(GlobalConfig config, RepoWriteAccess repoAccess, CommitReadAccess commitAccess,
-		KnownCommitWriteAccess knownCommitAccess, Queue queue) {
+		KnownCommitWriteAccess knownCommitAccess,
+		BenchRepo benchRepo) {
 		this.repoAccess = repoAccess;
 		this.commitAccess = commitAccess;
 		this.knownCommitAccess = knownCommitAccess;
-		this.queue = queue;
+		this.benchRepo = benchRepo;
 
 		long pollInterval = config.getPollInterval();
 
@@ -74,8 +82,10 @@ public class Listener {
 	}
 
 	private void update() {
+		long start = System.currentTimeMillis();
+
 		try {
-			repoAccess.updateBenchmarkRepo();
+			benchRepo.checkForUpdates();
 		} catch (RepoAccessException e) {
 			LOGGER.warn("Could not fetch updates from benchmark repo!", e);
 		}
@@ -87,6 +97,9 @@ public class Listener {
 				LOGGER.warn("Could not fetch updates for repo: " + repo, e);
 			}
 		}
+
+		long end = System.currentTimeMillis();
+		updateDurations.update(end - start);
 	}
 
 	/**
@@ -114,12 +127,13 @@ public class Listener {
 				// and all other commits that exist so far will be marked as known
 
 				// (1): Mark all commits as known (NO_BENCHMARK_REQUIRED)
-				List<BranchName> branches = repo.getTrackedBranches()
+				List<BranchName> branches = repoAccess.getBranches(repoId)
 					.stream()
 					.map(Branch::getName)
 					.collect(toList());
 
 				Collection<CommitHash> commits;
+
 				try (Stream<Commit> commitStream = commitAccess.getCommitLog(
 					repo.getRepoId(), branches)) {
 
@@ -128,15 +142,19 @@ public class Listener {
 						.collect(Collectors.toUnmodifiableList());
 				}
 
-				knownCommitAccess.setBenchmarkStatus(repoId, commits,
-					BenchmarkStatus.NO_BENCHMARK_REQUIRED);
+				knownCommitAccess.markCommitsAsKnown(repoId, commits);
 
-				// (2): Set last commit of each tracked branch to BENCHMARK_REQUIRED
-				repo.getTrackedBranches()
+				// (2): Make last commit of each tracked branch known
+				List<CommitHash> latestHashes = repo.getTrackedBranches()
 					.stream()
 					.map(repoAccess::getLatestCommitHash)
-					.map(commitHash -> commitAccess.getCommit(repoId, commitHash))
-					.forEach(queue::addTask);
+					.collect(toList());
+
+				List<Task> tasks = latestHashes.stream()
+					.map(hash -> commitToTask(repoId, hash))
+					.collect(toList());
+
+				knownCommitAccess.markCommitsAsKnownAndInsertIntoQueue(repoId, latestHashes, tasks);
 			} else {
 				// The repo already has some known commits so we need to be smart about it
 				// Group all new commits across all tracked branches into this
@@ -163,7 +181,16 @@ public class Listener {
 
 				// (2): Add new commits to queue (in a sorted manner)
 				allNewCommits.sort(Comparator.comparing(Commit::getAuthorDate));
-				allNewCommits.forEach(queue::addTask);
+
+				List<CommitHash> hashes = allNewCommits.stream()
+					.map(Commit::getHash)
+					.collect(toList());
+
+				List<Task> tasks = allNewCommits.stream()
+					.map(this::commitToTask)
+					.collect(toList());
+
+				knownCommitAccess.markCommitsAsKnownAndInsertIntoQueue(repoId, hashes, tasks);
 			}
 		} catch (Exception e) {
 			throw new CommitSearchException(repoId, e);
@@ -173,6 +200,14 @@ public class Listener {
 			long end = System.currentTimeMillis();
 			LOGGER.debug("checkForUnknownCommits({}) took {} ms", repoId.getId(), (end - start));
 		}
+	}
+
+	private Task commitToTask(Commit commit) {
+		return commitToTask(commit.getRepoId(), commit.getHash());
+	}
+
+	private Task commitToTask(RepoId repoId, CommitHash commitHash) {
+		return new Task(AUTHOR, new RepoSource(repoId, commitHash));
 	}
 
 }

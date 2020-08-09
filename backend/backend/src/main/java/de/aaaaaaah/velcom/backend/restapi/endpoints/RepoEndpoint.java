@@ -172,8 +172,8 @@ public class RepoEndpoint {
 		user.guardRepoAccess(repoId);
 
 		benchmarkAccess.deleteAllRunsOfRepo(repoId);
+		queue.deleteAllTasksOfRepo(repoId);
 		repoAccess.deleteRepo(repoId);
-		queue.abortAllTasksOfRepo(repoId);
 	}
 
 	private static class GetReply {

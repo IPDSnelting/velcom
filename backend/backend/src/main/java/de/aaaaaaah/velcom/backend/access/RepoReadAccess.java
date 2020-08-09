@@ -2,8 +2,8 @@ package de.aaaaaaah.velcom.backend.access;
 
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
-import static org.jooq.codegen.db.Tables.REPOSITORY;
 import static org.jooq.codegen.db.Tables.TRACKED_BRANCH;
+import static org.jooq.codegen.db.tables.Repo.REPO;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -27,13 +27,12 @@ import java.util.Set;
 import java.util.UUID;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.jooq.DSLContext;
 import org.jooq.Record1;
-import org.jooq.codegen.db.tables.records.RepositoryRecord;
+import org.jooq.codegen.db.tables.records.RepoRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,20 +46,13 @@ public class RepoReadAccess {
 	protected final DatabaseStorage databaseStorage;
 	protected final RepoStorage repoStorage;
 
-	protected final String benchRepoDirName = "benchrepo";
-	protected final RemoteUrl benchRepoRemoteUrl;
-
 	protected final Cache<RepoId, Repo> repoCache = Caffeine.newBuilder()
 		.maximumSize(100)
 		.build();
 
-	public RepoReadAccess(DatabaseStorage databaseStorage, RepoStorage repoStorage,
-		RemoteUrl benchRepoUrl) {
-
+	public RepoReadAccess(DatabaseStorage databaseStorage, RepoStorage repoStorage) {
 		this.databaseStorage = databaseStorage;
 		this.repoStorage = repoStorage;
-
-		this.benchRepoRemoteUrl = benchRepoUrl;
 	}
 
 	// --- Repo Getters ---------------------------------------------------------------------------
@@ -80,12 +72,10 @@ public class RepoReadAccess {
 		}
 
 		// Check database
-		RepositoryRecord repoRecord;
+		RepoRecord repoRecord;
 
 		try (DSLContext db = databaseStorage.acquireContext()) {
-			repoRecord = db.fetchOne(REPOSITORY,
-				REPOSITORY.ID.eq(repoId.getId().toString())
-			);
+			repoRecord = db.fetchOne(REPO, REPO.ID.eq(repoId.getId().toString()));
 
 			if (repoRecord == null) {
 				throw new NoSuchRepoException(repoId);
@@ -112,7 +102,7 @@ public class RepoReadAccess {
 			.collect(toList());
 
 		try (DSLContext db = databaseStorage.acquireContext()) {
-			db.fetch(REPOSITORY, REPOSITORY.ID.notIn(cachedRepoIdList))
+			db.fetch(REPO, REPO.ID.notIn(cachedRepoIdList))
 				.stream()
 				.map(record -> loadRepoData(db, record))
 				.forEach(repoList::add);
@@ -126,7 +116,7 @@ public class RepoReadAccess {
 	 */
 	public Collection<RepoId> getAllRepoIds() {
 		try (DSLContext db = databaseStorage.acquireContext()) {
-			return db.fetch(REPOSITORY)
+			return db.fetch(REPO)
 				.stream()
 				.map(record -> new RepoId(UUID.fromString(record.getId())))
 				.collect(toList());
@@ -147,7 +137,7 @@ public class RepoReadAccess {
 				.where(TRACKED_BRANCH.REPO_ID.eq(repoId.getId().toString()))
 				.fetch()
 				.stream()
-				.map(r -> BranchName.fromName(r.getBranchName()))
+				.map(r -> BranchName.fromName(r.getName()))
 				.map(b -> new Branch(repoId, b))
 				.collect(toSet());
 		}
@@ -158,6 +148,8 @@ public class RepoReadAccess {
 	 *
 	 * @param repoId the id of the repository
 	 * @return a list of all branches
+	 *
+	 * @throws RepoAccessException if access to the local repository failed
 	 */
 	public Collection<Branch> getBranches(RepoId repoId) {
 		try (Repository localRepo = repoStorage.acquireRepository(repoId.getDirectoryName())) {
@@ -174,8 +166,6 @@ public class RepoReadAccess {
 		}
 	}
 
-	// --- Latest Commit Hash Getters -------------------------------------------------------------
-
 	/**
 	 * Gets the commit hash that the given branch is pointing to.
 	 *
@@ -188,19 +178,10 @@ public class RepoReadAccess {
 		);
 	}
 
-	/**
-	 * Gets the commit hash that the benchmark repository's HEAD is pointing to.
-	 *
-	 * @return the commit hash
-	 */
-	public CommitHash getLatestBenchmarkRepoHash() throws RepoAccessException {
-		return loadLatestCommitHash(benchRepoDirName, Constants.HEAD);
-	}
-
 	// --- Additional Getters ---------------------------------------------------------------------
 
 	/**
-	 * Gets the remote url of the specified repository
+	 * Gets the remote url of the specified repository.
 	 *
 	 * @param repoId the id of the repository
 	 * @return the remote url
@@ -215,9 +196,9 @@ public class RepoReadAccess {
 
 		// Check database
 		try (DSLContext db = databaseStorage.acquireContext()) {
-			return db.select(REPOSITORY.REMOTE_URL)
-				.from(REPOSITORY)
-				.where(REPOSITORY.ID.eq(repoId.getId().toString()))
+			return db.select(REPO.REMOTE_URL)
+				.from(REPO)
+				.where(REPO.ID.eq(repoId.getId().toString()))
 				.fetchOptional()
 				.map(Record1::value1)
 				.map(RemoteUrl::new)
@@ -227,7 +208,7 @@ public class RepoReadAccess {
 
 	// --- Additional Data Loading Methods --------------------------------------------------------
 
-	private Repo loadRepoData(DSLContext db, RepositoryRecord repoRecord)
+	private Repo loadRepoData(DSLContext db, RepoRecord repoRecord)
 		throws RepoAccessException {
 
 		RepoId repoId = new RepoId(UUID.fromString(repoRecord.getId()));
@@ -237,7 +218,7 @@ public class RepoReadAccess {
 			.where(TRACKED_BRANCH.REPO_ID.eq(repoId.getId().toString()))
 			.fetch()
 			.stream()
-			.map(r -> BranchName.fromName(r.getBranchName()))
+			.map(r -> BranchName.fromName(r.getName()))
 			.map(b -> new Branch(repoId, b))
 			.collect(toSet());
 

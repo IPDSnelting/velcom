@@ -1,5 +1,6 @@
 package de.aaaaaaah.velcom.backend.access.entities;
 
+import de.aaaaaaah.velcom.shared.protocol.serialization.Result;
 import java.util.List;
 
 /**
@@ -8,8 +9,8 @@ import java.util.List;
 public enum Interpretation {
 
 	/**
-	 * The measurement value can be better or worse compared to any other measurement value
-	 * regardless of whether it is greater than or lesser than the other measurement value.
+	 * The measurement value can be better or worse compared to any other measurement value regardless
+	 * of whether it is greater than or lesser than the other measurement value.
 	 */
 	NEUTRAL("NEUTRAL"),
 
@@ -35,7 +36,7 @@ public enum Interpretation {
 	 * @param representation the string to interpret as {@link Interpretation}
 	 * @return the resulting {@link Interpretation}, if any could be found
 	 * @throws IllegalArgumentException if the string does not correspond to any {@link
-	 *                                  Interpretation}'s textual representation
+	 *  Interpretation}'s textual representation
 	 */
 	public static Interpretation fromTextualRepresentation(String representation)
 		throws IllegalArgumentException {
@@ -48,6 +49,24 @@ public enum Interpretation {
 
 		throw new IllegalArgumentException(
 			"\"" + representation + "\" is not a valid interpretation");
+	}
+
+	/**
+	 * Converts a shared Interpretation to a backend one.
+	 *
+	 * @param interpretation the shared interpretation
+	 * @return the backend interpretation
+	 */
+	public static Interpretation fromSharedRepresentation(Result.Interpretation interpretation) {
+		switch (interpretation) {
+			case NEUTRAL:
+				return NEUTRAL;
+			case LESS_IS_BETTER:
+				return LESS_IS_BETTER;
+			case MORE_IS_BETTER:
+				return MORE_IS_BETTER;
+		}
+		throw new IllegalArgumentException("Invalid interpretation");
 	}
 
 	public String getTextualRepresentation() {

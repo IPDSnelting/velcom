@@ -1,5 +1,6 @@
 package de.aaaaaaah.velcom.backend.access.entities;
 
+import de.aaaaaaah.velcom.backend.util.Either;
 import javax.annotation.Nullable;
 import java.time.Instant;
 import java.util.Collection;
@@ -17,48 +18,84 @@ import java.util.Optional;
 public class Run {
 
 	private final RunId id;
-	private final RepoId repoId;
-	private final CommitHash commitHash;
+	private final String author;
+	private final String runnerName;
+	private final String runnerInfo;
 	private final Instant startTime;
 	private final Instant stopTime;
+	private final Optional<RepoSource> repoSource;
+	private final Either<Collection<Measurement>, RunError> result;
 
-	@Nullable
-	private final String errorMessage;
-	@Nullable
-	private final Collection<Measurement> measurements;
+	public Run(RunId runId, String author, String runnerName, String runnerInfo, Instant startTime,
+		Instant stopTime, @Nullable RepoSource repoSource, Collection<Measurement> measurements) {
 
-	public Run(RunId id, RepoId repoId, CommitHash commitHash, Instant startTime, Instant stopTime,
-	           Collection<Measurement> measurements) {
-		this(id, repoId, commitHash, startTime, stopTime, null, measurements);
+		this(runId, author, runnerName, runnerInfo, startTime, stopTime, repoSource, null,
+			measurements);
 	}
 
-	public Run(RunId id, RepoId repoId, CommitHash commitHash, Instant startTime, Instant stopTime,
-	           String errorMessage) {
-		this(id, repoId, commitHash, startTime, stopTime, errorMessage, null);
+	public Run(RunId runId, String author, String runnerName, String runnerInfo, Instant startTime,
+		Instant stopTime, Collection<Measurement> measurements) {
+
+		this(runId, author, runnerName, runnerInfo, startTime, stopTime, null, null, measurements);
 	}
 
-	private Run(RunId id, RepoId repoId, CommitHash commitHash, Instant startTime, Instant stopTime,
-	            @Nullable String errorMessage, @Nullable Collection<Measurement> measurements) {
+	public Run(RunId runId, String author, String runnerName, String runnerInfo, Instant startTime,
+		Instant stopTime, @Nullable RepoSource repoSource, RunError error) {
 
+		this(runId, author, runnerName, runnerInfo, startTime, stopTime, repoSource, error,
+			null);
+	}
+
+	public Run(RunId runId, String author, String runnerName, String runnerInfo, Instant startTime,
+		Instant stopTime, RunError error) {
+
+		this(runId, author, runnerName, runnerInfo, startTime, stopTime, null, error, null);
+	}
+
+	private Run(RunId id, String author, String runnerName, String runnerInfo,
+		Instant startTime, Instant stopTime,
+		@Nullable RepoSource repoSource, @Nullable RunError error,
+		@Nullable Collection<Measurement> measurements) {
 		this.id = Objects.requireNonNull(id);
-		this.repoId = Objects.requireNonNull(repoId);
-		this.commitHash = Objects.requireNonNull(commitHash);
+		this.author = Objects.requireNonNull(author);
+		this.runnerName = Objects.requireNonNull(runnerName);
+		this.runnerInfo = Objects.requireNonNull(runnerInfo);
 		this.startTime = Objects.requireNonNull(startTime);
 		this.stopTime = Objects.requireNonNull(stopTime);
-		this.errorMessage = errorMessage;
-		this.measurements = measurements;
+
+		this.repoSource = Optional.ofNullable(repoSource);
+
+		if (error != null && measurements != null) {
+			throw new IllegalArgumentException(
+				"either error or measurement must be present, but not both at the same time!"
+			);
+		} else if (error != null) {
+			this.result = Either.ofRight(error);
+		} else if (measurements != null) {
+			this.result = Either.ofLeft(measurements);
+		} else {
+			throw new IllegalArgumentException("both error and measurement are null");
+		}
 	}
 
 	public RunId getId() {
 		return id;
 	}
 
-	public RepoId getRepoId() {
-		return repoId;
+	public String getAuthor() {
+		return author;
 	}
 
-	public CommitHash getCommitHash() {
-		return commitHash;
+	public String getRunnerName() {
+		return runnerName;
+	}
+
+	public String getRunnerInfo() {
+		return runnerInfo;
+	}
+
+	public Optional<RepoSource> getRepoSource() {
+		return repoSource;
 	}
 
 	public Instant getStartTime() {
@@ -69,24 +106,19 @@ public class Run {
 		return stopTime;
 	}
 
-	public Optional<String> getErrorMessage() {
-		return Optional.ofNullable(errorMessage);
-	}
-
-	public Optional<Collection<Measurement>> getMeasurements() {
-		return Optional.ofNullable(measurements);
-	}
+	public Either<Collection<Measurement>, RunError> getResult() { return result; }
 
 	@Override
 	public String toString() {
 		return "Run{" +
 			"id=" + id +
-			", repoId=" + repoId +
-			", commitHash=" + commitHash +
+			", author='" + author + '\'' +
+			", runnerName='" + runnerName + '\'' +
+			", runnerInfo='" + runnerInfo + '\'' +
 			", startTime=" + startTime +
 			", stopTime=" + stopTime +
-			", errorMessage='" + errorMessage + '\'' +
-			", measurements=" + measurements +
+			", repoSource=" + repoSource +
+			", result=" + result +
 			'}';
 	}
 

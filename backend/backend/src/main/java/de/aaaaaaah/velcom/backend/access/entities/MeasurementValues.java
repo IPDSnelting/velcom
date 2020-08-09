@@ -10,6 +10,12 @@ import java.util.Objects;
  */
 public class MeasurementValues {
 
+	/**
+	 * Calculates the mean of the given values.
+	 *
+	 * @param values the values
+	 * @return the mean
+	 */
 	public static double calculateAverage(List<Double> values) {
 		double sum = 0;
 		for (Double value : values) {
@@ -20,25 +26,13 @@ public class MeasurementValues {
 	}
 
 	private final List<Double> values;
-	private final Unit unit;
-	private final Interpretation interpretation;
 
-	public MeasurementValues(List<Double> values, Unit unit, Interpretation interpretation) {
+	public MeasurementValues(List<Double> values) {
 		this.values = Collections.unmodifiableList(Objects.requireNonNull(values));
-		this.unit = Objects.requireNonNull(unit);
-		this.interpretation = Objects.requireNonNull(interpretation);
 	}
 
 	public List<Double> getValues() {
 		return values;
-	}
-
-	public Unit getUnit() {
-		return unit;
-	}
-
-	public Interpretation getInterpretation() {
-		return interpretation;
 	}
 
 	public double getAverageValue() {
@@ -54,22 +48,18 @@ public class MeasurementValues {
 			return false;
 		}
 		MeasurementValues that = (MeasurementValues) o;
-		return values.equals(that.values) &&
-			unit.equals(that.unit) &&
-			interpretation == that.interpretation;
+		return values.equals(that.values);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(values, unit, interpretation);
+		return Objects.hash(values);
 	}
 
 	@Override
 	public String toString() {
 		return "MeasurementValues{" +
 			"values=" + values +
-			", unit=" + unit +
-			", interpretation=" + interpretation +
 			'}';
 	}
 

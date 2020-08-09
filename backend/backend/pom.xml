@@ -13,16 +13,38 @@
   </parent>
 
   <properties>
-    <db.url>jdbc:sqlite:backend/data/data.db</db.url>
+    <db.url>jdbc:sqlite:${project.build.directory}/data.db</db.url>
     <dropwizard-core.version>1.3.17</dropwizard-core.version>
     <dropwizard-auth.version>1.3.17</dropwizard-auth.version>
     <jetty.version>9.4.20.v20190813</jetty.version>
     <jgit.version>5.5.1.201910021850-r</jgit.version>
     <jooq.version>3.12.3</jooq.version>
+    <flyway.version>6.5.2</flyway.version>
+    <sqlite.version>3.32.3.1</sqlite.version>
   </properties>
 
   <build>
     <plugins>
+
+      <!-- Ensure that the target directory exists so that flyway can connect to ${db.url} -->
+      <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>3.0.0</version>
+        <executions>
+          <execution>
+            <phase>initialize</phase>
+            <configuration>
+              <target>
+                <mkdir dir="${project.build.directory}"/>
+              </target>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
       <plugin>
         <artifactId>maven-shade-plugin</artifactId>
         <configuration>
@@ -66,10 +88,10 @@
       <plugin>
         <artifactId>flyway-maven-plugin</artifactId>
         <configuration>
+          <url>${db.url}</url>
           <locations>
             <location>filesystem:src/main/resources/db/migration</location>
           </locations>
-          <url>${db.url}</url>
         </configuration>
         <executions>
           <execution>
@@ -82,7 +104,7 @@
 
         <groupId>org.flywaydb</groupId>
 
-        <version>6.1.0</version>
+        <version>${flyway.version}</version>
       </plugin>
 
       <!-- JOOQ -->
@@ -259,7 +281,7 @@
     <dependency>
       <artifactId>sqlite-jdbc</artifactId>
       <groupId>org.xerial</groupId>
-      <version>3.28.0</version>
+      <version>${sqlite.version}</version>
     </dependency>
     <!-- https://mvnrepository.com/artifact/com.zaxxer/HikariCP -->
     <dependency>
@@ -271,7 +293,7 @@
     <dependency>
       <artifactId>flyway-core</artifactId>
       <groupId>org.flywaydb</groupId>
-      <version>6.1.0</version>
+      <version>${flyway.version}</version>
     </dependency>
 
     <!-- misc dependencies -->

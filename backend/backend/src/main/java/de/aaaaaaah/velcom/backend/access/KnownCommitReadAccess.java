@@ -41,31 +41,4 @@ public class KnownCommitReadAccess {
 		}
 	}
 
-	public BenchmarkStatus getBenchmarkStatus(RepoId repoId, CommitHash commitHash) {
-		try (DSLContext db = databaseStorage.acquireContext()) {
-			return db.select(KNOWN_COMMIT.STATUS).from(KNOWN_COMMIT)
-				.where(KNOWN_COMMIT.REPO_ID.eq(repoId.getId().toString()))
-				.and(KNOWN_COMMIT.HASH.eq(commitHash.getHash()))
-				.fetchOptional()
-				.map(Record1::value1)
-				.map(BenchmarkStatus::fromNumericalValue)
-				.orElse(BenchmarkStatus.BENCHMARK_REQUIRED);
-		}
-	}
-
-	public Set<Pair<RepoId, CommitHash>> getAllCommitsRequiringBenchmark() {
-		try (DSLContext db = databaseStorage.acquireContext()) {
-			return db.select(KNOWN_COMMIT.REPO_ID, KNOWN_COMMIT.HASH)
-				.from(KNOWN_COMMIT)
-				.where(KNOWN_COMMIT.STATUS.eq(BENCHMARK_REQUIRED.getNumericalValue()))
-				.or(KNOWN_COMMIT.STATUS.eq(BENCHMARK_REQUIRED_MANUAL_PRIORITY.getNumericalValue()))
-				.stream()
-				.map(r -> new Pair<>(
-					new RepoId(UUID.fromString(r.value1())),
-					new CommitHash(r.value2())
-				))
-				.collect(Collectors.toUnmodifiableSet());
-		}
-	}
-
 }

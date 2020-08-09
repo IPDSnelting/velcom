@@ -1,9 +1,9 @@
 package de.aaaaaaah.velcom.backend;
 
+import de.aaaaaaah.velcom.backend.data.benchrepo.BenchRepo;
 import de.aaaaaaah.velcom.backend.runner.Dispatcher;
-import de.aaaaaaah.velcom.backend.runner.single.protocol.ServerMasterWebsocketServlet;
-import de.aaaaaaah.velcom.runner.shared.protocol.serialization.Serializer;
-import de.aaaaaaah.velcom.runner.shared.protocol.serialization.SimpleJsonSerializer;
+import de.aaaaaaah.velcom.backend.runner.ServerMasterWebsocketServlet;
+import de.aaaaaaah.velcom.shared.protocol.serialization.Serializer;
 import io.dropwizard.jetty.HttpConnectorFactory;
 import io.dropwizard.jetty.MutableServletContextHandler;
 import io.dropwizard.jetty.RoutingHandler;
@@ -26,15 +26,16 @@ public class RunnerAwareServerFactory implements ServerFactory {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(RunnerAwareServerFactory.class);
 
-	private static RunnerAwareServerFactory instance = new RunnerAwareServerFactory();
+	private static final RunnerAwareServerFactory instance = new RunnerAwareServerFactory();
 
 	private ServerFactory underlying;
 	private GlobalConfig config;
 	private Dispatcher dispatcher;
+	private BenchRepo benchRepo;
 	private final Serializer serializer;
 
 	private RunnerAwareServerFactory() {
-		this.serializer = new SimpleJsonSerializer();
+		this.serializer = new Serializer();
 	}
 
 	@Override
@@ -59,7 +60,7 @@ public class RunnerAwareServerFactory implements ServerFactory {
 		MutableServletContextHandler handler = new MutableServletContextHandler();
 		handler.getServletContext().addServlet(
 			"Runner Websocket servlet",
-			new ServerMasterWebsocketServlet(dispatcher, serializer, config.getRunnerToken())
+			new ServerMasterWebsocketServlet(dispatcher, serializer, config.getRunnerToken(), benchRepo)
 		)
 			.addMapping("/runner-connector");
 		handlerMap.put(connector, handler);
@@ -112,6 +113,18 @@ public class RunnerAwareServerFactory implements ServerFactory {
 			throw new IllegalStateException("I already have a dispatcher!");
 		}
 		this.dispatcher = dispatcher;
+	}
+
+	/**
+	 * Sets the bench reo to use.
+	 *
+	 * @param benchRepo the bench repo
+	 */
+	public void setBenchRepo(BenchRepo benchRepo) {
+		if (this.benchRepo != null) {
+			throw new IllegalStateException("I already have a bench repo!");
+		}
+		this.benchRepo = benchRepo;
 	}
 
 	/**

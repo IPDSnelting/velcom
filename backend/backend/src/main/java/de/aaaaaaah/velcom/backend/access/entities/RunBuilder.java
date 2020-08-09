@@ -1,5 +1,6 @@
 package de.aaaaaaah.velcom.backend.access.entities;
 
+import java.util.Optional;
 import javax.annotation.Nullable;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -15,80 +16,113 @@ public class RunBuilder {
 	/**
 	 * Creates a new run builder for successful runs.
 	 *
-	 * @param repoId     the id of the repository
-	 * @param commitHash the hash of the commit
-	 * @param startTime  the start time
-	 * @param stopTime   the stop time
+	 * @param task the task that prompted the run
+	 * @param runnerName the name of the runner that performed the run
+	 * @param runnerInfo some additional info about that runner
+	 * @param startTime the point in time when the runner started the benchmark script
+	 * @param stopTime the point in time when the benchmark script exited
 	 * @return a new builder instance
 	 */
-	public static RunBuilder successful(RepoId repoId, CommitHash commitHash, Instant startTime, Instant stopTime) {
-		return new RunBuilder(repoId, commitHash, startTime, stopTime, null);
+	public static RunBuilder successful(Task task, String runnerName, String runnerInfo,
+		Instant startTime, Instant stopTime) {
+		return new RunBuilder(
+			new RunId(task.getId().getId()),
+			task.getAuthor(),
+			runnerName,
+			runnerInfo,
+			startTime,
+			stopTime,
+			task.getSource().getLeft().orElse(null),
+			null
+		);
 	}
 
 	/**
 	 * Creates a new run builder for failed runs.
 	 *
-	 * @param repoId       the id of the repository
-	 * @param commitHash   the hash of the commit
-	 * @param startTime    the start time
-	 * @param stopTime     the stop time
+	 * @param task the task that prompted the run
+	 * @param runnerName the name of the runner that performed the run
+	 * @param runnerInfo some additional info about that runner
+	 * @param startTime the start time
+	 * @param stopTime the stop time
 	 * @param errorMessage the error message
+	 * @param errorType what kind of error occured
 	 * @return a new builder instance
 	 */
-	public static RunBuilder failed(RepoId repoId, CommitHash commitHash, Instant startTime, Instant stopTime,
-	                                String errorMessage) {
-		return new RunBuilder(repoId, commitHash, startTime, stopTime, errorMessage);
+	public static RunBuilder failed(Task task, String runnerName, String runnerInfo,
+		Instant startTime, Instant stopTime, String errorMessage, ErrorType errorType) {
+		return new RunBuilder(
+			new RunId(task.getId().getId()),
+			task.getAuthor(),
+			runnerName,
+			runnerInfo,
+			startTime,
+			stopTime,
+			task.getSource().getLeft().orElse(null),
+			new RunError(errorMessage, errorType)
+		);
 	}
 
 	private final RunId runId;
-	private final RepoId repoId;
-	private final CommitHash commitHash;
+	private final String author;
+	private final String runnerName;
+	private final String runnerInfo;
 	private final Instant startTime;
 	private final Instant stopTime;
-
-	@Nullable
-	private final String errorMessage;
-
+	private final Optional<RepoSource> repoSource;
 	private final List<Measurement> measurementList;
+	private final Optional<RunError> error;
 
-	private RunBuilder(RepoId repoId, CommitHash commitHash, Instant startTime, Instant stopTime,
-	                   @Nullable String errorMessage) {
+	private RunBuilder(RunId runId, String author, String runnerName, String runnerInfo,
+		Instant startTime, Instant stopTime,
+		@Nullable RepoSource repoSource, @Nullable RunError error) {
 
-		this.runId = new RunId();
-		this.repoId = Objects.requireNonNull(repoId);
-		this.commitHash = Objects.requireNonNull(commitHash);
+		this.runId = runId;
+		this.author = Objects.requireNonNull(author);
+		this.runnerName = Objects.requireNonNull(runnerName);
+		this.runnerInfo = Objects.requireNonNull(runnerInfo);
 		this.startTime = Objects.requireNonNull(startTime);
 		this.stopTime = Objects.requireNonNull(stopTime);
-		this.errorMessage = errorMessage;
-		this.measurementList = errorMessage != null ? Collections.emptyList() : new ArrayList<>();
+		this.repoSource = Optional.ofNullable(repoSource);
+		this.error = Optional.ofNullable(error);
+		this.measurementList = error != null ? Collections.emptyList() : new ArrayList<>();
 	}
 
 	/**
 	 * Adds a new successful measurement to the run.
 	 *
-	 * @param name           the name of the measurement
+	 * @param name the name of the measurement
 	 * @param interpretation the interpretation
-	 * @param unit           the unit
-	 * @param values         the values
+	 * @param unit the unit
+	 * @param values the values
 	 */
 	public void addSuccessfulMeasurement(MeasurementName name, Interpretation interpretation,
-	                                     Unit unit, List<Double> values) {
+		Unit unit, List<Double> values) {
 
-		MeasurementValues measurementValues = new MeasurementValues(values, unit, interpretation);
-		Measurement measurement = new Measurement(this.runId, name, measurementValues);
+		MeasurementValues measurementValues = new MeasurementValues(values);
+		Measurement measurement = new Measurement(
+			this.runId, name, unit, interpretation, measurementValues
+		);
+
 		this.measurementList.add(measurement);
 	}
 
 	/**
 	 * Adds a new failed measurement to the run.
 	 *
-	 * @param name         the name of the measurement
+	 * @param name the name of the measurement
+	 * @param unit the unit of the measurement
+	 * @param interpretation how the measurement is to be interpreted
 	 * @param errorMessage the error message
 	 */
-	public void addFailedMeasurement(MeasurementName name, String errorMessage) {
+	public void addFailedMeasurement(MeasurementName name, Unit unit, Interpretation interpretation,
+		String errorMessage) {
 
 		MeasurementError measurementError = new MeasurementError(errorMessage);
-		Measurement measurement = new Measurement(this.runId, name, measurementError);
+		Measurement measurement = new Measurement(
+			this.runId, name, unit, interpretation, measurementError
+		);
+
 		this.measurementList.add(measurement);
 	}
 
@@ -96,16 +130,19 @@ public class RunBuilder {
 	 * Builds the specified run instance.
 	 *
 	 * @return the created run instance
+	 * @throws IllegalStateException if this run cannot be built yet.
 	 */
-	public Run build() {
-		if (this.errorMessage != null) {
+	public Run build() throws IllegalStateException {
+		if (this.error.isPresent()) {
 			return new Run(
 				runId,
-				repoId,
-				commitHash,
+				author,
+				runnerName,
+				runnerInfo,
 				startTime,
 				stopTime,
-				errorMessage
+				repoSource.orElse(null),
+				this.error.get()
 			);
 		} else {
 			if (this.measurementList.isEmpty()) {
@@ -114,10 +151,12 @@ public class RunBuilder {
 
 			return new Run(
 				runId,
-				repoId,
-				commitHash,
+				author,
+				runnerName,
+				runnerInfo,
 				startTime,
 				stopTime,
+				repoSource.orElse(null),
 				measurementList
 			);
 		}
@@ -127,12 +166,14 @@ public class RunBuilder {
 	public String toString() {
 		return "RunBuilder{" +
 			"runId=" + runId +
-			", repoId=" + repoId +
-			", commitHash=" + commitHash +
+			", author='" + author + '\'' +
+			", runnerName='" + runnerName + '\'' +
+			", runnerInfo='" + runnerInfo + '\'' +
 			", startTime=" + startTime +
 			", stopTime=" + stopTime +
-			", errorMessage='" + errorMessage + '\'' +
+			", repoSource=" + repoSource +
 			", measurementList=" + measurementList +
+			", error=" + error +
 			'}';
 	}
 
