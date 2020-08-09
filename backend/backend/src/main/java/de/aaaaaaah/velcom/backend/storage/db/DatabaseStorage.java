@@ -6,9 +6,11 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Objects;
 import org.flywaydb.core.Flyway;
+import org.jooq.Configuration;
 import org.jooq.DSLContext;
 import org.jooq.SQLDialect;
 import org.jooq.impl.DSL;
+import org.jooq.impl.DefaultConfiguration;
 import org.sqlite.SQLiteConfig;
 import org.sqlite.SQLiteConfig.JournalMode;
 
@@ -49,7 +51,12 @@ public class DatabaseStorage {
 		sqliteConfig.setJournalMode(JournalMode.WAL);
 
 		connection = sqliteConfig.createConnection(jdbcUrl);
-		context = DSL.using(connection, SQLDialect.SQLITE);
+
+		Configuration jooqConfig = new DefaultConfiguration()
+			.set(new ThreadSafeConnectionProvider(connection))
+			.set(SQLDialect.SQLITE);
+
+		context = DSL.using(jooqConfig);
 	}
 
 	/**
