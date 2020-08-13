@@ -22,6 +22,7 @@ import de.aaaaaaah.velcom.backend.data.repocomparison.TimesliceComparison;
 import de.aaaaaaah.velcom.backend.listener.Listener;
 import de.aaaaaaah.velcom.backend.restapi.authentication.RepoAuthenticator;
 import de.aaaaaaah.velcom.backend.restapi.authentication.RepoUser;
+import de.aaaaaaah.velcom.backend.restapi.endpoints.TestTokenEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.exception.CommitAccessExceptionMapper;
 import de.aaaaaaah.velcom.backend.restapi.exception.NoSuchCommitExceptionMapper;
 import de.aaaaaaah.velcom.backend.restapi.exception.NoSuchRepoExceptionMapper;
@@ -145,7 +146,7 @@ public class ServerMain extends Application<GlobalConfig> {
 		configureCors(environment);
 
 		// Endpoints
-		// environment.jersey().register(<endpoint>);
+		environment.jersey().register(new TestTokenEndpoint());
 	}
 
 	private void configureApi(Environment environment, TokenWriteAccess tokenAccess) {
