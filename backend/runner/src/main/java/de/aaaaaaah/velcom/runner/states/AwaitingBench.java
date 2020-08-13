@@ -3,11 +3,11 @@ package de.aaaaaaah.velcom.runner.states;
 import de.aaaaaaah.velcom.runner.Connection;
 import de.aaaaaaah.velcom.runner.TeleBackend;
 import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.RequestRunReply;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,12 +39,11 @@ public class AwaitingBench extends RunnerState {
 		LOGGER.info("{}: Receiving bench repo", teleBackend);
 
 		try {
-			File file = teleBackend.getBenchRepoTmpPath().toFile();
-			file.getParentFile().mkdirs();
-			file.createNewFile();
-			tmpFile = new FileOutputStream(file);
+			Path benchRepoTmpPath = teleBackend.getBenchRepoTmpPath();
+			Files.createDirectories(benchRepoTmpPath.getParent());
+			tmpFile = Files.newOutputStream(benchRepoTmpPath);
 		} catch (IOException e) {
-			LOGGER.warn("{}: Could not open stream to bench repo tmp file",  teleBackend, e);
+			LOGGER.warn("{}: Could not open stream to bench repo tmp file", teleBackend, e);
 		}
 	}
 
