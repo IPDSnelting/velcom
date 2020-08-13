@@ -172,14 +172,9 @@ public class ArchiveAccess {
 
 				// 2.) Create tar file
 				if (!Files.exists(benchRepoTarPath)) {
-					try {
-						OutputStream tarOut = Files.newOutputStream(benchRepoTarPath);
-						TransferUtils.tarRepo(benchRepoClonePath, tarOut);
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
+					OutputStream tarOut = Files.newOutputStream(benchRepoTarPath);
+					TransferUtils.tarRepo(benchRepoClonePath, tarOut); // tarRepo() closes tarOut
 				}
-
 			} catch (Exception e) {
 				throw new PrepareTransferException("Failed to prepare bench repo for transfer", e);
 			}
