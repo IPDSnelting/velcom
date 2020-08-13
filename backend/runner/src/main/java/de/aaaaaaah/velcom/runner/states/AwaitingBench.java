@@ -51,13 +51,8 @@ public class AwaitingBench extends RunnerState {
 	@Override
 	public RunnerState onBinary(ByteBuffer data, boolean last) {
 		if (tmpFile != null) {
-			byte[] bytes;
-			if (data.hasArray()) {
-				bytes = data.array();
-			} else {
-				bytes = new byte[data.remaining()];
-				data.get(bytes);
-			}
+			byte[] bytes = new byte[data.remaining()];
+			data.get(bytes);
 			try {
 				tmpFile.write(bytes);
 			} catch (IOException e) {
