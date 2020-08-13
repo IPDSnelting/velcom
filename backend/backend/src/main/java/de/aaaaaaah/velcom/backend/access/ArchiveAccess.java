@@ -105,6 +105,10 @@ public class ArchiveAccess {
 					// bench repo not on disk => clone it
 					LOGGER.info("Missing benchmark repo on disk! Cloning it from: {}",
 						benchRepoUrl);
+					// Delete bench repo caches just to be safe
+					FileHelper.deleteDirectoryOrFile(benchRepoClonePath);
+					FileHelper.deleteDirectoryOrFile(benchRepoTarPath);
+					// And now clone bench repo from remote url
 					repoStorage.addRepository(BENCH_REPO_DIR_NAME, benchRepoUrl.getUrl());
 				}
 
@@ -114,9 +118,9 @@ public class ArchiveAccess {
 				if (!localRemoteUrl.equals(this.benchRepoUrl.getUrl())) {
 					// remote url changed! => need to clone repo again and delete old archives
 					LOGGER.info("Remote url for benchmark repo has changed! Cloning it again...");
-					repoStorage.deleteRepository(BENCH_REPO_DIR_NAME);
 					FileHelper.deleteDirectoryOrFile(benchRepoClonePath);
 					FileHelper.deleteDirectoryOrFile(benchRepoTarPath);
+					repoStorage.deleteRepository(BENCH_REPO_DIR_NAME);
 					repoStorage.addRepository(BENCH_REPO_DIR_NAME, benchRepoUrl.getUrl());
 				}
 
@@ -131,9 +135,9 @@ public class ArchiveAccess {
 
 				if (!oldHash.equals(newHash)) {
 					// commit hash was changed => bench repo was updated => remove old archives
-					this.currentBenchRepoHash = newHash;
 					FileHelper.deleteDirectoryOrFile(benchRepoClonePath);
 					FileHelper.deleteDirectoryOrFile(benchRepoTarPath);
+					this.currentBenchRepoHash = newHash;
 				}
 
 			} catch (RepositoryAcquisitionException | AddRepositoryException | IOException |
@@ -172,8 +176,21 @@ public class ArchiveAccess {
 
 				// 2.) Create tar file
 				if (!Files.exists(benchRepoTarPath)) {
-					OutputStream tarOut = Files.newOutputStream(benchRepoTarPath);
-					TransferUtils.tarRepo(benchRepoClonePath, tarOut); // tarRepo() closes tarOut
+					try (OutputStream tarOut = Files.newOutputStream(benchRepoTarPath)) {
+						TransferUtils.tarRepo(benchRepoClonePath, tarOut); // tarRepo() also closes tarOut
+					}
+					catch (Exception e) {
+						try {
+							FileHelper.deleteDirectoryOrFile(benchRepoTarPath);
+						}
+						catch (Exception deleteException) {
+							LOGGER.error(
+								"Failed to delete bench repo tar after failed tar process", deleteException
+							);
+						}
+
+						throw e;
+					}
 				}
 			} catch (Exception e) {
 				throw new PrepareTransferException("Failed to prepare bench repo for transfer", e);
