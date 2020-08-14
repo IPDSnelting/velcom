@@ -79,7 +79,9 @@
             <v-toolbar dark color="primary">Run Result</v-toolbar>
           </v-card-title>
           <v-card-text class="mx-2">
-            {{ measurements }}
+            <measurements-display
+              :measurements="measurements"
+            ></measurements-display>
           </v-card-text>
         </v-card>
       </v-col>
@@ -99,12 +101,18 @@ import {
   RunResultSuccess,
   Measurement,
   MeasurementError,
-  Dimension
+  Dimension,
+  MeasurementSuccess
 } from '@/store/types'
 import { Prop } from 'vue-property-decorator'
 import { formatDate, formatDuration } from '@/util/TimeUtil'
+import MeasurementsDisplay from '@/components/rundetail/MeasurementsDisplay.vue'
 
-@Component
+@Component({
+  components: {
+    'measurements-display': MeasurementsDisplay
+  }
+})
 export default class RunDetail extends Vue {
   @Prop()
   private run!: Run
@@ -170,7 +178,18 @@ export default class RunDetail extends Vue {
       new RunResultSuccess([
         new MeasurementError(
           new Dimension('Benchmark', 'Metric', 'Unit', 'NEUTRAL'),
-          'This is my error!'
+          'This is my error! It is really long\nand maginificent! This should overflooow' +
+            '\noverflooow'.repeat(30)
+        ),
+        new MeasurementSuccess(
+          new Dimension('Benchmark 2', 'Successful', 'cats', 'LESS_IS_BETTER'),
+          21,
+          [20, 21, 23, 24, 17]
+        ),
+        new MeasurementSuccess(
+          new Dimension('Benchmark 2', 'Successful', 'cats', 'MORE_IS_BETTER'),
+          21,
+          [20, 21, 23, 24, 17]
         )
       ])
     )
