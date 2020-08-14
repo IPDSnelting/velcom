@@ -157,11 +157,74 @@ export class Task {
   }
 }
 
+export class MeasurementSuccess {
+  readonly dimension: Dimension
+  readonly value: number
+  readonly values: number[]
+
+  constructor(dimension: Dimension, value: number, values: number[]) {
+    this.dimension = dimension
+    this.value = value
+    this.values = values
+  }
+}
+
+export class MeasurementError {
+  readonly dimension: Dimension
+  readonly error: string
+
+  constructor(dimension: Dimension, error: string) {
+    this.dimension = dimension
+    this.error = error
+  }
+}
+
+export type Measurement = MeasurementError | MeasurementSuccess
+
 export type RunId = Flavor<string, 'run_id'>
 export type RunDescriptionSuccess = Flavor<
   'SUCCESS' | 'PARTIAL_SUCCESS' | 'FAILURE',
   'run_description_success'
 >
+
+export type RunResultScriptError = Flavor<string, 'run_result_bench_error'>
+export type RunResultVelcomError = Flavor<string, 'run_result_velcom_error'>
+export type RunResultSuccess = Flavor<Measurement[], 'run_result_success'>
+export type RunResult =
+  | RunResultScriptError
+  | RunResultVelcomError
+  | RunResultSuccess
+
+export class Run {
+  readonly id: RunId
+  readonly author: string
+  readonly runnerName: string
+  readonly runnerInfo: string
+  readonly startTime: Date
+  readonly stopTime: Date
+  readonly source: TaskSource
+  readonly result: RunResult
+
+  constructor(
+    id: RunId,
+    author: string,
+    runnerName: string,
+    runnerInfo: string,
+    startTime: Date,
+    stopTime: Date,
+    source: TaskSource,
+    result: RunResult
+  ) {
+    this.id = id
+    this.author = author
+    this.runnerName = runnerName
+    this.runnerInfo = runnerInfo
+    this.startTime = startTime
+    this.stopTime = stopTime
+    this.source = source
+    this.result = result
+  }
+}
 
 export class RunDescription {
   readonly runId: RunId
