@@ -586,9 +586,30 @@ paths:
                 properties:
                   runs:
                     type: array
-                    description: 'The most recent runs, ordered from new to old'
                     items:
-                      $ref: '#/components/schemas/RunDescription'
+                      type: object
+                      properties:
+                        run:
+                          $ref: '#/components/schemas/RunDescription'
+                        significant_dimensions:
+                          type: array
+                          description: Present only when significant runs were requested
+                          items:
+                            type: object
+                            properties:
+                              dimension:
+                                $ref: '#/components/schemas/Dimension'
+                              absolute_difference:
+                                type: number
+                                description: '`new_value` - `old_value`'
+                              proportional_difference:
+                                type: number
+                                description: '`new_value` / `old_value` (only present if `old_value` is non-zero)'
+                            required:
+                              - dimension
+                              - absolute_difference
+                      required:
+                        - run
                 required:
                   - runs
       operationId: get-recent-runs
