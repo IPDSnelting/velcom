@@ -8,7 +8,7 @@ import Queue from '../views/Queue.vue'
 import NotFound404 from '../views/NotFound404.vue'
 import CommitComparisonDisplay from '../views/CommitComparisonDisplay.vue'
 import CommitDetail from '../views/CommitDetail.vue'
-import RunDetail from '../views/RunDetail.vue'
+import RunDetail from '../components/rundetail/RunDetail.vue'
 import {
   mdiHome,
   mdiScaleBalance,
