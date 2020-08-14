@@ -25,7 +25,7 @@ export function repoFromJson(json: any): Repo {
   )
 }
 
-function dimensionFromJson(json: any): Dimension {
+export function dimensionFromJson(json: any): Dimension {
   return new Dimension(
     json.benchmark,
     json.metric,

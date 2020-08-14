@@ -174,7 +174,7 @@ export default class CommitDetail extends Vue {
   @Watch('repoId')
   @Watch('hash')
   updateYourself() {
-    vxm.commitComparisonModule
+    vxm.commitDetailComparisonModule
       .fetchCommitInfo({
         repoId: this.repoID,
         first: undefined,

@@ -25,7 +25,7 @@ export function taskFromJson(json: any): Task {
   )
 }
 
-function sourceFromJson(json: any): TaskSource {
+export function sourceFromJson(json: any): TaskSource {
   if (json.type === 'COMMIT') {
     return new CommitTaskSource(commitDescriptionFromJson(json.source))
   } else if (json.type === 'UPLOADED_TAR') {

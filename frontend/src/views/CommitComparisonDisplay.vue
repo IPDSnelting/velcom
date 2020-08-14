@@ -83,7 +83,7 @@ export default class CommitComparisonDisplay extends Vue {
   @Watch('firstHash')
   @Watch('secondHash')
   private updateThySelf() {
-    vxm.commitComparisonModule
+    vxm.commitDetailComparisonModule
       .fetchCommitInfo({
         repoId: this.repoID,
         first: this.firstHash,

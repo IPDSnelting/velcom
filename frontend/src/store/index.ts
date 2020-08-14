@@ -4,7 +4,7 @@ import Vue from 'vue'
 import { RepoStore } from './modules/repoStore'
 import { UserStore } from './modules/userStore'
 import { ColorStore } from './modules/colorStore'
-import { CommitComparisonStore } from './modules/commitComparisonStore'
+import { CommitDetailComparisonStore } from './modules/commitDetailComparisonStore'
 import { NewsStore } from './modules/newsStore'
 import { QueueStore } from './modules/queueStore'
 import { RepoComparisonStore } from './modules/repoComparisonStore'
@@ -15,7 +15,7 @@ import { MeasurementID, CommitComparison, Commit, Datapoint } from './types'
 interface RootState {
   baseUrl: string
   colorModule: ColorStore
-  commitComparisonModule: CommitComparisonStore
+  commitDetailComparisonModule: CommitDetailComparisonStore
   newsModule: NewsStore
   queueModule: QueueStore
   repoComparisonModule: PersistedRepoComparisonStore
@@ -107,7 +107,7 @@ export const store = new Vuex.Store({
   } as RootState,
   modules: {
     ...extractVuexModule(ColorStore),
-    ...extractVuexModule(CommitComparisonStore),
+    ...extractVuexModule(CommitDetailComparisonStore),
     ...extractVuexModule(NewsStore),
     ...extractVuexModule(QueueStore),
     ...extractVuexModule(RepoComparisonStore),
@@ -120,7 +120,7 @@ export const store = new Vuex.Store({
 
 export const vxm = {
   colorModule: createProxy(store, ColorStore),
-  commitComparisonModule: createProxy(store, CommitComparisonStore),
+  commitDetailComparisonModule: createProxy(store, CommitDetailComparisonStore),
   newsModule: createProxy(store, NewsStore),
   queueModule: createProxy(store, QueueStore),
   repoComparisonModule: createProxy(store, RepoComparisonStore),
