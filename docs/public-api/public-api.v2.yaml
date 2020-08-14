@@ -791,7 +791,11 @@ components:
         parents:
           type: array
           items:
-            $ref: '#/components/schemas/CommitHash'
+            $ref: '#/components/schemas/CommitDescription'
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/CommitDescription'
         author:
           type: string
         author_date:
@@ -815,6 +819,7 @@ components:
         - repo_id
         - hash
         - parents
+        - children
         - author
         - author_date
         - committer
