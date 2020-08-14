@@ -33,14 +33,18 @@
           <v-col
             cols="12"
             class="my-1 py-0"
-            v-for="(commit, index) in items"
-            :key="commit.repoID + commit.hash"
+            v-for="(task, index) in items"
+            :key="task.id"
           >
-            <commit-overview-base :commit="commit">
-              <template #body.top>
+            <component
+              :is="task.source.type"
+              :commit="task.source.commitDescription"
+              :task="task"
+            >
+              <template #body_top>
                 <v-progress-linear
                   indeterminate
-                  v-if="inProgress(commit)"
+                  v-if="inProgress(task)"
                   color="accent"
                 ></v-progress-linear>
               </template>
@@ -49,25 +53,25 @@
                   (page - 1) * itemsPerPage + index + 1
                 }}</v-list-item-avatar>
               </template>
-              <template #content v-if="getWorker(commit)">
+              <template #content v-if="getWorker(task)">
                 <v-tooltip top>
                   <template #activator="{ on }">
                     <span style="flex: 0 0;" class="pt-3">
                       <v-chip v-on="on" outlined label
-                        >Running on » {{ getWorker(commit).name }} «</v-chip
+                        >Running on » {{ getWorker(task).name }} «</v-chip
                       >
                     </span>
                   </template>
                   <span style="white-space: pre; font-family: monospace;">{{
-                    getWorker(commit).osData
+                    getWorker(task).osData
                   }}</span>
                 </v-tooltip>
               </template>
               <template #actions v-if="isAdmin">
                 <v-btn
                   icon
-                  v-if="!inProgress(commit)"
-                  @click="liftToFront(commit, $event)"
+                  v-if="!inProgress(task)"
+                  @click="liftToFront(task, $event)"
                 >
                   <v-icon class="rocket">{{ liftToFrontIcon }}</v-icon>
                 </v-btn>
@@ -77,11 +81,11 @@
                   class="mx-1"
                   v-else
                 ></v-progress-circular>
-                <v-btn icon @click="deleteCommit(commit)">
+                <v-btn icon @click="deleteTask(task)">
                   <v-icon color="red">{{ deleteIcon }}</v-icon>
                 </v-btn>
               </template>
-            </commit-overview-base>
+            </component>
           </v-col>
         </v-row>
       </template>
@@ -93,15 +97,17 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { vxm } from '@/store/index'
-import { Commit, Worker } from '@/store/types'
+import { Commit, Worker, Task } from '@/store/types'
 import { mdiRocket, mdiDelete } from '@mdi/js'
 import { formatDateUTC, formatDate } from '../../util/TimeUtil'
 import CommitOverviewBase from './CommitOverviewBase.vue'
 import { extractErrorMessage } from '../../util/ErrorUtils'
+import TarTaskOverview from './TarTaskOverview.vue'
 
 @Component({
   components: {
-    'commit-overview-base': CommitOverviewBase
+    COMMIT: CommitOverviewBase,
+    UPLOADED_TAR: TarTaskOverview
   }
 })
 export default class QueueOverview extends Vue {
@@ -110,18 +116,13 @@ export default class QueueOverview extends Vue {
   private defaultItemsPerPage: number = 20
   private liftsInProgress: { [repoId: string]: string[] } = {}
 
-  private get queueItems(): Commit[] {
+  private get queueItems(): Task[] {
     let openTasks = vxm.queueModule.openTasks.slice()
-    vxm.queueModule.workers
-      .map(it => it.currentTask)
-      .filter(it => it)
-      .sort((a, b) => a!.message!.localeCompare(b!.message!))
-      .forEach(it => openTasks.unshift(it!))
     return openTasks
   }
 
-  private inProgress(commit: Commit) {
-    return vxm.queueModule.openTasks.indexOf(commit) < 0
+  private inProgress(task: Task) {
+    return false
   }
 
   private get isAdmin() {
@@ -218,18 +219,13 @@ export default class QueueOverview extends Vue {
     }, 1)
   }
 
-  private deleteCommit(commit: Commit) {
+  private deleteTask(task: Task) {
     vxm.queueModule.dispatchDeleteOpenTask({ commit: commit })
   }
 
-  private getWorker(commit: Commit): Worker | undefined {
-    return vxm.queueModule.workers
-      .filter(it => it.currentTask)
-      .find(
-        it =>
-          it.currentTask!.repoID === commit.repoID &&
-          it.currentTask!.hash === commit.hash
-      )
+  private getWorker(task: Task): Worker | undefined {
+    // FIXME: Implement
+    return undefined
   }
 
   private cancelAllFetched() {
@@ -267,7 +263,7 @@ export default class QueueOverview extends Vue {
 
   created() {
     vxm.queueModule.fetchQueue()
-    this.timerId = setInterval(() => vxm.queueModule.fetchQueue(), 10 * 1000)
+    // this.timerId = setInterval(() => vxm.queueModule.fetchQueue(), 10 * 1000)
   }
 
   beforeDestroy() {

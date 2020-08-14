@@ -2,11 +2,11 @@
  * Formats a date.
  *
  * @export
- * @param {number} date the date as an epoch seconds timestamp
+ * @param {number | Date} date the date as an epoch seconds timestamp
  * @returns {string} the formatted date
  */
-export function formatDate(date: number): string {
-  let myDate = getDate(date)
+export function formatDate(date: number | Date): string {
+  let myDate = date instanceof Date ? date : getDate(date)
 
   let resultString: string = myDate.getFullYear() + ''
   resultString += '-' + leftZeroPad(2, myDate.getMonth() + 1)
@@ -23,11 +23,11 @@ export function formatDate(date: number): string {
  * Formats a date relative to UTC time (or appends a zone offset).
  *
  * @export
- * @param {number} date the date to format
+ * @param {number | Date} date the date to format
  * @returns {string} the formatted date
  */
-export function formatDateUTC(date: number): string {
-  let myDate = getDate(date)
+export function formatDateUTC(date: number | Date): string {
+  let myDate = date instanceof Date ? date : getDate(date)
 
   let resultString: string = myDate.getFullYear() + ''
   resultString += '-' + leftZeroPad(2, myDate.getUTCMonth() + 1)

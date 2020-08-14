@@ -133,6 +133,64 @@ export class MeasurementID {
   }
 }
 
+export class CommitDescription {
+  readonly repoId: string
+  readonly hash: string
+  readonly author: string
+  readonly authorDate: Date
+  readonly summary: string
+
+  constructor(
+    repoId: string,
+    hash: string,
+    author: string,
+    authorDate: Date,
+    summary: string
+  ) {
+    this.repoId = repoId
+    this.hash = hash
+    this.author = author
+    this.authorDate = authorDate
+    this.summary = summary
+  }
+}
+
+export class CommitTaskSource {
+  readonly type: string = 'COMMIT'
+  readonly commitDescription: CommitDescription
+
+  constructor(commitDescription: CommitDescription) {
+    this.commitDescription = commitDescription
+  }
+}
+
+export class TarTaskSource {
+  readonly type: string = 'UPLOADED_TAR'
+  readonly description: string
+  readonly repoId: string
+
+  constructor(description: string, repoId: string) {
+    this.description = description
+    this.repoId = repoId
+  }
+}
+
+export type TaskSource = TarTaskSource | CommitTaskSource
+
+export class Task {
+  readonly id: string
+  readonly author: string
+  readonly since: Date
+  readonly source: TaskSource
+
+  constructor(id: string, author: string, since: Date, source: TaskSource) {
+    this.id = id
+    this.author = author
+    this.since = since
+    this.source = source
+  }
+}
+
 export class Commit {
   repoID: string
   hash: string

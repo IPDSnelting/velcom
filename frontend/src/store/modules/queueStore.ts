@@ -1,6 +1,7 @@
 import { createModule, mutation, action } from 'vuex-class-component'
-import { Worker, Commit } from '@/store/types'
+import { Worker, Commit, Task } from '@/store/types'
 import axios from 'axios'
+import { taskFromJson } from '@/util/QueueJsonHelper'
 
 const VxModule = createModule({
   namespaced: 'queueModule',
@@ -8,7 +9,7 @@ const VxModule = createModule({
 })
 
 export class QueueStore extends VxModule {
-  private _openTasks: Commit[] = []
+  private _openTasks: Task[] = []
   private _workers: Worker[] = []
 
   /**
@@ -22,52 +23,15 @@ export class QueueStore extends VxModule {
    * @memberof QueueModuleStore
    */
   @action
-  async fetchQueue(): Promise<Commit[]> {
+  async fetchQueue(): Promise<Task[]> {
     const response = await axios.get('/queue', {
       snackbarTag: 'queue'
     })
 
-    let tasks: Commit[] = []
     let jsonTasks: any[] = response.data.tasks
-
-    jsonTasks.forEach((item: any) => {
-      tasks.push(
-        new Commit(
-          item.repo_id,
-          item.hash,
-          item.author,
-          item.author_date,
-          item.committer,
-          item.committer_date,
-          item.message,
-          item.parents
-        )
-      )
-    })
-
-    let workers: Worker[] = []
-    let jsonWorkers: any[] = response.data.workers
-
-    jsonWorkers.forEach((item: any) => {
-      let currentTask = null
-      if (item.working_on) {
-        currentTask = new Commit(
-          item.working_on.repo_id,
-          item.working_on.hash,
-          item.working_on.author,
-          item.working_on.author_date,
-          item.working_on.committer,
-          item.working_on.committer_date,
-          item.working_on.message,
-          item.working_on.parents
-        )
-      }
-
-      workers.push(new Worker(item.name, item.machine_info, currentTask))
-    })
+    let tasks: Task[] = jsonTasks.map(taskFromJson)
 
     this.setOpenTasks(tasks)
-    this.setWorkers(workers)
 
     return tasks
   }
@@ -152,11 +116,11 @@ export class QueueStore extends VxModule {
   /**
    * Sets all open tasks.
    *
-   * @param {Commit[]} payload the tasks
+   * @param {Task[]} payload the tasks
    * @memberof QueueModuleStore
    */
   @mutation
-  setOpenTasks(payload: Commit[]) {
+  setOpenTasks(payload: Task[]) {
     this._openTasks = payload.slice()
   }
 
@@ -208,10 +172,10 @@ export class QueueStore extends VxModule {
    * Returns all open tasks.
    *
    * @readonly
-   * @type {Commit[]}
+   * @type {Task[]}
    * @memberof QueueModuleStore
    */
-  get openTasks(): Commit[] {
+  get openTasks(): Task[] {
     return this._openTasks
   }
 
@@ -224,36 +188,5 @@ export class QueueStore extends VxModule {
    */
   get workers(): Worker[] {
     return this._workers
-  }
-
-  /**
-   * Returns all open tasks for a given repo id.
-   *
-   * @readonly
-   * @memberof QueueModuleStore
-   */
-  get openTasksByRepoID(): (repoId: string) => Commit[] {
-    return (repoId: string) =>
-      this.openTasks.filter(task => task.repoID === repoId)
-  }
-
-  /**
-   * Returns the open task with the given repo id and commit hash.
-   *
-   * @readonly
-   * @memberof QueueModuleStore
-   */
-  get openTask(): (repoID: string, hash: string) => Commit | null {
-    return (repoId: string, hash: string) => {
-      let tasks = this.openTasks.filter(
-        task => task.repoID === repoId && task.hash === hash
-      )
-      if (tasks.length === 0) {
-        return null
-      } else if (tasks.length > 1) {
-        throw Error('Found more than one matching task! ' + repoId + ' ' + hash)
-      }
-      return tasks[0]
-    }
   }
 }
