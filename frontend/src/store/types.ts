@@ -411,14 +411,21 @@ export class Datapoint {
 }
 
 export class Worker {
-  name: string
-  osData: string | null
-  currentTask: Commit | null
+  readonly name: string
+  readonly info: string
+  readonly workingOn: string | null
+  readonly workingSince: Date | null
 
-  constructor(name: string, osData: string, currentTask: Commit | null) {
+  constructor(
+    name: string,
+    info: string,
+    workingOn: string | null,
+    workingSince: Date | null
+  ) {
     this.name = name
-    this.osData = osData
-    this.currentTask = currentTask
+    this.info = info
+    this.workingOn = workingOn
+    this.workingSince = workingSince
   }
 }
 

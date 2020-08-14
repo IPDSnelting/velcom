@@ -3,10 +3,14 @@
     <v-tooltip top>
       <template #activator="{ on }">
         <v-btn v-on="on" icon @click="benchmark">
-          <v-icon class="rocket">{{ hasExistingBenchmark ? rebenchmarkIcon : benchmarkIcon }}</v-icon>
+          <v-icon class="rocket">{{
+            hasExistingBenchmark ? rebenchmarkIcon : benchmarkIcon
+          }}</v-icon>
         </v-btn>
       </template>
-      <span v-if="hasExistingBenchmark">Re-runs all benchmarks for this commit</span>
+      <span v-if="hasExistingBenchmark"
+        >Re-runs all benchmarks for this commit</span
+      >
       <span v-else>Runs all benchmarks for this commit</span>
     </v-tooltip>
     <v-tooltip top>
@@ -16,8 +20,7 @@
         </v-btn>
       </template>
       Benchmarks all commits upwards of this commit (this
-      <strong>one</strong> and
-      <strong>up</strong>)
+      <strong>one</strong> and <strong>up</strong>)
     </v-tooltip>
   </span>
 </template>
@@ -43,7 +46,10 @@ export default class CommitBenchmarkActions extends Vue {
   }
 
   private benchmark() {
-    vxm.queueModule.dispatchPrioritizeOpenTask(this.commit)
+    vxm.queueModule.startManualTask({
+      repoId: this.commit.repoID,
+      hash: this.commit.hash
+    })
   }
 
   private benchmarkUpwards() {

@@ -1,7 +1,7 @@
 import { createModule, mutation, action } from 'vuex-class-component'
 import { Worker, Commit, Task } from '@/store/types'
 import axios from 'axios'
-import { taskFromJson } from '@/util/QueueJsonHelper'
+import { taskFromJson, workerFromJson } from '@/util/QueueJsonHelper'
 
 const VxModule = createModule({
   namespaced: 'queueModule',
@@ -31,32 +31,38 @@ export class QueueStore extends VxModule {
     let jsonTasks: any[] = response.data.tasks
     let tasks: Task[] = jsonTasks.map(taskFromJson)
 
+    let workers: Worker[] = response.data.runners.map(workerFromJson)
+
     this.setOpenTasks(tasks)
+    this.setWorkers(workers)
 
     return tasks
+  }
+
+  @action
+  async startManualTask(payload: {
+    hash: string
+    repoId: string
+  }): Promise<void> {
+    await axios.post(`/queue/${payload.repoId}/${payload.hash}`, {
+      showSuccessSnackbar: true
+    })
+    // We do not insert the task locally as we don't know where!
+    // Fetching the queue is not needed, as this option is only called from
+    // other pages
   }
 
   /**
    * Sends a prioritize request to the server.
    *
-   * @param {Commit} payload the commit to prioritize
+   * @param {string} id the id of the task to prioritize
    * @returns {Promise<void>} a promise completing with an optional error
    * @memberof QueueModuleStore
    */
   @action
-  dispatchPrioritizeOpenTask(payload: Commit): Promise<void> {
-    return axios
-      .post(
-        '/queue',
-        {
-          repo_id: payload.repoID,
-          commit_hash: payload.hash
-        },
-        { showSuccessSnackbar: true }
-      )
-      .then(() => {
-        this.prioritizeOpenTask(payload)
-      })
+  async dispatchPrioritizeOpenTask(id: string): Promise<void> {
+    await axios.patch(`/queue/${id}`, { showSuccessSnackbar: true })
+    this.prioritizeOpenTask(id)
   }
 
   /**
@@ -67,50 +73,31 @@ export class QueueStore extends VxModule {
    * @memberof QueueModuleStore
    */
   @action
-  dispatchQueueUpwardsOf(commit: Commit): Promise<void> {
-    return axios
-      .post(
-        '/queue',
-        {
-          repo_id: commit.repoID,
-          commit_hash: commit.hash,
-          include_all_commits_after: true
-        },
-        { showSuccessSnackbar: true }
-      )
-      .then(() => {
-        this.prioritizeOpenTask(commit)
-      })
+  async dispatchQueueUpwardsOf(task: Commit): Promise<void> {
+    // FIXME: Adjust API?
+    throw new Error('Not implementable!')
   }
 
   /**
    * Sends a delete request for an open task to the server.
    *
    * @param {{
-   *     commit: Commit,
+   *     id: string,
    *     suppressRefetch?: boolean,
    *     suppressSnackbar?: boolean,
-   *   }} payload the commit to delete. If `suppressRefetch` is false or not present, it will also call "fetchQueue"
+   *   }} payload the task to delete. If `suppressRefetch` is false or not present, it will also call "fetchQueue"
    * @returns {Promise<void>} a promise completing with an optional error
    * @memberof QueueModuleStore
    */
   @action
-  dispatchDeleteOpenTask(payload: {
-    commit: Commit
+  async dispatchDeleteOpenTask(payload: {
+    id: string
     suppressRefetch?: boolean
   }): Promise<void> {
-    return axios
-      .delete('/queue', {
-        params: {
-          repo_id: payload.commit.repoID,
-          commit_hash: payload.commit.hash
-        }
-      })
-      .then(() => {
-        if (!payload.suppressRefetch) {
-          this.fetchQueue()
-        }
-      })
+    await axios.delete(`/queue/${payload.id}`)
+    if (!payload.suppressRefetch) {
+      this.fetchQueue()
+    }
   }
 
   /**
@@ -127,31 +114,29 @@ export class QueueStore extends VxModule {
   /**
    * Moves a given manual task to the top of the queue. Locally!
    *
-   * @param {Commit} payload the payload of the commit
+   * @param {string} id the id of the task
    * @memberof QueueModuleStore
    */
   @mutation
-  prioritizeOpenTask(payload: Commit) {
-    let oldIndex = this._openTasks.findIndex(task => {
-      return task.repoID === payload.repoID && task.hash === payload.hash
-    })
-    if (oldIndex !== -1) {
-      this._openTasks.splice(oldIndex, 1)
+  prioritizeOpenTask(id: string) {
+    let oldIndex = this._openTasks.findIndex(task => task.id === id)
+    if (oldIndex < 0) {
+      return
     }
-    this._openTasks.unshift(payload)
+    let task = this._openTasks[oldIndex]
+    this._openTasks.splice(oldIndex, 1)
+    this._openTasks.unshift(task)
   }
 
   /**
-   * Deletes the open task for a given commit. Locally!
+   * Deletes an open task *locally*!
    *
-   * @param {Commit} payload the commit to delete
+   * @param {string} id the id of the task
    * @memberof QueueModuleStore
    */
   @mutation
-  deleteOpenTask(payload: Commit) {
-    let target = this._openTasks.findIndex(task => {
-      return task.repoID === payload.repoID && task.hash === payload.hash
-    })
+  deleteOpenTask(id: string) {
+    let target = this._openTasks.findIndex(task => task.id === id)
     if (target !== -1) {
       this._openTasks.splice(target, 1)
     }

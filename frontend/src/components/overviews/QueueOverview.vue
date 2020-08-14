@@ -63,7 +63,7 @@
                     </span>
                   </template>
                   <span style="white-space: pre; font-family: monospace;">{{
-                    getWorker(task).osData
+                    getWorker(task).info
                   }}</span>
                 </v-tooltip>
               </template>
@@ -104,6 +104,8 @@ import CommitOverviewBase from './CommitOverviewBase.vue'
 import { extractErrorMessage } from '../../util/ErrorUtils'
 import TarTaskOverview from './TarTaskOverview.vue'
 
+// FIXME: Check if the "in-progress" view works
+
 @Component({
   components: {
     COMMIT: CommitOverviewBase,
@@ -114,7 +116,7 @@ export default class QueueOverview extends Vue {
   private timerId: number | undefined = undefined
   private itemsPerPageOptions: number[] = [10, 20, 50, 100, 200, -1]
   private defaultItemsPerPage: number = 20
-  private liftsInProgress: { [repoId: string]: string[] } = {}
+  private liftsInProgress: Set<string> = new Set()
 
   private get queueItems(): Task[] {
     let openTasks = vxm.queueModule.openTasks.slice()
@@ -129,21 +131,17 @@ export default class QueueOverview extends Vue {
     return vxm.userModule.isAdmin
   }
 
-  private liftToFront(commit: Commit, event: Event) {
-    if (!this.liftsInProgress[commit.repoID]) {
-      this.liftsInProgress[commit.repoID] = []
-    }
-    let liftsForRepo = this.liftsInProgress[commit.repoID]
-    if (liftsForRepo.indexOf(commit.hash) >= 0) {
+  private liftToFront(task: Task, event: Event) {
+    if (this.liftsInProgress.has(task.id)) {
       return
     }
-    liftsForRepo.push(commit.hash)
+    this.liftsInProgress.add(task.id)
 
     let srcElement: HTMLElement = event.srcElement as HTMLElement
 
     // No animation possible
     if (!srcElement) {
-      vxm.queueModule.dispatchPrioritizeOpenTask(commit)
+      vxm.queueModule.dispatchPrioritizeOpenTask(task.id)
       return
     }
 
@@ -152,7 +150,7 @@ export default class QueueOverview extends Vue {
 
       // found no parent :/
       if (!srcElement) {
-        vxm.queueModule.dispatchPrioritizeOpenTask(commit)
+        vxm.queueModule.dispatchPrioritizeOpenTask(task.id)
         return
       }
     }
@@ -167,7 +165,7 @@ export default class QueueOverview extends Vue {
     let clonedElement = srcElement.cloneNode(true) as HTMLElement
 
     vxm.queueModule
-      .dispatchPrioritizeOpenTask(commit)
+      .dispatchPrioritizeOpenTask(task.id)
       .then(() => {
         parent.appendChild(clonedElement)
 
@@ -179,8 +177,7 @@ export default class QueueOverview extends Vue {
       })
       .finally(() => {
         srcElement.style.rotate = '0deg'
-        let index = this.liftsInProgress[commit.repoID].indexOf(commit.hash)
-        this.liftsInProgress[commit.repoID].splice(index, 1)
+        this.liftsInProgress.delete(task.id)
       })
   }
 
@@ -220,12 +217,11 @@ export default class QueueOverview extends Vue {
   }
 
   private deleteTask(task: Task) {
-    vxm.queueModule.dispatchDeleteOpenTask({ commit: commit })
+    vxm.queueModule.dispatchDeleteOpenTask({ id: task.id })
   }
 
   private getWorker(task: Task): Worker | undefined {
-    // FIXME: Implement
-    return undefined
+    return vxm.queueModule.workers.find(it => it.workingOn === task.id)
   }
 
   private cancelAllFetched() {
@@ -237,7 +233,7 @@ export default class QueueOverview extends Vue {
     Promise.all(
       vxm.queueModule.openTasks.map(it => {
         return vxm.queueModule.dispatchDeleteOpenTask({
-          commit: it,
+          id: it.id,
           suppressRefetch: true
         })
       })

@@ -40,10 +40,10 @@ export default class WorkerOverview extends Vue {
   private dense!: boolean
 
   formatWorkerInformation(worker: Worker) {
-    if (!worker.osData) {
+    if (!worker.info) {
       return 'No data known :/'
     }
-    return worker.osData.split(/\s*,\s*/).join('\n')
+    return worker.info.split(/\s*,\s*/).join('\n')
   }
 }
 </script>
