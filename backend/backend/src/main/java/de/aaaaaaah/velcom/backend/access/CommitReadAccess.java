@@ -7,6 +7,7 @@ import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.exceptions.CommitAccessException;
 import de.aaaaaaah.velcom.backend.access.exceptions.CommitLogException;
+import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchCommitException;
 import de.aaaaaaah.velcom.backend.access.exceptions.RepoAccessException;
 import de.aaaaaaah.velcom.backend.access.filter.AuthorTimeRevFilter;
 import de.aaaaaaah.velcom.backend.storage.repo.RepoStorage;
@@ -93,7 +94,7 @@ public class CommitReadAccess {
 		if (!commits.isEmpty()) {
 			return commits.get(0);
 		} else {
-			throw new CommitAccessException(repoId, commitHash);
+			throw new NoSuchCommitException(repoId, commitHash);
 		}
 	}
 

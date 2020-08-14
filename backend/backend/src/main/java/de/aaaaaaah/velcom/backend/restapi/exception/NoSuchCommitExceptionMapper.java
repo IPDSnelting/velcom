@@ -1,6 +1,7 @@
 package de.aaaaaaah.velcom.backend.restapi.exception;
 
 import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchCommitException;
+import java.util.UUID;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.ext.ExceptionMapper;
@@ -12,6 +13,38 @@ public class NoSuchCommitExceptionMapper implements ExceptionMapper<NoSuchCommit
 
 	@Override
 	public Response toResponse(NoSuchCommitException exception) {
-		return Response.status(Status.NOT_FOUND).build();
+		return Response
+			.status(Status.NOT_FOUND)
+			.entity(new Info(
+				"could not find commit",
+				exception.getRepoId().getId(),
+				exception.getCommitHash().getHash()
+			))
+			.build();
+	}
+
+	private static class Info {
+
+		private final String message;
+		private final UUID repoId;
+		private final String hash;
+
+		public Info(String message, UUID repoId, String hash) {
+			this.message = message;
+			this.repoId = repoId;
+			this.hash = hash;
+		}
+
+		public String getMessage() {
+			return message;
+		}
+
+		public UUID getRepoId() {
+			return repoId;
+		}
+
+		public String getHash() {
+			return hash;
+		}
 	}
 }
