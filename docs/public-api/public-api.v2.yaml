@@ -964,8 +964,10 @@ components:
               type: number
               description: The average of all measured values
             values:
-              type: string
+              type: array
               description: All measured values
+              items:
+                type: number
           required:
             - dimension
             - value
