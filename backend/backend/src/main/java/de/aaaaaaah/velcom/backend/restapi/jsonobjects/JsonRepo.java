@@ -1,6 +1,5 @@
 package de.aaaaaaah.velcom.backend.restapi.jsonobjects;
 
-import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 
@@ -8,13 +7,13 @@ public class JsonRepo {
 
 	private final UUID id;
 	private final String name;
-	private final URI remoteUrl;
+	private final String remoteUrl;
 	private final List<String> untrackedBranches;
 	private final List<String> trackedBranches;
 	private final boolean hasToken;
 	private final List<JsonDimension> dimensions;
 
-	public JsonRepo(UUID id, String name, URI remoteUrl, List<String> untrackedBranches,
+	public JsonRepo(UUID id, String name, String remoteUrl, List<String> untrackedBranches,
 		List<String> trackedBranches, boolean hasToken, List<JsonDimension> dimensions) {
 
 		this.id = id;
@@ -34,7 +33,7 @@ public class JsonRepo {
 		return name;
 	}
 
-	public URI getRemoteUrl() {
+	public String getRemoteUrl() {
 		return remoteUrl;
 	}
 

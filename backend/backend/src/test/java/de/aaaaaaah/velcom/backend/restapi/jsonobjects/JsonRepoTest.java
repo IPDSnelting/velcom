@@ -2,7 +2,6 @@ package de.aaaaaaah.velcom.backend.restapi.jsonobjects;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import de.aaaaaaah.velcom.backend.access.entities.Interpretation;
-import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -14,7 +13,7 @@ class JsonRepoTest extends SerializingTest {
 		Object object = new JsonRepo(
 			UUID.fromString("24dd4fd3-5c6d-4542-a7a4-b181f37295a6"),
 			"velcom",
-			URI.create("https://vel.com/"),
+			"https://vel.com/",
 			List.of("untracked", "branches"),
 			List.of("main"),
 			false,
