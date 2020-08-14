@@ -13,6 +13,7 @@ class JsonCommitTest extends SerializingTest {
 			UUID.fromString("24dd4fd3-5c6d-4542-a7a4-b181f37295a6"),
 			"e16272feb472dc4d357cc19dd97112c036a67990",
 			List.of(),
+			List.of(),
 			"authorName",
 			1596881630,
 			"committerName",
@@ -25,6 +26,7 @@ class JsonCommitTest extends SerializingTest {
 			+ "\"repo_id\": \"24dd4fd3-5c6d-4542-a7a4-b181f37295a6\","
 			+ "\"hash\": \"e16272feb472dc4d357cc19dd97112c036a67990\","
 			+ "\"parents\": [],"
+			+ "\"children\": [],"
 			+ "\"author\": \"authorName\","
 			+ "\"author_date\": 1596881630,"
 			+ "\"committer\": \"committerName\","

@@ -23,6 +23,7 @@ import de.aaaaaaah.velcom.backend.listener.Listener;
 import de.aaaaaaah.velcom.backend.restapi.authentication.RepoAuthenticator;
 import de.aaaaaaah.velcom.backend.restapi.authentication.RepoUser;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.AllReposEndpoint;
+import de.aaaaaaah.velcom.backend.restapi.endpoints.CommitEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.TestTokenEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.exception.CommitAccessExceptionMapper;
 import de.aaaaaaah.velcom.backend.restapi.exception.NoSuchCommitExceptionMapper;
@@ -149,6 +150,7 @@ public class ServerMain extends Application<GlobalConfig> {
 		// Endpoints
 		environment.jersey().register(new TestTokenEndpoint());
 		environment.jersey().register(new AllReposEndpoint(repoAccess, benchmarkAccess, tokenAccess));
+		environment.jersey().register(new CommitEndpoint(commitAccess, benchmarkAccess));
 	}
 
 	private void configureApi(Environment environment, TokenWriteAccess tokenAccess) {

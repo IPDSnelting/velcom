@@ -2,6 +2,9 @@ package de.aaaaaaah.velcom.backend.access.entities;
 
 import java.time.Instant;
 import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class Commit {
 
@@ -58,5 +61,34 @@ public class Commit {
 
 	public String getMessage() {
 		return message;
+	}
+
+	public List<String> getSections() {
+		List<String> lines = message.lines().collect(Collectors.toList());
+
+		int firstEmptyLine = lines.indexOf("");
+		if (firstEmptyLine == -1) {
+			// No empty line, meaning there is only a summary and no other sections
+			return List.of(message);
+		}
+
+		String summary = lines.subList(0, firstEmptyLine).stream()
+			.collect(Collectors.joining("\n", "", "\n"));
+		String rest = lines.subList(firstEmptyLine + 1, lines.size()).stream()
+			.collect(Collectors.joining("\n", "", "\n"));
+		return List.of(summary, rest);
+	}
+
+	public String getSummary() {
+		return getSections().get(0);
+	}
+
+	public Optional<String> getMessageWithoutSummary() {
+		List<String> sections = getSections();
+		if (sections.size() == 2) {
+			return Optional.of(sections.get(1));
+		} else {
+			return Optional.empty();
+		}
 	}
 }
