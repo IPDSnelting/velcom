@@ -1,3 +1,5 @@
+import { Flavor } from '@/util/FlavorTypes'
+
 export class RepoBranch {
   readonly name: string
   readonly tracked: boolean
@@ -7,8 +9,10 @@ export class RepoBranch {
     this.tracked = tracked
   }
 }
+
+export type RepoId = Flavor<string, 'repo_id'>
 export class Repo {
-  readonly id: string
+  readonly id: RepoId
   name: string
   branches: RepoBranch[]
   dimensions: Dimension[]
@@ -16,7 +20,7 @@ export class Repo {
   hasToken: boolean
 
   constructor(
-    id: string,
+    id: RepoId,
     name: string,
     branches: RepoBranch[],
     dimensions: Dimension[],
@@ -34,17 +38,22 @@ export class Repo {
   }
 }
 
+export type DimensionInterpretation = Flavor<
+  'LESS_IS_BETTER' | 'MORE_IS_BETTER' | 'NEUTRAL',
+  'dimension'
+>
+
 export class Dimension {
   readonly benchmark: string
   readonly metric: string
   readonly unit: string
-  readonly interpretation: 'LESS_IS_BETTER' | 'MORE_IS_BETTER' | 'NEUTRAL'
+  readonly interpretation: DimensionInterpretation
 
   constructor(
     benchmark: string,
     metric: string,
     unit: string,
-    interpretation: 'LESS_IS_BETTER' | 'MORE_IS_BETTER' | 'NEUTRAL'
+    interpretation: DimensionInterpretation
   ) {
     this.benchmark = benchmark
     this.metric = metric
@@ -133,16 +142,18 @@ export class MeasurementID {
   }
 }
 
+export type CommitHash = Flavor<string, 'commit_hash'>
+
 export class CommitDescription {
-  readonly repoId: string
-  readonly hash: string
+  readonly repoId: RepoId
+  readonly hash: CommitHash
   readonly author: string
   readonly authorDate: Date
   readonly summary: string
 
   constructor(
-    repoId: string,
-    hash: string,
+    repoId: RepoId,
+    hash: CommitHash,
     author: string,
     authorDate: Date,
     summary: string
@@ -176,14 +187,15 @@ export class TarTaskSource {
 }
 
 export type TaskSource = TarTaskSource | CommitTaskSource
+export type TaskId = Flavor<string, 'task_id'>
 
 export class Task {
-  readonly id: string
+  readonly id: TaskId
   readonly author: string
   readonly since: Date
   readonly source: TaskSource
 
-  constructor(id: string, author: string, since: Date, source: TaskSource) {
+  constructor(id: TaskId, author: string, since: Date, source: TaskSource) {
     this.id = id
     this.author = author
     this.since = since

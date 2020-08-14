@@ -1,5 +1,5 @@
 import { createModule, mutation, action } from 'vuex-class-component'
-import { Worker, Commit, Task } from '@/store/types'
+import { Worker, Commit, Task, RepoId, CommitHash, TaskId } from '@/store/types'
 import axios from 'axios'
 import { taskFromJson, workerFromJson } from '@/util/QueueJsonHelper'
 
@@ -41,8 +41,8 @@ export class QueueStore extends VxModule {
 
   @action
   async startManualTask(payload: {
-    hash: string
-    repoId: string
+    hash: CommitHash
+    repoId: RepoId
   }): Promise<void> {
     await axios.post(`/queue/${payload.repoId}/${payload.hash}`, {
       showSuccessSnackbar: true
@@ -60,7 +60,7 @@ export class QueueStore extends VxModule {
    * @memberof QueueModuleStore
    */
   @action
-  async dispatchPrioritizeOpenTask(id: string): Promise<void> {
+  async dispatchPrioritizeOpenTask(id: TaskId): Promise<void> {
     await axios.patch(`/queue/${id}`, { showSuccessSnackbar: true })
     this.prioritizeOpenTask(id)
   }
@@ -118,7 +118,7 @@ export class QueueStore extends VxModule {
    * @memberof QueueModuleStore
    */
   @mutation
-  prioritizeOpenTask(id: string) {
+  prioritizeOpenTask(id: TaskId) {
     let oldIndex = this._openTasks.findIndex(task => task.id === id)
     if (oldIndex < 0) {
       return
@@ -135,7 +135,7 @@ export class QueueStore extends VxModule {
    * @memberof QueueModuleStore
    */
   @mutation
-  deleteOpenTask(id: string) {
+  deleteOpenTask(id: TaskId) {
     let target = this._openTasks.findIndex(task => task.id === id)
     if (target !== -1) {
       this._openTasks.splice(target, 1)

@@ -1,5 +1,5 @@
 import { createModule, mutation, action } from 'vuex-class-component'
-import { Repo, RepoBranch } from '@/store/types'
+import { Repo, RepoBranch, RepoId } from '@/store/types'
 import Vue from 'vue'
 import axios from 'axios'
 import { vxm } from '..'
@@ -89,26 +89,26 @@ export class RepoStore extends VxModule {
   /**
    * Deletes the repo with the given id.
    *
-   * @param {string} payload the repo id
+   * @param {RepoId} repoId the repo id
    * @returns a promise completing when the repo was deleted.
    * @memberof RepoStore
    */
   @action
-  async deleteRepo(payload: string): Promise<void> {
+  async deleteRepo(repoId: RepoId): Promise<void> {
     return axios
       .delete('/repo', {
         params: {
-          repo_id: payload
+          repo_id: repoId
         }
       })
       .then(response => {
-        this.removeRepo(payload)
+        this.removeRepo(repoId)
       })
   }
 
   @action
   async updateRepo(payload: {
-    id: string
+    id: RepoId
     name: string | undefined
     repoToken: string | undefined | null
     remoteUrl: string | undefined
@@ -128,9 +128,9 @@ export class RepoStore extends VxModule {
   }
 
   @mutation
-  setIndexForRepo(repoID: string) {
-    if (!this.repoIndices[repoID]) {
-      this.repoIndices[repoID] = this.currentRepoIndex++
+  setIndexForRepo(repoId: RepoId) {
+    if (!this.repoIndices[repoId]) {
+      this.repoIndices[repoId] = this.currentRepoIndex++
     }
   }
 
@@ -158,7 +158,7 @@ export class RepoStore extends VxModule {
   }
 
   @mutation
-  removeRepo(payload: string) {
+  removeRepo(payload: RepoId) {
     Vue.delete(this.repos, payload)
   }
 
@@ -166,8 +166,8 @@ export class RepoStore extends VxModule {
     return Array.from(Object.values(this.repos))
   }
 
-  get repoByID(): (payload: string) => Repo | undefined {
-    return (payload: string) => this.repos[payload]
+  get repoByID(): (payload: RepoId) => Repo | undefined {
+    return (payload: RepoId) => this.repos[payload]
   }
 
   get trackedBranchesByRepoID(): { [key: string]: string[] } {
@@ -180,11 +180,11 @@ export class RepoStore extends VxModule {
     return branchesByRepoID
   }
 
-  get repoIndex(): (repoID: string) => number {
+  get repoIndex(): (repoID: RepoId) => number {
     return (repoID: string) => this.repoIndices[repoID]
   }
 
-  get occuringBenchmarks(): (selectedRepos: string[]) => string[] {
+  get occuringBenchmarks(): (selectedRepos: RepoId[]) => string[] {
     return (selectedRepos: string[]) => {
       let benchmarks = Object.values(this.repos)
         .filter(repo => selectedRepos.includes(repo.id))
