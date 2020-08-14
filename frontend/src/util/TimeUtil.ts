@@ -1,4 +1,27 @@
 /**
+ * Formats a duration into an "hh:mm:ss" string.
+ *
+ * @export
+ * @param {Date} start the start date
+ * @param {Date} end the end date
+ */
+export function formatDuration(start: Date, end: Date) {
+  const differenceMillis = Math.abs(end.getTime() - start.getTime())
+  let remainingDifferenceSeconds = differenceMillis / 1000
+
+  const hours = Math.floor(remainingDifferenceSeconds / (60 * 60))
+  remainingDifferenceSeconds -= hours * 60 * 60
+  const minutes = Math.floor(remainingDifferenceSeconds / 60)
+  remainingDifferenceSeconds -= minutes * 60
+
+  const hoursFormatted = leftZeroPad(2, hours)
+  const minutesFormatted = leftZeroPad(2, minutes)
+  const secondsFormatted = leftZeroPad(2, remainingDifferenceSeconds)
+
+  return `${hoursFormatted}:${minutesFormatted}:${secondsFormatted}`
+}
+
+/**
  * Formats a date.
  *
  * @export

@@ -8,6 +8,7 @@ import Queue from '../views/Queue.vue'
 import NotFound404 from '../views/NotFound404.vue'
 import CommitComparisonDisplay from '../views/CommitComparisonDisplay.vue'
 import CommitDetail from '../views/CommitDetail.vue'
+import RunDetail from '../views/RunDetail.vue'
 import {
   mdiHome,
   mdiScaleBalance,
@@ -92,6 +93,15 @@ const routes = [
     meta: {
       navigable: false,
       label: 'Commit Detail'
+    }
+  },
+  {
+    path: '/run-detail',
+    name: 'run-detail',
+    component: RunDetail,
+    meta: {
+      navigable: true,
+      label: 'Run Detail'
     }
   },
   {

@@ -187,9 +187,27 @@ export type RunDescriptionSuccess = Flavor<
   'run_description_success'
 >
 
-export type RunResultScriptError = Flavor<string, 'run_result_bench_error'>
-export type RunResultVelcomError = Flavor<string, 'run_result_velcom_error'>
-export type RunResultSuccess = Flavor<Measurement[], 'run_result_success'>
+export class RunResultScriptError {
+  readonly error: string
+
+  constructor(error: string) {
+    this.error = error
+  }
+}
+export class RunResultVelcomError {
+  readonly error: string
+
+  constructor(error: string) {
+    this.error = error
+  }
+}
+export class RunResultSuccess {
+  readonly measurements: Measurement[]
+
+  constructor(measurements: Measurement[]) {
+    this.measurements = measurements
+  }
+}
 export type RunResult =
   | RunResultScriptError
   | RunResultVelcomError
