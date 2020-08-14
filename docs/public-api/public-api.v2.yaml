@@ -806,10 +806,10 @@ components:
           $ref: '#/components/schemas/Time'
         summary:
           type: string
-          description: The first line of the commit message
+          description: The first section of the commit message
         message:
           type: string
-          description: The remaining lines of the commit message
+          description: The rest of the commit message without the summary
         runs:
           type: array
           description: All the runs belonging to this commit
