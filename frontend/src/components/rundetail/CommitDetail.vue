@@ -55,6 +55,9 @@
                   </div>
                 </v-col>
               </v-row>
+              <v-row>
+                <run-timeline :runs="myRunDummy"></run-timeline>
+              </v-row>
             </v-container>
           </v-card-text>
         </v-card>
@@ -72,13 +75,15 @@ import CommitInformation from '../CommitInformation.vue'
 import InlineMinimalRepoNameDisplay from '../InlineMinimalRepoDisplay.vue'
 import CommitBenchmarkActions from '../CommitBenchmarkActions.vue'
 import { formatDateUTC, formatDate } from '@/util/TimeUtil'
+import RunTimeline from './RunTimeline.vue'
 
 // FIXME: Navigation to parent / child
 
 @Component({
   components: {
     'commit-benchmark-actions': CommitBenchmarkActions,
-    'inline-repo-display': InlineMinimalRepoNameDisplay
+    'inline-repo-display': InlineMinimalRepoNameDisplay,
+    'run-timeline': RunTimeline
   }
 })
 export default class CommitDetail extends Vue {
@@ -91,6 +96,26 @@ export default class CommitDetail extends Vue {
 
   private formatDateUTC(date: Date) {
     return formatDateUTC(date)
+  }
+
+  private get myRunDummy() {
+    return [
+      new RunDescription(
+        'ID 1',
+        new Date(new Date().getTime() - 1000 * 40 * 60),
+        'FAILURE'
+      ),
+      new RunDescription(
+        'ID 2',
+        new Date(new Date().getTime() - 1000 * 20 * 60),
+        'PARTIAL_SUCCESS'
+      ),
+      new RunDescription(
+        'ID 3',
+        new Date(new Date().getTime() - 1000 * 0 * 60),
+        'SUCCESS'
+      )
+    ]
   }
 
   created() {
