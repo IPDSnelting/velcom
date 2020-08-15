@@ -37,7 +37,7 @@
             <v-container fluid class="ma-0 pa-0">
               <v-row align="center" justify="space-around">
                 <v-col
-                  lg="2"
+                  :lg="item.alwaysAuto ? 'auto' : '2'"
                   md="auto"
                   sm="auto"
                   class="pt-0"
@@ -143,7 +143,8 @@ export default class RunDetail extends Vue {
         header: this.run.runnerName,
         icon: this.iconRunner,
         body: this.run.runnerInfo,
-        bodyClass: 'worker-description'
+        bodyClass: 'worker-description',
+        alwaysAuto: true
       }
     ]
   }
