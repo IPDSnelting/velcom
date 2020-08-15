@@ -1,8 +1,18 @@
 import { createModule, mutation, action } from 'vuex-class-component'
-import { RunId, Run, CommitHash, RepoId, Commit } from '@/store/types'
+import {
+  RunId,
+  Run,
+  CommitHash,
+  RepoId,
+  Commit,
+  RunComparison
+} from '@/store/types'
 import axios from 'axios'
-import Vue from 'vue'
-import { runFromJson, commitFromJson } from '@/util/CommitComparisonJsonHelper'
+import {
+  runFromJson,
+  commitFromJson,
+  comparisonFromJson
+} from '@/util/CommitComparisonJsonHelper'
 
 const VxModule = createModule({
   namespaced: 'commitDetailComparisonModule',
@@ -51,32 +61,35 @@ export class CommitDetailComparisonStore extends VxModule {
   }
 
   /**
-   * Fetches the commit comparison for two commits in a repo
-   * from the server.
+   * Fetches a run comparison.
    *
-   * @param {{
-   *     repoId: string
-   *     first: string
-   *     second: string | undefined
-   *   }} payload the playload to fetch
-   * @returns {Promise<CommitInfo>} a promise resolving to
-   * the comparison
+   * @param {({
+   *     first: RepoId | RunId
+   *     second: RepoId | RunId
+   *     hash1: string | undefined
+   *     hash2: string | undefined
+   *   })} payload the first, second hash1 and hash2
+   * @returns {Promise<RunComparison>} the run comparison
    * @memberof CommitDetailComparisonStore
    */
   @action
-  async fetchCommitInfo(payload: {
-    repoId: string
-    first: string | undefined
-    second: string | undefined
-  }): Promise<CommitInfo> {
-    const response = await axios.get('/commit-compare', {
-      snackbarTag: 'commit-comparison',
-      params: {
-        repo_id: payload.repoId,
-        first_commit_hash: payload.first,
-        second_commit_hash: payload.second
+  async fetchComparison(payload: {
+    first: RepoId | RunId
+    second: RepoId | RunId
+    hash1: string | undefined
+    hash2: string | undefined
+  }): Promise<RunComparison> {
+    const response = await axios.get(
+      `/compare/${payload.first}/to/${payload.second}`,
+      {
+        params: {
+          hash1: payload.hash1,
+          hash2: payload.hash2,
+          all_values: true
+        }
       }
-    })
-    return commitInfoFromJson(response.data)
+    )
+
+    return comparisonFromJson(response.data)
   }
 }

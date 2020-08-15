@@ -6,10 +6,8 @@ import RepoDetailFrame from '../views/RepoDetailFrame.vue'
 import RepoDetail from '../views/RepoDetail.vue'
 import Queue from '../views/Queue.vue'
 import NotFound404 from '../views/NotFound404.vue'
-import CommitComparisonDisplay from '../views/CommitComparisonDisplay.vue'
 import RunCommitDetailView from '../views/RunCommitDetailView.vue'
-import RunDetail from '../components/rundetail/RunDetail.vue'
-import NewCommitDetail from '../components/rundetail/CommitDetail.vue'
+import RunComparison from '../views/RunComparison.vue'
 import {
   mdiHome,
   mdiScaleBalance,
@@ -79,12 +77,12 @@ const routes = [
     }
   },
   {
-    path: '/commit-comparison/:repoID/:hashOne/:hashTwo',
-    name: 'commit-comparison',
-    component: CommitComparisonDisplay,
+    path: '/compare/:first/to/:second',
+    name: 'run-comparison',
+    component: RunComparison,
     meta: {
       navigable: false,
-      label: 'Commit Comparison'
+      label: 'Run Comparison'
     }
   },
   {

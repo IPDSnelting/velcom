@@ -298,3 +298,15 @@ export class RunCompareDifference {
     this.difference = difference
   }
 }
+
+export class RunComparison {
+  readonly run1: Run
+  readonly run2: Run
+  readonly differences: RunCompareDifference[]
+
+  constructor(run1: Run, run2: Run, differences: RunCompareDifference[]) {
+    this.run1 = run1
+    this.run2 = run2
+    this.differences = differences
+  }
+}

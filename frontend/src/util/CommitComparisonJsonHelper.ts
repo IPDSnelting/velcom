@@ -8,7 +8,10 @@ import {
   MeasurementSuccess,
   Measurement,
   Commit,
-  RunDescription
+  RunDescription,
+  RunComparison,
+  RunCompareDifference,
+  Dimension
 } from '@/store/types'
 import { sourceFromJson } from '@/util/QueueJsonHelper'
 import { dimensionFromJson } from '@/util/RepoJsonHelper'
@@ -67,5 +70,21 @@ export function commitFromJson(json: any): Commit {
     json.summary,
     json.runs.map(runDescriptionFromJson),
     json.parents
+  )
+}
+
+function differenceFromJson(json: any): RunCompareDifference {
+  // FIXME: Proper unit / interpretation
+  return new RunCompareDifference(
+    new Dimension(json.benchmark, json.metric, 'cats', 'NEUTRAL'),
+    json.difference
+  )
+}
+
+export function comparisonFromJson(json: any): RunComparison {
+  return new RunComparison(
+    runFromJson(json.run1),
+    runFromJson(json.run2),
+    json.differences.map(differenceFromJson)
   )
 }
