@@ -23,6 +23,7 @@ Vue.use(VueRouter)
 
 const routes = [
   {
+    // Redirect / to /home
     path: '/',
     redirect: '/home',
     meta: {
@@ -31,7 +32,6 @@ const routes = [
     }
   },
   {
-    // Redirect / to /home
     path: '/home',
     name: 'home',
     component: Home,

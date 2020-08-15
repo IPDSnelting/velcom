@@ -1,6 +1,30 @@
 <template>
   <v-container fluid class="pa-0 ma-0">
     <v-row no-gutters>
+      <v-col v-if="error !== undefined">
+        <v-card>
+          <v-card-title>
+            <v-toolbar dark :color="runColor">{{ errorType }} Error</v-toolbar>
+          </v-card-title>
+          <v-card-text class="mx-2 error-text">{{ error }}</v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+    <v-row no-gutters>
+      <v-col v-if="measurements !== undefined">
+        <v-card>
+          <v-card-title>
+            <v-toolbar dark color="primary">Run Result</v-toolbar>
+          </v-card-title>
+          <v-card-text class="mx-2">
+            <measurements-display
+              :measurements="measurements"
+            ></measurements-display>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+    <v-row no-gutters class="mt-3">
       <v-col>
         <v-card>
           <v-card-title>
@@ -31,30 +55,6 @@
                 </v-col>
               </v-row>
             </v-container>
-          </v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
-    <v-row dense class="mt-3">
-      <v-col v-if="error !== undefined">
-        <v-card>
-          <v-card-title>
-            <v-toolbar dark :color="runColor">{{ errorType }} Error</v-toolbar>
-          </v-card-title>
-          <v-card-text class="mx-2 error-text">{{ error }}</v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
-    <v-row no-gutters>
-      <v-col v-if="measurements !== undefined">
-        <v-card>
-          <v-card-title>
-            <v-toolbar dark color="primary">Run Result</v-toolbar>
-          </v-card-title>
-          <v-card-text class="mx-2">
-            <measurements-display
-              :measurements="measurements"
-            ></measurements-display>
           </v-card-text>
         </v-card>
       </v-col>
@@ -172,43 +172,6 @@ export default class RunDetail extends Vue {
       return this.run.result.measurements
     }
     return undefined
-  }
-
-  created() {
-    // this.run = new Run(
-    //   'my id',
-    //   'I Al Istannen',
-    //   'My runner',
-    //   'Cool\n20 cores',
-    //   new Date(new Date().getTime() - 20 * 60 * 1000),
-    //   new Date(),
-    //   new CommitTaskSource(
-    //     new CommitDescription(
-    //       'my repo id',
-    //       'my commiut hash',
-    //       'I Al Istannen',
-    //       new Date(new Date().getTime() - 20 * 60 * 1000),
-    //       'The commit summary!'
-    //     )
-    //   ),
-    //   new RunResultSuccess([
-    //     new MeasurementError(
-    //       new Dimension('Benchmark', 'Metric', 'Unit', 'NEUTRAL'),
-    //       'This is my error! It is really long\nand maginificent! This should overflooow' +
-    //         '\noverflooow'.repeat(30)
-    //     ),
-    //     new MeasurementSuccess(
-    //       new Dimension('Benchmark 2', 'Successful', 'cats', 'LESS_IS_BETTER'),
-    //       21,
-    //       [20, 21, 23, 24, 17]
-    //     ),
-    //     new MeasurementSuccess(
-    //       new Dimension('Benchmark 2', 'Successful', 'cats', 'MORE_IS_BETTER'),
-    //       21,
-    //       [20, 21, 23, 24, 17]
-    //     )
-    //   ])
-    // )
   }
 
   // ICONS

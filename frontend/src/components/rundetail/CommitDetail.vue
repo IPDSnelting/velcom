@@ -68,10 +68,9 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 import { Commit, RunDescription } from '@/store/types'
-import CommitInformation from '../CommitInformation.vue'
+import { formatDateUTC, formatDate } from '@/util/TimeUtil'
 import InlineMinimalRepoNameDisplay from '../InlineMinimalRepoDisplay.vue'
 import CommitBenchmarkActions from '../CommitBenchmarkActions.vue'
-import { formatDateUTC, formatDate } from '@/util/TimeUtil'
 import RunTimeline from './RunTimeline.vue'
 
 // FIXME: Navigation to parent / child
@@ -93,41 +92,6 @@ export default class CommitDetail extends Vue {
 
   private formatDateUTC(date: Date) {
     return formatDateUTC(date)
-  }
-
-  private get myRunDummy() {
-    return [
-      new RunDescription(
-        'ID 1',
-        new Date(new Date().getTime() - 1000 * 40 * 60),
-        'FAILURE'
-      ),
-      new RunDescription(
-        'ID 2',
-        new Date(new Date().getTime() - 1000 * 20 * 60),
-        'PARTIAL_SUCCESS'
-      ),
-      new RunDescription(
-        'ID 3',
-        new Date(new Date().getTime() - 1000 * 0 * 60),
-        'SUCCESS'
-      )
-    ]
-  }
-
-  created() {
-    // this.commit = new Commit(
-    //   'Repo id',
-    //   'commit hash',
-    //   'I Al Istannen',
-    //   new Date(),
-    //   'I Al Istannen',
-    //   new Date(),
-    //   'This is my cool message\nWith a newline!',
-    //   'This is my summary. It is long but not too long!!!',
-    //   [new RunDescription('this is a run id', new Date(), 'SUCCESS')],
-    //   ['parent hash one', 'Parent hash two']
-    // )
   }
 }
 </script>
