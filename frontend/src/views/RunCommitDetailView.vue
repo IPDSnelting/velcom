@@ -5,6 +5,11 @@
         <v-skeleton-loader type="card"></v-skeleton-loader>
       </v-col>
     </v-row>
+    <v-row v-if="commit" no-gutters>
+      <v-col>
+        <commit-detail :commit="commit"></commit-detail>
+      </v-col>
+    </v-row>
     <v-row v-if="run" no-gutters>
       <v-col>
         <run-detail :run="run"></run-detail>
@@ -12,7 +17,6 @@
     </v-row>
     <v-row v-if="commit" no-gutters>
       <v-col>
-        <commit-detail :commit="commit"></commit-detail>
         <run-timeline :runs="commit.runs"></run-timeline>
       </v-col>
     </v-row>
