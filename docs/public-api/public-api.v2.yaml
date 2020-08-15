@@ -220,18 +220,9 @@ paths:
                     $ref: '#/components/schemas/Run'
                   differences:
                     type: array
-                    description: A list of differences between the runs
+                    description: A list of differences between the runs (`run2` - `run1`)
                     items:
-                      type: object
-                      properties:
-                        dimension:
-                          $ref: '#/components/schemas/Dimension'
-                        difference:
-                          type: number
-                          description: The difference from run1 to run2
-                      required:
-                        - dimension
-                        - difference
+                      $ref: '#/components/schemas/DimensionDifference'
                 required:
                   - run1
                   - run2
@@ -592,19 +583,7 @@ paths:
                           type: array
                           description: Present only when significant runs were requested
                           items:
-                            type: object
-                            properties:
-                              dimension:
-                                $ref: '#/components/schemas/Dimension'
-                              absolute_difference:
-                                type: number
-                                description: '`new_value` - `old_value`'
-                              proportional_difference:
-                                type: number
-                                description: '`new_value` / `old_value` (only present if `old_value` is non-zero)'
-                            required:
-                              - dimension
-                              - absolute_difference
+                            $ref: '#/components/schemas/DimensionDifference'
                       required:
                         - run
                 required:
@@ -1057,6 +1036,26 @@ components:
         - metric
         - unit
         - interpretation
+    DimensionDifference:
+      title: DimensionDifference
+      type: object
+      description: The difference between an old and a new value in the same dimension
+      properties:
+        dimension:
+          $ref: '#/components/schemas/Dimension'
+        absdiff:
+          type: number
+          description: new value - old value
+        reldiff:
+          type: number
+          description: new value / old value (only present if the old_value is non-zero)
+        stddev:
+          type: number
+          description: The standard deviation of the run the new value is from
+      required:
+        - dimension
+        - absdiff
+        - stddev
   securitySchemes:
     admin_credentials:
       type: http
