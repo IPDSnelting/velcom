@@ -8,51 +8,24 @@
               Run information
             </v-toolbar>
           </v-card-title>
-          <v-card-text>
+          <v-card-text class="py-0">
             <v-container fluid class="ma-0 pa-0">
               <v-row align="center" justify="space-around">
-                <v-col cols="2" class="pt-0">
-                  <v-card>
-                    <v-card-title>Trigger </v-card-title>
+                <v-col
+                  lg="2"
+                  md="auto"
+                  sm="auto"
+                  class="pt-0"
+                  v-for="item in runInfoItems"
+                  :key="item.header"
+                >
+                  <v-card outlined>
+                    <v-card-title class="pb-1">
+                      <v-icon left dense>{{ item.icon }}</v-icon>
+                      {{ item.header }}
+                    </v-card-title>
                     <v-card-text>
-                      <span class="text-capitalize">{{
-                        run.source.type.toLocaleLowerCase()
-                      }}</span>
-                      by {{ run.author }}
-                    </v-card-text>
-                  </v-card>
-                </v-col>
-                <v-col cols="2" class="pt-0">
-                  <v-card>
-                    <v-card-title>Started</v-card-title>
-                    <v-card-text>
-                      {{ formatDate(run.startTime) }}
-                    </v-card-text>
-                  </v-card>
-                </v-col>
-                <v-col cols="2" class="pt-0">
-                  <v-card>
-                    <v-card-title>Finished</v-card-title>
-                    <v-card-text>
-                      {{ formatDate(run.stopTime) }}
-                    </v-card-text>
-                  </v-card>
-                </v-col>
-                <v-col cols="2" class="pt-0">
-                  <v-card>
-                    <v-card-title>Duration</v-card-title>
-                    <v-card-text>
-                      {{ formatDuration(run.startTime, run.stopTime) }}
-                    </v-card-text>
-                  </v-card>
-                </v-col>
-                <v-col cols="2" class="pt-0">
-                  <v-card>
-                    <v-card-title>{{ run.runnerName }}</v-card-title>
-                    <v-card-text>
-                      <span class="worker-description">{{
-                        run.runnerInfo
-                      }}</span>
+                      <span :class="item.bodyClass">{{ item.body }}</span>
                     </v-card-text>
                   </v-card>
                 </v-col>
@@ -107,6 +80,16 @@ import {
 import { Prop } from 'vue-property-decorator'
 import { formatDate, formatDuration } from '@/util/TimeUtil'
 import MeasurementsDisplay from '@/components/rundetail/MeasurementsDisplay.vue'
+import {
+  mdiFlash,
+  mdiRunFast,
+  mdiTimerSandEmpty,
+  mdiCameraTimer,
+  mdiAlarmCheck,
+  mdiClockStart,
+  mdiClockFast,
+  mdiRobot
+} from '@mdi/js'
 
 @Component({
   components: {
@@ -123,6 +106,39 @@ export default class RunDetail extends Vue {
 
   private formatDuration(start: Date, end: Date) {
     return formatDuration(start, end)
+  }
+
+  private get runInfoItems() {
+    return [
+      {
+        header: 'Trigger',
+        icon: this.iconTrigger,
+        body: `${this.run.source.type.toLocaleLowerCase()} by ${
+          this.run.author
+        }`
+      },
+      {
+        header: 'Started',
+        icon: this.iconStarted,
+        body: this.formatDate(this.run.startTime)
+      },
+      {
+        header: 'Finished',
+        icon: this.iconFinished,
+        body: this.formatDate(this.run.stopTime)
+      },
+      {
+        header: 'Duration',
+        icon: this.iconDuration,
+        body: this.formatDuration(this.run.startTime, this.run.stopTime)
+      },
+      {
+        header: this.run.runnerName,
+        icon: this.iconRunner,
+        body: this.run.runnerInfo,
+        bodyClass: 'worker-description'
+      }
+    ]
   }
 
   private get runColor() {
@@ -194,6 +210,13 @@ export default class RunDetail extends Vue {
       ])
     )
   }
+
+  // ICONS
+  private iconTrigger = mdiFlash
+  private iconStarted = mdiClockFast
+  private iconFinished = mdiAlarmCheck
+  private iconDuration = mdiCameraTimer
+  private iconRunner = mdiRobot
 }
 </script>
 

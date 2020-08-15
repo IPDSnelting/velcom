@@ -21,7 +21,7 @@
       </v-card>
     </v-dialog>
 
-    <v-data-table :headers="headers" :items="items" :items-per-page="5">
+    <v-data-table multi-sort :headers="headers" :items="items" :items-per-page="5">
       <template #[`item.value`]="{ item, value }">
         <span v-if="item.error === undefined">{{ value }}</span>
         <v-btn
@@ -253,6 +253,7 @@ export default class MeasurementsDisplay extends Vue {
   color: var(--v-error-base);
   font-family: monospace;
   white-space: pre-line;
+  overflow: hidden;
 }
 
 .error-message-tooltip {
