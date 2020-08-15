@@ -12,12 +12,20 @@ class JsonRunDescriptionTest extends SerializingTest {
 		Object object = new JsonRunDescription(
 			UUID.fromString("24dd4fd3-5c6d-4542-a7a4-b181f37295a6"),
 			1596881630,
-			JsonSuccess.SUCCESS
+			JsonSuccess.SUCCESS,
+			JsonSource.fromUploadedTar(
+				"descriptionText",
+				null
+			)
 		);
 		String json = "{"
 			+ "\"id\": \"24dd4fd3-5c6d-4542-a7a4-b181f37295a6\","
 			+ "\"start_time\": 1596881630,"
-			+ "\"success\": \"SUCCESS\""
+			+ "\"success\": \"SUCCESS\","
+			+ "\"source\": {"
+			+ "    \"type\": \"UPLOADED_TAR\","
+			+ "    \"source\": {\"description\": \"descriptionText\"}"
+			+ "}"
 			+ "}";
 		serializedEquals(object, json);
 	}

@@ -7,11 +7,13 @@ public class JsonRunDescription {
 	private final UUID id;
 	private final long startTime;
 	private final JsonSuccess success;
+	private final JsonSource source;
 
-	public JsonRunDescription(UUID id, long startTime, JsonSuccess success) {
+	public JsonRunDescription(UUID id, long startTime, JsonSuccess success, JsonSource source) {
 		this.id = id;
 		this.startTime = startTime;
 		this.success = success;
+		this.source = source;
 	}
 
 	public UUID getId() {
@@ -24,6 +26,10 @@ public class JsonRunDescription {
 
 	public JsonSuccess getSuccess() {
 		return success;
+	}
+
+	public JsonSource getSource() {
+		return source;
 	}
 
 	public enum JsonSuccess {

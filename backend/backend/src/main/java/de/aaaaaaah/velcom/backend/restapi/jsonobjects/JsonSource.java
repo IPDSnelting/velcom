@@ -43,7 +43,7 @@ public class JsonSource {
 		return null;
 	}
 
-	private static enum JsonSourceType {
+	private enum JsonSourceType {
 		COMMIT, UPLOADED_TAR
 	}
 
