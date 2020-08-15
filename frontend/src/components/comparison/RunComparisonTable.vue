@@ -123,18 +123,37 @@ export default class RunComparisonTable extends Vue {
   }
 
   private get items(): TableItem[] {
-    return this.differences.map(
-      it =>
-        new TableItem(
-          it.dimension.benchmark,
-          it.dimension.metric,
-          it.dimension.unit,
-          it.dimension.interpretation,
-          this.getValue(this.first, it.dimension),
-          it.difference,
-          this.getValue(this.second, it.dimension)
-        )
+    return this.getDimensionsForRun(this.first)
+      .concat(this.getDimensionsForRun(this.second))
+      .map(
+        dimension =>
+          new TableItem(
+            dimension.benchmark,
+            dimension.metric,
+            dimension.unit,
+            dimension.interpretation,
+            this.getValue(this.first, dimension),
+            this.getDifference(dimension),
+            this.getValue(this.second, dimension)
+          )
+      )
+  }
+
+  private getDimensionsForRun(run: Run): Dimension[] {
+    if (run.result instanceof RunResultSuccess) {
+      return run.result.measurements.map(it => it.dimension)
+    }
+    return []
+  }
+
+  private getDifference(dimension: Dimension): number | undefined {
+    const difference = this.differences.find(it =>
+      it.dimension.equals(dimension)
     )
+    if (difference) {
+      return difference.difference
+    }
+    return undefined
   }
 
   private getValue(run: Run, dimension: Dimension): number | undefined {
