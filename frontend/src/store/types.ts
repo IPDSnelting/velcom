@@ -60,6 +60,17 @@ export class Dimension {
     this.unit = unit
     this.interpretation = interpretation
   }
+
+  /**
+   * Checks if the dimension equals another. Only checks the benchmark and metric.
+   *
+   * @param {Dimension} other the other dimension
+   * @returns true if the two have the same benchmark and metric
+   * @memberof Dimension
+   */
+  equals(other: Dimension) {
+    return other.benchmark === this.benchmark && other.metric === this.metric
+  }
 }
 
 export type CommitHash = Flavor<string, 'commit_hash'>
@@ -275,5 +286,15 @@ export class Worker {
     this.info = info
     this.workingOn = workingOn
     this.workingSince = workingSince
+  }
+}
+
+export class RunCompareDifference {
+  readonly dimension: Dimension
+  readonly difference: number
+
+  constructor(dimension: Dimension, difference: number) {
+    this.dimension = dimension
+    this.difference = difference
   }
 }
