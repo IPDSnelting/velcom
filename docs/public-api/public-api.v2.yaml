@@ -585,6 +585,7 @@ paths:
                 properties:
                   runs:
                     type: array
+                    description: 'The most recent runs, ordered from new to old'
                     items:
                       type: object
                       properties:
