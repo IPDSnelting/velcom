@@ -151,61 +151,6 @@ export default class RunComparisonTable extends Vue {
     }
     return undefined
   }
-
-  mounted() {
-    this.first = new Run(
-      'f272097e-0763-464d-a09c-ce9a957a21ff',
-      'I Al Istannen',
-      'Runner name',
-      'Runner info',
-      new Date(new Date().getTime() - 1000 * 10 * 60),
-      new Date(),
-      new TarTaskSource('hello', 'you repo'),
-      new RunResultSuccess([
-        new MeasurementSuccess(
-          new Dimension('benchmark', 'metric', 'cats', 'NEUTRAL'),
-          20,
-          [1, 2, 3, 4]
-        ),
-        new MeasurementSuccess(
-          new Dimension('benchmark', 'metric2', 'dogs', 'NEUTRAL'),
-          21,
-          [1, 2, 3, 4]
-        )
-      ])
-    )
-    this.second = new Run(
-      'eeeeeeee-0763-464d-a09c-ce9a957a21ff',
-      'I Al Bistannen',
-      'Runner name',
-      'Runner info',
-      new Date(new Date().getTime() - 1000 * 10 * 60),
-      new Date(),
-      new TarTaskSource('hellos', 'you repo'),
-      new RunResultSuccess([
-        new MeasurementSuccess(
-          new Dimension('benchmark', 'metric', 'cats', 'NEUTRAL'),
-          18,
-          [1, 2, 3, 4]
-        ),
-        new MeasurementSuccess(
-          new Dimension('benchmark', 'metric2', 'dogs', 'NEUTRAL'),
-          22,
-          [1, 2, 3, 4]
-        )
-      ])
-    )
-    this.differences = [
-      new RunCompareDifference(
-        new Dimension('benchmark', 'metric', 'cats', 'MORE_IS_BETTER'),
-        -2
-      ),
-      new RunCompareDifference(
-        new Dimension('benchmark', 'metric2', 'dogs', 'LESS_IS_BETTER'),
-        -5
-      )
-    ]
-  }
 }
 </script>
 

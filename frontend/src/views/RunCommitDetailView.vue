@@ -29,12 +29,12 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { Commit, Run, CommitTaskSource } from '@/store/types'
+import { Watch } from 'vue-property-decorator'
 import { vxm } from '@/store'
+import { Commit, Run, CommitTaskSource } from '@/store/types'
 import NotFound404 from './NotFound404.vue'
 import RunDetail from '@/components/rundetail/RunDetail.vue'
 import CommitDetail from '@/components/rundetail/CommitDetail.vue'
-import { Watch } from 'vue-property-decorator'
 import RunTimeline from '@/components/rundetail/RunTimeline.vue'
 
 @Component({
