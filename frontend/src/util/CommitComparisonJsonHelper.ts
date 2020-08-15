@@ -12,7 +12,10 @@ import {
   RunComparison,
   DimensionDifference
 } from '@/store/types'
-import { sourceFromJson } from '@/util/QueueJsonHelper'
+import {
+  sourceFromJson,
+  commitDescriptionFromJson
+} from '@/util/QueueJsonHelper'
 import { dimensionFromJson } from '@/util/RepoJsonHelper'
 
 export function runFromJson(json: any): Run {
@@ -68,7 +71,8 @@ export function commitFromJson(json: any): Commit {
     json.message,
     json.summary,
     json.runs.map(runDescriptionFromJson),
-    json.parents
+    json.parents.map(commitDescriptionFromJson),
+    json.children.map(commitDescriptionFromJson)
   )
 }
 

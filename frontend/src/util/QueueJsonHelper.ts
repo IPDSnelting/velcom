@@ -34,7 +34,7 @@ export function sourceFromJson(json: any): TaskSource {
   throw new Error('Unknown task type')
 }
 
-function commitDescriptionFromJson(json: any): CommitDescription {
+export function commitDescriptionFromJson(json: any): CommitDescription {
   return new CommitDescription(
     json.repo_id,
     json.hash,
