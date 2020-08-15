@@ -180,6 +180,11 @@ paths:
                 properties:
                   run:
                     $ref: '#/components/schemas/Run'
+                  differences:
+                    type: array
+                    description: Only present if the `diff` parameter is set to `true` and there is an unambiguous previous commit with a run
+                    items:
+                      $ref: '#/components/schemas/DimensionDifference'
                 required:
                   - run
         '404':
@@ -201,6 +206,12 @@ paths:
           in: query
           name: hash
           description: Commit hash
+        - schema:
+            type: boolean
+            default: 'false'
+          in: query
+          name: diff_prev
+          description: Whether to include the differences to the run of the previous commit (if available)
   '/compare/{runid1}/to/{runid2}':
     get:
       summary: compare runs
