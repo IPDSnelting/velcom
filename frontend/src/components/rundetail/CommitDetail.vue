@@ -32,6 +32,29 @@
           </v-card-title>
           <v-card-text class="body-1 mx-2" style="color: inherit;">
             <v-container fluid class="my-0 py-0">
+              <v-row
+                v-for="({ parent, child }, index) in navigationTargets"
+                :key="index"
+                justify="space-between"
+                no-gutters
+              >
+                <v-col cols="auto" class="pa-0 ma-0 pb-2">
+                  <commit-navigation-button
+                    v-if="parent"
+                    :commitDescription="parent"
+                    type="PARENT"
+                  ></commit-navigation-button>
+                  <v-spacer v-else></v-spacer>
+                </v-col>
+                <v-col cols="auto" class="pa-0 ma-0 pb-2">
+                  <commit-navigation-button
+                    v-if="child"
+                    :commitDescription="child"
+                    type="CHILD"
+                  ></commit-navigation-button>
+                  <v-spacer v-else></v-spacer>
+                </v-col>
+              </v-row>
               <v-row justify="space-between" align="center" no-gutters>
                 <v-col>
                   <span class="font-weight-bold">{{ commit.author }}</span>
@@ -67,19 +90,33 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
-import { Commit, RunDescription } from '@/store/types'
+import { Commit, RunDescription, CommitDescription } from '@/store/types'
 import { formatDateUTC, formatDate } from '@/util/TimeUtil'
 import InlineMinimalRepoNameDisplay from '../InlineMinimalRepoDisplay.vue'
 import CommitBenchmarkActions from '../CommitBenchmarkActions.vue'
 import RunTimeline from './RunTimeline.vue'
+import { mdiArrowLeft, mdiArrowRight } from '@mdi/js'
+import CommitNavigationButton from './CommitNavigationButton.vue'
 
-// FIXME: Navigation to parent / child
+class NavigationTarget {
+  readonly parent: CommitDescription | null
+  readonly child: CommitDescription | null
+
+  constructor(
+    parent: CommitDescription | null,
+    child: CommitDescription | null
+  ) {
+    this.parent = parent
+    this.child = child
+  }
+}
 
 @Component({
   components: {
     'commit-benchmark-actions': CommitBenchmarkActions,
     'inline-repo-display': InlineMinimalRepoNameDisplay,
-    'run-timeline': RunTimeline
+    'run-timeline': RunTimeline,
+    'commit-navigation-button': CommitNavigationButton
   }
 })
 export default class CommitDetail extends Vue {
@@ -93,6 +130,36 @@ export default class CommitDetail extends Vue {
   private formatDateUTC(date: Date) {
     return formatDateUTC(date)
   }
+
+  private get navigationTargets(): NavigationTarget[] {
+    const targets: NavigationTarget[] = []
+    let mutualItems = Math.min(
+      this.commit.parents.length,
+      this.commit.children.length
+    )
+    let i = 0
+    for (; i < mutualItems; i++) {
+      targets.push(
+        new NavigationTarget(this.commit.parents[i], this.commit.children[i])
+      )
+    }
+
+    if (i === this.commit.parents.length) {
+      for (; i < this.commit.children.length; i++) {
+        targets.push(new NavigationTarget(null, this.commit.children[i]))
+      }
+    } else {
+      for (; i < this.commit.parents.length; i++) {
+        targets.push(new NavigationTarget(this.commit.parents[i], null))
+      }
+    }
+
+    return targets
+  }
+
+  // Icons
+  private parentCommitIcon = mdiArrowLeft
+  private childCommitIcon = mdiArrowRight
 }
 </script>
 
