@@ -1,17 +1,8 @@
 import { createModule, mutation, action } from 'vuex-class-component'
-import {
-  RunId,
-  Run,
-  CommitHash,
-  RepoId,
-  Commit
-} from '@/store/types'
+import { RunId, Run, CommitHash, RepoId, Commit } from '@/store/types'
 import axios from 'axios'
 import Vue from 'vue'
-import {
-  runFromJson,
-  commitFromJson
-} from '@/util/CommitComparisonJsonHelper'
+import { runFromJson, commitFromJson } from '@/util/CommitComparisonJsonHelper'
 
 const VxModule = createModule({
   namespaced: 'commitDetailComparisonModule',
@@ -26,6 +17,7 @@ export class CommitDetailComparisonStore extends VxModule {
    * @returns {Promise<Run>} the run
    * @memberof CommitDetailComparisonStore
    */
+  @action
   async fetchRun(runId: RunId): Promise<Run> {
     const response = await axios.get(`/run/${runId}`, {
       params: {
@@ -39,13 +31,21 @@ export class CommitDetailComparisonStore extends VxModule {
   /**
    * Fetches a commit.
    *
-   * @param {RepoId} repoId the repo id
-   * @param {CommitHash} commitHash the commit hash
-   * @returns {Promise<Commit>} the commit, if any
+   * @param {{
+   *     repoId: RepoId
+   *     commitHash: CommitHash
+   *   }} payload the repoId and hash of the commit to fetch
+   * @returns {Promise<Commit>} the commit
    * @memberof CommitDetailComparisonStore
    */
-  async fetchCommit(repoId: RepoId, commitHash: CommitHash): Promise<Commit> {
-    const response = await axios.get(`/commit/${repoId}/${commitHash}`)
+  @action
+  async fetchCommit(payload: {
+    repoId: RepoId
+    commitHash: CommitHash
+  }): Promise<Commit> {
+    const response = await axios.get(
+      `/commit/${payload.repoId}/${payload.commitHash}`
+    )
 
     return commitFromJson(response.data.commit)
   }

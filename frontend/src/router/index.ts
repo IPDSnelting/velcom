@@ -7,7 +7,7 @@ import RepoDetail from '../views/RepoDetail.vue'
 import Queue from '../views/Queue.vue'
 import NotFound404 from '../views/NotFound404.vue'
 import CommitComparisonDisplay from '../views/CommitComparisonDisplay.vue'
-import CommitDetail from '../views/CommitDetail.vue'
+import RunCommitDetailView from '../views/RunCommitDetailView.vue'
 import RunDetail from '../components/rundetail/RunDetail.vue'
 import NewCommitDetail from '../components/rundetail/CommitDetail.vue'
 import {
@@ -88,30 +88,12 @@ const routes = [
     }
   },
   {
-    path: '/commit-detail/:repoID/:hash',
-    name: 'commit-detail',
-    component: CommitDetail,
+    path: '/run-detail/:first/:second?',
+    name: 'run-detail',
+    component: RunCommitDetailView,
     meta: {
       navigable: false,
-      label: 'Commit Detail'
-    }
-  },
-  {
-    path: '/run-detail',
-    name: 'run-detail',
-    component: RunDetail,
-    meta: {
-      navigable: true,
       label: 'Run Detail'
-    }
-  },
-  {
-    path: '/new-commit-detail',
-    name: 'new-commit-detail',
-    component: NewCommitDetail,
-    meta: {
-      navigable: true,
-      label: 'Commit Detail'
     }
   },
   {

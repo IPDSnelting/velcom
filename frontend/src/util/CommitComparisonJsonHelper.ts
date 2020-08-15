@@ -7,7 +7,8 @@ import {
   MeasurementError,
   MeasurementSuccess,
   Measurement,
-  Commit
+  Commit,
+  RunDescription
 } from '@/store/types'
 import { sourceFromJson } from '@/util/QueueJsonHelper'
 import { dimensionFromJson } from '@/util/RepoJsonHelper'
@@ -16,10 +17,10 @@ export function runFromJson(json: any): Run {
   return new Run(
     json.id,
     json.author,
-    json.runnerName,
-    json.runnerInfo,
-    new Date(json.startTime * 1000),
-    new Date(json.stopTime * 1000),
+    json.runner_name,
+    json.runner_info,
+    new Date(json.start_time * 1000),
+    new Date(json.stop_time * 1000),
     sourceFromJson(json.source),
     resultFromJson(json.result)
   )
@@ -46,6 +47,14 @@ function measurementFromJson(json: any): Measurement {
   )
 }
 
+export function runDescriptionFromJson(json: any): RunDescription {
+  return new RunDescription(
+    json.id,
+    new Date(json.start_time * 1000),
+    json.success
+  )
+}
+
 export function commitFromJson(json: any): Commit {
   return new Commit(
     json.repo_id,
@@ -56,7 +65,7 @@ export function commitFromJson(json: any): Commit {
     new Date(json.committer_date * 1000),
     json.message,
     json.summary,
-    json.runs.map(runFromJson),
+    json.runs.map(runDescriptionFromJson),
     json.parents
   )
 }
