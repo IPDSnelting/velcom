@@ -94,7 +94,6 @@ import { Commit, RunDescription, CommitDescription } from '@/store/types'
 import { formatDateUTC, formatDate } from '@/util/TimeUtil'
 import InlineMinimalRepoNameDisplay from '../InlineMinimalRepoDisplay.vue'
 import CommitBenchmarkActions from '../CommitBenchmarkActions.vue'
-import RunTimeline from './RunTimeline.vue'
 import { mdiArrowLeft, mdiArrowRight } from '@mdi/js'
 import CommitNavigationButton from './CommitNavigationButton.vue'
 
@@ -115,7 +114,6 @@ class NavigationTarget {
   components: {
     'commit-benchmark-actions': CommitBenchmarkActions,
     'inline-repo-display': InlineMinimalRepoNameDisplay,
-    'run-timeline': RunTimeline,
     'commit-navigation-button': CommitNavigationButton
   }
 })

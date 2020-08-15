@@ -17,7 +17,10 @@
     </v-row>
     <v-row v-if="commit" no-gutters>
       <v-col>
-        <run-timeline :runs="commit.runs"></run-timeline>
+        <run-timeline
+          :selectedRunId="runWithDifferences ? runWithDifferences.run.id : null"
+          :runs="commit.runs"
+        ></run-timeline>
       </v-col>
     </v-row>
     <v-row v-if="show404">

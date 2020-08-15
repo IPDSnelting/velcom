@@ -9,7 +9,9 @@
         :class="[index % 2 == 1 ? 'text-right' : '']"
         class="d-flex align-center"
       >
-        {{ formatDate(run.startTime) }}
+        <span :class="isSelected(run) ? ['text-h6'] : ['']">{{
+          formatDate(run.startTime)
+        }}</span>
         <template #icon>
           <v-tooltip :left="index % 2 === 0" :right="index % 2 === 1">
             <template #activator="{ on }">
@@ -31,7 +33,8 @@ import {
   RunResultSuccess,
   RunResultVelcomError,
   RunResultScriptError,
-  RunDescriptionSuccess
+  RunDescriptionSuccess,
+  RunId
 } from '@/store/types'
 import { Prop } from 'vue-property-decorator'
 import { formatDate } from '@/util/TimeUtil'
@@ -45,6 +48,8 @@ import {
 export default class RunTimeline extends Vue {
   @Prop()
   private runs!: RunDescription[]
+  @Prop({ default: null })
+  private selectedRunId!: RunId | null
 
   private readonly runInfos: {
     [key: string]: { icon: string; color: string; explanation: string }
@@ -72,6 +77,10 @@ export default class RunTimeline extends Vue {
 
   private runInfo(run: RunDescription) {
     return this.runInfos[run.success]
+  }
+
+  private isSelected(run: RunDescription) {
+    return run.runId === this.selectedRunId
   }
 }
 </script>
