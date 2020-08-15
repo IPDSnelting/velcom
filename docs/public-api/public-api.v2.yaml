@@ -224,16 +224,13 @@ paths:
                     items:
                       type: object
                       properties:
-                        benchmark:
-                          type: string
-                        metric:
-                          type: string
+                        dimension:
+                          $ref: '#/components/schemas/Dimension'
                         difference:
                           type: number
                           description: The difference from run1 to run2
                       required:
-                        - benchmark
-                        - metric
+                        - dimension
                         - difference
                 required:
                   - run1
