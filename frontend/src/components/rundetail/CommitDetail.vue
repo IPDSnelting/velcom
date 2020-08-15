@@ -1,5 +1,5 @@
 <template>
-  <v-container>
+  <v-container fluid class="pa-0 ma-0">
     <v-row>
       <v-col>
         <v-card>
@@ -31,8 +31,8 @@
             </v-toolbar>
           </v-card-title>
           <v-card-text class="body-1 mx-2" style="color: inherit;">
-            <v-container fluid>
-              <v-row justify="space-between" align="center">
+            <v-container fluid class="my-0 py-0">
+              <v-row justify="space-between" align="center" no-gutters>
                 <v-col>
                   <span class="font-weight-bold">{{ commit.author }}</span>
                   authored at
@@ -48,15 +48,12 @@
                   <br />
                 </v-col>
               </v-row>
-              <v-row dense v-if="commit.message.trim()">
+              <v-row no-gutters v-if="commit.message.trim()">
                 <v-col cols="12">
                   <div class="mt-5 commit-detail-message">
                     {{ commit.message.trim() }}
                   </div>
                 </v-col>
-              </v-row>
-              <v-row>
-                <run-timeline :runs="myRunDummy"></run-timeline>
               </v-row>
             </v-container>
           </v-card-text>
@@ -119,18 +116,18 @@ export default class CommitDetail extends Vue {
   }
 
   created() {
-    this.commit = new Commit(
-      'Repo id',
-      'commit hash',
-      'I Al Istannen',
-      new Date(),
-      'I Al Istannen',
-      new Date(),
-      'This is my cool message\nWith a newline!',
-      'This is my summary. It is long but not too long!!!',
-      [new RunDescription('this is a run id', new Date(), 'SUCCESS')],
-      ['parent hash one', 'Parent hash two']
-    )
+    // this.commit = new Commit(
+    //   'Repo id',
+    //   'commit hash',
+    //   'I Al Istannen',
+    //   new Date(),
+    //   'I Al Istannen',
+    //   new Date(),
+    //   'This is my cool message\nWith a newline!',
+    //   'This is my summary. It is long but not too long!!!',
+    //   [new RunDescription('this is a run id', new Date(), 'SUCCESS')],
+    //   ['parent hash one', 'Parent hash two']
+    // )
   }
 }
 </script>
