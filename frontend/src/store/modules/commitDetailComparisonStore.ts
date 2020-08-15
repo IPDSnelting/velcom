@@ -5,13 +5,15 @@ import {
   CommitHash,
   RepoId,
   Commit,
-  RunComparison
+  RunComparison,
+  RunWithDifferences
 } from '@/store/types'
 import axios from 'axios'
 import {
   runFromJson,
   commitFromJson,
-  comparisonFromJson
+  comparisonFromJson,
+  differenceFromJson
 } from '@/util/CommitComparisonJsonHelper'
 
 const VxModule = createModule({
@@ -28,14 +30,18 @@ export class CommitDetailComparisonStore extends VxModule {
    * @memberof CommitDetailComparisonStore
    */
   @action
-  async fetchRun(runId: RunId): Promise<Run> {
+  async fetchRun(runId: RunId): Promise<RunWithDifferences> {
     const response = await axios.get(`/run/${runId}`, {
       params: {
-        all_values: true
+        all_values: true,
+        diff_prev: true
       }
     })
 
-    return runFromJson(response.data.run)
+    return new RunWithDifferences(
+      runFromJson(response.data.run),
+      response.data.differences.map(differenceFromJson)
+    )
   }
 
   /**

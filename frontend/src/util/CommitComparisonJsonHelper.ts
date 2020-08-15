@@ -10,8 +10,7 @@ import {
   Commit,
   RunDescription,
   RunComparison,
-  RunCompareDifference,
-  Dimension
+  DimensionDifference
 } from '@/store/types'
 import { sourceFromJson } from '@/util/QueueJsonHelper'
 import { dimensionFromJson } from '@/util/RepoJsonHelper'
@@ -73,11 +72,12 @@ export function commitFromJson(json: any): Commit {
   )
 }
 
-function differenceFromJson(json: any): RunCompareDifference {
-  // FIXME: Proper unit / interpretation
-  return new RunCompareDifference(
-    new Dimension(json.benchmark, json.metric, 'cats', 'NEUTRAL'),
-    json.difference
+export function differenceFromJson(json: any): DimensionDifference {
+  return new DimensionDifference(
+    dimensionFromJson(json.dimension),
+    json.absdiff,
+    json.reldiff,
+    json.stddev
   )
 }
 

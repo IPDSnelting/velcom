@@ -21,7 +21,12 @@
       </v-card>
     </v-dialog>
 
-    <v-data-table multi-sort :headers="headers" :items="items" :items-per-page="5">
+    <v-data-table
+      multi-sort
+      :headers="headers"
+      :items="items"
+      :items-per-page="5"
+    >
       <template #[`item.value`]="{ item, value }">
         <span v-if="item.error === undefined">{{ value }}</span>
         <v-btn
@@ -54,7 +59,9 @@ import {
   Measurement,
   MeasurementError,
   MeasurementSuccess,
-  DimensionInterpretation
+  DimensionInterpretation,
+  DimensionDifference,
+  Dimension
 } from '@/store/types'
 
 const numberFormat: Intl.NumberFormat = new Intl.NumberFormat(
@@ -161,6 +168,8 @@ class Item {
 export default class MeasurementsDisplay extends Vue {
   @Prop()
   private measurements!: Measurement[]
+  @Prop()
+  private differences!: DimensionDifference[]
 
   private showDetailErrorDialog: boolean = false
   private detailErrorDialogMessage: string = ''
@@ -195,33 +204,23 @@ export default class MeasurementsDisplay extends Vue {
   }
 
   private successToItem(measurement: MeasurementSuccess): Item {
+    const difference = this.differenceForDimension(measurement.dimension)
     return new Item(
       measurement.dimension.benchmark,
       measurement.dimension.metric,
       measurement.dimension.unit,
       measurement.dimension.interpretation,
       measurement.value,
-      this.standardDeviation(measurement.values),
-      // FIXME: Real change
-      20,
-      0.5
+      difference ? difference.stddev : undefined,
+      difference ? difference.absDiff : undefined,
+      difference ? difference.relDiff : undefined
     )
   }
 
-  private standardDeviation(numbers: number[]): number {
-    let n = numbers.length
-    if (n <= 1) {
-      return 0
-    }
-
-    const mean =
-      numbers.reduce((acc: number, next: number) => acc + next) / numbers.length
-    const differenceSum = numbers
-      .map(it => Math.pow(it - mean, 2))
-      .reduce((a, b) => a + b)
-    const stdDev = (1 / (n - 1)) * differenceSum
-
-    return Math.sqrt(stdDev)
+  private differenceForDimension(
+    dimension: Dimension
+  ): DimensionDifference | undefined {
+    return this.differences.find(it => it.dimension.equals(dimension))
   }
 
   private errorToItem(measurementError: MeasurementError): Item {

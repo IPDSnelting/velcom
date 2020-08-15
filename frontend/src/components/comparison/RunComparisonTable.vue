@@ -15,7 +15,7 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import {
   Run,
-  RunCompareDifference,
+  DimensionDifference,
   Dimension,
   RunResultSuccess,
   MeasurementSuccess,
@@ -103,7 +103,7 @@ export default class RunComparisonTable extends Vue {
   private second!: Run
 
   @Prop({ default: () => [] })
-  private differences!: RunCompareDifference[]
+  private differences!: DimensionDifference[]
 
   private get headers() {
     return [
@@ -151,7 +151,7 @@ export default class RunComparisonTable extends Vue {
       it.dimension.equals(dimension)
     )
     if (difference) {
-      return difference.difference
+      return difference.absDiff
     }
     return undefined
   }

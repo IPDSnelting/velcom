@@ -1,6 +1,6 @@
 <template>
   <v-container>
-    <v-row v-if="!show404 && !run && !commit">
+    <v-row v-if="!show404 && !runWithDifferences && !commit">
       <v-col>
         <v-skeleton-loader type="card"></v-skeleton-loader>
       </v-col>
@@ -10,9 +10,9 @@
         <commit-detail :commit="commit"></commit-detail>
       </v-col>
     </v-row>
-    <v-row v-if="run" no-gutters>
+    <v-row v-if="runWithDifferences" no-gutters>
       <v-col>
-        <run-detail :run="run"></run-detail>
+        <run-detail :runWithDifferences="runWithDifferences"></run-detail>
       </v-col>
     </v-row>
     <v-row v-if="commit" no-gutters>
@@ -31,7 +31,12 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Watch } from 'vue-property-decorator'
 import { vxm } from '@/store'
-import { Commit, Run, CommitTaskSource } from '@/store/types'
+import {
+  Commit,
+  Run,
+  CommitTaskSource,
+  RunWithDifferences
+} from '@/store/types'
 import NotFound404 from './NotFound404.vue'
 import RunDetail from '@/components/rundetail/RunDetail.vue'
 import CommitDetail from '@/components/rundetail/CommitDetail.vue'
@@ -46,7 +51,7 @@ import RunTimeline from '@/components/rundetail/RunTimeline.vue'
   }
 })
 export default class RunCommitDetailView extends Vue {
-  private run: Run | null = null
+  private runWithDifferences: RunWithDifferences | null = null
   private commit: Commit | null = null
   private show404: boolean = false
 
@@ -62,18 +67,20 @@ export default class RunCommitDetailView extends Vue {
   @Watch('secondComponent')
   private async fetchCommitAndRun() {
     this.show404 = false
-    this.run = null
+    this.runWithDifferences = null
     this.commit = null
 
     if (this.firstComponent && !this.secondComponent) {
       // we have a run id
-      this.run = await vxm.commitDetailComparisonModule.fetchRun(
+      this.runWithDifferences = await vxm.commitDetailComparisonModule.fetchRun(
         this.firstComponent
       )
-      if (this.run.source instanceof CommitTaskSource) {
+      const run = this.runWithDifferences.run
+
+      if (run.source instanceof CommitTaskSource) {
         this.commit = await vxm.commitDetailComparisonModule.fetchCommit({
-          repoId: this.run.source.commitDescription.repoId,
-          commitHash: this.run.source.commitDescription.hash
+          repoId: run.source.commitDescription.repoId,
+          commitHash: run.source.commitDescription.hash
         })
       }
     } else if (this.firstComponent && this.secondComponent) {
@@ -83,7 +90,7 @@ export default class RunCommitDetailView extends Vue {
         commitHash: this.secondComponent
       })
       if (this.commit.runs.length > 0) {
-        this.run = await vxm.commitDetailComparisonModule.fetchRun(
+        this.runWithDifferences = await vxm.commitDetailComparisonModule.fetchRun(
           this.commit.runs[0].runId
         )
       }

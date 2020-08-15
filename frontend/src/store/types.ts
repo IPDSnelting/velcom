@@ -270,6 +270,16 @@ export class RunDescription {
   }
 }
 
+export class RunWithDifferences {
+  readonly run: Run
+  readonly differences: DimensionDifference[]
+
+  constructor(run: Run, differences: DimensionDifference[]) {
+    this.run = run
+    this.differences = differences
+  }
+}
+
 export class Worker {
   readonly name: string
   readonly info: string
@@ -289,22 +299,31 @@ export class Worker {
   }
 }
 
-export class RunCompareDifference {
+export class DimensionDifference {
   readonly dimension: Dimension
-  readonly difference: number
+  readonly absDiff: number
+  readonly relDiff: number
+  readonly stddev: number
 
-  constructor(dimension: Dimension, difference: number) {
+  constructor(
+    dimension: Dimension,
+    absDiff: number,
+    relDiff: number,
+    stddev: number
+  ) {
     this.dimension = dimension
-    this.difference = difference
+    this.absDiff = absDiff
+    this.relDiff = relDiff
+    this.stddev = stddev
   }
 }
 
 export class RunComparison {
   readonly run1: Run
   readonly run2: Run
-  readonly differences: RunCompareDifference[]
+  readonly differences: DimensionDifference[]
 
-  constructor(run1: Run, run2: Run, differences: RunCompareDifference[]) {
+  constructor(run1: Run, run2: Run, differences: DimensionDifference[]) {
     this.run1 = run1
     this.run2 = run2
     this.differences = differences

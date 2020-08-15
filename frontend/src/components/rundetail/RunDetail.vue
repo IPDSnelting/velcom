@@ -19,6 +19,7 @@
           <v-card-text class="mx-2">
             <measurements-display
               :measurements="measurements"
+              :differences="differences"
             ></measurements-display>
           </v-card-text>
         </v-card>
@@ -75,7 +76,9 @@ import {
   Measurement,
   MeasurementError,
   Dimension,
-  MeasurementSuccess
+  MeasurementSuccess,
+  DimensionDifference,
+  RunWithDifferences
 } from '@/store/types'
 import { Prop } from 'vue-property-decorator'
 import { formatDate, formatDuration } from '@/util/TimeUtil'
@@ -98,7 +101,7 @@ import {
 })
 export default class RunDetail extends Vue {
   @Prop()
-  private run!: Run
+  private runWithDifferences!: RunWithDifferences
 
   private formatDate(date: Date) {
     return formatDate(date)
@@ -106,6 +109,10 @@ export default class RunDetail extends Vue {
 
   private formatDuration(start: Date, end: Date) {
     return formatDuration(start, end)
+  }
+
+  private get run(): Run {
+    return this.runWithDifferences.run
   }
 
   private get runInfoItems() {
@@ -170,6 +177,13 @@ export default class RunDetail extends Vue {
   private get measurements(): Measurement[] | undefined {
     if (this.run.result instanceof RunResultSuccess) {
       return this.run.result.measurements
+    }
+    return undefined
+  }
+
+  private get differences(): DimensionDifference[] | undefined {
+    if (this.run.result instanceof RunResultSuccess) {
+      return this.runWithDifferences.differences
     }
     return undefined
   }
