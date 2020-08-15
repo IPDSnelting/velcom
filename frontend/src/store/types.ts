@@ -74,6 +74,7 @@ export class Commit {
   readonly summary: string
   readonly message: string | ''
   readonly runs: RunDescription[]
+  readonly parents: CommitHash[]
 
   constructor(
     repoId: RepoId,
@@ -84,7 +85,8 @@ export class Commit {
     committerDate: Date,
     message: string,
     summary: string,
-    runs: RunDescription[]
+    runs: RunDescription[],
+    parents: CommitHash[]
   ) {
     this.repoId = repoId
     this.hash = hash
@@ -95,6 +97,7 @@ export class Commit {
     this.message = message
     this.summary = summary
     this.runs = runs
+    this.parents = parents
   }
 }
 
