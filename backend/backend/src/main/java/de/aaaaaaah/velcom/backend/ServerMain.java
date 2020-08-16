@@ -24,6 +24,8 @@ import de.aaaaaaah.velcom.backend.restapi.authentication.RepoAuthenticator;
 import de.aaaaaaah.velcom.backend.restapi.authentication.RepoUser;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.AllReposEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.CommitEndpoint;
+import de.aaaaaaah.velcom.backend.restapi.endpoints.CompareEndpoint;
+import de.aaaaaaah.velcom.backend.restapi.endpoints.RunEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.TestTokenEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.exception.CommitAccessExceptionMapper;
 import de.aaaaaaah.velcom.backend.restapi.exception.NoSuchCommitExceptionMapper;
@@ -148,9 +150,11 @@ public class ServerMain extends Application<GlobalConfig> {
 		configureCors(environment);
 
 		// Endpoints
-		environment.jersey().register(new TestTokenEndpoint());
 		environment.jersey().register(new AllReposEndpoint(repoAccess, benchmarkAccess, tokenAccess));
 		environment.jersey().register(new CommitEndpoint(commitAccess, benchmarkAccess));
+		environment.jersey().register(new CompareEndpoint(benchmarkAccess));
+		environment.jersey().register(new RunEndpoint(benchmarkAccess));
+		environment.jersey().register(new TestTokenEndpoint());
 	}
 
 	private void configureApi(Environment environment, TokenWriteAccess tokenAccess) {

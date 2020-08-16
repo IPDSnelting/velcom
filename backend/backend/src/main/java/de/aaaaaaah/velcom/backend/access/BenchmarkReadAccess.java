@@ -118,9 +118,20 @@ public class BenchmarkReadAccess {
 	}
 
 	/**
+	 * Get a run by its id.
+	 *
+	 * @param id the run's id
+	 * @return the run, if one exists
+	 */
+	public Run getRun(RunId id) {
+		// TODO implement
+		return null;
+	}
+
+	/**
 	 * Gets the latest run for the given commit.
 	 *
-	 * @param repoId the id of the repository
+	 * @param repoId the id of the repository the commit is in
 	 * @param commitHash the hash of the commit
 	 * @return the latest run for the commit, or {@link Optional#empty()} if no run for that commit
 	 * 	exists yet.
@@ -129,6 +140,18 @@ public class BenchmarkReadAccess {
 		Map<CommitHash, Run> resultMap = getLatestRuns(repoId, List.of(commitHash));
 		return resultMap.containsKey(commitHash) ? Optional.of(resultMap.get(commitHash))
 			: Optional.empty();
+	}
+
+	/**
+	 * Gets all runs for the given commit, ordered from latest to oldest.
+	 *
+	 * @param repoId the id of the repository the commit is in
+	 * @param commitHash the hash of the commit
+	 * @return all runs for the commit, ordered from latest to oldest.
+	 */
+	public List<Run> getAllRuns(RepoId repoId, CommitHash commitHash) {
+		// TODO implement
+		return List.of();
 	}
 
 	/**

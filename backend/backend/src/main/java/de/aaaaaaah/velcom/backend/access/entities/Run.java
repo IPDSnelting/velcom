@@ -1,11 +1,11 @@
 package de.aaaaaaah.velcom.backend.access.entities;
 
 import de.aaaaaaah.velcom.backend.util.Either;
-import javax.annotation.Nullable;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.Optional;
+import javax.annotation.Nullable;
 
 /**
  * A run is a single execution of the benchmark script.
@@ -23,7 +23,8 @@ public class Run {
 	private final String runnerInfo;
 	private final Instant startTime;
 	private final Instant stopTime;
-	private final Optional<RepoSource> repoSource;
+	@Nullable
+	private final RepoSource repoSource;
 	private final Either<Collection<Measurement>, RunError> result;
 
 	public Run(RunId runId, String author, String runnerName, String runnerInfo, Instant startTime,
@@ -62,8 +63,7 @@ public class Run {
 		this.runnerInfo = Objects.requireNonNull(runnerInfo);
 		this.startTime = Objects.requireNonNull(startTime);
 		this.stopTime = Objects.requireNonNull(stopTime);
-
-		this.repoSource = Optional.ofNullable(repoSource);
+		this.repoSource = repoSource;
 
 		if (error != null && measurements != null) {
 			throw new IllegalArgumentException(
@@ -95,7 +95,7 @@ public class Run {
 	}
 
 	public Optional<RepoSource> getRepoSource() {
-		return repoSource;
+		return Optional.ofNullable(repoSource);
 	}
 
 	public Instant getStartTime() {
@@ -106,7 +106,9 @@ public class Run {
 		return stopTime;
 	}
 
-	public Either<Collection<Measurement>, RunError> getResult() { return result; }
+	public Either<Collection<Measurement>, RunError> getResult() {
+		return result;
+	}
 
 	@Override
 	public String toString() {

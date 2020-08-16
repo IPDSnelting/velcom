@@ -29,7 +29,7 @@ public class CompareEndpoint {
 		@QueryParam("hash1") String hash1,
 		@QueryParam("hash2") String hash2
 	) {
-		// TODO get the first and second run either by run id or by repo + hash
+		// TODO get runs by id or repo + hash
 		// TODO compare the two runs
 		return null;
 	}
