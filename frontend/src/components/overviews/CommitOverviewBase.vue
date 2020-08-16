@@ -8,7 +8,7 @@
           <v-row no-gutters align="center" justify="space-between">
             <v-col cols="auto" class="flex-shrink-too mr-3">
               <v-list-item-title>
-                <repo-display :repoId="commit.repoID"></repo-display>
+                <repo-display :repoId="commit.repoId"></repo-display>
                 <span class="mx-2">—</span>
                 <router-link
                   class="concealed-link"

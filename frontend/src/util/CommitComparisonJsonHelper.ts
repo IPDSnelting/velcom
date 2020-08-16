@@ -56,7 +56,8 @@ export function runDescriptionFromJson(json: any): RunDescription {
   return new RunDescription(
     json.id,
     new Date(json.start_time * 1000),
-    json.success
+    json.success,
+    sourceFromJson(json.source)
   )
 }
 

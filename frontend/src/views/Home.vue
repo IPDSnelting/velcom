@@ -61,7 +61,7 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Watch } from 'vue-property-decorator'
 import { vxm } from '../store/index'
-import { Run, Commit, RunWithDifferences } from '@/store/types'
+import { RunDescriptionWithDifferences, RunDescription } from '@/store/types'
 import MultipleRunOverview from '@/components/overviews/MultipleRunOverview.vue'
 
 @Component({
@@ -73,11 +73,11 @@ export default class Home extends Vue {
   private recentAmount: number = 5
   private recentSignificantAmount = 10
 
-  get recent(): Run[] {
+  get recent(): RunDescription[] {
     return vxm.newsModule.recentRuns
   }
 
-  get recentSignificant(): RunWithDifferences[] {
+  get recentSignificant(): RunDescriptionWithDifferences[] {
     return vxm.newsModule.recentSignificantRuns
   }
 

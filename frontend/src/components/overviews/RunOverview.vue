@@ -3,7 +3,7 @@
     :is="run.source.type"
     :commit="commit"
     :source="run.source"
-    :id="run.id"
+    :id="run.runId"
   >
     <template #avatar>
       <v-list-item-avatar>
@@ -25,16 +25,7 @@
             >
           </template>
           <span v-if="isCompleteFailure">This run failed completely :(</span>
-          <span v-else>
-            This run suffered at least one failure :/
-            <div
-              class="ml-2"
-              v-for="id in partialFailures"
-              :key="id.benchmark + id.metric"
-            >
-              {{ id.benchmark + ' — ' + id.metric }}
-            </div>
-          </span>
+          <span v-else>This run suffered at least one failure :/</span>
         </v-tooltip>
       </v-list-item-avatar>
     </template>
@@ -65,7 +56,8 @@ import {
   RunResultSuccess,
   MeasurementError,
   CommitDescription,
-  CommitTaskSource
+  CommitTaskSource,
+  RunDescription
 } from '@/store/types'
 import InlineMinimalRepoNameDisplay from '../InlineMinimalRepoDisplay.vue'
 import CommitChip from '../CommitChip.vue'
@@ -88,33 +80,21 @@ import TarTaskOverview from './TarTaskOverview.vue'
 })
 export default class RunOverview extends Vue {
   @Prop()
-  private run!: Run
+  private run!: RunDescription
 
   @Prop({ default: false })
   private hideActions!: boolean
 
   private get isSuccessful(): boolean {
-    return !this.isCompleteFailure && !this.isPartialFailure
+    return this.run.success === 'SUCCESS'
   }
 
   private get isCompleteFailure(): boolean {
-    return (
-      this.run.result instanceof RunResultScriptError ||
-      this.run.result instanceof RunResultVelcomError
-    )
+    return this.run.success === 'FAILURE'
   }
 
   private get isPartialFailure(): boolean {
-    return this.partialFailures.length !== 0
-  }
-
-  private get partialFailures(): Dimension[] {
-    if (this.run.result instanceof RunResultSuccess) {
-      return this.run.result.measurements
-        .filter(it => it instanceof MeasurementError)
-        .map(it => it.dimension)
-    }
-    return []
+    return this.run.success === 'PARTIAL_SUCCESS'
   }
 
   private get commit(): CommitDescription | undefined {

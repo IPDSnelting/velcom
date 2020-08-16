@@ -1,9 +1,13 @@
 import { createModule, mutation, action } from 'vuex-class-component'
-import { Run, RunWithDifferences } from '@/store/types'
+import {
+  Run,
+  RunDescriptionWithDifferences,
+  RunDescription
+} from '@/store/types'
 import axios from 'axios'
 import {
-  runFromJson,
-  differenceFromJson
+  differenceFromJson,
+  runDescriptionFromJson
 } from '@/util/CommitComparisonJsonHelper'
 
 const VxModule = createModule({
@@ -12,26 +16,28 @@ const VxModule = createModule({
 })
 
 export class NewsStore extends VxModule {
-  private _recentRuns: Run[] = []
-  private _recentSignificantRuns: RunWithDifferences[] = []
+  private _recentRuns: RunDescription[] = []
+  private _recentSignificantRuns: RunDescriptionWithDifferences[] = []
 
   /**
    * Fetches all recent runs from the server.
    *
    * @param {number} amount the amount of runs to fetch
-   * @returns {Promise<Run[]>} a promise resolving with the
+   * @returns {Promise<RunDescription[]>} a promise resolving with the
    * reactive recent runs
    * @memberof NewsModuleStore
    */
   @action
-  async fetchRecentRuns(amount: number): Promise<Run[]> {
+  async fetchRecentRuns(amount: number): Promise<RunDescription[]> {
     const response = await axios.get(`/recent/runs`, {
       params: {
         n: amount
       }
     })
 
-    const runs = response.data.runs.map((it: any) => runFromJson(it.run))
+    const runs: RunDescription[] = response.data.runs.map((it: any) =>
+      runDescriptionFromJson(it.run)
+    )
 
     this.setRecentRuns(runs)
 
@@ -42,14 +48,14 @@ export class NewsStore extends VxModule {
    * Fetches all recent significant runs from the server.
    *
    * @param {number} amount the amount of runs to fetch
-   * @returns {Promise<RunWithDifferences[]>} a promise resolving with the
+   * @returns {Promise<RunDescriptionWithDifferences[]>} a promise resolving with the
    * reactive recent runs
    * @memberof NewsModuleStore
    */
   @action
   async fetchRecentSignificantRuns(
     amount: number
-  ): Promise<RunWithDifferences[]> {
+  ): Promise<RunDescriptionWithDifferences[]> {
     const response = await axios.get(`/recent/runs`, {
       params: {
         n: amount,
@@ -59,8 +65,8 @@ export class NewsStore extends VxModule {
 
     const runs = response.data.runs.map(
       (it: any) =>
-        new RunWithDifferences(
-          runFromJson(it.run),
+        new RunDescriptionWithDifferences(
+          runDescriptionFromJson(it.run),
           it.significant_dimensions.map(differenceFromJson)
         )
     )
@@ -72,22 +78,24 @@ export class NewsStore extends VxModule {
   /**
    * Sets the recent runs.
    *
-   * @param {Run[]} recentRuns the recent runs
+   * @param {RunDescription[]} recentRuns the recent runs
    * @memberof NewsModuleStore
    */
   @mutation
-  setRecentRuns(recentRuns: Run[]) {
+  setRecentRuns(recentRuns: RunDescription[]) {
     this._recentRuns = recentRuns.slice()
   }
 
   /**
    * Sets the recent significant runs.
    *
-   * @param {RunWithDifferences[]} recentSignificantRuns the new runs
+   * @param {RunDescriptionWithDifferences[]} recentSignificantRuns the new runs
    * @memberof NewsModuleStore
    */
   @mutation
-  setRecentSignificantRuns(recentSignificantRuns: RunWithDifferences[]) {
+  setRecentSignificantRuns(
+    recentSignificantRuns: RunDescriptionWithDifferences[]
+  ) {
     this._recentSignificantRuns = recentSignificantRuns.slice()
   }
 
@@ -95,10 +103,10 @@ export class NewsStore extends VxModule {
    * Returns all recent runs.
    *
    * @readonly
-   * @type {Run[]}
+   * @type {RunDescription[]}
    * @memberof NewsModuleStore
    */
-  get recentRuns(): Run[] {
+  get recentRuns(): RunDescription[] {
     return this._recentRuns
   }
 
@@ -106,10 +114,10 @@ export class NewsStore extends VxModule {
    * Returns the recent runs that match a significance threshold.
    *
    * @readonly
-   * @type {RunWithDifferences[]}
+   * @type {RunDescriptionWithDifferences[]}
    * @memberof NewsModuleStore
    */
-  get recentSignificantRuns(): RunWithDifferences[] {
+  get recentSignificantRuns(): RunDescriptionWithDifferences[] {
     return this._recentSignificantRuns
   }
 }

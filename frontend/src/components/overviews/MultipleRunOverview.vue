@@ -56,10 +56,11 @@ import {
   Run,
   Commit,
   Measurement,
-  RunWithDifferences,
   Dimension,
   DimensionDifference,
-  DimensionInterpretation
+  DimensionInterpretation,
+  RunDescription,
+  RunDescriptionWithDifferences
 } from '../../store/types'
 import RunOverview from './RunOverview.vue'
 import {
@@ -153,7 +154,7 @@ class RelevantChange {
 })
 export default class MultipleRunOverview extends Vue {
   @Prop()
-  private runs!: Run[] | RunWithDifferences[]
+  private runs!: RunDescription[] | RunDescriptionWithDifferences[]
 
   @Prop({ default: 3 })
   private numberOfChanges!: number
@@ -161,14 +162,20 @@ export default class MultipleRunOverview extends Vue {
   private itemsPerPageOptions: number[] = [10, 20, 50, 100, 200, -1]
   private defaultItemsPerPage: number = 20
 
-  private run(run: Run | RunWithDifferences) {
-    return run instanceof RunWithDifferences ? run.run : run
+  private run(
+    run: RunDescription | RunDescriptionWithDifferences
+  ): RunDescription {
+    return run instanceof RunDescriptionWithDifferences ? run.run : run
   }
 
-  private relevantChanges(run: Run | RunWithDifferences): RelevantChange[] {
-    if (run instanceof Run) {
+  private relevantChanges(
+    run: RunDescription | RunDescriptionWithDifferences
+  ): RelevantChange[] {
+    if (run instanceof RunDescription) {
       return []
     }
+    console.log(run)
+
     return run.differences.map(it => new RelevantChange(it))
   }
 }

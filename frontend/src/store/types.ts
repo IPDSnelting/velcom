@@ -265,11 +265,18 @@ export class RunDescription {
   readonly runId: RunId
   readonly startTime: Date
   readonly success: RunDescriptionSuccess
+  readonly source: TaskSource
 
-  constructor(runId: RunId, startTime: Date, success: RunDescriptionSuccess) {
+  constructor(
+    runId: RunId,
+    startTime: Date,
+    success: RunDescriptionSuccess,
+    source: TaskSource
+  ) {
     this.runId = runId
     this.startTime = startTime
     this.success = success
+    this.source = source
   }
 }
 
@@ -278,6 +285,16 @@ export class RunWithDifferences {
   readonly differences: DimensionDifference[]
 
   constructor(run: Run, differences: DimensionDifference[]) {
+    this.run = run
+    this.differences = differences
+  }
+}
+
+export class RunDescriptionWithDifferences {
+  readonly run: RunDescription
+  readonly differences: DimensionDifference[]
+
+  constructor(run: RunDescription, differences: DimensionDifference[]) {
     this.run = run
     this.differences = differences
   }
