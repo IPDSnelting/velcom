@@ -13,10 +13,9 @@
           },
         }"
       >
+        <v-icon left v-if="type === 'PARENT'">{{ parentCommitIcon }}</v-icon>
         {{ commitDescription.summary }}
-        <v-icon right>{{
-          type === 'PARENT' ? parentCommitIcon : childCommitIcon
-        }}</v-icon>
+        <v-icon right v-if="type === 'CHILD'">{{ childCommitIcon }}</v-icon>
       </v-btn>
     </template>
     {{ commitDescription.hash }} by {{ commitDescription.author }}
