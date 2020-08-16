@@ -39,7 +39,8 @@
             <component
               :is="task.source.type"
               :commit="task.source.commitDescription"
-              :task="task"
+              :source="task.source"
+              :id="task.id"
             >
               <template #body_top>
                 <v-progress-linear

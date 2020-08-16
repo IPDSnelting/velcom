@@ -5,15 +5,24 @@
         <v-col>
           <v-card>
             <v-card-title>
-              <v-toolbar color="primary darken-1" dark>Recent Significant Commits</v-toolbar>
+              <v-toolbar color="primary darken-1" dark
+                >Recent Significant Commits</v-toolbar
+              >
             </v-card-title>
             <v-card-text>
               <v-container fluid>
                 <v-row align="baseline" justify="center">
-                  <multiple-run-overview :runs="recentSignificant"></multiple-run-overview>
+                  <multiple-run-overview
+                    :runs="recentSignificant"
+                  ></multiple-run-overview>
                 </v-row>
                 <v-row align="baseline" justify="end">
-                  <v-btn text color="primary" @click="recentSignificantAmount+=5">load more</v-btn>
+                  <v-btn
+                    text
+                    color="primary"
+                    @click="recentSignificantAmount += 5"
+                    >load more</v-btn
+                  >
                 </v-row>
               </v-container>
             </v-card-text>
@@ -24,7 +33,9 @@
         <v-col>
           <v-card>
             <v-card-title>
-              <v-toolbar color="primary darken-1" dark>Recently Benchmarked Commits</v-toolbar>
+              <v-toolbar color="primary darken-1" dark
+                >Recently Benchmarked Commits</v-toolbar
+              >
             </v-card-title>
             <v-card-text>
               <v-container fluid>
@@ -32,7 +43,9 @@
                   <multiple-run-overview :runs="recent"></multiple-run-overview>
                 </v-row>
                 <v-row align="baseline" justify="end">
-                  <v-btn text color="primary" @click="recentAmount+=10">load more</v-btn>
+                  <v-btn text color="primary" @click="recentAmount += 10"
+                    >load more</v-btn
+                  >
                 </v-row>
               </v-container>
             </v-card-text>
@@ -48,10 +61,8 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Watch } from 'vue-property-decorator'
 import { vxm } from '../store/index'
-import { Run, Commit } from '@/store/types'
-import MultipleRunOverview, {
-  AttributedRun
-} from '../components/overviews/MultipleRunOverview.vue'
+import { Run, Commit, RunWithDifferences } from '@/store/types'
+import MultipleRunOverview from '@/components/overviews/MultipleRunOverview.vue'
 
 @Component({
   components: {
@@ -62,30 +73,12 @@ export default class Home extends Vue {
   private recentAmount: number = 5
   private recentSignificantAmount = 10
 
-  get recent(): AttributedRun[] {
+  get recent(): Run[] {
     return vxm.newsModule.recentRuns
-      .filter(it => it.second)
-      .map(
-        comparison =>
-          new AttributedRun(
-            comparison.second!,
-            comparison.secondCommit,
-            comparison
-          )
-      )
   }
 
-  get recentSignificant(): AttributedRun[] {
+  get recentSignificant(): RunWithDifferences[] {
     return vxm.newsModule.recentSignificantRuns
-      .filter(it => it.second)
-      .map(
-        comparison =>
-          new AttributedRun(
-            comparison.second!,
-            comparison.secondCommit,
-            comparison
-          )
-      )
   }
 
   @Watch('recentAmount')

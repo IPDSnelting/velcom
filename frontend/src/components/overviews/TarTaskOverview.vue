@@ -8,15 +8,13 @@
           <v-row no-gutters align="center" justify="space-between">
             <v-col cols="auto" class="flex-shrink-too mr-3">
               <v-list-item-title>
-                <repo-display :repoId="task.source.repoId"></repo-display>
+                <repo-display :repoId="source.repoId"></repo-display>
                 <span class="mx-2">—</span>
                 <router-link
                   class="concealed-link"
-                  :to="{ name: 'run-detail', params: { runId: task.id } }"
+                  :to="{ name: 'run-detail', params: { runId: id } }"
                 >
-                  <span class="commit-message">{{
-                    task.source.description
-                  }}</span>
+                  <span class="commit-message">{{ source.description }}</span>
                 </router-link>
               </v-list-item-title>
               <v-list-item-content v-if="$scopedSlots['content']" class="py-0">
@@ -27,7 +25,7 @@
               <v-container fluid class="ma-0 pa-0">
                 <v-row no-gutters align="center" justify="space-between">
                   <v-col cols="auto">
-                    <commit-chip :commitHash="task.id"></commit-chip>
+                    <commit-chip :commitHash="id"></commit-chip>
                   </v-col>
                   <span :class="$scopedSlots['actions'] ? ['pl-3'] : ['']">
                     <slot name="actions"></slot>
@@ -45,7 +43,7 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
-import { Task } from '../../store/types'
+import { Task, TarTaskSource, RunId, TaskId } from '../../store/types'
 import CommitChip from '../CommitChip.vue'
 import InlineMinimalRepoNameDisplay from '../InlineMinimalRepoDisplay.vue'
 
@@ -57,7 +55,10 @@ import InlineMinimalRepoNameDisplay from '../InlineMinimalRepoDisplay.vue'
 })
 export default class TarTaskOverview extends Vue {
   @Prop()
-  private task!: Task
+  private source!: TarTaskSource
+  @Prop()
+  private id!: RunId | TaskId
+
   // FIXME: Links
 }
 </script>
