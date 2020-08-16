@@ -830,10 +830,13 @@ components:
             - SUCCESS
             - PARTIAL_SUCCESS
             - FAILURE
+        source:
+          $ref: '#/components/schemas/Source'
       required:
         - id
         - start_time
         - success
+        - source
     CommitDescription:
       title: CommitDescription
       type: object
