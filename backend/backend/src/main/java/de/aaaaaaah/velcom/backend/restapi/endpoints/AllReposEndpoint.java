@@ -86,14 +86,10 @@ public class AllReposEndpoint {
 
 	private static class GetReply {
 
-		private final List<JsonRepo> repos;
+		public final List<JsonRepo> repos;
 
 		public GetReply(List<JsonRepo> repos) {
 			this.repos = repos;
-		}
-
-		public List<JsonRepo> getRepos() {
-			return repos;
 		}
 	}
 }

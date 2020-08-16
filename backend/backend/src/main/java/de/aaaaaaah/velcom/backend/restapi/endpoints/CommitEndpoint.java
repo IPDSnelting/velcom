@@ -69,14 +69,10 @@ public class CommitEndpoint {
 
 	private static class GetReply {
 
-		private final JsonCommit commit;
+		public final JsonCommit commit;
 
 		public GetReply(JsonCommit commit) {
 			this.commit = commit;
-		}
-
-		public JsonCommit getCommit() {
-			return commit;
 		}
 	}
 }

@@ -36,26 +36,14 @@ public class CompareEndpoint {
 
 	private static class GetReply {
 
-		private final JsonRun run1;
-		private final JsonRun run2;
-		private final List<JsonDimensionDifference> differences;
+		public final JsonRun run1;
+		public final JsonRun run2;
+		public final List<JsonDimensionDifference> differences;
 
 		public GetReply(JsonRun run1, JsonRun run2, List<JsonDimensionDifference> differences) {
 			this.run1 = run1;
 			this.run2 = run2;
 			this.differences = differences;
-		}
-
-		public JsonRun getRun1() {
-			return run1;
-		}
-
-		public JsonRun getRun2() {
-			return run2;
-		}
-
-		public List<JsonDimensionDifference> getDifferences() {
-			return differences;
 		}
 	}
 }
