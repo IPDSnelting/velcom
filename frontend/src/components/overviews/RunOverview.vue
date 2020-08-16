@@ -82,8 +82,9 @@ export default class RunOverview extends Vue {
   @Prop()
   private run!: RunDescription
 
-  @Prop({ default: false })
-  private hideActions!: boolean
+  private get hideActions(): boolean {
+    return !vxm.userModule.isAdmin
+  }
 
   private get isSuccessful(): boolean {
     return this.run.success === 'SUCCESS'

@@ -57,7 +57,6 @@
                         v-if="comparison.second"
                         :run="comparison.second"
                         :commit="commit"
-                        :hideActions="!isAdmin"
                       ></run-overview>
                       <commit-overview-base v-else :commit="commit">
                         <template #avatar>
