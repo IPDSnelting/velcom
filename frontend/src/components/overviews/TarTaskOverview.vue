@@ -15,7 +15,7 @@
                 <span class="mx-2">—</span>
                 <router-link
                   class="concealed-link"
-                  :to="{ name: 'run-detail', params: { runId: id } }"
+                  :to="{ name: 'run-detail', params: { first: id } }"
                 >
                   <span class="commit-message">{{ source.description }}</span>
                 </router-link>
@@ -61,8 +61,6 @@ export default class TarTaskOverview extends Vue {
   private source!: TarTaskSource
   @Prop()
   private id!: RunId | TaskId
-
-  // FIXME: Links
 }
 </script>
 

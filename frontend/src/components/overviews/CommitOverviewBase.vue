@@ -12,14 +12,19 @@
                 <span class="mx-2">—</span>
                 <router-link
                   class="concealed-link"
-                  :to="{ name: 'commit-detail', params: { repoID: commit.repoId, hash: commit.hash } }"
+                  :to="{
+                    name: 'run-detail',
+                    params: { first: commit.repoId, second: commit.hash },
+                  }"
                 >
                   <span class="commit-message">{{ commit.summary }}</span>
                 </router-link>
               </v-list-item-title>
               <v-list-item-subtitle>
                 <span class="author">{{ commit.author }}</span> authored on
-                <span class="time" :title="formattedDateUTC">{{ formattedDate }}</span>
+                <span class="time" :title="formattedDateUTC">{{
+                  formattedDate
+                }}</span>
               </v-list-item-subtitle>
               <v-list-item-content v-if="$scopedSlots['content']" class="py-0">
                 <slot name="content"></slot>
@@ -31,7 +36,7 @@
                   <v-col cols="auto">
                     <commit-chip :commitHash="commit.hash"></commit-chip>
                   </v-col>
-                  <span :class="$scopedSlots['actions'] ? ['pl-3']: ['']">
+                  <span :class="$scopedSlots['actions'] ? ['pl-3'] : ['']">
                     <slot name="actions"></slot>
                   </span>
                 </v-row>

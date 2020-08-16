@@ -174,7 +174,6 @@ export default class MultipleRunOverview extends Vue {
     if (run instanceof RunDescription) {
       return []
     }
-    console.log(run)
 
     return run.differences.map(it => new RelevantChange(it))
   }
