@@ -22,7 +22,7 @@
                   </v-col>
                   <v-col cols="auto">
                     <commit-benchmark-actions
-                      :commit="commit"
+                      :commitDescription="commit"
                       :hasExistingBenchmark="commit.runs.length > 0"
                     ></commit-benchmark-actions>
                   </v-col>

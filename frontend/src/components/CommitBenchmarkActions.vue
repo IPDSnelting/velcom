@@ -31,7 +31,7 @@ import Component from 'vue-class-component'
 import { mdiHistory, mdiFlash, mdiOneUp } from '@mdi/js'
 import { Prop } from 'vue-property-decorator'
 import { vxm } from '../store'
-import { Commit } from '../store/types'
+import { CommitDescription } from '../store/types'
 
 @Component
 export default class CommitBenchmarkActions extends Vue {
@@ -39,7 +39,7 @@ export default class CommitBenchmarkActions extends Vue {
   private hasExistingBenchmark!: boolean
 
   @Prop()
-  private commit!: Commit
+  private commitDescription!: CommitDescription
 
   get isAdmin() {
     return vxm.userModule.isAdmin
@@ -47,13 +47,13 @@ export default class CommitBenchmarkActions extends Vue {
 
   private benchmark() {
     vxm.queueModule.startManualTask({
-      repoId: this.commit.repoID,
-      hash: this.commit.hash
+      repoId: this.commitDescription.repoId,
+      hash: this.commitDescription.hash
     })
   }
 
   private benchmarkUpwards() {
-    vxm.queueModule.dispatchQueueUpwardsOf(this.commit)
+    vxm.queueModule.dispatchQueueUpwardsOf(this.commitDescription)
   }
 
   // ============== ICONS ==============

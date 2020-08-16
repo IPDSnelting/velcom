@@ -1,5 +1,12 @@
 import { createModule, mutation, action } from 'vuex-class-component'
-import { Worker, Commit, Task, RepoId, CommitHash, TaskId } from '@/store/types'
+import {
+  Worker,
+  Task,
+  RepoId,
+  CommitHash,
+  TaskId,
+  CommitDescription
+} from '@/store/types'
 import axios from 'axios'
 import { taskFromJson, workerFromJson } from '@/util/QueueJsonHelper'
 
@@ -68,12 +75,12 @@ export class QueueStore extends VxModule {
   /**
    * Queues all commits upwards of (and including) the passed commit.
    *
-   * @param {Commit} commit the base commit to prioritize
+   * @param {CommitDescription} commit the base commit to prioritize
    * @returns {Promise<void>} a promise completing with an optional error
    * @memberof QueueModuleStore
    */
   @action
-  async dispatchQueueUpwardsOf(task: Commit): Promise<void> {
+  async dispatchQueueUpwardsOf(commit: CommitDescription): Promise<void> {
     // FIXME: Adjust API?
     throw new Error('Not implementable!')
   }

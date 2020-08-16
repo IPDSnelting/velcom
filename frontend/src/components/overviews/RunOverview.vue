@@ -32,7 +32,7 @@
     <template #actions v-if="!hideActions && commit" class="ml-3">
       <commit-benchmark-actions
         :hasExistingBenchmark="true"
-        :commit="commit"
+        :commitDescription="commit"
       ></commit-benchmark-actions>
       <slot name="actions"></slot>
     </template>
