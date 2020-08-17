@@ -12,4 +12,8 @@ public class PrepareTransferException extends Exception {
 		super(message, cause);
 	}
 
+	public PrepareTransferException(String message) {
+			super(message);
+	}
+
 }

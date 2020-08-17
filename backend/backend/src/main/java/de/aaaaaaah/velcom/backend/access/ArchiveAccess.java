@@ -1,9 +1,11 @@
 package de.aaaaaaah.velcom.backend.access;
 
-import de.aaaaaaah.velcom.backend.util.TransferUtils;
+import de.aaaaaaah.velcom.backend.access.archives.BenchRepoArchive;
+import de.aaaaaaah.velcom.backend.access.archives.RepoArchiveManager;
+import de.aaaaaaah.velcom.backend.access.archives.TarArchiveManager;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.entities.RemoteUrl;
-import de.aaaaaaah.velcom.backend.access.entities.TarSource;
+import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.entities.Task;
 import de.aaaaaaah.velcom.backend.access.exceptions.AddRepoException;
 import de.aaaaaaah.velcom.backend.access.exceptions.PrepareTransferException;
@@ -14,10 +16,9 @@ import de.aaaaaaah.velcom.backend.storage.repo.GuickCloning.CloneException;
 import de.aaaaaaah.velcom.backend.storage.repo.RepoStorage;
 import de.aaaaaaah.velcom.backend.storage.repo.exception.AddRepositoryException;
 import de.aaaaaaah.velcom.backend.storage.repo.exception.RepositoryAcquisitionException;
-import de.aaaaaaah.velcom.shared.util.FileHelper;
+import de.aaaaaaah.velcom.backend.util.TransferUtils;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
@@ -41,25 +42,30 @@ public class ArchiveAccess {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ArchiveAccess.class);
 	private static final String BENCH_REPO_DIR_NAME = "benchrepo";
 
-	private final Path repoArchivesRootDir;
-	private final Path tarArchivesRootDir;
 	private final RepoStorage repoStorage;
+
+	private final BenchRepoArchive benchRepoArchive;
+	private final RepoArchiveManager repoArchives;
+	private final TarArchiveManager tarArchives;
 
 	private final Object benchRepoLock = new Object();
 	private final RemoteUrl benchRepoUrl;
-	private final Path benchRepoClonePath;
-	private final Path benchRepoTarPath;
 	private CommitHash currentBenchRepoHash;
 
 	public ArchiveAccess(Path archivesRootDir, RemoteUrl benchRepoUrl, RepoStorage repoStorage)
 		throws IOException {
 
-		this.repoArchivesRootDir = archivesRootDir.resolve("repos");
-		this.tarArchivesRootDir = archivesRootDir.resolve("tars");
 		this.repoStorage = repoStorage;
 
-		this.benchRepoClonePath = archivesRootDir.resolve("benchrepo");
-		this.benchRepoTarPath = archivesRootDir.resolve("benchrepo.tar");
+		this.repoArchives = new RepoArchiveManager(archivesRootDir.resolve("repos"), repoStorage);
+
+		this.tarArchives = new TarArchiveManager(archivesRootDir.resolve("tars"));
+
+		this.benchRepoArchive = new BenchRepoArchive(
+			archivesRootDir.resolve("benchrepo"),
+			archivesRootDir.resolve("benchrepo.tar")
+		);
+
 		this.benchRepoUrl = benchRepoUrl;
 
 		// Initialize bench repo if it does not yet exist
@@ -83,10 +89,8 @@ public class ArchiveAccess {
 		}
 
 		// Clean up any archives that exist at this moment
-		FileHelper.deleteDirectoryOrFile(repoArchivesRootDir);
-		FileHelper.deleteDirectoryOrFile(tarArchivesRootDir);
-		Files.createDirectories(repoArchivesRootDir);
-		Files.createDirectories(tarArchivesRootDir);
+		repoArchives.deleteAll();
+		tarArchives.deleteAll();
 	}
 
 	public CommitHash getBenchRepoCommitHash() {
@@ -101,30 +105,24 @@ public class ArchiveAccess {
 	public void updateBenchRepo() throws RepoAccessException {
 		synchronized (this.benchRepoLock) {
 			try {
+				// 1.) Check if bench repo is currently in repo storage and clone again if not
 				if (!repoStorage.containsRepository(BENCH_REPO_DIR_NAME)) {
-					// bench repo not on disk => clone it
-					LOGGER.info("Missing benchmark repo on disk! Cloning it from: {}",
-						benchRepoUrl);
-					// Delete bench repo caches just to be safe
-					FileHelper.deleteDirectoryOrFile(benchRepoClonePath);
-					FileHelper.deleteDirectoryOrFile(benchRepoTarPath);
-					// And now clone bench repo from remote url
-					repoStorage.addRepository(BENCH_REPO_DIR_NAME, benchRepoUrl.getUrl());
+					LOGGER.info("Missing benchmark repo on disk! Cloning it from: {}", benchRepoUrl);
+					this.benchRepoArchive.delete(); // just to be safe
+					this.repoStorage.addRepository(BENCH_REPO_DIR_NAME, benchRepoUrl.getUrl());
 				}
 
-				// Check if remote url has changed
+				// 2.) Check if remote url has changed and reclone if that is the case
 				String localRemoteUrl = loadBenchmarkRepoRemoteUrl();
 
 				if (!localRemoteUrl.equals(this.benchRepoUrl.getUrl())) {
-					// remote url changed! => need to clone repo again and delete old archives
 					LOGGER.info("Remote url for benchmark repo has changed! Cloning it again...");
-					FileHelper.deleteDirectoryOrFile(benchRepoClonePath);
-					FileHelper.deleteDirectoryOrFile(benchRepoTarPath);
-					repoStorage.deleteRepository(BENCH_REPO_DIR_NAME);
-					repoStorage.addRepository(BENCH_REPO_DIR_NAME, benchRepoUrl.getUrl());
+					this.benchRepoArchive.delete();
+					this.repoStorage.deleteRepository(BENCH_REPO_DIR_NAME);
+					this.repoStorage.addRepository(BENCH_REPO_DIR_NAME, this.benchRepoUrl.getUrl());
 				}
 
-				// Check if commit hash has changed
+				// 3.) Check if commit hash has changed and delete archives if that is the case
 				CommitHash oldHash = getBenchRepoCommitHash();
 
 				try (Repository repo = repoStorage.acquireRepository(BENCH_REPO_DIR_NAME)) {
@@ -134,12 +132,10 @@ public class ArchiveAccess {
 				CommitHash newHash = loadLatestBenchRepoHash();
 
 				if (!oldHash.equals(newHash)) {
-					// commit hash was changed => bench repo was updated => remove old archives
-					FileHelper.deleteDirectoryOrFile(benchRepoClonePath);
-					FileHelper.deleteDirectoryOrFile(benchRepoTarPath);
+					LOGGER.info("Commit hash for benchmark repo has changed to: {}", newHash);
+					this.benchRepoArchive.delete();
 					this.currentBenchRepoHash = newHash;
 				}
-
 			} catch (RepositoryAcquisitionException | AddRepositoryException | IOException |
 				CloneException e) {
 
@@ -164,42 +160,20 @@ public class ArchiveAccess {
 		throws PrepareTransferException, TransferException {
 
 		synchronized (this.benchRepoLock) {
+			// 1.) Create archive if necessary
 			try {
-				// 1.) Create copy clone
-				if (!Files.exists(benchRepoClonePath)) {
-					// Create bench repo tar
-					TransferUtils.cloneRepo(
-						repoStorage, BENCH_REPO_DIR_NAME, benchRepoClonePath,
-						getBenchRepoCommitHash()
-					);
-				}
-
-				// 2.) Create tar file
-				if (!Files.exists(benchRepoTarPath)) {
-					try (OutputStream tarOut = Files.newOutputStream(benchRepoTarPath)) {
-						TransferUtils.tarRepo(benchRepoClonePath, tarOut); // tarRepo() also closes tarOut
-					}
-					catch (Exception e) {
-						try {
-							FileHelper.deleteDirectoryOrFile(benchRepoTarPath);
-						}
-						catch (Exception deleteException) {
-							LOGGER.error(
-								"Failed to delete bench repo tar after failed tar process", deleteException
-							);
-						}
-
-						throw e;
-					}
-				}
+				this.benchRepoArchive.createIfNecessary(
+					repoStorage, BENCH_REPO_DIR_NAME, getBenchRepoCommitHash()
+				);
 			} catch (Exception e) {
 				throw new PrepareTransferException("Failed to prepare bench repo for transfer", e);
 			}
 
-			// 3.) Transfer tar
+			// 2.) Transfer bench repo
 			try {
-				TransferUtils.transferTar(benchRepoTarPath, outputStream);
-			} catch (IOException e) {
+				Path tarFile = this.benchRepoArchive.getTar();
+				TransferUtils.transferTar(tarFile, outputStream);
+			} catch (Exception e) {
 				throw new TransferException("Failed to transfer bench repo", e);
 			}
 		}
@@ -220,31 +194,23 @@ public class ArchiveAccess {
 		throws PrepareTransferException, TransferException {
 
 		if (task.getSource().isRight()) {
-			TarSource tarSource = task.getSource().getRight().orElseThrow();
-			Path tarPath = tarArchivesRootDir.resolve(tarSource.getTarName());
-
-			try {
-				TransferUtils.transferTar(tarPath, outputStream);
-			} catch (IOException e) {
-				throw new TransferException(task, e);
-			}
+			throw new PrepareTransferException("tar transfers unsupported");
 		} else {
-			String dirName = task.getSource().getLeft().get().getRepoId().getDirectoryName();
+			RepoId repoId = task.getSource().getLeft().get().getRepoId();
 			CommitHash hash = task.getSource().getLeft().get().getHash();
 
-			// 1.) Create copy clone (and delete old one if there is one)
-			Path clonePath = repoArchivesRootDir.resolve(dirName + "_" + hash.getHash());
+			// 1.) Create archive
+			Path archive;
 
 			try {
-				FileHelper.deleteDirectoryOrFile(clonePath);
-				TransferUtils.cloneRepo(repoStorage, dirName, clonePath, hash);
+				archive = repoArchives.createIfNecessary(repoId, hash);
 			} catch (Exception e) {
 				throw new PrepareTransferException(task, e);
 			}
 
 			// 2.) Transfer with tar
 			try {
-				TransferUtils.tarRepo(clonePath, outputStream);
+				TransferUtils.tarRepo(archive, outputStream);
 			} catch (IOException e) {
 				throw new TransferException(task, e);
 			}
@@ -269,8 +235,10 @@ public class ArchiveAccess {
 	}
 
 	private String loadBenchmarkRepoRemoteUrl() throws RepositoryAcquisitionException {
-		try (Repository repo = repoStorage.acquireRepository(BENCH_REPO_DIR_NAME)) {
-			return repo.getConfig().getString("remote", "origin", "url");
+		synchronized (this.benchRepoLock) {
+			try (Repository repo = repoStorage.acquireRepository(BENCH_REPO_DIR_NAME)) {
+				return repo.getConfig().getString("remote", "origin", "url");
+			}
 		}
 	}
 
