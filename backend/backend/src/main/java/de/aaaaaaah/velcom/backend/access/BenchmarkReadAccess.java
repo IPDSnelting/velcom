@@ -23,6 +23,7 @@ import de.aaaaaaah.velcom.backend.access.entities.Run;
 import de.aaaaaaah.velcom.backend.access.entities.RunError;
 import de.aaaaaaah.velcom.backend.access.entities.RunId;
 import de.aaaaaaah.velcom.backend.access.entities.Unit;
+import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchRunException;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -122,10 +123,19 @@ public class BenchmarkReadAccess {
 	 *
 	 * @param id the run's id
 	 * @return the run, if one exists
+	 * @throws NoSuchRunException if no run with the given id is found
 	 */
-	public Run getRun(RunId id) {
-		// TODO implement
-		return null;
+	public Run getRun(RunId id) throws NoSuchRunException {
+		try (DSLContext db = databaseStorage.acquireContext()) {
+			Map<String, RunRecord> runRecordMap = db.selectFrom(RUN)
+				.where(RUN.ID.eq(id.getId().toString())).fetchMap(RUN.ID);
+
+			if (runRecordMap.isEmpty()) {
+				throw new NoSuchRunException(id);
+			}
+
+			return loadRunData(db, runRecordMap).get(0);
+		}
 	}
 
 	/**
