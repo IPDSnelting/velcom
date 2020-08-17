@@ -160,8 +160,14 @@ public class BenchmarkReadAccess {
 	 * @return all runs for the commit, ordered from latest to oldest.
 	 */
 	public List<Run> getAllRuns(RepoId repoId, CommitHash commitHash) {
-		// TODO implement
-		return List.of();
+		try (DSLContext db = databaseStorage.acquireContext()) {
+			Map<String, RunRecord> runRecordMap = db.selectFrom(RUN)
+				.where(RUN.REPO_ID.eq(repoId.getId().toString()))
+				.and(RUN.COMMIT_HASH.eq(commitHash.getHash()))
+				.fetchMap(RUN.ID);
+
+			return loadRunData(db, runRecordMap);
+		}
 	}
 
 	/**
