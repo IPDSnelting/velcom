@@ -86,7 +86,7 @@ public class BenchRepoArchive {
 		try {
 			FileHelper.deleteDirectoryOrFile(tarPath);
 		} catch (IOException e) {
-			LOGGER.error("Failed to delete bench repo clone directory", e);
+			LOGGER.error("Failed to delete bench tar file", e);
 		}
 	}
 

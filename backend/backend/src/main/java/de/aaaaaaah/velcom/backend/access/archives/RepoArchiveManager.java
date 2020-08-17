@@ -44,9 +44,7 @@ public class RepoArchiveManager {
 
 		Path archivePath = getArchivePath(repoId, commitHash);
 
-		if (Files.exists(archivePath)) {
-			return archivePath;
-		} else {
+		if (!Files.exists(archivePath)) {
 			try {
 				TransferUtils.cloneRepo(repoStorage, repoId.getDirectoryName(), archivePath, commitHash);
 			} catch (RepositoryAcquisitionException | CloneException | IOException e) {
@@ -74,7 +72,7 @@ public class RepoArchiveManager {
 		try {
 			FileHelper.deleteDirectoryOrFile(path);
 		} catch (IOException e) {
-			LOGGER.error("Failed to delete repo archive: {}", path);
+			LOGGER.error("Failed to delete repo archive: " + path, e);
 		}
 	}
 
