@@ -235,6 +235,8 @@ public class BenchmarkReadAccess {
 	}
 
 	private List<Run> loadRunData(DSLContext db, Map<String, RunRecord> runRecordMap) {
+		if (runRecordMap.isEmpty()) { return Collections.emptyList(); }
+
 		// 1.) Load measurements from database
 		Map<String, MeasurementRecord> measurementRecordMap = db.selectFrom(MEASUREMENT)
 			.where(MEASUREMENT.RUN_ID.in(runRecordMap.keySet()))
