@@ -78,7 +78,7 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 		});
 
 		// 2.) Invalidate measurement cache
-		run.getRepoSource().ifPresent(source -> measurementCache.remove(source.getRepoId()));
+		run.getRepoSource().ifPresent(source -> dimensionCache.remove(source.getRepoId()));
 
 		// 3.) Insert run into cache
 		synchronized (recentRunCache) {
@@ -167,7 +167,7 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 		}
 
 		// Invalidate measurement cache
-		measurementCache.remove(repoId);
+		dimensionCache.remove(repoId);
 
 		// Repopulate recent run cache
 		synchronized (recentRunCache) {
@@ -216,7 +216,7 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 		}
 
 		// Invalidate measurement cache
-		measurementCache.remove(repoId);
+		dimensionCache.remove(repoId);
 
 		// Invalidate recent run cache and reload it from database
 		this.reloadRecentRunCache();

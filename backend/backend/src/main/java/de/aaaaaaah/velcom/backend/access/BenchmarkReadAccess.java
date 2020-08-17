@@ -3,7 +3,6 @@ package de.aaaaaaah.velcom.backend.access;
 import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
-import static java.util.stream.Collectors.toUnmodifiableSet;
 import static org.jooq.codegen.db.Tables.MEASUREMENT;
 import static org.jooq.codegen.db.Tables.MEASUREMENT_VALUE;
 import static org.jooq.codegen.db.tables.Run.RUN;
@@ -11,6 +10,7 @@ import static org.jooq.codegen.db.tables.Run.RUN;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.access.entities.Dimension;
 import de.aaaaaaah.velcom.backend.access.entities.ErrorType;
 import de.aaaaaaah.velcom.backend.access.entities.Interpretation;
 import de.aaaaaaah.velcom.backend.access.entities.Measurement;
@@ -30,6 +30,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -37,9 +38,11 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 import org.jooq.DSLContext;
 import org.jooq.codegen.db.tables.records.MeasurementRecord;
 import org.jooq.codegen.db.tables.records.RunRecord;
+import org.jooq.impl.DSL;
 
 /**
  * Provides read access to benchmark related entities such as runs and measurements.
@@ -56,7 +59,7 @@ public class BenchmarkReadAccess {
 	protected final Map<RepoId, Cache<CommitHash, Run>> repoRunCache = new ConcurrentHashMap<>();
 	protected final List<Run> recentRunCache = new ArrayList<>();
 	protected final Comparator<Run> recentRunCacheOrder = comparing(Run::getStartTime).reversed();
-	protected final Map<RepoId, Set<MeasurementName>> measurementCache = new ConcurrentHashMap<>();
+	protected final Map<RepoId, Set<Dimension>> dimensionCache = new ConcurrentHashMap<>();
 
 	public BenchmarkReadAccess(DatabaseStorage databaseStorage, RepoReadAccess repoAccess) {
 		this.databaseStorage = Objects.requireNonNull(databaseStorage);
@@ -220,38 +223,73 @@ public class BenchmarkReadAccess {
 	}
 
 	/**
-	 * Gets all available measurements for a given repository.
+	 * Gets all available dimensions for the specified repositories.
 	 *
-	 * @param repoId the id of the repository
-	 * @return a collection of measurements
+	 * @param repoIds the ids of the repositories
+	 * @return a map with each repo id as a key mapping to the set of available dimensions for the
+	 * 	given repository
 	 */
-	public Collection<MeasurementName> getAvailableMeasurements(RepoId repoId) {
-		// Check cache
+	public Map<RepoId, Set<Dimension>> getAvailableDimensions(List<RepoId> repoIds) {
+		List<String> repoIdStrList = repoIds.stream()
+			.map(repoId -> repoId.getId().toString())
+			.collect(Collectors.toCollection(ArrayList::new));
+
+		Map<RepoId, Set<Dimension>> resultMap = new HashMap<>();
+
+		// 1.) Check cache
 		checkCachesForDeletedRepos();
 
-		Set<MeasurementName> result = measurementCache.get(repoId);
-		if (result != null) {
-			return result;
+		for (RepoId repoId : repoIds) {
+			Set<Dimension> dimensions = dimensionCache.get(repoId);
+
+			if (dimensions != null) {
+				resultMap.put(repoId, Collections.unmodifiableSet(dimensions));
+				repoIdStrList.remove(repoId.getId().toString());
+			} else {
+				resultMap.put(repoId, new HashSet<>()); // prepare for database query
+			}
 		}
 
-		// Check database
-		try (DSLContext db = databaseStorage.acquireContext()) {
-			result = db.selectDistinct(MEASUREMENT.BENCHMARK, MEASUREMENT.METRIC)
-				.from(MEASUREMENT)
-				.join(RUN).on(MEASUREMENT.RUN_ID.eq(RUN.ID))
-				.where(RUN.REPO_ID.eq(repoId.getId().toString()))
-				.stream()
-				.map(record -> new MeasurementName(record.value1(), record.value2()))
-				.collect(toUnmodifiableSet());
+		// 2.) Check database
+		if (!repoIdStrList.isEmpty()) {
+			try (DSLContext db = databaseStorage.acquireContext()) {
+				// SQLite guarantees that we get the correct row (correct interp and unit)
+				// in each group. (See https://sqlite.org/lang_select.html#bareagg)
+				db.select(RUN.REPO_ID, MEASUREMENT.BENCHMARK, MEASUREMENT.METRIC,
+					MEASUREMENT.UNIT, MEASUREMENT.INTERPRETATION, DSL.max(RUN.STOP_TIME))
+					.from(MEASUREMENT)
+					.join(RUN).on(RUN.ID.eq(MEASUREMENT.RUN_ID))
+					.groupBy(RUN.REPO_ID, MEASUREMENT.BENCHMARK, MEASUREMENT.METRIC)
+					.forEach(record -> {
+						RepoId repoId = new RepoId(UUID.fromString(record.value1()));
+						MeasurementName name = new MeasurementName(
+							record.value2(),
+							record.value3()
+						);
+						Unit unit = new Unit(record.value4());
+						Interpretation interp = Interpretation.fromTextualRepresentation(record.value5());
+						Dimension dimension = new Dimension(name, unit, interp);
 
-			measurementCache.put(repoId, result);
+						resultMap.get(repoId).add(dimension);
+					});
+			}
+
+			// 3.) Update cache with data collected from database
+			for (String repoIdStr : repoIdStrList) { // <- all repos in this list are not in cache
+				RepoId repoId = new RepoId(UUID.fromString(repoIdStr));
+				// Create copy so that no mutation can occur from outside
+				Set<Dimension> dimensionSet = new HashSet<>(resultMap.get(repoId));
+				dimensionCache.put(repoId, dimensionSet);
+			}
 		}
 
-		return result;
+		return resultMap;
 	}
 
 	private List<Run> loadRunData(DSLContext db, Map<String, RunRecord> runRecordMap) {
-		if (runRecordMap.isEmpty()) { return Collections.emptyList(); }
+		if (runRecordMap.isEmpty()) {
+			return Collections.emptyList();
+		}
 
 		// 1.) Load measurements from database
 		Map<String, MeasurementRecord> measurementRecordMap = db.selectFrom(MEASUREMENT)
@@ -368,7 +406,7 @@ public class BenchmarkReadAccess {
 		Collection<RepoId> ids = repoAccess.getAllRepoIds();
 
 		repoRunCache.keySet().removeIf(repoId -> !ids.contains(repoId));
-		measurementCache.keySet().removeIf(repoId -> !ids.contains(repoId));
+		dimensionCache.keySet().removeIf(repoId -> !ids.contains(repoId));
 
 		synchronized (recentRunCache) {
 			boolean recentRunRepoWasDeleted = recentRunCache.stream()
