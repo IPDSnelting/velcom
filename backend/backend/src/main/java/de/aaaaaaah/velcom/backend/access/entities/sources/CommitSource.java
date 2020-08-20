@@ -1,16 +1,18 @@
-package de.aaaaaaah.velcom.backend.access.entities;
+package de.aaaaaaah.velcom.backend.access.entities.sources;
 
+import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import java.util.Objects;
 
 /**
  * A source describing that the task originated from a commit in a repository.
  */
-public class RepoSource {
+public class CommitSource {
 
 	private final RepoId repoId;
 	private final CommitHash hash;
 
-	public RepoSource(RepoId repoId, CommitHash hash) {
+	public CommitSource(RepoId repoId, CommitHash hash) {
 		this.repoId = Objects.requireNonNull(repoId);
 		this.hash = Objects.requireNonNull(hash);
 	}
@@ -31,7 +33,7 @@ public class RepoSource {
 		if (o == null || getClass() != o.getClass()) {
 			return false;
 		}
-		RepoSource source = (RepoSource) o;
+		CommitSource source = (CommitSource) o;
 		return repoId.equals(source.repoId) &&
 			hash.equals(source.hash);
 	}
@@ -43,7 +45,7 @@ public class RepoSource {
 
 	@Override
 	public String toString() {
-		return "RepoSource{" +
+		return "CommitSource{" +
 			"repoId=" + repoId +
 			", hash=" + hash +
 			'}';

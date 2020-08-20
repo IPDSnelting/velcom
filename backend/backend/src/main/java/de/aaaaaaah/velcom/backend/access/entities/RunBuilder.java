@@ -1,12 +1,15 @@
 package de.aaaaaaah.velcom.backend.access.entities;
 
-import java.util.Optional;
-import javax.annotation.Nullable;
+import de.aaaaaaah.velcom.backend.access.entities.sources.CommitSource;
+import de.aaaaaaah.velcom.backend.access.entities.sources.TarSource;
+import de.aaaaaaah.velcom.backend.util.Either;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import javax.annotation.Nullable;
 
 /**
  * A basic builder that allows the creation of new runs.
@@ -32,7 +35,7 @@ public class RunBuilder {
 			runnerInfo,
 			startTime,
 			stopTime,
-			task.getSource().getLeft().orElse(null),
+			task.getSource(),
 			null
 		);
 	}
@@ -46,11 +49,11 @@ public class RunBuilder {
 	 * @param startTime the start time
 	 * @param stopTime the stop time
 	 * @param errorMessage the error message
-	 * @param errorType what kind of error occured
+	 * @param runErrorType what kind of error occured
 	 * @return a new builder instance
 	 */
 	public static RunBuilder failed(Task task, String runnerName, String runnerInfo,
-		Instant startTime, Instant stopTime, String errorMessage, ErrorType errorType) {
+		Instant startTime, Instant stopTime, String errorMessage, RunErrorType runErrorType) {
 		return new RunBuilder(
 			new RunId(task.getId().getId()),
 			task.getAuthor(),
@@ -58,8 +61,8 @@ public class RunBuilder {
 			runnerInfo,
 			startTime,
 			stopTime,
-			task.getSource().getLeft().orElse(null),
-			new RunError(errorMessage, errorType)
+			task.getSource(),
+			new RunError(errorMessage, runErrorType)
 		);
 	}
 
@@ -69,13 +72,13 @@ public class RunBuilder {
 	private final String runnerInfo;
 	private final Instant startTime;
 	private final Instant stopTime;
-	private final Optional<RepoSource> repoSource;
+	private final Optional<Either<CommitSource, TarSource>> source;
 	private final List<Measurement> measurementList;
 	private final Optional<RunError> error;
 
 	private RunBuilder(RunId runId, String author, String runnerName, String runnerInfo,
 		Instant startTime, Instant stopTime,
-		@Nullable RepoSource repoSource, @Nullable RunError error) {
+		@Nullable Either<CommitSource, TarSource> source, @Nullable RunError error) {
 
 		this.runId = runId;
 		this.author = Objects.requireNonNull(author);
@@ -83,7 +86,7 @@ public class RunBuilder {
 		this.runnerInfo = Objects.requireNonNull(runnerInfo);
 		this.startTime = Objects.requireNonNull(startTime);
 		this.stopTime = Objects.requireNonNull(stopTime);
-		this.repoSource = Optional.ofNullable(repoSource);
+		this.source = Optional.ofNullable(source);
 		this.error = Optional.ofNullable(error);
 		this.measurementList = error != null ? Collections.emptyList() : new ArrayList<>();
 	}
@@ -141,7 +144,7 @@ public class RunBuilder {
 				runnerInfo,
 				startTime,
 				stopTime,
-				repoSource.orElse(null),
+				source.orElse(null),
 				this.error.get()
 			);
 		} else {
@@ -156,7 +159,7 @@ public class RunBuilder {
 				runnerInfo,
 				startTime,
 				stopTime,
-				repoSource.orElse(null),
+				source.orElse(null),
 				measurementList
 			);
 		}
@@ -171,7 +174,7 @@ public class RunBuilder {
 			", runnerInfo='" + runnerInfo + '\'' +
 			", startTime=" + startTime +
 			", stopTime=" + stopTime +
-			", repoSource=" + repoSource +
+			", source=" + source +
 			", measurementList=" + measurementList +
 			", error=" + error +
 			'}';

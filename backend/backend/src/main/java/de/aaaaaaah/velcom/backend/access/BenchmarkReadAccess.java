@@ -11,14 +11,14 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.entities.Dimension;
-import de.aaaaaaah.velcom.backend.access.entities.ErrorType;
+import de.aaaaaaah.velcom.backend.access.entities.RunErrorType;
 import de.aaaaaaah.velcom.backend.access.entities.Interpretation;
 import de.aaaaaaah.velcom.backend.access.entities.Measurement;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementError;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementName;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementValues;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
-import de.aaaaaaah.velcom.backend.access.entities.RepoSource;
+import de.aaaaaaah.velcom.backend.access.entities.sources.CommitSource;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
 import de.aaaaaaah.velcom.backend.access.entities.RunError;
 import de.aaaaaaah.velcom.backend.access.entities.RunId;
@@ -210,7 +210,7 @@ public class BenchmarkReadAccess {
 					.fetchMap(RUN.ID);
 
 				loadRunData(db, runRecordMap).forEach(run -> {
-					CommitHash hash = run.getRepoSource().orElseThrow().getHash();
+					CommitHash hash = run.getSource().orElseThrow().getHash();
 					resultMap.put(hash, run);
 
 					// Insert run into cache
@@ -349,10 +349,10 @@ public class BenchmarkReadAccess {
 			.map(runRecord -> {
 				RunId runId = new RunId(UUID.fromString(runRecord.getId()));
 
-				RepoSource nullableSource = null;
+				CommitSource nullableSource = null;
 
 				if (runRecord.getRepoId() != null) {
-					nullableSource = new RepoSource(
+					nullableSource = new CommitSource(
 						new RepoId(UUID.fromString(runRecord.getRepoId())),
 						new CommitHash(runRecord.getCommitHash())
 					);
@@ -361,7 +361,7 @@ public class BenchmarkReadAccess {
 				if (runRecord.getError() != null) {
 					RunError error = new RunError(
 						runRecord.getError(),
-						ErrorType.fromTextualRepresentation(runRecord.getErrorType())
+						RunErrorType.fromTextualRepresentation(runRecord.getErrorType())
 					);
 
 					return new Run(
@@ -410,7 +410,7 @@ public class BenchmarkReadAccess {
 
 		synchronized (recentRunCache) {
 			boolean recentRunRepoWasDeleted = recentRunCache.stream()
-				.flatMap(run -> run.getRepoSource().stream())
+				.flatMap(run -> run.getSource().stream())
 				.anyMatch(source -> !ids.contains(source.getRepoId()));
 
 			if (recentRunRepoWasDeleted) {

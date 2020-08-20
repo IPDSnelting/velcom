@@ -1,4 +1,4 @@
-package de.aaaaaaah.velcom.backend.access.entities;
+package de.aaaaaaah.velcom.backend.access.entities.sources;
 
 import java.util.Objects;
 

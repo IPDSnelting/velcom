@@ -8,7 +8,7 @@ import de.aaaaaaah.velcom.backend.access.RepoReadAccess;
 import de.aaaaaaah.velcom.backend.access.TaskWriteAccess;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
-import de.aaaaaaah.velcom.backend.access.entities.RepoSource;
+import de.aaaaaaah.velcom.backend.access.entities.sources.CommitSource;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
 import de.aaaaaaah.velcom.backend.access.entities.Task;
 import de.aaaaaaah.velcom.backend.access.entities.TaskId;
@@ -117,7 +117,7 @@ public class Queue {
 	 */
 	public void addCommits(String author, RepoId repoId, List<CommitHash> commitHash) {
 		List<Task> tasks = commitHash.stream()
-			.map(hash -> new Task(author, new RepoSource(repoId, hash)))
+			.map(hash -> new Task(author, new CommitSource(repoId, hash)))
 			.collect(toList());
 
 		taskAccess.insertTasks(tasks);

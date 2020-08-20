@@ -9,9 +9,9 @@ import java.util.Objects;
 public class RunError {
 
 	private final String errorMessage;
-	private final ErrorType type;
+	private final RunErrorType type;
 
-	public RunError(String errorMessage, ErrorType type) {
+	public RunError(String errorMessage, RunErrorType type) {
 		this.errorMessage = Objects.requireNonNull(errorMessage);
 		this.type = Objects.requireNonNull(type);
 	}
@@ -20,7 +20,7 @@ public class RunError {
 		return errorMessage;
 	}
 
-	public ErrorType getType() {
+	public RunErrorType getType() {
 		return type;
 	}
 

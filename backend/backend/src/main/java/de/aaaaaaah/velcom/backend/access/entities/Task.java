@@ -1,5 +1,7 @@
 package de.aaaaaaah.velcom.backend.access.entities;
 
+import de.aaaaaaah.velcom.backend.access.entities.sources.CommitSource;
+import de.aaaaaaah.velcom.backend.access.entities.sources.TarSource;
 import de.aaaaaaah.velcom.backend.util.Either;
 
 import java.time.Instant;
@@ -14,9 +16,9 @@ public class Task {
     private final int priority;
     private final Instant insertTime;
     private final Instant updateTime;
-    private final Either<RepoSource, TarSource> source;
+    private final Either<CommitSource, TarSource> source;
 
-    public Task(String author, RepoSource source) {
+    public Task(String author, CommitSource source) {
         this(new TaskId(), author, DEFAULT_PRIORITY, Instant.now(), Instant.now(), Either.ofLeft(source));
     }
 
@@ -24,7 +26,7 @@ public class Task {
         this(new TaskId(), author, DEFAULT_PRIORITY, Instant.now(), Instant.now(), Either.ofRight(source));
     }
 
-    public Task(TaskId id, String author, int priority, Instant insertTime, Instant updateTime, RepoSource source) {
+    public Task(TaskId id, String author, int priority, Instant insertTime, Instant updateTime, CommitSource source) {
         this(id, author, priority, insertTime, updateTime, Either.ofLeft(source));
     }
 
@@ -33,7 +35,7 @@ public class Task {
     }
 
     private Task(TaskId id, String author, int priority, Instant insertTime, Instant updateTime,
-                Either<RepoSource, TarSource> source) {
+                Either<CommitSource, TarSource> source) {
         this.id = Objects.requireNonNull(id);
         this.author = Objects.requireNonNull(author);
         this.priority = priority;
@@ -62,7 +64,7 @@ public class Task {
         return updateTime;
     }
 
-    public Either<RepoSource, TarSource> getSource() {
+    public Either<CommitSource, TarSource> getSource() {
         return source;
     }
 

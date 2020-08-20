@@ -62,16 +62,16 @@ public class CommitComparison {
 	 * @return ArrayList of commitDifferences
 	 */
 	public Collection<CommitDifference> getDifferences() {
-		if (firstRun == null || firstRun.getResult().isRight()
-			|| secondRun == null || secondRun.getResult().isRight()) {
+		if (firstRun == null || firstRun.getResult().isLeft()
+			|| secondRun == null || secondRun.getResult().isLeft()) {
 			return new ArrayList<>();
 		}
 
 		Collection<CommitDifference> commitDifferences = new ArrayList<>();
 
 		// Put the measurements of the second run into a map
-		Collection<Measurement> firstMeasurements = firstRun.getResult().getLeft().get();
-		Collection<Measurement> secondMeasurements = secondRun.getResult().getLeft().get();
+		Collection<Measurement> firstMeasurements = firstRun.getResult().getRight().get();
+		Collection<Measurement> secondMeasurements = secondRun.getResult().getRight().get();
 		Map<MeasurementName, Measurement> secondMap = new HashMap<>();
 		for (Measurement m : secondMeasurements) {
 			secondMap.put(m.getMeasurementName(), m);

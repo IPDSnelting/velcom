@@ -1,6 +1,6 @@
 package de.aaaaaaah.velcom.backend.runner.single;
 
-import de.aaaaaaah.velcom.backend.access.entities.ErrorType;
+import de.aaaaaaah.velcom.backend.access.entities.RunErrorType;
 import de.aaaaaaah.velcom.backend.access.entities.Interpretation;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementName;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
@@ -224,7 +224,7 @@ public class TeleRunner {
 			resultReply.getStartTime(),
 			resultReply.getStopTime(),
 			resultReply.getError().orElseThrow(),
-			ErrorType.BENCH_SCRIPT_ERROR
+			RunErrorType.BENCH_SCRIPT_ERROR
 		);
 		return builder.build();
 	}
@@ -241,7 +241,7 @@ public class TeleRunner {
 				resultReply.getStartTime(),
 				resultReply.getStopTime(),
 				result.getError().get(),
-				ErrorType.BENCH_SCRIPT_ERROR
+				RunErrorType.BENCH_SCRIPT_ERROR
 			).build();
 		}
 
@@ -354,7 +354,7 @@ public class TeleRunner {
 			start,
 			Instant.now(),
 			"Archiving failed. Error:\n " + ExceptionHelper.getStackTrace(exception),
-			ErrorType.VELCOM_ERROR
+			RunErrorType.VELCOM_ERROR
 		).build();
 	}
 

@@ -57,20 +57,20 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 			runRecord.setStartTime(Timestamp.from(run.getStartTime()));
 			runRecord.setStopTime(Timestamp.from(run.getStopTime()));
 
-			run.getRepoSource().ifPresent(repoSource -> {
+			run.getSource().ifPresent(repoSource -> {
 				runRecord.setRepoId(repoSource.getRepoId().getId().toString());
 				runRecord.setCommitHash(repoSource.getHash().getHash());
 			});
 
-			if (run.getResult().isRight()) {
-				RunError error = run.getResult().getRight().orElseThrow();
+			if (run.getResult().isLeft()) {
+				RunError error = run.getResult().getLeft().orElseThrow();
 				runRecord.setError(error.getMessage());
 				runRecord.setErrorType(error.getType().getTextualRepresentation());
 				runRecord.insert();
 			} else {
 				runRecord.insert();
 
-				Collection<Measurement> measurements = run.getResult().getLeft().orElseThrow();
+				Collection<Measurement> measurements = run.getResult().getRight().orElseThrow();
 				for (Measurement measurement : measurements) {
 					insertMeasurement(db, measurement);
 				}
@@ -78,7 +78,7 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 		});
 
 		// 2.) Invalidate measurement cache
-		run.getRepoSource().ifPresent(source -> dimensionCache.remove(source.getRepoId()));
+		run.getSource().ifPresent(source -> dimensionCache.remove(source.getRepoId()));
 
 		// 3.) Insert run into cache
 		synchronized (recentRunCache) {
@@ -94,7 +94,7 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 		}
 
 		// 4.) If run is associated with a repository, insert into repoCache
-		run.getRepoSource().ifPresent(repoSource -> {
+		run.getSource().ifPresent(repoSource -> {
 			Cache<CommitHash, Run> cache = repoRunCache.computeIfAbsent(
 				repoSource.getRepoId(),
 				r -> RUN_CACHE_BUILDER.build()
@@ -184,11 +184,11 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 
 		for (CommitHash copiedKey : copiedKeys) {
 			Run run = repoRunCache.getIfPresent(copiedKey);
-			if (run == null || run.getResult().isRight()) {
+			if (run == null || run.getResult().isLeft()) {
 				continue; // No measurements for this run => skip!
 			}
 
-			Collection<Measurement> measurements = run.getResult().getLeft().get();
+			Collection<Measurement> measurements = run.getResult().getRight().get();
 
 			// Check if target measurement name is one of the measurements
 			List<MeasurementName> mNames = measurements.stream()
@@ -201,7 +201,7 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 
 			// This run contains the deleted measurement => need to invalidate run instance in cache
 			// (since run was cached in repoRunCache, the run must have a repo source)
-			repoRunCache.invalidate(run.getRepoSource().orElseThrow().getHash());
+			repoRunCache.invalidate(run.getSource().orElseThrow().getHash());
 		}
 	}
 

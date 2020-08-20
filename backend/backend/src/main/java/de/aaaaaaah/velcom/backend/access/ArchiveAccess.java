@@ -3,7 +3,7 @@ package de.aaaaaaah.velcom.backend.access;
 import de.aaaaaaah.velcom.backend.util.TransferUtils;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.entities.RemoteUrl;
-import de.aaaaaaah.velcom.backend.access.entities.TarSource;
+import de.aaaaaaah.velcom.backend.access.entities.sources.TarSource;
 import de.aaaaaaah.velcom.backend.access.entities.Task;
 import de.aaaaaaah.velcom.backend.access.exceptions.AddRepoException;
 import de.aaaaaaah.velcom.backend.access.exceptions.PrepareTransferException;

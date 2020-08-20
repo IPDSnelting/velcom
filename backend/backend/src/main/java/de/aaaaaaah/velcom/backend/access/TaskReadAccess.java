@@ -4,8 +4,8 @@ import static org.jooq.codegen.db.Tables.TASK;
 
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
-import de.aaaaaaah.velcom.backend.access.entities.RepoSource;
-import de.aaaaaaah.velcom.backend.access.entities.TarSource;
+import de.aaaaaaah.velcom.backend.access.entities.sources.CommitSource;
+import de.aaaaaaah.velcom.backend.access.entities.sources.TarSource;
 import de.aaaaaaah.velcom.backend.access.entities.Task;
 import de.aaaaaaah.velcom.backend.access.entities.TaskId;
 import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchTaskException;
@@ -77,7 +77,7 @@ public class TaskReadAccess {
 					taskRecord.getPriority(),
 					taskRecord.getInsertTime().toInstant(),
 					taskRecord.getUpdateTime().toInstant(),
-					new RepoSource(repoId, hash)
+					new CommitSource(repoId, hash)
 				);
 			}
 		}
@@ -109,7 +109,7 @@ public class TaskReadAccess {
 				taskRecord.getPriority(),
 				taskRecord.getInsertTime().toInstant(),
 				taskRecord.getUpdateTime().toInstant(),
-				new RepoSource(repoId, hash)
+				new CommitSource(repoId, hash)
 			);
 		}
 

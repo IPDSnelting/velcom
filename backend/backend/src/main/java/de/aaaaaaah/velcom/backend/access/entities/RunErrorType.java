@@ -3,7 +3,7 @@ package de.aaaaaaah.velcom.backend.access.entities;
 /**
  * Describes which type of error has occurred when trying to perform a benchmark run.
  */
-public enum ErrorType {
+public enum RunErrorType {
 
 	/**
 	 * The benchmark script returned a global error.
@@ -11,13 +11,13 @@ public enum ErrorType {
 	BENCH_SCRIPT_ERROR("BENCH"),
 
 	/**
-	 * Some error occured in velcom which prevented the execution of the benchmark script.
+	 * Some error occurred in velcom which prevented the execution of the benchmark script.
 	 */
 	VELCOM_ERROR("VELCOM");
 
 	private final String textualRepresentation;
 
-	ErrorType(String textualRepresentation) {
+	RunErrorType(String textualRepresentation) {
 		this.textualRepresentation = textualRepresentation;
 	}
 
@@ -32,12 +32,12 @@ public enum ErrorType {
 	 * @return the error type that matches the given string representation
 	 * @throws IllegalArgumentException if no error type matches the given string representation
 	 */
-	public static ErrorType fromTextualRepresentation(String representation)
+	public static RunErrorType fromTextualRepresentation(String representation)
 		throws IllegalArgumentException {
 
-		for (ErrorType errorType : ErrorType.values()) {
-			if (errorType.getTextualRepresentation().equals(representation)) {
-				return errorType;
+		for (RunErrorType runErrorType : RunErrorType.values()) {
+			if (runErrorType.getTextualRepresentation().equals(representation)) {
+				return runErrorType;
 			}
 		}
 

@@ -83,7 +83,7 @@ public class RecentBenchmarkCollector {
 		// TODO: Remove this by completely reworking the recent benchmark collector
 		// so that it also works with tars
 		runs = runs.stream()
-			.filter(run -> run.getRepoSource().isPresent())
+			.filter(run -> run.getSource().isPresent())
 			.collect(Collectors.toList());
 
 		// 1.) Filter out runs that belong to the same commit
@@ -92,8 +92,8 @@ public class RecentBenchmarkCollector {
 		Iterator<Run> iterator = runs.iterator();
 		while (iterator.hasNext()) {
 			Run run = iterator.next();
-			RepoId repoId = run.getRepoSource().get().getRepoId();
-			CommitHash hash = run.getRepoSource().get().getHash();
+			RepoId repoId = run.getSource().get().getRepoId();
+			CommitHash hash = run.getSource().get().getHash();
 
 			if (!commitToRunMap.containsKey(repoId)) {
 				commitToRunMap.put(repoId, new HashMap<>());
@@ -115,8 +115,8 @@ public class RecentBenchmarkCollector {
 
 		while (iterator.hasNext()) {
 			Run run = iterator.next();
-			RepoId repoId = run.getRepoSource().get().getRepoId();
-			CommitHash hash = run.getRepoSource().get().getHash();
+			RepoId repoId = run.getSource().get().getRepoId();
+			CommitHash hash = run.getSource().get().getHash();
 
 			missingParentRuns.computeIfAbsent(repoId, i -> new ArrayList<>());
 
@@ -148,8 +148,8 @@ public class RecentBenchmarkCollector {
 				Map<CommitHash, Run> latestRuns = benchmarkAccess.getLatestRuns(repoId, runHashes);
 
 				for (Run run : latestRuns.values()) {
-					RepoId runRepoId = run.getRepoSource().get().getRepoId();
-					CommitHash runHash = run.getRepoSource().get().getHash();
+					RepoId runRepoId = run.getSource().get().getRepoId();
+					CommitHash runHash = run.getSource().get().getHash();
 					commitToRunMap.get(runRepoId).put(runHash, run);
 				}
 			});
@@ -173,8 +173,8 @@ public class RecentBenchmarkCollector {
 		iterator = runs.iterator();
 		while (iterator.hasNext()) {
 			Run run = iterator.next();
-			RepoId repoId = run.getRepoSource().get().getRepoId();
-			CommitHash commitHash = run.getRepoSource().get().getHash();
+			RepoId repoId = run.getSource().get().getRepoId();
+			CommitHash commitHash = run.getSource().get().getHash();
 
 			CommitHash parentHash = parentMapper.getParent(repoId, commitHash)
 				.orElse(null);

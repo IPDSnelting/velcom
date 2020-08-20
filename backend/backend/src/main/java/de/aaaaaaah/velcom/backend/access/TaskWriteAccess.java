@@ -6,8 +6,8 @@ import static org.jooq.codegen.db.Tables.TASK;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.entities.CommitId;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
-import de.aaaaaaah.velcom.backend.access.entities.RepoSource;
-import de.aaaaaaah.velcom.backend.access.entities.TarSource;
+import de.aaaaaaah.velcom.backend.access.entities.sources.CommitSource;
+import de.aaaaaaah.velcom.backend.access.entities.sources.TarSource;
 import de.aaaaaaah.velcom.backend.access.entities.Task;
 import de.aaaaaaah.velcom.backend.access.entities.TaskId;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
@@ -100,7 +100,7 @@ public class TaskWriteAccess extends TaskReadAccess {
 		}
 
 		final Set<TaskId> inDatabaseTaskIds = new HashSet<>();
-		final Set<RepoSource> inDatabaseTaskCommitIds = new HashSet<>();
+		final Set<CommitSource> inDatabaseTaskCommitIds = new HashSet<>();
 		final Condition finalCondition = condition;
 
 		db.transaction(configuration -> {
@@ -112,7 +112,7 @@ public class TaskWriteAccess extends TaskReadAccess {
 				.forEach(taskRecord -> {
 					inDatabaseTaskIds.add(new TaskId(UUID.fromString(taskRecord.getId())));
 					if (taskRecord.getCommitHash() != null) {
-						inDatabaseTaskCommitIds.add(new RepoSource(
+						inDatabaseTaskCommitIds.add(new CommitSource(
 							new RepoId(UUID.fromString(taskRecord.getRepoId())),
 							new CommitHash(taskRecord.getCommitHash())
 						));
@@ -140,13 +140,13 @@ public class TaskWriteAccess extends TaskReadAccess {
 						task.getSource().getRight().map(TarSource::getTarName).orElse(null),
 						task.getSource()
 							.getLeft()
-							.map(RepoSource::getRepoId)
+							.map(CommitSource::getRepoId)
 							.map(RepoId::getId)
 							.map(UUID::toString)
 							.orElse(null),
 						task.getSource()
 							.getLeft()
-							.map(RepoSource::getHash)
+							.map(CommitSource::getHash)
 							.map(CommitHash::getHash)
 							.orElse(null)
 					);
