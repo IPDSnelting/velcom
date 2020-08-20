@@ -5,12 +5,15 @@ import de.aaaaaaah.velcom.backend.access.RepoReadAccess;
 import de.aaaaaaah.velcom.backend.access.TokenReadAccess;
 import de.aaaaaaah.velcom.backend.access.entities.Branch;
 import de.aaaaaaah.velcom.backend.access.entities.BranchName;
-import de.aaaaaaah.velcom.backend.access.entities.Interpretation;
+import de.aaaaaaah.velcom.backend.access.entities.Dimension;
+import de.aaaaaaah.velcom.backend.access.entities.Repo;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimension;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRepo;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.ws.rs.GET;
@@ -40,7 +43,11 @@ public class AllReposEndpoint {
 
 	@GET
 	public GetReply get() {
-		List<JsonRepo> repos = repoAccess.getAllRepos().stream()
+		Collection<Repo> repos = repoAccess.getAllRepos();
+		List<RepoId> repoIds = repos.stream().map(Repo::getRepoId).collect(Collectors.toList());
+		Map<RepoId, Set<Dimension>> allDimensions = benchmarkAccess.getAvailableDimensions(repoIds);
+
+		List<JsonRepo> jsonRepos = repos.stream()
 			.map(repo -> {
 				RepoId repoId = repo.getRepoId();
 
@@ -59,14 +66,13 @@ public class AllReposEndpoint {
 					.map(BranchName::getName)
 					.collect(Collectors.toList());
 
-				// TODO get correct unit and interpretation instead of placeholder values
-				List<JsonDimension> dimensions = benchmarkAccess.getAvailableMeasurements(repoId).stream()
+				List<JsonDimension> dimensions = allDimensions.get(repoId).stream()
 					.map(dimension -> new JsonDimension(
-						dimension.getBenchmark(),
-						dimension.getMetric(),
-						"",
-						Interpretation.NEUTRAL)
-					)
+						dimension.getName().getBenchmark(),
+						dimension.getName().getMetric(),
+						dimension.getUnit().getName(),
+						dimension.getInterpretation()
+					))
 					.collect(Collectors.toList());
 
 				return new JsonRepo(
@@ -81,7 +87,7 @@ public class AllReposEndpoint {
 			})
 			.collect(Collectors.toList());
 
-		return new GetReply(repos);
+		return new GetReply(jsonRepos);
 	}
 
 	private static class GetReply {
