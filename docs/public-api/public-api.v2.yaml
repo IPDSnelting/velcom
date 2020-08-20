@@ -371,6 +371,8 @@ paths:
                   type: string
                   minLength: 1
                   description: 'Set a new name for the repo. The name must not be unique, but it should still be unique so the UI does not look too confusing.'
+                remote_url:
+                  $ref: '#/components/schemas/RemoteUrl'
                 tracked_branches:
                   type: array
                   description: Set the branches to be tracked
