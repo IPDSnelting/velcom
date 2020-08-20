@@ -996,7 +996,6 @@ components:
         tracked_branches:
           type: array
           description: "All of the repo's tracked branches"
-          minItems: 1
           uniqueItems: true
           items:
             type: string
