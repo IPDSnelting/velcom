@@ -182,7 +182,7 @@ paths:
                     $ref: '#/components/schemas/Run'
                   differences:
                     type: array
-                    description: Only present if the `diff` parameter is set to `true` and there is an unambiguous previous commit with a run
+                    description: Only present if the `diff_prev` parameter is set to `true` and there is an unambiguous previous commit with a run
                     items:
                       $ref: '#/components/schemas/DimensionDifference'
                 required:
