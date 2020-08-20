@@ -14,8 +14,8 @@ public enum BenchmarkStatus {
 	 */
 	BENCHMARK_REQUIRED(1),
 	/**
-	 * Like BENCHMARK_REQUIRED, but the commit was manually prioritized (i. e. manually (re-)added
-	 * to the queue).
+	 * Like BENCHMARK_REQUIRED, but the commit was manually prioritized (i. e. manually (re-)added to
+	 * the queue).
 	 */
 	BENCHMARK_REQUIRED_MANUAL_PRIORITY(2);
 

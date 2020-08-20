@@ -3,8 +3,8 @@ package de.aaaaaaah.velcom.backend.access.entities;
 import java.util.Objects;
 
 /**
- * Occurs when either the benchmark script cause a global error or
- * the runner itself fails to execute the benchmark script.
+ * Occurs when either the benchmark script cause a global error or the runner itself fails to
+ * execute the benchmark script.
  */
 public class RunError {
 
