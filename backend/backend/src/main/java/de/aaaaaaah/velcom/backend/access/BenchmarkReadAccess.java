@@ -261,6 +261,7 @@ public class BenchmarkReadAccess {
 					MEASUREMENT.UNIT, MEASUREMENT.INTERPRETATION, DSL.max(RUN.STOP_TIME))
 					.from(MEASUREMENT)
 					.join(RUN).on(RUN.ID.eq(MEASUREMENT.RUN_ID))
+					.where(RUN.COMMIT_HASH.isNotNull())
 					.groupBy(RUN.REPO_ID, MEASUREMENT.BENCHMARK, MEASUREMENT.METRIC)
 					.forEach(record -> {
 						RepoId repoId = new RepoId(UUID.fromString(record.value1()));
