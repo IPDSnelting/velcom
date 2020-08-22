@@ -4,7 +4,8 @@ import de.aaaaaaah.velcom.backend.GlobalConfig;
 import de.aaaaaaah.velcom.backend.util.CheckedConsumer;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.Objects;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.flywaydb.core.Flyway;
 import org.jooq.Configuration;
 import org.jooq.DSLContext;
@@ -21,6 +22,7 @@ public class DatabaseStorage {
 
 	private final Connection connection;
 	private final DSLContext context;
+	private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
 	/**
 	 * Initializes the database storage.
@@ -75,31 +77,48 @@ public class DatabaseStorage {
 		flyway.migrate();
 	}
 
+	public DBReadAccess acquireReadAccess() {
+		return new DBReadAccess(acquireContext(), this.lock.readLock());
+	}
+
+	public DBWriteAccess acquireWriteAccess() {
+		return new DBWriteAccess(acquireContext(), this.lock.writeLock());
+	}
+
+	public void acquireReadTransaction(CheckedConsumer<DBReadAccess, Throwable> handler) {
+		try (final DBReadAccess db = acquireReadAccess()) {
+			db.dsl().transaction(configuration -> {
+				try (DSLContext inTransactionCTX = DSL.using(configuration)) {
+					try (DBReadAccess inTransactionDB = new DBReadAccess(
+						inTransactionCTX, this.lock.readLock()
+					)) {
+						handler.accept(inTransactionDB);
+					}
+				}
+			});
+		}
+	}
+
+	public void acquireWriteTransaction(CheckedConsumer<DBWriteAccess, Throwable> handler) {
+		try (final DBWriteAccess db = acquireWriteAccess()) {
+			db.dsl().transaction(configuration -> {
+				try (DSLContext inTransactionCTX = DSL.using(configuration)) {
+					try (DBWriteAccess inTransactionDB = new DBWriteAccess(
+						inTransactionCTX, this.lock.writeLock()
+					)) {
+						handler.accept(inTransactionDB);
+					}
+				}
+			});
+		}
+	}
+
 	/**
 	 * @return a {@link DSLContext} instance providing jooq functionality along with a connection to
 	 * 	the database
 	 */
-	public DSLContext acquireContext() {
+	private DSLContext acquireContext() {
 		return this.context;
-	}
-
-	/**
-	 * Acquires a transaction and passes the {@link DSLContext} that is associated with the
-	 * transaction to the given handler. If an exception occurs during execution of the handler, the
-	 * transaction will be cancelled and the exception is passed back to the caller of this method.
-	 *
-	 * @param handler the handler used to pass queries to the transaction
-	 */
-	public void acquireTransaction(CheckedConsumer<DSLContext, Throwable> handler) {
-		Objects.requireNonNull(handler);
-
-		try (DSLContext dslContext = this.acquireContext()) {
-			dslContext.transaction(configuration -> {
-				try (DSLContext transactionContext = DSL.using(configuration)) {
-					handler.accept(transactionContext);
-				}
-			});
-		}
 	}
 
 	/**
