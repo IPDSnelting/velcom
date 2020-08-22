@@ -6,10 +6,10 @@ import static org.jooq.codegen.db.Tables.TASK;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.entities.CommitId;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
-import de.aaaaaaah.velcom.backend.access.entities.sources.CommitSource;
-import de.aaaaaaah.velcom.backend.access.entities.sources.TarSource;
 import de.aaaaaaah.velcom.backend.access.entities.Task;
 import de.aaaaaaah.velcom.backend.access.entities.TaskId;
+import de.aaaaaaah.velcom.backend.access.entities.sources.CommitSource;
+import de.aaaaaaah.velcom.backend.access.entities.sources.TarSource;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -128,7 +128,7 @@ public class TaskWriteAccess extends TaskReadAccess {
 			if (!tasks.isEmpty()) {
 				var insert = transaction.insertInto(TASK)
 					.columns(TASK.ID, TASK.AUTHOR, TASK.PRIORITY, TASK.INSERT_TIME,
-						TASK.UPDATE_TIME, TASK.TAR_NAME, TASK.REPO_ID, TASK.COMMIT_HASH);
+						TASK.UPDATE_TIME, TASK.TAR_DESC, TASK.REPO_ID, TASK.COMMIT_HASH);
 
 				for (Task task : tasks) {
 					insert.values(
@@ -137,13 +137,8 @@ public class TaskWriteAccess extends TaskReadAccess {
 						task.getPriority(),
 						Timestamp.from(task.getInsertTime()),
 						Timestamp.from(task.getUpdateTime()),
-						task.getSource().getRight().map(TarSource::getTarName).orElse(null),
-						task.getSource()
-							.getLeft()
-							.map(CommitSource::getRepoId)
-							.map(RepoId::getId)
-							.map(UUID::toString)
-							.orElse(null),
+						task.getSource().getRight().map(TarSource::getDescription).orElse(null),
+						task.getRepoId().map(RepoId::getId).map(UUID::toString).orElse(null),
 						task.getSource()
 							.getLeft()
 							.map(CommitSource::getHash)

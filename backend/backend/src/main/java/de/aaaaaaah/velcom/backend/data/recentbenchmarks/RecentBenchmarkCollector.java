@@ -1,9 +1,5 @@
 package de.aaaaaaah.velcom.backend.data.recentbenchmarks;
 
-import de.aaaaaaah.velcom.backend.data.commitcomparison.CommitComparer;
-import de.aaaaaaah.velcom.backend.data.commitcomparison.CommitComparison;
-import de.aaaaaaah.velcom.backend.data.linearlog.LinearLog;
-import de.aaaaaaah.velcom.backend.data.linearlog.LinearLogException;
 import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.access.RepoReadAccess;
@@ -11,6 +7,10 @@ import de.aaaaaaah.velcom.backend.access.entities.Commit;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
+import de.aaaaaaah.velcom.backend.data.commitcomparison.CommitComparer;
+import de.aaaaaaah.velcom.backend.data.commitcomparison.CommitComparison;
+import de.aaaaaaah.velcom.backend.data.linearlog.LinearLog;
+import de.aaaaaaah.velcom.backend.data.linearlog.LinearLogException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -29,18 +29,18 @@ public class RecentBenchmarkCollector {
 
 	private final RepoReadAccess repoAccess;
 	private final BenchmarkReadAccess benchmarkAccess;
-	private final CommitReadAccess commitaccess;
+	private final CommitReadAccess commitAccess;
 	private final LinearLog linearLog;
 	private final CommitComparer comparer;
 
 	public RecentBenchmarkCollector(RepoReadAccess repoAccess,
 		BenchmarkReadAccess benchmarkAccess,
-		CommitReadAccess commitaccess, LinearLog linearLog,
+		CommitReadAccess commitAccess, LinearLog linearLog,
 		CommitComparer comparer) {
 
 		this.repoAccess = repoAccess;
 		this.benchmarkAccess = benchmarkAccess;
-		this.commitaccess = commitaccess;
+		this.commitAccess = commitAccess;
 		this.linearLog = linearLog;
 		this.comparer = comparer;
 	}
@@ -83,7 +83,7 @@ public class RecentBenchmarkCollector {
 		// TODO: Remove this by completely reworking the recent benchmark collector
 		// so that it also works with tars
 		runs = runs.stream()
-			.filter(run -> run.getSource().isPresent())
+			.filter(run -> run.getSource().isLeft())
 			.collect(Collectors.toList());
 
 		// 1.) Filter out runs that belong to the same commit
@@ -92,8 +92,8 @@ public class RecentBenchmarkCollector {
 		Iterator<Run> iterator = runs.iterator();
 		while (iterator.hasNext()) {
 			Run run = iterator.next();
-			RepoId repoId = run.getSource().get().getRepoId();
-			CommitHash hash = run.getSource().get().getHash();
+			RepoId repoId = run.getSource().getLeft().get().getRepoId();
+			CommitHash hash = run.getSource().getLeft().get().getHash();
 
 			if (!commitToRunMap.containsKey(repoId)) {
 				commitToRunMap.put(repoId, new HashMap<>());
@@ -115,8 +115,8 @@ public class RecentBenchmarkCollector {
 
 		while (iterator.hasNext()) {
 			Run run = iterator.next();
-			RepoId repoId = run.getSource().get().getRepoId();
-			CommitHash hash = run.getSource().get().getHash();
+			RepoId repoId = run.getSource().getLeft().get().getRepoId();
+			CommitHash hash = run.getSource().getLeft().get().getHash();
 
 			missingParentRuns.computeIfAbsent(repoId, i -> new ArrayList<>());
 
@@ -148,8 +148,8 @@ public class RecentBenchmarkCollector {
 				Map<CommitHash, Run> latestRuns = benchmarkAccess.getLatestRuns(repoId, runHashes);
 
 				for (Run run : latestRuns.values()) {
-					RepoId runRepoId = run.getSource().get().getRepoId();
-					CommitHash runHash = run.getSource().get().getHash();
+					RepoId runRepoId = run.getSource().getLeft().get().getRepoId();
+					CommitHash runHash = run.getSource().getLeft().get().getHash();
 					commitToRunMap.get(runRepoId).put(runHash, run);
 				}
 			});
@@ -161,7 +161,7 @@ public class RecentBenchmarkCollector {
 		commitToRunMap.forEach((repoId, hashToRunMap) -> {
 			Set<CommitHash> commitHashes = hashToRunMap.keySet();
 
-			List<Commit> commits = commitaccess.getCommits(repoId, commitHashes);
+			List<Commit> commits = commitAccess.getCommits(repoId, commitHashes);
 
 			for (Commit commit : commits) {
 				commitDataMap.computeIfAbsent(repoId, i -> new HashMap<>());
@@ -173,8 +173,8 @@ public class RecentBenchmarkCollector {
 		iterator = runs.iterator();
 		while (iterator.hasNext()) {
 			Run run = iterator.next();
-			RepoId repoId = run.getSource().get().getRepoId();
-			CommitHash commitHash = run.getSource().get().getHash();
+			RepoId repoId = run.getSource().getLeft().get().getRepoId();
+			CommitHash commitHash = run.getSource().getLeft().get().getHash();
 
 			CommitHash parentHash = parentMapper.getParent(repoId, commitHash)
 				.orElse(null);

@@ -56,11 +56,18 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 			runRecord.setRunnerInfo(run.getRunnerInfo());
 			runRecord.setStartTime(Timestamp.from(run.getStartTime()));
 			runRecord.setStopTime(Timestamp.from(run.getStopTime()));
+			runRecord.setRepoId(
+				run.getRepoId().map(RepoId::getId)
+					.map(UUID::toString)
+					.orElse(null)
+			);
 
-			run.getSource().ifPresent(repoSource -> {
-				runRecord.setRepoId(repoSource.getRepoId().getId().toString());
-				runRecord.setCommitHash(repoSource.getHash().getHash());
-			});
+			if (run.getSource().isLeft()) {
+				runRecord.setCommitHash(run.getSource().getLeft().get().getHash().getHash());
+			}
+			else {
+				runRecord.setTarDesc(run.getSource().getRight().get().getDescription());
+			}
 
 			if (run.getResult().isLeft()) {
 				RunError error = run.getResult().getLeft().orElseThrow();
@@ -77,8 +84,8 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 			}
 		});
 
-		// 2.) Invalidate measurement cache
-		run.getSource().ifPresent(source -> dimensionCache.remove(source.getRepoId()));
+		// 2.) Invalidate dimension cache for repo
+		run.getSource().getLeft().ifPresent(source -> dimensionCache.remove(source.getRepoId()));
 
 		// 3.) Insert run into cache
 		synchronized (recentRunCache) {
@@ -93,14 +100,14 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 			}
 		}
 
-		// 4.) If run is associated with a repository, insert into repoCache
-		run.getSource().ifPresent(repoSource -> {
+		// 4.) If run has a commit source, insert into repoCache
+		run.getSource().getLeft().ifPresent(commitSource -> {
 			Cache<CommitHash, Run> cache = repoRunCache.computeIfAbsent(
-				repoSource.getRepoId(),
+				commitSource.getRepoId(),
 				r -> RUN_CACHE_BUILDER.build()
 			);
 
-			cache.put(repoSource.getHash(), run);
+			cache.put(commitSource.getHash(), run);
 		});
 	}
 
@@ -201,7 +208,7 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 
 			// This run contains the deleted measurement => need to invalidate run instance in cache
 			// (since run was cached in repoRunCache, the run must have a repo source)
-			repoRunCache.invalidate(run.getSource().orElseThrow().getHash());
+			repoRunCache.invalidate(run.getSource().getLeft().orElseThrow().getHash());
 		}
 	}
 

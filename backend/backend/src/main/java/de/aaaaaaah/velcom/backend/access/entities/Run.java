@@ -25,37 +25,24 @@ public class Run {
 	private final String runnerInfo;
 	private final Instant startTime;
 	private final Instant stopTime;
-	@Nullable
 	private final Either<CommitSource, TarSource> source;
 	private final Either<RunError, Collection<Measurement>> result;
 
 	public Run(RunId runId, String author, String runnerName, String runnerInfo, Instant startTime,
-		Instant stopTime, @Nullable Either<CommitSource, TarSource> source,
+		Instant stopTime, Either<CommitSource, TarSource> source,
 		Collection<Measurement> measurements) {
 
 		this(runId, author, runnerName, runnerInfo, startTime, stopTime, source, null, measurements);
 	}
 
 	public Run(RunId runId, String author, String runnerName, String runnerInfo, Instant startTime,
-		Instant stopTime, Collection<Measurement> measurements) {
-
-		this(runId, author, runnerName, runnerInfo, startTime, stopTime, null, null, measurements);
-	}
-
-	public Run(RunId runId, String author, String runnerName, String runnerInfo, Instant startTime,
-		Instant stopTime, @Nullable Either<CommitSource, TarSource> source, RunError error) {
+		Instant stopTime, Either<CommitSource, TarSource> source, RunError error) {
 
 		this(runId, author, runnerName, runnerInfo, startTime, stopTime, source, error, null);
 	}
 
-	public Run(RunId runId, String author, String runnerName, String runnerInfo, Instant startTime,
-		Instant stopTime, RunError error) {
-
-		this(runId, author, runnerName, runnerInfo, startTime, stopTime, null, error, null);
-	}
-
 	private Run(RunId id, String author, String runnerName, String runnerInfo, Instant startTime,
-		Instant stopTime, @Nullable Either<CommitSource, TarSource> source, @Nullable RunError error,
+		Instant stopTime, Either<CommitSource, TarSource> source, @Nullable RunError error,
 		@Nullable Collection<Measurement> measurements) {
 
 		this.id = Objects.requireNonNull(id);
@@ -64,7 +51,7 @@ public class Run {
 		this.runnerInfo = Objects.requireNonNull(runnerInfo);
 		this.startTime = Objects.requireNonNull(startTime);
 		this.stopTime = Objects.requireNonNull(stopTime);
-		this.source = source;
+		this.source = Objects.requireNonNull(source);
 
 		if (error != null && measurements != null) {
 			throw new IllegalArgumentException(
@@ -95,8 +82,8 @@ public class Run {
 		return runnerInfo;
 	}
 
-	public Optional<Either<CommitSource, TarSource>> getSource() {
-		return Optional.ofNullable(source);
+	public Either<CommitSource, TarSource> getSource() {
+		return source;
 	}
 
 	public Instant getStartTime() {
@@ -109,6 +96,14 @@ public class Run {
 
 	public Either<RunError, Collection<Measurement>> getResult() {
 		return result;
+	}
+
+	public Optional<RepoId> getRepoId() {
+		if (getSource().isLeft()) {
+			return Optional.of(getSource().getLeft().get().getRepoId());
+		} else {
+			return getSource().getRight().get().getRepoId();
+		}
 	}
 
 	@Override

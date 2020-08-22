@@ -1,9 +1,7 @@
 package de.aaaaaaah.velcom.backend.access;
 
-import de.aaaaaaah.velcom.backend.util.TransferUtils;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.entities.RemoteUrl;
-import de.aaaaaaah.velcom.backend.access.entities.sources.TarSource;
 import de.aaaaaaah.velcom.backend.access.entities.Task;
 import de.aaaaaaah.velcom.backend.access.exceptions.AddRepoException;
 import de.aaaaaaah.velcom.backend.access.exceptions.PrepareTransferException;
@@ -14,6 +12,7 @@ import de.aaaaaaah.velcom.backend.storage.repo.GuickCloning.CloneException;
 import de.aaaaaaah.velcom.backend.storage.repo.RepoStorage;
 import de.aaaaaaah.velcom.backend.storage.repo.exception.AddRepositoryException;
 import de.aaaaaaah.velcom.backend.storage.repo.exception.RepositoryAcquisitionException;
+import de.aaaaaaah.velcom.backend.util.TransferUtils;
 import de.aaaaaaah.velcom.shared.util.FileHelper;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -207,9 +206,8 @@ public class ArchiveAccess {
 	public void transferTask(Task task, OutputStream outputStream)
 		throws PrepareTransferException, TransferException {
 
-		if (task.getSource().isRight()) {
-			TarSource tarSource = task.getSource().getRight().orElseThrow();
-			Path tarPath = tarArchivesRootDir.resolve(tarSource.getTarName());
+		if (task.getSource().isRight()) { // tar task
+			Path tarPath = tarArchivesRootDir.resolve(task.getId().getId().toString());
 
 			try {
 				TransferUtils.transferTar(tarPath, outputStream);

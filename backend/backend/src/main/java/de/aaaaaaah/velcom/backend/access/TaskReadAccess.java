@@ -4,10 +4,10 @@ import static org.jooq.codegen.db.Tables.TASK;
 
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
-import de.aaaaaaah.velcom.backend.access.entities.sources.CommitSource;
-import de.aaaaaaah.velcom.backend.access.entities.sources.TarSource;
 import de.aaaaaaah.velcom.backend.access.entities.Task;
 import de.aaaaaaah.velcom.backend.access.entities.TaskId;
+import de.aaaaaaah.velcom.backend.access.entities.sources.CommitSource;
+import de.aaaaaaah.velcom.backend.access.entities.sources.TarSource;
 import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchTaskException;
 import de.aaaaaaah.velcom.backend.access.policy.QueuePolicy;
 import de.aaaaaaah.velcom.backend.access.policy.RoundRobinFiloPolicy;
@@ -58,17 +58,20 @@ public class TaskReadAccess {
 				throw new NoSuchTaskException(taskId);
 			}
 
-			if (taskRecord.getTarName() != null) {
+			RepoId nullableRepoId = taskRecord.getRepoId() != null ?
+				new RepoId(UUID.fromString(taskRecord.getRepoId())) : null;
+
+			if (taskRecord.getTarDesc() != null) {
 				return new Task(
 					taskId,
 					taskRecord.getAuthor(),
 					taskRecord.getPriority(),
 					taskRecord.getInsertTime().toInstant(),
 					taskRecord.getUpdateTime().toInstant(),
-					new TarSource(taskRecord.getTarName())
+					new TarSource(taskRecord.getTarDesc(), nullableRepoId)
 				);
 			} else {
-				RepoId repoId = new RepoId(UUID.fromString(taskRecord.getRepoId()));
+				Objects.requireNonNull(nullableRepoId); // task has commit source => repo id must be present
 				CommitHash hash = new CommitHash(taskRecord.getCommitHash());
 
 				return new Task(
@@ -77,7 +80,7 @@ public class TaskReadAccess {
 					taskRecord.getPriority(),
 					taskRecord.getInsertTime().toInstant(),
 					taskRecord.getUpdateTime().toInstant(),
-					new CommitSource(repoId, hash)
+					new CommitSource(nullableRepoId, hash)
 				);
 			}
 		}
@@ -90,17 +93,20 @@ public class TaskReadAccess {
 	 * @return the task instance
 	 */
 	public static Task taskFromRecord(TaskRecord taskRecord) {
-		if (taskRecord.getTarName() != null) {
+		RepoId nullableRepoId = taskRecord.getRepoId() != null ?
+			new RepoId(UUID.fromString(taskRecord.getRepoId())) : null;
+
+		if (taskRecord.getTarDesc() != null) {
 			return new Task(
 				new TaskId(UUID.fromString(taskRecord.getId())),
 				taskRecord.getAuthor(),
 				taskRecord.getPriority(),
 				taskRecord.getInsertTime().toInstant(),
 				taskRecord.getUpdateTime().toInstant(),
-				new TarSource(taskRecord.getTarName())
+				new TarSource(taskRecord.getTarDesc(), nullableRepoId)
 			);
 		} else {
-			RepoId repoId = new RepoId(UUID.fromString(taskRecord.getRepoId()));
+			Objects.requireNonNull(nullableRepoId); // task has commit source => repo id must be present
 			CommitHash hash = new CommitHash(taskRecord.getCommitHash());
 
 			return new Task(
@@ -109,7 +115,7 @@ public class TaskReadAccess {
 				taskRecord.getPriority(),
 				taskRecord.getInsertTime().toInstant(),
 				taskRecord.getUpdateTime().toInstant(),
-				new CommitSource(repoId, hash)
+				new CommitSource(nullableRepoId, hash)
 			);
 		}
 

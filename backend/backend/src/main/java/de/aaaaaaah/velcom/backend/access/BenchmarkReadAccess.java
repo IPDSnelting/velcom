@@ -11,20 +11,22 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.entities.Dimension;
-import de.aaaaaaah.velcom.backend.access.entities.RunErrorType;
 import de.aaaaaaah.velcom.backend.access.entities.Interpretation;
 import de.aaaaaaah.velcom.backend.access.entities.Measurement;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementError;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementName;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementValues;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
-import de.aaaaaaah.velcom.backend.access.entities.sources.CommitSource;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
 import de.aaaaaaah.velcom.backend.access.entities.RunError;
+import de.aaaaaaah.velcom.backend.access.entities.RunErrorType;
 import de.aaaaaaah.velcom.backend.access.entities.RunId;
 import de.aaaaaaah.velcom.backend.access.entities.Unit;
+import de.aaaaaaah.velcom.backend.access.entities.sources.CommitSource;
+import de.aaaaaaah.velcom.backend.access.entities.sources.TarSource;
 import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchRunException;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
+import de.aaaaaaah.velcom.backend.util.Either;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -210,7 +212,7 @@ public class BenchmarkReadAccess {
 					.fetchMap(RUN.ID);
 
 				loadRunData(db, runRecordMap).forEach(run -> {
-					CommitHash hash = run.getSource().orElseThrow().getHash();
+					CommitHash hash = run.getSource().getLeft().orElseThrow().getHash();
 					resultMap.put(hash, run);
 
 					// Insert run into cache
@@ -349,13 +351,19 @@ public class BenchmarkReadAccess {
 			.map(runRecord -> {
 				RunId runId = new RunId(UUID.fromString(runRecord.getId()));
 
-				CommitSource nullableSource = null;
+				final Either<CommitSource, TarSource> source;
 
-				if (runRecord.getRepoId() != null) {
-					nullableSource = new CommitSource(
+				if (runRecord.getCommitHash() != null) {
+					source = Either.ofLeft(new CommitSource(
 						new RepoId(UUID.fromString(runRecord.getRepoId())),
 						new CommitHash(runRecord.getCommitHash())
-					);
+					));
+				}
+				else {
+					// If commit hash is null, tar desc must be present
+					source = Either.ofRight(new TarSource(
+						runRecord.getTarDesc()
+					));
 				}
 
 				if (runRecord.getError() != null) {
@@ -371,7 +379,7 @@ public class BenchmarkReadAccess {
 						runRecord.getRunnerInfo(),
 						runRecord.getStartTime().toInstant(),
 						runRecord.getStopTime().toInstant(),
-						nullableSource,
+						source,
 						error
 					);
 				} else {
@@ -384,7 +392,7 @@ public class BenchmarkReadAccess {
 						runRecord.getRunnerInfo(),
 						runRecord.getStartTime().toInstant(),
 						runRecord.getStopTime().toInstant(),
-						nullableSource,
+						source,
 						measurements
 					);
 				}
@@ -410,8 +418,10 @@ public class BenchmarkReadAccess {
 
 		synchronized (recentRunCache) {
 			boolean recentRunRepoWasDeleted = recentRunCache.stream()
-				.flatMap(run -> run.getSource().stream())
-				.anyMatch(source -> !ids.contains(source.getRepoId()));
+				.map(Run::getRepoId)
+				.filter(Optional::isPresent)
+				.map(Optional::get)
+				.anyMatch(repoId -> !ids.contains(repoId));
 
 			if (recentRunRepoWasDeleted) {
 				reloadRecentRunCache(); // recentRunCache is now invalid

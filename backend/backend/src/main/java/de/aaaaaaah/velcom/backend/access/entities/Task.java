@@ -5,6 +5,7 @@ import de.aaaaaaah.velcom.backend.access.entities.sources.TarSource;
 import de.aaaaaaah.velcom.backend.util.Either;
 import java.time.Instant;
 import java.util.Objects;
+import java.util.Optional;
 
 public class Task {
 
@@ -69,6 +70,14 @@ public class Task {
 
 	public Either<CommitSource, TarSource> getSource() {
 		return source;
+	}
+
+	public Optional<RepoId> getRepoId() {
+		if (getSource().isLeft()) {
+			return Optional.of(getSource().getLeft().get().getRepoId());
+		} else {
+			return getSource().getRight().get().getRepoId();
+		}
 	}
 
 	@Override
