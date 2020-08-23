@@ -1,5 +1,6 @@
 package de.aaaaaaah.velcom.backend.restapi.jsonobjects;
 
+import de.aaaaaaah.velcom.backend.access.entities.Commit;
 import java.util.UUID;
 
 public class JsonCommitDescription {
@@ -18,6 +19,22 @@ public class JsonCommitDescription {
 		this.author = author;
 		this.authorDate = authorDate;
 		this.summary = summary;
+	}
+
+	/**
+	 * Utility function to create a {@link JsonCommitDescription} directly from a {@link Commit}.
+	 *
+	 * @param commit the commit to use
+	 * @return a new description created from the commit
+	 */
+	public static JsonCommitDescription fromCommit(Commit commit) {
+		return new JsonCommitDescription(
+			commit.getRepoId().getId(),
+			commit.getHash().getHash(),
+			commit.getAuthor(),
+			commit.getAuthorDate().getEpochSecond(),
+			commit.getSummary()
+		);
 	}
 
 	public UUID getRepoId() {

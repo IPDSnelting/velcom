@@ -153,7 +153,7 @@ public class ServerMain extends Application<GlobalConfig> {
 		environment.jersey().register(new AllReposEndpoint(repoAccess, benchmarkAccess, tokenAccess));
 		environment.jersey().register(new CommitEndpoint(commitAccess, benchmarkAccess));
 		environment.jersey().register(new CompareEndpoint(benchmarkAccess));
-		environment.jersey().register(new RunEndpoint(benchmarkAccess));
+		environment.jersey().register(new RunEndpoint(benchmarkAccess, commitAccess));
 		environment.jersey().register(new TestTokenEndpoint());
 	}
 

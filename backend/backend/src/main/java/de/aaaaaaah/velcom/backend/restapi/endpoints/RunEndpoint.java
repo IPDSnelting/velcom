@@ -1,6 +1,7 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
 import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
+import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimensionDifference;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonResult;
@@ -21,19 +22,26 @@ import javax.ws.rs.core.MediaType;
 public class RunEndpoint {
 
 	private final BenchmarkReadAccess benchmarkAccess;
+	private final CommitReadAccess commitAccess;
 
-	public RunEndpoint(BenchmarkReadAccess benchmarkAccess) {
+	public RunEndpoint(BenchmarkReadAccess benchmarkAccess, CommitReadAccess commitAccess) {
 		this.benchmarkAccess = benchmarkAccess;
+		this.commitAccess = commitAccess;
 	}
 
 	@GET
 	public GetReply get(
 		@PathParam("runid") UUID runUuid,
-		@QueryParam("all_values") @Nullable Boolean allValues,
+		@QueryParam("all_values") @Nullable Boolean allValuesOptional,
 		@QueryParam("hash") @Nullable String hashString,
-		@QueryParam("diff_prev") @Nullable Boolean diffPrev
+		@QueryParam("diff_prev") @Nullable Boolean diffPrevOptional
 	) {
+		boolean allValues = (allValuesOptional == null) ? false : allValuesOptional;
+		boolean diffPrev = (diffPrevOptional == null) ? false : diffPrevOptional;
+
 		Run run = EndpointUtils.getRun(benchmarkAccess, runUuid, hashString);
+		JsonSource source = EndpointUtils.convertToSource(commitAccess, run.getSource());
+
 		// TODO find previous run and compare
 		return new GetReply(
 			new JsonRun(
@@ -43,10 +51,8 @@ public class RunEndpoint {
 				run.getRunnerInfo(),
 				run.getStartTime().getEpochSecond(),
 				run.getStopTime().getEpochSecond(),
-				// TODO use proper source
-				JsonSource.fromUploadedTar("PLACEHOLDER", null),
-				// TODO use proper result
-				JsonResult.velcomError("PLACEHOLDER")
+				source,
+				JsonResult.fromRunResult(run.getResult(), allValues)
 			),
 			// TODO use actual comparison to previous run, if applicable
 			null
