@@ -61,14 +61,14 @@ public class TaskReadAccess {
 			RepoId nullableRepoId = taskRecord.getRepoId() != null ?
 				new RepoId(UUID.fromString(taskRecord.getRepoId())) : null;
 
-			if (taskRecord.getTarDesc() != null) {
+			if (taskRecord.getDescription() != null) {
 				return new Task(
 					taskId,
 					taskRecord.getAuthor(),
 					taskRecord.getPriority(),
 					taskRecord.getInsertTime().toInstant(),
 					taskRecord.getUpdateTime().toInstant(),
-					new TarSource(taskRecord.getTarDesc(), nullableRepoId)
+					new TarSource(taskRecord.getDescription(), nullableRepoId)
 				);
 			} else {
 				Objects.requireNonNull(nullableRepoId); // task has commit source => repo id must be present
@@ -96,14 +96,14 @@ public class TaskReadAccess {
 		RepoId nullableRepoId = taskRecord.getRepoId() != null ?
 			new RepoId(UUID.fromString(taskRecord.getRepoId())) : null;
 
-		if (taskRecord.getTarDesc() != null) {
+		if (taskRecord.getDescription() != null) {
 			return new Task(
 				new TaskId(UUID.fromString(taskRecord.getId())),
 				taskRecord.getAuthor(),
 				taskRecord.getPriority(),
 				taskRecord.getInsertTime().toInstant(),
 				taskRecord.getUpdateTime().toInstant(),
-				new TarSource(taskRecord.getTarDesc(), nullableRepoId)
+				new TarSource(taskRecord.getDescription(), nullableRepoId)
 			);
 		} else {
 			Objects.requireNonNull(nullableRepoId); // task has commit source => repo id must be present

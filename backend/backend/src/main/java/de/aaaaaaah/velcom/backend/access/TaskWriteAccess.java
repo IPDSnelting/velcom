@@ -128,7 +128,7 @@ public class TaskWriteAccess extends TaskReadAccess {
 			if (!tasks.isEmpty()) {
 				var insert = transaction.insertInto(TASK)
 					.columns(TASK.ID, TASK.AUTHOR, TASK.PRIORITY, TASK.INSERT_TIME,
-						TASK.UPDATE_TIME, TASK.TAR_DESC, TASK.REPO_ID, TASK.COMMIT_HASH);
+						TASK.UPDATE_TIME, TASK.DESCRIPTION, TASK.REPO_ID, TASK.COMMIT_HASH);
 
 				for (Task task : tasks) {
 					insert.values(
