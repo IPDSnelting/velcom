@@ -24,6 +24,8 @@ public enum Interpretation {
 	 */
 	MORE_IS_BETTER("MORE_IS_BETTER");
 
+	public static Interpretation DEFAULT = NEUTRAL;
+
 	private final String textualRepresentation;
 
 	Interpretation(String textualRepresentation) {

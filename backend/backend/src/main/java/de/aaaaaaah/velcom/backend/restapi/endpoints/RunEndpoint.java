@@ -3,12 +3,15 @@ package de.aaaaaaah.velcom.backend.restapi.endpoints;
 import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
+import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparer;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimensionDifference;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonResult;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRun;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonSource;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -23,10 +26,19 @@ public class RunEndpoint {
 
 	private final BenchmarkReadAccess benchmarkAccess;
 	private final CommitReadAccess commitAccess;
+	private final RunComparer comparer;
 
-	public RunEndpoint(BenchmarkReadAccess benchmarkAccess, CommitReadAccess commitAccess) {
+	public RunEndpoint(BenchmarkReadAccess benchmarkAccess, CommitReadAccess commitAccess,
+		RunComparer comparer) {
+
 		this.benchmarkAccess = benchmarkAccess;
 		this.commitAccess = commitAccess;
+		this.comparer = comparer;
+	}
+
+	private Optional<Run> getPrevRun(Run run) {
+		// TODO implement
+		return Optional.empty();
 	}
 
 	@GET
@@ -42,7 +54,13 @@ public class RunEndpoint {
 		Run run = EndpointUtils.getRun(benchmarkAccess, runUuid, hashString);
 		JsonSource source = EndpointUtils.convertToSource(commitAccess, run.getSource());
 
-		// TODO find previous run and compare
+		Optional<List<JsonDimensionDifference>> differences = getPrevRun(run)
+			.map(prevRun -> comparer.compare(prevRun, run))
+			.map(runComparison -> runComparison.getDifferences().stream()
+				.map(JsonDimensionDifference::fromDimensionDifference)
+				.collect(Collectors.toList())
+			);
+
 		return new GetReply(
 			new JsonRun(
 				run.getId().getId(),
@@ -54,8 +72,7 @@ public class RunEndpoint {
 				source,
 				JsonResult.fromRunResult(run.getResult(), allValues)
 			),
-			// TODO use actual comparison to previous run, if applicable
-			null
+			differences.orElse(null)
 		);
 	}
 

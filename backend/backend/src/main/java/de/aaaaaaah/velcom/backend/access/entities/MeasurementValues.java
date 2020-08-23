@@ -3,6 +3,7 @@ package de.aaaaaaah.velcom.backend.access.entities;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * This class represents a successful {@link Measurement}'s state, which contains the measurement
@@ -29,6 +30,9 @@ public class MeasurementValues {
 
 	public MeasurementValues(List<Double> values) {
 		this.values = Collections.unmodifiableList(Objects.requireNonNull(values));
+		if (this.values.isEmpty()) {
+			throw new IllegalArgumentException("list of values must not be empty");
+		}
 	}
 
 	public List<Double> getValues() {
@@ -37,6 +41,20 @@ public class MeasurementValues {
 
 	public double getAverageValue() {
 		return calculateAverage(values);
+	}
+
+	public Optional<Double> getStddev() {
+		int n = values.size();
+		if (n < 2) {
+			return Optional.empty();
+		}
+
+		double avg = getAverageValue();
+		double sum = values.stream()
+			.map(value -> (value - avg) * (value - avg))
+			.reduce(0.0, Double::sum);
+		double result = Math.sqrt(sum / (n - 1));
+		return Optional.of(result);
 	}
 
 	@Override

@@ -8,11 +8,18 @@ public class Dimension {
 	private final Unit unit;
 	private final Interpretation interpretation;
 
-	public Dimension(MeasurementName name, Unit unit,
-		Interpretation interpretation) {
+	public Dimension(MeasurementName name, Unit unit, Interpretation interpretation) {
 		this.name = Objects.requireNonNull(name);
 		this.unit = Objects.requireNonNull(unit);
 		this.interpretation = Objects.requireNonNull(interpretation);
+	}
+
+	public static Dimension fromMeasurement(Measurement measurement) {
+		return new Dimension(
+			measurement.getMeasurementName(),
+			measurement.getUnit(),
+			measurement.getInterpretation()
+		);
 	}
 
 	public MeasurementName getName() {
