@@ -197,6 +197,7 @@ paths:
       parameters:
         - schema:
             type: boolean
+            default: 'false'
           in: query
           name: all_values
           description: Whether the measurements should contain all values
