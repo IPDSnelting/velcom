@@ -97,10 +97,10 @@ class CommitComparerTest {
 	@Test
 	void compareRunsWithMeasurements() {
 		when(firstRun.getResult()).thenReturn(
-			Either.ofLeft(
+			Either.ofRight(
 				List.of(successfulMeasurement1, successfulMeasurement2, failedMeasurement3)));
 		when(secondRun.getResult()).thenReturn(
-			Either.ofLeft(
+			Either.ofRight(
 				List.of(failedMeasurement2, successfulMeasurement1, successfulMeasurement3)));
 
 		CommitComparison comparison = comparer.compare(firstCommit, firstRun, secondCommit,

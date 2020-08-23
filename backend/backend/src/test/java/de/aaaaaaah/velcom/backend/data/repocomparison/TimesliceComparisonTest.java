@@ -106,10 +106,10 @@ class TimesliceComparisonTest {
 		r2 = mock(Run.class);
 		r3 = mock(Run.class);
 		r4 = mock(Run.class);
-		when(r1.getResult()).thenReturn(Either.ofLeft(List.of(m1)));
-		when(r2.getResult()).thenReturn(Either.ofLeft(List.of(m2)));
-		when(r3.getResult()).thenReturn(Either.ofLeft(List.of(m3)));
-		when(r4.getResult()).thenReturn(Either.ofLeft(List.of(m4)));
+		when(r1.getResult()).thenReturn(Either.ofRight(List.of(m1)));
+		when(r2.getResult()).thenReturn(Either.ofRight(List.of(m2)));
+		when(r3.getResult()).thenReturn(Either.ofRight(List.of(m3)));
+		when(r4.getResult()).thenReturn(Either.ofRight(List.of(m4)));
 		runMap = new HashMap<>();
 		runMap.put(c1Hash, r1);
 		runMap.put(c2Hash, r2);
