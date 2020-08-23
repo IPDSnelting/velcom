@@ -1068,11 +1068,10 @@ components:
           description: new value / old value (only present if the old_value is non-zero)
         stddev:
           type: number
-          description: The standard deviation of the run the new value is from
+          description: The standard deviation of the run the new value is from. Only present if the amount of values in the sample is above the minimum stddev amount.
       required:
         - dimension
         - absdiff
-        - stddev
   securitySchemes:
     admin_credentials:
       type: http
