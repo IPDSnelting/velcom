@@ -68,15 +68,10 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import {
   Run,
-  CommitTaskSource,
-  CommitDescription,
   RunResultScriptError,
   RunResultVelcomError,
   RunResultSuccess,
   Measurement,
-  MeasurementError,
-  Dimension,
-  MeasurementSuccess,
   DimensionDifference,
   RunWithDifferences
 } from '@/store/types'
@@ -85,11 +80,8 @@ import { formatDate, formatDuration } from '@/util/TimeUtil'
 import MeasurementsDisplay from '@/components/rundetail/MeasurementsDisplay.vue'
 import {
   mdiFlash,
-  mdiRunFast,
-  mdiTimerSandEmpty,
   mdiCameraTimer,
   mdiAlarmCheck,
-  mdiClockStart,
   mdiClockFast,
   mdiRobot
 } from '@mdi/js'

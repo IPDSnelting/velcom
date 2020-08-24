@@ -26,9 +26,13 @@
       :headers="headers"
       :items="items"
       :items-per-page="5"
+      class="test-me"
     >
       <template #[`item.value`]="{ item, value }">
-        <span v-if="item.error === undefined">{{ value }}</span>
+        <measurement-value
+          v-if="item.error === undefined"
+          :value="value"
+        ></measurement-value>
         <v-btn
           v-else
           class="error-message error-message-tooltip"
@@ -41,11 +45,16 @@
           >{{ formatErrorShorthand(item.error) }}</v-btn
         >
       </template>
-      <template #[`item.change`]=" { item, value }">
-        <span :style="{ color: item.changeColor }">{{ value }}</span>
-      </template>
-      <template #[`item.changePercent`]=" { item, value }">
-        <span :style="{ color: item.changeColor }">{{ value }}</span>
+      <template
+        v-for="{ slotName, tooltip } in headerFormats"
+        v-slot:[slotName]="{ item, value }"
+      >
+        <div :key="slotName">
+          <measurement-value
+            :value="value"
+            :tooltip-message="tooltip"
+          ></measurement-value>
+        </div>
       </template>
     </v-data-table>
   </v-container>
@@ -63,6 +72,7 @@ import {
   DimensionDifference,
   Dimension
 } from '@/store/types'
+import MeasurementValueDisplay from '@/components/rundetail/MeasurementValueDisplay.vue'
 
 const numberFormat: Intl.NumberFormat = new Intl.NumberFormat(
   new Intl.NumberFormat().resolvedOptions().locale,
@@ -73,11 +83,11 @@ class Item {
   readonly benchmark: string
   readonly metric: string
   readonly unit: string
-  readonly value: string
-  readonly standardDeviation: string
-  readonly standardDeviationPercent: string
-  readonly change: string
-  readonly changePercent: string
+  readonly value?: string
+  readonly standardDeviation?: string
+  readonly standardDeviationPercent?: string
+  readonly change?: string
+  readonly changePercent?: string
   readonly changeColor: string
   readonly error?: string
 
@@ -107,9 +117,9 @@ class Item {
     this.changeColor = this.computeChangeColor(interpretation, change)
   }
 
-  private formatNumber(number?: number): string {
+  private formatNumber(number?: number): string | undefined {
     if (number === undefined) {
-      return '-'
+      return undefined
     }
     if (Math.abs(number) === 0) {
       return '0'
@@ -117,7 +127,7 @@ class Item {
     return numberFormat.format(number)
   }
 
-  private formatPercent(number?: number): string {
+  private formatPercent(number?: number): string | undefined {
     if (number === undefined) {
       return this.formatNumber(number)
     }
@@ -127,11 +137,11 @@ class Item {
   private computeStandardDeviationPercent(
     value?: number,
     standardDeviation?: number
-  ): string {
+  ): string | undefined {
     if (value === undefined || standardDeviation === undefined) {
       return this.formatPercent(undefined)
     }
-    // devide by zero :(
+    // divide by zero :(
     if (value === 0) {
       return this.formatPercent(undefined)
     }
@@ -164,7 +174,11 @@ class Item {
   }
 }
 
-@Component
+@Component({
+  components: {
+    'measurement-value': MeasurementValueDisplay
+  }
+})
 export default class MeasurementsDisplay extends Vue {
   @Prop()
   private measurements!: Measurement[]
@@ -173,6 +187,29 @@ export default class MeasurementsDisplay extends Vue {
 
   private showDetailErrorDialog: boolean = false
   private detailErrorDialogMessage: string = ''
+
+  private get headerFormats() {
+    return [
+      {
+        slotName: 'item.change',
+        tooltip: 'No unambiguous parent commit found'
+      },
+      {
+        slotName: 'item.changePercent',
+        tooltip: 'No unambiguous parent commit found'
+      },
+      {
+        slotName: 'item.standardDeviation',
+        tooltip:
+          'Not applicable as the benchmark script did not report enough values'
+      },
+      {
+        slotName: 'item.standardDeviationPercent',
+        tooltip:
+          'Not applicable as the benchmark script did not report enough values'
+      }
+    ]
+  }
 
   private get headers() {
     return [

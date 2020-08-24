@@ -66,9 +66,8 @@ export class Dimension {
    *
    * @param {Dimension} other the other dimension
    * @returns true if the two have the same benchmark and metric
-   * @memberof Dimension
    */
-  equals(other: Dimension) {
+  equals(other: Dimension): boolean {
     return other.benchmark === this.benchmark && other.metric === this.metric
   }
 }
@@ -88,6 +87,7 @@ export class Commit {
   readonly parents: CommitDescription[]
   readonly children: CommitDescription[]
 
+  // noinspection DuplicatedCode
   constructor(
     repoId: RepoId,
     hash: CommitHash,
@@ -240,6 +240,7 @@ export class Run {
   readonly source: TaskSource
   readonly result: RunResult
 
+  // noinspection DuplicatedCode
   constructor(
     id: RunId,
     author: string,
@@ -323,13 +324,13 @@ export class DimensionDifference {
   readonly dimension: Dimension
   readonly absDiff: number
   readonly relDiff: number
-  readonly stddev: number
+  readonly stddev: number | undefined
 
   constructor(
     dimension: Dimension,
     absDiff: number,
     relDiff: number,
-    stddev: number
+    stddev: number | undefined
   ) {
     this.dimension = dimension
     this.absDiff = absDiff

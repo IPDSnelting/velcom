@@ -53,15 +53,12 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 import {
-  Run,
-  Commit,
-  Measurement,
   Dimension,
   DimensionDifference,
   DimensionInterpretation,
   RunDescription,
   RunDescriptionWithDifferences
-} from '../../store/types'
+} from '@/store/types'
 import RunOverview from './RunOverview.vue'
 import {
   mdiChevronDown,
@@ -93,8 +90,12 @@ class RelevantChange {
 
   constructor(difference: DimensionDifference) {
     this.id = difference.dimension
-    this.change =
-      this.formatPercentage(difference.relDiff) + ` (${difference.stddev} σ)`
+    if (difference.stddev !== undefined) {
+      this.change =
+        this.formatPercentage(difference.relDiff) + ` (${difference.stddev} σ)`
+    } else {
+      this.change = this.formatPercentage(difference.relDiff)
+    }
     this.color = this.changeColor(
       difference.absDiff,
       difference.dimension.interpretation
@@ -103,7 +104,7 @@ class RelevantChange {
   }
 
   private formatPercentage(percentage: number): string {
-    let scaled = Math.round(percentage * 100)
+    const scaled = Math.round(percentage * 100)
     return `${scaled}%`
   }
 
@@ -134,7 +135,7 @@ class RelevantChange {
     const LARGE_CHANGE_THRESHOLD = 5
     const adjustedChange = Math.abs(Math.round(change * 100))
 
-    let direction: 'up' | 'down' = change >= 0 ? 'up' : 'down'
+    const direction: 'up' | 'down' = change >= 0 ? 'up' : 'down'
 
     let magnitude: 'small' | 'middle' | 'large' = 'small'
     if (adjustedChange >= LARGE_CHANGE_THRESHOLD) {
@@ -159,6 +160,7 @@ export default class MultipleRunOverview extends Vue {
   @Prop({ default: 3 })
   private numberOfChanges!: number
 
+  // noinspection JSMismatchedCollectionQueryUpdate
   private itemsPerPageOptions: number[] = [10, 20, 50, 100, 200, -1]
   private defaultItemsPerPage: number = 20
 
