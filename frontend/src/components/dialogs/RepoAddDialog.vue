@@ -18,7 +18,13 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="primary" :disabled="!formValid" @click="addRepository">Add Repository</v-btn>
+          <v-btn
+            color="primary"
+            :loading="addInProgress"
+            :disabled="!formValid || addInProgress"
+            @click="addRepository"
+            >Add Repository</v-btn
+          >
           <v-spacer></v-spacer>
           <v-btn color="error" @click="dialogOpen = false">Close</v-btn>
         </v-card-actions>
@@ -42,6 +48,7 @@ export default class RepoAddDialog extends Vue {
 
   private formValid: boolean = false
   private dialogOpen: boolean = false
+  private addInProgress: boolean = false
 
   private notEmpty(input: string): boolean | string {
     return input.trim().length > 0 ? true : 'This field must not be empty!'
@@ -57,6 +64,7 @@ export default class RepoAddDialog extends Vue {
   }
 
   private addRepository() {
+    this.addInProgress = true
     vxm.repoModule
       .addRepo({
         repoName: this.repoName,
@@ -67,6 +75,7 @@ export default class RepoAddDialog extends Vue {
         this.$emit('value', it)
         this.dialogOpen = false
       })
+      .finally(() => (this.addInProgress = false))
   }
 }
 </script>

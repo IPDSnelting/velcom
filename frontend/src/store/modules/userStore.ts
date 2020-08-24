@@ -13,8 +13,12 @@ export class UserStore extends VxModule {
   private _darkThemeSelected: boolean | undefined = undefined
 
   @action
-  async logIn(payload: { role: string; asRepoAdmin: boolean; token: string }) {
-    const response = await axios.post('/test-token', '', {
+  async logIn(payload: {
+    role: string
+    asRepoAdmin: boolean
+    token: string
+  }): Promise<void> {
+    const response = await axios.get('/test-token', {
       auth: {
         username: payload.role,
         password: payload.token
@@ -25,9 +29,10 @@ export class UserStore extends VxModule {
       }
     })
 
-    // was a 200
-    this._role = payload.role
-    this._token = payload.token
+    if (response.status === 200) {
+      this.setRole(payload.role)
+      this.setToken(payload.token)
+    }
   }
 
   @action
