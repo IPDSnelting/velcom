@@ -2,7 +2,6 @@ package de.aaaaaaah.velcom.backend.storage.db;
 
 import java.io.Closeable;
 import java.util.Objects;
-import java.util.concurrent.locks.Lock;
 import org.jooq.DSLContext;
 import org.jooq.Record;
 import org.jooq.Record1;
@@ -32,25 +31,20 @@ import org.jooq.SelectSelectStep;
 import org.jooq.SelectWhereStep;
 import org.jooq.Table;
 
+/**
+ * Allows read only access to a database.
+ */
 public class DBReadAccess implements Closeable {
 
 	protected final DSLContext ctx;
-	private final Lock lock;
 
-	public DBReadAccess(DSLContext ctx, Lock lock) {
+	public DBReadAccess(DSLContext ctx) {
 		this.ctx = Objects.requireNonNull(ctx);
-		this.lock = Objects.requireNonNull(lock);
-		this.lock.lock();
 	}
 
 	@Override
 	public void close() {
-		try {
-			this.ctx.close();
-		}
-		finally {
-			this.lock.unlock();
-		}
+		this.ctx.close();
 	}
 
 	public DSLContext dsl() {
