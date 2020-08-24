@@ -145,8 +145,8 @@ public class TransferUtils {
 	 * @throws IOException if an io error occured
 	 */
 	public static void transferTar(Path tarPath, OutputStream out) throws IOException {
-		try (out) {
-			Files.newInputStream(tarPath).transferTo(out);
+		try (out; InputStream in = Files.newInputStream(tarPath)) {
+			in.transferTo(out);
 		}
 	}
 
