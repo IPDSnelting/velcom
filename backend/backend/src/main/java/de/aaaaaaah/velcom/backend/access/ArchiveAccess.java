@@ -89,6 +89,7 @@ public class ArchiveAccess {
 		}
 
 		// Clean up any archives that exist at this moment
+		benchRepoArchive.delete();
 		repoArchives.deleteAll();
 		tarArchives.deleteAll();
 	}
@@ -166,6 +167,7 @@ public class ArchiveAccess {
 					repoStorage, BENCH_REPO_DIR_NAME, getBenchRepoCommitHash()
 				);
 			} catch (Exception e) {
+				this.benchRepoArchive.delete();
 				throw new PrepareTransferException("Failed to prepare bench repo for transfer", e);
 			}
 
@@ -174,6 +176,7 @@ public class ArchiveAccess {
 				Path tarFile = this.benchRepoArchive.getTar();
 				TransferUtils.transferTar(tarFile, outputStream);
 			} catch (Exception e) {
+				this.benchRepoArchive.delete();
 				throw new TransferException("Failed to transfer bench repo", e);
 			}
 		}
