@@ -5,9 +5,9 @@ import static org.jooq.codegen.db.Tables.KNOWN_COMMIT;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.entities.Task;
+import de.aaaaaaah.velcom.backend.storage.db.DBWriteAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import java.util.Collection;
-import org.jooq.DSLContext;
 
 /**
  * Provides access to known commits and their respective statuses.
@@ -24,17 +24,17 @@ public class KnownCommitWriteAccess extends KnownCommitReadAccess {
 	public void markCommitsAsKnownAndInsertIntoQueue(RepoId repoId, Collection<CommitHash> commits,
 		Collection<Task> tasks) {
 
-		databaseStorage.acquireTransaction(db -> {
+		databaseStorage.acquireWriteTransaction(db -> {
 			markCommitsAsKnown(repoId, commits, db);
 			taskAccess.insertTasks(tasks, db);
 		});
 	}
 
 	public void markCommitsAsKnown(RepoId repoId, Collection<CommitHash> commits) {
-		markCommitsAsKnown(repoId, commits, databaseStorage.acquireContext());
+		markCommitsAsKnown(repoId, commits, databaseStorage.acquireWriteAccess());
 	}
 
-	private void markCommitsAsKnown(RepoId repoId, Collection<CommitHash> commits, DSLContext db) {
+	private void markCommitsAsKnown(RepoId repoId, Collection<CommitHash> commits, DBWriteAccess db) {
 		var insert = db.insertInto(KNOWN_COMMIT).columns(KNOWN_COMMIT.REPO_ID, KNOWN_COMMIT.HASH);
 		commits.forEach(c -> insert.values(repoId.getId().toString(), c.getHash()));
 		insert.onDuplicateKeyIgnore().execute();

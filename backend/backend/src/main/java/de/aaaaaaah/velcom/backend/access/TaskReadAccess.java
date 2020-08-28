@@ -11,12 +11,12 @@ import de.aaaaaaah.velcom.backend.access.entities.TaskId;
 import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchTaskException;
 import de.aaaaaaah.velcom.backend.access.policy.QueuePolicy;
 import de.aaaaaaah.velcom.backend.access.policy.RoundRobinFiloPolicy;
+import de.aaaaaaah.velcom.backend.storage.db.DBReadAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
-import org.jooq.DSLContext;
 import org.jooq.codegen.db.tables.records.TaskRecord;
 
 /**
@@ -51,7 +51,7 @@ public class TaskReadAccess {
 	 * @throws NoSuchTaskException if no task with the specified id exists
 	 */
 	public Task getById(TaskId taskId) throws NoSuchTaskException {
-		try (DSLContext db = databaseStorage.acquireContext()) {
+		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
 			TaskRecord taskRecord = db.fetchOne(TASK, TASK.ID.eq(taskId.getId().toString()));
 
 			if (taskRecord == null) {

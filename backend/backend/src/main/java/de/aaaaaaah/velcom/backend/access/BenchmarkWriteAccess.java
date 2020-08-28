@@ -16,13 +16,13 @@ import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
 import de.aaaaaaah.velcom.backend.access.entities.RunError;
 import de.aaaaaaah.velcom.backend.access.entities.TaskId;
+import de.aaaaaaah.velcom.backend.storage.db.DBWriteAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
-import org.jooq.DSLContext;
 import org.jooq.codegen.db.tables.records.MeasurementRecord;
 import org.jooq.codegen.db.tables.records.RunRecord;
 
@@ -43,7 +43,7 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 	 */
 	public void insertRun(Run run) {
 		// Insert run into database and delete associated task
-		databaseStorage.acquireTransaction(db -> {
+		databaseStorage.acquireWriteTransaction(db -> {
 			// 0.) Delete associated task
 			TaskId taskId = new TaskId(run.getId().getId());
 			taskAccess.deleteTasks(List.of(taskId), db);
@@ -104,7 +104,7 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 		});
 	}
 
-	private void insertMeasurement(DSLContext db, Measurement measurement) {
+	private void insertMeasurement(DBWriteAccess db, Measurement measurement) {
 		String measurementId = UUID.randomUUID().toString();
 
 		MeasurementRecord measurementRecord = db.newRecord(MEASUREMENT);
@@ -151,7 +151,7 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 	 */
 	public void deleteAllMeasurementsOfName(RepoId repoId, MeasurementName measurementName) {
 		// Update database
-		try (DSLContext db = databaseStorage.acquireContext()) {
+		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
 			db.deleteFrom(MEASUREMENT)
 				.where(
 					exists(db.selectOne().from(RUN)
@@ -211,7 +211,7 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 	 * @param repoId the id of the repository
 	 */
 	public void deleteAllRunsOfRepo(RepoId repoId) {
-		try (DSLContext db = databaseStorage.acquireContext()) {
+		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
 			db.deleteFrom(RUN).where(RUN.REPO_ID.eq(repoId.getId().toString()));
 		}
 
