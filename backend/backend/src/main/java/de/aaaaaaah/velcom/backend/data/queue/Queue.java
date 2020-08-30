@@ -8,13 +8,14 @@ import de.aaaaaaah.velcom.backend.access.RepoReadAccess;
 import de.aaaaaaah.velcom.backend.access.TaskWriteAccess;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
-import de.aaaaaaah.velcom.backend.access.entities.sources.CommitSource;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
 import de.aaaaaaah.velcom.backend.access.entities.Task;
 import de.aaaaaaah.velcom.backend.access.entities.TaskId;
+import de.aaaaaaah.velcom.backend.access.entities.sources.CommitSource;
 import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchTaskException;
 import de.aaaaaaah.velcom.backend.access.exceptions.PrepareTransferException;
 import de.aaaaaaah.velcom.backend.access.exceptions.TransferException;
+import de.aaaaaaah.velcom.backend.access.policy.QueuePriority;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -129,7 +130,7 @@ public class Queue {
 	 * @param taskId the id of the task
 	 * @param newPriority the new priority
 	 */
-	public void prioritizeTask(TaskId taskId, int newPriority) {
+	public void prioritizeTask(TaskId taskId, QueuePriority newPriority) {
 		taskAccess.setTaskPriority(taskId, newPriority);
 	}
 

@@ -1,13 +1,17 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
 import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
+import de.aaaaaaah.velcom.backend.access.entities.Task;
 import de.aaaaaaah.velcom.backend.access.entities.TaskId;
+import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchTaskException;
+import de.aaaaaaah.velcom.backend.access.policy.QueuePriority;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.restapi.authentication.RepoUser;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRunner;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonTask;
 import de.aaaaaaah.velcom.backend.runner.IDispatcher;
 import io.dropwizard.auth.Auth;
+import io.dropwizard.jersey.PATCH;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -53,6 +57,18 @@ public class QueueEndpoint {
 		user.guardAdminAccess();
 
 		queue.deleteTasks(List.of(new TaskId(taskId)));
+	}
+
+	@PATCH
+	@Path("{taskId}")
+	public void patchTask(@Auth RepoUser user, @PathParam("taskId") UUID taskId)
+		throws NoSuchTaskException {
+		user.guardAdminAccess();
+
+		// Throws an exception if the task does not exist! This is needed.
+		Task task = queue.getTaskById(new TaskId(taskId));
+
+		queue.prioritizeTask(task.getId(), QueuePriority.MANUAL);
 	}
 
 	private static class GetQueueReply {

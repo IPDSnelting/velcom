@@ -10,6 +10,7 @@ import de.aaaaaaah.velcom.backend.access.entities.Task;
 import de.aaaaaaah.velcom.backend.access.entities.TaskId;
 import de.aaaaaaah.velcom.backend.access.entities.sources.CommitSource;
 import de.aaaaaaah.velcom.backend.access.entities.sources.TarSource;
+import de.aaaaaaah.velcom.backend.access.policy.QueuePriority;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -199,10 +200,10 @@ public class TaskWriteAccess extends TaskReadAccess {
 		}
 	}
 
-	public void setTaskPriority(TaskId taskId, int newPriority) {
+	public void setTaskPriority(TaskId taskId, QueuePriority newPriority) {
 		try (DSLContext db = databaseStorage.acquireContext()) {
 			db.update(TASK)
-				.set(TASK.PRIORITY, newPriority)
+				.set(TASK.PRIORITY, newPriority.getAsInt())
 				.set(TASK.UPDATE_TIME, Timestamp.from(Instant.now()))
 				.where(TASK.ID.eq(taskId.getId().toString()))
 				.execute();
