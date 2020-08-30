@@ -99,7 +99,7 @@ public class RunBuilder {
 	 * @param unit the unit
 	 * @param values the values
 	 */
-	public void addSuccessfulMeasurement(MeasurementName name, Interpretation interpretation,
+	public void addSuccessfulMeasurement(Dimension name, Interpretation interpretation,
 		Unit unit, List<Double> values) {
 
 		MeasurementValues measurementValues = new MeasurementValues(values);
@@ -118,7 +118,7 @@ public class RunBuilder {
 	 * @param interpretation how the measurement is to be interpreted
 	 * @param errorMessage the error message
 	 */
-	public void addFailedMeasurement(MeasurementName name, Unit unit, Interpretation interpretation,
+	public void addFailedMeasurement(Dimension name, Unit unit, Interpretation interpretation,
 		String errorMessage) {
 
 		MeasurementError measurementError = new MeasurementError(errorMessage);

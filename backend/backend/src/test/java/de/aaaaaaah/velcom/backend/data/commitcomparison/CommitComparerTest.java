@@ -10,7 +10,7 @@ import static org.mockito.Mockito.when;
 import de.aaaaaaah.velcom.backend.access.entities.Commit;
 import de.aaaaaaah.velcom.backend.access.entities.Measurement;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementError;
-import de.aaaaaaah.velcom.backend.access.entities.MeasurementName;
+import de.aaaaaaah.velcom.backend.access.entities.Dimension;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementValues;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
 import de.aaaaaaah.velcom.backend.util.Either;
@@ -44,31 +44,31 @@ class CommitComparerTest {
 
 		successfulMeasurement1 = mock(Measurement.class);
 		when(successfulMeasurement1.getMeasurementName()).thenReturn(
-			new MeasurementName("bench1", "metric1"));
+			new Dimension("bench1", "metric1"));
 		when(successfulMeasurement1.getContent()).thenReturn(Either.ofRight(
 			new MeasurementValues(List.of(1d, 2d, 3d))));
 
 		successfulMeasurement2 = mock(Measurement.class);
 		when(successfulMeasurement2.getMeasurementName()).thenReturn(
-			new MeasurementName("bench1", "metric2"));
+			new Dimension("bench1", "metric2"));
 		when(successfulMeasurement2.getContent()).thenReturn(Either.ofRight(
 			new MeasurementValues(List.of(4d, 5d, 6d, 7d, 8d))));
 
 		successfulMeasurement3 = mock(Measurement.class);
 		when(successfulMeasurement3.getMeasurementName()).thenReturn(
-			new MeasurementName("bench2", "metric1"));
+			new Dimension("bench2", "metric1"));
 		when(successfulMeasurement3.getContent()).thenReturn(Either.ofRight(
 			new MeasurementValues(List.of(3d, -7d))));
 
 		failedMeasurement2 = mock(Measurement.class);
 		when(failedMeasurement2.getMeasurementName()).thenReturn(
-			new MeasurementName("bench1", "metric2"));
+			new Dimension("bench1", "metric2"));
 		when(failedMeasurement2.getContent()).thenReturn(
 			Either.ofLeft(new MeasurementError("measurement failed successfully")));
 
 		failedMeasurement3 = mock(Measurement.class);
 		when(failedMeasurement3.getMeasurementName()).thenReturn(
-			new MeasurementName("bench2", "metric1"));
+			new Dimension("bench2", "metric1"));
 		when(failedMeasurement3.getContent()).thenReturn(
 			Either.ofLeft(new MeasurementError("a rhombus is not a circle")));
 
@@ -108,7 +108,7 @@ class CommitComparerTest {
 
 		assertEquals(1, comparison.getDifferences().size());
 		CommitDifference difference = new ArrayList<>(comparison.getDifferences()).get(0);
-		assertEquals(new MeasurementName("bench1", "metric1"), difference.getMeasurementName());
+		assertEquals(new Dimension("bench1", "metric1"), difference.getMeasurementName());
 		assertEquals(2d, difference.getFirst(), 0.00001);
 		assertEquals(2d, difference.getSecond(), 0.00001);
 		assertEquals(0d, difference.getDifference(), 0.00001);

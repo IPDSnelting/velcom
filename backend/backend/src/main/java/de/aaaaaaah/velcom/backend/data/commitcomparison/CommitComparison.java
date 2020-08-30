@@ -2,7 +2,7 @@ package de.aaaaaaah.velcom.backend.data.commitcomparison;
 
 import de.aaaaaaah.velcom.backend.access.entities.Commit;
 import de.aaaaaaah.velcom.backend.access.entities.Measurement;
-import de.aaaaaaah.velcom.backend.access.entities.MeasurementName;
+import de.aaaaaaah.velcom.backend.access.entities.Dimension;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementValues;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
 import java.util.ArrayList;
@@ -72,7 +72,7 @@ public class CommitComparison {
 		// Put the measurements of the second run into a map
 		Collection<Measurement> firstMeasurements = firstRun.getResult().getRight().get();
 		Collection<Measurement> secondMeasurements = secondRun.getResult().getRight().get();
-		Map<MeasurementName, Measurement> secondMap = new HashMap<>();
+		Map<Dimension, Measurement> secondMap = new HashMap<>();
 		for (Measurement m : secondMeasurements) {
 			secondMap.put(m.getMeasurementName(), m);
 		}
@@ -80,7 +80,7 @@ public class CommitComparison {
 		// Iterate through fist measurements and check if a measurement by the same name exists in
 		// the second run. If so, create a commitDifference and add it to the list
 		for (Measurement firstMeasurement : firstMeasurements) {
-			final MeasurementName name = firstMeasurement.getMeasurementName();
+			final Dimension name = firstMeasurement.getMeasurementName();
 			Measurement secondMeasurement = secondMap.get(name);
 			if (secondMeasurement == null) {
 				continue;

@@ -13,7 +13,7 @@ import de.aaaaaaah.velcom.backend.access.entities.Commit;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.entities.Interpretation;
 import de.aaaaaaah.velcom.backend.access.entities.Measurement;
-import de.aaaaaaah.velcom.backend.access.entities.MeasurementName;
+import de.aaaaaaah.velcom.backend.access.entities.Dimension;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementValues;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
@@ -63,7 +63,7 @@ public class TimesliceComparison implements RepoComparison {
 	}
 
 	@Override
-	public ComparisonGraph generateGraph(MeasurementName measurement,
+	public ComparisonGraph generateGraph(Dimension measurement,
 		Map<RepoId, List<BranchName>> repoBranches,
 		@Nullable Instant startTime, @Nullable Instant stopTime) {
 
@@ -78,7 +78,7 @@ public class TimesliceComparison implements RepoComparison {
 		return new ComparisonGraph(measurement, repoBranches, dataList);
 	}
 
-	private Optional<RepoGraphData> collectData(RepoId repoId, MeasurementName measurementName,
+	private Optional<RepoGraphData> collectData(RepoId repoId, Dimension dimension,
 		Collection<BranchName> branches, @Nullable Instant startTime, @Nullable Instant stopTime) {
 
 		// 1.) Get commits
@@ -96,7 +96,7 @@ public class TimesliceComparison implements RepoComparison {
 
 		// Only get successful measurements
 		latestRuns.forEach((hash, run) -> {
-			findMeasurement(measurementName, run)
+			findMeasurement(dimension, run)
 				.filter(m -> m.getContent().isRight())
 				.ifPresent(values -> measurementMap.put(hash, values));
 		});
@@ -211,7 +211,7 @@ public class TimesliceComparison implements RepoComparison {
 		return grouper;
 	}
 
-	private Optional<Measurement> findMeasurement(MeasurementName name, Run run) {
+	private Optional<Measurement> findMeasurement(Dimension name, Run run) {
 		if (run.getResult().isRight()) {
 			Collection<Measurement> measurements = run.getResult().getRight().get();
 

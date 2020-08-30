@@ -5,7 +5,7 @@ import de.aaaaaaah.velcom.backend.access.RepoReadAccess;
 import de.aaaaaaah.velcom.backend.access.TokenReadAccess;
 import de.aaaaaaah.velcom.backend.access.entities.Branch;
 import de.aaaaaaah.velcom.backend.access.entities.BranchName;
-import de.aaaaaaah.velcom.backend.access.entities.Dimension;
+import de.aaaaaaah.velcom.backend.access.entities.DimensionInfo;
 import de.aaaaaaah.velcom.backend.access.entities.Repo;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimension;
@@ -45,7 +45,7 @@ public class AllReposEndpoint {
 	public GetReply get() {
 		Collection<Repo> repos = repoAccess.getAllRepos();
 		List<RepoId> repoIds = repos.stream().map(Repo::getRepoId).collect(Collectors.toList());
-		Map<RepoId, Set<Dimension>> allDimensions = benchmarkAccess.getAvailableDimensions(repoIds);
+		Map<RepoId, Set<DimensionInfo>> allDimensions = benchmarkAccess.getAvailableDimensions(repoIds);
 
 		List<JsonRepo> jsonRepos = repos.stream()
 			.map(repo -> {

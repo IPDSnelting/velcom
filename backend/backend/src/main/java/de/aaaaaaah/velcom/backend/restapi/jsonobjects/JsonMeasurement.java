@@ -1,6 +1,6 @@
 package de.aaaaaaah.velcom.backend.restapi.jsonobjects;
 
-import de.aaaaaaah.velcom.backend.access.entities.Dimension;
+import de.aaaaaaah.velcom.backend.access.entities.DimensionInfo;
 import de.aaaaaaah.velcom.backend.access.entities.Measurement;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementError;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementValues;
@@ -50,7 +50,7 @@ public class JsonMeasurement {
 	 * @return the newly created {@link JsonMeasurement}
 	 */
 	public static JsonMeasurement fromMeasurement(Measurement measurement, boolean allValues) {
-		JsonDimension dimension = JsonDimension.fromDimension(Dimension.fromMeasurement(measurement));
+		JsonDimension dimension = JsonDimension.fromDimension(DimensionInfo.fromMeasurement(measurement));
 
 		Either<MeasurementError, MeasurementValues> content = measurement.getContent();
 		if (content.isLeft()) {

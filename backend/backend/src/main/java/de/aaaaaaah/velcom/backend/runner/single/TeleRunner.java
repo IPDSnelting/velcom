@@ -2,7 +2,7 @@ package de.aaaaaaah.velcom.backend.runner.single;
 
 import de.aaaaaaah.velcom.backend.access.entities.RunErrorType;
 import de.aaaaaaah.velcom.backend.access.entities.Interpretation;
-import de.aaaaaaah.velcom.backend.access.entities.MeasurementName;
+import de.aaaaaaah.velcom.backend.access.entities.Dimension;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
 import de.aaaaaaah.velcom.backend.access.entities.RunBuilder;
 import de.aaaaaaah.velcom.backend.access.entities.Task;
@@ -258,7 +258,7 @@ public class TeleRunner {
 		//noinspection OptionalGetWithoutIsPresent
 		for (Benchmark benchmark : result.getBenchmarks().get()) {
 			for (Metric metric : benchmark.getMetrics()) {
-				MeasurementName name = new MeasurementName(benchmark.getName(), metric.getName());
+				Dimension name = new Dimension(benchmark.getName(), metric.getName());
 				if (metric.getError().isPresent()) {
 					builder.addFailedMeasurement(
 							name,

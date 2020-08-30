@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import de.aaaaaaah.velcom.backend.access.entities.Interpretation;
 import org.junit.jupiter.api.Test;
 
-class JsonDimensionTest extends SerializingTest {
+class JsonDimensionInfoTest extends SerializingTest {
 
 	@Test
 	void serialize() throws JsonProcessingException {

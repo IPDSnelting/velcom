@@ -11,24 +11,24 @@ import java.util.Objects;
 public class Measurement {
 
 	private final RunId runId;
-	private final MeasurementName measurementName;
+	private final Dimension dimension;
 	private final Unit unit;
 	private final Interpretation interpretation;
 	private final Either<MeasurementError, MeasurementValues> content;
 
-	public Measurement(RunId runId, MeasurementName measurementName, Unit unit,
+	public Measurement(RunId runId, Dimension dimension, Unit unit,
 		Interpretation interpretation, MeasurementError error) {
 		this.runId = Objects.requireNonNull(runId);
-		this.measurementName = Objects.requireNonNull(measurementName);
+		this.dimension = Objects.requireNonNull(dimension);
 		this.unit = Objects.requireNonNull(unit);
 		this.interpretation = Objects.requireNonNull(interpretation);
 		this.content = Either.ofLeft(error);
 	}
 
-	public Measurement(RunId runId, MeasurementName measurementName, Unit unit,
+	public Measurement(RunId runId, Dimension dimension, Unit unit,
 		Interpretation interpretation, MeasurementValues values) {
 		this.runId = Objects.requireNonNull(runId);
-		this.measurementName = Objects.requireNonNull(measurementName);
+		this.dimension = Objects.requireNonNull(dimension);
 		this.unit = Objects.requireNonNull(unit);
 		this.interpretation = Objects.requireNonNull(interpretation);
 		this.content = Either.ofRight(values);
@@ -38,8 +38,8 @@ public class Measurement {
 		return runId;
 	}
 
-	public MeasurementName getMeasurementName() {
-		return measurementName;
+	public Dimension getMeasurementName() {
+		return dimension;
 	}
 
 	public Unit getUnit() {

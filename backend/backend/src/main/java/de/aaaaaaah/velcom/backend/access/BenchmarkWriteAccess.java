@@ -10,7 +10,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.entities.Measurement;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementError;
-import de.aaaaaaah.velcom.backend.access.entities.MeasurementName;
+import de.aaaaaaah.velcom.backend.access.entities.Dimension;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementValues;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
@@ -154,9 +154,9 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 	 * <p> This is useful when a measurement becomes outdated or is renamed.
 	 *
 	 * @param repoId the repo to delete the measurements from
-	 * @param measurementName the name specifying which measurements to delete.
+	 * @param dimension the name specifying which measurements to delete.
 	 */
-	public void deleteAllMeasurementsOfName(RepoId repoId, MeasurementName measurementName) {
+	public void deleteAllMeasurementsOfName(RepoId repoId, Dimension dimension) {
 		// Update database
 		try (DSLContext db = databaseStorage.acquireContext()) {
 			db.deleteFrom(MEASUREMENT)
@@ -167,8 +167,8 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 								.and(RUN.REPO_ID.eq(repoId.getId().toString()))
 						)
 					)
-						.and(MEASUREMENT.BENCHMARK.eq(measurementName.getBenchmark()))
-						.and(MEASUREMENT.METRIC.eq(measurementName.getMetric()))
+						.and(MEASUREMENT.BENCHMARK.eq(dimension.getBenchmark()))
+						.and(MEASUREMENT.METRIC.eq(dimension.getMetric()))
 				)
 				.execute();
 		}
@@ -198,11 +198,11 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 			Collection<Measurement> measurements = run.getResult().getRight().get();
 
 			// Check if target measurement name is one of the measurements
-			List<MeasurementName> mNames = measurements.stream()
+			List<Dimension> mNames = measurements.stream()
 				.map(Measurement::getMeasurementName)
 				.collect(toList());
 
-			if (!mNames.contains(measurementName)) {
+			if (!mNames.contains(dimension)) {
 				continue; // run does not even contain deleted measurement => skip!
 			}
 

@@ -1,6 +1,6 @@
 package de.aaaaaaah.velcom.backend.restapi.jsonobjects;
 
-import de.aaaaaaah.velcom.backend.access.entities.Dimension;
+import de.aaaaaaah.velcom.backend.access.entities.DimensionInfo;
 import de.aaaaaaah.velcom.backend.access.entities.Interpretation;
 
 public class JsonDimension {
@@ -20,17 +20,17 @@ public class JsonDimension {
 	}
 
 	/**
-	 * Create a {@link JsonDimension} from a {@link Dimension}.
+	 * Create a {@link JsonDimension} from a {@link DimensionInfo}.
 	 *
-	 * @param dimension the {@link Dimension} to use
+	 * @param dimensionInfo the {@link DimensionInfo} to use
 	 * @return the newly created {@link JsonDimension}
 	 */
-	public static JsonDimension fromDimension(Dimension dimension) {
+	public static JsonDimension fromDimension(DimensionInfo dimensionInfo) {
 		return new JsonDimension(
-			dimension.getName().getBenchmark(),
-			dimension.getName().getMetric(),
-			dimension.getUnit().getName(),
-			dimension.getInterpretation()
+			dimensionInfo.getName().getBenchmark(),
+			dimensionInfo.getName().getMetric(),
+			dimensionInfo.getUnit().getName(),
+			dimensionInfo.getInterpretation()
 		);
 	}
 

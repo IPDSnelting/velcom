@@ -2,36 +2,25 @@ package de.aaaaaaah.velcom.backend.access.entities;
 
 import java.util.Objects;
 
+/**
+ * A "dumb" class that identifies a {@link Measurement} in a {@link Run}.
+ */
 public class Dimension {
 
-	private final MeasurementName name;
-	private final Unit unit;
-	private final Interpretation interpretation;
+	private final String benchmark;
+	private final String metric;
 
-	public Dimension(MeasurementName name, Unit unit, Interpretation interpretation) {
-		this.name = Objects.requireNonNull(name);
-		this.unit = Objects.requireNonNull(unit);
-		this.interpretation = Objects.requireNonNull(interpretation);
+	public Dimension(String benchmark, String metric) {
+		this.benchmark = Objects.requireNonNull(benchmark);
+		this.metric = Objects.requireNonNull(metric);
 	}
 
-	public static Dimension fromMeasurement(Measurement measurement) {
-		return new Dimension(
-			measurement.getMeasurementName(),
-			measurement.getUnit(),
-			measurement.getInterpretation()
-		);
+	public String getBenchmark() {
+		return benchmark;
 	}
 
-	public MeasurementName getName() {
-		return name;
-	}
-
-	public Unit getUnit() {
-		return unit;
-	}
-
-	public Interpretation getInterpretation() {
-		return interpretation;
+	public String getMetric() {
+		return metric;
 	}
 
 	@Override
@@ -42,22 +31,21 @@ public class Dimension {
 		if (o == null || getClass() != o.getClass()) {
 			return false;
 		}
-		Dimension dimension = (Dimension) o;
-		return name.equals(dimension.name);
+		Dimension that = (Dimension) o;
+		return Objects.equals(benchmark, that.benchmark) &&
+			Objects.equals(metric, that.metric);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(name);
+		return Objects.hash(benchmark, metric);
 	}
 
 	@Override
 	public String toString() {
-		return "Dimension{" +
-			"name=" + name +
-			", unit=" + unit +
-			", interpretation=" + interpretation +
+		return "MeasurementName{" +
+			"benchmark='" + benchmark + '\'' +
+			", metric='" + metric + '\'' +
 			'}';
 	}
-
 }

@@ -1,24 +1,24 @@
 package de.aaaaaaah.velcom.backend.data.commitcomparison;
 
-import de.aaaaaaah.velcom.backend.access.entities.MeasurementName;
+import de.aaaaaaah.velcom.backend.access.entities.Dimension;
 
 /**
  * This class represents a difference in a specific measurement between two commits.
  */
 public class CommitDifference {
 
-	private final MeasurementName measurementName;
+	private final Dimension dimension;
 	private final double first;
 	private final double second;
 
-	CommitDifference(MeasurementName measurementName, double first, double second) {
-		this.measurementName = measurementName;
+	CommitDifference(Dimension dimension, double first, double second) {
+		this.dimension = dimension;
 		this.first = first;
 		this.second = second;
 	}
 
-	public MeasurementName getMeasurementName() {
-		return measurementName;
+	public Dimension getMeasurementName() {
+		return dimension;
 	}
 
 	public double getFirst() {

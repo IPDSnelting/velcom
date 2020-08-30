@@ -1,6 +1,6 @@
 package de.aaaaaaah.velcom.backend.data.repocomparison;
 
-import de.aaaaaaah.velcom.backend.access.entities.MeasurementName;
+import de.aaaaaaah.velcom.backend.access.entities.Dimension;
 import de.aaaaaaah.velcom.backend.access.entities.BranchName;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import java.time.Instant;
@@ -26,7 +26,7 @@ public interface RepoComparison {
 	 * @param stopTime the instant after which commits won't be considered
 	 * @return the generated graph
 	 */
-	ComparisonGraph generateGraph(MeasurementName measurement,
+	ComparisonGraph generateGraph(Dimension measurement,
 		Map<RepoId, List<BranchName>> repoBranches,
 		@Nullable Instant startTime, @Nullable Instant stopTime);
 

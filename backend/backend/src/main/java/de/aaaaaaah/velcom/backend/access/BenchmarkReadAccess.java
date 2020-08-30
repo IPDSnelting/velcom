@@ -10,11 +10,11 @@ import static org.jooq.codegen.db.tables.Run.RUN;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
-import de.aaaaaaah.velcom.backend.access.entities.Dimension;
+import de.aaaaaaah.velcom.backend.access.entities.DimensionInfo;
 import de.aaaaaaah.velcom.backend.access.entities.Interpretation;
 import de.aaaaaaah.velcom.backend.access.entities.Measurement;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementError;
-import de.aaaaaaah.velcom.backend.access.entities.MeasurementName;
+import de.aaaaaaah.velcom.backend.access.entities.Dimension;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementValues;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
@@ -61,7 +61,7 @@ public class BenchmarkReadAccess {
 	protected final Map<RepoId, Cache<CommitHash, Run>> repoRunCache = new ConcurrentHashMap<>();
 	protected final List<Run> recentRunCache = new ArrayList<>();
 	protected final Comparator<Run> recentRunCacheOrder = comparing(Run::getStartTime).reversed();
-	protected final Map<RepoId, Set<Dimension>> dimensionCache = new ConcurrentHashMap<>();
+	protected final Map<RepoId, Set<DimensionInfo>> dimensionCache = new ConcurrentHashMap<>();
 
 	public BenchmarkReadAccess(DatabaseStorage databaseStorage, RepoReadAccess repoAccess) {
 		this.databaseStorage = Objects.requireNonNull(databaseStorage);
@@ -231,21 +231,21 @@ public class BenchmarkReadAccess {
 	 * @return a map with each repo id as a key mapping to the set of available dimensions for the
 	 * 	given repository
 	 */
-	public Map<RepoId, Set<Dimension>> getAvailableDimensions(List<RepoId> repoIds) {
+	public Map<RepoId, Set<DimensionInfo>> getAvailableDimensions(List<RepoId> repoIds) {
 		List<String> repoIdStrList = repoIds.stream()
 			.map(repoId -> repoId.getId().toString())
 			.collect(Collectors.toCollection(ArrayList::new));
 
-		Map<RepoId, Set<Dimension>> resultMap = new HashMap<>();
+		Map<RepoId, Set<DimensionInfo>> resultMap = new HashMap<>();
 
 		// 1.) Check cache
 		checkCachesForDeletedRepos();
 
 		for (RepoId repoId : repoIds) {
-			Set<Dimension> dimensions = dimensionCache.get(repoId);
+			Set<DimensionInfo> dimensionInfos = dimensionCache.get(repoId);
 
-			if (dimensions != null) {
-				resultMap.put(repoId, Collections.unmodifiableSet(dimensions));
+			if (dimensionInfos != null) {
+				resultMap.put(repoId, Collections.unmodifiableSet(dimensionInfos));
 				repoIdStrList.remove(repoId.getId().toString());
 			} else {
 				resultMap.put(repoId, new HashSet<>()); // prepare for database query
@@ -265,15 +265,15 @@ public class BenchmarkReadAccess {
 					.groupBy(RUN.REPO_ID, MEASUREMENT.BENCHMARK, MEASUREMENT.METRIC)
 					.forEach(record -> {
 						RepoId repoId = new RepoId(UUID.fromString(record.value1()));
-						MeasurementName name = new MeasurementName(
+						Dimension name = new Dimension(
 							record.value2(),
 							record.value3()
 						);
 						Unit unit = new Unit(record.value4());
 						Interpretation interp = Interpretation.fromTextualRepresentation(record.value5());
-						Dimension dimension = new Dimension(name, unit, interp);
+						DimensionInfo dimensionInfo = new DimensionInfo(name, unit, interp);
 
-						resultMap.get(repoId).add(dimension);
+						resultMap.get(repoId).add(dimensionInfo);
 					});
 			}
 
@@ -281,8 +281,8 @@ public class BenchmarkReadAccess {
 			for (String repoIdStr : repoIdStrList) { // <- all repos in this list are not in cache
 				RepoId repoId = new RepoId(UUID.fromString(repoIdStr));
 				// Create copy so that no mutation can occur from outside
-				Set<Dimension> dimensionSet = new HashSet<>(resultMap.get(repoId));
-				dimensionCache.put(repoId, dimensionSet);
+				Set<DimensionInfo> dimensionInfoSet = new HashSet<>(resultMap.get(repoId));
+				dimensionCache.put(repoId, dimensionInfoSet);
 			}
 		}
 
@@ -311,7 +311,7 @@ public class BenchmarkReadAccess {
 			// Read basic measurement data
 			RunRecord runRecord = runRecordMap.get(measurementRecord.getRunId());
 			RunId runId = new RunId(UUID.fromString(runRecord.getId()));
-			MeasurementName measurementName = new MeasurementName(
+			Dimension dimension = new Dimension(
 				measurementRecord.getBenchmark(), measurementRecord.getMetric()
 			);
 			Unit unit = new Unit(
@@ -328,14 +328,14 @@ public class BenchmarkReadAccess {
 				var measurementError = new MeasurementError(measurementRecord.getError());
 
 				measurement = new Measurement(
-					runId, measurementName, unit, interpretation, measurementError
+					runId, dimension, unit, interpretation, measurementError
 				);
 			} else {
 				List<Double> values = valueMap.get(measurementRecord.getId());
 				var measurementValues = new MeasurementValues(values);
 
 				measurement = new Measurement(
-					runId, measurementName, unit, interpretation, measurementValues
+					runId, dimension, unit, interpretation, measurementValues
 				);
 			}
 
