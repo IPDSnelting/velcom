@@ -1,6 +1,10 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
 import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
+import de.aaaaaaah.velcom.backend.access.RepoReadAccess;
+import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.access.entities.Repo;
+import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.entities.Task;
 import de.aaaaaaah.velcom.backend.access.entities.TaskId;
 import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchTaskException;
@@ -17,6 +21,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -27,11 +32,15 @@ import javax.ws.rs.core.MediaType;
 public class QueueEndpoint {
 
 	private final CommitReadAccess commitReadAccess;
+	private final RepoReadAccess repoReadAccess;
 	private final Queue queue;
 	private final IDispatcher dispatcher;
 
-	public QueueEndpoint(CommitReadAccess commitReadAccess, Queue queue, IDispatcher dispatcher) {
+	public QueueEndpoint(CommitReadAccess commitReadAccess,
+		RepoReadAccess repoReadAccess, Queue queue,
+		IDispatcher dispatcher) {
 		this.commitReadAccess = commitReadAccess;
+		this.repoReadAccess = repoReadAccess;
 		this.queue = queue;
 		this.dispatcher = dispatcher;
 	}
@@ -53,8 +62,14 @@ public class QueueEndpoint {
 
 	@DELETE
 	@Path("{taskId}")
-	public void deleteTask(@Auth RepoUser user, @PathParam("taskId") UUID taskId) {
-		user.guardAdminAccess();
+	public void deleteTask(@Auth RepoUser user, @PathParam("taskId") UUID taskId)
+		throws NoSuchTaskException {
+		Task task = queue.getTaskById(new TaskId(taskId));
+		if (task.getRepoId().isEmpty()) {
+			user.guardAdminAccess();
+		} else {
+			user.guardRepoAccess(task.getRepoId().get());
+		}
 
 		queue.deleteTasks(List.of(new TaskId(taskId)));
 	}
@@ -69,6 +84,26 @@ public class QueueEndpoint {
 		Task task = queue.getTaskById(new TaskId(taskId));
 
 		queue.prioritizeTask(task.getId(), QueuePriority.MANUAL);
+	}
+
+	@POST
+	@Path("commit/{repoId}/{hash}")
+	public void addCommit(@Auth RepoUser user, @PathParam("repoId") UUID repoId,
+		@PathParam("hash") String commitHash) {
+		user.guardRepoAccess(new RepoId(repoId));
+
+		Repo repo = repoReadAccess.getRepo(new RepoId(repoId));
+
+		String author = String.format(
+			"%s %s(%s)",
+			user.isAdmin() ? "Admin" : "Repo-Admin",
+			repo.getName(),
+			repoId
+		);
+
+		queue.addCommits(
+			author, new RepoId(repoId), List.of(new CommitHash(commitHash))
+		);
 	}
 
 	private static class GetQueueReply {
