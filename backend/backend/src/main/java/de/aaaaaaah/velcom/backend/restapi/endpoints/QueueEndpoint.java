@@ -1,14 +1,20 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
 import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
+import de.aaaaaaah.velcom.backend.access.entities.TaskId;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
+import de.aaaaaaah.velcom.backend.restapi.authentication.RepoUser;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRunner;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonTask;
 import de.aaaaaaah.velcom.backend.runner.IDispatcher;
+import io.dropwizard.auth.Auth;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
@@ -39,6 +45,14 @@ public class QueueEndpoint {
 			.collect(Collectors.toList());
 
 		return new GetQueueReply(tasks, worker);
+	}
+
+	@DELETE
+	@Path("{taskId}")
+	public void deleteTask(@Auth RepoUser user, @PathParam("taskId") UUID taskId) {
+		user.guardAdminAccess();
+
+		queue.deleteTasks(List.of(new TaskId(taskId)));
 	}
 
 	private static class GetQueueReply {
