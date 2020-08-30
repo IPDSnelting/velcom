@@ -2,6 +2,7 @@ package de.aaaaaaah.velcom.backend.util;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 
 /**
  * An {@code Either<L, R>} can either have a left value of type {@code L} or a right value of type
@@ -65,6 +66,10 @@ public final class Either<L, R> {
 
 	public Optional<R> getRight() {
 		return Optional.ofNullable(right);
+	}
+
+	public <Result> Result consume(Function<L, Result> left, Function<R, Result> right) {
+		return isLeft() ? left.apply(this.left) : right.apply(this.right);
 	}
 
 	@Override
