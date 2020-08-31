@@ -6,22 +6,17 @@ import de.aaaaaaah.velcom.backend.access.entities.Commit;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.entities.Dimension;
 import de.aaaaaaah.velcom.backend.access.entities.DimensionInfo;
-import de.aaaaaaah.velcom.backend.access.entities.Measurement;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
 import de.aaaaaaah.velcom.backend.access.entities.sources.CommitSource;
 import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparer;
 import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparison;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimensionDifference;
-import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonResult;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRun;
-import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonSource;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -74,7 +69,6 @@ public class RunEndpoint {
 		boolean diffPrev = (diffPrevOptional != null) && diffPrevOptional;
 
 		Run run = EndpointUtils.getRun(benchmarkAccess, runUuid, hashString);
-		JsonSource source = EndpointUtils.convertToSource(commitAccess, run.getSource());
 
 		// Obtain differences to previous run
 		Optional<List<JsonDimensionDifference>> differences;
@@ -84,50 +78,14 @@ public class RunEndpoint {
 					RunComparison comparison = comparer.compare(prevRun, run);
 					Map<Dimension, DimensionInfo> infos = benchmarkAccess
 						.getDimensionInfos(comparison.getDimensions());
-					return comparison.getDifferences().stream()
-						.map(difference -> JsonDimensionDifference.fromDimensionDifference(difference, infos))
-						.collect(Collectors.toList());
-
+					return JsonDimensionDifference.fromRunComparison(comparison, infos);
 				});
 		} else {
 			differences = Optional.empty();
 		}
 
-		final JsonRun jsonRun;
-		if (run.getResult().isLeft()) {
-			jsonRun = new JsonRun(
-				run.getId().getId(),
-				run.getAuthor(),
-				run.getRunnerName(),
-				run.getRunnerInfo(),
-				run.getStartTime().getEpochSecond(),
-				run.getStopTime().getEpochSecond(),
-				source,
-				JsonResult.fromRunError(run.getResult().getLeft().get())
-			);
-		} else {
-			Collection<Measurement> measurements = run.getResult().getRight().get();
-			List<Dimension> dimensions = measurements.stream()
-				.map(Measurement::getDimension)
-				.collect(Collectors.toList());
-			jsonRun = new JsonRun(
-				run.getId().getId(),
-				run.getAuthor(),
-				run.getRunnerName(),
-				run.getRunnerInfo(),
-				run.getStartTime().getEpochSecond(),
-				run.getStopTime().getEpochSecond(),
-				source,
-				JsonResult.fromMeasurements(
-					measurements,
-					benchmarkAccess.getDimensionInfos(dimensions),
-					allValues
-				)
-			);
-		}
-
 		return new GetReply(
-			jsonRun,
+			EndpointUtils.fromRun(benchmarkAccess, commitAccess, run, allValues),
 			differences.orElse(null)
 		);
 	}

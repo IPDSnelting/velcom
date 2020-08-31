@@ -4,14 +4,19 @@ import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.access.entities.Commit;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.access.entities.Dimension;
+import de.aaaaaaah.velcom.backend.access.entities.DimensionInfo;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
 import de.aaaaaaah.velcom.backend.access.entities.RunId;
 import de.aaaaaaah.velcom.backend.access.entities.sources.CommitSource;
 import de.aaaaaaah.velcom.backend.access.entities.sources.TarSource;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonCommitDescription;
+import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonResult;
+import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRun;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonSource;
 import de.aaaaaaah.velcom.backend.util.Either;
+import java.util.Map;
 import java.util.UUID;
 import javax.annotation.Nullable;
 
@@ -38,6 +43,52 @@ public class EndpointUtils {
 			CommitHash commitHash = new CommitHash(hash);
 			// TODO use exception instead
 			return benchmarkAccess.getLatestRun(repoId, commitHash).get();
+		}
+	}
+
+	/**
+	 * Create a {@link JsonRun} from a {@link Run} and a few other variables.
+	 *
+	 * @param benchmarkAccess a {@link BenchmarkReadAccess}
+	 * @param commitAccess a {@link CommitReadAccess}
+	 * @param run the run
+	 * @param allValues whether the full lists of values should also be included for each
+	 * 	measurement
+	 * @return the created {@link JsonRun}
+	 */
+	public static JsonRun fromRun(BenchmarkReadAccess benchmarkAccess, CommitReadAccess commitAccess,
+		Run run, boolean allValues) {
+
+		JsonSource source = convertToSource(commitAccess, run.getSource());
+		Map<Dimension, DimensionInfo> dimensionInfos = benchmarkAccess
+			.getDimensionInfos(run.getAllDimensionsUsed());
+
+		if (run.getResult().isLeft()) {
+			return new JsonRun(
+				run.getId().getId(),
+				run.getAuthor(),
+				run.getRunnerName(),
+				run.getRunnerInfo(),
+				run.getStartTime().getEpochSecond(),
+				run.getStopTime().getEpochSecond(),
+				source,
+				JsonResult.fromRunError(run.getResult().getLeft().get())
+			);
+		} else {
+			return new JsonRun(
+				run.getId().getId(),
+				run.getAuthor(),
+				run.getRunnerName(),
+				run.getRunnerInfo(),
+				run.getStartTime().getEpochSecond(),
+				run.getStopTime().getEpochSecond(),
+				source,
+				JsonResult.fromMeasurements(
+					run.getResult().getRight().get(),
+					dimensionInfos,
+					allValues
+				)
+			);
 		}
 	}
 

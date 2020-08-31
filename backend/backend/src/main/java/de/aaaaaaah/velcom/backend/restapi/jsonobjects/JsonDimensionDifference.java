@@ -3,7 +3,10 @@ package de.aaaaaaah.velcom.backend.restapi.jsonobjects;
 import de.aaaaaaah.velcom.backend.access.entities.Dimension;
 import de.aaaaaaah.velcom.backend.access.entities.DimensionInfo;
 import de.aaaaaaah.velcom.backend.data.runcomparison.DimensionDifference;
+import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparison;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 public class JsonDimensionDifference {
@@ -39,6 +42,14 @@ public class JsonDimensionDifference {
 			difference.getReldiff().orElse(null),
 			difference.getSecondStddev().orElse(null)
 		);
+	}
+
+	public static List<JsonDimensionDifference> fromRunComparison(RunComparison comparison,
+		Map<Dimension, DimensionInfo> dimensionInfos) {
+
+		return comparison.getDifferences().stream()
+			.map(diff -> fromDimensionDifference(diff, dimensionInfos))
+			.collect(Collectors.toList());
 	}
 
 	public JsonDimension getDimension() {

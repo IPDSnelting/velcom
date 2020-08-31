@@ -7,6 +7,8 @@ import java.time.Instant;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -104,6 +106,13 @@ public class Run {
 		} else {
 			return getSource().getRight().get().getRepoId();
 		}
+	}
+
+	public Set<Dimension> getAllDimensionsUsed() {
+		return result.getRight().stream()
+			.flatMap(Collection::stream)
+			.map(Measurement::getDimension)
+			.collect(Collectors.toSet());
 	}
 
 	@Override
