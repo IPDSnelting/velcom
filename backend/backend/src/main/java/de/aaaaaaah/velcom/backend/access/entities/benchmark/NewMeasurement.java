@@ -65,12 +65,10 @@ public class NewMeasurement {
 	}
 
 	public Measurement toMeasurement() {
-		// TODO use fancy Either methods
-		if (content.isLeft()) {
-			return new Measurement(runId, dimension, content.getLeft().get());
-		} else {
-			return new Measurement(runId, dimension, content.getRight().get());
-		}
+		return content.consume(
+			error -> new Measurement(runId, dimension, error),
+			values -> new Measurement(runId, dimension, values)
+		);
 	}
 
 	@Override

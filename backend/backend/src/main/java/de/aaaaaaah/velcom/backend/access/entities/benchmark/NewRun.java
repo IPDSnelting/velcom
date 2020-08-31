@@ -98,16 +98,16 @@ public class NewRun {
 	}
 
 	public Run toRun() {
-		// TODO use fancy Either methods
-		if (result.isLeft()) {
-			RunError error = result.getLeft().get();
-			return new Run(id, author, runnerName, runnerInfo, startTime, stopTime, source, error);
-		} else {
-			List<Measurement> measurements = result.getRight().get().stream()
-				.map(NewMeasurement::toMeasurement)
-				.collect(Collectors.toList());
-			return new Run(id, author, runnerName, runnerInfo, startTime, stopTime, source, measurements);
-		}
+		return result.consume(
+			error -> new Run(id, author, runnerName, runnerInfo, startTime, stopTime, source, error),
+			newMeasurements -> {
+				List<Measurement> measurements = newMeasurements.stream()
+					.map(NewMeasurement::toMeasurement)
+					.collect(Collectors.toList());
+				return new Run(id, author, runnerName, runnerInfo, startTime, stopTime, source,
+					measurements);
+			}
+		);
 	}
 
 	@Override
