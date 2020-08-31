@@ -26,6 +26,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 @Path("/queue")
 @Produces(MediaType.APPLICATION_JSON)
@@ -62,7 +63,7 @@ public class QueueEndpoint {
 
 	@DELETE
 	@Path("{taskId}")
-	public void deleteTask(@Auth RepoUser user, @PathParam("taskId") UUID taskId)
+	public Response deleteTask(@Auth RepoUser user, @PathParam("taskId") UUID taskId)
 		throws NoSuchTaskException {
 		Task task = queue.getTaskById(new TaskId(taskId));
 		if (task.getRepoId().isEmpty()) {
@@ -72,11 +73,13 @@ public class QueueEndpoint {
 		}
 
 		queue.deleteTasks(List.of(new TaskId(taskId)));
+
+		return Response.ok().build();
 	}
 
 	@PATCH
 	@Path("{taskId}")
-	public void patchTask(@Auth RepoUser user, @PathParam("taskId") UUID taskId)
+	public Response patchTask(@Auth RepoUser user, @PathParam("taskId") UUID taskId)
 		throws NoSuchTaskException {
 		user.guardAdminAccess();
 
@@ -84,6 +87,8 @@ public class QueueEndpoint {
 		Task task = queue.getTaskById(new TaskId(taskId));
 
 		queue.prioritizeTask(task.getId(), QueuePriority.MANUAL);
+
+		return Response.ok().build();
 	}
 
 	@POST
