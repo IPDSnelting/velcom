@@ -1,5 +1,9 @@
 package de.aaaaaaah.velcom.backend.restapi.jsonobjects;
 
+import de.aaaaaaah.velcom.backend.access.entities.Measurement;
+import de.aaaaaaah.velcom.backend.access.entities.RunError;
+import de.aaaaaaah.velcom.backend.util.Either;
+import java.util.Collection;
 import java.util.UUID;
 
 public class JsonRunDescription {
@@ -33,6 +37,12 @@ public class JsonRunDescription {
 	}
 
 	public enum JsonSuccess {
-		SUCCESS, PARTIAL_SUCCESS, FAILURE
+		SUCCESS, PARTIAL_SUCCESS, FAILURE;
+
+		public static JsonSuccess fromRunResult(Either<RunError, Collection<Measurement>> result) {
+			return result.getRight()
+				.map(ms -> ms.stream().allMatch(m -> m.getContent().isRight()) ? SUCCESS : PARTIAL_SUCCESS)
+				.orElse(FAILURE);
+		}
 	}
 }
