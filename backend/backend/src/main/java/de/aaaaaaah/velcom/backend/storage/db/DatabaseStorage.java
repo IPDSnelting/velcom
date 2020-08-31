@@ -50,6 +50,7 @@ public class DatabaseStorage {
 		sqliteConfig.setJournalMode(JournalMode.WAL);
 
 		SQLiteDataSource sqLiteDataSource = new SQLiteDataSource(sqliteConfig);
+		sqLiteDataSource.setUrl(jdbcUrl);
 
 		HikariConfig hikariConfig = new HikariConfig();
 		hikariConfig.setDataSource(sqLiteDataSource);
@@ -64,7 +65,7 @@ public class DatabaseStorage {
 	/**
 	 * By default, sqlite doesn't check for foreign key constraints. By opening a new db connection
 	 * only based on the db url, flyway can take advantage of this and migrations become much more
-	 * performant. This does however mean that each migration has to check foreign key consistency
+	 * performant. This does however mean thacct each migration has to check foreign key consistency
 	 * itself using {@code PRAGMA foreign_key_check}.
 	 *
 	 * @param jdbcUrl the url to the database
