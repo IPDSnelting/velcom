@@ -29,7 +29,7 @@ public class JsonDimensionDifference {
 	 */
 	public static JsonDimensionDifference fromDimensionDifference(DimensionDifference difference) {
 		return new JsonDimensionDifference(
-			JsonDimension.fromDimension(difference.getDimension()),
+			JsonDimension.fromDimensionInfo(difference.getDimension()),
 			difference.getAbsdiff(),
 			difference.getReldiff().orElse(null),
 			difference.getSecondStddev().orElse(null)

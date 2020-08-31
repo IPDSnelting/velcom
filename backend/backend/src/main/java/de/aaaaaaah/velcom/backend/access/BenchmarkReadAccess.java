@@ -45,7 +45,6 @@ import java.util.stream.Collectors;
 import org.jooq.DSLContext;
 import org.jooq.codegen.db.tables.records.MeasurementRecord;
 import org.jooq.codegen.db.tables.records.RunRecord;
-import org.jooq.impl.DSL;
 
 /**
  * Provides read access to benchmark related entities such as runs and measurements.
@@ -62,7 +61,7 @@ public class BenchmarkReadAccess {
 	protected final Map<RepoId, Cache<CommitHash, Run>> repoRunCache = new ConcurrentHashMap<>();
 	protected final List<Run> recentRunCache = new ArrayList<>();
 	protected final Comparator<Run> recentRunCacheOrder = comparing(Run::getStartTime).reversed();
-	protected final Map<RepoId, Set<DimensionInfo>> dimensionCache = new ConcurrentHashMap<>();
+	protected final Map<RepoId, Set<Dimension>> dimensionCache = new ConcurrentHashMap<>();
 
 	protected final Map<Dimension, DimensionInfo> dimensions = new ConcurrentHashMap<>();
 
@@ -236,21 +235,21 @@ public class BenchmarkReadAccess {
 	 * @return a map with each repo id as a key mapping to the set of available dimensions for the
 	 * 	given repository
 	 */
-	public Map<RepoId, Set<DimensionInfo>> getAvailableDimensions(List<RepoId> repoIds) {
+	public Map<RepoId, Set<Dimension>> getAvailableDimensions(List<RepoId> repoIds) {
 		List<String> repoIdStrList = repoIds.stream()
 			.map(repoId -> repoId.getId().toString())
 			.collect(Collectors.toCollection(ArrayList::new));
 
-		Map<RepoId, Set<DimensionInfo>> resultMap = new HashMap<>();
+		Map<RepoId, Set<Dimension>> resultMap = new HashMap<>();
 
 		// 1.) Check cache
 		checkCachesForDeletedRepos();
 
 		for (RepoId repoId : repoIds) {
-			Set<DimensionInfo> dimensionInfos = dimensionCache.get(repoId);
+			Set<Dimension> dimensions = dimensionCache.get(repoId);
 
-			if (dimensionInfos != null) {
-				resultMap.put(repoId, Collections.unmodifiableSet(dimensionInfos));
+			if (dimensions != null) {
+				resultMap.put(repoId, Collections.unmodifiableSet(dimensions));
 				repoIdStrList.remove(repoId.getId().toString());
 			} else {
 				resultMap.put(repoId, new HashSet<>()); // prepare for database query
@@ -262,23 +261,14 @@ public class BenchmarkReadAccess {
 			try (DSLContext db = databaseStorage.acquireContext()) {
 				// SQLite guarantees that we get the correct row (correct interp and unit)
 				// in each group. (See https://sqlite.org/lang_select.html#bareagg)
-				db.select(RUN.REPO_ID, MEASUREMENT.BENCHMARK, MEASUREMENT.METRIC,
-					MEASUREMENT.UNIT, MEASUREMENT.INTERPRETATION, DSL.max(RUN.STOP_TIME))
+				db.selectDistinct(RUN.REPO_ID, MEASUREMENT.BENCHMARK, MEASUREMENT.METRIC)
 					.from(MEASUREMENT)
 					.join(RUN).on(RUN.ID.eq(MEASUREMENT.RUN_ID))
-					.where(RUN.COMMIT_HASH.isNotNull())
-					.groupBy(RUN.REPO_ID, MEASUREMENT.BENCHMARK, MEASUREMENT.METRIC)
+					.where(RUN.COMMIT_HASH.isNotNull()) // Ignore uploaded-tar runs associated
 					.forEach(record -> {
 						RepoId repoId = new RepoId(UUID.fromString(record.value1()));
-						Dimension name = new Dimension(
-							record.value2(),
-							record.value3()
-						);
-						Unit unit = new Unit(record.value4());
-						Interpretation interp = Interpretation.fromTextualRepresentation(record.value5());
-						DimensionInfo dimensionInfo = new DimensionInfo(name, unit, interp);
-
-						resultMap.get(repoId).add(dimensionInfo);
+						Dimension dimension = new Dimension(record.value2(), record.value3());
+						resultMap.get(repoId).add(dimension);
 					});
 			}
 
@@ -286,8 +276,8 @@ public class BenchmarkReadAccess {
 			for (String repoIdStr : repoIdStrList) { // <- all repos in this list are not in cache
 				RepoId repoId = new RepoId(UUID.fromString(repoIdStr));
 				// Create copy so that no mutation can occur from outside
-				Set<DimensionInfo> dimensionInfoSet = new HashSet<>(resultMap.get(repoId));
-				dimensionCache.put(repoId, dimensionInfoSet);
+				Set<Dimension> dimensionSet = new HashSet<>(resultMap.get(repoId));
+				dimensionCache.put(repoId, dimensionSet);
 			}
 		}
 

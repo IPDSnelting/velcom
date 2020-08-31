@@ -25,7 +25,7 @@ public class JsonDimension {
 	 * @param dimensionInfo the {@link DimensionInfo} to use
 	 * @return the newly created {@link JsonDimension}
 	 */
-	public static JsonDimension fromDimension(DimensionInfo dimensionInfo) {
+	public static JsonDimension fromDimensionInfo(DimensionInfo dimensionInfo) {
 		return new JsonDimension(
 			dimensionInfo.getDimension().getBenchmark(),
 			dimensionInfo.getDimension().getMetric(),

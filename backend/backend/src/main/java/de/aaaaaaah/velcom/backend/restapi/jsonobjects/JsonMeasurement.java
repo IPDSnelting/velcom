@@ -55,7 +55,7 @@ public class JsonMeasurement {
 			throw new IllegalArgumentException("measurement must have same dimension as dimension info");
 		}
 
-		JsonDimension dimension = JsonDimension.fromDimension(dimensionInfo);
+		JsonDimension dimension = JsonDimension.fromDimensionInfo(dimensionInfo);
 
 		Either<MeasurementError, MeasurementValues> content = measurement.getContent();
 		if (content.isLeft()) {
