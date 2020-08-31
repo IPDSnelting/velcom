@@ -1,7 +1,5 @@
 package de.aaaaaaah.velcom.runner;
 
-// TODO update comment once backend is implemented
-
 import de.aaaaaaah.velcom.runner.benchmarking.BenchResult;
 import de.aaaaaaah.velcom.runner.benchmarking.Benchmarker;
 import de.aaaaaaah.velcom.runner.states.AwaitingRequestRunReply;

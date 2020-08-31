@@ -5,6 +5,8 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
 
+// TODO: 31.08.20 Merge with BenchmarkFailureInformation
+
 /**
  * A class for collecting and formatting runner information before sending it to the server.
  */
@@ -58,8 +60,8 @@ public class RunnerInfo {
 
 
 	/**
-	 * Add a new line at the bottom. If another line with the same name already exists, it is
-	 * removed before this new line is added.
+	 * Add a new line at the bottom. If another line with the same name already exists, it is removed
+	 * before this new line is added.
 	 *
 	 * @param name the label to the left
 	 * @param value the text to the right

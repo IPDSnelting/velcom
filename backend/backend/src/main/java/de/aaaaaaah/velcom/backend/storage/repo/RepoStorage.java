@@ -27,9 +27,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * // TODO: 27.12.19 Repo vs Repository?
- *
- * <p>
  * A repo storage is able to store git repositories on the file system.
  */
 public class RepoStorage {

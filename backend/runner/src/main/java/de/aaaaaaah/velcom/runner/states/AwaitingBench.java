@@ -39,12 +39,13 @@ public class AwaitingBench extends RunnerState {
 		LOGGER.info("{}: Receiving bench repo", teleBackend);
 
 		try {
+			// TODO: 31.08.20 Use java.nio.files instead
 			File file = teleBackend.getBenchRepoTmpPath().toFile();
 			file.getParentFile().mkdirs();
 			file.createNewFile();
 			tmpFile = new FileOutputStream(file);
 		} catch (IOException e) {
-			LOGGER.warn("{}: Could not open stream to bench repo tmp file",  teleBackend, e);
+			LOGGER.warn("{}: Could not open stream to bench repo tmp file", teleBackend, e);
 		}
 	}
 
