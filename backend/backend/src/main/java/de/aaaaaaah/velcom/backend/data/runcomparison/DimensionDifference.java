@@ -1,23 +1,23 @@
 package de.aaaaaaah.velcom.backend.data.runcomparison;
 
-import de.aaaaaaah.velcom.backend.access.entities.DimensionInfo;
+import de.aaaaaaah.velcom.backend.access.entities.Dimension;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
 public class DimensionDifference {
 
 	private final SignificanceFactors significanceFactors;
-	private final DimensionInfo dimensionInfo;
+	private final Dimension dimension;
 	private final double first;
 	private final double second;
 	@Nullable
 	private final Double secondStddev;
 
-	public DimensionDifference(SignificanceFactors significanceFactors, DimensionInfo dimensionInfo,
+	public DimensionDifference(SignificanceFactors significanceFactors, Dimension dimension,
 		double first, double second, @Nullable Double secondStddev) {
 
 		this.significanceFactors = significanceFactors;
-		this.dimensionInfo = dimensionInfo;
+		this.dimension = dimension;
 		this.first = first;
 		this.second = second;
 		this.secondStddev = secondStddev;
@@ -27,8 +27,8 @@ public class DimensionDifference {
 		return significanceFactors;
 	}
 
-	public DimensionInfo getDimension() {
-		return dimensionInfo;
+	public Dimension getDimension() {
+		return dimension;
 	}
 
 	public double getFirst() {

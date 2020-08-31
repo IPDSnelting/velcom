@@ -1,12 +1,9 @@
 package de.aaaaaaah.velcom.backend.data.runcomparison;
 
-import de.aaaaaaah.velcom.backend.access.entities.DimensionInfo;
-import de.aaaaaaah.velcom.backend.access.entities.Interpretation;
-import de.aaaaaaah.velcom.backend.access.entities.Measurement;
 import de.aaaaaaah.velcom.backend.access.entities.Dimension;
+import de.aaaaaaah.velcom.backend.access.entities.Measurement;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementValues;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
-import de.aaaaaaah.velcom.backend.access.entities.Unit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -37,16 +34,13 @@ public class RunComparer {
 		commonNames.retainAll(secondMap.keySet());
 
 		ArrayList<DimensionDifference> differences = new ArrayList<>();
-		for (Dimension name : commonNames) {
-			MeasurementValues firstValues = firstMap.get(name);
-			MeasurementValues secondValues = secondMap.get(name);
-
-			// TODO use actual dimension
-			DimensionInfo dimensionInfo = new DimensionInfo(name, Unit.DEFAULT, Interpretation.DEFAULT);
+		for (Dimension dimension : commonNames) {
+			MeasurementValues firstValues = firstMap.get(dimension);
+			MeasurementValues secondValues = secondMap.get(dimension);
 
 			DimensionDifference difference = new DimensionDifference(
 				significanceFactors,
-				dimensionInfo,
+				dimension,
 				firstValues.getAverageValue(),
 				secondValues.getAverageValue(),
 				getStddev(secondValues).orElse(null)

@@ -1,7 +1,10 @@
 package de.aaaaaaah.velcom.backend.data.runcomparison;
 
+import de.aaaaaaah.velcom.backend.access.entities.Dimension;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class RunComparison {
 
@@ -25,5 +28,11 @@ public class RunComparison {
 
 	public List<DimensionDifference> getDifferences() {
 		return differences;
+	}
+
+	public Set<Dimension> getDimensions() {
+		return differences.stream()
+			.map(DimensionDifference::getDimension)
+			.collect(Collectors.toSet());
 	}
 }

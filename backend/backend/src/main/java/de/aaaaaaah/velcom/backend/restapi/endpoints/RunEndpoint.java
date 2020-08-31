@@ -2,16 +2,23 @@ package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
 import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
+import de.aaaaaaah.velcom.backend.access.entities.Commit;
+import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.entities.Dimension;
+import de.aaaaaaah.velcom.backend.access.entities.DimensionInfo;
 import de.aaaaaaah.velcom.backend.access.entities.Measurement;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
+import de.aaaaaaah.velcom.backend.access.entities.sources.CommitSource;
 import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparer;
+import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparison;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimensionDifference;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonResult;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRun;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonSource;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -40,8 +47,20 @@ public class RunEndpoint {
 	}
 
 	private Optional<Run> getPrevRun(Run run) {
-		// TODO implement
-		return Optional.empty();
+		Optional<CommitSource> left = run.getSource().getLeft();
+		if (left.isEmpty()) {
+			return Optional.empty(); // Run doesn't come from a commit
+		}
+		CommitSource commitSource = left.get();
+
+		Commit commit = commitAccess.getCommit(commitSource.getRepoId(), commitSource.getHash());
+		ArrayList<CommitHash> parentHashes = new ArrayList<>(commit.getParentHashes());
+		if (parentHashes.size() != 1) {
+			return Optional.empty(); // No unambiguous previous commit
+		}
+
+		CommitHash parentHash = parentHashes.get(0);
+		return benchmarkAccess.getLatestRun(commitSource.getRepoId(), parentHash);
 	}
 
 	@GET
@@ -51,18 +70,28 @@ public class RunEndpoint {
 		@QueryParam("hash") @Nullable String hashString,
 		@QueryParam("diff_prev") @Nullable Boolean diffPrevOptional
 	) {
-		boolean allValues = (allValuesOptional == null) ? false : allValuesOptional;
-		boolean diffPrev = (diffPrevOptional == null) ? false : diffPrevOptional;
+		boolean allValues = (allValuesOptional != null) && allValuesOptional;
+		boolean diffPrev = (diffPrevOptional != null) && diffPrevOptional;
 
 		Run run = EndpointUtils.getRun(benchmarkAccess, runUuid, hashString);
 		JsonSource source = EndpointUtils.convertToSource(commitAccess, run.getSource());
 
-		Optional<List<JsonDimensionDifference>> differences = getPrevRun(run)
-			.map(prevRun -> comparer.compare(prevRun, run))
-			.map(runComparison -> runComparison.getDifferences().stream()
-				.map(JsonDimensionDifference::fromDimensionDifference)
-				.collect(Collectors.toList())
-			);
+		// Obtain differences to previous run
+		Optional<List<JsonDimensionDifference>> differences;
+		if (diffPrev) {
+			differences = getPrevRun(run)
+				.map(prevRun -> {
+					RunComparison comparison = comparer.compare(prevRun, run);
+					Map<Dimension, DimensionInfo> infos = benchmarkAccess
+						.getDimensionInfos(comparison.getDimensions());
+					return comparison.getDifferences().stream()
+						.map(difference -> JsonDimensionDifference.fromDimensionDifference(difference, infos))
+						.collect(Collectors.toList());
+
+				});
+		} else {
+			differences = Optional.empty();
+		}
 
 		final JsonRun jsonRun;
 		if (run.getResult().isLeft()) {

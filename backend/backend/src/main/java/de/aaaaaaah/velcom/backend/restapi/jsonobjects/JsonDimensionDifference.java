@@ -1,6 +1,9 @@
 package de.aaaaaaah.velcom.backend.restapi.jsonobjects;
 
+import de.aaaaaaah.velcom.backend.access.entities.Dimension;
+import de.aaaaaaah.velcom.backend.access.entities.DimensionInfo;
 import de.aaaaaaah.velcom.backend.data.runcomparison.DimensionDifference;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 public class JsonDimensionDifference {
@@ -27,9 +30,11 @@ public class JsonDimensionDifference {
 	 * @param difference the {@link DimensionDifference} to use
 	 * @return the newly created {@link JsonDimensionDifference}
 	 */
-	public static JsonDimensionDifference fromDimensionDifference(DimensionDifference difference) {
+	public static JsonDimensionDifference fromDimensionDifference(DimensionDifference difference,
+		Map<Dimension, DimensionInfo> dimensionInfos) {
+
 		return new JsonDimensionDifference(
-			JsonDimension.fromDimensionInfo(difference.getDimension()),
+			JsonDimension.fromDimensionInfo(dimensionInfos.get(difference.getDimension())),
 			difference.getAbsdiff(),
 			difference.getReldiff().orElse(null),
 			difference.getSecondStddev().orElse(null)
