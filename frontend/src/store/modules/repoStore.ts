@@ -16,7 +16,7 @@ export class RepoStore extends VxModule {
   private repoIndices: { [repoID: string]: number } = {}
 
   @action
-  async fetchRepos() {
+  async fetchRepos(): Promise<Repo[]> {
     const response = await axios.get('/all-repos', {
       snackbarTag: 'all repos',
       hideLoadingSnackbar: true
@@ -28,33 +28,21 @@ export class RepoStore extends VxModule {
       return
     }
 
-    let repos: Repo[] = response.data.repos.map((it: any) => repoFromJson(it))
+    const repos: Repo[] = response.data.repos.map((it: any) => repoFromJson(it))
 
     this.setRepos(repos)
     return repos
   }
 
   @action
-  async fetchRepoByID(payload: string) {
-    const response = await axios.get('/repo', {
-      snackbarTag: 'repo-detail',
-      params: {
-        repo_id: payload
-      }
+  async fetchRepoById(repoId: string): Promise<Repo> {
+    const response = await axios.get(`/repo/${repoId}`, {
+      snackbarTag: 'repo-detail'
     })
 
-    let item = response.data.repo
-    let repo = new Repo(
-      item.id,
-      item.name,
-      item.branches,
-      item.tracked_branches,
-      item.measurements,
-      item.remote_url
-    )
-
+    const repo: Repo = repoFromJson(response.data.repo)
     this.setRepo(repo)
-    return this.repoByID(repo.id)!
+    return this.repoById(repo.id)!
   }
 
   @action
@@ -62,28 +50,16 @@ export class RepoStore extends VxModule {
     repoName: string
     remoteUrl: string
     repoToken: string | undefined
-  }) {
-    return axios
-      .post('/repo', {
-        name: payload.repoName,
-        remote_url: payload.remoteUrl,
-        token: payload.repoToken
-      })
-      .then(response => {
-        let item = response.data['repo']
+  }): Promise<Repo> {
+    const response = await axios.post('/repo', {
+      name: payload.repoName,
+      remote_url: payload.remoteUrl,
+      token: payload.repoToken
+    })
 
-        let repo = new Repo(
-          item.id,
-          item.name,
-          item.branches,
-          item.tracked_branches,
-          item.measurements,
-          item.remote_url
-        )
-
-        this.setRepo(repo)
-        return repo
-      })
+    const repo: Repo = repoFromJson(response.data.repo)
+    this.setRepo(repo)
+    return this.repoById(repo.id)!
   }
 
   /**
@@ -95,15 +71,8 @@ export class RepoStore extends VxModule {
    */
   @action
   async deleteRepo(repoId: RepoId): Promise<void> {
-    return axios
-      .delete('/repo', {
-        params: {
-          repo_id: repoId
-        }
-      })
-      .then(response => {
-        this.removeRepo(repoId)
-      })
+    await axios.delete(`/repo/${repoId}`)
+    this.removeRepo(repoId)
   }
 
   @action
@@ -114,28 +83,24 @@ export class RepoStore extends VxModule {
     remoteUrl: string | undefined
     trackedBranches: string[] | undefined
   }): Promise<void> {
-    return axios
-      .patch('/repo', {
-        repo_id: payload.id,
-        name: payload.name,
-        token: payload.repoToken,
-        remote_url: payload.remoteUrl,
-        tracked_branches: payload.trackedBranches
-      })
-      .then(response => {
-        this.fetchRepoByID(payload.id)
-      })
+    await axios.patch(`/repo/${payload.id}`, {
+      name: payload.name,
+      token: payload.repoToken,
+      remote_url: payload.remoteUrl,
+      tracked_branches: payload.trackedBranches
+    })
+    this.fetchRepoById(payload.id)
   }
 
   @mutation
-  setIndexForRepo(repoId: RepoId) {
+  setIndexForRepo(repoId: RepoId): void {
     if (!this.repoIndices[repoId]) {
       this.repoIndices[repoId] = this.currentRepoIndex++
     }
   }
 
   @mutation
-  setRepo(payload: Repo) {
+  setRepo(payload: Repo): void {
     if (this.repos[payload.id]) {
       const existing = this.repos[payload.id]
       existing.branches = payload.branches.slice()
@@ -150,7 +115,7 @@ export class RepoStore extends VxModule {
   }
 
   @mutation
-  setRepos(repos: Repo[]) {
+  setRepos(repos: Repo[]): void {
     Array.from(Object.keys(this.repos)).forEach(it =>
       Vue.delete(this.repos, it)
     )
@@ -158,20 +123,20 @@ export class RepoStore extends VxModule {
   }
 
   @mutation
-  removeRepo(payload: RepoId) {
+  removeRepo(payload: RepoId): void {
     Vue.delete(this.repos, payload)
   }
 
-  get allRepos() {
+  get allRepos(): Repo[] {
     return Array.from(Object.values(this.repos))
   }
 
-  get repoByID(): (payload: RepoId) => Repo | undefined {
+  get repoById(): (payload: RepoId) => Repo | undefined {
     return (payload: RepoId) => this.repos[payload]
   }
 
   get trackedBranchesByRepoID(): { [key: string]: string[] } {
-    var branchesByRepoID: { [key: string]: string[] } = {}
+    const branchesByRepoID: { [key: string]: string[] } = {}
     this.allRepos.forEach(repo => {
       branchesByRepoID[repo.id] = repo.branches
         .filter(it => it.tracked)
@@ -186,7 +151,7 @@ export class RepoStore extends VxModule {
 
   get occuringBenchmarks(): (selectedRepos: RepoId[]) => string[] {
     return (selectedRepos: string[]) => {
-      let benchmarks = Object.values(this.repos)
+      const benchmarks = Object.values(this.repos)
         .filter(repo => selectedRepos.includes(repo.id))
         .flatMap(repo => repo.dimensions)
         .map(dimension => dimension.benchmark)
@@ -203,7 +168,7 @@ export class RepoStore extends VxModule {
 
   get metricsForBenchmark(): (benchmark: string) => string[] {
     return (benchmark: string) => {
-      let metrics = Object.values(this.repos)
+      const metrics = Object.values(this.repos)
         .flatMap(repo => repo.dimensions)
         .filter(dimension => dimension.benchmark === benchmark)
         .map(dimension => dimension.metric)
