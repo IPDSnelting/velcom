@@ -27,8 +27,8 @@ public class JsonDimension {
 	 */
 	public static JsonDimension fromDimension(DimensionInfo dimensionInfo) {
 		return new JsonDimension(
-			dimensionInfo.getName().getBenchmark(),
-			dimensionInfo.getName().getMetric(),
+			dimensionInfo.getDimension().getBenchmark(),
+			dimensionInfo.getDimension().getMetric(),
 			dimensionInfo.getUnit().getName(),
 			dimensionInfo.getInterpretation()
 		);

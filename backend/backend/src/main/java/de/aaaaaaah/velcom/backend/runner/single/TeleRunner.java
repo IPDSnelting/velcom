@@ -1,13 +1,14 @@
 package de.aaaaaaah.velcom.backend.runner.single;
 
-import de.aaaaaaah.velcom.backend.access.entities.RunErrorType;
-import de.aaaaaaah.velcom.backend.access.entities.Interpretation;
 import de.aaaaaaah.velcom.backend.access.entities.Dimension;
+import de.aaaaaaah.velcom.backend.access.entities.Interpretation;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
 import de.aaaaaaah.velcom.backend.access.entities.RunBuilder;
+import de.aaaaaaah.velcom.backend.access.entities.RunErrorType;
 import de.aaaaaaah.velcom.backend.access.entities.Task;
 import de.aaaaaaah.velcom.backend.access.entities.TaskId;
 import de.aaaaaaah.velcom.backend.access.entities.Unit;
+import de.aaaaaaah.velcom.backend.access.entities.benchmark.NewRun;
 import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchTaskException;
 import de.aaaaaaah.velcom.backend.access.exceptions.PrepareTransferException;
 import de.aaaaaaah.velcom.backend.access.exceptions.TransferException;
@@ -203,7 +204,7 @@ public class TeleRunner {
 			return;
 		}
 
-		Run run;
+		NewRun run;
 		if (resultReply.isSuccess()) {
 			// the benchmark script exited normally
 			run = handleSuccessful(resultReply, task);
@@ -216,7 +217,7 @@ public class TeleRunner {
 		myCurrentTask.set(null);
 	}
 
-	private Run handleUnsuccessful(GetResultReply resultReply, Task task) {
+	private NewRun handleUnsuccessful(GetResultReply resultReply, Task task) {
 		RunBuilder builder = RunBuilder.failed(
 			task,
 			getRunnerName(),
@@ -229,7 +230,7 @@ public class TeleRunner {
 		return builder.build();
 	}
 
-	private Run handleSuccessful(GetResultReply resultReply, Task task) {
+	private NewRun handleSuccessful(GetResultReply resultReply, Task task) {
 		Result result = resultReply.getResult().orElseThrow();
 
 		// Global error
@@ -247,11 +248,11 @@ public class TeleRunner {
 
 		// No global error, but maybe individual ones failed
 		RunBuilder builder = RunBuilder.successful(
-				task,
-				getRunnerName(),
-				getRunnerInformation().getInformation(),
-				resultReply.getStartTime(),
-				resultReply.getStopTime()
+			task,
+			getRunnerName(),
+			getRunnerInformation().getInformation(),
+			resultReply.getStartTime(),
+			resultReply.getStopTime()
 		);
 
 		// That get is okay, we check for `getError().isPresent()
@@ -261,19 +262,19 @@ public class TeleRunner {
 				Dimension name = new Dimension(benchmark.getName(), metric.getName());
 				if (metric.getError().isPresent()) {
 					builder.addFailedMeasurement(
-							name,
-							new Unit(metric.getUnit()),
-							Interpretation.fromSharedRepresentation(metric.getInterpretation()),
-							metric.getError().get()
+						name,
+						new Unit(metric.getUnit()),
+						Interpretation.fromSharedRepresentation(metric.getInterpretation()),
+						metric.getError().get()
 					);
 				} else {
 					// That get is okay, we check for metric.getError().isPresent()
 					//noinspection OptionalGetWithoutIsPresent
 					builder.addSuccessfulMeasurement(
-							name,
-							Interpretation.fromSharedRepresentation(metric.getInterpretation()),
-							new Unit(metric.getUnit()),
-							metric.getValues().get()
+						name,
+						Interpretation.fromSharedRepresentation(metric.getInterpretation()),
+						new Unit(metric.getUnit()),
+						metric.getValues().get()
 					);
 				}
 			}
@@ -288,12 +289,12 @@ public class TeleRunner {
 	public void sendAvailableWork() {
 		LOGGER.debug("Runner {} asks for work", getRunnerName());
 		Optional<Task> workOptional = Optional.ofNullable(myCurrentTask.get())
-				.or(() -> dispatcher.getWork(this));
+			.or(() -> dispatcher.getWork(this));
 
 		if (workOptional.isEmpty()) {
 			LOGGER.debug("Dispatcher gave me no work for {}", getRunnerName());
 			connection.send(
-					new RequestRunReply(false, null, false, null).asPacket(serializer)
+				new RequestRunReply(false, null, false, null).asPacket(serializer)
 			);
 			return;
 		}
@@ -345,7 +346,7 @@ public class TeleRunner {
 		}
 	}
 
-	private Run prepareTransferFailed(Task task, Instant start,
+	private NewRun prepareTransferFailed(Task task, Instant start,
 		PrepareTransferException exception) {
 		return RunBuilder.failed(
 			task,

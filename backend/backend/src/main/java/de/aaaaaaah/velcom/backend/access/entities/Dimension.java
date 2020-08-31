@@ -43,7 +43,7 @@ public class Dimension {
 
 	@Override
 	public String toString() {
-		return "MeasurementName{" +
+		return "Dimension{" +
 			"benchmark='" + benchmark + '\'' +
 			", metric='" + metric + '\'' +
 			'}';

@@ -68,8 +68,8 @@ public class AllReposEndpoint {
 
 				List<JsonDimension> dimensions = allDimensions.get(repoId).stream()
 					.map(dimension -> new JsonDimension(
-						dimension.getName().getBenchmark(),
-						dimension.getName().getMetric(),
+						dimension.getDimension().getBenchmark(),
+						dimension.getDimension().getMetric(),
 						dimension.getUnit().getName(),
 						dimension.getInterpretation()
 					))

@@ -125,8 +125,9 @@ public class TimesliceComparison implements RepoComparison {
 			}
 		}
 
-		Interpretation interpretation = youngestMeasurement.getInterpretation();
-		Unit unit = youngestMeasurement.getUnit();
+		// TODO use actual unit and interpretation, or rewrite this
+		Interpretation interpretation = Interpretation.DEFAULT;
+		Unit unit = Unit.DEFAULT;
 
 		if (startTime == null) {
 			startTime = oldestAuthorDate;
@@ -216,7 +217,7 @@ public class TimesliceComparison implements RepoComparison {
 			Collection<Measurement> measurements = run.getResult().getRight().get();
 
 			Measurement measurement = measurements.stream()
-				.filter(m -> m.getMeasurementName().equals(name))
+				.filter(m -> m.getDimension().equals(name))
 				.findAny()
 				.orElse(null);
 

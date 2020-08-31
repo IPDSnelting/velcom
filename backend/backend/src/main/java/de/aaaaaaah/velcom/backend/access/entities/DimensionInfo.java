@@ -4,26 +4,37 @@ import java.util.Objects;
 
 public class DimensionInfo {
 
-	private final Dimension name;
+	private final Dimension dimension;
 	private final Unit unit;
 	private final Interpretation interpretation;
 
-	public DimensionInfo(Dimension name, Unit unit, Interpretation interpretation) {
-		this.name = Objects.requireNonNull(name);
+	public DimensionInfo(Dimension dimension, Unit unit, Interpretation interpretation) {
+		this.dimension = Objects.requireNonNull(dimension);
 		this.unit = Objects.requireNonNull(unit);
 		this.interpretation = Objects.requireNonNull(interpretation);
 	}
 
-	public static DimensionInfo fromMeasurement(Measurement measurement) {
+	/**
+	 * Create a {@link DimensionInfo} with default unit and interpretation.
+	 *
+	 * @param dimension the dimension
+	 */
+	public DimensionInfo(Dimension dimension) {
+		this(dimension, Unit.DEFAULT, Interpretation.DEFAULT);
+	}
+
+	public static DimensionInfo fromMeasurement(Measurement measurement, Unit unit,
+		Interpretation interpretation) {
+
 		return new DimensionInfo(
-			measurement.getMeasurementName(),
-			measurement.getUnit(),
-			measurement.getInterpretation()
+			measurement.getDimension(),
+			unit,
+			interpretation
 		);
 	}
 
-	public Dimension getName() {
-		return name;
+	public Dimension getDimension() {
+		return dimension;
 	}
 
 	public Unit getUnit() {
@@ -43,21 +54,20 @@ public class DimensionInfo {
 			return false;
 		}
 		DimensionInfo dimensionInfo = (DimensionInfo) o;
-		return name.equals(dimensionInfo.name);
+		return dimension.equals(dimensionInfo.dimension);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(name);
+		return Objects.hash(dimension);
 	}
 
 	@Override
 	public String toString() {
-		return "Dimension{" +
-			"name=" + name +
+		return "DimensionInfo{" +
+			"dimension=" + dimension +
 			", unit=" + unit +
 			", interpretation=" + interpretation +
 			'}';
 	}
-
 }

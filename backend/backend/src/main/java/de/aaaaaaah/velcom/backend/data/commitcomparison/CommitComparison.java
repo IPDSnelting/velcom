@@ -74,13 +74,13 @@ public class CommitComparison {
 		Collection<Measurement> secondMeasurements = secondRun.getResult().getRight().get();
 		Map<Dimension, Measurement> secondMap = new HashMap<>();
 		for (Measurement m : secondMeasurements) {
-			secondMap.put(m.getMeasurementName(), m);
+			secondMap.put(m.getDimension(), m);
 		}
 
 		// Iterate through fist measurements and check if a measurement by the same name exists in
 		// the second run. If so, create a commitDifference and add it to the list
 		for (Measurement firstMeasurement : firstMeasurements) {
-			final Dimension name = firstMeasurement.getMeasurementName();
+			final Dimension name = firstMeasurement.getDimension();
 			Measurement secondMeasurement = secondMap.get(name);
 			if (secondMeasurement == null) {
 				continue;

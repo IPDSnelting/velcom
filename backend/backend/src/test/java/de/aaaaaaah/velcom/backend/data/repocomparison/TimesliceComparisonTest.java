@@ -11,14 +11,12 @@ import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.access.entities.BranchName;
 import de.aaaaaaah.velcom.backend.access.entities.Commit;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
-import de.aaaaaaah.velcom.backend.access.entities.Interpretation;
-import de.aaaaaaah.velcom.backend.access.entities.Measurement;
 import de.aaaaaaah.velcom.backend.access.entities.Dimension;
+import de.aaaaaaah.velcom.backend.access.entities.Measurement;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementValues;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
 import de.aaaaaaah.velcom.backend.access.entities.RunId;
-import de.aaaaaaah.velcom.backend.access.entities.Unit;
 import de.aaaaaaah.velcom.backend.util.Either;
 import java.time.Instant;
 import java.util.HashMap;
@@ -49,8 +47,6 @@ class TimesliceComparisonTest {
 	private Commit c4;
 	private Map<CommitHash, Commit> commitMap;
 
-	private Unit unit;
-	private Interpretation interpretation;
 	private Measurement m1;
 	private Measurement m2;
 	private Measurement m3;
@@ -91,15 +87,13 @@ class TimesliceComparisonTest {
 		commitMap.put(c3Hash, c3);
 		commitMap.put(c4Hash, c4);
 
-		unit = new Unit("unit");
-		interpretation = Interpretation.LESS_IS_BETTER;
-		m1 = new Measurement(mock(RunId.class), dimension, unit, interpretation,
+		m1 = new Measurement(mock(RunId.class), dimension,
 			new MeasurementValues(List.of(1d, 2d, 3d)));
-		m2 = new Measurement(mock(RunId.class), dimension, unit, interpretation,
+		m2 = new Measurement(mock(RunId.class), dimension,
 			new MeasurementValues(List.of(4d, 5d, 6d)));
-		m3 = new Measurement(mock(RunId.class), dimension, unit, interpretation,
+		m3 = new Measurement(mock(RunId.class), dimension,
 			new MeasurementValues(List.of(7d, 8d, 9d)));
-		m4 = new Measurement(mock(RunId.class), dimension, unit, interpretation,
+		m4 = new Measurement(mock(RunId.class), dimension,
 			new MeasurementValues(List.of(10d, 11d, 12d)));
 		r1 = mock(Run.class);
 		r2 = mock(Run.class);
@@ -151,8 +145,6 @@ class TimesliceComparisonTest {
 
 		RepoGraphData data = graph.getData().get(0);
 		assertEquals(repoId, data.getRepoId());
-		assertEquals(unit, data.getUnit());
-		assertEquals(interpretation, data.getInterpretation());
 		assertEquals(3, data.getEntries().size());
 	}
 
@@ -191,8 +183,6 @@ class TimesliceComparisonTest {
 
 		RepoGraphData data = graph.getData().get(0);
 		assertEquals(repoId, data.getRepoId());
-		assertEquals(unit, data.getUnit());
-		assertEquals(interpretation, data.getInterpretation());
 		assertEquals(3, data.getEntries().size());
 	}
 
@@ -231,8 +221,6 @@ class TimesliceComparisonTest {
 
 		RepoGraphData data = graph.getData().get(0);
 		assertEquals(repoId, data.getRepoId());
-		assertEquals(unit, data.getUnit());
-		assertEquals(interpretation, data.getInterpretation());
 		assertEquals(3, data.getEntries().size());
 	}
 }

@@ -49,8 +49,13 @@ public class JsonMeasurement {
 	 * @param allValues whether the full lists of values should also be included
 	 * @return the newly created {@link JsonMeasurement}
 	 */
-	public static JsonMeasurement fromMeasurement(Measurement measurement, boolean allValues) {
-		JsonDimension dimension = JsonDimension.fromDimension(DimensionInfo.fromMeasurement(measurement));
+	public static JsonMeasurement fromMeasurement(Measurement measurement, DimensionInfo dimensionInfo, boolean allValues) {
+
+		if (!measurement.getDimension().equals(dimensionInfo.getDimension())) {
+			throw new IllegalArgumentException("measurement must have same dimension as dimension info");
+		}
+
+		JsonDimension dimension = JsonDimension.fromDimension(dimensionInfo);
 
 		Either<MeasurementError, MeasurementValues> content = measurement.getContent();
 		if (content.isLeft()) {

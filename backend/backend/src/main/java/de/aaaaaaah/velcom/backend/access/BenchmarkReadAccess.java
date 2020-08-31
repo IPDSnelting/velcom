@@ -10,11 +10,11 @@ import static org.jooq.codegen.db.tables.Run.RUN;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.access.entities.Dimension;
 import de.aaaaaaah.velcom.backend.access.entities.DimensionInfo;
 import de.aaaaaaah.velcom.backend.access.entities.Interpretation;
 import de.aaaaaaah.velcom.backend.access.entities.Measurement;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementError;
-import de.aaaaaaah.velcom.backend.access.entities.Dimension;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementValues;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
@@ -22,6 +22,7 @@ import de.aaaaaaah.velcom.backend.access.entities.RunError;
 import de.aaaaaaah.velcom.backend.access.entities.RunErrorType;
 import de.aaaaaaah.velcom.backend.access.entities.RunId;
 import de.aaaaaaah.velcom.backend.access.entities.Unit;
+import de.aaaaaaah.velcom.backend.access.entities.benchmark.NewMeasurement;
 import de.aaaaaaah.velcom.backend.access.entities.sources.CommitSource;
 import de.aaaaaaah.velcom.backend.access.entities.sources.TarSource;
 import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchRunException;
@@ -63,9 +64,13 @@ public class BenchmarkReadAccess {
 	protected final Comparator<Run> recentRunCacheOrder = comparing(Run::getStartTime).reversed();
 	protected final Map<RepoId, Set<DimensionInfo>> dimensionCache = new ConcurrentHashMap<>();
 
+	protected final Map<Dimension, DimensionInfo> dimensions = new ConcurrentHashMap<>();
+
 	public BenchmarkReadAccess(DatabaseStorage databaseStorage, RepoReadAccess repoAccess) {
 		this.databaseStorage = Objects.requireNonNull(databaseStorage);
 		this.repoAccess = Objects.requireNonNull(repoAccess);
+
+		loadDimensions();
 
 		// Populate recent run cache
 		reloadRecentRunCache();
@@ -326,17 +331,11 @@ public class BenchmarkReadAccess {
 			// Read measurement content
 			if (measurementRecord.getError() != null) {
 				var measurementError = new MeasurementError(measurementRecord.getError());
-
-				measurement = new Measurement(
-					runId, dimension, unit, interpretation, measurementError
-				);
+				measurement = new Measurement(runId, dimension, measurementError);
 			} else {
 				List<Double> values = valueMap.get(measurementRecord.getId());
 				var measurementValues = new MeasurementValues(values);
-
-				measurement = new Measurement(
-					runId, dimension, unit, interpretation, measurementValues
-				);
+				measurement = new Measurement(runId, dimension, measurementValues);
 			}
 
 			// Insert measurement into map
@@ -359,12 +358,9 @@ public class BenchmarkReadAccess {
 						new RepoId(UUID.fromString(runRecord.getRepoId())),
 						new CommitHash(runRecord.getCommitHash())
 					));
-				}
-				else {
+				} else {
 					// If commit hash is null, tar desc must be present
-					source = Either.ofRight(new TarSource(
-						runRecord.getTarDesc()
-					));
+					source = Either.ofRight(new TarSource(runRecord.getTarDesc()));
 				}
 
 				if (runRecord.getError() != null) {
@@ -430,4 +426,95 @@ public class BenchmarkReadAccess {
 		}
 	}
 
+	/**
+	 * Load all dimensions and their infos from the db.
+	 */
+	private void loadDimensions() {
+		try (DSLContext db = databaseStorage.acquireContext()) {
+
+			// Figure out which dimensions exist at all
+			db.selectDistinct(MEASUREMENT.BENCHMARK, MEASUREMENT.METRIC)
+				.from(MEASUREMENT)
+				.forEach(record -> {
+					Dimension dimension = new Dimension(record.component1(), record.component2());
+					DimensionInfo info = new DimensionInfo(dimension, Unit.DEFAULT, Interpretation.DEFAULT);
+					dimensions.put(dimension, info);
+				});
+
+			// Figure out the latest units
+			db.selectDistinct(MEASUREMENT.BENCHMARK, MEASUREMENT.METRIC, MEASUREMENT.UNIT)
+				.from(RUN)
+				.join(MEASUREMENT).on(MEASUREMENT.RUN_ID.eq(RUN.ID))
+				.where(MEASUREMENT.UNIT.isNotNull())
+				.groupBy(MEASUREMENT.BENCHMARK, MEASUREMENT.METRIC)
+				.orderBy(RUN.STOP_TIME.desc())
+				.forEach(record -> {
+					Dimension dimension = new Dimension(record.value1(), record.value2());
+					DimensionInfo info = dimensions.get(dimension);
+					DimensionInfo newInfo = new DimensionInfo(
+						info.getDimension(),
+						new Unit(record.value3()),
+						info.getInterpretation()
+					);
+					dimensions.put(dimension, newInfo);
+				});
+
+			// Figure out the latest interpretations
+
+			// Figure out the latest units
+			db.selectDistinct(MEASUREMENT.BENCHMARK, MEASUREMENT.METRIC, MEASUREMENT.INTERPRETATION)
+				.from(RUN)
+				.join(MEASUREMENT).on(MEASUREMENT.RUN_ID.eq(RUN.ID))
+				.where(MEASUREMENT.INTERPRETATION.isNotNull())
+				.groupBy(MEASUREMENT.BENCHMARK, MEASUREMENT.METRIC)
+				.orderBy(RUN.STOP_TIME.desc())
+				.forEach(record -> {
+					Dimension dimension = new Dimension(record.value1(), record.value2());
+					DimensionInfo info = dimensions.get(dimension);
+					DimensionInfo newInfo = new DimensionInfo(
+						info.getDimension(),
+						info.getUnit(),
+						Interpretation.fromTextualRepresentation(record.value3())
+					);
+					dimensions.put(dimension, newInfo);
+				});
+		}
+	}
+
+	/**
+	 * Update the measurement's dimension's info if necessary.
+	 *
+	 * @param measurement the measurement whose unit and interpretation to use for the update
+	 */
+	protected void updateDimensions(NewMeasurement measurement) {
+		if (measurement.getUnit().isPresent() || measurement.getInterpretation().isPresent()) {
+			dimensions.compute(measurement.getDimension(), (dimension, info) -> {
+				if (info == null) {
+					return new DimensionInfo(
+						dimension,
+						measurement.getUnit().orElse(null),
+						measurement.getInterpretation().orElse(null)
+					);
+				} else {
+					return new DimensionInfo(
+						dimension,
+						measurement.getUnit().orElse(info.getUnit()),
+						measurement.getInterpretation().orElse(info.getInterpretation())
+					);
+				}
+			});
+		}
+	}
+
+	public DimensionInfo getDimensionInfo(Dimension dimension) {
+		return dimensions.getOrDefault(dimension, new DimensionInfo(dimension));
+	}
+
+	public Map<Dimension, DimensionInfo> getDimensionInfos(Collection<Dimension> dimensions) {
+		HashMap<Dimension, DimensionInfo> infoMap = new HashMap<>();
+		for (Dimension dimension : dimensions) {
+			infoMap.put(dimension, getDimensionInfo(dimension));
+		}
+		return infoMap;
+	}
 }

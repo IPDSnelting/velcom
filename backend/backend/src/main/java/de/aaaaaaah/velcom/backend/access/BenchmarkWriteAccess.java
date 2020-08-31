@@ -8,14 +8,17 @@ import static org.jooq.impl.DSL.exists;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.access.entities.Dimension;
+import de.aaaaaaah.velcom.backend.access.entities.DimensionInfo;
 import de.aaaaaaah.velcom.backend.access.entities.Measurement;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementError;
-import de.aaaaaaah.velcom.backend.access.entities.Dimension;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementValues;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
 import de.aaaaaaah.velcom.backend.access.entities.RunError;
 import de.aaaaaaah.velcom.backend.access.entities.TaskId;
+import de.aaaaaaah.velcom.backend.access.entities.benchmark.NewMeasurement;
+import de.aaaaaaah.velcom.backend.access.entities.benchmark.NewRun;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -39,53 +42,54 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 	/**
 	 * Inserts the specified run into the database.
 	 *
-	 * @param run the run to insert
+	 * @param newRun the run to insert
 	 */
-	public void insertRun(Run run) {
+	public void insertRun(NewRun newRun) {
+		Run run = newRun.toRun();
+
 		// Insert run into database and delete associated task
 		databaseStorage.acquireTransaction(db -> {
 			// 0.) Delete associated task
-			TaskId taskId = new TaskId(run.getId().getId());
+			TaskId taskId = new TaskId(newRun.getId().getId());
 			taskAccess.deleteTasks(List.of(taskId), db);
 
 			// 1.) Insert run
 			RunRecord runRecord = db.newRecord(RUN);
-			runRecord.setId(run.getId().getId().toString());
-			runRecord.setAuthor(run.getAuthor());
-			runRecord.setRunnerName(run.getRunnerName());
-			runRecord.setRunnerInfo(run.getRunnerInfo());
-			runRecord.setStartTime(Timestamp.from(run.getStartTime()));
-			runRecord.setStopTime(Timestamp.from(run.getStopTime()));
+			runRecord.setId(newRun.getId().getId().toString());
+			runRecord.setAuthor(newRun.getAuthor());
+			runRecord.setRunnerName(newRun.getRunnerName());
+			runRecord.setRunnerInfo(newRun.getRunnerInfo());
+			runRecord.setStartTime(Timestamp.from(newRun.getStartTime()));
+			runRecord.setStopTime(Timestamp.from(newRun.getStopTime()));
 			runRecord.setRepoId(
-				run.getRepoId().map(RepoId::getId)
+				newRun.getRepoId().map(RepoId::getId)
 					.map(UUID::toString)
 					.orElse(null)
 			);
 
-			if (run.getSource().isLeft()) {
-				runRecord.setCommitHash(run.getSource().getLeft().get().getHash().getHash());
-			}
-			else {
-				runRecord.setTarDesc(run.getSource().getRight().get().getDescription());
+			if (newRun.getSource().isLeft()) {
+				runRecord.setCommitHash(newRun.getSource().getLeft().get().getHash().getHash());
+			} else {
+				runRecord.setTarDesc(newRun.getSource().getRight().get().getDescription());
 			}
 
-			if (run.getResult().isLeft()) {
-				RunError error = run.getResult().getLeft().orElseThrow();
+			if (newRun.getResult().isLeft()) {
+				RunError error = newRun.getResult().getLeft().orElseThrow();
 				runRecord.setError(error.getMessage());
 				runRecord.setErrorType(error.getType().getTextualRepresentation());
 				runRecord.insert();
 			} else {
 				runRecord.insert();
 
-				Collection<Measurement> measurements = run.getResult().getRight().orElseThrow();
-				for (Measurement measurement : measurements) {
+				Collection<NewMeasurement> measurements = newRun.getResult().getRight().orElseThrow();
+				for (NewMeasurement measurement : measurements) {
 					insertMeasurement(db, measurement);
 				}
 			}
 		});
 
 		// 2.) Invalidate dimension cache for repo
-		run.getSource().getLeft().ifPresent(source -> dimensionCache.remove(source.getRepoId()));
+		newRun.getSource().getLeft().ifPresent(source -> dimensionCache.remove(source.getRepoId()));
 
 		// 3.) Insert run into cache
 		synchronized (recentRunCache) {
@@ -101,7 +105,7 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 		}
 
 		// 4.) If run has a commit source, insert into repoCache
-		run.getSource().getLeft().ifPresent(commitSource -> {
+		newRun.getSource().getLeft().ifPresent(commitSource -> {
 			Cache<CommitHash, Run> cache = repoRunCache.computeIfAbsent(
 				commitSource.getRepoId(),
 				r -> RUN_CACHE_BUILDER.build()
@@ -111,18 +115,17 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 		});
 	}
 
-	private void insertMeasurement(DSLContext db, Measurement measurement) {
+	private void insertMeasurement(DSLContext db, NewMeasurement measurement) {
 		String measurementId = UUID.randomUUID().toString();
 
 		MeasurementRecord measurementRecord = db.newRecord(MEASUREMENT);
 		measurementRecord.setId(measurementId);
 		measurementRecord.setRunId(measurement.getRunId().getId().toString());
-		measurementRecord.setBenchmark(measurement.getMeasurementName().getBenchmark());
-		measurementRecord.setMetric(measurement.getMeasurementName().getMetric());
-		measurementRecord.setUnit(measurement.getUnit().getName());
-		measurementRecord.setInterpretation(
-			measurement.getInterpretation().getTextualRepresentation()
-		);
+		measurementRecord.setBenchmark(measurement.getDimension().getBenchmark());
+		measurementRecord.setMetric(measurement.getDimension().getMetric());
+		measurement.getUnit().ifPresent(unit -> measurementRecord.setUnit(unit.getName()));
+		measurement.getInterpretation().ifPresent(interpretation -> measurementRecord
+			.setInterpretation(interpretation.getTextualRepresentation()));
 
 		if (measurement.getContent().isLeft()) {
 			MeasurementError error = measurement.getContent().getLeft().orElseThrow();
@@ -146,6 +149,8 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 
 			valuesInsertStep.execute();
 		}
+
+		updateDimensions(measurement);
 	}
 
 	/**
@@ -199,7 +204,7 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 
 			// Check if target measurement name is one of the measurements
 			List<Dimension> mNames = measurements.stream()
-				.map(Measurement::getMeasurementName)
+				.map(Measurement::getDimension)
 				.collect(toList());
 
 			if (!mNames.contains(dimension)) {

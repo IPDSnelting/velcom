@@ -1,5 +1,7 @@
 package de.aaaaaaah.velcom.backend.access.entities;
 
+import de.aaaaaaah.velcom.backend.access.entities.benchmark.NewMeasurement;
+import de.aaaaaaah.velcom.backend.access.entities.benchmark.NewRun;
 import de.aaaaaaah.velcom.backend.access.entities.sources.CommitSource;
 import de.aaaaaaah.velcom.backend.access.entities.sources.TarSource;
 import de.aaaaaaah.velcom.backend.util.Either;
@@ -8,7 +10,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import javax.annotation.Nullable;
 
 /**
@@ -28,6 +29,7 @@ public class RunBuilder {
 	 */
 	public static RunBuilder successful(Task task, String runnerName, String runnerInfo,
 		Instant startTime, Instant stopTime) {
+
 		return new RunBuilder(
 			new RunId(task.getId().getId()),
 			task.getAuthor(),
@@ -54,6 +56,7 @@ public class RunBuilder {
 	 */
 	public static RunBuilder failed(Task task, String runnerName, String runnerInfo,
 		Instant startTime, Instant stopTime, String errorMessage, RunErrorType runErrorType) {
+
 		return new RunBuilder(
 			new RunId(task.getId().getId()),
 			task.getAuthor(),
@@ -72,9 +75,11 @@ public class RunBuilder {
 	private final String runnerInfo;
 	private final Instant startTime;
 	private final Instant stopTime;
-	private final Optional<Either<CommitSource, TarSource>> source;
-	private final List<Measurement> measurementList;
-	private final Optional<RunError> error;
+	@Nullable
+	private final Either<CommitSource, TarSource> source;
+	private final List<NewMeasurement> measurementList;
+	@Nullable
+	private final RunError error;
 
 	private RunBuilder(RunId runId, String author, String runnerName, String runnerInfo,
 		Instant startTime, Instant stopTime,
@@ -86,8 +91,8 @@ public class RunBuilder {
 		this.runnerInfo = Objects.requireNonNull(runnerInfo);
 		this.startTime = Objects.requireNonNull(startTime);
 		this.stopTime = Objects.requireNonNull(stopTime);
-		this.source = Optional.ofNullable(source);
-		this.error = Optional.ofNullable(error);
+		this.source = source;
+		this.error = error;
 		this.measurementList = error != null ? Collections.emptyList() : new ArrayList<>();
 	}
 
@@ -103,7 +108,7 @@ public class RunBuilder {
 		Unit unit, List<Double> values) {
 
 		MeasurementValues measurementValues = new MeasurementValues(values);
-		Measurement measurement = new Measurement(
+		NewMeasurement measurement = new NewMeasurement(
 			this.runId, name, unit, interpretation, measurementValues
 		);
 
@@ -122,7 +127,7 @@ public class RunBuilder {
 		String errorMessage) {
 
 		MeasurementError measurementError = new MeasurementError(errorMessage);
-		Measurement measurement = new Measurement(
+		NewMeasurement measurement = new NewMeasurement(
 			this.runId, name, unit, interpretation, measurementError
 		);
 
@@ -135,31 +140,31 @@ public class RunBuilder {
 	 * @return the created run instance
 	 * @throws IllegalStateException if this run cannot be built yet.
 	 */
-	public Run build() throws IllegalStateException {
-		if (this.error.isPresent()) {
-			return new Run(
+	public NewRun build() throws IllegalStateException {
+		if (error != null) {
+			return new NewRun(
 				runId,
 				author,
 				runnerName,
 				runnerInfo,
 				startTime,
 				stopTime,
-				source.orElse(null),
-				this.error.get()
+				source,
+				error
 			);
 		} else {
-			if (this.measurementList.isEmpty()) {
+			if (measurementList.isEmpty()) {
 				throw new IllegalStateException("measurement list is empty for: " + this);
 			}
 
-			return new Run(
+			return new NewRun(
 				runId,
 				author,
 				runnerName,
 				runnerInfo,
 				startTime,
 				stopTime,
-				source.orElse(null),
+				source,
 				measurementList
 			);
 		}

@@ -8,9 +8,9 @@ import de.aaaaaaah.velcom.backend.access.RepoReadAccess;
 import de.aaaaaaah.velcom.backend.access.TaskWriteAccess;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
-import de.aaaaaaah.velcom.backend.access.entities.Run;
 import de.aaaaaaah.velcom.backend.access.entities.Task;
 import de.aaaaaaah.velcom.backend.access.entities.TaskId;
+import de.aaaaaaah.velcom.backend.access.entities.benchmark.NewRun;
 import de.aaaaaaah.velcom.backend.access.entities.sources.CommitSource;
 import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchTaskException;
 import de.aaaaaaah.velcom.backend.access.exceptions.PrepareTransferException;
@@ -56,8 +56,8 @@ public class Queue {
 
 	/**
 	 * Adds a handler to this queue that is called when a task process is aborted, which means that
-	 * the task was given to a runner but the processing of the task has been subsequently
-	 * cancelled. The task still remains in the queue.
+	 * the task was given to a runner but the processing of the task has been subsequently cancelled.
+	 * The task still remains in the queue.
 	 *
 	 * @param handler the handler
 	 */
@@ -171,7 +171,7 @@ public class Queue {
 	 *
 	 * @param result the result associated with the task
 	 */
-	public void completeTask(Run result) {
+	public void completeTask(NewRun result) {
 		benchAccess.insertRun(result);
 	}
 

@@ -2,12 +2,15 @@ package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
 import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
+import de.aaaaaaah.velcom.backend.access.entities.Dimension;
+import de.aaaaaaah.velcom.backend.access.entities.Measurement;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
 import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparer;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimensionDifference;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonResult;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRun;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonSource;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -61,8 +64,9 @@ public class RunEndpoint {
 				.collect(Collectors.toList())
 			);
 
-		return new GetReply(
-			new JsonRun(
+		final JsonRun jsonRun;
+		if (run.getResult().isLeft()) {
+			jsonRun = new JsonRun(
 				run.getId().getId(),
 				run.getAuthor(),
 				run.getRunnerName(),
@@ -70,8 +74,31 @@ public class RunEndpoint {
 				run.getStartTime().getEpochSecond(),
 				run.getStopTime().getEpochSecond(),
 				source,
-				JsonResult.fromRunResult(run.getResult(), allValues)
-			),
+				JsonResult.fromRunError(run.getResult().getLeft().get())
+			);
+		} else {
+			Collection<Measurement> measurements = run.getResult().getRight().get();
+			List<Dimension> dimensions = measurements.stream()
+				.map(Measurement::getDimension)
+				.collect(Collectors.toList());
+			jsonRun = new JsonRun(
+				run.getId().getId(),
+				run.getAuthor(),
+				run.getRunnerName(),
+				run.getRunnerInfo(),
+				run.getStartTime().getEpochSecond(),
+				run.getStopTime().getEpochSecond(),
+				source,
+				JsonResult.fromMeasurements(
+					measurements,
+					benchmarkAccess.getDimensionInfos(dimensions),
+					allValues
+				)
+			);
+		}
+
+		return new GetReply(
+			jsonRun,
 			differences.orElse(null)
 		);
 	}

@@ -67,7 +67,7 @@ public class RunComparer {
 		for (Measurement measurement : right.get()) {
 			Optional<MeasurementValues> content = measurement.getContent().getRight();
 			content.ifPresent(
-				measurementValues -> measurements.put(measurement.getMeasurementName(), measurementValues)
+				measurementValues -> measurements.put(measurement.getDimension(), measurementValues)
 			);
 		}
 
