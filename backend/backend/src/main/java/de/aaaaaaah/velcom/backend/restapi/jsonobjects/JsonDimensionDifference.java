@@ -54,7 +54,8 @@ public class JsonDimensionDifference {
 		return reldiff;
 	}
 
-	public double getStddev() {
+	@Nullable
+	public Double getStddev() {
 		return stddev;
 	}
 }
