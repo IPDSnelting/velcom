@@ -350,3 +350,28 @@ export class RunComparison {
     this.differences = differences
   }
 }
+
+export class DataPoint {
+  readonly hash: CommitHash
+  readonly parents: CommitHash[]
+  readonly author: string
+  readonly authorDate: Date
+  readonly summary: string
+  readonly values: number[]
+
+  constructor(
+    hash: CommitHash,
+    parents: CommitHash[],
+    author: string,
+    authorDate: Date,
+    summary: string,
+    values: number[]
+  ) {
+    this.hash = hash
+    this.parents = parents
+    this.author = author
+    this.authorDate = authorDate
+    this.summary = summary
+    this.values = values
+  }
+}
