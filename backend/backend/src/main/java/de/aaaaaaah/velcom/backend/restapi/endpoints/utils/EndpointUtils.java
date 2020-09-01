@@ -1,4 +1,4 @@
-package de.aaaaaaah.velcom.backend.restapi.endpoints;
+package de.aaaaaaah.velcom.backend.restapi.endpoints.utils;
 
 import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
@@ -16,8 +16,13 @@ import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonResult;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRun;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonSource;
 import de.aaaaaaah.velcom.backend.util.Either;
+import de.aaaaaaah.velcom.backend.util.Pair;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 public class EndpointUtils {
@@ -113,5 +118,27 @@ public class EndpointUtils {
 				.orElse(null);
 			return JsonSource.fromUploadedTar(tarSource.getDescription(), repoId);
 		}
+	}
+
+	public static List<Pair<String, List<String>>> parseColonSeparatedArgs(String args) {
+		return Arrays.stream(args.split("::"))
+			.map(s -> {
+				String[] elements = s.split(":");
+				if (elements.length < 2) {
+					throw new ArgumentParseException("section \"" + s + "\" needs at least two elements");
+				}
+
+				String sectionName = elements[0];
+				List<String> sectionElements = Arrays.stream(elements).skip(1).collect(Collectors.toList());
+				return new Pair<>(sectionName, sectionElements);
+			})
+			.collect(Collectors.toList());
+	}
+
+	public static Set<Dimension> parseDimensions(String args) {
+		return parseColonSeparatedArgs(args).stream()
+			.flatMap(pair -> pair.getSecond().stream()
+				.map(elem -> new Dimension(pair.getFirst(), elem)))
+			.collect(Collectors.toSet());
 	}
 }
