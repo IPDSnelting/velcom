@@ -80,6 +80,7 @@ public class DatabaseStorage {
 
 	/**
 	 * Acquires read access to the database.
+	 *
 	 * @return a way to interact with the database in a read only way
 	 */
 	public DBReadAccess acquireReadAccess() {
@@ -88,6 +89,7 @@ public class DatabaseStorage {
 
 	/**
 	 * Acquires read and write access to the database.
+	 *
 	 * @return a way to interact with the database
 	 */
 	public DBWriteAccess acquireWriteAccess() {
@@ -96,6 +98,7 @@ public class DatabaseStorage {
 
 	/**
 	 * Acquires a transaction that can only read from the database.
+	 *
 	 * @param handler the handler that is executed within the context of the transaction
 	 */
 	public void acquireReadTransaction(CheckedConsumer<DBReadAccess, Throwable> handler) {
@@ -110,6 +113,7 @@ public class DatabaseStorage {
 
 	/**
 	 * Acquires a transaction that can read and write to the database.
+	 *
 	 * @param handler the handler that is executed within the context of the transaction
 	 */
 	public void acquireWriteTransaction(CheckedConsumer<DBWriteAccess, Throwable> handler) {
