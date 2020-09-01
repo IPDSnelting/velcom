@@ -66,7 +66,9 @@ public class TaskWriteAccess extends TaskReadAccess {
 	 * @param tasks the tasks to insert
 	 */
 	public void insertTasks(Collection<Task> tasks) {
-		insertTasks(tasks, databaseStorage.acquireWriteAccess());
+		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
+			insertTasks(tasks, db);
+		}
 	}
 
 	void insertTasks(Collection<Task> originalTasks, DBWriteAccess db) {
@@ -166,7 +168,9 @@ public class TaskWriteAccess extends TaskReadAccess {
 	 * @param taskIds the ids of the tasks to delete
 	 */
 	public void deleteTasks(Collection<TaskId> taskIds) {
-		deleteTasks(taskIds, databaseStorage.acquireWriteAccess());
+		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
+			deleteTasks(taskIds, db);
+		}
 	}
 
 	void deleteTasks(Collection<TaskId> taskIds, DBWriteAccess db) {

@@ -31,7 +31,9 @@ public class KnownCommitWriteAccess extends KnownCommitReadAccess {
 	}
 
 	public void markCommitsAsKnown(RepoId repoId, Collection<CommitHash> commits) {
-		markCommitsAsKnown(repoId, commits, databaseStorage.acquireWriteAccess());
+		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
+			markCommitsAsKnown(repoId, commits, db);
+		}
 	}
 
 	private void markCommitsAsKnown(RepoId repoId, Collection<CommitHash> commits, DBWriteAccess db) {
