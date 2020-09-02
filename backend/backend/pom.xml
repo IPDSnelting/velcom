@@ -287,7 +287,7 @@
     <dependency>
       <artifactId>HikariCP</artifactId>
       <groupId>com.zaxxer</groupId>
-      <version>3.4.1</version>
+      <version>3.4.5</version>
     </dependency>
     <!-- https://mvnrepository.com/artifact/org.flywaydb/flyway-core -->
     <dependency>

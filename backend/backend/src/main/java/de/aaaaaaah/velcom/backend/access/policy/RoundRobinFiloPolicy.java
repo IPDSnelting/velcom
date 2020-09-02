@@ -56,7 +56,7 @@ public class RoundRobinFiloPolicy implements QueuePolicy {
 	public synchronized Optional<Task> fetchNextTask() {
 		AtomicReference<Task> result = new AtomicReference<>(null);
 
-		databaseStorage.acquireTransaction(db -> {
+		databaseStorage.acquireWriteTransaction(db -> {
 			// 1.) Find manual or tar task with highest priority
 			Optional<TaskRecord> mostImportantRecord = db.selectFrom(TASK)
 				.where(
@@ -159,7 +159,7 @@ public class RoundRobinFiloPolicy implements QueuePolicy {
 		// The final ordered list that represents the queue
 		LinkedList<Task> completeTaskList = new LinkedList<>();
 
-		databaseStorage.acquireTransaction(db -> {
+		databaseStorage.acquireReadTransaction(db -> {
 			// 1.) Get manual tasks
 			db.selectFrom(TASK)
 				.where(TASK.PRIORITY.lessThan(Task.DEFAULT_PRIORITY))

@@ -23,6 +23,7 @@ import de.aaaaaaah.velcom.backend.access.entities.Run;
 import de.aaaaaaah.velcom.backend.access.entities.RunError;
 import de.aaaaaaah.velcom.backend.access.entities.RunId;
 import de.aaaaaaah.velcom.backend.access.entities.Unit;
+import de.aaaaaaah.velcom.backend.storage.db.DBReadAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -36,7 +37,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import org.jooq.DSLContext;
 import org.jooq.codegen.db.tables.records.MeasurementRecord;
 import org.jooq.codegen.db.tables.records.RunRecord;
 
@@ -103,7 +103,7 @@ public class BenchmarkReadAccess {
 			int dbSkip = Math.max(skip, recentRunCache.size());
 			int dbAmount = amount - runList.size();
 
-			try (DSLContext db = databaseStorage.acquireContext()) {
+			try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
 				Map<String, RunRecord> runRecordMap = db.selectFrom(RUN)
 					.orderBy(RUN.START_TIME.desc())
 					.limit(dbSkip, dbAmount)
@@ -160,7 +160,7 @@ public class BenchmarkReadAccess {
 			.collect(toSet());
 
 		if (!uncachedCommitHashes.isEmpty()) {
-			try (DSLContext db = databaseStorage.acquireContext()) {
+			try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
 				// Get all data from database
 				Map<String, RunRecord> runRecordMap = db.selectFrom(RUN)
 					.where(RUN.REPO_ID.eq(repoId.getId().toString()))
@@ -196,7 +196,7 @@ public class BenchmarkReadAccess {
 		}
 
 		// Check database
-		try (DSLContext db = databaseStorage.acquireContext()) {
+		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
 			result = db.selectDistinct(MEASUREMENT.BENCHMARK, MEASUREMENT.METRIC)
 				.from(MEASUREMENT)
 				.join(RUN).on(MEASUREMENT.RUN_ID.eq(RUN.ID))
@@ -211,7 +211,7 @@ public class BenchmarkReadAccess {
 		return result;
 	}
 
-	private List<Run> loadRunData(DSLContext db, Map<String, RunRecord> runRecordMap) {
+	private List<Run> loadRunData(DBReadAccess db, Map<String, RunRecord> runRecordMap) {
 		// 1.) Load measurements from database
 		Map<String, MeasurementRecord> measurementRecordMap = db.selectFrom(MEASUREMENT)
 			.where(MEASUREMENT.RUN_ID.in(runRecordMap.keySet()))

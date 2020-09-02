@@ -7,12 +7,13 @@ import de.aaaaaaah.velcom.backend.access.entities.AuthToken;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.hashalgorithm.Argon2Algorithm;
 import de.aaaaaaah.velcom.backend.access.hashalgorithm.HashAlgorithm;
+import de.aaaaaaah.velcom.backend.storage.db.DBReadAccess;
+import de.aaaaaaah.velcom.backend.storage.db.DBWriteAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import javax.annotation.Nullable;
-import org.jooq.DSLContext;
 import org.jooq.codegen.db.tables.records.RepoTokenRecord;
 
 public class TokenReadAccess {
@@ -55,7 +56,7 @@ public class TokenReadAccess {
 		Objects.requireNonNull(repoId);
 		Objects.requireNonNull(token);
 
-		try (DSLContext db = databaseStorage.acquireContext()) {
+		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
 			RepoTokenRecord tokenRecord = db.selectFrom(REPO_TOKEN)
 				.where(REPO_TOKEN.REPO_ID.eq(repoId.getId().toString()))
 				.fetchOptional()
@@ -105,7 +106,7 @@ public class TokenReadAccess {
 	 */
 	public boolean hasToken(RepoId id) {
 		Objects.requireNonNull(id);
-		try (DSLContext db = databaseStorage.acquireContext()) {
+		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
 			return db.fetchExists(selectFrom(REPO_TOKEN)
 				.where(REPO_TOKEN.REPO_ID.eq(id.getId().toString()))
 			);
@@ -119,7 +120,7 @@ public class TokenReadAccess {
 
 		if (authToken == null) {
 			// Remove from database
-			try (DSLContext db = databaseStorage.acquireContext()) {
+			try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
 				db.deleteFrom(REPO_TOKEN)
 					.where(REPO_TOKEN.REPO_ID.eq(id.getId().toString()))
 					.execute();
@@ -128,7 +129,7 @@ public class TokenReadAccess {
 			String hash = currentHashAlgorithm.generateHash(authToken);
 
 			// Insert hash into database
-			try (DSLContext db = databaseStorage.acquireContext()) {
+			try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
 				db.insertInto(REPO_TOKEN)
 					.set(REPO_TOKEN.REPO_ID, id.getId().toString())
 					.set(REPO_TOKEN.HASH_ALGO, currentHashAlgorithmId)
