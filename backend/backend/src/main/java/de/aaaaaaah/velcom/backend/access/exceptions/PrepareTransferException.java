@@ -2,6 +2,9 @@ package de.aaaaaaah.velcom.backend.access.exceptions;
 
 import de.aaaaaaah.velcom.backend.access.entities.Task;
 
+/**
+ * An exception that occurs when the preparation of a task transfer has failed.
+ */
 public class PrepareTransferException extends Exception {
 
 	public PrepareTransferException(Task task, Throwable cause) {
@@ -10,6 +13,10 @@ public class PrepareTransferException extends Exception {
 
 	public PrepareTransferException(String message, Throwable cause) {
 		super(message, cause);
+	}
+
+	public PrepareTransferException(String message) {
+		super(message);
 	}
 
 }

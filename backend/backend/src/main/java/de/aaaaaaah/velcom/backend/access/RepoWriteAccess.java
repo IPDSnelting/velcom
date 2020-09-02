@@ -13,6 +13,7 @@ import de.aaaaaaah.velcom.backend.access.exceptions.AddRepoException;
 import de.aaaaaaah.velcom.backend.access.exceptions.DeleteRepoException;
 import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchRepoException;
 import de.aaaaaaah.velcom.backend.access.exceptions.RepoAccessException;
+import de.aaaaaaah.velcom.backend.storage.db.DBWriteAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import de.aaaaaaah.velcom.backend.storage.repo.GuickCloning;
 import de.aaaaaaah.velcom.backend.storage.repo.GuickCloning.CloneException;
@@ -23,9 +24,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import org.eclipse.jgit.lib.Repository;
-import org.jooq.DSLContext;
 import org.jooq.codegen.db.tables.records.RepoRecord;
-import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,7 +59,7 @@ public class RepoWriteAccess extends RepoReadAccess {
 	 * @param newName the new name
 	 */
 	public void setName(RepoId repoId, String newName) {
-		try (DSLContext db = databaseStorage.acquireContext()) {
+		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
 			db.update(REPO).set(REPO.NAME, newName)
 				.where(REPO.ID.eq(repoId.getId().toString()))
 				.execute();
@@ -102,7 +101,7 @@ public class RepoWriteAccess extends RepoReadAccess {
 		}
 
 		// (3): Update database
-		try (DSLContext db = databaseStorage.acquireContext()) {
+		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
 			db.update(REPO)
 				.set(REPO.REMOTE_URL, newRemoteUrl.getUrl())
 				.where(REPO.ID.eq(repoId.getId().toString()))
@@ -124,8 +123,8 @@ public class RepoWriteAccess extends RepoReadAccess {
 	}
 
 	/**
-	 * Set the repo's tracked branches. Ignores duplicate branches and invalid branches. All
-	 * branches not inside the collection are set to untracked.
+	 * Set the repo's tracked branches. Ignores duplicate branches and invalid branches. All branches
+	 * not inside the collection are set to untracked.
 	 *
 	 * @param repoId the repo's id
 	 * @param branches the branches to be set as tracked
@@ -133,25 +132,22 @@ public class RepoWriteAccess extends RepoReadAccess {
 	public void setTrackedBranches(RepoId repoId, Collection<BranchName> branches) {
 		String repoIdStr = repoId.getId().toString();
 
-		try (DSLContext db = databaseStorage.acquireContext()) {
-			db.transaction((configuration) -> {
-				DSLContext ts = DSL.using(configuration);
+		databaseStorage.acquireWriteTransaction(db -> {
+			// Remove existing tracked branches
+			db.deleteFrom(TRACKED_BRANCH)
+				.where(TRACKED_BRANCH.REPO_ID.eq(repoIdStr))
+				.execute();
 
-				// Remove existing tracked branches
-				ts.deleteFrom(TRACKED_BRANCH)
-					.where(TRACKED_BRANCH.REPO_ID.eq(repoIdStr))
-					.execute();
+			// Add new tracked branches
+			var insertStep = db.insertInto(
+				TRACKED_BRANCH, TRACKED_BRANCH.REPO_ID, TRACKED_BRANCH.NAME
+			);
 
-				// Add new tracked branches
-				var insertStep = ts.insertInto(
-					TRACKED_BRANCH, TRACKED_BRANCH.REPO_ID, TRACKED_BRANCH.NAME
-				);
+			branches.forEach(branchName -> insertStep.values(repoIdStr, branchName.getName()));
 
-				branches.forEach(branchName -> insertStep.values(repoIdStr, branchName.getName()));
+			insertStep.execute();
 
-				insertStep.execute();
-			});
-		}
+		});
 
 		// Update cache
 		final Repo cachedRepo = this.repoCache.getIfPresent(repoId);
@@ -188,7 +184,7 @@ public class RepoWriteAccess extends RepoReadAccess {
 		}
 
 		// 2.) Insert repo into database
-		try (DSLContext db = databaseStorage.acquireContext()) {
+		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
 			RepoRecord record = db.newRecord(REPO);
 			record.setId(repoId.getId().toString());
 			record.setName(name);
@@ -228,7 +224,7 @@ public class RepoWriteAccess extends RepoReadAccess {
 	 */
 	public void deleteRepo(RepoId repoId) throws DeleteRepoException {
 		// Delete from database
-		try (DSLContext db = databaseStorage.acquireContext()) {
+		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
 			db.deleteFrom(REPO)
 				.where(REPO.ID.eq(repoId.getId().toString()))
 				.execute();

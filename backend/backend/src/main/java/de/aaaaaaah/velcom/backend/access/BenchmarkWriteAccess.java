@@ -9,7 +9,6 @@ import static org.jooq.impl.DSL.exists;
 import com.github.benmanes.caffeine.cache.Cache;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.entities.Dimension;
-import de.aaaaaaah.velcom.backend.access.entities.DimensionInfo;
 import de.aaaaaaah.velcom.backend.access.entities.Measurement;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementError;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementValues;
@@ -19,13 +18,13 @@ import de.aaaaaaah.velcom.backend.access.entities.RunError;
 import de.aaaaaaah.velcom.backend.access.entities.TaskId;
 import de.aaaaaaah.velcom.backend.access.entities.benchmark.NewMeasurement;
 import de.aaaaaaah.velcom.backend.access.entities.benchmark.NewRun;
+import de.aaaaaaah.velcom.backend.storage.db.DBWriteAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
-import org.jooq.DSLContext;
 import org.jooq.codegen.db.tables.records.MeasurementRecord;
 import org.jooq.codegen.db.tables.records.RunRecord;
 
@@ -48,7 +47,7 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 		Run run = newRun.toRun();
 
 		// Insert run into database and delete associated task
-		databaseStorage.acquireTransaction(db -> {
+		databaseStorage.acquireWriteTransaction(db -> {
 			// 0.) Delete associated task
 			TaskId taskId = new TaskId(newRun.getId().getId());
 			taskAccess.deleteTasks(List.of(taskId), db);
@@ -115,7 +114,7 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 		});
 	}
 
-	private void insertMeasurement(DSLContext db, NewMeasurement measurement) {
+	private void insertMeasurement(DBWriteAccess db, NewMeasurement measurement) {
 		String measurementId = UUID.randomUUID().toString();
 
 		MeasurementRecord measurementRecord = db.newRecord(MEASUREMENT);
@@ -163,7 +162,7 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 	 */
 	public void deleteAllMeasurementsOfName(RepoId repoId, Dimension dimension) {
 		// Update database
-		try (DSLContext db = databaseStorage.acquireContext()) {
+		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
 			db.deleteFrom(MEASUREMENT)
 				.where(
 					exists(db.selectOne().from(RUN)
@@ -223,7 +222,7 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 	 * @param repoId the id of the repository
 	 */
 	public void deleteAllRunsOfRepo(RepoId repoId) {
-		try (DSLContext db = databaseStorage.acquireContext()) {
+		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
 			db.deleteFrom(RUN).where(RUN.REPO_ID.eq(repoId.getId().toString()));
 		}
 

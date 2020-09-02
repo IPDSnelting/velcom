@@ -11,6 +11,7 @@ import de.aaaaaaah.velcom.backend.access.entities.TaskId;
 import de.aaaaaaah.velcom.backend.access.entities.sources.CommitSource;
 import de.aaaaaaah.velcom.backend.access.entities.sources.TarSource;
 import de.aaaaaaah.velcom.backend.access.policy.QueuePriority;
+import de.aaaaaaah.velcom.backend.storage.db.DBWriteAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -23,7 +24,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 import org.jooq.Condition;
-import org.jooq.DSLContext;
 import org.jooq.impl.DSL;
 
 /**
@@ -38,7 +38,7 @@ public class TaskWriteAccess extends TaskReadAccess {
 		super(databaseStorage);
 
 		// Reset "in process" status for all tasks
-		try (DSLContext db = databaseStorage.acquireContext()) {
+		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
 			db.update(TASK).set(TASK.IN_PROCESS, false).execute();
 		}
 	}
@@ -67,10 +67,12 @@ public class TaskWriteAccess extends TaskReadAccess {
 	 * @param tasks the tasks to insert
 	 */
 	public void insertTasks(Collection<Task> tasks) {
-		insertTasks(tasks, databaseStorage.acquireContext());
+		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
+			insertTasks(tasks, db);
+		}
 	}
 
-	void insertTasks(Collection<Task> originalTasks, DSLContext db) {
+	void insertTasks(Collection<Task> originalTasks, DBWriteAccess db) {
 		// Create mutable copy of task list
 		final List<Task> tasks = new ArrayList<>(originalTasks);
 
@@ -104,9 +106,7 @@ public class TaskWriteAccess extends TaskReadAccess {
 		final Set<CommitSource> inDatabaseTaskCommitIds = new HashSet<>();
 		final Condition finalCondition = condition;
 
-		db.transaction(configuration -> {
-			DSLContext transaction = DSL.using(configuration);
-
+		db.transaction(transaction -> {
 			transaction.selectFrom(TASK)
 				.where(TASK.ID.in(idList).or(finalCondition))
 				.fetch()
@@ -164,10 +164,12 @@ public class TaskWriteAccess extends TaskReadAccess {
 	 * @param taskIds the ids of the tasks to delete
 	 */
 	public void deleteTasks(Collection<TaskId> taskIds) {
-		deleteTasks(taskIds, databaseStorage.acquireContext());
+		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
+			deleteTasks(taskIds, db);
+		}
 	}
 
-	void deleteTasks(Collection<TaskId> taskIds, DSLContext db) {
+	void deleteTasks(Collection<TaskId> taskIds, DBWriteAccess db) {
 		List<String> taskIdStrings = taskIds.stream()
 			.map(TaskId::getId)
 			.map(UUID::toString)
@@ -184,7 +186,7 @@ public class TaskWriteAccess extends TaskReadAccess {
 	 * Deletes all tasks.
 	 */
 	public void deleteAllTasks() {
-		try (DSLContext db = databaseStorage.acquireContext()) {
+		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
 			db.deleteFrom(TASK).execute();
 		}
 	}
@@ -195,13 +197,13 @@ public class TaskWriteAccess extends TaskReadAccess {
 	 * @param repoId the repo id
 	 */
 	public void deleteAllTasksOfRepo(RepoId repoId) {
-		try (DSLContext db = databaseStorage.acquireContext()) {
+		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
 			db.deleteFrom(TASK).where(TASK.REPO_ID.eq(repoId.getId().toString())).execute();
 		}
 	}
 
 	public void setTaskPriority(TaskId taskId, QueuePriority newPriority) {
-		try (DSLContext db = databaseStorage.acquireContext()) {
+		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
 			db.update(TASK)
 				.set(TASK.PRIORITY, newPriority.getAsInt())
 				.set(TASK.UPDATE_TIME, Timestamp.from(Instant.now()))
@@ -211,7 +213,7 @@ public class TaskWriteAccess extends TaskReadAccess {
 	}
 
 	public void setTaskStatus(TaskId taskId, boolean taskInProcess) {
-		try (DSLContext db = databaseStorage.acquireContext()) {
+		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
 			db.update(TASK)
 				.set(TASK.IN_PROCESS, taskInProcess)
 				.where(TASK.ID.eq(taskId.getId().toString()))

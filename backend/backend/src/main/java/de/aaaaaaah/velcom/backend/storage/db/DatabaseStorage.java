@@ -1,26 +1,27 @@
 package de.aaaaaaah.velcom.backend.storage.db;
 
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import de.aaaaaaah.velcom.backend.GlobalConfig;
+import de.aaaaaaah.velcom.backend.ServerMain;
 import de.aaaaaaah.velcom.backend.util.CheckedConsumer;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.Objects;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import org.flywaydb.core.Flyway;
-import org.jooq.Configuration;
 import org.jooq.DSLContext;
 import org.jooq.SQLDialect;
 import org.jooq.impl.DSL;
-import org.jooq.impl.DefaultConfiguration;
 import org.sqlite.SQLiteConfig;
 import org.sqlite.SQLiteConfig.JournalMode;
+import org.sqlite.SQLiteDataSource;
 
 /**
  * Provides access to a database.
  */
 public class DatabaseStorage {
 
-	private final Connection connection;
 	private final DSLContext context;
+	private final Lock writeLock = new ReentrantLock();
 
 	/**
 	 * Initializes the database storage.
@@ -29,9 +30,8 @@ public class DatabaseStorage {
 	 * Also performs database migrations, if necessary.
 	 *
 	 * @param config the config used to get the connection information for the database from
-	 * @throws SQLException if sql goes wrong
 	 */
-	public DatabaseStorage(GlobalConfig config) throws SQLException {
+	public DatabaseStorage(GlobalConfig config) {
 		this(config.getJdbcUrl());
 	}
 
@@ -41,22 +41,25 @@ public class DatabaseStorage {
 	 * <p> Also performs database migrations, if necessary.
 	 *
 	 * @param jdbcUrl the jdbc url used to connect to the database
-	 * @throws SQLException if sql goes wrong
 	 */
-	public DatabaseStorage(String jdbcUrl) throws SQLException {
+	public DatabaseStorage(String jdbcUrl) {
 		migrate(jdbcUrl);
 
 		SQLiteConfig sqliteConfig = new SQLiteConfig();
 		sqliteConfig.enforceForeignKeys(true);
 		sqliteConfig.setJournalMode(JournalMode.WAL);
 
-		connection = sqliteConfig.createConnection(jdbcUrl);
+		SQLiteDataSource sqLiteDataSource = new SQLiteDataSource(sqliteConfig);
+		sqLiteDataSource.setUrl(jdbcUrl);
 
-		Configuration jooqConfig = new DefaultConfiguration()
-			.set(new ThreadSafeConnectionProvider(connection))
-			.set(SQLDialect.SQLITE);
+		HikariConfig hikariConfig = new HikariConfig();
+		hikariConfig.setDataSource(sqLiteDataSource);
+		hikariConfig.setPoolName("velcom-db-pool");
+		hikariConfig.setMetricRegistry(ServerMain.getMetricRegistry());
 
-		context = DSL.using(jooqConfig);
+		HikariDataSource hikariDataSource = new HikariDataSource(hikariConfig);
+
+		this.context = DSL.using(hikariDataSource, SQLDialect.SQLITE);
 	}
 
 	/**
@@ -76,40 +79,59 @@ public class DatabaseStorage {
 	}
 
 	/**
-	 * @return a {@link DSLContext} instance providing jooq functionality along with a connection to
-	 * 	the database
+	 * Acquires read access to the database.
+	 *
+	 * @return a way to interact with the database in a read only way
 	 */
-	public DSLContext acquireContext() {
-		return this.context;
+	public DBReadAccess acquireReadAccess() {
+		return new DBReadAccess(acquireContext());
 	}
 
 	/**
-	 * Acquires a transaction and passes the {@link DSLContext} that is associated with the
-	 * transaction to the given handler. If an exception occurs during execution of the handler, the
-	 * transaction will be cancelled and the exception is passed back to the caller of this method.
+	 * Acquires read and write access to the database.
 	 *
-	 * @param handler the handler used to pass queries to the transaction
+	 * @return a way to interact with the database
 	 */
-	public void acquireTransaction(CheckedConsumer<DSLContext, Throwable> handler) {
-		Objects.requireNonNull(handler);
+	public DBWriteAccess acquireWriteAccess() {
+		return new DBWriteAccess(acquireContext(), this.writeLock);
+	}
 
-		try (DSLContext dslContext = this.acquireContext()) {
-			dslContext.transaction(configuration -> {
-				try (DSLContext transactionContext = DSL.using(configuration)) {
-					handler.accept(transactionContext);
+	/**
+	 * Acquires a transaction that can only read from the database.
+	 *
+	 * @param handler the handler that is executed within the context of the transaction
+	 */
+	public void acquireReadTransaction(CheckedConsumer<DBReadAccess, Throwable> handler) {
+		try (final DBReadAccess db = acquireReadAccess()) {
+			db.dsl().transaction(cfg -> {
+				try (DBReadAccess inTransactionDB = new DBReadAccess(cfg.dsl())) {
+					handler.accept(inTransactionDB);
 				}
 			});
 		}
 	}
 
 	/**
-	 * Closes the database storage.
+	 * Acquires a transaction that can read and write to the database.
+	 *
+	 * @param handler the handler that is executed within the context of the transaction
 	 */
-	public void close() {
-		try {
-			this.connection.close();
-		} catch (SQLException ignore) {
+	public void acquireWriteTransaction(CheckedConsumer<DBWriteAccess, Throwable> handler) {
+		try (final DBWriteAccess db = acquireWriteAccess()) {
+			db.dsl().transaction(cfg -> {
+				try (DBWriteAccess inTransactionDB = new DBWriteAccess(cfg.dsl(), this.writeLock)) {
+					handler.accept(inTransactionDB);
+				}
+			});
 		}
+	}
+
+	/**
+	 * @return a {@link DSLContext} instance providing jooq functionality along with a connection to
+	 * 	the database
+	 */
+	private DSLContext acquireContext() {
+		return this.context;
 	}
 
 }

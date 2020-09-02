@@ -21,8 +21,8 @@ import org.jooq.codegen.db.tables.records.TaskRecord;
 
 /**
  * A thread safe {@link QueuePolicy} that prioritizes tars and provides some kind of fairness to
- * repo associated tasks by ordering them in a round robin type of way while also allowing
- * tasks to be manually prioritized over all other tasks.
+ * repo associated tasks by ordering them in a round robin type of way while also allowing tasks to
+ * be manually prioritized over all other tasks.
  *
  * <p>There are three priorities:</p>
  * <p>
@@ -56,7 +56,7 @@ public class RoundRobinFiloPolicy implements QueuePolicy {
 	public synchronized Optional<Task> fetchNextTask() {
 		AtomicReference<Task> result = new AtomicReference<>(null);
 
-		databaseStorage.acquireTransaction(db -> {
+		databaseStorage.acquireWriteTransaction(db -> {
 			// 1.) Find manual or tar task with highest priority
 			Optional<TaskRecord> mostImportantRecord = db.selectFrom(TASK)
 				.where(
@@ -159,7 +159,7 @@ public class RoundRobinFiloPolicy implements QueuePolicy {
 		// The final ordered list that represents the queue
 		LinkedList<Task> completeTaskList = new LinkedList<>();
 
-		databaseStorage.acquireTransaction(db -> {
+		databaseStorage.acquireReadTransaction(db -> {
 			// 1.) Get manual tasks
 			db.selectFrom(TASK)
 				.where(TASK.PRIORITY.lessThan(Task.DEFAULT_PRIORITY))

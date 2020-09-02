@@ -26,6 +26,7 @@ import de.aaaaaaah.velcom.backend.access.entities.benchmark.NewMeasurement;
 import de.aaaaaaah.velcom.backend.access.entities.sources.CommitSource;
 import de.aaaaaaah.velcom.backend.access.entities.sources.TarSource;
 import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchRunException;
+import de.aaaaaaah.velcom.backend.storage.db.DBReadAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import de.aaaaaaah.velcom.backend.util.Either;
 import java.util.ArrayList;
@@ -42,7 +43,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
-import org.jooq.DSLContext;
 import org.jooq.codegen.db.tables.records.MeasurementRecord;
 import org.jooq.codegen.db.tables.records.RunRecord;
 
@@ -113,7 +113,7 @@ public class BenchmarkReadAccess {
 			int dbSkip = Math.max(skip, recentRunCache.size());
 			int dbAmount = amount - runList.size();
 
-			try (DSLContext db = databaseStorage.acquireContext()) {
+			try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
 				Map<String, RunRecord> runRecordMap = db.selectFrom(RUN)
 					.orderBy(RUN.START_TIME.desc())
 					.limit(dbSkip, dbAmount)
@@ -135,7 +135,7 @@ public class BenchmarkReadAccess {
 	 * @throws NoSuchRunException if no run with the given id is found
 	 */
 	public Run getRun(RunId id) throws NoSuchRunException {
-		try (DSLContext db = databaseStorage.acquireContext()) {
+		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
 			Map<String, RunRecord> runRecordMap = db.selectFrom(RUN)
 				.where(RUN.ID.eq(id.getId().toString())).fetchMap(RUN.ID);
 
@@ -169,7 +169,7 @@ public class BenchmarkReadAccess {
 	 * @return all runs for the commit, ordered from latest to oldest.
 	 */
 	public List<Run> getAllRuns(RepoId repoId, CommitHash commitHash) {
-		try (DSLContext db = databaseStorage.acquireContext()) {
+		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
 			Map<String, RunRecord> runRecordMap = db.selectFrom(RUN)
 				.where(RUN.REPO_ID.eq(repoId.getId().toString()))
 				.and(RUN.COMMIT_HASH.eq(commitHash.getHash()))
@@ -208,7 +208,7 @@ public class BenchmarkReadAccess {
 			.collect(toSet());
 
 		if (!uncachedCommitHashes.isEmpty()) {
-			try (DSLContext db = databaseStorage.acquireContext()) {
+			try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
 				// Get all data from database
 				Map<String, RunRecord> runRecordMap = db.selectFrom(RUN)
 					.where(RUN.REPO_ID.eq(repoId.getId().toString()))
@@ -258,7 +258,7 @@ public class BenchmarkReadAccess {
 
 		// 2.) Check database
 		if (!repoIdStrList.isEmpty()) {
-			try (DSLContext db = databaseStorage.acquireContext()) {
+			try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
 				// SQLite guarantees that we get the correct row (correct interp and unit)
 				// in each group. (See https://sqlite.org/lang_select.html#bareagg)
 				db.selectDistinct(RUN.REPO_ID, MEASUREMENT.BENCHMARK, MEASUREMENT.METRIC)
@@ -284,7 +284,7 @@ public class BenchmarkReadAccess {
 		return resultMap;
 	}
 
-	private List<Run> loadRunData(DSLContext db, Map<String, RunRecord> runRecordMap) {
+	private List<Run> loadRunData(DBReadAccess db, Map<String, RunRecord> runRecordMap) {
 		if (runRecordMap.isEmpty()) {
 			return Collections.emptyList();
 		}
@@ -420,7 +420,7 @@ public class BenchmarkReadAccess {
 	 * Load all dimensions and their infos from the db.
 	 */
 	private void loadDimensions() {
-		try (DSLContext db = databaseStorage.acquireContext()) {
+		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
 
 			// Figure out which dimensions exist at all
 			db.selectDistinct(MEASUREMENT.BENCHMARK, MEASUREMENT.METRIC)

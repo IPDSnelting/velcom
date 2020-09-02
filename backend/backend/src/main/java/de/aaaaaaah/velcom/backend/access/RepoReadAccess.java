@@ -15,6 +15,7 @@ import de.aaaaaaah.velcom.backend.access.entities.Repo;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchRepoException;
 import de.aaaaaaah.velcom.backend.access.exceptions.RepoAccessException;
+import de.aaaaaaah.velcom.backend.storage.db.DBReadAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import de.aaaaaaah.velcom.backend.storage.repo.RepoStorage;
 import de.aaaaaaah.velcom.backend.storage.repo.exception.NoSuchRepositoryException;
@@ -30,7 +31,6 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
-import org.jooq.DSLContext;
 import org.jooq.Record1;
 import org.jooq.codegen.db.tables.records.RepoRecord;
 import org.slf4j.Logger;
@@ -74,7 +74,7 @@ public class RepoReadAccess {
 		// Check database
 		RepoRecord repoRecord;
 
-		try (DSLContext db = databaseStorage.acquireContext()) {
+		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
 			repoRecord = db.fetchOne(REPO, REPO.ID.eq(repoId.getId().toString()));
 
 			if (repoRecord == null) {
@@ -101,7 +101,7 @@ public class RepoReadAccess {
 			.map(repo -> repo.getRepoId().getId().toString())
 			.collect(toList());
 
-		try (DSLContext db = databaseStorage.acquireContext()) {
+		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
 			db.fetch(REPO, REPO.ID.notIn(cachedRepoIdList))
 				.stream()
 				.map(record -> loadRepoData(db, record))
@@ -115,7 +115,7 @@ public class RepoReadAccess {
 	 * @return Gets a list of the ids of all tracked repositories.
 	 */
 	public Collection<RepoId> getAllRepoIds() {
-		try (DSLContext db = databaseStorage.acquireContext()) {
+		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
 			return db.fetch(REPO)
 				.stream()
 				.map(record -> new RepoId(UUID.fromString(record.getId())))
@@ -132,7 +132,7 @@ public class RepoReadAccess {
 	 * @return a list of tracked branches
 	 */
 	public Collection<Branch> getTrackedBranches(RepoId repoId) {
-		try (DSLContext db = databaseStorage.acquireContext()) {
+		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
 			return db.selectFrom(TRACKED_BRANCH)
 				.where(TRACKED_BRANCH.REPO_ID.eq(repoId.getId().toString()))
 				.fetch()
@@ -148,7 +148,6 @@ public class RepoReadAccess {
 	 *
 	 * @param repoId the id of the repository
 	 * @return a list of all branches
-	 *
 	 * @throws RepoAccessException if access to the local repository failed
 	 */
 	public Collection<Branch> getBranches(RepoId repoId) {
@@ -195,7 +194,7 @@ public class RepoReadAccess {
 		}
 
 		// Check database
-		try (DSLContext db = databaseStorage.acquireContext()) {
+		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
 			return db.select(REPO.REMOTE_URL)
 				.from(REPO)
 				.where(REPO.ID.eq(repoId.getId().toString()))
@@ -208,7 +207,7 @@ public class RepoReadAccess {
 
 	// --- Additional Data Loading Methods --------------------------------------------------------
 
-	private Repo loadRepoData(DSLContext db, RepoRecord repoRecord)
+	private Repo loadRepoData(DBReadAccess db, RepoRecord repoRecord)
 		throws RepoAccessException {
 
 		RepoId repoId = new RepoId(UUID.fromString(repoRecord.getId()));

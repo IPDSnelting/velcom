@@ -180,6 +180,11 @@ paths:
                 properties:
                   run:
                     $ref: '#/components/schemas/Run'
+                  differences:
+                    type: array
+                    description: Only present if the `diff_prev` parameter is set to `true` and there is an unambiguous previous commit with a run
+                    items:
+                      $ref: '#/components/schemas/DimensionDifference'
                 required:
                   - run
         '404':
@@ -201,6 +206,12 @@ paths:
           in: query
           name: hash
           description: Commit hash
+        - schema:
+            type: boolean
+            default: 'false'
+          in: query
+          name: diff_prev
+          description: Whether to include the differences to the run of the previous commit (if available)
   '/compare/{runid1}/to/{runid2}':
     get:
       summary: compare runs
@@ -220,21 +231,9 @@ paths:
                     $ref: '#/components/schemas/Run'
                   differences:
                     type: array
-                    description: A list of differences between the runs
+                    description: A list of differences between the runs (`run2` - `run1`)
                     items:
-                      type: object
-                      properties:
-                        benchmark:
-                          type: string
-                        metric:
-                          type: string
-                        difference:
-                          type: number
-                          description: The difference from run1 to run2
-                      required:
-                        - benchmark
-                        - metric
-                        - difference
+                      $ref: '#/components/schemas/DimensionDifference'
                 required:
                   - run1
                   - run2
@@ -372,6 +371,8 @@ paths:
                   type: string
                   minLength: 1
                   description: 'Set a new name for the repo. The name must not be unique, but it should still be unique so the UI does not look too confusing.'
+                remote_url:
+                  $ref: '#/components/schemas/RemoteUrl'
                 tracked_branches:
                   type: array
                   description: Set the branches to be tracked
@@ -588,7 +589,17 @@ paths:
                     type: array
                     description: 'The most recent runs, ordered from new to old'
                     items:
-                      $ref: '#/components/schemas/RunDescription'
+                      type: object
+                      properties:
+                        run:
+                          $ref: '#/components/schemas/RunDescription'
+                        significant_dimensions:
+                          type: array
+                          description: Present only when significant runs were requested
+                          items:
+                            $ref: '#/components/schemas/DimensionDifference'
+                      required:
+                        - run
                 required:
                   - runs
       operationId: get-recent-runs
@@ -770,7 +781,11 @@ components:
         parents:
           type: array
           items:
-            $ref: '#/components/schemas/CommitHash'
+            $ref: '#/components/schemas/CommitDescription'
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/CommitDescription'
         author:
           type: string
         author_date:
@@ -781,10 +796,10 @@ components:
           $ref: '#/components/schemas/Time'
         summary:
           type: string
-          description: The first line of the commit message
+          description: The first section of the commit message
         message:
           type: string
-          description: The remaining lines of the commit message
+          description: The rest of the commit message without the summary
         runs:
           type: array
           description: All the runs belonging to this commit
@@ -794,6 +809,7 @@ components:
         - repo_id
         - hash
         - parents
+        - children
         - author
         - author_date
         - committer
@@ -816,10 +832,13 @@ components:
             - SUCCESS
             - PARTIAL_SUCCESS
             - FAILURE
+        source:
+          $ref: '#/components/schemas/Source'
       required:
         - id
         - start_time
         - success
+        - source
     CommitDescription:
       title: CommitDescription
       type: object
@@ -938,8 +957,10 @@ components:
               type: number
               description: The average of all measured values
             values:
-              type: string
+              type: array
               description: All measured values
+              items:
+                type: number
           required:
             - dimension
             - value
@@ -977,7 +998,6 @@ components:
         tracked_branches:
           type: array
           description: "All of the repo's tracked branches"
-          minItems: 1
           uniqueItems: true
           items:
             type: string
@@ -1032,6 +1052,26 @@ components:
         - metric
         - unit
         - interpretation
+    DimensionDifference:
+      title: DimensionDifference
+      type: object
+      description: The difference between an old and a new value in the same dimension
+      properties:
+        dimension:
+          $ref: '#/components/schemas/Dimension'
+        absdiff:
+          type: number
+          description: new value - old value
+        reldiff:
+          type: number
+          description: new value / old value (only present if the old_value is non-zero)
+        stddev:
+          type: number
+          description: The standard deviation of the run the new value is from
+      required:
+        - dimension
+        - absdiff
+        - stddev
   securitySchemes:
     admin_credentials:
       type: http
