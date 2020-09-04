@@ -36,18 +36,18 @@ export class UserStore extends VxModule {
   }
 
   @action
-  async logOut() {
+  async logOut(): Promise<void> {
     this.setRole(null)
     this.setToken(null)
   }
 
   @mutation
-  setRole(payload: string | null) {
+  setRole(payload: string | null): void {
     this._role = payload
   }
 
   @mutation
-  setToken(payload: string | null) {
+  setToken(payload: string | null): void {
     this._token = payload
   }
 

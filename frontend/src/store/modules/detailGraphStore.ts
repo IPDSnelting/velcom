@@ -1,14 +1,14 @@
 import { createModule, mutation, action } from 'vuex-class-component'
-import { Commit, RepoId, Dimension, DataPoint } from '@/store/types'
+import { RepoId, Dimension, DataPoint } from '@/store/types'
 import axios from 'axios'
 import { dataPointFromJson } from '@/util/GraphJsonHelper'
 
 const VxModule = createModule({
-  namespaced: 'repoDetailModule',
+  namespaced: 'deatilGraphModule',
   strict: false
 })
 
-export class detailGraphStore extends VxModule {
+export class DetailGraphStore extends VxModule {
   private _detailGraph: DataPoint[] = []
   private _selectedRepoId: RepoId = ''
   // Needs to be a primitive so persistence works.

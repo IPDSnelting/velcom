@@ -58,7 +58,7 @@ export default class RepoDetailFrame extends Vue {
   get selectedRepo() {
     return this.selectedRepoId == null
       ? null
-      : vxm.repoModule.repoByID(this.selectedRepoId)!
+      : vxm.repoModule.repoById(this.selectedRepoId)!
   }
 
   get allRepos(): Repo[] {

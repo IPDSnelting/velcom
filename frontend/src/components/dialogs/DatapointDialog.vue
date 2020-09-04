@@ -69,10 +69,10 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
-import { Commit, CommitComparison } from '../../store/types'
+import { Commit, RunComparison } from '../../store/types'
 import CommitBenchmarkActions from '../CommitBenchmarkActions.vue'
 
-type CommitInfo = { commit: Commit; comparison: CommitComparison }
+type CommitInfo = { commit: Commit; comparison: RunComparison }
 
 @Component({
   components: {

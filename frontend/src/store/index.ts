@@ -8,9 +8,9 @@ import { CommitDetailComparisonStore } from './modules/commitDetailComparisonSto
 import { NewsStore } from './modules/newsStore'
 import { QueueStore } from './modules/queueStore'
 import { RepoComparisonStore } from './modules/repoComparisonStore'
-import { RepoDetailStore } from './modules/repoDetailStore'
+import { DetailGraphStore } from './modules/detailGraphStore'
 import VuexPersistence from 'vuex-persist'
-import { MeasurementID, CommitComparison, Commit, Datapoint } from './types'
+import { Commit, RepoId } from './types'
 
 interface RootState {
   baseUrl: string
@@ -20,7 +20,7 @@ interface RootState {
   queueModule: QueueStore
   repoComparisonModule: PersistedRepoComparisonStore
   repoModule: PersistedRepoStore
-  repoDetailModule: PersisteRepoDetailStore
+  detailGraphModule: PersistedDetailGraphStore
   userModule: UserStore
 }
 
@@ -39,8 +39,8 @@ interface PersistedRepoComparisonStore {
   selectedBenchmark: string
 }
 
-interface PersisteRepoDetailStore {
-  _selectedRepoId: string
+interface PersistedDetailGraphStore {
+  _selectedRepoId: RepoId
 
   lockedToRelativeCommit: boolean
   relativeToCommit: string
@@ -111,7 +111,7 @@ export const store = new Vuex.Store({
     ...extractVuexModule(NewsStore),
     ...extractVuexModule(QueueStore),
     ...extractVuexModule(RepoComparisonStore),
-    ...extractVuexModule(RepoDetailStore),
+    ...extractVuexModule(DetailGraphStore),
     ...extractVuexModule(RepoStore),
     ...extractVuexModule(UserStore)
   },
@@ -126,7 +126,7 @@ export const vxm = {
   repoComparisonModule: createProxy(store, RepoComparisonStore),
   repoModule: createProxy(store, RepoStore),
   userModule: createProxy(store, UserStore),
-  repoDetailModule: createProxy(store, RepoDetailStore)
+  repoDetailModule: createProxy(store, DetailGraphStore)
 }
 
 export function storeToLocalStorage() {

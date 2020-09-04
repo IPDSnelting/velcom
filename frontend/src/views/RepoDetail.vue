@@ -35,13 +35,13 @@
             </v-col>
           </v-row>
           <v-card flat>
-            <component
+            <!-- <component
               v-bind:is="currentFlavour.component"
               :measurements="selectedMeasurements"
               :amount="Number.parseInt(amount)"
               :beginYAtZero="this.yScaleBeginsAtZero"
               @selectionChanged="updateSelection"
-            ></component>
+            ></component> -->
           </v-card>
         </v-card>
       </v-col>
@@ -87,7 +87,7 @@
                               nonEmptyRunAmount,
                               nonNegativeRunAmount,
                               onlyNumericInput,
-                              noIntegerOverflow,
+                              noIntegerOverflow
                             ]"
                             label="number of commits to fetch"
                             class="mr-5"
@@ -102,7 +102,7 @@
                               nonEmptyRunAmount,
                               nonNegativeRunAmount,
                               onlyNumericInput,
-                              noIntegerOverflow,
+                              noIntegerOverflow
                             ]"
                             label="number of commits to skip"
                             class="mr-5"
@@ -127,7 +127,7 @@
                       class="mr-2"
                       :to="{
                         name: 'commit-detail',
-                        params: { repoID: id, hash: referenceCommit },
+                        params: { repoID: id, hash: referenceCommit }
                       }"
                       :commitHash="referenceCommit"
                       :copyOnClick="false"
@@ -220,7 +220,7 @@
 
 <script lang="ts">
 import Vue from 'vue'
-import { Repo, Commit, MeasurementID } from '@/store/types'
+import { Repo, Dimension, CommitHash } from '@/store/types'
 import Component from 'vue-class-component'
 import { Watch } from 'vue-property-decorator'
 import { vxm } from '../store/index'
@@ -245,9 +245,9 @@ type graphFlavour = {
   components: {
     'repo-base-information': RepoBaseInformation,
     'repo-commit-overview': RepoCommitOverview,
-    'detail-graph': DetailGraph,
+/*     'detail-graph': DetailGraph,
     'dytail-graph': DytailGraph,
-    'echarts-graph': EchartsGraph,
+    'echarts-graph': EchartsGraph, */
     'commit-chip': CommitChip,
     'commit-selection': CommitSelectionComponent,
     'matrix-measurement-id-selection': MatrixMeasurementIdSelection,
@@ -280,7 +280,7 @@ export default class RepoDetail extends Vue {
 
   private get referenceCommit(): string {
     return vxm.repoDetailModule.referenceDatapoint
-      ? vxm.repoDetailModule.referenceDatapoint.commit.hash
+      ? vxm.repoDetailModule.referenceDatapoint.dataPoint.hash
       : ''
   }
 
@@ -293,11 +293,11 @@ export default class RepoDetail extends Vue {
     | 'begin y-Scale at zero'
     | 'begin y-Scale at minimum Value' = 'begin y-Scale at minimum Value'
 
-  private get selectedMeasurements(): MeasurementID[] {
-    return vxm.repoDetailModule.selectedMeasurements
+  private get selectedDimensions(): Dimension[] {
+    return vxm.repoDetailModule.selectedDimensions
   }
 
-  private set selectedMeasurements(selectedMeasurements: MeasurementID[]) {
+  private set selectedMeasurements(selectedMeasurements: Dimension[]) {
     vxm.repoDetailModule.selectedMeasurements = selectedMeasurements
   }
 
@@ -308,24 +308,24 @@ export default class RepoDetail extends Vue {
   private set relativeToCommit(commitHash: string) {
     vxm.repoDetailModule.relativeToCommit = commitHash
     if (this.lockedToRelativeCommit) {
-      vxm.repoDetailModule.fetchHistoryForRepo(this.payload)
+      vxm.repoDetailModule.fetchDetailGraph(this.payload)
     }
   }
 
   private get amount() {
-    return vxm.repoDetailModule.selectedFetchAmount
+    return '' // vxm.repoDetailModule.selectedFetchAmount
   }
 
   private set amount(amount: string) {
-    vxm.repoDetailModule.selectedFetchAmount = amount
+    // vxm.repoDetailModule.selectedFetchAmount = amount
   }
 
   private get skip() {
-    return vxm.repoDetailModule.selectedSkipAmount
+    return '' // vxm.repoDetailModule.selectedSkipAmount
   }
 
   private set skip(skip: string) {
-    vxm.repoDetailModule.selectedSkipAmount = skip
+    // vxm.repoDetailModule.selectedSkipAmount = skip
   }
 
   private get lockedToRelativeCommit(): boolean {
@@ -336,8 +336,8 @@ export default class RepoDetail extends Vue {
     vxm.repoDetailModule.lockedToRelativeCommit = lockedToRelativeCommit
   }
 
-  private get allCommits(): Commit[] {
-    return vxm.repoDetailModule.repoHistory.map(it => it.commit)
+  private get allCommits(): CommitHash[] {
+    return vxm.repoDetailModule.detailGraph.map(it => it.hash)
   }
 
   private get id() {
@@ -345,14 +345,22 @@ export default class RepoDetail extends Vue {
   }
 
   private repoExists(id: string): boolean {
-    return vxm.repoModule.repoByID(id) !== undefined
+    return vxm.repoModule.repoById(id) !== undefined
   }
 
-  private get payload(): { repoId: string; amount: number; skip: number } {
+  private get payload(): {
+    repoId: string
+    startTime: Date
+    endTime: Date
+    duration: number
+    dimensions: Dimension[]
+  } {
     return {
       repoId: this.id,
-      amount: Number(this.amount),
-      skip: Number(this.skip)
+      startTime: new Date(),
+      endTime: new Date(),
+      duration: 0,
+      dimensions: []
     }
   }
 
@@ -378,18 +386,18 @@ export default class RepoDetail extends Vue {
   }
 
   private async lockReferenceFrame() {
-    this.relativeToCommit = vxm.repoDetailModule.repoHistory[0].commit.hash
+    /* this.relativeToCommit = vxm.repoDetailModule.detailGraph[0].hash
     let { index } = await vxm.repoDetailModule.fetchIndexOfCommit({
       repoId: this.repo.id,
       commitHash: this.relativeToCommit
     })
     this.lockedToRelativeCommit = true
     this.skip = '0'
-    vxm.repoDetailModule.fetchHistoryForRepo(this.payload)
+    vxm.repoDetailModule.fetchHistoryForRepo(this.payload) */
   }
 
   private async unlockReferenceFrame() {
-    vxm.repoDetailModule
+    /* vxm.repoDetailModule
       .fetchIndexOfCommit({
         repoId: this.repo.id,
         commitHash: this.relativeToCommit
@@ -400,7 +408,7 @@ export default class RepoDetail extends Vue {
       .finally(() => {
         this.lockedToRelativeCommit = false
         vxm.repoDetailModule.fetchHistoryForRepo(this.payload)
-      })
+      }) */
   }
 
   private toggleYScale() {
@@ -425,7 +433,7 @@ export default class RepoDetail extends Vue {
   }
 
   private deleteMetric() {
-    if (!this.canDeleteMetric) {
+    /* if (!this.canDeleteMetric) {
       return
     }
     let measurement = this.selectedMeasurements[0]
@@ -439,13 +447,13 @@ export default class RepoDetail extends Vue {
         measurementId: measurement,
         repoId: this.id
       })
-    }
+    } */
   }
 
   @Watch('id')
-  retrieveRuns() {
+  retrieveRuns(): void {
     if (this.$refs.form && (this.$refs.form as any).validate()) {
-      vxm.repoDetailModule.fetchHistoryForRepo(this.payload)
+      vxm.repoDetailModule.fetchDetailGraph(this.payload)
     }
   }
 
@@ -455,7 +463,7 @@ export default class RepoDetail extends Vue {
   @Watch('lockedToRelativeCommit')
   @Watch('relativeToCommit')
   @Watch('yScaleBeginsAtZero')
-  updateUrl() {
+  updateUrl(): void {
     let newQuery: { [param: string]: string } = {
       selectedMeasurements: JSON.stringify(this.selectedMeasurements),
       skip: this.skip,
@@ -503,24 +511,24 @@ export default class RepoDetail extends Vue {
     to: Route,
     from: Route,
     next: (to?: RawLocation | false | ((vm: Vue) => any) | void) => void
-  ) {
+  ): void {
     next(component => {
       let vm = component as RepoDetail
       vm.updateToUrl(to.query)
 
-      vxm.repoDetailModule.fetchHistoryForRepo(vm.payload)
+      vxm.repoDetailModule.fetchDetailGraph(vm.payload)
       vm.updateUrl()
     })
   }
 
-  updateSelection(newAmount: number, additionalSkip: number) {
+  updateSelection(newAmount: number, additionalSkip: number): void {
     this.amount = newAmount.toString()
     this.skip = (Number.parseInt(this.skip) + additionalSkip).toString()
     this.retrieveRuns()
   }
 
   private get repo(): Repo {
-    return vxm.repoModule.repoByID(this.id)!
+    return vxm.repoModule.repoById(this.id)!
   }
 
   private updateToUrl(query: Dictionary<string | (string | null)[]>) {
@@ -537,7 +545,8 @@ export default class RepoDetail extends Vue {
       }[]
 
       this.selectedMeasurements = jsonified.map(
-        ({ metric, benchmark }) => new MeasurementID(benchmark, metric)
+        ({ metric, benchmark }) =>
+          new Dimension(benchmark, metric, 's', 'NEUTRAL')
       )
     }
     if (query.relativeToCommit) {
@@ -551,7 +560,7 @@ export default class RepoDetail extends Vue {
     }
   }
 
-  mounted() {
+  mounted(): void {
     if (!this.$route.query) {
       this.updateUrl()
     }
