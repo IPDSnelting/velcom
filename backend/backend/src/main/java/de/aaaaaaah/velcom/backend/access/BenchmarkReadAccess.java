@@ -284,6 +284,16 @@ public class BenchmarkReadAccess {
 		return resultMap;
 	}
 
+	/**
+	 * Gets all available dimensions for the specified repository.
+	 *
+	 * @param repoId the id of the repository
+	 * @return all of the repository's available dimensions
+	 */
+	public Set<Dimension> getAvailableDimensions(RepoId repoId) {
+		return getAvailableDimensions(List.of(repoId)).get(repoId);
+	}
+
 	private List<Run> loadRunData(DBReadAccess db, Map<String, RunRecord> runRecordMap) {
 		if (runRecordMap.isEmpty()) {
 			return Collections.emptyList();
