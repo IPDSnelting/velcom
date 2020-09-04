@@ -13,12 +13,7 @@ import de.aaaaaaah.velcom.backend.access.TokenWriteAccess;
 import de.aaaaaaah.velcom.backend.access.entities.AuthToken;
 import de.aaaaaaah.velcom.backend.access.entities.RemoteUrl;
 import de.aaaaaaah.velcom.backend.data.benchrepo.BenchRepo;
-import de.aaaaaaah.velcom.backend.data.commitcomparison.CommitComparer;
-import de.aaaaaaah.velcom.backend.data.linearlog.CommitAccessBasedLinearLog;
-import de.aaaaaaah.velcom.backend.data.linearlog.LinearLog;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
-import de.aaaaaaah.velcom.backend.data.repocomparison.RepoComparison;
-import de.aaaaaaah.velcom.backend.data.repocomparison.TimesliceComparison;
 import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparer;
 import de.aaaaaaah.velcom.backend.data.runcomparison.SignificanceFactors;
 import de.aaaaaaah.velcom.backend.listener.Listener;
@@ -133,13 +128,14 @@ public class ServerMain extends Application<GlobalConfig> {
 		);
 
 		// Data layer
-		CommitComparer commitComparer = new CommitComparer(configuration.getSignificantFactor());
-		LinearLog linearLog = new CommitAccessBasedLinearLog(commitAccess, repoAccess);
-		RepoComparison repoComparison = new TimesliceComparison(commitAccess, benchmarkAccess);
 		Queue queue = new Queue(repoAccess, taskAccess, archiveAccess, benchmarkAccess);
 		BenchRepo benchRepo = new BenchRepo(archiveAccess);
-		// TODO Read significance factors from config file
-		RunComparer comparer = new RunComparer(new SignificanceFactors(0.01, 2.0, 25));
+		SignificanceFactors significanceFactors = new SignificanceFactors(
+			configuration.getSignificanceRelativeThreshold(),
+			configuration.getSignificanceStddevThreshold(),
+			configuration.getSignificanceMinStddevAmount()
+		);
+		RunComparer comparer = new RunComparer(significanceFactors);
 
 		// Listener
 		Listener listener = new Listener(configuration, repoAccess, commitAccess, knownCommitAccess,

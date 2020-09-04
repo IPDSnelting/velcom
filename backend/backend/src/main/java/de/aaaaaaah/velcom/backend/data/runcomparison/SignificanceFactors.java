@@ -2,32 +2,34 @@ package de.aaaaaaah.velcom.backend.data.runcomparison;
 
 public class SignificanceFactors {
 
-	private final double relativeFactor;
-	private final double stddevFactor;
+	private final double relativeThreshold;
+	private final double stddevThreshold;
 	private final int minStddevAmount;
 
-	public SignificanceFactors(double relativeFactor, double stddevFactor, int minStddevAmount) {
-		if (relativeFactor < 0) {
-			throw new IllegalArgumentException("relative factor must be >= 0");
+	public SignificanceFactors(double relativeThreshold, double stddevThreshold,
+		int minStddevAmount) {
+
+		if (relativeThreshold < 0) {
+			throw new IllegalArgumentException("relative threshold must be >= 0");
 		}
-		if (stddevFactor < 0) {
-			throw new IllegalArgumentException("stddev factor must be >= 0");
+		if (stddevThreshold < 0) {
+			throw new IllegalArgumentException("stddev threshold must be >= 0");
 		}
 		if (minStddevAmount < 2) {
 			throw new IllegalArgumentException("minimum stddev amount must be at least 2");
 		}
 
-		this.relativeFactor = relativeFactor;
-		this.stddevFactor = stddevFactor;
+		this.relativeThreshold = relativeThreshold;
+		this.stddevThreshold = stddevThreshold;
 		this.minStddevAmount = minStddevAmount;
 	}
 
-	public double getRelativeFactor() {
-		return relativeFactor;
+	public double getRelativeThreshold() {
+		return relativeThreshold;
 	}
 
-	public double getStddevFactor() {
-		return stddevFactor;
+	public double getStddevThreshold() {
+		return stddevThreshold;
 	}
 
 	public int getMinStddevAmount() {

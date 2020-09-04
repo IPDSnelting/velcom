@@ -57,11 +57,11 @@ public class DimensionDifference {
 
 	public boolean isSignificant() {
 		boolean relSignificant = getReldiff()
-			.map(reldiff -> Math.abs(reldiff) >= significanceFactors.getRelativeFactor())
-			.orElse(false);
+			.map(reldiff -> Math.abs(reldiff) >= significanceFactors.getRelativeThreshold())
+			.orElse(true);
 
 		boolean stddevSignificant = getSecondStddev()
-			.map(stddev -> Math.abs(getAbsdiff()) >= significanceFactors.getStddevFactor() * stddev)
+			.map(stddev -> Math.abs(getAbsdiff()) >= significanceFactors.getStddevThreshold() * stddev)
 			.orElse(true);
 
 		return relSignificant && stddevSignificant;
