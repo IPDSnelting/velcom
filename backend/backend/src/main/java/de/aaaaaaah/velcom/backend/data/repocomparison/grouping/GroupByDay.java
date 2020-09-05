@@ -9,4 +9,5 @@ public class GroupByDay implements CommitGrouper<Long> {
 	public Long getGroup(ZonedDateTime time) {
 		return time.getLong(JulianFields.JULIAN_DAY);
 	}
+
 }

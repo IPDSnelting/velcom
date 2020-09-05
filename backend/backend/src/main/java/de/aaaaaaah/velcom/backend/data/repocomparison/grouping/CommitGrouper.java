@@ -5,4 +5,5 @@ import java.time.ZonedDateTime;
 public interface CommitGrouper<T> {
 
 	T getGroup(ZonedDateTime time);
+
 }
