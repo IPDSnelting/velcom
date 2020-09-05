@@ -245,7 +245,7 @@ type graphFlavour = {
   components: {
     'repo-base-information': RepoBaseInformation,
     'repo-commit-overview': RepoCommitOverview,
-/*     'detail-graph': DetailGraph,
+    /*     'detail-graph': DetailGraph,
     'dytail-graph': DytailGraph,
     'echarts-graph': EchartsGraph, */
     'commit-chip': CommitChip,
@@ -350,15 +350,15 @@ export default class RepoDetail extends Vue {
 
   private get payload(): {
     repoId: string
-    startTime: Date
-    endTime: Date
+    startTime: string
+    endTime: string
     duration: number
     dimensions: Dimension[]
   } {
     return {
       repoId: this.id,
-      startTime: new Date(),
-      endTime: new Date(),
+      startTime: '',
+      endTime: '',
       duration: 0,
       dimensions: []
     }

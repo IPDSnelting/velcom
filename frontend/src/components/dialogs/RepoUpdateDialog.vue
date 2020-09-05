@@ -179,7 +179,7 @@ export default class RepoUpdateDialog extends Vue {
   }
 
   get repo(): Repo {
-    return vxm.repoModule.repoByID(this.repoId)!
+    return vxm.repoModule.repoById(this.repoId)!
   }
 
   private filterName(items: { lowerCased: string }[], search: string) {

@@ -59,15 +59,28 @@
                           <v-btn
                             text
                             color="primary"
-                            @click="$refs.startDateMenu.save(today); retrieveGraphData()"
-                          >Today</v-btn>
+                            @click="
+                              $refs.startDateMenu.save(today)
+                              retrieveGraphData()
+                            "
+                            >Today</v-btn
+                          >
                           <v-spacer></v-spacer>
-                          <v-btn text color="primary" @click="startDateMenuOpen = false">Cancel</v-btn>
                           <v-btn
                             text
                             color="primary"
-                            @click="$refs.startDateMenu.save(startTimeString); retrieveGraphData()"
-                          >OK</v-btn>
+                            @click="startDateMenuOpen = false"
+                            >Cancel</v-btn
+                          >
+                          <v-btn
+                            text
+                            color="primary"
+                            @click="
+                              $refs.startDateMenu.save(startTimeString)
+                              retrieveGraphData()
+                            "
+                            >OK</v-btn
+                          >
                         </v-date-picker>
                       </v-menu>
                     </v-col>
@@ -101,15 +114,28 @@
                           <v-btn
                             text
                             color="primary"
-                            @click="$refs.stopDateMenu.save(today); retrieveGraphData()"
-                          >Today</v-btn>
+                            @click="
+                              $refs.stopDateMenu.save(today)
+                              retrieveGraphData()
+                            "
+                            >Today</v-btn
+                          >
                           <v-spacer></v-spacer>
-                          <v-btn text color="primary" @click="stopDateMenuOpen = false">Cancel</v-btn>
                           <v-btn
                             text
                             color="primary"
-                            @click="$refs.stopDateMenu.save(stopTimeString); retrieveGraphData()"
-                          >OK</v-btn>
+                            @click="stopDateMenuOpen = false"
+                            >Cancel</v-btn
+                          >
+                          <v-btn
+                            text
+                            color="primary"
+                            @click="
+                              $refs.stopDateMenu.save(stopTimeString)
+                              retrieveGraphData()
+                            "
+                            >OK</v-btn
+                          >
                         </v-date-picker>
                       </v-menu>
                     </v-col>
@@ -121,7 +147,9 @@
           <v-card-actions>
             <v-row no-gutters justify="center">
               <v-col cols="auto">
-                <v-btn text color="primary" @click="resetDates()">Reset dates</v-btn>
+                <v-btn text color="primary" @click="resetDates()"
+                  >Reset dates</v-btn
+                >
               </v-col>
               <v-col cols="auto">
                 <v-btn
@@ -129,13 +157,18 @@
                   text
                   color="primary"
                   @click="autoZoom()"
-                >Auto zoom</v-btn>
+                  >Auto zoom</v-btn
+                >
               </v-col>
               <v-col>
-                <v-btn text color="primary" @click="zoomToBrush()">Zoom to brushed area</v-btn>
+                <v-btn text color="primary" @click="zoomToBrush()"
+                  >Zoom to brushed area</v-btn
+                >
               </v-col>
               <v-col cols="auto">
-                <v-btn text color="primary" @click="toggleYScale()">{{ yScaleButtonLabel }}</v-btn>
+                <v-btn text color="primary" @click="toggleYScale()">{{
+                  yScaleButtonLabel
+                }}</v-btn>
               </v-col>
             </v-row>
           </v-card-actions>
@@ -155,7 +188,10 @@
                 <v-col class="pa-0">
                   <commit-chip
                     class="mr-2"
-                    :to="{ name: 'commit-detail', params: { repoID: referenceRepoID, hash: referenceHash } }"
+                    :to="{
+                      name: 'commit-detail',
+                      params: { repoID: referenceRepoID, hash: referenceHash }
+                    }"
                     :commitHash="referenceHash"
                     :copyOnClick="false"
                   ></commit-chip>
@@ -163,14 +199,19 @@
               </v-row>
             </v-col>
             <v-col class="ma-0 pa-0">
-              <repo-selector v-on:selectionChanged="retrieveGraphData()"></repo-selector>
+              <repo-selector
+                v-on:selectionChanged="retrieveGraphData()"
+              ></repo-selector>
             </v-col>
           </v-card>
         </v-row>
       </v-col>
       <v-col style="flex: 1 1 50%; min-width: 600px">
         <v-card>
-          <comparison-graph ref="graph" :beginYAtZero="this.yScaleBeginsAtZero"></comparison-graph>
+          <comparison-graph
+            ref="graph"
+            :beginYAtZero="this.yScaleBeginsAtZero"
+          ></comparison-graph>
         </v-card>
       </v-col>
     </v-row>
@@ -184,7 +225,7 @@ import { Watch } from 'vue-property-decorator'
 import { vxm } from '../store/index'
 import RepoAddDialog from '../components/dialogs/RepoAddDialog.vue'
 import RepoSelector from '../components/RepoSelector.vue'
-import { Repo, MeasurementID, Datapoint, Commit } from '../store/types'
+import { Repo, Commit, Dimension } from '../store/types'
 import { mdiCalendar } from '@mdi/js'
 import { Route, RawLocation } from 'vue-router'
 import { Dictionary } from 'vue-router/types/router'
@@ -215,7 +256,12 @@ export default class RepoComparison extends Vue {
   // ==============       ==============
 
   get selectedMeasurement() {
-    return new MeasurementID(this.selectedBenchmark, this.selectedMetric)
+    return new Dimension(
+      this.selectedBenchmark,
+      this.selectedMetric,
+      '',
+      'NEUTRAL'
+    )
   }
 
   get selectedBenchmark() {
@@ -306,13 +352,13 @@ export default class RepoComparison extends Vue {
 
   private get referenceHash(): string {
     return vxm.repoComparisonModule.referenceDatapoint !== undefined
-      ? vxm.repoComparisonModule.referenceDatapoint.commit.hash
+      ? vxm.repoComparisonModule.referenceDatapoint.hash
       : ''
   }
 
   private get referenceRepoID(): string {
     return vxm.repoComparisonModule.referenceDatapoint !== undefined
-      ? vxm.repoComparisonModule.referenceDatapoint.commit.repoID
+      ? vxm.repoComparisonModule.referenceDatapoint.hash
       : ''
   }
 
@@ -335,7 +381,7 @@ export default class RepoComparison extends Vue {
   }
 
   private get selectedRepos() {
-    return vxm.repoComparisonModule.selectedBranchesByRepoID
+    return vxm.repoComparisonModule.selectedBranchesByRepoId
   }
 
   retrieveGraphData() {
@@ -345,7 +391,7 @@ export default class RepoComparison extends Vue {
       this.stopAfterStart &&
       this.notAfterToday
     ) {
-      vxm.repoComparisonModule.fetchComparisonData(this.payload)
+      vxm.repoComparisonModule.fetchComparisonGraph(this.payload)
     }
   }
 
@@ -374,10 +420,10 @@ export default class RepoComparison extends Vue {
   }
 
   private autoZoom() {
-    vxm.repoComparisonModule
-      .fetchComparisonData({
+    /*    vxm.repoComparisonModule
+      .fetchComparisonGraph({
         startTime: null,
-        stopTime: null,
+        endTime: null,
         ...this.payload
       })
       .then(data => {
@@ -385,7 +431,7 @@ export default class RepoComparison extends Vue {
           .flatMap(it => it)
           .reduce(
             (accumulated, next) => {
-              let time = next.commit.authorDate
+              let time = next.authorDate
               if (time && time < accumulated.min) {
                 accumulated.min = time
               }
@@ -399,7 +445,7 @@ export default class RepoComparison extends Vue {
 
         vxm.repoComparisonModule.startDate = new Date(min * 1000)
         vxm.repoComparisonModule.stopDate = new Date(max * 1000)
-      })
+      }) */
   }
 
   private zoomToBrush() {
@@ -420,7 +466,7 @@ export default class RepoComparison extends Vue {
     let repos: { [repoId: string]: string[] } = {}
     vxm.repoComparisonModule.selectedReposWithBranches.forEach(
       ({ repo_id: repoId, branches }) => {
-        let repo = vxm.repoModule.repoByID(repoId)
+        let repo = vxm.repoModule.repoById(repoId)
         if (!repo) {
           return
         }
@@ -484,7 +530,7 @@ export default class RepoComparison extends Vue {
       Object.keys(branchesByRepoId).forEach(repoId => {
         let branches = branchesByRepoId[repoId]
         if (branches.length === 0) {
-          let repo = vxm.repoModule.repoByID(repoId)
+          let repo = vxm.repoModule.repoById(repoId)
           if (!repo) {
             return
           }
