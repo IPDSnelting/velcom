@@ -903,7 +903,7 @@ export default class ComparisonGraph extends Vue {
   private showInDetailGraph() {
     let selectedCommit = this.selectedDatapoint!.commit
     let repoId = selectedCommit.repoID
-    vxm.repoDetailModule
+    vxm.detailGraphModule
       .fetchIndexOfCommit({
         commitHash: selectedCommit.hash,
         repoId: repoId
@@ -911,7 +911,7 @@ export default class ComparisonGraph extends Vue {
       .then(({ index, comparison }) => {
         this.closeDialog()
 
-        vxm.repoDetailModule.referenceDatapoint = {
+        vxm.detailGraphModule.referenceDatapoint = {
           commit: selectedCommit,
           comparison: comparison,
           measurementId: new MeasurementID(

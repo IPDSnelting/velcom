@@ -154,14 +154,14 @@ router.afterEach((to, from) => {
 
 router.beforeEach((to, from, next) => {
   if (to.name === 'repo-detail') {
-    vxm.repoDetailModule.selectedRepoId = to.params.id
+    vxm.detailGraphModule.selectedRepoId = to.params.id
   }
   next()
 })
 
 router.beforeEach((to, from, next) => {
   if (to.name === 'repo-detail-frame' && !to.params['id']) {
-    let saved = vxm.repoDetailModule.selectedRepoId
+    let saved = vxm.detailGraphModule.selectedRepoId
     if (saved) {
       next({ name: 'repo-detail', params: { id: saved } })
       return

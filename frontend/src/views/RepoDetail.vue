@@ -279,13 +279,13 @@ export default class RepoDetail extends Vue {
   private dynamicFlavourSwitching: boolean = true
 
   private get referenceCommit(): string {
-    return vxm.repoDetailModule.referenceDatapoint
-      ? vxm.repoDetailModule.referenceDatapoint.dataPoint.hash
+    return vxm.detailGraphModule.referenceDatapoint
+      ? vxm.detailGraphModule.referenceDatapoint.dataPoint.hash
       : ''
   }
 
   private get referenceCommitSelected(): boolean {
-    return vxm.repoDetailModule.referenceDatapoint !== null
+    return vxm.detailGraphModule.referenceDatapoint !== null
   }
 
   private yScaleBeginsAtZero: boolean = true
@@ -294,50 +294,50 @@ export default class RepoDetail extends Vue {
     | 'begin y-Scale at minimum Value' = 'begin y-Scale at minimum Value'
 
   private get selectedDimensions(): Dimension[] {
-    return vxm.repoDetailModule.selectedDimensions
+    return vxm.detailGraphModule.selectedDimensions
   }
 
   private set selectedMeasurements(selectedMeasurements: Dimension[]) {
-    vxm.repoDetailModule.selectedMeasurements = selectedMeasurements
+    vxm.detailGraphModule.selectedMeasurements = selectedMeasurements
   }
 
   private get relativeToCommit(): string {
-    return vxm.repoDetailModule.relativeToCommit
+    return vxm.detailGraphModule.relativeToCommit
   }
 
   private set relativeToCommit(commitHash: string) {
-    vxm.repoDetailModule.relativeToCommit = commitHash
+    vxm.detailGraphModule.relativeToCommit = commitHash
     if (this.lockedToRelativeCommit) {
-      vxm.repoDetailModule.fetchDetailGraph(this.payload)
+      vxm.detailGraphModule.fetchDetailGraph(this.payload)
     }
   }
 
   private get amount() {
-    return '' // vxm.repoDetailModule.selectedFetchAmount
+    return '' // vxm.detailGraphModule.selectedFetchAmount
   }
 
   private set amount(amount: string) {
-    // vxm.repoDetailModule.selectedFetchAmount = amount
+    // vxm.detailGraphModule.selectedFetchAmount = amount
   }
 
   private get skip() {
-    return '' // vxm.repoDetailModule.selectedSkipAmount
+    return '' // vxm.detailGraphModule.selectedSkipAmount
   }
 
   private set skip(skip: string) {
-    // vxm.repoDetailModule.selectedSkipAmount = skip
+    // vxm.detailGraphModule.selectedSkipAmount = skip
   }
 
   private get lockedToRelativeCommit(): boolean {
-    return vxm.repoDetailModule.lockedToRelativeCommit
+    return vxm.detailGraphModule.lockedToRelativeCommit
   }
 
   private set lockedToRelativeCommit(lockedToRelativeCommit: boolean) {
-    vxm.repoDetailModule.lockedToRelativeCommit = lockedToRelativeCommit
+    vxm.detailGraphModule.lockedToRelativeCommit = lockedToRelativeCommit
   }
 
   private get allCommits(): CommitHash[] {
-    return vxm.repoDetailModule.detailGraph.map(it => it.hash)
+    return vxm.detailGraphModule.detailGraph.map(it => it.hash)
   }
 
   private get id() {
@@ -386,18 +386,18 @@ export default class RepoDetail extends Vue {
   }
 
   private async lockReferenceFrame() {
-    /* this.relativeToCommit = vxm.repoDetailModule.detailGraph[0].hash
-    let { index } = await vxm.repoDetailModule.fetchIndexOfCommit({
+    /* this.relativeToCommit = vxm.detailGraphModule.detailGraph[0].hash
+    let { index } = await vxm.detailGraphModule.fetchIndexOfCommit({
       repoId: this.repo.id,
       commitHash: this.relativeToCommit
     })
     this.lockedToRelativeCommit = true
     this.skip = '0'
-    vxm.repoDetailModule.fetchHistoryForRepo(this.payload) */
+    vxm.detailGraphModule.fetchHistoryForRepo(this.payload) */
   }
 
   private async unlockReferenceFrame() {
-    /* vxm.repoDetailModule
+    /* vxm.detailGraphModule
       .fetchIndexOfCommit({
         repoId: this.repo.id,
         commitHash: this.relativeToCommit
@@ -407,7 +407,7 @@ export default class RepoDetail extends Vue {
       })
       .finally(() => {
         this.lockedToRelativeCommit = false
-        vxm.repoDetailModule.fetchHistoryForRepo(this.payload)
+        vxm.detailGraphModule.fetchHistoryForRepo(this.payload)
       }) */
   }
 
@@ -443,7 +443,7 @@ export default class RepoDetail extends Vue {
          This will also delete all measurements for this metric!`
       )
     ) {
-      vxm.repoDetailModule.dispatchDeleteMeasurements({
+      vxm.detailGraphModule.dispatchDeleteMeasurements({
         measurementId: measurement,
         repoId: this.id
       })
@@ -453,7 +453,7 @@ export default class RepoDetail extends Vue {
   @Watch('id')
   retrieveRuns(): void {
     if (this.$refs.form && (this.$refs.form as any).validate()) {
-      vxm.repoDetailModule.fetchDetailGraph(this.payload)
+      vxm.detailGraphModule.fetchDetailGraph(this.payload)
     }
   }
 
@@ -516,7 +516,7 @@ export default class RepoDetail extends Vue {
       let vm = component as RepoDetail
       vm.updateToUrl(to.query)
 
-      vxm.repoDetailModule.fetchDetailGraph(vm.payload)
+      vxm.detailGraphModule.fetchDetailGraph(vm.payload)
       vm.updateUrl()
     })
   }

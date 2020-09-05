@@ -87,11 +87,11 @@ export default class DetailGraph extends Vue {
 
   // retrieving and interpreting datapoints
   private get amount(): number {
-    return Number.parseInt(vxm.repoDetailModule.selectedFetchAmount)
+    return Number.parseInt(vxm.detailGraphModule.selectedFetchAmount)
   }
 
   private get datapoints(): CommitInfo[] {
-    return vxm.repoDetailModule.repoHistory
+    return vxm.detailGraphModule.repoHistory
       .slice()
       .reverse()
       .flatMap(it => {
@@ -315,9 +315,9 @@ export default class DetailGraph extends Vue {
       .attr('stroke-width', (d: CommitInfo) => this.strokeWidth(d))
       .attr('opacity', 1)
       .style('cursor', 'pointer')
-    if (vxm.repoDetailModule.referenceDatapoint) {
+    if (vxm.detailGraphModule.referenceDatapoint) {
       this.drawCrosshair(
-        vxm.repoDetailModule.referenceDatapoint,
+        vxm.detailGraphModule.referenceDatapoint,
         this.graphReferenceElementsColor,
         {
           delay: 0,
@@ -393,19 +393,19 @@ export default class DetailGraph extends Vue {
   }
 
   setReference() {
-    if (vxm.repoDetailModule.referenceDatapoint) {
-      this.removeCrosshair(vxm.repoDetailModule.referenceDatapoint)
+    if (vxm.detailGraphModule.referenceDatapoint) {
+      this.removeCrosshair(vxm.detailGraphModule.referenceDatapoint)
     }
     if (this.selectedDatapoint) {
-      vxm.repoDetailModule.referenceDatapoint = this.selectedDatapoint
+      vxm.detailGraphModule.referenceDatapoint = this.selectedDatapoint
     }
     if (
-      vxm.repoDetailModule.referenceDatapoint &&
-      this.hasDataForPoint(vxm.repoDetailModule.referenceDatapoint)
+      vxm.detailGraphModule.referenceDatapoint &&
+      this.hasDataForPoint(vxm.detailGraphModule.referenceDatapoint)
     ) {
-      this.drawReferenceLine(vxm.repoDetailModule.referenceDatapoint)
+      this.drawReferenceLine(vxm.detailGraphModule.referenceDatapoint)
       this.drawCrosshair(
-        vxm.repoDetailModule.referenceDatapoint,
+        vxm.detailGraphModule.referenceDatapoint,
         this.graphReferenceElementsColor,
         {
           delay: 100,
@@ -450,9 +450,9 @@ export default class DetailGraph extends Vue {
       .transition()
       .attr('opacity', 0)
       .remove()
-    this.removeCrosshair(vxm.repoDetailModule.referenceDatapoint!)
+    this.removeCrosshair(vxm.detailGraphModule.referenceDatapoint!)
     if (clearReferenceDataPoint) {
-      vxm.repoDetailModule.referenceDatapoint = null
+      vxm.detailGraphModule.referenceDatapoint = null
     }
     this.closeDialog()
   }
@@ -990,7 +990,7 @@ export default class DetailGraph extends Vue {
   }
 
   get selectedRepo(): string {
-    return vxm.repoDetailModule.selectedRepoId
+    return vxm.detailGraphModule.selectedRepoId
   }
 
   // updating ths graph

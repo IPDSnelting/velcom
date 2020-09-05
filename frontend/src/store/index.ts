@@ -55,7 +55,7 @@ interface PersistedDetailGraphStore {
 
 interface PersistedSessionRootState {
   repoComparisonModule: PersistedRepoComparisonStore
-  repoDetailModule: PersisteRepoDetailStore
+  detailGraphModule: PersistedDetailGraphStore
 }
 
 const persistenceLocalStorage = new VuexPersistence<RootState>({
@@ -86,14 +86,14 @@ const persistenceSessionStorage = new VuexPersistence<RootState>({
         selectedBenchmark: state.repoComparisonModule.selectedBenchmark,
         selectedMetric: state.repoComparisonModule.selectedMetric
       },
-      repoDetailModule: {
-        _selectedRepoId: state.repoDetailModule._selectedRepoId,
-        lockedToRelativeCommit: state.repoDetailModule.lockedToRelativeCommit,
-        _selectedMeasurements: state.repoDetailModule._selectedMeasurements,
-        relativeToCommit: state.repoDetailModule.relativeToCommit,
-        _referenceDatapoint: state.repoDetailModule._referenceDatapoint,
-        selectedFetchAmount: state.repoDetailModule.selectedFetchAmount,
-        selectedSkipAmount: state.repoDetailModule.selectedSkipAmount
+      detailGraphModule: {
+        _selectedRepoId: state.detailGraphModule._selectedRepoId,
+        lockedToRelativeCommit: state.detailGraphModule.lockedToRelativeCommit,
+        _selectedMeasurements: state.detailGraphModule._selectedMeasurements,
+        relativeToCommit: state.detailGraphModule.relativeToCommit,
+        _referenceDatapoint: state.detailGraphModule._referenceDatapoint,
+        selectedFetchAmount: state.detailGraphModule.selectedFetchAmount,
+        selectedSkipAmount: state.detailGraphModule.selectedSkipAmount
       }
     }
   }
@@ -126,7 +126,7 @@ export const vxm = {
   repoComparisonModule: createProxy(store, ComparisonGraphStore),
   repoModule: createProxy(store, RepoStore),
   userModule: createProxy(store, UserStore),
-  repoDetailModule: createProxy(store, DetailGraphStore)
+  detailGraphModule: createProxy(store, DetailGraphStore)
 }
 
 export function storeToLocalStorage() {
@@ -165,7 +165,7 @@ export function restoreFromPassedSession(rawData: string | null) {
   console.log(state)
 
   // Detail module
-  Object.assign(vxm.repoDetailModule, state.repoDetailModule)
+  Object.assign(vxm.detailGraphModule, state.detailGraphModule)
 
   // Comparison module
   Object.assign(vxm.repoComparisonModule, state.repoComparisonModule)

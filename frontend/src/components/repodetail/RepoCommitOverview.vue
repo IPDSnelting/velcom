@@ -149,11 +149,11 @@ export default class RepoCommitOverview extends Vue {
   }
 
   private get commitHistory() {
-    return vxm.repoDetailModule.repoHistory
+    return vxm.detailGraphModule.repoHistory
   }
 
   private get allCommits(): Commit[] {
-    return vxm.repoDetailModule.repoHistory.map(
+    return vxm.detailGraphModule.repoHistory.map(
       (datapoint: { commit: Commit; comparison: CommitComparison }) => {
         return datapoint.commit
       }

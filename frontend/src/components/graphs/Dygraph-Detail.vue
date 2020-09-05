@@ -44,7 +44,7 @@ export default class DytailGraph extends Vue {
   private height: number = 500
 
   private get datapoints(): CommitInfo[] {
-    return vxm.repoDetailModule.repoHistory
+    return vxm.detailGraphModule.repoHistory
       .slice()
       .reverse()
       .flatMap(it => {
@@ -108,7 +108,7 @@ export default class DytailGraph extends Vue {
 
   // retrieving and interpreting datapoints
   private get amount(): number {
-    return Number.parseInt(vxm.repoDetailModule.selectedFetchAmount)
+    return Number.parseInt(vxm.detailGraphModule.selectedFetchAmount)
   }
 
   private unit(measurementId: MeasurementID): string | null {

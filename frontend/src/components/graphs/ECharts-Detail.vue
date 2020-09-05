@@ -143,18 +143,18 @@ export default class EchartsDetailGraph extends Vue {
   }
 
   private get referenceDatapoint(): CommitInfo | null {
-    return vxm.repoDetailModule.referenceDatapoint
+    return vxm.detailGraphModule.referenceDatapoint
   }
 
   private set referenceDatapoint(datapoint: CommitInfo | null) {
-    vxm.repoDetailModule.referenceDatapoint = datapoint
+    vxm.detailGraphModule.referenceDatapoint = datapoint
   }
 
   private compareCommits() {
     this.$router.push({
       name: 'commit-comparison',
       params: {
-        repoID: vxm.repoDetailModule.selectedRepoId,
+        repoID: vxm.detailGraphModule.selectedRepoId,
         hashOne: this.commitToCompare!.itemInfo.name,
         hashTwo: this.selectedDatapoint!.itemInfo.name
       }
@@ -163,11 +163,11 @@ export default class EchartsDetailGraph extends Vue {
 
   // retrieving and interpreting datapoints
   private get amount(): number {
-    return Number.parseInt(vxm.repoDetailModule.selectedFetchAmount)
+    return Number.parseInt(vxm.detailGraphModule.selectedFetchAmount)
   }
 
   private get datapoints(): CommitInfo[] {
-    return vxm.repoDetailModule.repoHistory
+    return vxm.detailGraphModule.repoHistory
       .slice()
       .reverse()
       .flatMap(it => {
@@ -381,7 +381,7 @@ export default class EchartsDetailGraph extends Vue {
         let routeData = this.$router.resolve({
           name: 'commit-detail',
           params: {
-            repoID: vxm.repoDetailModule.selectedRepoId,
+            repoID: vxm.detailGraphModule.selectedRepoId,
             hash: referencedCommitInfo.commit.hash
           }
         })
@@ -393,7 +393,7 @@ export default class EchartsDetailGraph extends Vue {
     this.$router.push({
       name: 'commit-detail',
       params: {
-        repoID: vxm.repoDetailModule.selectedRepoId,
+        repoID: vxm.detailGraphModule.selectedRepoId,
         hash: referencedCommitInfo.commit.hash
       }
     })

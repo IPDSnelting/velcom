@@ -78,8 +78,8 @@ export default class RepoDetailFrame extends Vue {
   }
 
   mounted() {
-    if (!this.selectedRepoId && vxm.repoDetailModule.selectedRepoId) {
-      this.selectedRepoId = vxm.repoDetailModule.selectedRepoId
+    if (!this.selectedRepoId && vxm.detailGraphModule.selectedRepoId) {
+      this.selectedRepoId = vxm.detailGraphModule.selectedRepoId
     }
     if (vxm.repoModule.allRepos.length === 1) {
       this.selectedRepoId = vxm.repoModule.allRepos[0].id

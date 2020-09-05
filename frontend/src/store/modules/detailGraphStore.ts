@@ -4,7 +4,7 @@ import axios from 'axios'
 import { dataPointFromJson } from '@/util/GraphJsonHelper'
 
 const VxModule = createModule({
-  namespaced: 'deatilGraphModule',
+  namespaced: 'detailGraphModule',
   strict: false
 })
 
@@ -167,7 +167,7 @@ export class DetailGraphStore extends VxModule {
    *
    * @memberof detailGraphStore
    */
-  set selectedMeasurements(dimensions: Dimension[]) {
+  set selectedDimensions(dimensions: Dimension[]) {
     dimensions.forEach(it => {
       if (!it) {
         throw new Error('UNDEFINED OR NULL!')
