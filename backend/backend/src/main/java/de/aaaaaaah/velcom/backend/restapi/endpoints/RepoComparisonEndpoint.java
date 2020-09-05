@@ -10,16 +10,11 @@ import de.aaaaaaah.velcom.backend.data.repocomparison.RepoComparison;
 import de.aaaaaaah.velcom.backend.data.repocomparison.RepoComparisonGraph;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.utils.EndpointUtils;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimension;
-import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRepoCompareGraphData;
-import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRepoCompareGraphEntry;
 import de.aaaaaaah.velcom.backend.util.Pair;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.GET;
@@ -65,50 +60,23 @@ public class RepoComparisonEndpoint {
 			throw new NotFoundException("unknown dimension");
 		}
 
-		// Parse startTime, endTime and duration
-		Instant startTime = startTimeEpoch == null ? null : Instant.ofEpochSecond(startTimeEpoch);
-		Instant endTime = endTimeEpoch == null ? null : Instant.ofEpochSecond(endTimeEpoch);
-		Duration duration = durationInSeconds == null ? null : Duration.ofSeconds(durationInSeconds);
-
-		if (duration != null) {
-			if (startTime == null && endTime == null) {
-				startTime = Instant.now().minus(duration);
-				endTime = Instant.now();
-			} else if (startTime != null && endTime == null) {
-				endTime = startTime.plus(duration);
-			} else if (startTime == null && endTime != null) {
-				startTime = endTime.minus(duration);
-			} else {
-				throw new ForbiddenException("duration and startTime and endTime provided");
-			}
-		}
+		Pair<Instant, Instant> startAndEndTime = EndpointUtils
+			.getStartAndEndTime(startTimeEpoch, endTimeEpoch, durationInSeconds);
+		Instant startTime = startAndEndTime.getFirst();
+		Instant endTime = startAndEndTime.getSecond();
 
 		if (startTime != null && endTime != null && startTime.isAfter(endTime)) {
 			throw new IllegalStateException();
 		}
 
-		// Parse repos
-		final Map<RepoId, Set<BranchName>> repos = EndpointUtils.parseColonSeparatedArgs(reposStr)
-			.stream()
-			.map(p -> new Pair<>(
-				new RepoId(UUID.fromString(p.getFirst())),
-				p.getSecond().stream().map(BranchName::fromName).collect(Collectors.toSet())
-			))
-			.collect(Collectors.toMap(Pair::getFirst, Pair::getSecond));
-
+		final Map<RepoId, Set<BranchName>> repos = EndpointUtils.parseRepos(reposStr);
 		RepoComparisonGraph result = comparison.generateGraph(dimension, repos, startTime, endTime);
+		JsonDimension jsonDimension = JsonDimension.fromDimensionInfo(result.getDimensionInfo());
 
-		JsonDimension jsonDimension = new JsonDimension(
-			result.getDimensionInfo().getDimension().getBenchmark(),
-			result.getDimensionInfo().getDimension().getMetric(),
-			result.getDimensionInfo().getUnit().getName(),
-			result.getDimensionInfo().getInterpretation()
-		);
-
-		final List<JsonRepoCompareGraphData> repoResults = result.getData().stream()
-			.map(data -> new JsonRepoCompareGraphData(
+		final List<JsonGraphRepo> repoResults = result.getData().stream()
+			.map(data -> new JsonGraphRepo(
 				data.getRepoId(),
-				data.getEntries().stream().map(graphEntry -> new JsonRepoCompareGraphEntry(
+				data.getEntries().stream().map(graphEntry -> new JsonGraphCommit(
 					graphEntry.getHash().getHash(),
 					graphEntry.getAuthor(),
 					graphEntry.getAuthorDate().getEpochSecond(),
@@ -123,9 +91,9 @@ public class RepoComparisonEndpoint {
 	private static class GetReply {
 
 		private final JsonDimension dimension;
-		private final List<JsonRepoCompareGraphData> repos;
+		private final List<JsonGraphRepo> repos;
 
-		public GetReply(JsonDimension dimension, List<JsonRepoCompareGraphData> repos) {
+		public GetReply(JsonDimension dimension, List<JsonGraphRepo> repos) {
 			this.dimension = dimension;
 			this.repos = repos;
 		}
@@ -134,9 +102,66 @@ public class RepoComparisonEndpoint {
 			return dimension;
 		}
 
-		public List<JsonRepoCompareGraphData> getRepos() {
+		public List<JsonGraphRepo> getRepos() {
 			return repos;
 		}
 	}
 
+	private static class JsonGraphRepo {
+
+		private final RepoId repoId;
+		private final List<JsonGraphCommit> commits;
+
+		public JsonGraphRepo(RepoId repoId, List<JsonGraphCommit> commits) {
+			this.repoId = repoId;
+			this.commits = commits;
+		}
+
+		public RepoId getRepoId() {
+			return repoId;
+		}
+
+		public List<JsonGraphCommit> getCommits() {
+			return commits;
+		}
+	}
+
+	private static class JsonGraphCommit {
+
+		private final String hash;
+		private final String author;
+		private final long authorDate;
+		private final String summary;
+		private final double value;
+
+		public JsonGraphCommit(String hash, String author, long authorDate, String summary,
+			double value) {
+
+			this.hash = hash;
+			this.author = author;
+			this.authorDate = authorDate;
+			this.summary = summary;
+			this.value = value;
+		}
+
+		public String getHash() {
+			return hash;
+		}
+
+		public String getAuthor() {
+			return author;
+		}
+
+		public long getAuthorDate() {
+			return authorDate;
+		}
+
+		public String getSummary() {
+			return summary;
+		}
+
+		public double getValue() {
+			return value;
+		}
+	}
 }

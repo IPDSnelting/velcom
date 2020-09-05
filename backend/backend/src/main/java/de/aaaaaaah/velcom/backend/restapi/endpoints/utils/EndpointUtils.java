@@ -2,6 +2,7 @@ package de.aaaaaaah.velcom.backend.restapi.endpoints.utils;
 
 import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
+import de.aaaaaaah.velcom.backend.access.entities.BranchName;
 import de.aaaaaaah.velcom.backend.access.entities.Commit;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.entities.Dimension;
@@ -17,6 +18,8 @@ import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRun;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonSource;
 import de.aaaaaaah.velcom.backend.util.Either;
 import de.aaaaaaah.velcom.backend.util.Pair;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +27,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import javax.ws.rs.ForbiddenException;
 
 public class EndpointUtils {
 
@@ -140,5 +144,46 @@ public class EndpointUtils {
 			.flatMap(pair -> pair.getSecond().stream()
 				.map(elem -> new Dimension(pair.getFirst(), elem)))
 			.collect(Collectors.toSet());
+	}
+
+	public static Map<RepoId, Set<BranchName>> parseRepos(String args) {
+		return parseColonSeparatedArgs(args).stream()
+			.collect(Collectors.toMap(
+				pair -> new RepoId(UUID.fromString(pair.getFirst())),
+				pair -> pair.getSecond().stream().map(BranchName::fromName).collect(Collectors.toSet())
+			));
+	}
+
+	public static Pair<Instant, Instant> getStartAndEndTime(@Nullable Long startTimeEpoch,
+		@Nullable Long endTimeEpoch, @Nullable Integer durationInSeconds) {
+
+		// Parse startTime, endTime and duration
+		Instant startTime = startTimeEpoch == null ? null : Instant.ofEpochSecond(startTimeEpoch);
+		Instant endTime = endTimeEpoch == null ? null : Instant.ofEpochSecond(endTimeEpoch);
+		Duration duration = durationInSeconds == null ? null : Duration.ofSeconds(durationInSeconds);
+
+		// Relatively ugly start and end time logic, but I don't see any obvious way of making it more
+		// elegant and concise.
+		if (startTime != null && endTime != null && duration != null) {
+			throw new ForbiddenException("duration and startTime and endTime provided");
+		} else if (duration != null) {
+			if (startTime != null) {
+				endTime = startTime.plus(duration);
+			} else if (endTime != null) {
+				startTime = endTime.minus(duration);
+			} else {
+				endTime = Instant.now();
+				startTime = endTime.minus(duration);
+			}
+		} else {
+			if (startTime == null) {
+				startTime = Instant.MIN;
+			}
+			if (endTime == null) {
+				endTime = Instant.now();
+			}
+		}
+
+		return new Pair<>(startTime, endTime);
 	}
 }

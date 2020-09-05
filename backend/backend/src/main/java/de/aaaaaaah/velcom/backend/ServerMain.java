@@ -14,6 +14,7 @@ import de.aaaaaaah.velcom.backend.access.entities.AuthToken;
 import de.aaaaaaah.velcom.backend.access.entities.RemoteUrl;
 import de.aaaaaaah.velcom.backend.data.benchrepo.BenchRepo;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
+import de.aaaaaaah.velcom.backend.data.repocomparison.TimesliceComparison;
 import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparer;
 import de.aaaaaaah.velcom.backend.data.runcomparison.SignificanceFactors;
 import de.aaaaaaah.velcom.backend.listener.Listener;
@@ -24,6 +25,7 @@ import de.aaaaaaah.velcom.backend.restapi.endpoints.CommitEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.CompareEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.QueueEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.RecentRunsEndpoint;
+import de.aaaaaaah.velcom.backend.restapi.endpoints.RepoComparisonEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.RepoEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.RunEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.TestTokenEndpoint;
@@ -136,6 +138,7 @@ public class ServerMain extends Application<GlobalConfig> {
 			configuration.getSignificanceMinStddevAmount()
 		);
 		RunComparer comparer = new RunComparer(significanceFactors);
+		TimesliceComparison comparison = new TimesliceComparison(commitAccess, benchmarkAccess);
 
 		// Listener
 		Listener listener = new Listener(configuration, repoAccess, commitAccess, knownCommitAccess,
@@ -163,6 +166,7 @@ public class ServerMain extends Application<GlobalConfig> {
 		environment.jersey().register(new RecentRunsEndpoint(benchmarkAccess, commitAccess));
 		environment.jersey()
 			.register(new RepoEndpoint(repoAccess, tokenAccess, benchmarkAccess, listener));
+		environment.jersey().register(new RepoComparisonEndpoint(comparison, benchmarkAccess));
 	}
 
 	private void configureApi(Environment environment, TokenWriteAccess tokenAccess) {
