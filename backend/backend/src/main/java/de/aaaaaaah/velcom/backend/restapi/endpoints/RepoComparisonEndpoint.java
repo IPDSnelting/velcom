@@ -125,10 +125,17 @@ public class RepoComparisonEndpoint {
 		private final JsonDimension dimension;
 		private final List<JsonRepoCompareGraphData> repos;
 
-		public GetReply(JsonDimension dimension,
-			List<JsonRepoCompareGraphData> repos) {
+		public GetReply(JsonDimension dimension, List<JsonRepoCompareGraphData> repos) {
 			this.dimension = dimension;
 			this.repos = repos;
+		}
+
+		public JsonDimension getDimension() {
+			return dimension;
+		}
+
+		public List<JsonRepoCompareGraphData> getRepos() {
+			return repos;
 		}
 	}
 
