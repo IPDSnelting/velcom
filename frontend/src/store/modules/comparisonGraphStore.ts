@@ -1,26 +1,21 @@
-import {
-  createModule,
-  mutation,
-  action,
-  getRawActionContext
-} from 'vuex-class-component'
-import { Datapoint, Repo, Commit } from '@/store/types'
+import { createModule, mutation, action } from 'vuex-class-component'
+import { DataPoint, Commit, DimensionInterpretation } from '@/store/types'
 import Vue from 'vue'
 import axios from 'axios'
 import { vxm } from '..'
-import { runFromJson, commitFromJson } from '@/util/CommitComparisonJsonHelper'
+import { dataPointFromJson } from '@/util/GraphJsonHelper'
 
 const VxModule = createModule({
   namespaced: 'repoComparisonModule',
   strict: false
 })
 
-export class RepoComparisonStore extends VxModule {
+export class ComparisonGraphStore extends VxModule {
   private _selectedRepos: string[] = []
   private _selectedBranchesByRepoID: { [key: string]: string[] } = {}
-  private _datapointsByRepoId: { [key: string]: Datapoint[] } = {}
-  private _interpretation: 'LESS_IS_BETTER' | 'MORE_IS_BETTER' | 'NEUTRAL' =
-    'NEUTRAL'
+  private _datapointsByRepoId: { [key: string]: DataPoint[] } = {}
+
+  private _interpretation: DimensionInterpretation = 'NEUTRAL'
   private _unit: string = ''
 
   referenceCommit: Commit | null = null
@@ -39,13 +34,26 @@ export class RepoComparisonStore extends VxModule {
   private startTime: string = this._defaultStartTime
   private stopTime: string = this._defaultStopTime
 
+  /**
+   * Fetches the data neccessary to display the data points
+   * of the comparison graph in given time frame.
+   *
+   * @param {({
+   *     benchmark: string
+   *     metric: string
+   *     startTime?: string | null
+   *     endTime?: string | null
+   *   })} payload
+   * @returns {Promise<{ [key: string]: DataPoint[] }>}
+   * @memberof ComparisonGraphStore
+   */
   @action
-  async fetchComparisonData(payload: {
+  async fetchComparisonGraph(payload: {
     benchmark: string
     metric: string
     startTime?: string | null
-    stopTime?: string | null
-  }): Promise<{ [key: string]: Datapoint[] }> {
+    endTime?: string | null
+  }): Promise<{ [key: string]: DataPoint[] }> {
     this.cleanupSelectedBranches()
 
     let effectiveStartTime: number | undefined
@@ -57,39 +65,38 @@ export class RepoComparisonStore extends VxModule {
       effectiveStartTime = this.startDate.getTime() / 1000
     }
 
-    let effectiveStopTime: number | undefined
-    if (payload.stopTime) {
-      effectiveStopTime = new Date(payload.stopTime).getTime()
+    let effectiveEndTime: number | undefined
+    if (payload.endTime) {
+      effectiveEndTime = new Date(payload.endTime).getTime()
     } else if (payload.startTime === null) {
-      effectiveStopTime = undefined
+      effectiveEndTime = undefined
     } else {
-      effectiveStopTime = this.stopDate.getTime() / 1000 + 60 * 60 * 24
+      effectiveEndTime = this.stopDate.getTime() / 1000 + 60 * 60 * 24
     }
 
     const response = await axios.post(
-      '/repo-comparison-graph',
+      '/graph/comparison',
       {
-        repos: this.selectedReposWithBranches,
+        repos: this.formatRepos,
         start_time: effectiveStartTime,
-        stop_time: effectiveStopTime,
+        stop_time: effectiveEndTime,
         benchmark: payload.benchmark,
         metric: payload.metric
       },
       { snackbarTag: 'repo-comparison' }
     )
 
-    let datapoints: { [key: string]: Datapoint[] } = {}
-    let jsonRepos: any[] = response.data.repos
+    const datapoints: { [key: string]: DataPoint[] } = {}
+    const jsonRepos: any[] = response.data.repos
 
     jsonRepos.forEach((item: any) => {
-      datapoints[item.repo_id] = item.commits.map(
-        (datapoint: any) =>
-          new Datapoint(commitFromJson(datapoint.commit), datapoint.value)
+      datapoints[item.repo_id] = item.commits.map((it: any) =>
+        dataPointFromJson(it)
       )
     })
 
     this.setDatapoints(datapoints)
-
+    // TODO: where does the following line come from? I'm scared.
     // ugly and wrong, only for demonstration purposes
     this._interpretation = jsonRepos[0].interpretation
     this._unit = jsonRepos[0].unit
@@ -98,17 +105,40 @@ export class RepoComparisonStore extends VxModule {
   }
 
   /**
+   * Builds a string out of the requested repos and branches
+   *
+   * @private
+   * @returns {string}
+   * @memberof ComparisonGraphStore
+   */
+  private formatRepos(): string {
+    const resultString: string = ''
+
+    this.selectedReposWithBranches.forEach(
+      (repo: { repo_id: string; branches: string[] }) => {
+        resultString.concat(repo.repo_id)
+        repo.branches.forEach((branch: string) => {
+          resultString.concat(':' + branch)
+        })
+        resultString.concat('::')
+      }
+    )
+
+    return resultString.slice(0, resultString.length - 2)
+  }
+
+  /**
    * Deletes all selected repositories that are no longer found in repoModule.allRepos.
    *
    * @memberof RepoComparisonStore
    */
   @mutation
-  cleanupSelectedBranches() {
+  cleanupSelectedBranches(): void {
     // cleanup selected branches
-    let allRepos = vxm.repoModule.allRepos
-    let keysToRemove = Object.keys(this._selectedBranchesByRepoID)
+    const allRepos = vxm.repoModule.allRepos
+    const keysToRemove = Object.keys(this._selectedBranchesByRepoID)
     allRepos.forEach(repo => {
-      let index = keysToRemove.findIndex(it => it === repo.id)
+      const index = keysToRemove.findIndex(it => it === repo.id)
       if (index >= 0) {
         keysToRemove.splice(index, 1)
       }
@@ -122,7 +152,7 @@ export class RepoComparisonStore extends VxModule {
   setSelectedBranchesForRepo(payload: {
     repoID: string
     selectedBranches: string[]
-  }) {
+  }): void {
     Vue.set(
       this._selectedBranchesByRepoID,
       payload.repoID,
@@ -138,20 +168,18 @@ export class RepoComparisonStore extends VxModule {
    * @memberof RepoComparisonStore
    */
   @mutation
-  setDatapoints(payload: { [key: string]: Datapoint[] }) {
+  setDatapoints(payload: { [key: string]: DataPoint[] }): void {
     this._datapointsByRepoId = {} // reset it
     Array.from(Object.keys(payload)).forEach(key => {
       Vue.set(this._datapointsByRepoId, key, payload[key])
     })
   }
 
-  get interpretation(): 'LESS_IS_BETTER' | 'MORE_IS_BETTER' | 'NEUTRAL' {
+  get interpretation(): DimensionInterpretation {
     return this._interpretation
   }
 
-  set interpretation(
-    interpretation: 'LESS_IS_BETTER' | 'MORE_IS_BETTER' | 'NEUTRAL'
-  ) {
+  set interpretation(interpretation: DimensionInterpretation) {
     this._interpretation = interpretation
   }
 
@@ -179,18 +207,17 @@ export class RepoComparisonStore extends VxModule {
     this.stopTime = stop.toISOString().substring(0, 10)
   }
 
-  get referenceDatapoint(): Datapoint | undefined {
+  get referenceDatapoint(): DataPoint | undefined {
     if (
       this.referenceCommit === null ||
-      this._datapointsByRepoId[this.referenceCommit.repoID] === undefined
+      this._datapointsByRepoId[this.referenceCommit.repoId] === undefined
     ) {
       return undefined
     }
 
-    return this._datapointsByRepoId[this.referenceCommit.repoID].find(it => {
+    return this._datapointsByRepoId[this.referenceCommit.repoId].find(it => {
       return (
-        this.referenceCommit !== null &&
-        it.commit.hash === this.referenceCommit.hash
+        this.referenceCommit !== null && it.hash === this.referenceCommit.hash
       )
     })
   }
@@ -202,11 +229,11 @@ export class RepoComparisonStore extends VxModule {
    * @type {{ [key: string]: Run[] }}
    * @memberof RepoComparisonStore
    */
-  get allDatapoints(): { [key: string]: Datapoint[] } {
+  get allDatapoints(): { [key: string]: DataPoint[] } {
     return this._datapointsByRepoId
   }
 
-  get runsByRepoID(): (repoID: string) => Datapoint[] {
+  get runsByRepoID(): (repoID: string) => DataPoint[] {
     return (repoID: string) => this._datapointsByRepoId[repoID]
   }
 
@@ -218,7 +245,7 @@ export class RepoComparisonStore extends VxModule {
     this._selectedRepos = selectedRepos
   }
 
-  get selectedBranchesByRepoID(): { [key: string]: string[] } {
+  get selectedBranchesByRepoId(): { [key: string]: string[] } {
     return (
       vxm.repoModule.allRepos
         .map(repo => ({
@@ -245,26 +272,26 @@ export class RepoComparisonStore extends VxModule {
   // eslint-disable-next-line camelcase
   get selectedReposWithBranches(): { repo_id: string; branches: string[] }[] {
     // eslint-disable-next-line camelcase
-    let repos: { repo_id: string; branches: string[] }[] = []
-    Object.keys(this.selectedBranchesByRepoID).forEach(repoID => {
+    const repos: { repo_id: string; branches: string[] }[] = []
+    Object.keys(this.selectedBranchesByRepoId).forEach(repoID => {
       if (
         this.selectedRepos.includes(repoID) &&
-        this.selectedBranchesByRepoID[repoID].length !== 0
+        this.selectedBranchesByRepoId[repoID].length !== 0
       ) {
         repos.push({
           repo_id: repoID,
-          branches: this.selectedBranchesByRepoID[repoID]
+          branches: this.selectedBranchesByRepoId[repoID]
         })
       }
     })
     return repos
   }
 
-  get defaultStartTime() {
+  get defaultStartTime(): string {
     return this._defaultStartTime
   }
 
-  get defaultStopTime() {
+  get defaultStopTime(): string {
     return this._defaultStopTime
   }
 }

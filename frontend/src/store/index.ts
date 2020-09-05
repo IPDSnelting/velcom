@@ -7,7 +7,7 @@ import { ColorStore } from './modules/colorStore'
 import { CommitDetailComparisonStore } from './modules/commitDetailComparisonStore'
 import { NewsStore } from './modules/newsStore'
 import { QueueStore } from './modules/queueStore'
-import { RepoComparisonStore } from './modules/repoComparisonStore'
+import { ComparisonGraphStore } from './modules/comparisonGraphStore'
 import { DetailGraphStore } from './modules/detailGraphStore'
 import VuexPersistence from 'vuex-persist'
 import { Commit, RepoId } from './types'
@@ -110,7 +110,7 @@ export const store = new Vuex.Store({
     ...extractVuexModule(CommitDetailComparisonStore),
     ...extractVuexModule(NewsStore),
     ...extractVuexModule(QueueStore),
-    ...extractVuexModule(RepoComparisonStore),
+    ...extractVuexModule(ComparisonGraphStore),
     ...extractVuexModule(DetailGraphStore),
     ...extractVuexModule(RepoStore),
     ...extractVuexModule(UserStore)
@@ -123,7 +123,7 @@ export const vxm = {
   commitDetailComparisonModule: createProxy(store, CommitDetailComparisonStore),
   newsModule: createProxy(store, NewsStore),
   queueModule: createProxy(store, QueueStore),
-  repoComparisonModule: createProxy(store, RepoComparisonStore),
+  repoComparisonModule: createProxy(store, ComparisonGraphStore),
   repoModule: createProxy(store, RepoStore),
   userModule: createProxy(store, UserStore),
   repoDetailModule: createProxy(store, DetailGraphStore)

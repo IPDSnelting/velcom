@@ -35,7 +35,7 @@ export class DetailGraphStore extends VxModule {
   )
   private _defaultStopTime: Date = new Date()
   private startTime: Date = this._defaultStartTime
-  private stopTime: Date = this._defaultStopTime
+  private endTime: Date = this._defaultStopTime
 
   /**
    * Fetches the data neccessary to display the data points
@@ -54,16 +54,35 @@ export class DetailGraphStore extends VxModule {
   @action
   async fetchDetailGraph(payload: {
     repoId: RepoId
-    startTime: Date
-    endTime: Date
+    startTime?: string | null
+    endTime?: string | null
     duration: number
     dimensions: Dimension[]
   }): Promise<DataPoint[]> {
+    let effectiveStartTime: number | undefined
+    if (payload.startTime) {
+      effectiveStartTime = new Date(payload.startTime).getTime()
+    } else if (payload.startTime === null) {
+      effectiveStartTime = undefined
+    } else {
+      effectiveStartTime = this.startTime.getTime() / 1000
+    }
+
+    let effectiveEndTime: number | undefined
+
+    if (payload.endTime) {
+      effectiveEndTime = new Date(payload.endTime).getTime()
+    } else if (payload.startTime === null) {
+      effectiveEndTime = undefined
+    } else {
+      effectiveEndTime = this.endTime.getTime() / 1000 + 60 * 60 * 24
+    }
+
     const response = await axios.get(`/graph/deatail/${payload.repoId}`, {
       snackbarTag: 'commit-history',
       params: {
-        start_time: payload.startTime,
-        end_time: payload.endTime,
+        start_time: effectiveStartTime,
+        end_time: effectiveEndTime,
         duration: payload.duration,
         dimensions: this.formatDimensions(payload.dimensions)
       }
