@@ -506,6 +506,10 @@ public class BenchmarkReadAccess {
 		}
 	}
 
+	public boolean doesDimensionExist(Dimension dimension) {
+		return dimensions.containsKey(dimension);
+	}
+
 	public DimensionInfo getDimensionInfo(Dimension dimension) {
 		return dimensions.getOrDefault(dimension, new DimensionInfo(dimension));
 	}
