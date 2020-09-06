@@ -13,7 +13,12 @@
       </thead>
       <tbody>
         <tr v-for="benchmark in allBenchmarks" :key="benchmark">
-          <th class="benchmark-header" @click="selectAllForBenchmark(benchmark)">{{ benchmark }}</th>
+          <th
+            class="benchmark-header"
+            @click="toggleAllForBenchmark(benchmark)"
+          >
+            {{ benchmark }}
+          </th>
           <td v-for="metric in allMetrics" :key="benchmark + metric">
             <v-checkbox
               :input-value="isSelected(benchmark, metric)"
@@ -36,7 +41,7 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { vxm } from '../../store'
 import { Prop, Watch, Model } from 'vue-property-decorator'
-import { MeasurementID } from '../../store/types'
+import { Dimension } from '../../store/types'
 
 @Component
 export default class MatrixMeasurementIdSelection extends Vue {
@@ -44,16 +49,16 @@ export default class MatrixMeasurementIdSelection extends Vue {
   private repoId!: string
 
   @Prop()
-  private selectedMeasurements!: MeasurementID[]
+  private selectedDimensions!: Dimension[]
 
-  private get selectedMeasurementsSet(): Set<string> {
+  private get selectedDimensionSet(): Set<string> {
     return new Set(
-      this.selectedMeasurements.map(it => it.benchmark + it.metric)
+      this.selectedDimensions.map(it => it.benchmark + '_' + it.metric)
     )
   }
 
   private isSelected(benchmark: string, metric: string): boolean {
-    return this.selectedMeasurementsSet.has(benchmark + metric)
+    return this.selectedDimensionSet.has(benchmark + '_' + metric)
   }
 
   private combinationExists(benchmark: string, metric: string) {
@@ -69,64 +74,68 @@ export default class MatrixMeasurementIdSelection extends Vue {
   }
 
   private toggleAllForMetric(metric: string) {
-    let relevantBenchmarks = this.allBenchmarks.filter(it =>
-      this.metricsFor(it).includes(metric)
+    let relevantBenchmarks: string[] = this.allBenchmarks.filter(benchmark =>
+      this.metricsFor(benchmark).includes(metric)
     )
 
-    let remainingMeasurements = []
+    let resultingSelectedDimensions: Dimension[] = []
 
-    let allAreSelected = relevantBenchmarks.every(it =>
-      this.selectedMeasurementsSet.has(it + metric)
+    let allAreSelected = relevantBenchmarks.every(benchmark =>
+      this.selectedDimensionSet.has(benchmark + metric)
     )
 
     if (allAreSelected) {
-      // Keep all with other metrics
-      remainingMeasurements = this.selectedMeasurements.filter(
-        it => it.metric !== metric
+      // deselect dimensions with given metric, but keep all with other metrics
+      resultingSelectedDimensions = this.selectedDimensions.filter(
+        (dimension: Dimension) => dimension.metric !== metric
       )
     } else {
-      let benchmarksSet = new Set(relevantBenchmarks)
+      // select all dimensions with given metric
 
-      // figure out already selected ones
-      this.selectedMeasurements
+      // figure out which dimensions need to bee added
+      let notYetSelectedDimensions: Dimension[] = vxm.repoModule
+        .occuringDimensions([this.repoId])
         .filter(it => it.metric === metric)
-        .forEach(it => benchmarksSet.delete(it.benchmark))
+        .filter(dimension => !this.selectedDimensions.includes(dimension))
 
-      // Concat new ones to it
-      remainingMeasurements = Array.from(benchmarksSet)
-        .map(it => new MeasurementID(it, metric))
-        .concat(this.selectedMeasurements)
+      // add them to the already selected ones
+      resultingSelectedDimensions = this.selectedDimensions.concat(
+        notYetSelectedDimensions
+      )
     }
 
-    this.$emit('input', remainingMeasurements)
+    this.$emit('input', resultingSelectedDimensions)
   }
 
-  private selectAllForBenchmark(benchmark: string) {
+  private toggleAllForBenchmark(benchmark: string) {
     let relevantMetrics = this.metricsFor(benchmark)
 
-    let remainingMeasurements = []
+    let resultingSelectedDimensions: Dimension[] = []
 
-    let allSelected = relevantMetrics.every(metric =>
-      this.selectedMeasurementsSet.has(benchmark + metric)
+    let allAreSelected = relevantMetrics.every(metric =>
+      this.selectedDimensionSet.has(benchmark + metric)
     )
-    if (allSelected) {
-      remainingMeasurements = this.selectedMeasurements.filter(
+    if (allAreSelected) {
+      // deselect dimensions with given benchmark, but keep all with other benchmarks
+
+      resultingSelectedDimensions = this.selectedDimensions.filter(
         it => it.benchmark !== benchmark
       )
     } else {
-      let metricSet = new Set(relevantMetrics)
+      // select all dimensions with given benchmark
 
-      // figure out already selected ones
-      this.selectedMeasurements
+      // figure out which dimensions need to bee added
+      let notYetSelectedDimensions: Dimension[] = vxm.repoModule
+        .occuringDimensions([this.repoId])
         .filter(it => it.benchmark === benchmark)
-        .forEach(it => metricSet.delete(it.metric))
+        .filter(dimension => !this.selectedDimensions.includes(dimension))
 
-      // Concat new ones to it
-      remainingMeasurements = Array.from(metricSet)
-        .map(metric => new MeasurementID(benchmark, metric))
-        .concat(this.selectedMeasurements)
+      // add them to the already selected ones
+      resultingSelectedDimensions = this.selectedDimensions.concat(
+        notYetSelectedDimensions
+      )
     }
-    this.$emit('input', remainingMeasurements)
+    this.$emit('input', resultingSelectedDimensions)
   }
 
   private get allMetrics(): string[] {
@@ -136,9 +145,9 @@ export default class MatrixMeasurementIdSelection extends Vue {
   }
 
   private metricColor(benchmark: string, metric: string): string {
-    if (this.selectedMeasurementsSet.has(benchmark + metric)) {
+    if (this.selectedDimensionSet.has(benchmark + metric)) {
       return vxm.colorModule.colorByIndex(
-        this.selectedMeasurements.findIndex(
+        this.selectedDimensions.findIndex(
           it => it.benchmark === benchmark && it.metric === metric
         )
       )
@@ -148,14 +157,22 @@ export default class MatrixMeasurementIdSelection extends Vue {
 
   private changed(checked: boolean, benchmark: string, metric: string) {
     if (checked) {
-      this.$emit(
-        'input',
-        this.selectedMeasurements.concat([new MeasurementID(benchmark, metric)])
-      )
+      const newlyCheckedDimension:
+        | Dimension
+        | undefined = vxm.repoModule
+        .occuringDimensions([this.repoId])
+        .find(it => it.benchmark !== benchmark || it.metric !== metric)
+
+      if (newlyCheckedDimension) {
+        this.$emit(
+          'input',
+          this.selectedDimensions.concat([newlyCheckedDimension])
+        )
+      }
     } else {
       this.$emit(
         'input',
-        this.selectedMeasurements.filter(
+        this.selectedDimensions.filter(
           it => it.benchmark !== benchmark || it.metric !== metric
         )
       )

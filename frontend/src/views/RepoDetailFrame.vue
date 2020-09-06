@@ -28,7 +28,7 @@
 
 <script lang="ts">
 import Vue from 'vue'
-import { Component, Watch } from 'vue-property-decorator'
+import { Component } from 'vue-property-decorator'
 import { vxm } from '../store/index'
 import { Repo } from '../store/types'
 import RepoSelectionComponent from '../components/RepoSelectionComponent.vue'
@@ -55,7 +55,7 @@ export default class RepoDetailFrame extends Vue {
     this.$router.replace({ name: 'repo-detail', params: { id: repoId } })
   }
 
-  get selectedRepo() {
+  get selectedRepo(): Repo | null {
     return this.selectedRepoId == null
       ? null
       : vxm.repoModule.repoById(this.selectedRepoId)!
@@ -65,11 +65,11 @@ export default class RepoDetailFrame extends Vue {
     return vxm.repoModule.allRepos
   }
 
-  get isAdmin() {
+  get isAdmin(): boolean {
     return vxm.userModule.isAdmin
   }
 
-  get isDarkMode() {
+  get isDarkMode(): boolean {
     return vxm.userModule.darkThemeSelected
   }
 
@@ -77,7 +77,7 @@ export default class RepoDetailFrame extends Vue {
     return this.selectedRepo !== null
   }
 
-  mounted() {
+  mounted(): void {
     if (!this.selectedRepoId && vxm.detailGraphModule.selectedRepoId) {
       this.selectedRepoId = vxm.detailGraphModule.selectedRepoId
     }

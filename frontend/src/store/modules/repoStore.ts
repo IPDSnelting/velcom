@@ -1,5 +1,5 @@
 import { createModule, mutation, action } from 'vuex-class-component'
-import { Repo, RepoBranch, RepoId } from '@/store/types'
+import { Repo, RepoBranch, RepoId, Dimension } from '@/store/types'
 import Vue from 'vue'
 import axios from 'axios'
 import { vxm } from '..'
@@ -147,6 +147,18 @@ export class RepoStore extends VxModule {
 
   get repoIndex(): (repoID: RepoId) => number {
     return (repoID: string) => this.repoIndices[repoID]
+  }
+
+  get occuringDimensions(): (selectedRepos: RepoId[]) => Dimension[] {
+    return (selectedRepos: RepoId[]) => {
+      return Object.values(this.repos)
+        .filter(repo => selectedRepos.includes(repo.id))
+        .flatMap(repo => repo.dimensions)
+        .filter(
+          (dimension, index, dimensionArray) =>
+            index === dimensionArray.findIndex(dim => dim.equals(dimension))
+        )
+    }
   }
 
   get occuringBenchmarks(): (selectedRepos: RepoId[]) => string[] {

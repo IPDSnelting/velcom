@@ -3,7 +3,7 @@ import VueRouter, { RouteConfig, RouterOptions } from 'vue-router'
 import Home from '../views/Home.vue'
 import RepoComparison from '../views/RepoComparison.vue'
 import RepoDetailFrame from '../views/RepoDetailFrame.vue'
-import RepoDetail from '../views/RepoDetail.vue'
+import RepoDetail from '../views/NewRepoDetail.vue'
 import Queue from '../views/Queue.vue'
 import NotFound404 from '../views/NotFound404.vue'
 import RunCommitDetailView from '../views/RunCommitDetailView.vue'
@@ -161,7 +161,7 @@ router.beforeEach((to, from, next) => {
 
 router.beforeEach((to, from, next) => {
   if (to.name === 'repo-detail-frame' && !to.params['id']) {
-    let saved = vxm.detailGraphModule.selectedRepoId
+    const saved = vxm.detailGraphModule.selectedRepoId
     if (saved) {
       next({ name: 'repo-detail', params: { id: saved } })
       return
