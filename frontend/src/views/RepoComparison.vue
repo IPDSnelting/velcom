@@ -39,7 +39,7 @@
                         offset-y
                         min-width="290px"
                       >
-                        <template v-slot:activator="{ on }" class="mr-5">
+                        <template #activator="{ on }" class="mr-5">
                           <v-text-field
                             hide-details="auto"
                             v-model="startTimeString"
@@ -59,10 +59,7 @@
                           <v-btn
                             text
                             color="primary"
-                            @click="
-                              $refs.startDateMenu.save(today)
-                              retrieveGraphData()
-                            "
+                            @click="saveStartDateMenu(today)"
                             >Today</v-btn
                           >
                           <v-spacer></v-spacer>
@@ -75,10 +72,7 @@
                           <v-btn
                             text
                             color="primary"
-                            @click="
-                              $refs.startDateMenu.save(startTimeString)
-                              retrieveGraphData()
-                            "
+                            @click="saveStartDateMenu(startTimeString)"
                             >OK</v-btn
                           >
                         </v-date-picker>
@@ -114,10 +108,7 @@
                           <v-btn
                             text
                             color="primary"
-                            @click="
-                              $refs.stopDateMenu.save(today)
-                              retrieveGraphData()
-                            "
+                            @click="saveStopDateMenu(today)"
                             >Today</v-btn
                           >
                           <v-spacer></v-spacer>
@@ -130,10 +121,7 @@
                           <v-btn
                             text
                             color="primary"
-                            @click="
-                              $refs.stopDateMenu.save(stopTimeString)
-                              retrieveGraphData()
-                            "
+                            @click="saveStopDateMenu(stopTimeString)"
                             >OK</v-btn
                           >
                         </v-date-picker>
@@ -225,7 +213,7 @@ import { Watch } from 'vue-property-decorator'
 import { vxm } from '../store/index'
 import RepoAddDialog from '../components/dialogs/RepoAddDialog.vue'
 import RepoSelector from '../components/RepoSelector.vue'
-import { Repo, Commit, Dimension } from '../store/types'
+import { Repo, DimensionId } from '../store/types'
 import { mdiCalendar } from '@mdi/js'
 import { Route, RawLocation } from 'vue-router'
 import { Dictionary } from 'vue-router/types/router'
@@ -255,16 +243,14 @@ export default class RepoComparison extends Vue {
   private dateIcon = mdiCalendar
   // ==============       ==============
 
-  get selectedMeasurement() {
-    return new Dimension(
-      this.selectedBenchmark,
-      this.selectedMetric,
-      '',
-      'NEUTRAL'
-    )
+  get selectedDimensionId(): DimensionId {
+    return {
+      benchmark: this.selectedBenchmark,
+      metric: this.selectedMetric
+    }
   }
 
-  get selectedBenchmark() {
+  get selectedBenchmark(): string {
     return vxm.repoComparisonModule.selectedBenchmark
   }
 
@@ -281,7 +267,7 @@ export default class RepoComparison extends Vue {
     vxm.repoComparisonModule.selectedBenchmark = newBenchmark
   }
 
-  get selectedMetric() {
+  get selectedMetric(): string {
     return vxm.repoComparisonModule.selectedMetric
   }
 
@@ -318,7 +304,17 @@ export default class RepoComparison extends Vue {
     }
   }
 
-  get startTimeString() {
+  private saveStartDateMenu(date: string) {
+    ;(this.$refs.startDateMenu as any).save(date)
+    this.retrieveGraphData()
+  }
+
+  private saveStopDateMenu(date: string) {
+    ;(this.$refs.stopDateMenu as any).save(date)
+    this.retrieveGraphData()
+  }
+
+  get startTimeString(): string {
     return vxm.repoComparisonModule.startDate.toISOString().substring(0, 10)
   }
 
@@ -326,7 +322,7 @@ export default class RepoComparison extends Vue {
     vxm.repoComparisonModule.startDate = new Date(value)
   }
 
-  get stopTimeString() {
+  get stopTimeString(): string {
     return vxm.repoComparisonModule.stopDate.toISOString().substring(0, 10)
   }
 
@@ -368,7 +364,7 @@ export default class RepoComparison extends Vue {
 
   @Watch('selectedBenchmark')
   @Watch('selectedMetric')
-  clearMetricOnBenchmarkSelection() {
+  clearMetricOnBenchmarkSelection(): void {
     if (
       this.metricsForBenchmark(this.selectedBenchmark).includes(
         this.selectedMetric
@@ -384,7 +380,7 @@ export default class RepoComparison extends Vue {
     return vxm.repoComparisonModule.selectedBranchesByRepoId
   }
 
-  retrieveGraphData() {
+  retrieveGraphData(): void {
     if (
       this.selectedBenchmark &&
       this.selectedMetric &&
@@ -395,7 +391,7 @@ export default class RepoComparison extends Vue {
     }
   }
 
-  updateTimeframe(newMin: Date, newMax: Date) {
+  updateTimeframe(newMin: Date, newMax: Date): void {
     vxm.repoComparisonModule.startDate = newMin
     vxm.repoComparisonModule.stopDate = newMax
     this.retrieveGraphData()
@@ -462,10 +458,10 @@ export default class RepoComparison extends Vue {
   @Watch('startTimeString')
   @Watch('stopTimeString')
   @Watch('selectedRepos')
-  updateUrl() {
+  updateUrl(): void {
     let repos: { [repoId: string]: string[] } = {}
     vxm.repoComparisonModule.selectedReposWithBranches.forEach(
-      ({ repo_id: repoId, branches }) => {
+      ({ repoId, branches }) => {
         let repo = vxm.repoModule.repoById(repoId)
         if (!repo) {
           return
@@ -510,7 +506,7 @@ export default class RepoComparison extends Vue {
     to: Route,
     from: Route,
     next: (to?: RawLocation | false | ((vm: Vue) => any) | void) => void
-  ) {
+  ): void {
     next(component => {
       let vm = component as RepoComparison
       vxm.repoModule.fetchRepos().then(() => {
