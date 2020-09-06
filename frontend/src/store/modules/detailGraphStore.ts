@@ -8,6 +8,27 @@ const VxModule = createModule({
   strict: false
 })
 
+export function detailGraphStoreFromJson(json?: string): any {
+  if (!json) {
+    return {}
+  }
+  const parsed = JSON.parse(json)
+  // Convert flat json to real object
+  parsed._selectedDimensions = parsed._selectedDimensions.map(
+    (it: Dimension) =>
+      new Dimension(it.benchmark, it.metric, it.unit, it.interpretation)
+  )
+  return parsed
+}
+
+export function detailGraphStoreToJson(store: DetailGraphStore): string {
+  return JSON.stringify({
+    _selectedRepoId: (store as any)._selectedRepoId,
+    _selectedDimensions: (store as any)._selectedDimensions,
+    _referenceDatapoint: (store as any)._referenceDatapoint
+  })
+}
+
 export class DetailGraphStore extends VxModule {
   private _detailGraph: DataPoint[] = []
   private _selectedRepoId: RepoId = ''

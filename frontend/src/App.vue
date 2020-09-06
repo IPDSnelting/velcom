@@ -15,9 +15,10 @@ import Component from 'vue-class-component'
 import NavigationBar from './components/NavigationBar.vue'
 import Snackbar from './components/Snackbar.vue'
 import { Store } from 'vuex'
-import { vxm, storeToLocalStorage } from './store'
+import { vxm } from './store'
 import { Watch } from 'vue-property-decorator'
 import ThemeSelector from './components/ThemeSelector.vue'
+import { storeToLocalStorage } from './store/persistence'
 
 @Component({
   components: {

@@ -2,10 +2,11 @@ import Vue from 'vue'
 import './class-components-router-hooks' // Register custom hooks
 import App from './App.vue'
 import router from './router'
-import { store, vxm, restoreFromPassedSession } from './store'
+import { store, vxm } from './store'
 import axios, { AxiosRequestConfig } from 'axios'
 import vuetify from './plugins/vuetify'
 import { extractErrorMessage } from './util/ErrorUtils'
+import { restoreFromPassedSession } from './store/persistence'
 
 Vue.config.productionTip = false
 
