@@ -79,7 +79,7 @@ export default class ComparisonGraph extends Vue {
 
   // retrieving and interpreting datapoints
   private get datapoints(): { [key: string]: ComparisonGraphDataPoint[] } {
-    return vxm.repoComparisonModule.allDatapoints
+    return vxm.comparisonGraphModule.allDatapoints
   }
 
   private get repos(): string[] {
@@ -87,7 +87,7 @@ export default class ComparisonGraph extends Vue {
   }
 
   private get metric(): string {
-    return vxm.repoComparisonModule.selectedMetric
+    return vxm.comparisonGraphModule.selectedMetric
   }
 
   private get unit(): string {
@@ -96,11 +96,11 @@ export default class ComparisonGraph extends Vue {
   }
 
   private get minTimestamp(): number {
-    return vxm.repoComparisonModule.startDate.getTime()
+    return vxm.comparisonGraphModule.startDate.getTime()
   }
 
   private get maxTimestamp(): number {
-    return vxm.repoComparisonModule.stopDate.getTime() + 1000 * 60 * 60 * 24
+    return vxm.comparisonGraphModule.stopDate.getTime() + 1000 * 60 * 60 * 24
   }
 
   private context: number[] = [this.minTimestamp, this.maxTimestamp]
@@ -139,13 +139,13 @@ export default class ComparisonGraph extends Vue {
     )
 
     if (inFocusMin) {
-      return vxm.repoComparisonModule.referenceDatapoint !== undefined &&
-        vxm.repoComparisonModule.referenceDatapoint.value < inFocusMin
-        ? vxm.repoComparisonModule.referenceDatapoint.value
+      return vxm.comparisonGraphModule.referenceDatapoint !== undefined &&
+        vxm.comparisonGraphModule.referenceDatapoint.value < inFocusMin
+        ? vxm.comparisonGraphModule.referenceDatapoint.value
         : inFocusMin
     }
-    return vxm.repoComparisonModule.referenceDatapoint !== undefined
-      ? vxm.repoComparisonModule.referenceDatapoint.value
+    return vxm.comparisonGraphModule.referenceDatapoint !== undefined
+      ? vxm.comparisonGraphModule.referenceDatapoint.value
       : 0
   }
 
@@ -159,13 +159,13 @@ export default class ComparisonGraph extends Vue {
     )
 
     if (inFocusMax) {
-      return vxm.repoComparisonModule.referenceDatapoint !== undefined &&
-        vxm.repoComparisonModule.referenceDatapoint.value > inFocusMax
-        ? vxm.repoComparisonModule.referenceDatapoint.value
+      return vxm.comparisonGraphModule.referenceDatapoint !== undefined &&
+        vxm.comparisonGraphModule.referenceDatapoint.value > inFocusMax
+        ? vxm.comparisonGraphModule.referenceDatapoint.value
         : inFocusMax
     }
-    return vxm.repoComparisonModule.referenceDatapoint !== undefined
-      ? vxm.repoComparisonModule.referenceDatapoint.value
+    return vxm.comparisonGraphModule.referenceDatapoint !== undefined
+      ? vxm.comparisonGraphModule.referenceDatapoint.value
       : 0
   }
 
@@ -285,15 +285,15 @@ export default class ComparisonGraph extends Vue {
   }
 
   setReference(): void {
-    if (vxm.repoComparisonModule.referenceDatapoint !== undefined) {
-      this.removeCrosshair(vxm.repoComparisonModule.referenceDatapoint)
+    if (vxm.comparisonGraphModule.referenceDatapoint !== undefined) {
+      this.removeCrosshair(vxm.comparisonGraphModule.referenceDatapoint)
     }
     if (this.selectedDatapoint) {
-      vxm.repoComparisonModule.referenceCommit = this.selectedDatapoint.hash
+      vxm.comparisonGraphModule.referenceCommit = this.selectedDatapoint.hash
     }
-    if (vxm.repoComparisonModule.referenceDatapoint !== undefined) {
-      this.drawReferenceLine(vxm.repoComparisonModule.referenceDatapoint)
-      this.drawCrosshair(vxm.repoComparisonModule.referenceDatapoint)
+    if (vxm.comparisonGraphModule.referenceDatapoint !== undefined) {
+      this.drawReferenceLine(vxm.comparisonGraphModule.referenceDatapoint)
+      this.drawCrosshair(vxm.comparisonGraphModule.referenceDatapoint)
     }
     this.closeDialog()
   }
@@ -330,8 +330,8 @@ export default class ComparisonGraph extends Vue {
       .transition()
       .attr('opacity', 0)
       .remove()
-    this.removeCrosshair(vxm.repoComparisonModule.referenceDatapoint!)
-    vxm.repoComparisonModule.referenceCommit = null
+    this.removeCrosshair(vxm.comparisonGraphModule.referenceDatapoint!)
+    vxm.comparisonGraphModule.referenceCommit = null
     this.closeDialog()
   }
 
@@ -915,8 +915,8 @@ export default class ComparisonGraph extends Vue {
           commit: selectedCommit,
           comparison: comparison,
           measurementId: new MeasurementID(
-            vxm.repoComparisonModule.selectedBenchmark,
-            vxm.repoComparisonModule.selectedMetric
+            vxm.comparisonGraphModule.selectedBenchmark,
+            vxm.comparisonGraphModule.selectedMetric
           )
         }
 
@@ -926,8 +926,8 @@ export default class ComparisonGraph extends Vue {
           query: {
             selectedMeasurements: JSON.stringify([
               {
-                metric: vxm.repoComparisonModule.selectedMetric,
-                benchmark: vxm.repoComparisonModule.selectedBenchmark
+                metric: vxm.comparisonGraphModule.selectedMetric,
+                benchmark: vxm.comparisonGraphModule.selectedBenchmark
               }
             ]),
             skip: '' + Math.max(0, index - 20),

@@ -251,11 +251,11 @@ export default class RepoComparison extends Vue {
   }
 
   get selectedBenchmark(): string {
-    return vxm.repoComparisonModule.selectedBenchmark
+    return vxm.comparisonGraphModule.selectedBenchmark
   }
 
   set selectedBenchmark(newBenchmark: string) {
-    if (vxm.repoComparisonModule.selectedBenchmark !== newBenchmark) {
+    if (vxm.comparisonGraphModule.selectedBenchmark !== newBenchmark) {
       let newMetrics = this.metricsForBenchmark(newBenchmark)
       if (!newMetrics.includes(this.selectedMetric)) {
         if (newMetrics) {
@@ -264,15 +264,15 @@ export default class RepoComparison extends Vue {
       }
     }
 
-    vxm.repoComparisonModule.selectedBenchmark = newBenchmark
+    vxm.comparisonGraphModule.selectedBenchmark = newBenchmark
   }
 
   get selectedMetric(): string {
-    return vxm.repoComparisonModule.selectedMetric
+    return vxm.comparisonGraphModule.selectedMetric
   }
 
   set selectedMetric(metric: string) {
-    vxm.repoComparisonModule.selectedMetric = metric
+    vxm.comparisonGraphModule.selectedMetric = metric
   }
 
   get allRepos(): Repo[] {
@@ -285,7 +285,7 @@ export default class RepoComparison extends Vue {
 
   get occuringBenchmarks(): string[] {
     return vxm.repoModule.occuringBenchmarks(
-      vxm.repoComparisonModule.selectedRepos
+      vxm.comparisonGraphModule.selectedRepos
     )
   }
 
@@ -315,24 +315,24 @@ export default class RepoComparison extends Vue {
   }
 
   get startTimeString(): string {
-    return vxm.repoComparisonModule.startDate.toISOString().substring(0, 10)
+    return vxm.comparisonGraphModule.startDate.toISOString().substring(0, 10)
   }
 
   set startTimeString(value: string) {
-    vxm.repoComparisonModule.startDate = new Date(value)
+    vxm.comparisonGraphModule.startDate = new Date(value)
   }
 
   get stopTimeString(): string {
-    return vxm.repoComparisonModule.stopDate.toISOString().substring(0, 10)
+    return vxm.comparisonGraphModule.stopDate.toISOString().substring(0, 10)
   }
 
   set stopTimeString(value: string) {
-    vxm.repoComparisonModule.stopDate = new Date(value)
+    vxm.comparisonGraphModule.stopDate = new Date(value)
   }
 
   private stopAfterStart(): boolean | string {
-    return vxm.repoComparisonModule.startDate.getTime() <=
-      vxm.repoComparisonModule.stopDate.getTime()
+    return vxm.comparisonGraphModule.startDate.getTime() <=
+      vxm.comparisonGraphModule.stopDate.getTime()
       ? true
       : 'This date must not be be before the first!'
   }
@@ -347,19 +347,19 @@ export default class RepoComparison extends Vue {
   }
 
   private get referenceHash(): string {
-    return vxm.repoComparisonModule.referenceDatapoint !== undefined
-      ? vxm.repoComparisonModule.referenceDatapoint.hash
+    return vxm.comparisonGraphModule.referenceDatapoint !== undefined
+      ? vxm.comparisonGraphModule.referenceDatapoint.hash
       : ''
   }
 
   private get referenceRepoID(): string {
-    return vxm.repoComparisonModule.referenceDatapoint !== undefined
-      ? vxm.repoComparisonModule.referenceDatapoint.hash
+    return vxm.comparisonGraphModule.referenceDatapoint !== undefined
+      ? vxm.comparisonGraphModule.referenceDatapoint.hash
       : ''
   }
 
   private get referenceCommitSelected(): boolean {
-    return vxm.repoComparisonModule.referenceDatapoint !== undefined
+    return vxm.comparisonGraphModule.referenceDatapoint !== undefined
   }
 
   @Watch('selectedBenchmark')
@@ -377,7 +377,7 @@ export default class RepoComparison extends Vue {
   }
 
   private get selectedRepos() {
-    return vxm.repoComparisonModule.selectedBranchesByRepoId
+    return vxm.comparisonGraphModule.selectedBranchesByRepoId
   }
 
   retrieveGraphData(): void {
@@ -387,13 +387,13 @@ export default class RepoComparison extends Vue {
       this.stopAfterStart &&
       this.notAfterToday
     ) {
-      vxm.repoComparisonModule.fetchComparisonGraph(this.payload)
+      vxm.comparisonGraphModule.fetchComparisonGraph(this.payload)
     }
   }
 
   updateTimeframe(newMin: Date, newMax: Date): void {
-    vxm.repoComparisonModule.startDate = newMin
-    vxm.repoComparisonModule.stopDate = newMax
+    vxm.comparisonGraphModule.startDate = newMin
+    vxm.comparisonGraphModule.stopDate = newMax
     this.retrieveGraphData()
   }
 
@@ -407,8 +407,8 @@ export default class RepoComparison extends Vue {
   }
 
   private resetDates() {
-    this.startTimeString = vxm.repoComparisonModule.defaultStartTime
-    this.stopTimeString = vxm.repoComparisonModule.defaultStopTime
+    this.startTimeString = vxm.comparisonGraphModule.defaultStartTime
+    this.stopTimeString = vxm.comparisonGraphModule.defaultStopTime
 
     if (this.selectedBenchmark && this.selectedMetric) {
       this.retrieveGraphData()
@@ -416,7 +416,7 @@ export default class RepoComparison extends Vue {
   }
 
   private autoZoom() {
-    /*    vxm.repoComparisonModule
+    /*    vxm.comparisonGraphModule
       .fetchComparisonGraph({
         startTime: null,
         endTime: null,
@@ -439,8 +439,8 @@ export default class RepoComparison extends Vue {
             { min: 1e200, max: 0 }
           )
 
-        vxm.repoComparisonModule.startDate = new Date(min * 1000)
-        vxm.repoComparisonModule.stopDate = new Date(max * 1000)
+        vxm.comparisonGraphModule.startDate = new Date(min * 1000)
+        vxm.comparisonGraphModule.stopDate = new Date(max * 1000)
       }) */
   }
 
@@ -460,7 +460,7 @@ export default class RepoComparison extends Vue {
   @Watch('selectedRepos')
   updateUrl(): void {
     let repos: { [repoId: string]: string[] } = {}
-    vxm.repoComparisonModule.selectedReposWithBranches.forEach(
+    vxm.comparisonGraphModule.selectedReposWithBranches.forEach(
       ({ repoId, branches }) => {
         let repo = vxm.repoModule.repoById(repoId)
         if (!repo) {
@@ -522,7 +522,7 @@ export default class RepoComparison extends Vue {
       let branchesByRepoId: { [key: string]: string[] } = JSON.parse(
         query.repos as string
       )
-      vxm.repoComparisonModule.selectedRepos = Object.keys(branchesByRepoId)
+      vxm.comparisonGraphModule.selectedRepos = Object.keys(branchesByRepoId)
       Object.keys(branchesByRepoId).forEach(repoId => {
         let branches = branchesByRepoId[repoId]
         if (branches.length === 0) {
@@ -532,23 +532,23 @@ export default class RepoComparison extends Vue {
           }
           branches = repo.branches.slice().map(it => it.name)
         }
-        vxm.repoComparisonModule.setSelectedBranchesForRepo({
-          repoID: repoId,
+        vxm.comparisonGraphModule.setSelectedBranchesForRepo({
+          repoId: repoId,
           selectedBranches: branches
         })
       })
     }
     if (query.benchmark) {
-      vxm.repoComparisonModule.selectedBenchmark = query.benchmark as string
+      vxm.comparisonGraphModule.selectedBenchmark = query.benchmark as string
     }
     if (query.metric) {
-      vxm.repoComparisonModule.selectedMetric = query.metric as string
+      vxm.comparisonGraphModule.selectedMetric = query.metric as string
     }
     if (query.start) {
-      vxm.repoComparisonModule.startDate = new Date(query.start as string)
+      vxm.comparisonGraphModule.startDate = new Date(query.start as string)
     }
     if (query.stop) {
-      vxm.repoComparisonModule.stopDate = new Date(query.stop as string)
+      vxm.comparisonGraphModule.stopDate = new Date(query.stop as string)
     }
     this.retrieveGraphData()
   }

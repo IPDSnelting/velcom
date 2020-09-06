@@ -73,11 +73,11 @@ export default class RepoSelector extends Vue {
   private notifyTimeout: number | undefined
 
   get selectedRepos(): RepoId[] {
-    return vxm.repoComparisonModule.selectedRepos
+    return vxm.comparisonGraphModule.selectedRepos
   }
 
   set selectedRepos(repos: RepoId[]) {
-    vxm.repoComparisonModule.selectedRepos = repos
+    vxm.comparisonGraphModule.selectedRepos = repos
   }
 
   get allRepos(): Repo[] {
@@ -90,7 +90,7 @@ export default class RepoSelector extends Vue {
 
   get selectedBranchesByRepo(): (repoId: string) => string[] {
     return (repoId: string) =>
-      vxm.repoComparisonModule.selectedBranchesByRepoId[repoId]
+      vxm.comparisonGraphModule.selectedBranchesByRepoId[repoId]
   }
 
   get allColors(): string[] {
@@ -113,7 +113,7 @@ export default class RepoSelector extends Vue {
     branch: string,
     checkedValues: string[]
   ): void {
-    vxm.repoComparisonModule.setSelectedBranchesForRepo({
+    vxm.comparisonGraphModule.setSelectedBranchesForRepo({
       repoId: repoId,
       selectedBranches: checkedValues
     })
