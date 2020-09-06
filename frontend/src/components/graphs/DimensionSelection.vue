@@ -5,7 +5,9 @@
         <v-text-field label="Search" v-model="search"></v-text-field>
       </v-col>
       <v-col cols="auto mr-4 mb-2">
-        <v-btn text color="primary" @click="changed([])">Deselect all metrics</v-btn>
+        <v-btn text color="primary" @click="changed([])"
+          >Deselect all metrics
+        </v-btn>
       </v-col>
     </v-row>
     <v-row no-gutters>
@@ -31,7 +33,7 @@
             >
               <span class="name">{{ item.name }}</span>
             </v-chip>
-            <span v-else>{{ item.name}}</span>
+            <span v-else>{{ item.name }}</span>
           </template>
         </v-treeview>
       </v-col>
@@ -43,42 +45,42 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { vxm } from '../../store'
-import { Prop, Watch, Model } from 'vue-property-decorator'
-import { MeasurementID } from '../../store/types'
+import { Prop, Watch } from 'vue-property-decorator'
+import { Dimension } from '../../store/types'
 
 class BenchmarkItem {
   id: string
   name: string
-  children: MeasurementItem[]
+  children: DimensionItem[]
 
-  constructor(id: string, children: MeasurementItem[]) {
+  constructor(id: string, children: DimensionItem[]) {
     this.id = id
     this.name = id
     this.children = children
   }
 }
 
-class MeasurementItem {
+class DimensionItem {
   id: string
-  measurementId: MeasurementID
+  dimension: Dimension
   name: string
 
-  constructor(id: MeasurementID) {
-    this.measurementId = id
-    this.id = id.toString()
-    this.name = id.metric
+  constructor(dimension: Dimension) {
+    this.dimension = dimension
+    this.id = dimension.benchmark + '_' + dimension.metric
+    this.name = dimension.metric
   }
 }
 
 @Component
-export default class MeasurementIdSelection extends Vue {
+export default class DimensionSelection extends Vue {
   private search: string = ''
 
   @Prop()
   private repoId!: string
 
   @Prop()
-  private selectedMeasurements!: MeasurementID[]
+  private selectedDimensions!: Dimension[]
 
   private selectedBenchmarkItems: string[] = []
 
@@ -105,39 +107,37 @@ export default class MeasurementIdSelection extends Vue {
 
   private get benchmarkItems(): BenchmarkItem[] {
     return vxm.repoModule.occuringBenchmarks([this.repoId]).map(benchmark => {
-      let metrics = vxm.repoModule
-        .metricsForBenchmark(benchmark)
-        .map(
-          metric => new MeasurementItem(new MeasurementID(benchmark, metric))
-        )
-      return new BenchmarkItem(benchmark, metrics)
+      let dimensions: DimensionItem[] = vxm.repoModule
+        .occuringDimensions([this.repoId])
+        .map(dimension => new DimensionItem(dimension))
+      return new BenchmarkItem(benchmark, dimensions)
     })
   }
 
-  private get measurementItemMap(): Map<string, MeasurementItem> {
+  private get dimensionItemMap(): Map<string, DimensionItem> {
     let map = new Map()
     this.benchmarkItems
       .flatMap(it => it.children)
-      .forEach(it => map.set(it.measurementId.toString(), it))
+      .forEach(it => map.set(it.dimension.toString(), it))
     return map
   }
 
   private get selectedItems(): string[] {
-    let leafs = this.selectedMeasurements
-      .map(id => this.measurementItemMap.get(id.toString()))
+    let leafs = this.selectedDimensions
+      .map(id => this.dimensionItemMap.get(id.toString()))
       .filter(it => it)
       .map(it => it!.id)
 
     return [...this.selectedBenchmarkItems, ...leafs]
   }
 
-  private metricColor(item: MeasurementItem | BenchmarkItem): string {
-    if (!this.selectedMeasurements) {
+  private metricColor(item: DimensionItem | BenchmarkItem): string {
+    if (!this.selectedDimensions) {
       return 'accent'
     }
-    if (item instanceof MeasurementItem) {
+    if (item instanceof DimensionItem) {
       return vxm.colorModule.colorByIndex(
-        this.selectedMeasurements.findIndex(it => it.equals(item.measurementId))
+        this.selectedDimensions.findIndex(it => it.equals(item.dimension))
       )
     } else if (item.children) {
       return this.metricColor(item.children[0])
@@ -152,9 +152,9 @@ export default class MeasurementIdSelection extends Vue {
     )
 
     let ids = measurements
-      .map(it => this.measurementItemMap.get(it))
-      .filter(it => it && it instanceof MeasurementItem)
-      .map(it => it!.measurementId)
+      .map(it => this.dimensionItemMap.get(it))
+      .filter(it => it && it instanceof DimensionItem)
+      .map(it => it!.dimension)
 
     this.$emit('input', ids)
   }

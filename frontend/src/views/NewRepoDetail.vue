@@ -20,12 +20,19 @@
                     <span v-if="useMatrixSelector">Use tree selector</span>
                     <span v-if="!useMatrixSelector">Use matrix selector</span>
                   </v-btn>
-                  <matrix-measurement-id-selection
+                  <matrix-dimension-selection
                     v-if="useMatrixSelector"
                     @input="selectedMeasurements = $event"
                     :selectedDimensions="selectedDimensions"
                     :repoId="id"
-                  ></matrix-measurement-id-selection>
+                  ></matrix-dimension-selection>
+                  <normal-dimension-selection
+                    v-if="!useMatrixSelector"
+                    @input="selectedMeasurements = $event"
+                    :selectedDimensions="selectedDimensions"
+                    :repoId="id"
+                  >
+                  </normal-dimension-selection>
                 </v-col>
               </v-row>
             </v-container>
@@ -41,15 +48,15 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { vxm } from '../store/index'
 import RepoBaseInformation from '@/components/repodetail/RepoBaseInformation.vue'
-import MeasurementIdSelection from '../components/graphs/DimensionSelection.vue'
-import MatrixMeasurementIdSelection from '../components/graphs/MatrixDimensionSelection.vue'
+import DimensionSelection from '../components/graphs/DimensionSelection.vue'
+import MatrixDimensionSelection from '../components/graphs/MatrixDimensionSelection.vue'
 import { Dimension, Repo } from '@/store/types'
 
 @Component({
   components: {
     'repo-base-information': RepoBaseInformation,
-    'matrix-measurement-id-selection': MatrixMeasurementIdSelection,
-    'normal-measurement-id-selection': MeasurementIdSelection
+    'matrix-dimension-selection': MatrixDimensionSelection,
+    'normal-dimension-selection': DimensionSelection
   }
 })
 export default class RepoDetail extends Vue {
