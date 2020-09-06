@@ -36,12 +36,27 @@ export class Repo {
     )
     this.hasToken = hasToken
   }
+
+  /**
+   * Returns all tracked branches.
+   *
+   * @returns {string[]} all tracked branches
+   * @memberof Repo
+   */
+  public get trackedBranches(): string[] {
+    return this.branches.filter(it => it.tracked).map(it => it.name)
+  }
 }
 
 export type DimensionInterpretation = Flavor<
   'LESS_IS_BETTER' | 'MORE_IS_BETTER' | 'NEUTRAL',
   'dimension'
 >
+
+export type DimensionId = {
+  readonly benchmark: string
+  readonly metric: string
+}
 
 export class Dimension {
   readonly benchmark: string
