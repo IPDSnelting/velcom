@@ -12,11 +12,14 @@ import de.aaaaaaah.velcom.backend.access.entities.BranchName;
 import de.aaaaaaah.velcom.backend.access.entities.Commit;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.entities.Dimension;
+import de.aaaaaaah.velcom.backend.access.entities.DimensionInfo;
+import de.aaaaaaah.velcom.backend.access.entities.Interpretation;
 import de.aaaaaaah.velcom.backend.access.entities.Measurement;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementValues;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
 import de.aaaaaaah.velcom.backend.access.entities.RunId;
+import de.aaaaaaah.velcom.backend.access.entities.Unit;
 import de.aaaaaaah.velcom.backend.util.Either;
 import java.time.Instant;
 import java.util.HashMap;
@@ -34,6 +37,7 @@ class TimesliceComparisonTest {
 	private RepoComparison comparison;
 
 	private Dimension dimension;
+	private DimensionInfo dimensionInfo;
 	private RepoId repoId;
 	private Set<BranchName> branchNames;
 	private Map<RepoId, Set<BranchName>> repoBranches;
@@ -65,6 +69,8 @@ class TimesliceComparisonTest {
 		comparison = new TimesliceComparison(commitReadAccess, benchmarkReadAccess);
 
 		dimension = new Dimension("benchmark", "metric");
+		dimensionInfo = new DimensionInfo(dimension, new Unit("testunit"),
+			Interpretation.MORE_IS_BETTER);
 		repoId = new RepoId(UUID.randomUUID());
 		branchNames = Set.of(BranchName.fromName("branch1"), BranchName.fromName("branch2"));
 		repoBranches = new HashMap<>();
@@ -109,6 +115,9 @@ class TimesliceComparisonTest {
 		runMap.put(c2Hash, r2);
 		runMap.put(c3Hash, r3);
 		runMap.put(c4Hash, r4);
+
+		when(benchmarkReadAccess.getLatestRuns(eq(repoId), anyCollection())).thenReturn(runMap);
+		when(benchmarkReadAccess.getDimensionInfo(dimension)).thenReturn(dimensionInfo);
 	}
 
 	@Test
@@ -134,12 +143,6 @@ class TimesliceComparisonTest {
 
 		when(commitReadAccess.getCommitsBetween(repoId, branchNames, startInstant, stopInstant))
 			.thenReturn(commitMap);
-		when(benchmarkReadAccess.getLatestRuns(eq(repoId), anyCollection()))
-			.thenReturn(runMap);
-
-		if (this.comparison == null) {
-			throw new IllegalStateException("wtf?");
-		}
 
 		RepoComparisonGraph graph = comparison.generateGraph(dimension, repoBranches,
 			startInstant, stopInstant);
@@ -176,8 +179,6 @@ class TimesliceComparisonTest {
 
 		when(commitReadAccess.getCommitsBetween(repoId, branchNames, startInstant, stopInstant))
 			.thenReturn(commitMap);
-		when(benchmarkReadAccess.getLatestRuns(eq(repoId), anyCollection()))
-			.thenReturn(runMap);
 
 		RepoComparisonGraph graph = comparison.generateGraph(dimension, repoBranches,
 			startInstant, stopInstant);
@@ -214,8 +215,6 @@ class TimesliceComparisonTest {
 
 		when(commitReadAccess.getCommitsBetween(repoId, branchNames, startInstant, stopInstant))
 			.thenReturn(commitMap);
-		when(benchmarkReadAccess.getLatestRuns(eq(repoId), anyCollection()))
-			.thenReturn(runMap);
 
 		RepoComparisonGraph graph = comparison.generateGraph(dimension, repoBranches,
 			startInstant, stopInstant);
