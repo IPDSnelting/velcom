@@ -10,6 +10,21 @@ const VxModule = createModule({
   strict: false
 })
 
+/**
+ * Builds a string out of the requested repos and branches
+ *
+ * @returns {string}
+ */
+function formatRepos(repos: { repoId: string; branches: string[] }[]): string {
+  return (
+    repos
+      // ignore repos without branches, as we later assume it has at least one
+      .filter(it => it.branches.length > 0)
+      .map(({ repoId, branches }) => repoId + ':' + branches.join(':'))
+      .join('::')
+  )
+}
+
 export class ComparisonGraphStore extends VxModule {
   private _selectedRepos: string[] = []
   private _selectedBranchesByRepoId: { [key: string]: string[] } = {}
@@ -73,17 +88,15 @@ export class ComparisonGraphStore extends VxModule {
       effectiveEndTime = this.stopDate.getTime() / 1000 + 60 * 60 * 24
     }
 
-    const response = await axios.post(
-      '/graph/comparison',
-      {
-        repos: this.formatRepos(),
+    const response = await axios.get('/graph/comparison', {
+      params: {
+        repos: formatRepos(this.selectedReposWithBranches),
         start_time: effectiveStartTime,
         stop_time: effectiveEndTime,
-        benchmark: payload.benchmark,
-        metric: payload.metric
+        dimension: `${payload.benchmark}:${payload.metric}`
       },
-      { snackbarTag: 'repo-comparison' }
-    )
+      snackbarTag: 'repo-comparison'
+    })
 
     const datapoints: { [key: string]: ComparisonGraphDataPoint[] } = {}
     const jsonRepos: any[] = response.data.repos
@@ -97,23 +110,6 @@ export class ComparisonGraphStore extends VxModule {
     this.setDatapoints(datapoints)
 
     return this.allDatapoints
-  }
-
-  /**
-   * Builds a string out of the requested repos and branches
-   *
-   * @private
-   * @returns {string}
-   * @memberof ComparisonGraphStore
-   */
-  private formatRepos(): string {
-    return (
-      this.selectedReposWithBranches
-        // ignore repos without branches, as we later assume it has at least one
-        .filter(it => it.branches.length > 0)
-        .map(({ repoId, branches }) => repoId + ':' + branches.join(':'))
-        .join('::')
-    )
   }
 
   /**
@@ -139,12 +135,12 @@ export class ComparisonGraphStore extends VxModule {
 
   @mutation
   setSelectedBranchesForRepo(payload: {
-    repoID: string
+    repoId: string
     selectedBranches: string[]
   }): void {
     Vue.set(
       this._selectedBranchesByRepoId,
-      payload.repoID,
+      payload.repoId,
       payload.selectedBranches
     )
   }
