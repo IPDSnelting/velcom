@@ -375,3 +375,24 @@ export class DataPoint {
     this.values = values
   }
 }
+export class ComparisonGraphDataPoint {
+  readonly hash: CommitHash
+  readonly author: string
+  readonly authorDate: Date
+  readonly summary: string
+  readonly values: number[]
+
+  constructor(
+    hash: CommitHash,
+    author: string,
+    authorDate: Date,
+    summary: string,
+    values: number[]
+  ) {
+    this.hash = hash
+    this.author = author
+    this.authorDate = authorDate
+    this.summary = summary
+    this.values = values
+  }
+}
