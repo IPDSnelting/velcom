@@ -1,4 +1,4 @@
-import { DataPoint, ComparisonGraphDataPoint } from '@/store/types'
+import { DataPoint, ComparisonGraphDataPoint, RepoId } from '@/store/types'
 
 /**
  * Parses a data point json to a DataPoint object.
@@ -28,13 +28,15 @@ export function dataPointFromJson(json: any): DataPoint {
  */
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 export function comparisonGraphDataPointFromJson(
-  json: any
+  json: any,
+  repoId: RepoId
 ): ComparisonGraphDataPoint {
   return new ComparisonGraphDataPoint(
     json.hash,
     json.author,
-    json.author_date,
+    new Date(json.author_date * 1000),
     json.summary,
-    json.values
+    json.value,
+    repoId
   )
 }

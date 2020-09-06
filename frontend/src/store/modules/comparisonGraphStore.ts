@@ -102,8 +102,8 @@ export class ComparisonGraphStore extends VxModule {
     const jsonRepos: any[] = response.data.repos
 
     jsonRepos.forEach((item: any) => {
-      datapoints[item.repo_id] = item.commits.map(
-        comparisonGraphDataPointFromJson
+      datapoints[item.repo_id] = item.commits.map((datapoint: any) =>
+        comparisonGraphDataPointFromJson(datapoint, item.repo_id)
       )
     })
 

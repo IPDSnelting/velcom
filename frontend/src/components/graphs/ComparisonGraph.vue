@@ -2,7 +2,7 @@
   <v-container fluid>
     <v-row align="center" justify="center">
       <v-col>
-        <div id="chart" :style="{'height': this.height + 'px'}">
+        <div id="chart" :style="{ height: this.height + 'px' }">
           <svg id="mainSvg" />
         </div>
       </v-col>
@@ -11,7 +11,7 @@
       <v-col>
         <datapoint-dialog
           :dialogOpen="dialogOpen"
-          :selectedCommit="selectedCommit"
+          :selectedCommit="undefined"
           @setReference="setReference"
           @removeReference="removeReference"
           @viewInDetailGraph="showInDetailGraph"
@@ -29,7 +29,7 @@ import { Prop, Watch } from 'vue-property-decorator'
 import * as d3 from 'd3'
 import { vxm } from '../../store'
 import { formatDateUTC } from '../../util/TimeUtil'
-import { Datapoint, Commit, Repo, MeasurementID } from '../../store/types'
+import { ComparisonGraphDataPoint, Commit, Repo } from '../../store/types'
 import ComparisonDatapointDialog from '../dialogs/ComparisonDatapointDialog.vue'
 import { crosshairIcon } from '../graphs/crosshairIcon'
 
@@ -78,7 +78,7 @@ export default class ComparisonGraph extends Vue {
   }
 
   // retrieving and interpreting datapoints
-  private get datapoints(): { [key: string]: Datapoint[] } {
+  private get datapoints(): { [key: string]: ComparisonGraphDataPoint[] } {
     return vxm.repoComparisonModule.allDatapoints
   }
 
@@ -91,7 +91,8 @@ export default class ComparisonGraph extends Vue {
   }
 
   private get unit(): string {
-    return vxm.repoComparisonModule.unit
+    // TODO: This
+    return 'unit'
   }
 
   private get minTimestamp(): number {
@@ -109,7 +110,7 @@ export default class ComparisonGraph extends Vue {
     return this.focus
   }
 
-  get allDatapoints(): Datapoint[] {
+  get allDatapoints(): ComparisonGraphDataPoint[] {
     return Array.from(Object.values(this.datapoints)).reduce(
       (acc, next) => acc.concat(next),
       []
@@ -117,13 +118,13 @@ export default class ComparisonGraph extends Vue {
   }
 
   private get minContextVal(): number | undefined {
-    return d3.min(this.allDatapoints, (d: Datapoint) => {
+    return d3.min(this.allDatapoints, (d: ComparisonGraphDataPoint) => {
       return d.value
     })
   }
 
   private get maxContextVal(): number | undefined {
-    return d3.max(this.allDatapoints, (d: Datapoint) => {
+    return d3.max(this.allDatapoints, (d: ComparisonGraphDataPoint) => {
       return d.value
     })
   }
@@ -131,8 +132,8 @@ export default class ComparisonGraph extends Vue {
   private get minFocusVal(): number | undefined {
     let inFocusMin: number | undefined = d3.min(
       this.allDatapoints,
-      (d: Datapoint) => {
-        let date: number = d.commit.authorDate ? d.commit.authorDate * 1000 : 0
+      (d: ComparisonGraphDataPoint) => {
+        let date: number = d.authorDate ? d.authorDate.getTime() : 0
         return this.focus[0] <= date && date <= this.focus[1] ? d.value : NaN
       }
     )
@@ -151,8 +152,8 @@ export default class ComparisonGraph extends Vue {
   private get maxFocusVal(): number | undefined {
     let inFocusMax: number | undefined = d3.max(
       this.allDatapoints,
-      (d: Datapoint) => {
-        let date: number = d.commit.authorDate ? d.commit.authorDate * 1000 : 0
+      (d: ComparisonGraphDataPoint) => {
+        let date: number = d.authorDate ? d.authorDate.getTime() : 0
         return this.focus[0] <= date && date <= this.focus[1] ? d.value : NaN
       }
     )
@@ -199,12 +200,16 @@ export default class ComparisonGraph extends Vue {
       .range([height, 0])
   }
 
-  private x(domain: number[], datapoint: Datapoint): number {
-    return datapoint.commit.authorDate
-      ? this.xScale(domain)(datapoint.commit.authorDate * 1000)
+  private x(domain: number[], datapoint: ComparisonGraphDataPoint): number {
+    return datapoint.authorDate
+      ? this.xScale(domain)(datapoint.authorDate.getTime())
       : 0
   }
-  private y(domain: number[], datapoint: Datapoint, height: number): number {
+  private y(
+    domain: number[],
+    datapoint: ComparisonGraphDataPoint,
+    height: number
+  ): number {
     return this.yScale(domain, height)(datapoint.value)
   }
 
@@ -272,23 +277,19 @@ export default class ComparisonGraph extends Vue {
 
   // interacting with data points via DatapointDialog
   private dialogOpen: boolean = false
-  private selectedDatapoint: Datapoint | null = null
+  private selectedDatapoint: ComparisonGraphDataPoint | null = null
 
-  private get selectedCommit(): Commit | null {
-    return this.selectedDatapoint ? this.selectedDatapoint.commit : null
-  }
-
-  openDatapointMenu(datapoint: Datapoint) {
+  openDatapointMenu(datapoint: ComparisonGraphDataPoint): void {
     this.selectedDatapoint = datapoint
     this.dialogOpen = true
   }
 
-  setReference(animation: { delay: number; duration: number }) {
+  setReference(): void {
     if (vxm.repoComparisonModule.referenceDatapoint !== undefined) {
       this.removeCrosshair(vxm.repoComparisonModule.referenceDatapoint)
     }
     if (this.selectedDatapoint) {
-      vxm.repoComparisonModule.referenceCommit = this.selectedDatapoint.commit
+      vxm.repoComparisonModule.referenceCommit = this.selectedDatapoint.hash
     }
     if (vxm.repoComparisonModule.referenceDatapoint !== undefined) {
       this.drawReferenceLine(vxm.repoComparisonModule.referenceDatapoint)
@@ -297,7 +298,7 @@ export default class ComparisonGraph extends Vue {
     this.closeDialog()
   }
 
-  private drawReferenceLine(datapoint: Datapoint) {
+  private drawReferenceLine(datapoint: ComparisonGraphDataPoint) {
     let referenceLine = d3
       .select('#focusLayer')
       .selectAll<SVGPathElement, unknown>('#referenceLine')
@@ -336,19 +337,15 @@ export default class ComparisonGraph extends Vue {
 
   private crosshairIcon = crosshairIcon
 
-  private drawCrosshair(datapoint: Datapoint) {
+  private drawCrosshair(datapoint: ComparisonGraphDataPoint) {
     let crosshair = d3.select(
-      '#' + '_' + datapoint.commit.repoID + '_' + datapoint.commit.hash
+      '#' + '_' + datapoint.repoId + '_' + datapoint.hash
     )
 
     if (crosshair.node()) {
       let crosshairRect = (crosshair.node() as SVGElement).getBoundingClientRect()
-      let crosshairWidth: number = crosshairRect.width
-      let crosshairHeight: number = crosshairRect.height
 
-      d3.select(
-        '#' + '_' + datapoint.commit.repoID + '_' + datapoint.commit.hash
-      )
+      d3.select('#' + '_' + datapoint.repoId + '_' + datapoint.hash)
         .transition()
         .attr(
           'd',
@@ -366,14 +363,14 @@ export default class ComparisonGraph extends Vue {
             ')'
         )
         .attr('opacity', 1)
-        .attr('fill', this.colorById(datapoint.commit.repoID))
-        .attr('stroke', this.colorById(datapoint.commit.repoID))
+        .attr('fill', this.colorById(datapoint.repoId))
+        .attr('stroke', this.colorById(datapoint.repoId))
         .attr('stroke-width', 2)
     }
   }
 
-  private removeCrosshair(datapoint: Datapoint) {
-    d3.select('#' + '_' + datapoint.commit.repoID + '_' + datapoint.commit.hash)
+  private removeCrosshair(datapoint: ComparisonGraphDataPoint) {
+    d3.select('#' + '_' + datapoint.repoId + '_' + datapoint.hash)
       .attr(
         'd',
         d3
@@ -389,8 +386,8 @@ export default class ComparisonGraph extends Vue {
           this.y(this.yFocusDomain, datapoint, this.focusHeight) +
           ')'
       )
-      .attr('fill', this.colorById(datapoint.commit.repoID))
-      .attr('stroke', this.colorById(datapoint.commit.repoID))
+      .attr('fill', this.colorById(datapoint.repoId))
+      .attr('stroke', this.colorById(datapoint.repoId))
       .attr('stroke-width', 2)
   }
 
@@ -409,8 +406,10 @@ export default class ComparisonGraph extends Vue {
         this.graphDrawn = true
       }
 
-      let keyFn: d3.ValueFn<any, any, string> = (d: Datapoint) => {
-        return '_' + d.commit.repoID + '_' + d.commit.hash
+      let keyFn: d3.ValueFn<any, any, string> = (
+        d: ComparisonGraphDataPoint
+      ) => {
+        return '_' + d.repoId + '_' + d.hash
       }
 
       this.repos.forEach(repoID => {
@@ -418,7 +417,7 @@ export default class ComparisonGraph extends Vue {
       })
       this.drawDatapoints(keyFn, animation)
       this.appendTooltips(keyFn)
-      this.setReference(animation)
+      this.setReference()
     } else {
       if (this.graphDrawn) {
         this.graphDrawn = false
@@ -486,7 +485,7 @@ export default class ComparisonGraph extends Vue {
         .select('#' + layer + 'Layer')
         .selectAll<SVGPathElement, unknown>('#' + layer + 'line_' + repoID)
         .data([this.datapoints[repoID]])
-      let newPath: any = path
+      path
         .enter()
         .append('path')
         .attr('id', layer + 'line_' + repoID)
@@ -515,11 +514,11 @@ export default class ComparisonGraph extends Vue {
   get line(): (xDomain: number[], yDomain: number[], height: number) => any {
     return (xDomain: number[], yDomain: number[], height: number) =>
       d3
-        .line<Datapoint>()
-        .x((d: Datapoint) => {
+        .line<ComparisonGraphDataPoint>()
+        .x((d: ComparisonGraphDataPoint) => {
           return this.x(xDomain, d)
         })
-        .y((d: Datapoint) => {
+        .y((d: ComparisonGraphDataPoint) => {
           return this.y(yDomain, d, height)
         })
   }
@@ -530,7 +529,7 @@ export default class ComparisonGraph extends Vue {
   ) {
     let datapoints: d3.Selection<
       SVGPathElement,
-      Datapoint,
+      ComparisonGraphDataPoint,
       d3.BaseType,
       unknown
     > = d3
@@ -538,11 +537,14 @@ export default class ComparisonGraph extends Vue {
       .selectAll<SVGPathElement, unknown>('.datapoint')
       .data(this.allDatapoints, keyFn)
 
-    let newDatapoints = datapoints
+    datapoints
       .enter()
       .append('path')
       .attr('class', 'datapoint')
-      .attr('id', (d: Datapoint) => '_' + d.commit.repoID + '_' + d.commit.hash)
+      .attr(
+        'id',
+        (d: ComparisonGraphDataPoint) => '_' + d.repoId + '_' + d.hash
+      )
       .merge(datapoints)
       .transition()
       .delay(animation.delay)
@@ -556,15 +558,15 @@ export default class ComparisonGraph extends Vue {
       )
       .attr(
         'transform',
-        (d: Datapoint) =>
+        (d: ComparisonGraphDataPoint) =>
           'translate(' +
           this.x(this.focus, d) +
           ', ' +
           this.y(this.yFocusDomain, d, this.focusHeight) +
           ')'
       )
-      .attr('fill', (d: Datapoint) => this.colorById(d.commit.repoID))
-      .attr('stroke', (d: Datapoint) => this.colorById(d.commit.repoID))
+      .attr('fill', (d: ComparisonGraphDataPoint) => this.colorById(d.repoId))
+      .attr('stroke', (d: ComparisonGraphDataPoint) => this.colorById(d.repoId))
       .attr('stroke-width', 2)
       .attr('opacity', 1)
       .style('cursor', 'pointer')
@@ -578,35 +580,34 @@ export default class ComparisonGraph extends Vue {
   }
 
   private appendTooltips(keyFn: d3.ValueFn<any, any, string>) {
-    let tooltip = d3
-      .selectAll('.datapoint')
+    d3.selectAll('.datapoint')
       .data(this.allDatapoints, keyFn)
       .on('mouseover', this.mouseover)
       .on('mousemove', this.mousemove)
       .on('mouseleave', this.mouseleave)
-      .on('click', (d: Datapoint) => {
+      .on('click', (d: ComparisonGraphDataPoint) => {
         this.$router.push({
           name: 'commit-detail',
-          params: { repoID: d.commit.repoID, hash: d.commit.hash }
+          params: { repoID: d.repoId, hash: d.hash }
         })
       })
-      .on('contextmenu', (d: Datapoint) => {
+      .on('contextmenu', (d: ComparisonGraphDataPoint) => {
         d3.event.preventDefault()
         this.openDatapointMenu(d)
       })
-      .on('mousedown', (d: Datapoint) => {
+      .on('mousedown', (d: ComparisonGraphDataPoint) => {
         if (d3.event.which === 2) {
           d3.event.preventDefault()
           let routeData = this.$router.resolve({
             name: 'commit-detail',
-            params: { repoID: d.commit.repoID, hash: d.commit.hash }
+            params: { repoID: d.repoId, hash: d.hash }
           })
           window.open(routeData.href, '_blank')
         }
       })
   }
 
-  private mouseover(d: Datapoint) {
+  private mouseover() {
     d3.select('#tooltip')
       .transition()
       .duration(300)
@@ -614,7 +615,7 @@ export default class ComparisonGraph extends Vue {
       .style('visibility', 'visible')
   }
 
-  private mousemove(d: Datapoint) {
+  private mousemove(d: ComparisonGraphDataPoint) {
     let tooltip: d3.Selection<
       d3.BaseType,
       unknown,
@@ -625,17 +626,17 @@ export default class ComparisonGraph extends Vue {
     let tipHeight = (tooltip.node() as HTMLElement).getBoundingClientRect()
       .height
 
-    let date = d.commit.authorDate || 0
+    let date = d.authorDate
 
     let htmlMessage = `
         <table class="tooltip-table">
           <tr>
             <td>Commit</td>
-            <td>${d.commit.hash}</td>
+            <td>${d.hash}</td>
           </tr>
           <tr>
             <td>Author</td>
-            <td>${d.commit.author}</td>
+            <td>${d.author}</td>
           </tr>
           <tr>
             <td>Date</td>
@@ -647,7 +648,7 @@ export default class ComparisonGraph extends Vue {
           </tr>
           <tr>
             <td>Commit summary</td>
-            <td>${d.commit.summary!.trim()}</td>
+            <td>${d.summary!.trim()}</td>
           </tr>
         </table>
       `
@@ -690,7 +691,7 @@ export default class ComparisonGraph extends Vue {
     }
   }
 
-  mouseleave(d: any) {
+  mouseleave(): void {
     d3.select('#tooltip')
       .transition()
       .duration(500)
@@ -706,7 +707,8 @@ export default class ComparisonGraph extends Vue {
   }
 
   // updating
-  private resizeListener: () => void = () => {}
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  private resizeListener: () => void = function() {}
 
   private resize() {
     let chart = d3.select('#chart').node() as HTMLElement
@@ -938,14 +940,14 @@ export default class ComparisonGraph extends Vue {
   }
 
   // initializing
-  created() {
+  created(): void {
     this.resizeListener = () => {
       this.resize()
     }
     window.addEventListener('resize', this.resizeListener)
   }
 
-  mounted() {
+  mounted(): void {
     d3.select('#mainSvg')
       .attr('width', '100%')
       .attr('height', '100%')
@@ -954,7 +956,7 @@ export default class ComparisonGraph extends Vue {
     this.resize()
   }
 
-  beforeDestroy() {
+  beforeDestroy(): void {
     window.removeEventListener('resize', this.resizeListener)
   }
 
