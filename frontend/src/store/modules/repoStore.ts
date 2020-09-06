@@ -11,7 +11,7 @@ const VxModule = createModule({
 })
 
 export class RepoStore extends VxModule {
-  private repos: { [repoID: string]: Repo } = {}
+  private repos: { [repoId: string]: Repo } = {}
   private currentRepoIndex: number = 0
   private repoIndices: { [repoID: string]: number } = {}
 
@@ -28,7 +28,7 @@ export class RepoStore extends VxModule {
       return
     }
 
-    const repos: Repo[] = response.data.repos.map((it: any) => repoFromJson(it))
+    const repos: Repo[] = response.data.repos.map(repoFromJson)
 
     this.setRepos(repos)
     return repos
@@ -109,7 +109,7 @@ export class RepoStore extends VxModule {
       existing.dimensions = payload.dimensions.slice()
       existing.hasToken = payload.hasToken
     } else {
-      Vue.set(this.repos, payload.id, { ...payload })
+      Vue.set(this.repos, payload.id, payload)
       vxm.repoModule.setIndexForRepo(payload.id)
     }
   }
