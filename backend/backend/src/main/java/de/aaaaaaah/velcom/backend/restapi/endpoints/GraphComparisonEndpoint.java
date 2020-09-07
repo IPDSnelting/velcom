@@ -25,38 +25,39 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
 /**
- * Endpoint for getting a list of the most recent runs.
+ * Endpoint for getting the repo comparison graph.
  */
 @Path("/graph/comparison")
 @Produces(MediaType.APPLICATION_JSON)
-public class RepoComparisonEndpoint {
+public class GraphComparisonEndpoint {
 
 	private final RepoComparison comparison;
 	private final BenchmarkReadAccess benchmarkAccess;
 
-	public RepoComparisonEndpoint(RepoComparison comparison, BenchmarkReadAccess benchmarkAccess) {
+	public GraphComparisonEndpoint(RepoComparison comparison, BenchmarkReadAccess benchmarkAccess) {
 		this.comparison = comparison;
 		this.benchmarkAccess = benchmarkAccess;
 	}
 
 	@GET
-	public GetReply getRuns(
+	public GetReply get(
 		@QueryParam("repos") String reposStr,
 		@QueryParam("start_time") @Nullable Long startTimeEpoch,
 		@QueryParam("end_time") @Nullable Long endTimeEpoch,
 		@QueryParam("duration") @Nullable Integer durationInSeconds,
 		@QueryParam("dimension") String dimensionStr
 	) {
-
 		// Parse dimension
 		Set<Dimension> dimensionSet = EndpointUtils.parseDimensions(dimensionStr);
 		if (dimensionSet.size() != 1) {
+			// TODO: 07.09.20 Ensure the http status code is correct
 			throw new ForbiddenException("invalid amount of dimensions provided");
 		}
 
 		Dimension dimension = dimensionSet.iterator().next();
 
 		if (!benchmarkAccess.doesDimensionExist(dimension)) {
+			// TODO: 07.09.20 Ensure the http status code is correct
 			throw new NotFoundException("unknown dimension");
 		}
 
