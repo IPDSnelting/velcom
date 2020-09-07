@@ -1,11 +1,12 @@
 package de.aaaaaaah.velcom.backend.access.entities;
 
+import java.util.Comparator;
 import java.util.Objects;
 
 /**
  * A "dumb" class that identifies a {@link Measurement} in a {@link Run}.
  */
-public class Dimension {
+public class Dimension implements Comparable<Dimension> {
 
 	private final String benchmark;
 	private final String metric;
@@ -47,5 +48,12 @@ public class Dimension {
 			"benchmark='" + benchmark + '\'' +
 			", metric='" + metric + '\'' +
 			'}';
+	}
+
+	@Override
+	public int compareTo(Dimension other) {
+		return Comparator.comparing(Dimension::getBenchmark)
+			.thenComparing(Dimension::getMetric)
+			.compare(this, other);
 	}
 }
