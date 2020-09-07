@@ -28,6 +28,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -60,7 +61,7 @@ public class GraphDetailEndpoint {
 		@QueryParam("start_time") @Nullable Long startTimeEpoch,
 		@QueryParam("end_time") @Nullable Long endTimeEpoch,
 		@QueryParam("duration") @Nullable Integer durationInSeconds,
-		@QueryParam("dimension") String dimensionStr
+		@QueryParam("dimensions") @NotNull String dimensionStr
 	) {
 		// Figure out tracked branches
 		RepoId repoId = new RepoId(repoUuid);

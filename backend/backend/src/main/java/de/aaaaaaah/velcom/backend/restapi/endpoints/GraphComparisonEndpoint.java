@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
@@ -41,11 +42,11 @@ public class GraphComparisonEndpoint {
 
 	@GET
 	public GetReply get(
-		@QueryParam("repos") String reposStr,
+		@QueryParam("repos") @NotNull String reposStr,
 		@QueryParam("start_time") @Nullable Long startTimeEpoch,
 		@QueryParam("end_time") @Nullable Long endTimeEpoch,
 		@QueryParam("duration") @Nullable Integer durationInSeconds,
-		@QueryParam("dimension") String dimensionStr
+		@QueryParam("dimension") @NotNull String dimensionStr
 	) {
 		// Parse dimension
 		Set<Dimension> dimensionSet = EndpointUtils.parseDimensions(dimensionStr);
