@@ -514,9 +514,11 @@ paths:
                           type: string
                         values:
                           type: array
-                          description: 'One value for each dimension. For the order, see the `dimensions` field'
+                          description: "One value for each dimension. For the order, see the `dimensions` field. If this commit's run doesn't have a value of the corresponding dimension, the array contains a null placeholder instead."
                           items:
-                            type: number
+                            type:
+                              - number
+                              - 'null'
                       required:
                         - hash
                         - parents
