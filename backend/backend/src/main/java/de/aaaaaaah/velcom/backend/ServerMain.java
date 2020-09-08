@@ -33,6 +33,7 @@ import de.aaaaaaah.velcom.backend.restapi.endpoints.TestTokenEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.exception.CommitAccessExceptionMapper;
 import de.aaaaaaah.velcom.backend.restapi.exception.NoSuchCommitExceptionMapper;
 import de.aaaaaaah.velcom.backend.restapi.exception.NoSuchRepoExceptionMapper;
+import de.aaaaaaah.velcom.backend.restapi.exception.NoSuchRunExceptionMapper;
 import de.aaaaaaah.velcom.backend.restapi.exception.NoSuchTaskExceptionMapper;
 import de.aaaaaaah.velcom.backend.runner.Dispatcher;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
@@ -180,10 +181,11 @@ public class ServerMain extends Application<GlobalConfig> {
 			.setSerializationInclusion(Include.NON_NULL);
 
 		// Exceptions
-		environment.jersey().register(new NoSuchRepoExceptionMapper());
-		environment.jersey().register(new NoSuchTaskExceptionMapper());
-		environment.jersey().register(new NoSuchCommitExceptionMapper());
 		environment.jersey().register(new CommitAccessExceptionMapper());
+		environment.jersey().register(new NoSuchCommitExceptionMapper());
+		environment.jersey().register(new NoSuchRepoExceptionMapper());
+		environment.jersey().register(new NoSuchRunExceptionMapper());
+		environment.jersey().register(new NoSuchTaskExceptionMapper());
 
 		// Authentication
 		environment.jersey().register(
