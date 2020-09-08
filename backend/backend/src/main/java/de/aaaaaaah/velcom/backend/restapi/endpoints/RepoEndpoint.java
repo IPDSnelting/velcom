@@ -189,6 +189,9 @@ public class RepoEndpoint {
 		RepoId repoId = new RepoId(repoUuid);
 		user.guardRepoAccess(repoId);
 
+		// This is here to ensure a NoSuchRepoException is thrown if the repo doesn't exist.
+		repoAccess.getRepo(repoId);
+
 		request.getName().ifPresent(name -> repoAccess.setName(repoId, name));
 
 		request.getRemoteUrl().ifPresent(remoteUrl ->
