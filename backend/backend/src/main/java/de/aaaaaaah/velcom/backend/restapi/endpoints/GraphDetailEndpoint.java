@@ -11,6 +11,7 @@ import de.aaaaaaah.velcom.backend.access.entities.Dimension;
 import de.aaaaaaah.velcom.backend.access.entities.DimensionInfo;
 import de.aaaaaaah.velcom.backend.access.entities.Measurement;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementValues;
+import de.aaaaaaah.velcom.backend.access.entities.Repo;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.utils.EndpointUtils;
@@ -65,7 +66,12 @@ public class GraphDetailEndpoint {
 	) {
 		// Figure out tracked branches
 		RepoId repoId = new RepoId(repoUuid);
-		Collection<BranchName> trackedBranches = repoAccess.getTrackedBranches(repoId).stream()
+		// By getting the tracked branches indirectly via the repo instead of directly from the
+		// repoAccess, we ensure a NoSuchRepoException is thrown when the repo doesn't exist. This
+		// should probably be handled differently though (e. g. by making repoAccess#getTrackedBranches
+		// throw a NoSuchRepoException when no such repo exists).
+		Repo repo = repoAccess.getRepo(repoId);
+		Collection<BranchName> trackedBranches = repo.getTrackedBranches().stream()
 			.map(Branch::getName)
 			.collect(Collectors.toList());
 
