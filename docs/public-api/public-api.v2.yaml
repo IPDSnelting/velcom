@@ -360,6 +360,8 @@ paths:
       responses:
         '200':
           description: OK
+        '404':
+          description: Not Found
       security:
         - repo_admin_credentials: []
       requestBody:
