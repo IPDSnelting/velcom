@@ -168,48 +168,46 @@ public class RoundRobinFiloPolicy implements QueuePolicy {
 
 			// 2.) Get default repo tasks that have to be ordered in a round robin way
 			Map<RepoId, LinkedList<Task>> groupMap = new HashMap<>();
-			List<RepoId> repoIds = new ArrayList<>();
-
-			try (Cursor<TaskRecord> cursor = db.selectFrom(TASK)
+			db.selectFrom(TASK)
 				.where(TASK.REPO_ID.isNotNull())
 				.orderBy(TASK.INSERT_TIME.desc())
-				.fetchLazy()) {
-
-				while (cursor.hasNext()) {
-					Task task = taskFromRecord(cursor.fetchNext());
+				.forEach(record -> {
+					Task task = taskFromRecord(record);
 					RepoId repoId = task.getSource().getLeft().orElseThrow().getRepoId();
 
 					if (!groupMap.containsKey(repoId)) {
 						groupMap.put(repoId, new LinkedList<>());
-						repoIds.add(repoId);
 					}
 
 					groupMap.get(repoId).addLast(task);
-				}
-			}
+				});
 
 			if (groupMap.isEmpty()) {
 				return; // we are done here
 			}
 
+			List<RepoId> repoIds = new ArrayList<>(groupMap.keySet());
 			if (lastRepo != null && !repoIds.contains(lastRepo)) {
-				// if lastRepo is not already in the repoIds list, then there
-				// are no tasks associated with lastRepo currently in the queue
-				// however we still need to begin the repo that comes right after
-				// lastRepo (alphabetically) => add lastRepo to repoIds
+				// The repo of the next task is determined starting in order from the repo whose task was
+				// last executed. If that repo is not in the repoIds list, we add it here so we can
+				// determine the correct starting index later.
 				repoIds.add(lastRepo);
 			}
-
 			repoIds.sort(Comparator.comparing(repoId -> repoId.getId().toString()));
 
-			int start = lastRepo == null ? 0 : (repoIds.indexOf(lastRepo) + 1) % repoIds.size();
+			int startingIndex = (lastRepo == null) ? 0 : (repoIds.indexOf(lastRepo) + 1) % repoIds.size();
 
-			for (int i = start; !groupMap.isEmpty(); i = (i + 1) % repoIds.size()) {
+			for (int i = startingIndex; !groupMap.isEmpty(); i = (i + 1) % repoIds.size()) {
 				RepoId currentRepoId = repoIds.get(i);
 				LinkedList<Task> tasks = groupMap.get(currentRepoId);
 
-				completeTaskList.addLast(tasks.pollFirst());
+				// If we have  exhausted the tasks for the current repo, its task list entry will have been
+				// removed already.
+				if (tasks == null) {
+					continue;
+				}
 
+				completeTaskList.addLast(tasks.pollFirst());
 				if (tasks.isEmpty()) {
 					groupMap.remove(currentRepoId);
 				}
