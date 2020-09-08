@@ -9,6 +9,8 @@ import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.data.repocomparison.RepoComparison;
 import de.aaaaaaah.velcom.backend.data.repocomparison.RepoComparisonGraph;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.utils.EndpointUtils;
+import de.aaaaaaah.velcom.backend.restapi.exception.InvalidQueryParamsException;
+import de.aaaaaaah.velcom.backend.restapi.exception.NoSuchDimensionException;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimension;
 import de.aaaaaaah.velcom.backend.util.Pair;
 import java.time.Instant;
@@ -17,9 +19,7 @@ import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
-import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.GET;
-import javax.ws.rs.NotFoundException;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
@@ -51,24 +51,22 @@ public class GraphComparisonEndpoint {
 		// Parse dimension
 		Set<Dimension> dimensionSet = EndpointUtils.parseDimensions(dimensionStr);
 		if (dimensionSet.size() != 1) {
-			// TODO: 07.09.20 Ensure the http status code is correct
-			throw new ForbiddenException("invalid amount of dimensions provided");
+			throw new InvalidQueryParamsException("exactly one dimension must be specified");
 		}
 
 		Dimension dimension = dimensionSet.iterator().next();
 
 		if (!benchmarkAccess.doesDimensionExist(dimension)) {
-			// TODO: 07.09.20 Ensure the http status code is correct
-			throw new NotFoundException("unknown dimension");
+			throw new NoSuchDimensionException(dimension);
 		}
 
+		// Figure out the start and end time
 		Pair<Instant, Instant> startAndEndTime = EndpointUtils
 			.getStartAndEndTime(startTimeEpoch, endTimeEpoch, durationInSeconds);
 		Instant startTime = startAndEndTime.getFirst();
 		Instant endTime = startAndEndTime.getSecond();
-
 		if (startTime != null && endTime != null && startTime.isAfter(endTime)) {
-			throw new IllegalStateException();
+			throw new InvalidQueryParamsException("start time must be earlier than end time");
 		}
 
 		final Map<RepoId, Set<BranchName>> repos = EndpointUtils.parseRepos(reposStr);

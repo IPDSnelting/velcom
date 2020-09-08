@@ -15,6 +15,7 @@ import de.aaaaaaah.velcom.backend.access.entities.Repo;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.utils.EndpointUtils;
+import de.aaaaaaah.velcom.backend.restapi.exception.InvalidQueryParamsException;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimension;
 import de.aaaaaaah.velcom.backend.util.Either;
 import de.aaaaaaah.velcom.backend.util.Pair;
@@ -87,8 +88,7 @@ public class GraphDetailEndpoint {
 		Instant startTime = startAndEndTime.getFirst();
 		Instant endTime = startAndEndTime.getSecond();
 		if (startTime != null && endTime != null && startTime.isAfter(endTime)) {
-			// TODO: 07.09.20 Ensure the http status code is correct
-			throw new IllegalStateException();
+			throw new InvalidQueryParamsException("start time must be earlier than end time");
 		}
 
 		// Figure out which commits we'll need to show

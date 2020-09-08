@@ -12,6 +12,7 @@ import de.aaaaaaah.velcom.backend.access.entities.Run;
 import de.aaaaaaah.velcom.backend.access.entities.RunId;
 import de.aaaaaaah.velcom.backend.access.entities.sources.CommitSource;
 import de.aaaaaaah.velcom.backend.access.entities.sources.TarSource;
+import de.aaaaaaah.velcom.backend.restapi.exception.InvalidQueryParamsException;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonCommitDescription;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonResult;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRun;
@@ -27,7 +28,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
-import javax.ws.rs.ForbiddenException;
 
 public class EndpointUtils {
 
@@ -165,7 +165,8 @@ public class EndpointUtils {
 		// Relatively ugly start and end time logic, but I don't see any obvious way of making it more
 		// elegant and concise.
 		if (startTime != null && endTime != null && duration != null) {
-			throw new ForbiddenException("duration and startTime and endTime provided");
+			throw new InvalidQueryParamsException(
+				"duration, start_time and end_time can't all be specified at the same time");
 		} else if (duration != null) {
 			if (startTime != null) {
 				endTime = startTime.plus(duration);

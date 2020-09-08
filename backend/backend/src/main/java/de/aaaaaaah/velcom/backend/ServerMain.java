@@ -31,7 +31,9 @@ import de.aaaaaaah.velcom.backend.restapi.endpoints.RepoEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.RunEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.TestTokenEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.exception.CommitAccessExceptionMapper;
+import de.aaaaaaah.velcom.backend.restapi.exception.InvalidQueryParamsExceptionMapper;
 import de.aaaaaaah.velcom.backend.restapi.exception.NoSuchCommitExceptionMapper;
+import de.aaaaaaah.velcom.backend.restapi.exception.NoSuchDimensionExceptionMapper;
 import de.aaaaaaah.velcom.backend.restapi.exception.NoSuchRepoExceptionMapper;
 import de.aaaaaaah.velcom.backend.restapi.exception.NoSuchRunExceptionMapper;
 import de.aaaaaaah.velcom.backend.restapi.exception.NoSuchTaskExceptionMapper;
@@ -182,7 +184,9 @@ public class ServerMain extends Application<GlobalConfig> {
 
 		// Exceptions
 		environment.jersey().register(new CommitAccessExceptionMapper());
+		environment.jersey().register(new InvalidQueryParamsExceptionMapper());
 		environment.jersey().register(new NoSuchCommitExceptionMapper());
+		environment.jersey().register(new NoSuchDimensionExceptionMapper());
 		environment.jersey().register(new NoSuchRepoExceptionMapper());
 		environment.jersey().register(new NoSuchRunExceptionMapper());
 		environment.jersey().register(new NoSuchTaskExceptionMapper());
