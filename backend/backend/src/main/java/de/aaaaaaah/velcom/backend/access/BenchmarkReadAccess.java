@@ -236,9 +236,9 @@ public class BenchmarkReadAccess {
 	 * 	given repository
 	 */
 	public Map<RepoId, Set<Dimension>> getAvailableDimensions(List<RepoId> repoIds) {
-		List<String> repoIdStrList = repoIds.stream()
+		Set<String> repoIdsAsStrings = repoIds.stream()
 			.map(repoId -> repoId.getId().toString())
-			.collect(Collectors.toCollection(ArrayList::new));
+			.collect(Collectors.toCollection(HashSet::new));
 
 		Map<RepoId, Set<Dimension>> resultMap = new HashMap<>();
 
@@ -250,14 +250,14 @@ public class BenchmarkReadAccess {
 
 			if (dimensions != null) {
 				resultMap.put(repoId, Collections.unmodifiableSet(dimensions));
-				repoIdStrList.remove(repoId.getId().toString());
+				repoIdsAsStrings.remove(repoId.getId().toString());
 			} else {
 				resultMap.put(repoId, new HashSet<>()); // prepare for database query
 			}
 		}
 
 		// 2.) Check database
-		if (!repoIdStrList.isEmpty()) {
+		if (!repoIdsAsStrings.isEmpty()) {
 			try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
 				// SQLite guarantees that we get the correct row (correct interp and unit)
 				// in each group. (See https://sqlite.org/lang_select.html#bareagg)
@@ -265,6 +265,7 @@ public class BenchmarkReadAccess {
 					.from(MEASUREMENT)
 					.join(RUN).on(RUN.ID.eq(MEASUREMENT.RUN_ID))
 					.where(RUN.COMMIT_HASH.isNotNull()) // Ignore uploaded-tar runs associated
+					.and(RUN.REPO_ID.in(repoIds))
 					.forEach(record -> {
 						RepoId repoId = new RepoId(UUID.fromString(record.value1()));
 						Dimension dimension = new Dimension(record.value2(), record.value3());
@@ -273,7 +274,7 @@ public class BenchmarkReadAccess {
 			}
 
 			// 3.) Update cache with data collected from database
-			for (String repoIdStr : repoIdStrList) { // <- all repos in this list are not in cache
+			for (String repoIdStr : repoIdsAsStrings) { // <- all repos in this list are not in cache
 				RepoId repoId = new RepoId(UUID.fromString(repoIdStr));
 				// Create copy so that no mutation can occur from outside
 				Set<Dimension> dimensionSet = new HashSet<>(resultMap.get(repoId));
