@@ -7,16 +7,19 @@ import de.aaaaaaah.velcom.backend.access.entities.Repo;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.entities.Task;
 import de.aaaaaaah.velcom.backend.access.entities.TaskId;
+import de.aaaaaaah.velcom.backend.access.entities.sources.CommitSource;
 import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchTaskException;
 import de.aaaaaaah.velcom.backend.access.policy.QueuePriority;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.restapi.authentication.RepoUser;
+import de.aaaaaaah.velcom.backend.restapi.exception.TaskAlreadyExistsException;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRunner;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonTask;
 import de.aaaaaaah.velcom.backend.runner.IDispatcher;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.PATCH;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.ws.rs.DELETE;
@@ -94,11 +97,14 @@ public class QueueEndpoint {
 
 	@POST
 	@Path("commit/{repoId}/{hash}")
-	public void addCommit(@Auth RepoUser user, @PathParam("repoId") UUID repoId,
-		@PathParam("hash") String commitHash) {
-		user.guardRepoAccess(new RepoId(repoId));
+	public void addCommit(@Auth RepoUser user, @PathParam("repoId") UUID repoUuid,
+		@PathParam("hash") String commitHashString) {
+		RepoId repoId = new RepoId(repoUuid);
+		CommitHash commitHash = new CommitHash(commitHashString);
 
-		Repo repo = repoReadAccess.getRepo(new RepoId(repoId));
+		user.guardRepoAccess(repoId);
+
+		Repo repo = repoReadAccess.getRepo(repoId);
 
 		String author = String.format(
 			"%s %s(%s)",
@@ -107,11 +113,21 @@ public class QueueEndpoint {
 			repoId
 		);
 
-		// TODO: 08.09.20 Return status code 403 if commit is already in the queue
+		Optional<Task> existingTask = queue.getTasksSorted().stream()
+			.filter(it -> it.getRepoId().isPresent() && it.getRepoId().get().equals(repoId))
+			.filter(task ->
+				task.getSource().getLeft()
+					.map(CommitSource::getHash)
+					.filter(commitHash::equals)
+					.isPresent()
+			)
+			.findFirst();
 
-		queue.addCommits(
-			author, new RepoId(repoId), List.of(new CommitHash(commitHash))
-		);
+		if (existingTask.isPresent()) {
+			throw new TaskAlreadyExistsException(commitHash, repoId, existingTask.get().getId());
+		}
+
+		queue.addCommits(author, repoId, List.of(commitHash));
 	}
 
 	private static class GetQueueReply {

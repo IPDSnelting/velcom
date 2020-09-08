@@ -37,6 +37,7 @@ import de.aaaaaaah.velcom.backend.restapi.exception.NoSuchDimensionExceptionMapp
 import de.aaaaaaah.velcom.backend.restapi.exception.NoSuchRepoExceptionMapper;
 import de.aaaaaaah.velcom.backend.restapi.exception.NoSuchRunExceptionMapper;
 import de.aaaaaaah.velcom.backend.restapi.exception.NoSuchTaskExceptionMapper;
+import de.aaaaaaah.velcom.backend.restapi.exception.TaskAlreadyExistsExceptionMapper;
 import de.aaaaaaah.velcom.backend.runner.Dispatcher;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import de.aaaaaaah.velcom.backend.storage.repo.RepoStorage;
@@ -190,6 +191,7 @@ public class ServerMain extends Application<GlobalConfig> {
 		environment.jersey().register(new NoSuchRepoExceptionMapper());
 		environment.jersey().register(new NoSuchRunExceptionMapper());
 		environment.jersey().register(new NoSuchTaskExceptionMapper());
+		environment.jersey().register(new TaskAlreadyExistsExceptionMapper());
 
 		// Authentication
 		environment.jersey().register(
