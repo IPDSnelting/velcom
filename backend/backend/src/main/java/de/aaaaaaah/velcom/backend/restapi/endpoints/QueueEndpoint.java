@@ -48,6 +48,7 @@ public class QueueEndpoint {
 
 	@GET
 	public GetQueueReply getQueue() {
+		// TODO: 08.09.20 Fix NPE when calling this endpoint
 		List<JsonTask> tasks = queue.getTasksSorted()
 			.stream()
 			.map(it -> JsonTask.fromTask(it, commitReadAccess))
@@ -105,6 +106,8 @@ public class QueueEndpoint {
 			repo.getName(),
 			repoId
 		);
+
+		// TODO: 08.09.20 Return status code 403 if commit is already in the queue
 
 		queue.addCommits(
 			author, new RepoId(repoId), List.of(new CommitHash(commitHash))
