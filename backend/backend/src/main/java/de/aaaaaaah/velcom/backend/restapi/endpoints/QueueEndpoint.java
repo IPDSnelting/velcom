@@ -7,7 +7,6 @@ import de.aaaaaaah.velcom.backend.access.entities.Repo;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.entities.Task;
 import de.aaaaaaah.velcom.backend.access.entities.TaskId;
-import de.aaaaaaah.velcom.backend.access.entities.sources.CommitSource;
 import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchTaskException;
 import de.aaaaaaah.velcom.backend.access.policy.QueuePriority;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
@@ -19,7 +18,6 @@ import de.aaaaaaah.velcom.backend.runner.IDispatcher;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.PATCH;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.ws.rs.DELETE;
@@ -113,21 +111,10 @@ public class QueueEndpoint {
 			repoId
 		);
 
-		Optional<Task> existingTask = queue.getTasksSorted().stream()
-			.filter(it -> it.getRepoId().isPresent() && it.getRepoId().get().equals(repoId))
-			.filter(task ->
-				task.getSource().getLeft()
-					.map(CommitSource::getHash)
-					.filter(commitHash::equals)
-					.isPresent()
-			)
-			.findFirst();
-
-		if (existingTask.isPresent()) {
-			throw new TaskAlreadyExistsException(commitHash, repoId, existingTask.get().getId());
+		// TODO: Really don't tell them the id of the existing task?
+		if (queue.addCommits(author, repoId, List.of(commitHash)).isEmpty()) {
+			throw new TaskAlreadyExistsException(commitHash, repoId);
 		}
-
-		queue.addCommits(author, repoId, List.of(commitHash));
 	}
 
 	private static class GetQueueReply {

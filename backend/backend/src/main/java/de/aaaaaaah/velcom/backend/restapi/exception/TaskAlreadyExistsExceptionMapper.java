@@ -18,8 +18,7 @@ public class TaskAlreadyExistsExceptionMapper implements
 			.entity(new Info(
 				"that task already exists in the queue",
 				exception.getRepoId().getId(),
-				exception.getHash().getHash(),
-				exception.getTaskId().getId()
+				exception.getHash().getHash()
 			))
 			.build();
 	}
@@ -29,13 +28,11 @@ public class TaskAlreadyExistsExceptionMapper implements
 		private final String message;
 		private final UUID repoId;
 		private final String hash;
-		private final UUID taskId;
 
-		public Info(String message, UUID repoId, String hash, UUID taskId) {
+		public Info(String message, UUID repoId, String hash) {
 			this.message = message;
 			this.repoId = repoId;
 			this.hash = hash;
-			this.taskId = taskId;
 		}
 
 		public String getMessage() {
@@ -48,10 +45,6 @@ public class TaskAlreadyExistsExceptionMapper implements
 
 		public String getHash() {
 			return hash;
-		}
-
-		public UUID getTaskId() {
-			return taskId;
 		}
 	}
 }
