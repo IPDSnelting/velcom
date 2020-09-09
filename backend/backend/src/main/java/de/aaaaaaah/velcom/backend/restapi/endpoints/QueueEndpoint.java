@@ -96,7 +96,7 @@ public class QueueEndpoint {
 
 	@POST
 	@Path("commit/{repoId}/{hash}")
-	public void addCommit(@Auth RepoUser user, @PathParam("repoId") UUID repoUuid,
+	public PostCommitReply addCommit(@Auth RepoUser user, @PathParam("repoId") UUID repoUuid,
 		@PathParam("hash") String commitHashString) {
 		RepoId repoId = new RepoId(repoUuid);
 		CommitHash commitHash = new CommitHash(commitHashString);
@@ -120,9 +120,22 @@ public class QueueEndpoint {
 			throw new TaskAlreadyExistsException(commitHash, repoId);
 		}
 
-		final Task task = insertedTasks.iterator().next();
+		Task task = insertedTasks.iterator().next();
 
-		// TODO: return task information as response
+		return new PostCommitReply(JsonTask.fromTask(task, commitReadAccess));
+	}
+
+	private static class PostCommitReply {
+
+		private final JsonTask task;
+
+		private PostCommitReply(JsonTask task) {
+			this.task = task;
+		}
+
+		public JsonTask getTask() {
+			return task;
+		}
 	}
 
 	private static class GetQueueReply {
