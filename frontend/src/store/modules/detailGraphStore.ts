@@ -110,7 +110,7 @@ export class DetailGraphStore extends VxModule {
     })
 
     const dataPoints: DataPoint[] = response.data.commits.map((it: any) =>
-      dataPointFromJson(it)
+      dataPointFromJson(it, payload.dimensions)
     )
 
     this.setDetailGraph(dataPoints)

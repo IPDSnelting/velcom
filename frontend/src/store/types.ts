@@ -372,7 +372,8 @@ export class DataPoint {
   readonly author: string
   readonly authorDate: Date
   readonly summary: string
-  readonly values: number[]
+  // TODO: Figure out if the map wastes too much memory
+  readonly values: Map<DimensionId, number | null>
 
   constructor(
     hash: CommitHash,
@@ -380,7 +381,7 @@ export class DataPoint {
     author: string,
     authorDate: Date,
     summary: string,
-    values: number[]
+    values: Map<DimensionId, number | null>
   ) {
     this.hash = hash
     this.parents = parents
