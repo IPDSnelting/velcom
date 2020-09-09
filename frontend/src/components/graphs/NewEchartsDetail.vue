@@ -60,12 +60,31 @@ class EchartsDataPoint {
    */
   readonly name: string
 
-  constructor(time: Date, dataValue: number, symbol: string, name: string) {
+  // Allows styling the individual item
+  readonly itemStyle: {
+    color: string
+    borderColor: string
+    borderWidth: number
+  }
+
+  constructor(
+    time: Date,
+    dataValue: number,
+    symbol: string,
+    name: string,
+    color: string,
+    borderColor: string
+  ) {
     this.time = time
     this.dataValue = dataValue
     this.symbol = symbol
     this.value = [this.time, this.dataValue]
     this.name = name
+    this.itemStyle = {
+      color: color,
+      borderColor: borderColor,
+      borderWidth: 2
+    }
   }
 }
 
@@ -102,7 +121,7 @@ export default class NewEchartsDetail extends Vue {
         'Peter',
         new Date(new Date().getTime() - 1000 * 60 * 60),
         'this is a point',
-        this.randomGarbage()
+        this.randomGarbage(false)
       ),
       new DetailDataPoint(
         'Commit3',
@@ -132,9 +151,11 @@ export default class NewEchartsDetail extends Vue {
     return max || 0
   }
 
-  private randomGarbage(): Map<DimensionId, number | null> {
+  private randomGarbage(
+    successful: boolean = true
+  ): Map<DimensionId, number | null> {
     const map = new Map()
-    map.set(this.dimensions[0], Math.random() * 20 - 5)
+    map.set(this.dimensions[0], successful ? Math.random() * 20 - 5 : null)
     return map
   }
 
@@ -192,10 +213,14 @@ export default class NewEchartsDetail extends Vue {
 
     return this.detailDataPoints.map(point => {
       let symbol = 'circle'
+      let color = this.dimensionColor(dimension)
+
       let pointValue = point.values.get(dimension)
       if (pointValue === undefined || pointValue === null) {
         pointValue = lastSuccessfulValue
         symbol = this.crossIcon
+        color = this.graphFailedOrUnbenchmarkedColor
+        // Todo: Different style for unbenchmarked commits
       }
       lastSuccessfulValue = pointValue
 
@@ -203,7 +228,9 @@ export default class NewEchartsDetail extends Vue {
         point.authorDate,
         pointValue,
         symbol,
-        point.hash
+        point.hash,
+        color,
+        color
       )
     })
   }
@@ -335,6 +362,10 @@ export default class NewEchartsDetail extends Vue {
       this.dimensions.findIndex(it => it.equals(dimension))
     )
   }
+  private get graphFailedOrUnbenchmarkedColor() {
+    return this.$vuetify.theme.currentTheme.graphFailedOrUnbenchmarked as string
+  }
+
   private readonly crossIcon =
     'path://M24 20.188l-8.315-8.209 8.2-8.282-3.697-3.697-8.212 8.318-8.31-8.203-3.666 3.666 8.321 8.24-8.206 8.313 3.666 3.666 8.237-8.318 8.285 8.203z'
 }
