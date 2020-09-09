@@ -1,9 +1,9 @@
 import { createModule, mutation, action } from 'vuex-class-component'
-import { Commit, ComparisonGraphDataPoint } from '@/store/types'
+import { Commit, ComparisonDataPoint } from '@/store/types'
 import Vue from 'vue'
 import axios from 'axios'
 import { vxm } from '..'
-import { comparisonGraphDataPointFromJson } from '@/util/GraphJsonHelper'
+import { comparisonDataPointFromJson } from '@/util/GraphJsonHelper'
 
 const VxModule = createModule({
   namespaced: 'comparisonGraphModule',
@@ -46,7 +46,7 @@ export class ComparisonGraphStore extends VxModule {
   private _selectedRepos: string[] = []
   private _selectedBranchesByRepoId: { [key: string]: string[] } = {}
   private _datapointsByRepoId: {
-    [key: string]: ComparisonGraphDataPoint[]
+    [key: string]: ComparisonDataPoint[]
   } = {}
 
   referenceCommit: Commit | null = null
@@ -84,7 +84,7 @@ export class ComparisonGraphStore extends VxModule {
     metric: string
     startTime?: string | null
     endTime?: string | null
-  }): Promise<{ [key: string]: ComparisonGraphDataPoint[] }> {
+  }): Promise<{ [key: string]: ComparisonDataPoint[] }> {
     this.cleanupSelectedBranches()
 
     let effectiveStartTime: number | undefined
@@ -115,12 +115,12 @@ export class ComparisonGraphStore extends VxModule {
       snackbarTag: 'repo-comparison'
     })
 
-    const datapoints: { [key: string]: ComparisonGraphDataPoint[] } = {}
+    const datapoints: { [key: string]: ComparisonDataPoint[] } = {}
     const jsonRepos: any[] = response.data.repos
 
     jsonRepos.forEach((item: any) => {
       datapoints[item.repo_id] = item.commits.map((datapoint: any) =>
-        comparisonGraphDataPointFromJson(datapoint, item.repo_id)
+        comparisonDataPointFromJson(datapoint, item.repo_id)
       )
     })
 
@@ -170,7 +170,7 @@ export class ComparisonGraphStore extends VxModule {
    * @memberof RepoComparisonStore
    */
   @mutation
-  setDatapoints(payload: { [key: string]: ComparisonGraphDataPoint[] }): void {
+  setDatapoints(payload: { [key: string]: ComparisonDataPoint[] }): void {
     // TODO: Is this reactive?
     this._datapointsByRepoId = {} // reset it
     Array.from(Object.keys(payload)).forEach(key => {
@@ -194,7 +194,7 @@ export class ComparisonGraphStore extends VxModule {
     this.stopTime = stop.toISOString().substring(0, 10)
   }
 
-  get referenceDatapoint(): ComparisonGraphDataPoint | undefined {
+  get referenceDatapoint(): ComparisonDataPoint | undefined {
     if (
       this.referenceCommit === null ||
       this._datapointsByRepoId[this.referenceCommit.repoId] === undefined
@@ -216,11 +216,11 @@ export class ComparisonGraphStore extends VxModule {
    * @type {{ [key: string]: Run[] }}
    * @memberof RepoComparisonStore
    */
-  get allDatapoints(): { [key: string]: ComparisonGraphDataPoint[] } {
+  get allDatapoints(): { [key: string]: ComparisonDataPoint[] } {
     return this._datapointsByRepoId
   }
 
-  get runsByRepoId(): (repoId: string) => ComparisonGraphDataPoint[] {
+  get runsByRepoId(): (repoId: string) => ComparisonDataPoint[] {
     return (repoId: string) => this._datapointsByRepoId[repoId]
   }
 

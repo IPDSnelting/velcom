@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 import {
   DetailDataPoint,
-  ComparisonGraphDataPoint,
+  ComparisonDataPoint,
   RepoId,
   DimensionId
 } from '@/store/types'
@@ -37,13 +37,13 @@ export function detailDataPointFromJson(
  *
  * @export
  * @param {*} json the json object
- * @returns {ComparisonGraphDataPoint} the data point object
+ * @returns {ComparisonDataPoint} the data point object
  */
-export function comparisonGraphDataPointFromJson(
+export function comparisonDataPointFromJson(
   json: any,
   repoId: RepoId
-): ComparisonGraphDataPoint {
-  return new ComparisonGraphDataPoint(
+): ComparisonDataPoint {
+  return new ComparisonDataPoint(
     json.hash,
     json.author,
     new Date(json.author_date * 1000),

@@ -391,7 +391,7 @@ export class DetailDataPoint {
     this.values = values
   }
 }
-export class ComparisonGraphDataPoint {
+export class ComparisonDataPoint {
   readonly hash: CommitHash
   readonly author: string
   readonly authorDate: Date
