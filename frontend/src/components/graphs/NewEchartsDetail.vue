@@ -3,7 +3,11 @@
     <v-row align="center" justify="center">
       <v-col>
         <div id="chart-container">
-          <v-chart :autoresize="true" :options="chartOptions" />
+          <v-chart
+            :autoresize="true"
+            :options="chartOptions"
+            @datazoom="echartsZoomed"
+          />
         </div>
       </v-col>
     </v-row>
@@ -30,6 +34,9 @@ import 'echarts/lib/component/toolbox'
 import 'echarts/lib/component/brush'
 import 'echarts/lib/component/markLine'
 import 'echarts/lib/component/markPoint'
+
+type ValidEchartsSeries = EChartOption.SeriesLine | EChartOption.SeriesGraph
+type SeriesGenerationFunction = (id: DimensionId) => ValidEchartsSeries
 
 class EchartsDataPoint {
   // convenience methods for accessing the value
@@ -74,6 +81,9 @@ export default class NewEchartsDetail extends Vue {
   private beginYAtZero!: boolean
 
   private chartOptions: EChartOption = {}
+  private seriesGenerator: SeriesGenerationFunction = this.buildLineSeries
+  private zoomStartPercent: number = 0
+  private zoomEndPercent: number = 1
 
   private get detailDataPoints(): DetailDataPoint[] {
     return [
@@ -105,6 +115,22 @@ export default class NewEchartsDetail extends Vue {
     // return vxm.detailGraphModule.detailGraph
   }
 
+  private get minDateValue(): number {
+    let min = Math.min.apply(
+      Math,
+      this.detailDataPoints.map(it => it.authorDate.getTime())
+    )
+    return min || 0
+  }
+
+  private get maxDateValue(): number {
+    let max = Math.max.apply(
+      Math,
+      this.detailDataPoints.map(it => it.authorDate.getTime())
+    )
+    return max || 0
+  }
+
   private randomGarbage(): Map<DimensionId, number | null> {
     const map = new Map()
     map.set(this.dimensions[0], Math.random() * 20 - 5)
@@ -112,6 +138,10 @@ export default class NewEchartsDetail extends Vue {
   }
 
   private updateGraph() {
+    console.log('UPDATED')
+
+    this.selectAppropriateSeries()
+
     this.chartOptions = {
       backgroundColor: this.graphBackgroundColor,
       grid: {
@@ -130,13 +160,19 @@ export default class NewEchartsDetail extends Vue {
       },
       dataZoom: [
         {
-          type: 'inside'
+          type: 'inside',
+          // Start at the correct place when changing the series type
+          start: this.zoomStartPercent * 100,
+          end: this.zoomEndPercent * 100
         },
         {
-          type: 'slider'
+          type: 'slider',
+          // Start at the correct place when changing the series type
+          start: this.zoomStartPercent * 100,
+          end: this.zoomEndPercent * 100
         }
       ],
-      series: this.dimensions.map(this.buildAppropriateSeries)
+      series: this.dimensions.map(this.seriesGenerator)
     }
   }
 
@@ -219,16 +255,24 @@ export default class NewEchartsDetail extends Vue {
   }
 
   /**
-   * Builds the correct series based on the number of points displayed:
+   * Selects the correct series generator based on the number of points displayed:
    * If there are too many, the graph is not performant enough and a line graph will be drawn.
    * If the number is manageable, the graph type will be selected.
    */
-  private buildAppropriateSeries(dimension: DimensionId) {
-    if (this.detailDataPoints.length * this.dimensions.length > 200) {
-      return this.buildLineSeries(dimension)
-    } else {
-      return this.buildGraphSeries(dimension)
+  private selectAppropriateSeries(): 're-render' | 'unchanged' {
+    const totalPoints = this.detailDataPoints.length * this.dimensions.length
+    // FIXME: This is now broken, as the graph is not equidistant
+    const visibleDataPoints =
+      totalPoints * (this.zoomEndPercent - this.zoomStartPercent)
+
+    let newGenerator: SeriesGenerationFunction =
+      visibleDataPoints > 2 ? this.buildLineSeries : this.buildGraphSeries
+
+    if (newGenerator !== this.seriesGenerator) {
+      this.seriesGenerator = newGenerator
+      return 're-render'
     }
+    return 'unchanged'
   }
 
   mounted(): void {
@@ -238,7 +282,44 @@ export default class NewEchartsDetail extends Vue {
     this.updateGraph()
   }
 
-  // THEME HELPER
+  // ==== ECHARTS EVENT HANDLER ====
+  private echartsZoomed(e: any) {
+    let event: {
+      start?: number
+      end?: number
+      startValue?: number
+      endValue?: number
+    }
+    if (!e.batch || e.batch.length === 0) {
+      event = e
+    } else {
+      event = e.batch[0]
+    }
+
+    let startPercent: number
+    let endPercent: number
+
+    // Batch and unbatched events set either the percent or absolute value
+    // we normalize to percentages
+    if (event.start !== undefined && event.end !== undefined) {
+      startPercent = event.start / 100
+      endPercent = event.end / 100
+    } else if (event.startValue !== undefined && event.endValue !== undefined) {
+      startPercent = event.startValue / (this.maxDateValue - this.minDateValue)
+      endPercent = event.endValue / (this.maxDateValue - this.minDateValue)
+    } else {
+      return
+    }
+
+    this.zoomStartPercent = startPercent
+    this.zoomEndPercent = endPercent
+
+    if (this.selectAppropriateSeries() === 're-render') {
+      this.updateGraph()
+    }
+  }
+
+  // ==== THEME HELPER ====
   private get graphBackgroundColor() {
     return this.$vuetify.theme.currentTheme.graphBackground as string
   }
