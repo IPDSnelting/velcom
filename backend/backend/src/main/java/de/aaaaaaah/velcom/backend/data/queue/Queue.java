@@ -1,6 +1,7 @@
 package de.aaaaaaah.velcom.backend.data.queue;
 
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
 
 import de.aaaaaaah.velcom.backend.access.ArchiveAccess;
 import de.aaaaaaah.velcom.backend.access.BenchmarkWriteAccess;
@@ -21,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 
 /**
@@ -115,10 +117,10 @@ public class Queue {
 	 * @param author the author of this addition
 	 * @param repoId the id of the repository that the given commits belong to
 	 * @param hashes the commit hashes
-	 * @return a collection of all commit hashes that were actually inserted because they were not
-	 * 	already in the queue beforehand
+	 * @return a set of all commit hashes that were actually inserted because they were not already in
+	 * 	the queue beforehand
 	 */
-	public Collection<CommitHash> addCommits(String author, RepoId repoId,
+	public Set<CommitHash> addCommits(String author, RepoId repoId,
 		List<CommitHash> hashes) {
 
 		List<Task> tasks = hashes.stream()
@@ -129,7 +131,7 @@ public class Queue {
 
 		return tasksThatWereActuallyInserted.stream()
 			.map(task -> task.getSource().getLeft().orElseThrow().getHash())
-			.collect(toList());
+			.collect(toSet());
 	}
 
 	/**
