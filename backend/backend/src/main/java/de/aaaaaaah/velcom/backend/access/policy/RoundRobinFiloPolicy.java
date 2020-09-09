@@ -75,6 +75,12 @@ public class RoundRobinFiloPolicy implements QueuePolicy {
 				.fetchOptional();
 
 			if (mostImportantRecord.isPresent()) {
+				// Mark task as "in process"
+				db.update(TASK)
+					.set(TASK.IN_PROCESS, true)
+					.where(TASK.ID.eq(mostImportantRecord.get().getId()))
+					.execute();
+
 				result.set(taskFromRecord(mostImportantRecord.get()));
 				return;
 			}
@@ -92,6 +98,12 @@ public class RoundRobinFiloPolicy implements QueuePolicy {
 					Task task = taskFromRecord(repoTaskRecord.get());
 
 					lastRepo = task.getSource().getLeft().orElseThrow().getRepoId();
+
+					// Mark task as "in process"
+					db.update(TASK)
+						.set(TASK.IN_PROCESS, true)
+						.where(TASK.ID.eq(repoTaskRecord.get().getId()))
+						.execute();
 
 					result.set(task);
 					return;
