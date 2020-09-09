@@ -1,7 +1,7 @@
 import { createModule, mutation, action } from 'vuex-class-component'
-import { RepoId, Dimension, DataPoint } from '@/store/types'
+import { RepoId, Dimension, DetailDataPoint } from '@/store/types'
 import axios from 'axios'
-import { dataPointFromJson } from '@/util/GraphJsonHelper'
+import { detailDataPointFromJson } from '@/util/GraphJsonHelper'
 
 const VxModule = createModule({
   namespaced: 'detailGraphModule',
@@ -30,13 +30,13 @@ export function detailGraphStoreToJson(store: DetailGraphStore): string {
 }
 
 export class DetailGraphStore extends VxModule {
-  private _detailGraph: DataPoint[] = []
+  private _detailGraph: DetailDataPoint[] = []
   private _selectedRepoId: RepoId = ''
   // Needs to be a primitive so persistence works.
   private _selectedDimensions: Dimension[] = []
   // Not a real object, needs to be translated so persistence works.
   private _referenceDatapoint: {
-    dataPoint: DataPoint
+    dataPoint: DetailDataPoint
     dimension: Dimension
   } | null = null
 
@@ -69,7 +69,7 @@ export class DetailGraphStore extends VxModule {
    *     duration: number
    *     dimensions: Dimension[]
    *   }} payload
-   * @returns {Promise<DataPoint[]>}
+   * @returns {Promise<DetailDataPoint[]>}
    * @memberof detailGraphStore
    */
   @action
@@ -79,7 +79,7 @@ export class DetailGraphStore extends VxModule {
     endTime?: string | null
     duration: number
     dimensions: Dimension[]
-  }): Promise<DataPoint[]> {
+  }): Promise<DetailDataPoint[]> {
     let effectiveStartTime: number | undefined
     if (payload.startTime) {
       effectiveStartTime = new Date(payload.startTime).getTime()
@@ -109,8 +109,8 @@ export class DetailGraphStore extends VxModule {
       }
     })
 
-    const dataPoints: DataPoint[] = response.data.commits.map((it: any) =>
-      dataPointFromJson(it, payload.dimensions)
+    const dataPoints: DetailDataPoint[] = response.data.commits.map((it: any) =>
+      detailDataPointFromJson(it, payload.dimensions)
     )
 
     this.setDetailGraph(dataPoints)
@@ -157,7 +157,7 @@ export class DetailGraphStore extends VxModule {
   }
 
   @mutation
-  setDetailGraph(graph: DataPoint[]): void {
+  setDetailGraph(graph: DetailDataPoint[]): void {
     this._detailGraph = graph
   }
 
@@ -165,10 +165,10 @@ export class DetailGraphStore extends VxModule {
    * Returns the locally stored data for a repo detail graph
    *
    * @readonly
-   * @type {DataPoint[]}
+   * @type {DetailDataPoint[]}
    * @memberof detailGraphStore
    */
-  get detailGraph(): DataPoint[] {
+  get detailGraph(): DetailDataPoint[] {
     return this._detailGraph
   }
 
@@ -201,13 +201,13 @@ export class DetailGraphStore extends VxModule {
    * Returns the reference data point.
    *
    * @type {({
-   *     dataPoint: DataPoint
+   *     dataPoint: DetailDataPoint
    *     dimension: Dimension
    *   } | null)}
    * @memberof detailGraphStore
    */
   get referenceDatapoint(): {
-    dataPoint: DataPoint
+    dataPoint: DetailDataPoint
     dimension: Dimension
   } | null {
     if (!this._referenceDatapoint) {
@@ -223,7 +223,7 @@ export class DetailGraphStore extends VxModule {
    */
   set referenceDatapoint(
     datapoint: {
-      dataPoint: DataPoint
+      dataPoint: DetailDataPoint
       dimension: Dimension
     } | null
   ) {

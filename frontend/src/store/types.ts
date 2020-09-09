@@ -366,7 +366,7 @@ export class RunComparison {
   }
 }
 
-export class DataPoint {
+export class DetailDataPoint {
   readonly hash: CommitHash
   readonly parents: CommitHash[]
   readonly author: string
