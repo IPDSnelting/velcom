@@ -23,6 +23,8 @@ paths:
       responses:
         '200':
           description: OK
+        '404':
+          description: Not Found
       operationId: delete-queue-taskid
       security:
         - admin_credentials: []
@@ -349,6 +351,8 @@ paths:
       responses:
         '200':
           description: OK
+        '404':
+          description: Not Found
       security:
         - repo_admin_credentials: []
       description: Delete an entire repository and its associated measurements.
