@@ -17,6 +17,7 @@ import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonTask;
 import de.aaaaaaah.velcom.backend.runner.IDispatcher;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.PATCH;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -112,9 +113,16 @@ public class QueueEndpoint {
 		);
 
 		// TODO: Really don't tell them the id of the existing task?
-		if (queue.addCommits(author, repoId, List.of(commitHash)).isEmpty()) {
+		final Collection<Task> insertedTasks = queue
+			.addCommits(author, repoId, List.of(commitHash), QueuePriority.MANUAL.getAsInt());
+
+		if (insertedTasks.isEmpty()) {
 			throw new TaskAlreadyExistsException(commitHash, repoId);
 		}
+
+		final Task task = insertedTasks.iterator().next();
+
+		// TODO: return task information as response
 	}
 
 	private static class GetQueueReply {
