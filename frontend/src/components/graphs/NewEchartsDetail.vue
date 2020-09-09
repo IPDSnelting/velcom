@@ -23,7 +23,6 @@ import 'echarts/lib/chart/graph'
 import 'echarts/lib/component/polar'
 import 'echarts/lib/component/tooltip'
 import 'echarts/lib/component/legend'
-import 'echarts/lib/component/title'
 import 'echarts/lib/component/dataZoomSlider'
 import 'echarts/lib/component/dataZoom'
 import 'echarts/lib/component/dataZoomInside'
@@ -33,16 +32,32 @@ import 'echarts/lib/component/markLine'
 import 'echarts/lib/component/markPoint'
 
 class EchartsDataPoint {
+  // convenience methods for accessing the value
   readonly time: Date
   readonly dataValue: number
+
+  // Used to display the symbol
   readonly symbol: string
+
+  // Needed pointh THIS NAME for Echarts.
+  // A `get` method does not work for some reason
+  /**
+   * First entry is the {time}, second the {dataValue}
+   */
   readonly value: [Date, number]
 
-  constructor(time: Date, dataValue: number, symbol: string) {
+  // Used in the graph series display to identify a node
+  /**
+   * The hash of the point this point refers to
+   */
+  readonly name: string
+
+  constructor(time: Date, dataValue: number, symbol: string, name: string) {
     this.time = time
     this.dataValue = dataValue
     this.symbol = symbol
     this.value = [this.time, this.dataValue]
+    this.name = name
   }
 }
 
@@ -63,27 +78,27 @@ export default class NewEchartsDetail extends Vue {
   private get detailDataPoints(): DetailDataPoint[] {
     return [
       new DetailDataPoint(
-        'hash me as well',
-        ['hash me too'],
+        'Commit1',
+        [],
         'Peter3',
         new Date(new Date().getTime()),
-        'this is an OG commit',
+        'this is an OG point',
         this.randomGarbage()
       ),
       new DetailDataPoint(
-        'hash me',
-        ['hash you'],
+        'Commit2',
+        ['Commit1'],
         'Peter',
         new Date(new Date().getTime() - 1000 * 60 * 60),
-        'this is a commit',
+        'this is a point',
         this.randomGarbage()
       ),
       new DetailDataPoint(
-        'hash me too',
-        ['hash me'],
+        'Commit3',
+        ['Commit1', 'Commit2'],
         'Peter2',
         new Date(new Date().getTime() - 1000 * 60 * 120),
-        'this is a commit!!',
+        'this is a point!!',
         this.randomGarbage()
       )
     ]
@@ -121,11 +136,11 @@ export default class NewEchartsDetail extends Vue {
           type: 'slider'
         }
       ],
-      series: this.dimensions.map(this.buildSeries)
+      series: this.dimensions.map(this.buildGraphSeries)
     }
   }
 
-  private buildSeries(dimension: DimensionId): EChartOption.SeriesLine {
+  private buildEchartsDataPoints(dimension: DimensionId): EchartsDataPoint[] {
     const findFirstSuccessful = () => {
       for (let i = 0; i < this.detailDataPoints.length; i++) {
         const value = this.detailDataPoints[i].values.get(dimension)
@@ -138,18 +153,27 @@ export default class NewEchartsDetail extends Vue {
 
     let lastSuccessfulValue: number = findFirstSuccessful()
 
-    const echartPoints: EchartsDataPoint[] = this.detailDataPoints.map(
-      point => {
-        let symbol = 'circle'
-        let pointValue = point.values.get(dimension)
-        if (pointValue === undefined || pointValue === null) {
-          pointValue = lastSuccessfulValue
-          symbol = this.crossIcon
-        }
-        lastSuccessfulValue = pointValue
-
-        return new EchartsDataPoint(point.authorDate, pointValue, symbol)
+    return this.detailDataPoints.map(point => {
+      let symbol = 'circle'
+      let pointValue = point.values.get(dimension)
+      if (pointValue === undefined || pointValue === null) {
+        pointValue = lastSuccessfulValue
+        symbol = this.crossIcon
       }
+      lastSuccessfulValue = pointValue
+
+      return new EchartsDataPoint(
+        point.authorDate,
+        pointValue,
+        symbol,
+        point.hash
+      )
+    })
+  }
+
+  private buildLineSeries(dimension: DimensionId): EChartOption.SeriesLine {
+    const echartPoints: EchartsDataPoint[] = this.buildEchartsDataPoints(
+      dimension
     )
 
     return {
@@ -157,6 +181,39 @@ export default class NewEchartsDetail extends Vue {
       showSymbol: true,
       symbol: ((value: EchartsDataPoint) => value.symbol) as any,
       symbolSize: 6,
+      data: echartPoints as any
+    }
+  }
+
+  private buildGraphSeries(dimension: DimensionId): EChartOption.SeriesGraph {
+    const echartPoints: EchartsDataPoint[] = this.buildEchartsDataPoints(
+      dimension
+    )
+    let links: EChartOption.SeriesGraph.LinkObject[] = this.detailDataPoints.flatMap(
+      point => {
+        return point.parents.map(parent => ({
+          source: point.hash,
+          target: parent
+        }))
+      }
+    )
+
+    return {
+      type: 'graph',
+      coordinateSystem: 'cartesian2d',
+      label: {
+        show: false
+      },
+      emphasis: {
+        label: {
+          show: false
+        }
+      },
+      edgeSymbol: ['none', 'arrow'],
+      edgeSymbolSize: 6,
+      symbol: ((value: EchartsDataPoint) => value.symbol) as any,
+      symbolSize: 6,
+      links: links,
       data: echartPoints as any
     }
   }
@@ -179,7 +236,7 @@ export default class NewEchartsDetail extends Vue {
 
 <style scoped>
 #chart-container {
-  position: relative;
+  pointion: relative;
   height: 80vh;
 }
 </style>
