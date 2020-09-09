@@ -34,6 +34,7 @@ import 'echarts/lib/component/toolbox'
 import 'echarts/lib/component/brush'
 import 'echarts/lib/component/markLine'
 import 'echarts/lib/component/markPoint'
+import { vxm } from '@/store'
 
 type ValidEchartsSeries = EChartOption.SeriesLine | EChartOption.SeriesGraph
 type SeriesGenerationFunction = (id: DimensionId) => ValidEchartsSeries
@@ -217,6 +218,9 @@ export default class NewEchartsDetail extends Vue {
       showSymbol: true,
       symbol: ((value: EchartsDataPoint) => value.symbol) as any,
       symbolSize: 6,
+      lineStyle: {
+        color: this.dimensionColor(dimension)
+      },
       data: echartPoints as any
     }
   }
@@ -249,6 +253,9 @@ export default class NewEchartsDetail extends Vue {
       edgeSymbolSize: 6,
       symbol: ((value: EchartsDataPoint) => value.symbol) as any,
       symbolSize: 6,
+      lineStyle: {
+        color: this.dimensionColor(dimension)
+      },
       links: links,
       data: echartPoints as any
     }
@@ -322,6 +329,11 @@ export default class NewEchartsDetail extends Vue {
   // ==== THEME HELPER ====
   private get graphBackgroundColor() {
     return this.$vuetify.theme.currentTheme.graphBackground as string
+  }
+  private dimensionColor(dimension: DimensionId) {
+    return vxm.colorModule.colorByIndex(
+      this.dimensions.findIndex(it => it.equals(dimension))
+    )
   }
   private readonly crossIcon =
     'path://M24 20.188l-8.315-8.209 8.2-8.282-3.697-3.697-8.212 8.318-8.31-8.203-3.666 3.666 8.321 8.24-8.206 8.313 3.666 3.666 8.237-8.318 8.285 8.203z'
