@@ -24,7 +24,7 @@ import org.jooq.codegen.db.tables.records.TaskRecord;
  * repo associated tasks by ordering them in a round robin type of way while also allowing tasks to
  * be manually prioritized over all other tasks.
  *
- * <p>There are three priorities:</p>
+ * <p>This queue policy recognizes three different priority levels:</p>
  * <p>
  * Priority 0: Tasks that are prioritized at priority 0 are considered manual tasks and are regarded
  * as the most important tasks. Comparing two tasks with priority 0 results in the task that got
@@ -45,6 +45,11 @@ import org.jooq.codegen.db.tables.records.TaskRecord;
  */
 public class RoundRobinFiloPolicy implements QueuePolicy {
 
+	/**
+	 * The priority at which tasks will be subject to the round robin ordering.
+	 */
+	private static final int ROUND_ROBIN_PRIORITY = QueuePriority.LISTENER.getAsInt();
+
 	private DatabaseStorage databaseStorage;
 	private RepoId lastRepo;
 
@@ -60,7 +65,7 @@ public class RoundRobinFiloPolicy implements QueuePolicy {
 			// 1.) Find manual or tar task with highest priority
 			Optional<TaskRecord> mostImportantRecord = db.selectFrom(TASK)
 				.where(
-					TASK.PRIORITY.lessThan(Task.DEFAULT_PRIORITY)
+					TASK.PRIORITY.lessThan(ROUND_ROBIN_PRIORITY)
 						.and(TASK.IN_PROCESS.eq(false))
 				)
 				.orderBy(
@@ -162,7 +167,7 @@ public class RoundRobinFiloPolicy implements QueuePolicy {
 		databaseStorage.acquireReadTransaction(db -> {
 			// 1.) Get manual tasks
 			db.selectFrom(TASK)
-				.where(TASK.PRIORITY.lessThan(Task.DEFAULT_PRIORITY))
+				.where(TASK.PRIORITY.lessThan(ROUND_ROBIN_PRIORITY))
 				.orderBy(TASK.PRIORITY.asc(), TASK.UPDATE_TIME.desc())
 				.forEach(record -> completeTaskList.addLast(taskFromRecord(record)));
 

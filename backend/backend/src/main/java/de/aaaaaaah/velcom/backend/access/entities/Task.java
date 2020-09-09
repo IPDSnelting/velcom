@@ -9,8 +9,6 @@ import java.util.Optional;
 
 public class Task {
 
-	public static final int DEFAULT_PRIORITY = 2;
-
 	private final TaskId id;
 	private final String author;
 	private final int priority;
@@ -18,13 +16,13 @@ public class Task {
 	private final Instant updateTime;
 	private final Either<CommitSource, TarSource> source;
 
-	public Task(String author, CommitSource source) {
-		this(new TaskId(), author, DEFAULT_PRIORITY, Instant.now(), Instant.now(),
+	public Task(String author, int priority, CommitSource source) {
+		this(new TaskId(), author, priority, Instant.now(), Instant.now(),
 			Either.ofLeft(source));
 	}
 
-	public Task(String author, TarSource source) {
-		this(new TaskId(), author, DEFAULT_PRIORITY, Instant.now(), Instant.now(),
+	public Task(String author, int priority, TarSource source) {
+		this(new TaskId(), author, priority, Instant.now(), Instant.now(),
 			Either.ofRight(source));
 	}
 

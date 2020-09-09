@@ -1,7 +1,6 @@
 package de.aaaaaaah.velcom.backend.data.queue;
 
 import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toSet;
 
 import de.aaaaaaah.velcom.backend.access.ArchiveAccess;
 import de.aaaaaaah.velcom.backend.access.BenchmarkWriteAccess;
@@ -22,7 +21,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Consumer;
 
 /**
@@ -117,21 +115,18 @@ public class Queue {
 	 * @param author the author of this addition
 	 * @param repoId the id of the repository that the given commits belong to
 	 * @param hashes the commit hashes
-	 * @return a set of all commit hashes that were actually inserted because they were not already in
-	 * 	the queue beforehand
+	 * @param priority the priority that will be given to the commit tasks
+	 * @return a collection of all tasks that were actually inserted because respective their commits
+	 * 	were not already in the queue beforehand
 	 */
-	public Set<CommitHash> addCommits(String author, RepoId repoId,
-		List<CommitHash> hashes) {
+	public Collection<Task> addCommits(String author, RepoId repoId,
+		List<CommitHash> hashes, int priority) {
 
 		List<Task> tasks = hashes.stream()
-			.map(hash -> new Task(author, new CommitSource(repoId, hash)))
+			.map(hash -> new Task(author, priority, new CommitSource(repoId, hash)))
 			.collect(toList());
 
-		Collection<Task> tasksThatWereActuallyInserted = taskAccess.insertTasks(tasks);
-
-		return tasksThatWereActuallyInserted.stream()
-			.map(task -> task.getSource().getLeft().orElseThrow().getHash())
-			.collect(toSet());
+		return taskAccess.insertTasks(tasks);
 	}
 
 	/**
