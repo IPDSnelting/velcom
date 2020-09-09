@@ -47,7 +47,7 @@ class EchartsDataPoint {
   // Used to display the symbol
   readonly symbol: string
 
-  // Needed pointh THIS NAME for Echarts.
+  // Needs THIS NAME for Echarts.
   // A `get` method does not work for some reason
   /**
    * First entry is the {time}, second the {dataValue}
@@ -136,7 +136,7 @@ export default class NewEchartsDetail extends Vue {
   }
 
   private get minDateValue(): number {
-    let min = Math.min.apply(
+    const min = Math.min.apply(
       Math,
       this.detailDataPoints.map(it => it.authorDate.getTime())
     )
@@ -144,7 +144,7 @@ export default class NewEchartsDetail extends Vue {
   }
 
   private get maxDateValue(): number {
-    let max = Math.max.apply(
+    const max = Math.max.apply(
       Math,
       this.detailDataPoints.map(it => it.authorDate.getTime())
     )
@@ -256,7 +256,7 @@ export default class NewEchartsDetail extends Vue {
     const echartPoints: EchartsDataPoint[] = this.buildEchartsDataPoints(
       dimension
     )
-    let links: EChartOption.SeriesGraph.LinkObject[] = this.detailDataPoints.flatMap(
+    const links: EChartOption.SeriesGraph.LinkObject[] = this.detailDataPoints.flatMap(
       point => {
         return point.parents.map(parent => ({
           source: point.hash,
@@ -294,12 +294,25 @@ export default class NewEchartsDetail extends Vue {
    * If the number is manageable, the graph type will be selected.
    */
   private selectAppropriateSeries(): 're-render' | 'unchanged' {
-    const totalPoints = this.detailDataPoints.length * this.dimensions.length
-    // FIXME: This is now broken, as the graph is not equidistant
-    const visibleDataPoints =
-      totalPoints * (this.zoomEndPercent - this.zoomStartPercent)
+    const percentToAbsolute = (percent: number) =>
+      (this.maxDateValue - this.minDateValue) * percent + this.minDateValue
+    const startValue = percentToAbsolute(this.zoomStartPercent)
+    const endValue = percentToAbsolute(this.zoomEndPercent)
 
-    let newGenerator: SeriesGenerationFunction =
+    // TODO: Is this a performance problem? There might be 10.000+ items here
+    // and this method is called every time the slider is dragged or the user
+    // zooms using the mouse wheel
+    let visibleDataPoints = 0
+    for (const point of this.detailDataPoints) {
+      if (
+        point.authorDate.getTime() >= startValue &&
+        point.authorDate.getTime() <= endValue
+      ) {
+        visibleDataPoints += this.dimensions.length
+      }
+    }
+
+    const newGenerator: SeriesGenerationFunction =
       visibleDataPoints > 2 ? this.buildLineSeries : this.buildGraphSeries
 
     if (newGenerator !== this.seriesGenerator) {
@@ -333,7 +346,7 @@ export default class NewEchartsDetail extends Vue {
     let startPercent: number
     let endPercent: number
 
-    // Batch and unbatched events set either the percent or absolute value
+    // Batch and un-batched events set either the percent or absolute value
     // we normalize to percentages
     if (event.start !== undefined && event.end !== undefined) {
       startPercent = event.start / 100
