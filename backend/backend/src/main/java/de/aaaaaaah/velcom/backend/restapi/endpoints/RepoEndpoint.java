@@ -257,9 +257,12 @@ public class RepoEndpoint {
 		RepoId repoId = new RepoId(repoUuid);
 		user.guardRepoAccess(repoId);
 
+		// Ensures 404 is thrown if the repo does not exist
+		Repo repo = repoAccess.getRepo(repoId);
+
 		// Also deletes the repo from all tables in the db that have a foreign key on the repo table
 		// since all (relevant) foreign key restraints are marked as ON DELETE CASCADE. This includes
 		// the queue table.
-		repoAccess.deleteRepo(repoId);
+		repoAccess.deleteRepo(repo.getRepoId());
 	}
 }
