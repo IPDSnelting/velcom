@@ -65,14 +65,24 @@ public class TaskWriteAccess extends TaskReadAccess {
 	 * Inserts the given tasks into the database.
 	 *
 	 * @param tasks the tasks to insert
+	 * @return a collection of all tasks that were actually inserted because they were not already in
+	 * 	the database beforehand
 	 */
-	public void insertTasks(Collection<Task> tasks) {
+	public Collection<Task> insertTasks(Collection<Task> tasks) {
 		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
-			insertTasks(tasks, db);
+			return insertTasks(tasks, db);
 		}
 	}
 
-	void insertTasks(Collection<Task> originalTasks, DBWriteAccess db) {
+	/**
+	 * Inserts the given tasks into the database by using the provided write access.
+	 *
+	 * @param originalTasks the tasks to insert
+	 * @param db the access that will be used
+	 * @return a collection of all tasks that were actually inserted because they were not already in
+	 * 	the database beforehand
+	 */
+	Collection<Task> insertTasks(Collection<Task> originalTasks, DBWriteAccess db) {
 		// Create mutable copy of task list
 		final List<Task> tasks = new ArrayList<>(originalTasks);
 
@@ -152,6 +162,8 @@ public class TaskWriteAccess extends TaskReadAccess {
 		for (Consumer<Task> insertHandler : insertHandlers) {
 			tasks.forEach(insertHandler);
 		}
+
+		return tasks;
 	}
 
 	/**

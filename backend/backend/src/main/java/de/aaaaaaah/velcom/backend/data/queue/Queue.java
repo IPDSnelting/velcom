@@ -110,18 +110,26 @@ public class Queue {
 	}
 
 	/**
-	 * Adds a new task to this queue.
+	 * Adds the specified commits as tasks into the queue.
 	 *
 	 * @param author the author of this addition
-	 * @param repoId the id of the repository that this task belongs to
-	 * @param commitHash the commit hash of this taks
+	 * @param repoId the id of the repository that the given commits belong to
+	 * @param hashes the commit hashes
+	 * @return a collection of all commit hashes that were actually inserted because they were not
+	 * 	already in the queue beforehand
 	 */
-	public void addCommits(String author, RepoId repoId, List<CommitHash> commitHash) {
-		List<Task> tasks = commitHash.stream()
+	public Collection<CommitHash> addCommits(String author, RepoId repoId,
+		List<CommitHash> hashes) {
+
+		List<Task> tasks = hashes.stream()
 			.map(hash -> new Task(author, new CommitSource(repoId, hash)))
 			.collect(toList());
 
-		taskAccess.insertTasks(tasks);
+		Collection<Task> tasksThatWereActuallyInserted = taskAccess.insertTasks(tasks);
+
+		return tasksThatWereActuallyInserted.stream()
+			.map(task -> task.getSource().getLeft().orElseThrow().getHash())
+			.collect(toList());
 	}
 
 	/**
