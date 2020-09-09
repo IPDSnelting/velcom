@@ -4,8 +4,8 @@ package de.aaaaaaah.velcom.backend.access.policy;
  * The priority of a queue task.
  */
 public enum QueuePriority {
-	NORMAL(10),
-	LOW(20),
+	LISTENER(2),
+	TAR(1),
 	MANUAL(0);
 
 	private final int priority;
