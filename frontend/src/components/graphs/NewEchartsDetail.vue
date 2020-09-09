@@ -136,7 +136,7 @@ export default class NewEchartsDetail extends Vue {
           type: 'slider'
         }
       ],
-      series: this.dimensions.map(this.buildGraphSeries)
+      series: this.dimensions.map(this.buildAppropriateSeries)
     }
   }
 
@@ -218,6 +218,19 @@ export default class NewEchartsDetail extends Vue {
     }
   }
 
+  /**
+   * Builds the correct series based on the number of points displayed:
+   * If there are too many, the graph is not performant enough and a line graph will be drawn.
+   * If the number is manageable, the graph type will be selected.
+   */
+  private buildAppropriateSeries(dimension: DimensionId) {
+    if (this.detailDataPoints.length * this.dimensions.length > 200) {
+      return this.buildLineSeries(dimension)
+    } else {
+      return this.buildGraphSeries(dimension)
+    }
+  }
+
   mounted(): void {
     this.dimensions = [
       new Dimension('Random', 'metric', 'cats', 'LESS_IS_BETTER')
@@ -236,7 +249,7 @@ export default class NewEchartsDetail extends Vue {
 
 <style scoped>
 #chart-container {
-  pointion: relative;
+  position: relative;
   height: 80vh;
 }
 </style>
