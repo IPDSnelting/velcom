@@ -95,11 +95,7 @@ public class TaskWriteAccess extends TaskReadAccess {
 			Condition subCondition = TASK.REPO_ID.eq(commitId.getRepoId().getId().toString())
 				.and(TASK.COMMIT_HASH.eq(commitId.getHash().getHash()));
 
-			if (condition == null) {
-				condition = subCondition;
-			} else {
-				condition = condition.or(subCondition);
-			}
+			condition = condition.or(subCondition);
 		}
 
 		final Set<TaskId> inDatabaseTaskIds = new HashSet<>();
