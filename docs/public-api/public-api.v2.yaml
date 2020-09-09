@@ -295,7 +295,7 @@ paths:
                     $ref: '#/components/schemas/Task'
                 required:
                   - task
-        '403':
+        '409':
           description: There is already a task for this commit in the queue
       description: 'This endpoint allows users to add a specific commit to the queue. If there is already a task for this commit in the queue, this endpoint fails.'
       tags:
