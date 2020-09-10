@@ -53,6 +53,7 @@ export default class RepoDetailFrame extends Vue {
       return
     }
     this.$router.replace({ name: 'repo-detail', params: { id: repoId } })
+    vxm.detailGraphModule.selectedRepoId = repoId
   }
 
   get selectedRepo(): Repo | null {

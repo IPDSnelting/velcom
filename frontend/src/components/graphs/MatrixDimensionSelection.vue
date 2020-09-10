@@ -40,7 +40,7 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { vxm } from '../../store'
-import { Prop, Watch, Model } from 'vue-property-decorator'
+import { Prop } from 'vue-property-decorator'
 import { Dimension } from '../../store/types'
 
 @Component
@@ -104,7 +104,7 @@ export default class MatrixMeasurementIdSelection extends Vue {
       )
     }
 
-    this.$emit('input', resultingSelectedDimensions)
+    vxm.detailGraphModule.selectedDimensions = resultingSelectedDimensions
   }
 
   private toggleAllForBenchmark(benchmark: string) {
@@ -135,7 +135,7 @@ export default class MatrixMeasurementIdSelection extends Vue {
         notYetSelectedDimensions
       )
     }
-    this.$emit('input', resultingSelectedDimensions)
+    vxm.detailGraphModule.selectedDimensions = resultingSelectedDimensions
   }
 
   private get allMetrics(): string[] {
@@ -164,17 +164,13 @@ export default class MatrixMeasurementIdSelection extends Vue {
         .find(it => it.benchmark !== benchmark || it.metric !== metric)
 
       if (newlyCheckedDimension) {
-        this.$emit(
-          'input',
-          this.selectedDimensions.concat([newlyCheckedDimension])
+        vxm.detailGraphModule.selectedDimensions = this.selectedDimensions.concat(
+          [newlyCheckedDimension]
         )
       }
     } else {
-      this.$emit(
-        'input',
-        this.selectedDimensions.filter(
-          it => it.benchmark !== benchmark || it.metric !== metric
-        )
+      vxm.detailGraphModule.selectedDimensions = this.selectedDimensions.filter(
+        it => it.benchmark !== benchmark || it.metric !== metric
       )
     }
   }

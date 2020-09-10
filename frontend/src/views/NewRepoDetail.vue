@@ -22,17 +22,153 @@
                   </v-btn>
                   <matrix-dimension-selection
                     v-if="useMatrixSelector"
-                    @input="selectedMeasurements = $event"
                     :selectedDimensions="selectedDimensions"
                     :repoId="id"
                   ></matrix-dimension-selection>
                   <normal-dimension-selection
                     v-if="!useMatrixSelector"
-                    @input="selectedMeasurements = $event"
                     :selectedDimensions="selectedDimensions"
                     :repoId="id"
                   >
                   </normal-dimension-selection>
+                </v-col>
+              </v-row>
+            </v-container>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+    <v-row align="baseline" justify="center">
+      <v-col>
+        <v-card>
+          <v-card-text class="ma-0 pa-0">
+            <v-container fluid class="ma-0 px-5">
+              <v-row align="center" justify="space-between" no-gutters
+                ><v-col>
+                  <v-menu
+                    ref="startDateMenu"
+                    v-model="startDateMenuOpen"
+                    :close-on-content-click="false"
+                    :return-value.sync="startTimeString"
+                    transition="scale-transition"
+                    offset-y
+                    min-width="290px"
+                  >
+                    <template #activator="{ on }">
+                      <v-text-field
+                        class="mr-5 mb-5"
+                        hide-details="auto"
+                        v-model="startTimeString"
+                        :disabled="dateLocked === 'start'"
+                        label="from:"
+                        :prepend-icon="dateIcon"
+                        readonly
+                        v-on="on"
+                      >
+                        <v-icon
+                          slot="append"
+                          @click="lockDates('start')"
+                          class="lock-button"
+                        >
+                          {{ dateLocked === 'start' ? lock : openLock }}
+                        </v-icon>
+                      </v-text-field>
+                    </template>
+                    <v-date-picker
+                      hide-details="auto"
+                      v-model="startTimeString"
+                      no-title
+                      scrollable
+                    >
+                      <v-btn
+                        text
+                        color="primary"
+                        @click="saveStartDateMenu(today)"
+                        >Today</v-btn
+                      >
+                      <v-spacer></v-spacer>
+                      <v-btn
+                        text
+                        color="primary"
+                        @click="startDateMenuOpen = false"
+                        >Cancel</v-btn
+                      >
+                      <v-btn
+                        text
+                        color="primary"
+                        @click="saveStartDateMenu(startTimeString)"
+                        >OK</v-btn
+                      >
+                    </v-date-picker>
+                  </v-menu>
+                </v-col>
+                <v-col>
+                  <v-menu
+                    ref="stopDateMenu"
+                    v-model="stopDateMenuOpen"
+                    :close-on-content-click="false"
+                    :return-value.sync="endTimeString"
+                    transition="scale-transition"
+                    offset-y
+                    min-width="290px"
+                  >
+                    <template v-slot:activator="{ on }">
+                      <v-text-field
+                        class="mr-5 mb-5"
+                        hide-details="auto"
+                        v-model="endTimeString"
+                        :disabled="dateLocked === 'end'"
+                        label="to:"
+                        :prepend-icon="dateIcon"
+                        :rules="[stopAfterStart]"
+                        readonly
+                        v-on="on"
+                      >
+                        <v-icon
+                          slot="append"
+                          @click="lockDates('end')"
+                          class="lock-button"
+                        >
+                          {{ dateLocked === 'end' ? lock : openLock }}
+                        </v-icon>
+                      </v-text-field>
+                    </template>
+                    <v-date-picker
+                      v-model="endTimeString"
+                      no-title
+                      scrollable
+                      hide-details="auto"
+                    >
+                      <v-btn
+                        text
+                        color="primary"
+                        @click="saveStopDateMenu(today)"
+                        >Today</v-btn
+                      >
+                      <v-spacer></v-spacer>
+                      <v-btn
+                        text
+                        color="primary"
+                        @click="stopDateMenuOpen = false"
+                        >Cancel</v-btn
+                      >
+                      <v-btn
+                        text
+                        color="primary"
+                        @click="saveStopDateMenu(endTimeString)"
+                        >OK</v-btn
+                      >
+                    </v-date-picker>
+                  </v-menu>
+                </v-col>
+                <v-col>
+                  <v-text-field
+                    @blur="saveDuration"
+                    v-model="duration"
+                    :disabled="dateLocked === 'neither'"
+                    label="number of days to fetch:"
+                    class="mr-5"
+                  ></v-text-field>
                 </v-col>
               </v-row>
             </v-container>
@@ -46,6 +182,7 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
+import { mdiCalendar, mdiLock, mdiLockOpenVariant } from '@mdi/js'
 import { vxm } from '../store/index'
 import RepoBaseInformation from '@/components/repodetail/RepoBaseInformation.vue'
 import DimensionSelection from '../components/graphs/DimensionSelection.vue'
@@ -60,7 +197,19 @@ import { Dimension, Repo } from '@/store/types'
   }
 })
 export default class RepoDetail extends Vue {
+  // ============== ICONS ==============
+  private dateIcon = mdiCalendar
+  private openLock = mdiLockOpenVariant
+  private lock = mdiLock
+  // ==============       ==============
+
+  private today = new Date().toISOString().substr(0, 10)
+
   private useMatrixSelector: boolean = false
+
+  private startDateMenuOpen: boolean = false
+  private stopDateMenuOpen: boolean = false
+  private dateLocked: 'start' | 'end' | 'neither' = 'start'
 
   private get repo(): Repo {
     return vxm.repoModule.repoById(this.id)!
@@ -69,6 +218,7 @@ export default class RepoDetail extends Vue {
   private get id() {
     return this.$route.params.id
   }
+
   private repoExists(id: string): boolean {
     return vxm.repoModule.repoById(id) !== undefined
   }
@@ -80,6 +230,96 @@ export default class RepoDetail extends Vue {
   private set selectedDimensions(dimensions: Dimension[]) {
     vxm.detailGraphModule.selectedDimensions = dimensions
   }
+
+  private saveStartDateMenu(date: string) {
+    ;(this.$refs.startDateMenu as any).save(date)
+    vxm.detailGraphModule.startTime = new Date(date)
+    vxm.detailGraphModule.duration = this.computeDuration()
+    this.retrieveGraphData()
+  }
+
+  private saveStopDateMenu(date: string) {
+    ;(this.$refs.stopDateMenu as any).save(date)
+    vxm.detailGraphModule.endTime = new Date(date)
+    vxm.detailGraphModule.duration = this.computeDuration()
+    this.retrieveGraphData()
+  }
+
+  private saveDuration() {
+    if (this.dateLocked === 'start') {
+      console.log(vxm.detailGraphModule.startTime.getDate())
+      vxm.detailGraphModule.endTime = new Date(
+        new Date().setDate(
+          vxm.detailGraphModule.startTime.getDate() + this.duration
+        )
+      )
+      console.log(vxm.detailGraphModule.startTime.getDate() + this.duration)
+    } else {
+      vxm.detailGraphModule.startTime = new Date(
+        new Date().setDate(
+          vxm.detailGraphModule.endTime.getDate() - this.duration
+        )
+      )
+    }
+    this.retrieveGraphData()
+  }
+
+  get startTimeString(): string {
+    return vxm.detailGraphModule.startTime.toISOString().substring(0, 10)
+  }
+
+  set startTimeString(value: string) {
+    vxm.detailGraphModule.startTime = new Date(value)
+  }
+
+  get endTimeString(): string {
+    return vxm.detailGraphModule.endTime.toISOString().substring(0, 10)
+  }
+
+  set endTimeString(value: string) {
+    vxm.detailGraphModule.endTime = new Date(value)
+  }
+
+  get duration(): number {
+    return vxm.detailGraphModule.duration
+  }
+
+  set duration(duration: number) {
+    vxm.detailGraphModule.duration = Number(duration)
+  }
+
+  private lockDates(date: 'start' | 'end'): void {
+    if (this.dateLocked === 'neither') {
+      this.dateLocked = date
+    } else if ((this.dateLocked = date)) {
+      this.dateLocked = 'neither'
+    } else {
+      this.dateLocked = this.dateLocked === 'start' ? 'end' : 'start'
+    }
+  }
+
+  private computeDuration(): number {
+    const timeDiff =
+      vxm.detailGraphModule.endTime.getTime() -
+      vxm.detailGraphModule.startTime.getTime()
+
+    return (vxm.detailGraphModule.duration = Math.ceil(
+      timeDiff / (1000 * 3600 * 24)
+    ))
+  }
+
+  private stopAfterStart(): boolean | string {
+    return vxm.detailGraphModule.startTime.getTime() <=
+      vxm.detailGraphModule.endTime.getTime()
+      ? true
+      : 'You have to select a date after the first one!'
+  }
+
+  private retrieveGraphData(): void {
+    if (this.stopAfterStart()) {
+      vxm.detailGraphModule.fetchDetailGraph()
+    }
+  }
 }
 </script>
 
@@ -88,5 +328,10 @@ export default class RepoDetail extends Vue {
   font-size: 14px;
   font-weight: 400;
   opacity: 0.7;
+}
+
+/*  https://stackoverflow.com/questions/53391733/untie-text-fields-icon-click-enabling-from-the-input-one */
+.lock-button {
+  pointer-events: auto;
 }
 </style>

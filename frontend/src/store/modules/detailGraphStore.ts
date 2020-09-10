@@ -53,63 +53,36 @@ export class DetailGraphStore extends VxModule {
   private _defaultStartTime: Date = new Date(
     new Date().setDate(new Date().getDate() - 7)
   )
-  private _defaultStopTime: Date = new Date()
-  private startTime: Date = this._defaultStartTime
-  private endTime: Date = this._defaultStopTime
+  private _defaultEndTime: Date = new Date()
+  private _startTime: Date = this._defaultStartTime
+  private _endTime: Date = this._defaultEndTime
+  private _duration: number = 7
 
   /**
    * Fetches the data necessary to display the data points
    * in a detail graph of a given time frame.
    *
-   * @param {{
-   *     repoId: RepoId
-   *     startTime: Date
-   *     endTime: Date
-   *     duration: number
-   *     dimensions: Dimension[]
-   *   }} payload
    * @returns {Promise<DetailDataPoint[]>}
    * @memberof detailGraphStore
    */
   @action
-  async fetchDetailGraph(payload: {
-    repoId: RepoId
-    startTime?: string | null
-    endTime?: string | null
-    duration: number
-    dimensions: Dimension[]
-  }): Promise<DetailDataPoint[]> {
-    let effectiveStartTime: number | undefined
-    if (payload.startTime) {
-      effectiveStartTime = new Date(payload.startTime).getTime()
-    } else if (payload.startTime === null) {
-      effectiveStartTime = undefined
-    } else {
-      effectiveStartTime = this.startTime.getTime() / 1000
-    }
+  async fetchDetailGraph(): Promise<DetailDataPoint[]> {
+    const effectiveStartTime: number = this._startTime.getTime() / 1000
+    const effectiveEndTime: number =
+      this._endTime.getTime() / 1000 + 60 * 60 * 24
 
-    let effectiveEndTime: number | undefined
-
-    if (payload.endTime) {
-      effectiveEndTime = new Date(payload.endTime).getTime()
-    } else if (payload.startTime === null) {
-      effectiveEndTime = undefined
-    } else {
-      effectiveEndTime = this.endTime.getTime() / 1000 + 60 * 60 * 24
-    }
-
-    const response = await axios.get(`/graph/detail/${payload.repoId}`, {
+    const response = await axios.get(`/graph/deatail/${this._selectedRepoId}`, {
       snackbarTag: 'commit-history',
       params: {
         start_time: effectiveStartTime,
         end_time: effectiveEndTime,
-        duration: payload.duration,
-        dimensions: this.formatDimensions(payload.dimensions)
+        duration: this._duration,
+        dimensions: this.formatDimensions()
       }
     })
 
     const dataPoints: DetailDataPoint[] = response.data.commits.map((it: any) =>
-      detailDataPointFromJson(it, payload.dimensions)
+      detailDataPointFromJson(it, this._selectedDimensions)
     )
 
     this.setDetailGraph(dataPoints)
@@ -125,10 +98,10 @@ export class DetailGraphStore extends VxModule {
    * @returns {string}
    * @memberof detailGraphStore
    */
-  private formatDimensions(dimensions: Dimension[]): string {
+  private formatDimensions(): string {
     const resultString: string = ''
 
-    const groupedDimensions = dimensions.reduce(
+    const groupedDimensions = this._selectedDimensions.reduce(
       (benchmarkGroup: { [key: string]: any[] }, cur: Dimension) => {
         ;(benchmarkGroup[cur.benchmark] =
           benchmarkGroup[cur.benchmark] || []).push(cur)
@@ -249,5 +222,29 @@ export class DetailGraphStore extends VxModule {
    */
   set selectedRepoId(selectedRepoId: string) {
     this._selectedRepoId = selectedRepoId
+  }
+
+  get startTime(): Date {
+    return this._startTime
+  }
+
+  set startTime(start: Date) {
+    this._startTime = start
+  }
+
+  get endTime(): Date {
+    return this._endTime
+  }
+
+  set endTime(end: Date) {
+    this._endTime = end
+  }
+
+  get duration(): number {
+    return this._duration
+  }
+
+  set duration(duration: number) {
+    this._duration = duration
   }
 }
