@@ -67,7 +67,7 @@ class DimensionItem {
 
   constructor(dimension: Dimension) {
     this.dimension = dimension
-    this.id = dimension.benchmark + '_' + dimension.metric
+    this.id = dimension.toString()
     this.name = dimension.metric
   }
 }
@@ -146,17 +146,17 @@ export default class DimensionSelection extends Vue {
     }
   }
 
-  private changed(measurements: string[]) {
-    this.selectedBenchmarkItems = measurements.filter(it =>
+  private changed(dimensions: string[]) {
+    this.selectedBenchmarkItems = dimensions.filter(it =>
       this.benchmarkItems.find(a => a.id === it)
     )
 
-    let ids = measurements
+    let ids = dimensions
       .map(it => this.dimensionItemMap.get(it))
       .filter(it => it && it instanceof DimensionItem)
       .map(it => it!.dimension)
 
-    this.$emit('input', ids)
+    vxm.detailGraphModule.selectedDimensions = ids
   }
 }
 </script>
