@@ -285,7 +285,7 @@ export default class RepoDetail extends Vue {
   }
 
   set duration(duration: number) {
-    vxm.detailGraphModule.duration = Number(duration)
+    vxm.detailGraphModule.duration = Number(duration) // the number is a lie :(
   }
 
   private lockDates(date: 'start' | 'end'): void {

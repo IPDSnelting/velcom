@@ -67,16 +67,19 @@ export class DetailGraphStore extends VxModule {
    */
   @action
   async fetchDetailGraph(): Promise<DetailDataPoint[]> {
-    const effectiveStartTime: number = this._startTime.getTime() / 1000
-    const effectiveEndTime: number =
+    const effectiveStartTime: number = Math.floor(
+      this._startTime.getTime() / 1000
+    )
+    const effectiveEndTime: number = Math.floor(
       this._endTime.getTime() / 1000 + 60 * 60 * 24
+    )
 
-    const response = await axios.get(`/graph/deatail/${this._selectedRepoId}`, {
+    const response = await axios.get(`/graph/detail/${this._selectedRepoId}`, {
       snackbarTag: 'commit-history',
       params: {
         start_time: effectiveStartTime,
         end_time: effectiveEndTime,
-        duration: this._duration,
+        duration: undefined,
         dimensions: this.dimensionString
       }
     })
