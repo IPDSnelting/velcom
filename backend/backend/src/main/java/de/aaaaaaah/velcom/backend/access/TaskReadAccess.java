@@ -10,6 +10,7 @@ import de.aaaaaaah.velcom.backend.access.entities.sources.CommitSource;
 import de.aaaaaaah.velcom.backend.access.entities.sources.TarSource;
 import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchTaskException;
 import de.aaaaaaah.velcom.backend.access.policy.QueuePolicy;
+import de.aaaaaaah.velcom.backend.access.policy.QueuePriority;
 import de.aaaaaaah.velcom.backend.access.policy.RoundRobinFiloPolicy;
 import de.aaaaaaah.velcom.backend.storage.db.DBReadAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
@@ -68,7 +69,7 @@ public class TaskReadAccess {
 				return new Task(
 					taskId,
 					taskRecord.getAuthor(),
-					taskRecord.getPriority(),
+					QueuePriority.fromInt(taskRecord.getPriority()),
 					taskRecord.getInsertTime().toInstant(),
 					taskRecord.getUpdateTime().toInstant(),
 					new TarSource(taskRecord.getDescription(), nullableRepoId)
@@ -80,7 +81,7 @@ public class TaskReadAccess {
 				return new Task(
 					taskId,
 					taskRecord.getAuthor(),
-					taskRecord.getPriority(),
+					QueuePriority.fromInt(taskRecord.getPriority()),
 					taskRecord.getInsertTime().toInstant(),
 					taskRecord.getUpdateTime().toInstant(),
 					new CommitSource(nullableRepoId, hash)
@@ -103,7 +104,7 @@ public class TaskReadAccess {
 			return new Task(
 				new TaskId(UUID.fromString(taskRecord.getId())),
 				taskRecord.getAuthor(),
-				taskRecord.getPriority(),
+				QueuePriority.fromInt(taskRecord.getPriority()),
 				taskRecord.getInsertTime().toInstant(),
 				taskRecord.getUpdateTime().toInstant(),
 				new TarSource(taskRecord.getDescription(), nullableRepoId)
@@ -115,7 +116,7 @@ public class TaskReadAccess {
 			return new Task(
 				new TaskId(UUID.fromString(taskRecord.getId())),
 				taskRecord.getAuthor(),
-				taskRecord.getPriority(),
+				QueuePriority.fromInt(taskRecord.getPriority()),
 				taskRecord.getInsertTime().toInstant(),
 				taskRecord.getUpdateTime().toInstant(),
 				new CommitSource(nullableRepoId, hash)

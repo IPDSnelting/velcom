@@ -46,9 +46,10 @@ import org.jooq.codegen.db.tables.records.TaskRecord;
 public class RoundRobinFiloPolicy implements QueuePolicy {
 
 	/**
-	 * The priority at which tasks will be subject to the round robin ordering.
+	 * The priority at and below which tasks will be subject to the round robin ordering (below as in
+	 * less important, not a lower priority value).
 	 */
-	private static final int ROUND_ROBIN_PRIORITY = QueuePriority.LISTENER.getAsInt();
+	private static final QueuePriority ROUND_ROBIN_PRIORITY = QueuePriority.LISTENER;
 
 	private DatabaseStorage databaseStorage;
 	private RepoId lastRepo;
@@ -65,7 +66,7 @@ public class RoundRobinFiloPolicy implements QueuePolicy {
 			// 1.) Find manual or tar task with highest priority
 			Optional<TaskRecord> mostImportantRecord = db.selectFrom(TASK)
 				.where(
-					TASK.PRIORITY.lessThan(ROUND_ROBIN_PRIORITY)
+					TASK.PRIORITY.lessThan(ROUND_ROBIN_PRIORITY.asInt())
 						.and(TASK.IN_PROCESS.eq(false))
 				)
 				.orderBy(
@@ -179,7 +180,7 @@ public class RoundRobinFiloPolicy implements QueuePolicy {
 		databaseStorage.acquireReadTransaction(db -> {
 			// 1.) Get manual tasks
 			db.selectFrom(TASK)
-				.where(TASK.PRIORITY.lessThan(ROUND_ROBIN_PRIORITY))
+				.where(TASK.PRIORITY.lessThan(ROUND_ROBIN_PRIORITY.asInt()))
 				.orderBy(TASK.PRIORITY.asc(), TASK.UPDATE_TIME.desc())
 				.forEach(record -> completeTaskList.addLast(taskFromRecord(record)));
 

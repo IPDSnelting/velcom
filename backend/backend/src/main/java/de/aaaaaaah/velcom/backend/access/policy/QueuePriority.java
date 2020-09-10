@@ -15,9 +15,26 @@ public enum QueuePriority {
 	}
 
 	/**
+	 * Convert an int to a {@link QueuePriority}. Integers that don't correspond to a particular
+	 * priority are interpreted as the closest available priority.
+	 *
+	 * @param priority the int to convert
+	 * @return the matching priority
+	 */
+	public static QueuePriority fromInt(int priority) {
+		if (priority <= 0) {
+			return MANUAL;
+		} else if (priority >= 2) {
+			return LISTENER;
+		} else {
+			return TAR;
+		}
+	}
+
+	/**
 	 * @return the integer priority. Lower is more important
 	 */
-	public int getAsInt() {
+	public int asInt() {
 		return priority;
 	}
 }

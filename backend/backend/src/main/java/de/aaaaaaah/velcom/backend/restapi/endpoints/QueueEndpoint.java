@@ -114,7 +114,7 @@ public class QueueEndpoint {
 
 		// TODO: Really don't tell them the id of the existing task?
 		final Collection<Task> insertedTasks = queue
-			.addCommits(author, repoId, List.of(commitHash), QueuePriority.MANUAL.getAsInt());
+			.addCommits(author, repoId, List.of(commitHash), QueuePriority.MANUAL);
 
 		if (insertedTasks.isEmpty()) {
 			throw new TaskAlreadyExistsException(commitHash, repoId);

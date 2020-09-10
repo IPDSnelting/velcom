@@ -141,7 +141,7 @@ public class TaskWriteAccess extends TaskReadAccess {
 					insert.values(
 						task.getId().getId().toString(),
 						task.getAuthor(),
-						task.getPriority(),
+						task.getPriority().asInt(),
 						Timestamp.from(task.getInsertTime()),
 						Timestamp.from(task.getUpdateTime()),
 						task.getSource().getRight().map(TarSource::getDescription).orElse(null),
@@ -213,7 +213,7 @@ public class TaskWriteAccess extends TaskReadAccess {
 	public void setTaskPriority(TaskId taskId, QueuePriority newPriority) {
 		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
 			db.update(TASK)
-				.set(TASK.PRIORITY, newPriority.getAsInt())
+				.set(TASK.PRIORITY, newPriority.asInt())
 				.set(TASK.UPDATE_TIME, Timestamp.from(Instant.now()))
 				.where(TASK.ID.eq(taskId.getId().toString()))
 				.execute();

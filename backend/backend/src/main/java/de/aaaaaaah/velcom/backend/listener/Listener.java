@@ -210,7 +210,7 @@ public class Listener {
 	private Task commitToTask(RepoId repoId, CommitHash commitHash) {
 		return new Task(
 			AUTHOR,
-			QueuePriority.LISTENER.getAsInt(),
+			QueuePriority.LISTENER,
 			new CommitSource(repoId, commitHash)
 		);
 	}

@@ -2,6 +2,7 @@ package de.aaaaaaah.velcom.backend.access.entities;
 
 import de.aaaaaaah.velcom.backend.access.entities.sources.CommitSource;
 import de.aaaaaaah.velcom.backend.access.entities.sources.TarSource;
+import de.aaaaaaah.velcom.backend.access.policy.QueuePriority;
 import de.aaaaaaah.velcom.backend.util.Either;
 import java.time.Instant;
 import java.util.Objects;
@@ -11,33 +12,34 @@ public class Task {
 
 	private final TaskId id;
 	private final String author;
-	private final int priority;
+	private final QueuePriority priority;
 	private final Instant insertTime;
 	private final Instant updateTime;
 	private final Either<CommitSource, TarSource> source;
 
-	public Task(String author, int priority, CommitSource source) {
+	public Task(String author, QueuePriority priority, CommitSource source) {
 		this(new TaskId(), author, priority, Instant.now(), Instant.now(),
 			Either.ofLeft(source));
 	}
 
-	public Task(String author, int priority, TarSource source) {
+	public Task(String author, QueuePriority priority, TarSource source) {
 		this(new TaskId(), author, priority, Instant.now(), Instant.now(),
 			Either.ofRight(source));
 	}
 
-	public Task(TaskId id, String author, int priority, Instant insertTime, Instant updateTime,
-		CommitSource source) {
+	public Task(TaskId id, String author, QueuePriority priority, Instant insertTime,
+		Instant updateTime, CommitSource source) {
 		this(id, author, priority, insertTime, updateTime, Either.ofLeft(source));
 	}
 
-	public Task(TaskId id, String author, int priority, Instant insertTime, Instant updateTime,
-		TarSource source) {
+	public Task(TaskId id, String author, QueuePriority priority, Instant insertTime,
+		Instant updateTime, TarSource source) {
 		this(id, author, priority, insertTime, updateTime, Either.ofRight(source));
 	}
 
-	private Task(TaskId id, String author, int priority, Instant insertTime, Instant updateTime,
-		Either<CommitSource, TarSource> source) {
+	private Task(TaskId id, String author, QueuePriority priority, Instant insertTime,
+		Instant updateTime, Either<CommitSource, TarSource> source) {
+
 		this.id = Objects.requireNonNull(id);
 		this.author = Objects.requireNonNull(author);
 		this.priority = priority;
@@ -54,7 +56,7 @@ public class Task {
 		return author;
 	}
 
-	public int getPriority() {
+	public QueuePriority getPriority() {
 		return priority;
 	}
 
@@ -71,11 +73,10 @@ public class Task {
 	}
 
 	public Optional<RepoId> getRepoId() {
-		if (getSource().isLeft()) {
-			return Optional.of(getSource().getLeft().get().getRepoId());
-		} else {
-			return getSource().getRight().get().getRepoId();
-		}
+		return getSource().consume(
+			commitSource -> Optional.of(commitSource.getRepoId()),
+			TarSource::getRepoId
+		);
 	}
 
 	@Override

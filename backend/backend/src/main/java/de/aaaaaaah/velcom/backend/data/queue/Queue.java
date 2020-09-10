@@ -122,8 +122,8 @@ public class Queue {
 	 * @return a collection of all tasks that were actually inserted because respective their commits
 	 * 	were not already in the queue beforehand
 	 */
-	public Collection<Task> addCommits(String author, RepoId repoId,
-		List<CommitHash> hashes, int priority) {
+	public Collection<Task> addCommits(String author, RepoId repoId, List<CommitHash> hashes,
+		QueuePriority priority) {
 
 		List<Task> tasks = hashes.stream()
 			.map(hash -> new Task(author, priority, new CommitSource(repoId, hash)))
