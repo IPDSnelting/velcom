@@ -37,6 +37,9 @@ public class TaskReadAccess {
 	}
 
 	/**
+	 * Gets the task that is next in line to be benchmarked. The returned task will then be marked as
+	 * "in_process" until the task is completed.
+	 *
 	 * @return the task that should be the next to be processed and benchmarked.
 	 */
 	public Optional<Task> fetchNextTask() {

@@ -95,6 +95,9 @@ public class Queue {
 	}
 
 	/**
+	 * Gets the task that is next in line to be benchmarked. The returned task will then be marked as
+	 * "in_process" until the task is completed via {@link Queue#completeTask(NewRun)}.
+	 *
 	 * @return the next task in this queue to be processed
 	 */
 	public Optional<Task> fetchNextTask() {
@@ -140,8 +143,7 @@ public class Queue {
 	}
 
 	/**
-	 * Transfers a task to the supplied {@link OutputStream} while also marking the task as "in
-	 * process".
+	 * Transfers a task to the supplied {@link OutputStream}.
 	 *
 	 * <p>Note that the provided output stream will be closed after the transfer operation is
 	 * done.</p>
