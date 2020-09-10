@@ -520,11 +520,17 @@ paths:
                           type: string
                         values:
                           type: array
-                          description: "One value for each dimension. For the order, see the `dimensions` field. If this commit's run doesn't have a value of the corresponding dimension, the array contains a null placeholder instead."
+                          description: |-
+                            One value for each dimension. For the order, see the `dimensions` field.
+
+                            If there is no value for any reason, the array contains a string as placeholder describing why there is no value. `"N"` means that the commit has no correspondin run. `"O"` means that the run has no corresponding measurement. `"R"` means that the entire run has failed. `"M"` means that only the measurement itself has failed.
                           items:
                             type:
                               - number
-                              - 'null'
+                              - string
+                            pattern: '^[NORM]$'
+                            minLength: 1
+                            maxLength: 1
                       required:
                         - hash
                         - parents
