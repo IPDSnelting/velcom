@@ -17,7 +17,6 @@ import de.aaaaaaah.velcom.backend.access.entities.Run;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.utils.EndpointUtils;
 import de.aaaaaaah.velcom.backend.restapi.exception.InvalidQueryParamsException;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimension;
-import de.aaaaaaah.velcom.backend.util.Either;
 import de.aaaaaaah.velcom.backend.util.Pair;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -44,6 +43,11 @@ import javax.ws.rs.core.MediaType;
 @Path("/graph/detail/{repoid}")
 @Produces(MediaType.APPLICATION_JSON)
 public class GraphDetailEndpoint {
+
+	private static final String NO_RUN_FOUND = "N";
+	private static final String NO_MEASUREMENT_FOUND = "O";
+	private static final String RUN_FAILED = "R";
+	private static final String MEASUREMENT_FAILED = "M";
 
 	private final CommitReadAccess commitAccess;
 	private final BenchmarkReadAccess benchmarkAccess;
@@ -117,32 +121,43 @@ public class GraphDetailEndpoint {
 		return new GetReply(jsonDimensions, jsonGraphCommits);
 	}
 
-	private static List<Double> extractValuesFromCommit(List<DimensionInfo> dimensions,
+	private static List<Object> extractValuesFromCommit(List<DimensionInfo> dimensions,
 		Map<CommitHash, Run> runs, Commit commit) {
 
-		// This would be way more readable if I could use do notation, I promise! :P
+		Run run = runs.get(commit.getHash());
+		if (run == null) {
+			return createListFullOf(dimensions, NO_RUN_FOUND);
+		}
 
-		return Optional.ofNullable(runs.get(commit.getHash()))
-			.map(Run::getResult)
-			.flatMap(Either::getRight)
+		Optional<Collection<Measurement>> optionalMeasurements = run.getResult().getRight();
+		if (optionalMeasurements.isEmpty()) {
+			return createListFullOf(dimensions, RUN_FAILED);
+		}
 
-			// Convert measurements into a map by dimension
-			.map(values -> values.stream()
-				.collect(Collectors.toMap(Measurement::getDimension, v -> v)))
+		Map<Dimension, Measurement> measurements = optionalMeasurements.get().stream()
+			.collect(Collectors.toMap(Measurement::getDimension, m -> m));
 
-			// Get the value for each dimension in order of dimension
-			.map(values -> dimensions.stream()
-				.map(dim -> Optional.ofNullable(values.get(dim.getDimension()))
-					.map(Measurement::getContent)
-					.flatMap(Either::getRight)
-					.map(MeasurementValues::getAverageValue)
-					.orElse(null))
-				.collect(Collectors.toList()))
+		return dimensions.stream()
+			.map(dim -> {
+				Measurement measurement = measurements.get(dim.getDimension());
+				if (measurement == null) {
+					return NO_MEASUREMENT_FOUND;
+				}
 
-			// Create list of only nulls if there are no measurements
-			.orElseGet(() -> dimensions.stream()
-				.map(dim -> (Double) null)
-				.collect(Collectors.toList()));
+				Optional<MeasurementValues> values = measurement.getContent().getRight();
+				if (values.isEmpty()) {
+					return MEASUREMENT_FAILED;
+				}
+
+				return values.get().getAverageValue();
+			})
+			.collect(Collectors.toList());
+	}
+
+	private static List<Object> createListFullOf(List<DimensionInfo> dimensions, String string) {
+		return dimensions.stream()
+			.map(dim -> string)
+			.collect(Collectors.toList());
 	}
 
 	private static class GetReply {
@@ -171,10 +186,11 @@ public class GraphDetailEndpoint {
 		private final String author;
 		private final long authorDate;
 		private final String summary;
-		private final List<Double> values;
+		// A list of Doubles and Strings
+		private final List<Object> values;
 
 		public JsonGraphCommit(String hash, List<String> parents, String author, long authorDate,
-			String summary, List<Double> values) {
+			String summary, List<Object> values) {
 
 			this.hash = hash;
 			this.parents = parents;
@@ -204,7 +220,7 @@ public class GraphDetailEndpoint {
 			return summary;
 		}
 
-		public List<Double> getValues() {
+		public List<Object> getValues() {
 			return values;
 		}
 	}
