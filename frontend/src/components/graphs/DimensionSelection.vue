@@ -157,6 +157,7 @@ export default class DimensionSelection extends Vue {
       .map(it => it!.dimension)
 
     vxm.detailGraphModule.selectedDimensions = ids
+    vxm.detailGraphModule.fetchDetailGraph()
   }
 }
 </script>

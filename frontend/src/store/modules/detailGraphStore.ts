@@ -77,7 +77,7 @@ export class DetailGraphStore extends VxModule {
         start_time: effectiveStartTime,
         end_time: effectiveEndTime,
         duration: this._duration,
-        dimensions: this.formatDimensions()
+        dimensions: this.dimensionString
       }
     })
 
@@ -91,21 +91,21 @@ export class DetailGraphStore extends VxModule {
   }
 
   /**
-   * Builds a string out of the requested dimensions for a detail graph.
+   * string of requested dimensions for a detail graph,
+   * formatted as 'bench1:metric1.1:metric1.2::bench2:metric2.1' etc.
    *
+   * @readonly
    * @private
-   * @param {Dimension[]} dimensions
-   * @returns {string}
-   * @memberof detailGraphStore
+   * @type {string}
+   * @memberof DetailGraphStore
    */
-  private formatDimensions(): string {
-    const resultString: string = ''
+  private get dimensionString(): string {
+    let resultString: string = ''
 
     const groupedDimensions = this._selectedDimensions.reduce(
       (benchmarkGroup: { [key: string]: any[] }, cur: Dimension) => {
         ;(benchmarkGroup[cur.benchmark] =
           benchmarkGroup[cur.benchmark] || []).push(cur)
-        console.log(benchmarkGroup)
         return benchmarkGroup
       },
       {}
@@ -118,11 +118,11 @@ export class DetailGraphStore extends VxModule {
     })
 
     groupedDimensionsArray.forEach((benchmarkGroup: Dimension[]) => {
-      resultString.concat(benchmarkGroup[0].benchmark)
+      resultString = resultString.concat(benchmarkGroup[0].benchmark)
       benchmarkGroup.forEach((dimension: Dimension) => {
-        resultString.concat(':' + dimension.metric)
+        resultString = resultString.concat(':' + dimension.metric)
       })
-      resultString.concat('::')
+      resultString = resultString.concat('::')
     })
 
     return resultString.slice(0, resultString.length - 2)
