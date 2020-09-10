@@ -72,13 +72,16 @@ class EchartsDataPoint {
     borderWidth: number
   }
 
+  readonly summary: string
+
   constructor(
     time: Date,
     dataValue: number,
     symbol: string,
     name: string,
     color: string,
-    borderColor: string
+    borderColor: string,
+    summary: string
   ) {
     this.time = time
     this.dataValue = dataValue
@@ -90,6 +93,7 @@ class EchartsDataPoint {
       borderColor: borderColor,
       borderWidth: 2
     }
+    this.summary = summary
   }
 }
 
@@ -161,19 +165,23 @@ export default class NewEchartsDetail extends Vue {
   ): Map<DimensionId, DetailDataPointValue> {
     const map: Map<DimensionId, DetailDataPointValue> = new Map()
     if (successful) {
-      map.set(this.dimensions[0], Math.random() * 20 - 5)
+      for (let i = 0; i < this.dimensions.length; i++) {
+        map.set(this.dimensions[i], Math.random() * 20 - 5)
+      }
     } else {
       const random = Math.random()
-      map.set(
-        this.dimensions[0],
-        random < 0.25
-          ? 'NO_MEASUREMENT'
-          : random < 0.5
-          ? 'NO_RUN'
-          : random < 0.75
-          ? 'RUN_FAILED'
-          : 'MEASUREMENT_FAILED'
-      )
+      for (let i = 0; i < this.dimensions.length; i++) {
+        map.set(
+          this.dimensions[i],
+          random < 0.25
+            ? 'NO_MEASUREMENT'
+            : random < 0.5
+            ? 'NO_RUN'
+            : random < 0.75
+            ? 'RUN_FAILED'
+            : 'MEASUREMENT_FAILED'
+        )
+      }
     }
     return map
   }
@@ -213,6 +221,46 @@ export default class NewEchartsDetail extends Vue {
           end: this.zoomEndPercent * 100
         }
       ],
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: {},
+        // TODO: Extract in own helper?
+        formatter: params => {
+          const values = Array.isArray(params) ? params : [params]
+
+          const dimensionRows = values.map(val => {
+            const dimension = this.dimensions[val.seriesIndex || 0]
+            const color = this.dimensionColor(dimension)
+            const datapoint = val.data as EchartsDataPoint
+
+            return `
+                <tr>
+                  <td>
+                    <span class="color-preview" style="background-color: ${color}"></span>
+                    ${dimension.benchmark} - ${dimension.metric}
+                  </td>
+                  <td>${this.numberFormat.format(datapoint.dataValue)}</td>
+                </tr>
+                `
+          })
+
+          const samplePoint = values[0].data as EchartsDataPoint
+
+          return `
+                <table class="echarts-tooltip-table">
+                  <tr>
+                    <td>Hash</td>
+                    <td>${samplePoint.name}</td>
+                  </tr>
+                  </tr>
+                    <td>Message</td>
+                    <td>${samplePoint.summary}</td>
+                  </tr>
+                  ${dimensionRows.join('\n')}
+                </table>
+            `
+        }
+      },
       series: this.dimensions.map(this.seriesGenerator)
     }
   }
@@ -258,7 +306,8 @@ export default class NewEchartsDetail extends Vue {
         symbol,
         point.hash,
         color,
-        borderColor
+        borderColor,
+        point.summary
       )
     })
   }
@@ -343,7 +392,7 @@ export default class NewEchartsDetail extends Vue {
     }
 
     const newGenerator: SeriesGenerationFunction =
-      visibleDataPoints > 2 ? this.buildLineSeries : this.buildGraphSeries
+      visibleDataPoints > 4 ? this.buildLineSeries : this.buildGraphSeries
 
     if (newGenerator !== this.seriesGenerator) {
       this.seriesGenerator = newGenerator
@@ -354,7 +403,8 @@ export default class NewEchartsDetail extends Vue {
 
   mounted(): void {
     this.dimensions = [
-      new Dimension('Random', 'metric', 'cats', 'LESS_IS_BETTER')
+      new Dimension('Random', 'metric', 'cats', 'LESS_IS_BETTER'),
+      new Dimension('Random2', 'metric', 'cats', 'LESS_IS_BETTER')
     ]
     this.updateGraph()
   }
@@ -397,6 +447,12 @@ export default class NewEchartsDetail extends Vue {
   }
 
   // ==== THEME HELPER ====
+  private get numberFormat(): Intl.NumberFormat {
+    return new Intl.NumberFormat(
+      new Intl.NumberFormat().resolvedOptions().locale,
+      { maximumFractionDigits: 3 }
+    )
+  }
   private get graphBackgroundColor() {
     return this.$vuetify.theme.currentTheme.graphBackground as string
   }
@@ -426,5 +482,28 @@ export default class NewEchartsDetail extends Vue {
 .echarts {
   width: 100%;
   height: 100%;
+}
+
+.echarts-tooltip-table tr td {
+  padding: 2px;
+}
+
+.echarts-tooltip-table tr td:nth-child(2) {
+  font-family: monospace;
+}
+.echarts-tooltip-table tr td:first-child {
+  padding-right: 10px;
+}
+.echarts-tooltip-table tr td:only-child {
+  font-weight: bold;
+  padding-top: 1em;
+  font-size: 1.1em;
+}
+
+.echarts-tooltip-table .color-preview {
+  width: 10px;
+  height: 10px;
+  border-radius: 25%;
+  display: inline-block;
 }
 </style>
