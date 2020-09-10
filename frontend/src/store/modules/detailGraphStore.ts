@@ -32,7 +32,6 @@ export function detailGraphStoreToJson(store: DetailGraphStore): string {
 export class DetailGraphStore extends VxModule {
   private _detailGraph: DetailDataPoint[] = []
   private _selectedRepoId: RepoId = ''
-  // Needs to be a primitive so persistence works.
   private _selectedDimensions: Dimension[] = []
   // Not a real object, needs to be translated so persistence works.
   private _referenceDatapoint: {
@@ -59,7 +58,7 @@ export class DetailGraphStore extends VxModule {
   private endTime: Date = this._defaultStopTime
 
   /**
-   * Fetches the data neccessary to display the data points
+   * Fetches the data necessary to display the data points
    * in a detail graph of a given time frame.
    *
    * @param {{
@@ -99,7 +98,7 @@ export class DetailGraphStore extends VxModule {
       effectiveEndTime = this.endTime.getTime() / 1000 + 60 * 60 * 24
     }
 
-    const response = await axios.get(`/graph/deatail/${payload.repoId}`, {
+    const response = await axios.get(`/graph/detail/${payload.repoId}`, {
       snackbarTag: 'commit-history',
       params: {
         start_time: effectiveStartTime,

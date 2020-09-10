@@ -85,15 +85,15 @@ export const persistenceSessionStorage = new VuexPersistence<
   }
 })
 
-export function storeToLocalStorage() {
-  let data = {
+export function storeToLocalStorage(): void {
+  const data = {
     data: JSON.stringify(sessionStorage),
     accessTime: new Date().getTime()
   }
   localStorage.setItem('persisted_session_state', JSON.stringify(data))
 }
 
-export function restoreFromPassedSession(rawData: string | null) {
+export function restoreFromPassedSession(rawData: string | null): void {
   console.log('Trying to restore')
 
   if (rawData === null) {
@@ -105,7 +105,7 @@ export function restoreFromPassedSession(rawData: string | null) {
     }
   }
 
-  let { data, accessTime } = JSON.parse(rawData)
+  const { data, accessTime } = JSON.parse(rawData)
 
   // Older than 10 seconds. Should not happen, but better be safe than sorry.
   if (new Date().getTime() - accessTime > 10 * 1000) {
@@ -115,7 +115,7 @@ export function restoreFromPassedSession(rawData: string | null) {
 
   console.log('Used data: ' + data)
 
-  let state: RootState = JSON.parse(JSON.parse(data)['vuex'])
+  const state: RootState = JSON.parse(JSON.parse(data)['vuex'])
 
   console.log('Used state')
   console.log(state)
