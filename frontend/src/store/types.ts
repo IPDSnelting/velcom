@@ -79,7 +79,7 @@ export class Dimension {
   /**
    * Checks if the dimension equals another. Only checks the benchmark and metric.
    *
-   * @param {DimensionID} other the other dimension
+   * @param {DimensionId} other the other dimension
    * @returns true if the two have the same benchmark and metric
    */
   equals(other: DimensionId): boolean {
@@ -366,6 +366,13 @@ export class RunComparison {
   }
 }
 
+export type DetailDataPointValue =
+  | number
+  | 'NO_RUN'
+  | 'NO_MEASUREMENT'
+  | 'RUN_FAILED'
+  | 'MEASUREMENT_FAILED'
+
 export class DetailDataPoint {
   readonly hash: CommitHash
   readonly parents: CommitHash[]
@@ -373,7 +380,7 @@ export class DetailDataPoint {
   readonly authorDate: Date
   readonly summary: string
   // TODO: Figure out if the map wastes too much memory
-  readonly values: Map<DimensionId, number | null>
+  readonly values: Map<DimensionId, DetailDataPointValue>
 
   constructor(
     hash: CommitHash,
@@ -381,7 +388,7 @@ export class DetailDataPoint {
     author: string,
     authorDate: Date,
     summary: string,
-    values: Map<DimensionId, number | null>
+    values: Map<DimensionId, DetailDataPointValue>
   ) {
     this.hash = hash
     this.parents = parents
@@ -389,6 +396,20 @@ export class DetailDataPoint {
     this.authorDate = authorDate
     this.summary = summary
     this.values = values
+  }
+
+  public successful(dimension: DimensionId): boolean {
+    return typeof this.values.get(dimension) === 'number'
+  }
+
+  public unbenchmarked(dimension: DimensionId): boolean {
+    const value = this.values.get(dimension)
+    return value === 'NO_RUN' || value === 'NO_MEASUREMENT'
+  }
+
+  public failed(dimension: DimensionId): boolean {
+    const value = this.values.get(dimension)
+    return value === 'MEASUREMENT_FAILED' || value === 'RUN_FAILED'
   }
 }
 export class ComparisonDataPoint {

@@ -17,7 +17,12 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { DetailDataPoint, Dimension, DimensionId } from '@/store/types'
+import {
+  DetailDataPoint,
+  DetailDataPointValue,
+  Dimension,
+  DimensionId
+} from '@/store/types'
 import { EChartOption } from 'echarts'
 import { Prop } from 'vue-property-decorator'
 import EChartsComp from 'vue-echarts'
@@ -97,7 +102,7 @@ export default class NewEchartsDetail extends Vue {
   @Prop()
   private dimensions!: Dimension[]
 
-  @Prop({ default: true })
+  @Prop({ default: false })
   private beginYAtZero!: boolean
 
   private chartOptions: EChartOption = {}
@@ -153,9 +158,23 @@ export default class NewEchartsDetail extends Vue {
 
   private randomGarbage(
     successful: boolean = true
-  ): Map<DimensionId, number | null> {
-    const map = new Map()
-    map.set(this.dimensions[0], successful ? Math.random() * 20 - 5 : null)
+  ): Map<DimensionId, DetailDataPointValue> {
+    const map: Map<DimensionId, DetailDataPointValue> = new Map()
+    if (successful) {
+      map.set(this.dimensions[0], Math.random() * 20 - 5)
+    } else {
+      const random = Math.random()
+      map.set(
+        this.dimensions[0],
+        random < 0.25
+          ? 'NO_MEASUREMENT'
+          : random < 0.5
+          ? 'NO_RUN'
+          : random < 0.75
+          ? 'RUN_FAILED'
+          : 'MEASUREMENT_FAILED'
+      )
+    }
     return map
   }
 
@@ -202,7 +221,7 @@ export default class NewEchartsDetail extends Vue {
     const findFirstSuccessful = () => {
       for (let i = 0; i < this.detailDataPoints.length; i++) {
         const value = this.detailDataPoints[i].values.get(dimension)
-        if (value !== null && value !== undefined) {
+        if (typeof value === 'number') {
           return value
         }
       }
@@ -214,15 +233,24 @@ export default class NewEchartsDetail extends Vue {
     return this.detailDataPoints.map(point => {
       let symbol = 'circle'
       let color = this.dimensionColor(dimension)
+      let borderColor = color
 
       let pointValue = point.values.get(dimension)
-      if (pointValue === undefined || pointValue === null) {
+      if (typeof pointValue !== 'number') {
         pointValue = lastSuccessfulValue
-        symbol = this.crossIcon
-        color = this.graphFailedOrUnbenchmarkedColor
-        // Todo: Different style for unbenchmarked commits
       }
       lastSuccessfulValue = pointValue
+
+      if (point.failed(dimension)) {
+        // grey circle
+        symbol = this.crossIcon
+        color = this.graphFailedOrUnbenchmarkedColor
+        borderColor = color
+      } else if (point.unbenchmarked(dimension)) {
+        // empty circle with outline
+        color = this.graphBackgroundColor
+        borderColor = this.graphFailedOrUnbenchmarkedColor
+      }
 
       return new EchartsDataPoint(
         point.authorDate,
@@ -230,12 +258,13 @@ export default class NewEchartsDetail extends Vue {
         symbol,
         point.hash,
         color,
-        color
+        borderColor
       )
     })
   }
 
   private buildLineSeries(dimension: DimensionId): EChartOption.SeriesLine {
+    // noinspection JSMismatchedCollectionQueryUpdate
     const echartPoints: EchartsDataPoint[] = this.buildEchartsDataPoints(
       dimension
     )
@@ -253,6 +282,7 @@ export default class NewEchartsDetail extends Vue {
   }
 
   private buildGraphSeries(dimension: DimensionId): EChartOption.SeriesGraph {
+    // noinspection JSMismatchedCollectionQueryUpdate
     const echartPoints: EchartsDataPoint[] = this.buildEchartsDataPoints(
       dimension
     )
@@ -392,6 +422,7 @@ export default class NewEchartsDetail extends Vue {
 </style>
 
 <style>
+/*noinspection CssUnusedSymbol*/
 .echarts {
   width: 100%;
   height: 100%;
