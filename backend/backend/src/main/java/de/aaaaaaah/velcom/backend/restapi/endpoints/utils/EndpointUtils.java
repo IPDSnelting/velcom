@@ -177,9 +177,6 @@ public class EndpointUtils {
 				startTime = endTime.minus(duration);
 			}
 		} else {
-			if (startTime == null) {
-				startTime = Instant.MIN;
-			}
 			if (endTime == null) {
 				endTime = Instant.now();
 			}
