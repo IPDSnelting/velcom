@@ -29,7 +29,7 @@ import { Prop, Watch } from 'vue-property-decorator'
 import * as d3 from 'd3'
 import { vxm } from '@/store'
 import { formatDateUTC } from '@/util/TimeUtil'
-import { ComparisonDataPoint, Repo } from '@/store/types'
+import { ComparisonDataPoint, DetailDataPoint, Repo } from '@/store/types'
 import ComparisonDatapointDialog from '../dialogs/ComparisonDatapointDialog.vue'
 import { crosshairIcon } from '../graphs/crosshairIcon'
 
@@ -289,7 +289,7 @@ export default class ComparisonGraph extends Vue {
       this.removeCrosshair(vxm.comparisonGraphModule.referenceDatapoint)
     }
     if (this.selectedDatapoint) {
-      vxm.comparisonGraphModule.referenceCommit = this.selectedDatapoint.hash
+      vxm.comparisonGraphModule.referenceCommit = this.selectedDatapoint
     }
     if (vxm.comparisonGraphModule.referenceDatapoint !== undefined) {
       this.drawReferenceLine(vxm.comparisonGraphModule.referenceDatapoint)
@@ -730,7 +730,7 @@ export default class ComparisonGraph extends Vue {
     this.updateFocus()
   }
 
-  @Watch('datapoints')
+  @Watch('allDatapoints')
   @Watch('minTimestamp')
   @Watch('maxTimestamp')
   @Watch('beginYAtZero')
@@ -895,43 +895,36 @@ export default class ComparisonGraph extends Vue {
       .style('opacity', 0)
   }
 
-  private showInDetailGraph() {
-    const selectedCommit = this.selectedDatapoint!.commit
-    const repoId = selectedCommit.repoID
-    vxm.detailGraphModule
-      .fetchIndexOfCommit({
-        commitHash: selectedCommit.hash,
-        repoId: repoId
-      })
-      .then(({ index, comparison }) => {
-        this.closeDialog()
+  private async showInDetailGraph() {
+    if (!this.selectedDatapoint) {
+      return
+    }
+    this.closeDialog()
+    const dataPoint = this.selectedDatapoint
+    const repoId = dataPoint.repoId
 
-        vxm.detailGraphModule.referenceDatapoint = {
-          commit: selectedCommit,
-          comparison: comparison,
-          measurementId: new MeasurementID(
-            vxm.comparisonGraphModule.selectedBenchmark,
-            vxm.comparisonGraphModule.selectedMetric
-          )
-        }
+    vxm.detailGraphModule.startTime = new Date(
+      dataPoint.authorDate.getTime() - 1000 * 60 * 60 * 24 * 4
+    )
+    vxm.detailGraphModule.endTime = new Date(
+      dataPoint.authorDate.getTime() + 1000 * 60 * 60 * 24 * 4
+    )
+    vxm.detailGraphModule.selectedRepoId = repoId
+    const allDataPoints = await vxm.detailGraphModule.fetchDetailGraph()
 
-        this.$router.push({
-          name: 'repo-detail',
-          params: { id: repoId },
-          query: {
-            selectedMeasurements: JSON.stringify([
-              {
-                metric: vxm.comparisonGraphModule.selectedMetric,
-                benchmark: vxm.comparisonGraphModule.selectedBenchmark
-              }
-            ]),
-            skip: '' + Math.max(0, index - 20),
-            fetchAmount: '40',
-            relativeToCommit: selectedCommit.hash,
-            lockedToRelativeCommit: 'false'
-          }
-        })
-      })
+    const detailPoint = allDataPoints.find(it => it.hash === dataPoint.hash)
+
+    if (detailPoint && vxm.comparisonGraphModule.selectedDimension) {
+      vxm.detailGraphModule.referenceDatapoint = {
+        dataPoint: detailPoint,
+        dimension: vxm.comparisonGraphModule.selectedDimension
+      }
+    }
+
+    await this.$router.push({
+      name: 'repo-detail',
+      params: { id: repoId }
+    })
   }
 
   // initializing

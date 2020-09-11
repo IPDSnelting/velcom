@@ -1,9 +1,10 @@
 import { createModule, mutation, action } from 'vuex-class-component'
-import { Commit, ComparisonDataPoint } from '@/store/types'
+import { Commit, ComparisonDataPoint, Dimension } from '@/store/types'
 import Vue from 'vue'
 import axios from 'axios'
 import { vxm } from '..'
 import { comparisonDataPointFromJson } from '@/util/GraphJsonHelper'
+import { dimensionFromJson } from '@/util/RepoJsonHelper'
 
 const VxModule = createModule({
   namespaced: 'comparisonGraphModule',
@@ -49,10 +50,11 @@ export class ComparisonGraphStore extends VxModule {
     [key: string]: ComparisonDataPoint[]
   } = {}
 
-  referenceCommit: Commit | null = null
+  referenceCommit: ComparisonDataPoint | null = null
 
   selectedBenchmark: string = ''
   selectedMetric: string = ''
+  selectedDimension: Dimension | null = null
 
   // One week in the past
   private _defaultStartTime: string = new Date(
@@ -125,6 +127,7 @@ export class ComparisonGraphStore extends VxModule {
     })
 
     this.setDatapoints(datapoints)
+    this.selectedDimension = dimensionFromJson(response.data.dimension)
 
     return this.allDatapoints
   }
