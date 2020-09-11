@@ -80,7 +80,7 @@ import CommitBenchmarkActions from '@/components/CommitBenchmarkActions.vue'
     'benchmark-actions': CommitBenchmarkActions
   }
 })
-export default class DatapointDialog extends Vue {
+export default class DetailDatapointDialog extends Vue {
   @Prop({ default: false })
   dialogOpen!: boolean
 

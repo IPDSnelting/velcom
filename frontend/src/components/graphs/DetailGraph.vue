@@ -40,7 +40,7 @@ import {
 import { crosshairIcon } from '../graphs/crosshairIcon'
 import { vxm } from '../../store'
 import { formatDateUTC } from '../../util/TimeUtil'
-import DatapointDialog from '../dialogs/DatapointDialog.vue'
+import DetailDatapointDialog from '../dialogs/DetailDatapointDialog.vue'
 
 type CommitInfo = {
   commit: Commit
@@ -50,7 +50,7 @@ type CommitInfo = {
 
 @Component({
   components: {
-    'datapoint-dialog': DatapointDialog
+    'datapoint-dialog': DetailDatapointDialog
   }
 })
 export default class DetailGraph extends Vue {

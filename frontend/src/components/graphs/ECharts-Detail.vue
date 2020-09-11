@@ -45,7 +45,7 @@ import {
 import { crosshairIcon } from '../graphs/crosshairIcon'
 import { vxm } from '../../store'
 import { formatDateUTC } from '../../util/TimeUtil'
-import DatapointDialog from '../dialogs/DatapointDialog.vue'
+import DetailDatapointDialog from '../dialogs/DetailDatapointDialog.vue'
 import EChartsComp from 'vue-echarts'
 
 import { EChartOption } from 'echarts'
@@ -106,7 +106,7 @@ type CommitInfo = {
 
 @Component({
   components: {
-    'datapoint-dialog': DatapointDialog,
+    'datapoint-dialog': DetailDatapointDialog,
     'v-chart': EChartsComp
   }
 })

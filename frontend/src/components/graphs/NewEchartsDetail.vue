@@ -50,7 +50,7 @@ import 'echarts/lib/component/brush'
 import 'echarts/lib/component/markLine'
 import 'echarts/lib/component/markPoint'
 import { vxm } from '@/store'
-import DatapointDialog from '@/components/dialogs/DatapointDialog.vue'
+import DetailDatapointDialog from '@/components/dialogs/DetailDatapointDialog.vue'
 import { DimensionDetailPoint } from '@/store/modules/detailGraphStore'
 
 type ValidEchartsSeries = EChartOption.SeriesLine | EChartOption.SeriesGraph
@@ -111,7 +111,7 @@ class EchartsDataPoint {
 
 @Component({
   components: {
-    'datapoint-dialog': DatapointDialog,
+    'datapoint-dialog': DetailDatapointDialog,
     'v-chart': EChartsComp
   }
 })
