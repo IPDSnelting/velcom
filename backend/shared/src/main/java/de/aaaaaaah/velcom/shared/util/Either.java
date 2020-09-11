@@ -1,4 +1,4 @@
-package de.aaaaaaah.velcom.backend.util;
+package de.aaaaaaah.velcom.shared.util;
 
 import java.util.Objects;
 import java.util.Optional;
