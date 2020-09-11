@@ -49,7 +49,7 @@ import 'echarts/lib/component/markLine'
 import 'echarts/lib/component/markPoint'
 import { vxm } from '@/store'
 import DatapointDialog from '@/components/dialogs/DatapointDialog.vue'
-import Format = echarts.EChartOption.Tooltip.Format
+import { DimensionDetailPoint } from '@/store/modules/detailGraphStore'
 
 type ValidEchartsSeries = EChartOption.SeriesLine | EChartOption.SeriesGraph
 type SeriesGenerationFunction = (id: DimensionId) => ValidEchartsSeries
@@ -255,7 +255,9 @@ export default class NewEchartsDetail extends Vue {
     this.updateReferenceDatapoint()
   }
 
-  private tooltipFormatter(params: Format | Format[]) {
+  private tooltipFormatter(
+    params: EChartOption.Tooltip.Format | EChartOption.Tooltip.Format[]
+  ) {
     const values = Array.isArray(params) ? params : [params]
 
     const dimensionRows = values.map(val => {
@@ -442,7 +444,7 @@ export default class NewEchartsDetail extends Vue {
   // <!--</editor-fold>-->
 
   // <!--<editor-fold desc="REFERENCE LINE, COMPARE">-->
-  private get commitToCompare(): DetailDataPoint | null {
+  private get commitToCompare(): DimensionDetailPoint | null {
     return vxm.detailGraphModule.commitToCompare
   }
 
@@ -492,6 +494,41 @@ export default class NewEchartsDetail extends Vue {
     const grid = this.chartOptions.grid as EChartOption.Grid
     grid.right = hasReferenceLine ? 70 : 20
   }
+
+  @Watch('commitToCompare')
+  private updateCommitToCompare() {
+    const series = this.chartOptions.series! as ValidEchartsSeries[]
+    // noinspection JSMismatchedCollectionQueryUpdate
+    const markPointData: any[] = []
+
+    if (this.commitToCompare) {
+      const point = this.commitToCompare.dataPoint
+
+      markPointData.push({
+        coord: [
+          point.authorDate,
+          point.values.get(this.commitToCompare.dimension)
+        ],
+        label: {
+          show: true,
+          position: 'inside',
+          formatter: () => 'A'
+        }
+      })
+    }
+
+    const markPointJson = {
+      silent: true,
+      data: markPointData as any
+    }
+
+    // Set on one, delete on all (as the order might change)
+    if (this.commitToCompare) {
+      Vue.set(series[0], 'markPoint', markPointJson)
+    } else {
+      series.forEach(it => Vue.set(it, 'markPoint', markPointJson))
+    }
+  }
   // <!--</editor-fold>-->
 
   // <!--<editor-fold desc="DETAIL DIALOG EVENT HANDLER">-->
@@ -500,7 +537,7 @@ export default class NewEchartsDetail extends Vue {
       return
     }
     const repoId = vxm.detailGraphModule.selectedRepoId
-    const hashFrom = vxm.detailGraphModule.commitToCompare.hash
+    const hashFrom = vxm.detailGraphModule.commitToCompare.dataPoint.hash
     const hashTo = this.pointDialogDatapoint.hash
 
     this.$router.push({
