@@ -3,7 +3,7 @@ import './class-components-router-hooks' // Register custom hooks
 import App from './App.vue'
 import router from './router'
 import { store, vxm } from './store'
-import axios, { AxiosRequestConfig } from 'axios'
+import axios from 'axios'
 import vuetify from './plugins/vuetify'
 import { extractErrorMessage } from './util/ErrorUtils'
 import { restoreFromPassedSession } from './store/persistence'
@@ -43,14 +43,14 @@ axios.interceptors.request.use(function(config) {
   return config
 })
 
-let loadingElements: Set<number> = new Set()
+const loadingElements: Set<number> = new Set()
 
 // Intercept requests and show a loading indicator / errors
 axios.interceptors.request.use(
   function(config) {
     if (!config.hideLoadingSnackbar && !config.hideFromSnackbar) {
-      let prefix = config.snackbarTag || ''
-      let randomTag = Math.floor(Math.random() * Number.MAX_VALUE)
+      const prefix = config.snackbarTag || ''
+      const randomTag = Math.floor(Math.random() * Number.MAX_VALUE)
       config.randomTag = randomTag
       loadingElements.add(randomTag)
 
@@ -67,7 +67,7 @@ axios.interceptors.request.use(
 
     // Always display network errors
     if (!error.response) {
-      let prefix = error.config.snackbarTag || ''
+      const prefix = error.config.snackbarTag || ''
       vue.$globalSnackbar.setError(prefix, extractErrorMessage(error))
     }
     return Promise.reject(error)
@@ -79,7 +79,7 @@ axios.interceptors.response.use(
   function(response) {
     loadingElements.delete(response.config.randomTag!)
 
-    let prefix = response.config.snackbarTag || ''
+    const prefix = response.config.snackbarTag || ''
     vue.$globalSnackbar.finishedLoading(prefix)
 
     if (response.config.showSuccessSnackbar) {
@@ -92,7 +92,7 @@ axios.interceptors.response.use(
     loadingElements.delete(error.config.randomTag)
 
     if (!error.config.hideFromSnackbar && !error.config.hideErrorSnackbar) {
-      let prefix = error.config.snackbarTag || ''
+      const prefix = error.config.snackbarTag || ''
       vue.$globalSnackbar.setError(prefix, extractErrorMessage(error))
     }
     return Promise.reject(error)

@@ -22,10 +22,6 @@ export class QueueStore extends VxModule {
   /**
    * Fetches the whole queue.
    *
-   * @param {{
-   *     hideFromSnackbar?: boolean
-   *   }} [payload] the payload. If hideFromSnackbar is true,
-   * it will not be shown in the snackbar.
    * @returns {Promise<Commit[]>} a promise completing the commits
    * @memberof QueueModuleStore
    */
@@ -35,10 +31,10 @@ export class QueueStore extends VxModule {
       snackbarTag: 'queue'
     })
 
-    let jsonTasks: any[] = response.data.tasks
-    let tasks: Task[] = jsonTasks.map(taskFromJson)
+    const jsonTasks: any[] = response.data.tasks
+    const tasks: Task[] = jsonTasks.map(taskFromJson)
 
-    let workers: Worker[] = response.data.runners.map(workerFromJson)
+    const workers: Worker[] = response.data.runners.map(workerFromJson)
 
     this.setOpenTasks(tasks)
     this.setWorkers(workers)
@@ -80,6 +76,7 @@ export class QueueStore extends VxModule {
    * @memberof QueueModuleStore
    */
   @action
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async dispatchQueueUpwardsOf(commit: CommitDescription): Promise<void> {
     // FIXME: Adjust API?
     throw new Error('Not implementable!')
@@ -103,7 +100,7 @@ export class QueueStore extends VxModule {
   }): Promise<void> {
     await axios.delete(`/queue/${payload.id}`)
     if (!payload.suppressRefetch) {
-      this.fetchQueue()
+      await this.fetchQueue()
     }
   }
 
@@ -114,7 +111,7 @@ export class QueueStore extends VxModule {
    * @memberof QueueModuleStore
    */
   @mutation
-  setOpenTasks(payload: Task[]) {
+  setOpenTasks(payload: Task[]): void {
     this._openTasks = payload.slice()
   }
 
@@ -125,12 +122,12 @@ export class QueueStore extends VxModule {
    * @memberof QueueModuleStore
    */
   @mutation
-  prioritizeOpenTask(id: TaskId) {
-    let oldIndex = this._openTasks.findIndex(task => task.id === id)
+  prioritizeOpenTask(id: TaskId): void {
+    const oldIndex = this._openTasks.findIndex(task => task.id === id)
+    const task = this._openTasks[oldIndex]
     if (oldIndex < 0) {
       return
     }
-    let task = this._openTasks[oldIndex]
     this._openTasks.splice(oldIndex, 1)
     this._openTasks.unshift(task)
   }
@@ -142,8 +139,8 @@ export class QueueStore extends VxModule {
    * @memberof QueueModuleStore
    */
   @mutation
-  deleteOpenTask(id: TaskId) {
-    let target = this._openTasks.findIndex(task => task.id === id)
+  deleteOpenTask(id: TaskId): void {
+    const target = this._openTasks.findIndex(task => task.id === id)
     if (target !== -1) {
       this._openTasks.splice(target, 1)
     }
@@ -156,7 +153,7 @@ export class QueueStore extends VxModule {
    * @memberof QueueModuleStore
    */
   @mutation
-  setWorkers(payload: Worker[]) {
+  setWorkers(payload: Worker[]): void {
     this._workers = payload.slice()
   }
 

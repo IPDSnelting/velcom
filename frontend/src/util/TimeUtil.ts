@@ -5,7 +5,7 @@
  * @param {Date} start the start date
  * @param {Date} end the end date
  */
-export function formatDuration(start: Date, end: Date) {
+export function formatDuration(start: Date, end: Date): string {
   const differenceMillis = Math.abs(end.getTime() - start.getTime())
   let remainingDifferenceSeconds = differenceMillis / 1000
 
@@ -29,7 +29,7 @@ export function formatDuration(start: Date, end: Date) {
  * @returns {string} the formatted date
  */
 export function formatDate(date: number | Date): string {
-  let myDate = date instanceof Date ? date : getDate(date)
+  const myDate = date instanceof Date ? date : getDate(date)
 
   let resultString: string = myDate.getFullYear() + ''
   resultString += '-' + leftZeroPad(2, myDate.getMonth() + 1)
@@ -50,7 +50,7 @@ export function formatDate(date: number | Date): string {
  * @returns {string} the formatted date
  */
 export function formatDateUTC(date: number | Date): string {
-  let myDate = date instanceof Date ? date : getDate(date)
+  const myDate = date instanceof Date ? date : getDate(date)
 
   let resultString: string = myDate.getFullYear() + ''
   resultString += '-' + leftZeroPad(2, myDate.getUTCMonth() + 1)
@@ -73,7 +73,7 @@ export function formatDateUTC(date: number | Date): string {
  * @returns {Date} the matching date
  */
 export function getDate(date: number): Date {
-  let myDate = new Date()
+  const myDate = new Date()
   // Time takes an epoch MILLIS string
   myDate.setTime(date * 1000)
   return myDate
