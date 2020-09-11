@@ -30,8 +30,8 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { mdiHistory, mdiFlash, mdiOneUp } from '@mdi/js'
 import { Prop } from 'vue-property-decorator'
-import { vxm } from '../store'
-import { CommitDescription } from '../store/types'
+import { vxm } from '@/store'
+import { CommitDescription } from '@/store/types'
 
 @Component
 export default class CommitBenchmarkActions extends Vue {
@@ -41,7 +41,7 @@ export default class CommitBenchmarkActions extends Vue {
   @Prop()
   private commitDescription!: CommitDescription
 
-  get isAdmin() {
+  private get isAdmin(): boolean {
     return vxm.userModule.isAdmin
   }
 

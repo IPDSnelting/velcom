@@ -55,6 +55,10 @@
         </v-row>
       </v-card-text>
       <v-card-actions>
+        <benchmark-actions
+          :has-existing-benchmark="commitHasRun"
+          :commit-description="selectedDatapointAsCommitDescription"
+        ></benchmark-actions>
         <v-spacer></v-spacer>
         <v-btn color="error" @click="onClose">Close</v-btn>
       </v-card-actions>
@@ -66,12 +70,15 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
-import { DetailDataPoint, Dimension } from '@/store/types'
+import { CommitDescription, DetailDataPoint, Dimension } from '@/store/types'
 import { vxm } from '@/store'
 import { DimensionDetailPoint } from '@/store/modules/detailGraphStore'
+import CommitBenchmarkActions from '@/components/CommitBenchmarkActions.vue'
 
 @Component({
-  components: {}
+  components: {
+    'benchmark-actions': CommitBenchmarkActions
+  }
 })
 export default class DatapointDialog extends Vue {
   @Prop({ default: false })
@@ -105,6 +112,16 @@ export default class DatapointDialog extends Vue {
 
   private get hasReferenceLine() {
     return vxm.detailGraphModule.referenceDatapoint !== null
+  }
+
+  private get selectedDatapointAsCommitDescription() {
+    return new CommitDescription(
+      vxm.detailGraphModule.selectedRepoId,
+      this.selectedDatapoint.hash,
+      this.selectedDatapoint.author,
+      this.selectedDatapoint.authorDate,
+      this.selectedDatapoint.summary
+    )
   }
 
   private get compareLabel(): string {
