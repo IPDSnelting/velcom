@@ -10,25 +10,24 @@
               color="primary"
               text
               outlined
-              @click="emit('setReference'); emit('close')"
-            >use datapoint as reference</v-btn>
+              @click="setAsReference"
+              >Use datapoint as reference</v-btn
+            >
           </v-col>
         </v-row>
-        <v-row v-if="allowSelectAsReference && !isCommitToCompare(this.selectedDatapoint)">
+        <v-row v-if="allowSelectCompare">
           <v-col>
             <v-btn
               width="100%"
               color="primary"
               text
               outlined
-              @click="emit('selectCommitToCompare'); emit('close')"
-            >Select this commit to compare</v-btn>
+              @click="setAsCompare"
+              >Select this commit to compare</v-btn
+            >
           </v-col>
         </v-row>
-        <v-row
-          v-if="allowSelectAsReference && commitToCompare && !isCommitToCompare(this.selectedDatapoint)"
-          dense
-        >
+        <v-row v-if="allowSelectCompare && commitToCompare" dense>
           <v-col class="mb-2">
             <v-btn
               width="100%"
@@ -36,28 +35,26 @@
               text
               outlined
               class="reflow-button py-2"
-              @click="emit('compareCommits'); emit('close')"
-            >{{ compareLabel }}</v-btn>
+              @click="compareCommits"
+              >{{ compareLabel }}</v-btn
+            >
           </v-col>
         </v-row>
         <v-row dense>
           <v-col>
             <v-btn
+              v-if="hasReferenceLine"
               width="100%"
               color="primary"
               text
               outlined
-              @click="emit('removeReference'); emit('close')"
-            >remove reference line</v-btn>
+              @click="removeReferenceLine"
+              >remove reference line</v-btn
+            >
           </v-col>
         </v-row>
       </v-card-text>
       <v-card-actions>
-        <commit-benchmark-actions
-          v-if="selectedDatapoint"
-          :hasExistingBenchmark="selectedDatapoint.comparison && selectedDatapoint.comparison.second"
-          :commit="selectedCommit"
-        ></commit-benchmark-actions>
         <v-spacer></v-spacer>
         <v-btn color="error" @click="onClose">Close</v-btn>
       </v-card-actions>
@@ -68,49 +65,80 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { Prop, Watch } from 'vue-property-decorator'
-import { Commit, RunComparison } from '../../store/types'
-import CommitBenchmarkActions from '../CommitBenchmarkActions.vue'
-
-type CommitInfo = { commit: Commit; comparison: RunComparison }
+import { Prop } from 'vue-property-decorator'
+import { DetailDataPoint, Dimension } from '@/store/types'
+import { vxm } from '@/store'
 
 @Component({
-  components: {
-    'commit-benchmark-actions': CommitBenchmarkActions
-  }
+  components: {}
 })
 export default class DatapointDialog extends Vue {
   @Prop({ default: false })
   dialogOpen!: boolean
 
-  @Prop({})
-  selectedDatapoint!: CommitInfo | null
+  @Prop()
+  selectedDatapoint!: DetailDataPoint
 
-  @Prop({})
-  commitToCompare!: CommitInfo | null
+  @Prop()
+  dimension!: Dimension
 
-  @Prop({})
-  allowSelectAsReference!: boolean
-
-  private get selectedCommit(): Commit {
-    return this.selectedDatapoint!.commit
+  private get commitHasValue() {
+    return this.selectedDatapoint.successful(this.dimension)
   }
 
-  private isCommitToCompare(datapoint: CommitInfo): boolean {
-    if (this.commitToCompare) {
-      return datapoint.commit.hash === this.commitToCompare.commit.hash
+  private get commitHasRun() {
+    return !this.selectedDatapoint.unbenchmarked(this.dimension)
+  }
+
+  private get allowSelectAsReference(): boolean {
+    return this.commitHasValue
+  }
+
+  private get allowSelectCompare(): boolean {
+    if (!this.commitHasRun) {
+      return false
     }
-    return false
+    if (this.commitToCompare === null) {
+      return true
+    }
+    return this.selectedDatapoint.hash !== this.commitToCompare.hash
+  }
+
+  private get commitToCompare(): DetailDataPoint | null {
+    return vxm.detailGraphModule.commitToCompare
+  }
+
+  private get hasReferenceLine() {
+    return vxm.detailGraphModule.referenceDatapoint !== null
   }
 
   private get compareLabel(): string {
     return this.commitToCompare
-      ? 'Compare this commit to commit ' + this.commitToCompare!.commit.hash
+      ? 'Compare this commit to commit ' + this.commitToCompare.hash
       : ''
   }
 
-  private emit(event: string) {
-    this.$emit(event)
+  private setAsReference() {
+    vxm.detailGraphModule.referenceDatapoint = {
+      dataPoint: this.selectedDatapoint,
+      dimension: this.dimension
+    }
+    this.$emit('close')
+  }
+
+  private removeReferenceLine() {
+    vxm.detailGraphModule.referenceDatapoint = null
+    this.$emit('close')
+  }
+
+  private setAsCompare() {
+    vxm.detailGraphModule.commitToCompare = this.selectedDatapoint
+    this.$emit('close')
+  }
+
+  private compareCommits() {
+    this.$emit('compareCommits')
+    this.$emit('close')
   }
 
   private onClose() {

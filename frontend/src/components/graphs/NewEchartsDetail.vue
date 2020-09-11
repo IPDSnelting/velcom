@@ -2,11 +2,19 @@
   <v-container fluid>
     <v-row align="center" justify="center">
       <v-col>
+        <datapoint-dialog
+          v-if="pointDialogDatapoint"
+          :dialogOpen="pointDialogOpen"
+          :selectedDatapoint="pointDialogDatapoint"
+          :dimension="pointDialogDimension"
+          @close="pointDialogOpen = false"
+        ></datapoint-dialog>
         <div id="chart-container">
           <v-chart
             :autoresize="true"
             :options="chartOptions"
             @datazoom="echartsZoomed"
+            @contextmenu="echartsOpenContextMenu"
           />
         </div>
       </v-col>
@@ -24,7 +32,7 @@ import {
   DimensionId
 } from '@/store/types'
 import { EChartOption } from 'echarts'
-import { Prop } from 'vue-property-decorator'
+import { Prop, Watch } from 'vue-property-decorator'
 import EChartsComp from 'vue-echarts'
 
 import 'echarts/lib/chart/line'
@@ -40,6 +48,8 @@ import 'echarts/lib/component/brush'
 import 'echarts/lib/component/markLine'
 import 'echarts/lib/component/markPoint'
 import { vxm } from '@/store'
+import DatapointDialog from '@/components/dialogs/DatapointDialog.vue'
+import Format = echarts.EChartOption.Tooltip.Format
 
 type ValidEchartsSeries = EChartOption.SeriesLine | EChartOption.SeriesGraph
 type SeriesGenerationFunction = (id: DimensionId) => ValidEchartsSeries
@@ -99,6 +109,7 @@ class EchartsDataPoint {
 
 @Component({
   components: {
+    'datapoint-dialog': DatapointDialog,
     'v-chart': EChartsComp
   }
 })
@@ -113,6 +124,12 @@ export default class NewEchartsDetail extends Vue {
   private seriesGenerator: SeriesGenerationFunction = this.buildLineSeries
   private zoomStartPercent: number = 0
   private zoomEndPercent: number = 1
+
+  // >>>> Datapoint Dialog >>>>
+  private pointDialogOpen: boolean = false
+  private pointDialogDatapoint: DetailDataPoint | null = null
+  private pointDialogDimension: Dimension | null = null
+  // <<<< Datapoint Dialog <<<<
 
   private get detailDataPoints(): DetailDataPoint[] {
     return [
@@ -225,44 +242,12 @@ export default class NewEchartsDetail extends Vue {
         trigger: 'axis',
         axisPointer: {},
         // TODO: Extract in own helper?
-        formatter: params => {
-          const values = Array.isArray(params) ? params : [params]
-
-          const dimensionRows = values.map(val => {
-            const dimension = this.dimensions[val.seriesIndex || 0]
-            const color = this.dimensionColor(dimension)
-            const datapoint = val.data as EchartsDataPoint
-
-            return `
-                <tr>
-                  <td>
-                    <span class="color-preview" style="background-color: ${color}"></span>
-                    ${dimension.benchmark} - ${dimension.metric}
-                  </td>
-                  <td>${this.numberFormat.format(datapoint.dataValue)}</td>
-                </tr>
-                `
-          })
-
-          const samplePoint = values[0].data as EchartsDataPoint
-
-          return `
-                <table class="echarts-tooltip-table">
-                  <tr>
-                    <td>Hash</td>
-                    <td>${samplePoint.name}</td>
-                  </tr>
-                  </tr>
-                    <td>Message</td>
-                    <td>${samplePoint.summary}</td>
-                  </tr>
-                  ${dimensionRows.join('\n')}
-                </table>
-            `
-        }
+        formatter: this.tooltipFormatter
       },
       series: this.dimensions.map(this.seriesGenerator)
     }
+
+    this.updateReferenceDatapoint()
   }
 
   private buildEchartsDataPoints(dimension: DimensionId): EchartsDataPoint[] {
@@ -409,6 +394,74 @@ export default class NewEchartsDetail extends Vue {
     this.updateGraph()
   }
 
+  // ==== REFERENCE LINE, COMPARE ====
+  private get commitToCompare(): DetailDataPoint | null {
+    return vxm.detailGraphModule.commitToCompare
+  }
+
+  private get referenceDatapoint() {
+    return vxm.detailGraphModule.referenceDatapoint
+  }
+
+  @Watch('referenceDatapoint')
+  private updateReferenceDatapoint() {
+    const series = this.chartOptions.series! as ValidEchartsSeries[]
+
+    // noinspection JSMismatchedCollectionQueryUpdate
+    let markLineData: { yAxis: number }[] = []
+    if (this.referenceDatapoint !== null) {
+      const reference = this.referenceDatapoint
+      const referenceValue = reference.dataPoint.values.get(reference.dimension)
+      if (typeof referenceValue === 'number') {
+        markLineData = [{ yAxis: referenceValue }]
+      }
+    }
+    const hasReferenceLine = markLineData.length > 0
+
+    const markLineJson = {
+      symbol: 'none',
+      lineStyle: {
+        type: 'dotted',
+        width: 2
+      },
+      label: {
+        show: true,
+        formatter: () => {
+          return 'Reference'
+        }
+      },
+      silent: true,
+      data: markLineData as any
+    }
+
+    // Set on one, delete on all (as the order might change)
+    if (hasReferenceLine) {
+      Vue.set(series[0], 'markLine', markLineJson)
+    } else {
+      series.forEach(it => Vue.set(it, 'markLine', markLineJson))
+    }
+
+    // Adjust padding so the label is not cut off on the right
+    const grid = this.chartOptions.grid as EChartOption.Grid
+    grid.right = hasReferenceLine ? 70 : 20
+  }
+
+  // ==== DETAIL DIALOG EVENT HANDLER ====
+  private pointDialogExecuteCompare() {
+    if (!vxm.detailGraphModule.commitToCompare || !this.pointDialogDatapoint) {
+      return
+    }
+    const repoId = vxm.detailGraphModule.selectedRepoId
+    const hashFrom = vxm.detailGraphModule.commitToCompare.hash
+    const hashTo = this.pointDialogDatapoint.hash
+
+    this.$router.push({
+      name: 'run-comparison',
+      params: { first: repoId, second: repoId },
+      query: { hash1: hashFrom, hash2: hashTo }
+    })
+  }
+
   // ==== ECHARTS EVENT HANDLER ====
   private echartsZoomed(e: any) {
     let event: {
@@ -444,6 +497,69 @@ export default class NewEchartsDetail extends Vue {
     if (this.selectAppropriateSeries() === 're-render') {
       this.updateGraph()
     }
+  }
+
+  private echartsOpenContextMenu(e: any) {
+    if (!e.data) {
+      return
+    }
+
+    const echartsPoint = e.data as EchartsDataPoint
+
+    const detailPoint = this.detailDataPoints.find(
+      it => it.hash === echartsPoint.name
+    )
+    const dimension = this.dimensions[e.seriesIndex]
+
+    if (!detailPoint || !dimension) {
+      return
+    }
+
+    // Hide browser right click context menu
+    if ((e as any).event && (e as any).event.event) {
+      const event = (e as any).event.event as Event
+      event.preventDefault()
+    }
+
+    this.pointDialogDatapoint = detailPoint
+    this.pointDialogDimension = dimension
+    this.pointDialogOpen = true
+  }
+
+  private tooltipFormatter(params: Format | Format[]) {
+    const values = Array.isArray(params) ? params : [params]
+
+    const dimensionRows = values.map(val => {
+      const dimension = this.dimensions[val.seriesIndex || 0]
+      const color = this.dimensionColor(dimension)
+      const datapoint = val.data as EchartsDataPoint
+
+      return `
+                <tr>
+                  <td>
+                    <span class="color-preview" style="background-color: ${color}"></span>
+                    ${dimension.benchmark} - ${dimension.metric}
+                  </td>
+                  <td>${this.numberFormat.format(datapoint.dataValue)}</td>
+                </tr>
+                `
+    })
+
+    const samplePoint = values[0].data as EchartsDataPoint
+
+    return `
+                <table class="echarts-tooltip-table">
+                  <tr>
+                    <td>Hash</td>
+                    <td>${samplePoint.name}</td>
+                  </tr>
+                  </tr>
+                    <td>Message</td>
+                    <td>${samplePoint.summary}</td>
+                  </tr>
+                  ${dimensionRows.join('\n')}
+                </table>
+            `
   }
 
   // ==== THEME HELPER ====
