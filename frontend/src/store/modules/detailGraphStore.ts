@@ -12,20 +12,47 @@ export function detailGraphStoreFromJson(json?: string): any {
   if (!json) {
     return {}
   }
+  const hydrateDimension = (it: Dimension) =>
+    new Dimension(it.benchmark, it.metric, it.unit, it.interpretation)
+  const hydrateDetailPoint = (it: DetailDataPoint) => {
+    return new DetailDataPoint(
+      it.hash,
+      it.parents,
+      it.author,
+      new Date(it.authorDate),
+      it.summary,
+      new Map(it.values)
+    )
+  }
+
   const parsed = JSON.parse(json)
   // Convert flat json to real object
-  parsed._selectedDimensions = parsed._selectedDimensions.map(
-    (it: Dimension) =>
-      new Dimension(it.benchmark, it.metric, it.unit, it.interpretation)
-  )
+  parsed._selectedDimensions = parsed._selectedDimensions.map(hydrateDimension)
+  if (parsed._referenceDatapoint) {
+    parsed._referenceDatapoint = {
+      dimension: hydrateDimension(parsed._referenceDatapoint.dimension),
+      dataPoint: hydrateDetailPoint(parsed._referenceDatapoint.dataPoint)
+    }
+  }
+
   return parsed
 }
 
 export function detailGraphStoreToJson(store: DetailGraphStore): string {
+  let referenceDataPoint = (store as any)._referenceDatapoint
+  if (referenceDataPoint) {
+    const persistablePoint = Object.assign({}, referenceDataPoint.dataPoint)
+    persistablePoint.values = Array.from(persistablePoint.values.entries())
+
+    referenceDataPoint = {
+      dataPoint: persistablePoint,
+      dimension: referenceDataPoint.dimension
+    }
+  }
   return JSON.stringify({
     _selectedRepoId: (store as any)._selectedRepoId,
     _selectedDimensions: (store as any)._selectedDimensions,
-    _referenceDatapoint: (store as any)._referenceDatapoint
+    _referenceDatapoint: referenceDataPoint
   })
 }
 
@@ -33,11 +60,12 @@ export class DetailGraphStore extends VxModule {
   private _detailGraph: DetailDataPoint[] = []
   private _selectedRepoId: RepoId = ''
   private _selectedDimensions: Dimension[] = []
-  // Not a real object, needs to be translated so persistence works.
   private _referenceDatapoint: {
     dataPoint: DetailDataPoint
     dimension: Dimension
   } | null = null
+
+  commitToCompare: DetailDataPoint | null = null
 
   /**
    * If true the user is locked to the relative commit, if false the
@@ -214,7 +242,7 @@ export class DetailGraphStore extends VxModule {
    * @type {string}
    * @memberof RepoDetailStore
    */
-  get selectedRepoId(): string {
+  get selectedRepoId(): RepoId {
     return this._selectedRepoId
   }
 
@@ -223,7 +251,7 @@ export class DetailGraphStore extends VxModule {
    *
    * @memberof RepoDetailStore
    */
-  set selectedRepoId(selectedRepoId: string) {
+  set selectedRepoId(selectedRepoId: RepoId) {
     this._selectedRepoId = selectedRepoId
   }
 
