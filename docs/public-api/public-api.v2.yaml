@@ -458,7 +458,7 @@ paths:
       summary: test auth token
       tags: []
       responses:
-        '200':
+        '204':
           description: OK
         '401':
           description: Unauthorized
