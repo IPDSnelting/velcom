@@ -234,7 +234,7 @@ import CommitSelectionComponent from '../components/CommitSelectionComponent.vue
 import MeasurementIdSelection from '../components/graphs/MeasurementIdSelection.vue'
 import MatrixMeasurementIdSelection from '../components/graphs/MatrixMeasurementIdSelection.vue'
 import DytailGraph from '../components/graphs/Dygraph-Detail.vue'
-import EchartsGraph from '@/components/graphs/ECharts-Detail.vue'
+// import EchartsGraph from '@/components/graphs/ECharts-Detail.vue'
 
 type graphFlavour = {
   name: string
