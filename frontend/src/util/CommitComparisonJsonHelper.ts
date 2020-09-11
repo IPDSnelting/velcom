@@ -69,7 +69,7 @@ export function commitFromJson(json: any): Commit {
     new Date(json.author_date * 1000),
     json.committer,
     new Date(json.committer_date * 1000),
-    json.message,
+    json.message || '',
     json.summary,
     json.runs.map(runDescriptionFromJson),
     json.parents.map(commitDescriptionFromJson),
