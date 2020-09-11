@@ -94,7 +94,7 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
-import { Repo, Commit, CommitComparison } from '@/store/types'
+import { Repo, Commit } from '@/store/types'
 import { vxm } from '@/store'
 import { mdiHelpCircleOutline, mdiChevronUp, mdiChevronDown } from '@mdi/js'
 import CommitOverviewBase from '@/components/overviews/CommitOverviewBase.vue'
@@ -149,15 +149,17 @@ export default class RepoCommitOverview extends Vue {
   }
 
   private get commitHistory() {
-    return vxm.detailGraphModule.repoHistory
+    // return vxm.detailGraphModule.repoHistory
+    return []
   }
 
   private get allCommits(): Commit[] {
-    return vxm.detailGraphModule.repoHistory.map(
-      (datapoint: { commit: Commit; comparison: CommitComparison }) => {
-        return datapoint.commit
-      }
-    )
+    return []
+    // return vxm.detailGraphModule.repoHistory.map(
+    //   (datapoint: { commit: Commit; comparison: CommitComparison }) => {
+    //     return datapoint.commit
+    //   }
+    // )
   }
 
   private get secondCommitCandidates(): Commit[] {
