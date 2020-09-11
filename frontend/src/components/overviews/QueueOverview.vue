@@ -97,12 +97,11 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { vxm } from '@/store/index'
-import { Commit, Worker, Task } from '@/store/types'
-import { mdiRocket, mdiDelete } from '@mdi/js'
-import { formatDateUTC, formatDate } from '../../util/TimeUtil'
+import { vxm } from '@/store'
+import { Task, Worker } from '@/store/types'
+import { mdiDelete, mdiRocket } from '@mdi/js'
 import CommitOverviewBase from './CommitOverviewBase.vue'
-import { extractErrorMessage } from '../../util/ErrorUtils'
+import { extractErrorMessage } from '@/util/ErrorUtils'
 import TarTaskOverview from './TarTaskOverview.vue'
 
 // FIXME: Check if the "in-progress" view works
@@ -120,12 +119,11 @@ export default class QueueOverview extends Vue {
   private liftsInProgress: Set<string> = new Set()
 
   private get queueItems(): Task[] {
-    let openTasks = vxm.queueModule.openTasks.slice()
-    return openTasks
+    return vxm.queueModule.openTasks.slice()
   }
 
-  private inProgress(task: Task) {
-    return false
+  private inProgress(task: Task): boolean {
+    return this.queueItems.find(it => it.id === task.id) !== undefined
   }
 
   private get isAdmin() {
@@ -156,14 +154,14 @@ export default class QueueOverview extends Vue {
       }
     }
 
-    let offsetTop = srcElement.getBoundingClientRect().top
-    let offsetLeft = srcElement.getBoundingClientRect().left
-    let parent = srcElement.parentElement!
+    const offsetTop = srcElement.getBoundingClientRect().top
+    const offsetLeft = srcElement.getBoundingClientRect().left
+    const parent = srcElement.parentElement!
 
-    let startAngle = Math.random() * 2 * Math.PI
+    const startAngle = Math.random() * 2 * Math.PI
     srcElement.style.rotate = startAngle + 'rad'
 
-    let clonedElement = srcElement.cloneNode(true) as HTMLElement
+    const clonedElement = srcElement.cloneNode(true) as HTMLElement
 
     vxm.queueModule
       .dispatchPrioritizeOpenTask(task.id)
@@ -193,10 +191,10 @@ export default class QueueOverview extends Vue {
       if (Math.random() < 0.5) {
         alpha *= -1
       }
-      let rocketTilt = Math.PI / 4
+      const rocketTilt = Math.PI / 4
       alpha += -startAngle + rocketTilt
 
-      let direction = [Math.cos(alpha), Math.sin(alpha)]
+      const direction = [Math.cos(alpha), Math.sin(alpha)]
 
       while (
         rawTargetY > 0 &&
@@ -258,12 +256,13 @@ export default class QueueOverview extends Vue {
       })
   }
 
-  created() {
+  created(): void {
     vxm.queueModule.fetchQueue()
     // this.timerId = setInterval(() => vxm.queueModule.fetchQueue(), 10 * 1000)
   }
 
-  beforeDestroy() {
+  // noinspection JSUnusedGlobalSymbols
+  beforeDestroy(): void {
     if (this.timerId) {
       clearInterval(this.timerId)
     }
