@@ -1,5 +1,5 @@
 import { createModule, mutation, action } from 'vuex-class-component'
-import { Repo, RepoBranch, RepoId, Dimension } from '@/store/types'
+import { Repo, RepoId, Dimension } from '@/store/types'
 import Vue from 'vue'
 import axios from 'axios'
 import { vxm } from '..'
@@ -38,7 +38,7 @@ export class RepoStore extends VxModule {
 
     // FIXME: Remove this. But this keeps the API a bit more stable.
     if (Object.keys(this.repos).length > 0) {
-      return
+      return this.allRepos
     }
 
     const repos: Repo[] = response.data.repos.map(repoFromJson)
