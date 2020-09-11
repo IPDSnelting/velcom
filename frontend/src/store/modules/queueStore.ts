@@ -47,7 +47,7 @@ export class QueueStore extends VxModule {
     hash: CommitHash
     repoId: RepoId
   }): Promise<void> {
-    await axios.post(`/queue/${payload.repoId}/${payload.hash}`, {
+    await axios.post(`/queue/commit/${payload.repoId}/${payload.hash}`, {
       showSuccessSnackbar: true
     })
     // We do not insert the task locally as we don't know where!
