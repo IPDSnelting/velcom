@@ -319,7 +319,7 @@ export default class EchartsDetailGraph extends Vue {
   // <!--</editor-fold>-->
 
   // <!--<editor-fold desc="SERIES GENERATION">-->
-  private buildEchartsDataPoints(dimension: DimensionId): EchartsDataPoint[] {
+  private buildPointsForSingle(dimension: DimensionId) {
     const findFirstSuccessful = () => {
       for (let i = 0; i < this.detailDataPoints.length; i++) {
         const value = this.detailDataPoints[i].values.get(dimension)
@@ -366,11 +366,21 @@ export default class EchartsDetailGraph extends Vue {
     })
   }
 
+  private get echartsDataPoints(): Map<DimensionId, EchartsDataPoint[]> {
+    const map: Map<DimensionId, EchartsDataPoint[]> = new Map()
+
+    this.dimensions.forEach(dimension =>
+      map.set(dimension, this.buildPointsForSingle(dimension))
+    )
+
+    return map
+  }
+
   private buildLineSeries(dimension: DimensionId): EChartOption.SeriesLine {
     // noinspection JSMismatchedCollectionQueryUpdate
-    const echartPoints: EchartsDataPoint[] = this.buildEchartsDataPoints(
+    const echartPoints: EchartsDataPoint[] = this.echartsDataPoints.get(
       dimension
-    )
+    )!
 
     return {
       type: 'line',
@@ -386,9 +396,9 @@ export default class EchartsDetailGraph extends Vue {
 
   private buildGraphSeries(dimension: DimensionId): EChartOption.SeriesGraph {
     // noinspection JSMismatchedCollectionQueryUpdate
-    const echartPoints: EchartsDataPoint[] = this.buildEchartsDataPoints(
+    const echartPoints: EchartsDataPoint[] = this.echartsDataPoints.get(
       dimension
-    )
+    )!
     const links: EChartOption.SeriesGraph.LinkObject[] = this.detailDataPoints.flatMap(
       point => {
         return point.parents.map(parent => ({
