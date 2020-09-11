@@ -90,16 +90,6 @@ export class DetailGraphStore extends VxModule {
 
   commitToCompare: DimensionDetailPoint | null = null
 
-  /**
-   * If true the user is locked to the relative commit, if false the
-   * relative commit will be ignored.
-   *
-   * @type {boolean}
-   * @memberof RepoDetailStore
-   */
-  lockedToRelativeCommit: boolean = false
-  relativeToCommit: string = ''
-
   // One week in the past, as elegant as ever
   private _defaultStartTime: Date = new Date(
     new Date().setDate(new Date().getDate() - 7)
@@ -156,8 +146,10 @@ export class DetailGraphStore extends VxModule {
   private get dimensionString(): string {
     let resultString: string = ''
 
-    const groupedDimensions = this._selectedDimensions.reduce(
-      (benchmarkGroup: { [key: string]: any[] }, cur: Dimension) => {
+    const groupedDimensions: {
+      [key: string]: Dimension[]
+    } = this._selectedDimensions.reduce(
+      (benchmarkGroup: { [key: string]: Dimension[] }, cur: Dimension) => {
         ;(benchmarkGroup[cur.benchmark] =
           benchmarkGroup[cur.benchmark] || []).push(cur)
         return benchmarkGroup
