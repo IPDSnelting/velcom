@@ -68,6 +68,7 @@ import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 import { DetailDataPoint, Dimension } from '@/store/types'
 import { vxm } from '@/store'
+import { DimensionDetailPoint } from '@/store/modules/detailGraphStore'
 
 @Component({
   components: {}
@@ -95,16 +96,10 @@ export default class DatapointDialog extends Vue {
   }
 
   private get allowSelectCompare(): boolean {
-    if (!this.commitHasRun) {
-      return false
-    }
-    if (this.commitToCompare === null) {
-      return true
-    }
-    return this.selectedDatapoint.hash !== this.commitToCompare.hash
+    return this.commitHasValue
   }
 
-  private get commitToCompare(): DetailDataPoint | null {
+  private get commitToCompare(): DimensionDetailPoint | null {
     return vxm.detailGraphModule.commitToCompare
   }
 
@@ -114,7 +109,7 @@ export default class DatapointDialog extends Vue {
 
   private get compareLabel(): string {
     return this.commitToCompare
-      ? 'Compare this commit to commit ' + this.commitToCompare.hash
+      ? 'Compare this commit to commit ' + this.commitToCompare.dataPoint.hash
       : ''
   }
 
@@ -132,7 +127,10 @@ export default class DatapointDialog extends Vue {
   }
 
   private setAsCompare() {
-    vxm.detailGraphModule.commitToCompare = this.selectedDatapoint
+    vxm.detailGraphModule.commitToCompare = {
+      dimension: this.dimension,
+      dataPoint: this.selectedDatapoint
+    }
     this.$emit('close')
   }
 

@@ -8,51 +8,77 @@ const VxModule = createModule({
   strict: false
 })
 
+export type DimensionDetailPoint = {
+  dataPoint: DetailDataPoint
+  dimension: Dimension
+}
+
+function hydrateDimension(it: Dimension) {
+  return new Dimension(it.benchmark, it.metric, it.unit, it.interpretation)
+}
+
+function hydrateDetailPoint(it: DetailDataPoint) {
+  return new DetailDataPoint(
+    it.hash,
+    it.parents,
+    it.author,
+    new Date(it.authorDate),
+    it.summary,
+    new Map(it.values)
+  )
+}
+
+function deserializeDimensionDetailPoint(
+  point: any
+): DimensionDetailPoint | null {
+  if (!point) {
+    return null
+  }
+  return {
+    dimension: hydrateDimension(point.dimension),
+    dataPoint: hydrateDetailPoint(point.dataPoint)
+  }
+}
+
 export function detailGraphStoreFromJson(json?: string): any {
   if (!json) {
     return {}
-  }
-  const hydrateDimension = (it: Dimension) =>
-    new Dimension(it.benchmark, it.metric, it.unit, it.interpretation)
-  const hydrateDetailPoint = (it: DetailDataPoint) => {
-    return new DetailDataPoint(
-      it.hash,
-      it.parents,
-      it.author,
-      new Date(it.authorDate),
-      it.summary,
-      new Map(it.values)
-    )
   }
 
   const parsed = JSON.parse(json)
   // Convert flat json to real object
   parsed._selectedDimensions = parsed._selectedDimensions.map(hydrateDimension)
-  if (parsed._referenceDatapoint) {
-    parsed._referenceDatapoint = {
-      dimension: hydrateDimension(parsed._referenceDatapoint.dimension),
-      dataPoint: hydrateDetailPoint(parsed._referenceDatapoint.dataPoint)
-    }
-  }
+  parsed._referenceDatapoint = deserializeDimensionDetailPoint(
+    parsed._referenceDatapoint
+  )
+  parsed.commitToCompare = deserializeDimensionDetailPoint(
+    parsed.commitToCompare
+  )
 
   return parsed
 }
 
-export function detailGraphStoreToJson(store: DetailGraphStore): string {
-  let referenceDataPoint = (store as any)._referenceDatapoint
-  if (referenceDataPoint) {
-    const persistablePoint = Object.assign({}, referenceDataPoint.dataPoint)
-    persistablePoint.values = Array.from(persistablePoint.values.entries())
-
-    referenceDataPoint = {
-      dataPoint: persistablePoint,
-      dimension: referenceDataPoint.dimension
-    }
+function serializeDimensionDetailPoint(point: DimensionDetailPoint | null) {
+  if (!point) {
+    return null
   }
+  const persistablePoint: any = Object.assign({}, point.dataPoint)
+  persistablePoint.values = Array.from(persistablePoint.values.entries())
+  return {
+    dataPoint: persistablePoint,
+    dimension: point.dimension
+  }
+}
+
+export function detailGraphStoreToJson(store: DetailGraphStore): string {
+  const referenceDataPoint = serializeDimensionDetailPoint(
+    (store as any)._referenceDatapoint
+  )
   return JSON.stringify({
     _selectedRepoId: (store as any)._selectedRepoId,
     _selectedDimensions: (store as any)._selectedDimensions,
-    _referenceDatapoint: referenceDataPoint
+    _referenceDatapoint: referenceDataPoint,
+    commitToCompare: serializeDimensionDetailPoint(store.commitToCompare)
   })
 }
 
@@ -60,12 +86,9 @@ export class DetailGraphStore extends VxModule {
   private _detailGraph: DetailDataPoint[] = []
   private _selectedRepoId: RepoId = ''
   private _selectedDimensions: Dimension[] = []
-  private _referenceDatapoint: {
-    dataPoint: DetailDataPoint
-    dimension: Dimension
-  } | null = null
+  private _referenceDatapoint: DimensionDetailPoint | null = null
 
-  commitToCompare: DetailDataPoint | null = null
+  commitToCompare: DimensionDetailPoint | null = null
 
   /**
    * If true the user is locked to the relative commit, if false the
