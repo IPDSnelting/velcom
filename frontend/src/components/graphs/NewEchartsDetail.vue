@@ -16,6 +16,7 @@
             @datazoom="echartsZoomed"
             @contextmenu="echartsOpenContextMenu"
             @click="echartsClicked"
+            @restore="echartsZoomReset"
           />
         </div>
       </v-col>
@@ -229,6 +230,26 @@ export default class NewEchartsDetail extends Vue {
       yAxis: {
         type: 'value',
         scale: this.beginYAtZero
+      },
+      toolbox: {
+        left: 'center',
+        show: true,
+        showTitle: false, // hide the default text so they don't overlap each other
+        feature: {
+          restore: { show: true, title: 'Reset' },
+          saveAsImage: { show: true, title: 'Save as Image' },
+          dataZoom: {
+            title: {
+              zoom: 'Zoom (brush)',
+              back: 'Reset zoom'
+            },
+            start: this.zoomStartPercent * 100,
+            end: this.zoomEndPercent * 100
+          }
+        },
+        tooltip: {
+          show: true
+        }
       },
       dataZoom: [
         {
@@ -584,6 +605,12 @@ export default class NewEchartsDetail extends Vue {
     if (this.selectAppropriateSeries() === 're-render') {
       this.updateGraph()
     }
+  }
+
+  private echartsZoomReset() {
+    this.zoomStartPercent = 0
+    this.zoomEndPercent = 1
+    this.updateGraph()
   }
 
   private echartsOpenContextMenu(e: any) {
