@@ -1,5 +1,6 @@
 package de.aaaaaaah.velcom.backend.restapi.jsonobjects;
 
+import de.aaaaaaah.velcom.backend.access.entities.DimensionInfo;
 import de.aaaaaaah.velcom.backend.access.entities.Measurement;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementError;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementValues;
@@ -7,69 +8,71 @@ import de.aaaaaaah.velcom.backend.util.Either;
 import java.util.List;
 import javax.annotation.Nullable;
 
-/**
- * A helper class for serialization representing a measurement.
- */
 public class JsonMeasurement {
 
-	private final String benchmark;
-	private final String metric;
-	@Nullable
-	private final String unit;
-	@Nullable
-	private final String interpretation;
-	@Nullable
-	private final List<Double> values;
+	private final JsonDimension dimension;
 	@Nullable
 	private final Double value;
 	@Nullable
-	private final String errorMessage;
+	private final List<Double> values;
+	@Nullable
+	private final String error;
 
-	public JsonMeasurement(Measurement measurement) {
-		benchmark = measurement.getMeasurementName().getBenchmark();
-		metric = measurement.getMeasurementName().getMetric();
+	private JsonMeasurement(JsonDimension dimension, @Nullable Double value,
+		@Nullable List<Double> values, @Nullable String error) {
+
+		this.dimension = dimension;
+		this.value = value;
+		this.values = values;
+		this.error = error;
+	}
+
+	public static JsonMeasurement successful(JsonDimension dimension, double value,
+		List<Double> values) {
+
+		return new JsonMeasurement(dimension, value, values, null);
+	}
+
+	public static JsonMeasurement successful(JsonDimension dimension, double value) {
+
+		return new JsonMeasurement(dimension, value, null, null);
+	}
+
+	public static JsonMeasurement failed(JsonDimension dimension, String error) {
+		return new JsonMeasurement(dimension, null, null, error);
+	}
+
+	/**
+	 * Create a {@link JsonMeasurement} from a {@link Measurement}.
+	 *
+	 * @param measurement the {@link Measurement} to use
+	 * @param allValues whether the full lists of values should also be included
+	 * @return the newly created {@link JsonMeasurement}
+	 */
+	public static JsonMeasurement fromMeasurement(Measurement measurement, DimensionInfo dimensionInfo, boolean allValues) {
+
+		if (!measurement.getDimension().equals(dimensionInfo.getDimension())) {
+			throw new IllegalArgumentException("measurement must have same dimension as dimension info");
+		}
+
+		JsonDimension dimension = JsonDimension.fromDimensionInfo(dimensionInfo);
 
 		Either<MeasurementError, MeasurementValues> content = measurement.getContent();
-		if (content.isRight()) {
-			//noinspection OptionalGetWithoutIsPresent
-			MeasurementValues measurementValues = content.getRight().get();
-			unit = measurement.getUnit().getName();
-			interpretation = measurement.getInterpretation().getTextualRepresentation();
-			values = measurementValues.getValues();
-			value = measurementValues.getAverageValue();
-			errorMessage = null;
+		if (content.isLeft()) {
+			MeasurementError left = content.getLeft().get();
+			return failed(dimension, left.getErrorMessage());
 		} else {
-			//noinspection OptionalGetWithoutIsPresent
-			MeasurementError measurementError = content.getLeft().get();
-			unit = null;
-			interpretation = null;
-			values = null;
-			value = null;
-			errorMessage = measurementError.getErrorMessage();
+			MeasurementValues right = content.getRight().get();
+			if (allValues) {
+				return successful(dimension, right.getAverageValue(), right.getValues());
+			} else {
+				return successful(dimension, right.getAverageValue());
+			}
 		}
 	}
 
-	public String getBenchmark() {
-		return benchmark;
-	}
-
-	public String getMetric() {
-		return metric;
-	}
-
-	@Nullable
-	public String getUnit() {
-		return unit;
-	}
-
-	@Nullable
-	public String getInterpretation() {
-		return interpretation;
-	}
-
-	@Nullable
-	public List<Double> getValues() {
-		return values;
+	public JsonDimension getDimension() {
+		return dimension;
 	}
 
 	@Nullable
@@ -78,7 +81,12 @@ public class JsonMeasurement {
 	}
 
 	@Nullable
-	public String getErrorMessage() {
-		return errorMessage;
+	public List<Double> getValues() {
+		return values;
+	}
+
+	@Nullable
+	public String getError() {
+		return error;
 	}
 }

@@ -6,10 +6,11 @@ import static org.jooq.codegen.db.Tables.TASK;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.entities.CommitId;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
-import de.aaaaaaah.velcom.backend.access.entities.RepoSource;
-import de.aaaaaaah.velcom.backend.access.entities.TarSource;
 import de.aaaaaaah.velcom.backend.access.entities.Task;
 import de.aaaaaaah.velcom.backend.access.entities.TaskId;
+import de.aaaaaaah.velcom.backend.access.entities.sources.CommitSource;
+import de.aaaaaaah.velcom.backend.access.entities.sources.TarSource;
+import de.aaaaaaah.velcom.backend.access.policy.QueuePriority;
 import de.aaaaaaah.velcom.backend.storage.db.DBWriteAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import java.sql.Timestamp;
@@ -64,14 +65,24 @@ public class TaskWriteAccess extends TaskReadAccess {
 	 * Inserts the given tasks into the database.
 	 *
 	 * @param tasks the tasks to insert
+	 * @return a collection of all tasks that were actually inserted because they were not already in
+	 * 	the database beforehand
 	 */
-	public void insertTasks(Collection<Task> tasks) {
+	public Collection<Task> insertTasks(Collection<Task> tasks) {
 		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
-			insertTasks(tasks, db);
+			return insertTasks(tasks, db);
 		}
 	}
 
-	void insertTasks(Collection<Task> originalTasks, DBWriteAccess db) {
+	/**
+	 * Inserts the given tasks into the database by using the provided write access.
+	 *
+	 * @param originalTasks the tasks to insert
+	 * @param db the access that will be used
+	 * @return a collection of all tasks that were actually inserted because they were not already in
+	 * 	the database beforehand
+	 */
+	Collection<Task> insertTasks(Collection<Task> originalTasks, DBWriteAccess db) {
 		// Create mutable copy of task list
 		final List<Task> tasks = new ArrayList<>(originalTasks);
 
@@ -94,15 +105,11 @@ public class TaskWriteAccess extends TaskReadAccess {
 			Condition subCondition = TASK.REPO_ID.eq(commitId.getRepoId().getId().toString())
 				.and(TASK.COMMIT_HASH.eq(commitId.getHash().getHash()));
 
-			if (condition == null) {
-				condition = subCondition;
-			} else {
-				condition = condition.or(subCondition);
-			}
+			condition = condition.or(subCondition);
 		}
 
 		final Set<TaskId> inDatabaseTaskIds = new HashSet<>();
-		final Set<RepoSource> inDatabaseTaskCommitIds = new HashSet<>();
+		final Set<CommitSource> inDatabaseTaskCommitIds = new HashSet<>();
 		final Condition finalCondition = condition;
 
 		db.transaction(transaction -> {
@@ -112,7 +119,7 @@ public class TaskWriteAccess extends TaskReadAccess {
 				.forEach(taskRecord -> {
 					inDatabaseTaskIds.add(new TaskId(UUID.fromString(taskRecord.getId())));
 					if (taskRecord.getCommitHash() != null) {
-						inDatabaseTaskCommitIds.add(new RepoSource(
+						inDatabaseTaskCommitIds.add(new CommitSource(
 							new RepoId(UUID.fromString(taskRecord.getRepoId())),
 							new CommitHash(taskRecord.getCommitHash())
 						));
@@ -128,25 +135,20 @@ public class TaskWriteAccess extends TaskReadAccess {
 			if (!tasks.isEmpty()) {
 				var insert = transaction.insertInto(TASK)
 					.columns(TASK.ID, TASK.AUTHOR, TASK.PRIORITY, TASK.INSERT_TIME,
-						TASK.UPDATE_TIME, TASK.TAR_NAME, TASK.REPO_ID, TASK.COMMIT_HASH);
+						TASK.UPDATE_TIME, TASK.DESCRIPTION, TASK.REPO_ID, TASK.COMMIT_HASH);
 
 				for (Task task : tasks) {
 					insert.values(
 						task.getId().getId().toString(),
 						task.getAuthor(),
-						task.getPriority(),
+						task.getPriority().asInt(),
 						Timestamp.from(task.getInsertTime()),
 						Timestamp.from(task.getUpdateTime()),
-						task.getSource().getRight().map(TarSource::getTarName).orElse(null),
+						task.getSource().getRight().map(TarSource::getDescription).orElse(null),
+						task.getRepoId().map(RepoId::getId).map(UUID::toString).orElse(null),
 						task.getSource()
 							.getLeft()
-							.map(RepoSource::getRepoId)
-							.map(RepoId::getId)
-							.map(UUID::toString)
-							.orElse(null),
-						task.getSource()
-							.getLeft()
-							.map(RepoSource::getHash)
+							.map(CommitSource::getHash)
 							.map(CommitHash::getHash)
 							.orElse(null)
 					);
@@ -160,6 +162,8 @@ public class TaskWriteAccess extends TaskReadAccess {
 		for (Consumer<Task> insertHandler : insertHandlers) {
 			tasks.forEach(insertHandler);
 		}
+
+		return tasks;
 	}
 
 	/**
@@ -206,10 +210,10 @@ public class TaskWriteAccess extends TaskReadAccess {
 		}
 	}
 
-	public void setTaskPriority(TaskId taskId, int newPriority) {
+	public void setTaskPriority(TaskId taskId, QueuePriority newPriority) {
 		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
 			db.update(TASK)
-				.set(TASK.PRIORITY, newPriority)
+				.set(TASK.PRIORITY, newPriority.asInt())
 				.set(TASK.UPDATE_TIME, Timestamp.from(Instant.now()))
 				.where(TASK.ID.eq(taskId.getId().toString()))
 				.execute();

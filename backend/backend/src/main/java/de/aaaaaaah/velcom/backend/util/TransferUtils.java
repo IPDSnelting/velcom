@@ -35,9 +35,8 @@ public class TransferUtils {
 	}
 
 	/**
-	 * Creates a non bare clone of a repository that resides in the given repo storage and
-	 * corresponds to the provided {@code dirName} by cloning the repo into the specified {@code
-	 * destDir}.
+	 * Creates a non bare clone of a repository that resides in the given repo storage and corresponds
+	 * to the provided {@code dirName} by cloning the repo into the specified {@code destDir}.
 	 *
 	 * @param repoStorage the repo storage that contains the repository which should be cloned
 	 * @param dirName the directory name of the repository
@@ -89,8 +88,8 @@ public class TransferUtils {
 	}
 
 	/**
-	 * Creates a tar of the repository at the specified {@code repoDir} and simultaneously writes
-	 * that tar into the given output stream.
+	 * Creates a tar of the repository at the specified {@code repoDir} and simultaneously writes that
+	 * tar into the given output stream.
 	 *
 	 * <p>Note that this method closes the provided output stream after it has finished.</p>
 	 *

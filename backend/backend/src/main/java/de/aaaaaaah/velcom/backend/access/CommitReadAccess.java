@@ -7,6 +7,7 @@ import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.exceptions.CommitAccessException;
 import de.aaaaaaah.velcom.backend.access.exceptions.CommitLogException;
+import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchCommitException;
 import de.aaaaaaah.velcom.backend.access.exceptions.RepoAccessException;
 import de.aaaaaaah.velcom.backend.access.filter.AuthorTimeRevFilter;
 import de.aaaaaaah.velcom.backend.storage.repo.RepoStorage;
@@ -82,10 +83,10 @@ public class CommitReadAccess {
 	/**
 	 * Fetch a single {@link Commit}.
 	 *
-	 * @param repoId the repo to searc
+	 * @param repoId the repo to search
 	 * @param commitHash the commit to retrieve
-	 * @return The commit if it could be found. Returns empty if the repo doesn't exist or the
-	 * 	commit could not be found.
+	 * @return The commit if it could be found. Returns empty if the repo doesn't exist or the commit
+	 * 	could not be found.
 	 */
 	public Commit getCommit(RepoId repoId, CommitHash commitHash) {
 		List<Commit> commits = getCommits(repoId, List.of(commitHash));
@@ -93,7 +94,7 @@ public class CommitReadAccess {
 		if (!commits.isEmpty()) {
 			return commits.get(0);
 		} else {
-			throw new CommitAccessException(repoId, commitHash);
+			throw new NoSuchCommitException(repoId, commitHash);
 		}
 	}
 
@@ -104,8 +105,7 @@ public class CommitReadAccess {
 	 * @param commitHashes the commits to retrieve
 	 * @return Those commits that could be found. If the repo could not be found, returns an empty
 	 * 	list. If a commit could not be found, doesn't return that commit in the return value.
-	 * 	Preserves ordering of commits (and duplicate commits) from the input commit hash
-	 * 	collection.
+	 * 	Preserves ordering of commits (and duplicate commits) from the input commit hash collection.
 	 */
 	public List<Commit> getCommits(RepoId repoId, Collection<CommitHash> commitHashes) {
 		Objects.requireNonNull(repoId);
@@ -135,6 +135,18 @@ public class CommitReadAccess {
 		}
 
 		return commits;
+	}
+
+	/**
+	 * Find the children of a given commit.
+	 *
+	 * @param repoId the repo the commit is in
+	 * @param commitHash the commit's hash
+	 * @return the commit's children
+	 */
+	public Collection<CommitHash> getChildren(RepoId repoId, CommitHash commitHash) {
+		// TODO implement
+		return null;
 	}
 
 	/**

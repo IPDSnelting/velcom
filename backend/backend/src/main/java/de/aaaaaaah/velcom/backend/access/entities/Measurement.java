@@ -1,7 +1,6 @@
 package de.aaaaaaah.velcom.backend.access.entities;
 
 import de.aaaaaaah.velcom.backend.util.Either;
-
 import java.util.Objects;
 
 /**
@@ -12,26 +11,18 @@ import java.util.Objects;
 public class Measurement {
 
 	private final RunId runId;
-	private final MeasurementName measurementName;
-	private final Unit unit;
-	private final Interpretation interpretation;
+	private final Dimension dimension;
 	private final Either<MeasurementError, MeasurementValues> content;
 
-	public Measurement(RunId runId, MeasurementName measurementName, Unit unit,
-		Interpretation interpretation, MeasurementError error) {
+	public Measurement(RunId runId, Dimension dimension, MeasurementError error) {
 		this.runId = Objects.requireNonNull(runId);
-		this.measurementName = Objects.requireNonNull(measurementName);
-		this.unit = Objects.requireNonNull(unit);
-		this.interpretation = Objects.requireNonNull(interpretation);
+		this.dimension = Objects.requireNonNull(dimension);
 		this.content = Either.ofLeft(error);
 	}
 
-	public Measurement(RunId runId, MeasurementName measurementName, Unit unit,
-		Interpretation interpretation, MeasurementValues values) {
+	public Measurement(RunId runId, Dimension dimension, MeasurementValues values) {
 		this.runId = Objects.requireNonNull(runId);
-		this.measurementName = Objects.requireNonNull(measurementName);
-		this.unit = Objects.requireNonNull(unit);
-		this.interpretation = Objects.requireNonNull(interpretation);
+		this.dimension = Objects.requireNonNull(dimension);
 		this.content = Either.ofRight(values);
 	}
 
@@ -39,16 +30,8 @@ public class Measurement {
 		return runId;
 	}
 
-	public MeasurementName getMeasurementName() {
-		return measurementName;
-	}
-
-	public Unit getUnit() {
-		return unit;
-	}
-
-	public Interpretation getInterpretation() {
-		return interpretation;
+	public Dimension getDimension() {
+		return dimension;
 	}
 
 	public Either<MeasurementError, MeasurementValues> getContent() {

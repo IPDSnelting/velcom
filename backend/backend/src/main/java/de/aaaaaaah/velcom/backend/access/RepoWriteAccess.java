@@ -123,8 +123,8 @@ public class RepoWriteAccess extends RepoReadAccess {
 	}
 
 	/**
-	 * Set the repo's tracked branches. Ignores duplicate branches and invalid branches. All
-	 * branches not inside the collection are set to untracked.
+	 * Set the repo's tracked branches. Ignores duplicate branches and invalid branches. All branches
+	 * not inside the collection are set to untracked.
 	 *
 	 * @param repoId the repo's id
 	 * @param branches the branches to be set as tracked

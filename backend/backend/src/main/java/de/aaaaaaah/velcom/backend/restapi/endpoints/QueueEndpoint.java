@@ -1,252 +1,159 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toSet;
-
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.access.RepoReadAccess;
-import de.aaaaaaah.velcom.backend.access.entities.Branch;
-import de.aaaaaaah.velcom.backend.access.entities.BranchName;
-import de.aaaaaaah.velcom.backend.access.entities.Commit;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.access.entities.Repo;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.entities.Task;
 import de.aaaaaaah.velcom.backend.access.entities.TaskId;
 import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchTaskException;
-import de.aaaaaaah.velcom.backend.data.linearlog.LinearLog;
-import de.aaaaaaah.velcom.backend.data.linearlog.LinearLogException;
+import de.aaaaaaah.velcom.backend.access.policy.QueuePriority;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
-import de.aaaaaaah.velcom.backend.restapi.RepoUser;
-import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonCommit;
+import de.aaaaaaah.velcom.backend.restapi.authentication.RepoUser;
+import de.aaaaaaah.velcom.backend.restapi.exception.TaskAlreadyExistsException;
+import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRunner;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonTask;
-import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonWorker;
 import de.aaaaaaah.velcom.backend.runner.IDispatcher;
 import io.dropwizard.auth.Auth;
+import io.dropwizard.jersey.PATCH;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import javax.validation.constraints.NotNull;
-import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import javax.ws.rs.core.Response;
 
-/**
- * The REST API endpoint allowing to interact with the {@link Queue}.
- */
 @Path("/queue")
-@Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 public class QueueEndpoint {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(QueueEndpoint.class);
-
-	private final CommitReadAccess commitAccess;
+	private final CommitReadAccess commitReadAccess;
 	private final RepoReadAccess repoReadAccess;
 	private final Queue queue;
 	private final IDispatcher dispatcher;
-	private final LinearLog linearLog;
 
-	public QueueEndpoint(CommitReadAccess commitAccess, Queue queue, IDispatcher dispatcher,
-		LinearLog linearLog, RepoReadAccess repoReadAccess) {
-		this.commitAccess = commitAccess;
+	public QueueEndpoint(CommitReadAccess commitReadAccess,
+		RepoReadAccess repoReadAccess, Queue queue,
+		IDispatcher dispatcher) {
+		this.commitReadAccess = commitReadAccess;
+		this.repoReadAccess = repoReadAccess;
 		this.queue = queue;
 		this.dispatcher = dispatcher;
-		this.linearLog = linearLog;
-		this.repoReadAccess = repoReadAccess;
 	}
 
-	/**
-	 * @return all commits that are currently queued and all active runners.
-	 */
 	@GET
-	public GetReply get() {
-		List<JsonTask> tasks = queue.getTasksSorted().stream()
-			.map(JsonTask::new)
-			.collect(Collectors.toUnmodifiableList());
+	public GetQueueReply getQueue() {
+		// TODO: 08.09.20 Fix NPE when calling this endpoint
+		List<JsonTask> tasks = queue.getTasksSorted()
+			.stream()
+			.map(it -> JsonTask.fromTask(it, commitReadAccess))
+			.collect(Collectors.toList());
 
-		// FIXME: 07.07.20 Obtain runners from dispatcher
-		// List<JsonWorker> workers = dispatcher.getKnownRunners().stream()
-		List<JsonWorker> workers = List.of();
+		List<JsonRunner> worker = dispatcher.getKnownRunners()
+			.stream()
+			.map(JsonRunner::fromKnownRunner)
+			.collect(Collectors.toList());
 
-		// Convert tasks to commits for now, change later when frontend is able to work with
-		// JsonTask instances properly. To use JsonCommit instances, we need to load real
-		// Commit instances from commitAccess, which we can only do per repo.
-		// The following code will completely ignore tar tasks.
-
-		// Map<RepoId, List<JsonTask>>
-		Map<UUID, List<JsonTask>> perRepoTaskMap = tasks.stream()
-			.filter(task -> task.getCommitHash() != null)
-			.collect(Collectors.groupingBy(JsonTask::getRepoId));
-
-		// Map<RepoId, Map<CommitHash, JsonCommit>>
-		Map<UUID, Map<String, JsonCommit>> commitMap = new HashMap<>();
-
-		// Load commits per repo and convert them into JsonCommit instances
-		perRepoTaskMap.forEach((repoIdAsUuid, taskGroup) -> {
-			RepoId repoId = new RepoId(repoIdAsUuid);
-			Set<CommitHash> hashes = taskGroup.stream()
-				.map(JsonTask::getCommitHash)
-				.map(CommitHash::new)
-				.collect(toSet());
-
-			commitAccess.getCommits(repoId, hashes)
-				.stream()
-				.map(JsonCommit::new)
-				.forEach(commit -> {
-					commitMap.computeIfAbsent(repoId.getId(), rid -> new HashMap<>());
-					commitMap.get(repoId.getId()).put(commit.getHash(), commit);
-				});
-		});
-
-		// Map each JsonTask instance to their respective JsonCommit instance
-		List<JsonCommit> commitList = tasks.stream()
-			.filter(task -> task.getCommitHash() != null)
-			.map(task -> commitMap.get(task.getRepoId()).get(task.getCommitHash()))
-			.collect(toList());
-
-		return new GetReply(commitList, workers);
+		return new GetQueueReply(tasks, worker);
 	}
 
-	/**
-	 * Adds a new commit to the queue as a manual task.
-	 *
-	 * @param postRequest the commit to add
-	 */
-	@POST
-	public void post(@Auth RepoUser user, @NotNull PostRequest postRequest) {
-		RepoId repoId = new RepoId(postRequest.getRepoId());
+	@DELETE
+	@Path("{taskId}")
+	public Response deleteTask(@Auth RepoUser user, @PathParam("taskId") UUID taskId)
+		throws NoSuchTaskException {
+		Task task = queue.getTaskById(new TaskId(taskId));
+		if (task.getRepoId().isEmpty()) {
+			user.guardAdminAccess();
+		} else {
+			user.guardRepoAccess(task.getRepoId().get());
+		}
+
+		queue.deleteTasks(List.of(new TaskId(taskId)));
+
+		return Response.ok().build();
+	}
+
+	@PATCH
+	@Path("{taskId}")
+	public Response patchTask(@Auth RepoUser user, @PathParam("taskId") UUID taskId)
+		throws NoSuchTaskException {
 		user.guardAdminAccess();
 
-		CommitHash commitHash = new CommitHash(postRequest.getCommitHash());
+		// Throws an exception if the task does not exist! This is needed.
+		Task task = queue.getTaskById(new TaskId(taskId));
 
-		String author = "admin of repo " + repoId.getId().toString();
+		queue.prioritizeTask(task.getId(), QueuePriority.MANUAL);
 
-		queue.addCommits(author, repoId, List.of(commitHash));
-
-		if (postRequest.isIncludeUpwards()) {
-			List<BranchName> branchNames = repoReadAccess.getBranches(repoId)
-				.stream()
-				.map(Branch::getName)
-				.collect(toList());
-
-			try {
-				// Do we really need to load complete commit objects?
-				List<CommitHash> commits = linearLog.walk(repoId, branchNames)
-					.takeWhile(it -> !it.getHash().equals(commitHash))
-					.map(Commit::getHash)
-					.collect(toList());
-
-				queue.addCommits(author, repoId, commits);
-			} catch (LinearLogException e) {
-				LOGGER.error("Error fetching linear log for " + repoId + " - " + commitHash, e);
-			}
-		}
+		return Response.ok().build();
 	}
 
-	/**
-	 * Deletes a commit from the queue.
-	 *
-	 * @param user user who authored this delete
-	 * @param repoUuid the id of the repo
-	 * @param hashString the hash of the commit
-	 */
-	@DELETE
-	public void delete(
-		@Auth RepoUser user,
-		@NotNull @QueryParam("repo_id") UUID repoUuid,
-		@NotNull @QueryParam("commit_hash") String hashString)
-		throws NoSuchTaskException {
-
+	@POST
+	@Path("commit/{repoId}/{hash}")
+	public PostCommitReply addCommit(@Auth RepoUser user, @PathParam("repoId") UUID repoUuid,
+		@PathParam("hash") String commitHashString) {
 		RepoId repoId = new RepoId(repoUuid);
+		CommitHash commitHash = new CommitHash(commitHashString);
+
 		user.guardRepoAccess(repoId);
 
-		CommitHash commitHash = new CommitHash(hashString);
+		Repo repo = repoReadAccess.getRepo(repoId);
 
-		// We need to find the task that is associated with the commit hash and repo id
-		List<TaskId> tasks = queue.getTasksSorted().stream()
-			.filter(task -> task.getSource().isLeft())
-			.filter(task -> task.getSource().getLeft().get().getRepoId().equals(repoId))
-			.filter(task -> task.getSource().getLeft().get().getHash().equals(commitHash))
-			.map(Task::getId)
-			.collect(toList());
+		String author = String.format(
+			"%s %s(%s)",
+			user.isAdmin() ? "Admin" : "Repo-Admin",
+			repo.getName(),
+			repoId
+		);
 
-		queue.deleteTasks(tasks);
+		// TODO: Really don't tell them the id of the existing task?
+		final Collection<Task> insertedTasks = queue
+			.addCommits(author, repoId, List.of(commitHash), QueuePriority.MANUAL);
 
-		/*Task task = queue.getTaskById(new TaskId(taskId));
-
-		if (task.getSource().getLeft().isPresent()) {
-			// task is commit
-			RepoId repoId = task.getSource().getLeft().get().getRepoId();
-			user.guardRepoAccess(repoId);
-		} else {
-			// task is tar
-			user.guardAdminAccess();
+		if (insertedTasks.isEmpty()) {
+			throw new TaskAlreadyExistsException(commitHash, repoId);
 		}
 
-		queue.deleteTasks(List.of(new TaskId(taskId)));*/
+		Task task = insertedTasks.iterator().next();
+
+		return new PostCommitReply(JsonTask.fromTask(task, commitReadAccess));
 	}
 
-	private static class GetReply {
+	private static class PostCommitReply {
 
-		// only commits for now, change later
-		private final Collection<JsonCommit> tasks;
-		private final Collection<JsonWorker> workers;
+		private final JsonTask task;
 
-		public GetReply(Collection<JsonCommit> tasks, Collection<JsonWorker> workers) {
-			this.tasks = tasks;
-			this.workers = workers;
+		private PostCommitReply(JsonTask task) {
+			this.task = task;
 		}
 
-		public Collection<JsonCommit> getTasks() {
+		public JsonTask getTask() {
+			return task;
+		}
+	}
+
+	private static class GetQueueReply {
+
+		private final List<JsonTask> tasks;
+		private final List<JsonRunner> runners;
+
+		public GetQueueReply(List<JsonTask> tasks, List<JsonRunner> runners) {
+			this.tasks = tasks;
+			this.runners = runners;
+		}
+
+		public List<JsonTask> getTasks() {
 			return tasks;
 		}
 
-		public Collection<JsonWorker> getWorkers() {
-			return workers;
-		}
-	}
-
-	private static class PostRequest {
-
-		private final UUID repoId;
-		private final String commitHash;
-		private final boolean includeUpwards;
-
-		@JsonCreator
-		public PostRequest(
-			@JsonProperty(value = "repo_id", required = true) UUID repoId,
-			@JsonProperty(value = "commit_hash", required = true) String commitHash,
-			@JsonProperty(value = "include_all_commits_after", required = false) Boolean includeUpwards) {
-
-			this.repoId = Objects.requireNonNull(repoId);
-			this.commitHash = Objects.requireNonNull(commitHash);
-			this.includeUpwards = includeUpwards == null ? false : includeUpwards;
-		}
-
-		public UUID getRepoId() {
-			return repoId;
-		}
-
-		public String getCommitHash() {
-			return commitHash;
-		}
-
-		public boolean isIncludeUpwards() {
-			return includeUpwards;
+		public List<JsonRunner> getRunners() {
+			return runners;
 		}
 	}
 }

@@ -14,10 +14,11 @@ import de.aaaaaaah.velcom.backend.access.entities.Commit;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.entities.Repo;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
-import de.aaaaaaah.velcom.backend.access.entities.RepoSource;
 import de.aaaaaaah.velcom.backend.access.entities.Task;
+import de.aaaaaaah.velcom.backend.access.entities.sources.CommitSource;
 import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchRepoException;
 import de.aaaaaaah.velcom.backend.access.exceptions.RepoAccessException;
+import de.aaaaaaah.velcom.backend.access.policy.QueuePriority;
 import de.aaaaaaah.velcom.backend.data.benchrepo.BenchRepo;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -207,7 +208,11 @@ public class Listener {
 	}
 
 	private Task commitToTask(RepoId repoId, CommitHash commitHash) {
-		return new Task(AUTHOR, new RepoSource(repoId, commitHash));
+		return new Task(
+			AUTHOR,
+			QueuePriority.LISTENER,
+			new CommitSource(repoId, commitHash)
+		);
 	}
 
 }

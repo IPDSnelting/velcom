@@ -10,4 +10,7 @@ public class NoSuchTaskException extends Exception {
 		this.taskId = taskId;
 	}
 
+	public TaskId getInvalidId() {
+		return taskId;
+	}
 }

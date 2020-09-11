@@ -11,9 +11,10 @@ import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.access.entities.BranchName;
 import de.aaaaaaah.velcom.backend.access.entities.Commit;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.access.entities.Dimension;
+import de.aaaaaaah.velcom.backend.access.entities.DimensionInfo;
 import de.aaaaaaah.velcom.backend.access.entities.Interpretation;
 import de.aaaaaaah.velcom.backend.access.entities.Measurement;
-import de.aaaaaaah.velcom.backend.access.entities.MeasurementName;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementValues;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
@@ -24,7 +25,7 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,10 +36,11 @@ class TimesliceComparisonTest {
 	private BenchmarkReadAccess benchmarkReadAccess;
 	private RepoComparison comparison;
 
-	private MeasurementName measurementName;
+	private Dimension dimension;
+	private DimensionInfo dimensionInfo;
 	private RepoId repoId;
-	private List<BranchName> branchNames;
-	private Map<RepoId, List<BranchName>> repoBranches;
+	private Set<BranchName> branchNames;
+	private Map<RepoId, Set<BranchName>> repoBranches;
 
 	private CommitHash c1Hash;
 	private CommitHash c2Hash;
@@ -50,8 +52,6 @@ class TimesliceComparisonTest {
 	private Commit c4;
 	private Map<CommitHash, Commit> commitMap;
 
-	private Unit unit;
-	private Interpretation interpretation;
 	private Measurement m1;
 	private Measurement m2;
 	private Measurement m3;
@@ -68,9 +68,11 @@ class TimesliceComparisonTest {
 		benchmarkReadAccess = mock(BenchmarkReadAccess.class);
 		comparison = new TimesliceComparison(commitReadAccess, benchmarkReadAccess);
 
-		measurementName = new MeasurementName("benchmark", "metric");
+		dimension = new Dimension("benchmark", "metric");
+		dimensionInfo = new DimensionInfo(dimension, new Unit("testunit"),
+			Interpretation.MORE_IS_BETTER);
 		repoId = new RepoId(UUID.randomUUID());
-		branchNames = List.of(BranchName.fromName("branch1"), BranchName.fromName("branch2"));
+		branchNames = Set.of(BranchName.fromName("branch1"), BranchName.fromName("branch2"));
 		repoBranches = new HashMap<>();
 		repoBranches.put(repoId, branchNames);
 
@@ -92,29 +94,30 @@ class TimesliceComparisonTest {
 		commitMap.put(c3Hash, c3);
 		commitMap.put(c4Hash, c4);
 
-		unit = new Unit("unit");
-		interpretation = Interpretation.LESS_IS_BETTER;
-		m1 = new Measurement(mock(RunId.class), measurementName, unit, interpretation,
+		m1 = new Measurement(mock(RunId.class), dimension,
 			new MeasurementValues(List.of(1d, 2d, 3d)));
-		m2 = new Measurement(mock(RunId.class), measurementName, unit, interpretation,
+		m2 = new Measurement(mock(RunId.class), dimension,
 			new MeasurementValues(List.of(4d, 5d, 6d)));
-		m3 = new Measurement(mock(RunId.class), measurementName, unit, interpretation,
+		m3 = new Measurement(mock(RunId.class), dimension,
 			new MeasurementValues(List.of(7d, 8d, 9d)));
-		m4 = new Measurement(mock(RunId.class), measurementName, unit, interpretation,
+		m4 = new Measurement(mock(RunId.class), dimension,
 			new MeasurementValues(List.of(10d, 11d, 12d)));
 		r1 = mock(Run.class);
 		r2 = mock(Run.class);
 		r3 = mock(Run.class);
 		r4 = mock(Run.class);
-		when(r1.getResult()).thenReturn(Either.ofLeft(List.of(m1)));
-		when(r2.getResult()).thenReturn(Either.ofLeft(List.of(m2)));
-		when(r3.getResult()).thenReturn(Either.ofLeft(List.of(m3)));
-		when(r4.getResult()).thenReturn(Either.ofLeft(List.of(m4)));
+		when(r1.getResult()).thenReturn(Either.ofRight(List.of(m1)));
+		when(r2.getResult()).thenReturn(Either.ofRight(List.of(m2)));
+		when(r3.getResult()).thenReturn(Either.ofRight(List.of(m3)));
+		when(r4.getResult()).thenReturn(Either.ofRight(List.of(m4)));
 		runMap = new HashMap<>();
 		runMap.put(c1Hash, r1);
 		runMap.put(c2Hash, r2);
 		runMap.put(c3Hash, r3);
 		runMap.put(c4Hash, r4);
+
+		when(benchmarkReadAccess.getLatestRuns(eq(repoId), anyCollection())).thenReturn(runMap);
+		when(benchmarkReadAccess.getDimensionInfo(dimension)).thenReturn(dimensionInfo);
 	}
 
 	@Test
@@ -140,20 +143,16 @@ class TimesliceComparisonTest {
 
 		when(commitReadAccess.getCommitsBetween(repoId, branchNames, startInstant, stopInstant))
 			.thenReturn(commitMap);
-		when(benchmarkReadAccess.getLatestRuns(eq(repoId), anyCollection()))
-			.thenReturn(runMap);
 
-		ComparisonGraph graph = comparison.generateGraph(measurementName, repoBranches,
+		RepoComparisonGraph graph = comparison.generateGraph(dimension, repoBranches,
 			startInstant, stopInstant);
 
-		assertEquals(measurementName, graph.getMeasurement());
-		assertEquals(repoBranches, graph.getRepoBranches());
+		assertEquals(dimension, graph.getDimensionInfo().getDimension());
 		assertEquals(1, graph.getData().size()); // Only one repo
 
 		RepoGraphData data = graph.getData().get(0);
 		assertEquals(repoId, data.getRepoId());
-		assertEquals(unit, data.getUnit());
-		assertEquals(interpretation, data.getInterpretation());
+		assertEquals(branchNames, data.getIncludedBranches());
 		assertEquals(3, data.getEntries().size());
 	}
 
@@ -180,20 +179,16 @@ class TimesliceComparisonTest {
 
 		when(commitReadAccess.getCommitsBetween(repoId, branchNames, startInstant, stopInstant))
 			.thenReturn(commitMap);
-		when(benchmarkReadAccess.getLatestRuns(eq(repoId), anyCollection()))
-			.thenReturn(runMap);
 
-		ComparisonGraph graph = comparison.generateGraph(measurementName, repoBranches,
+		RepoComparisonGraph graph = comparison.generateGraph(dimension, repoBranches,
 			startInstant, stopInstant);
 
-		assertEquals(measurementName, graph.getMeasurement());
-		assertEquals(repoBranches, graph.getRepoBranches());
+		assertEquals(dimension, graph.getDimensionInfo().getDimension());
 		assertEquals(1, graph.getData().size()); // Only one repo
 
 		RepoGraphData data = graph.getData().get(0);
 		assertEquals(repoId, data.getRepoId());
-		assertEquals(unit, data.getUnit());
-		assertEquals(interpretation, data.getInterpretation());
+		assertEquals(branchNames, data.getIncludedBranches());
 		assertEquals(3, data.getEntries().size());
 	}
 
@@ -220,20 +215,16 @@ class TimesliceComparisonTest {
 
 		when(commitReadAccess.getCommitsBetween(repoId, branchNames, startInstant, stopInstant))
 			.thenReturn(commitMap);
-		when(benchmarkReadAccess.getLatestRuns(eq(repoId), anyCollection()))
-			.thenReturn(runMap);
 
-		ComparisonGraph graph = comparison.generateGraph(measurementName, repoBranches,
+		RepoComparisonGraph graph = comparison.generateGraph(dimension, repoBranches,
 			startInstant, stopInstant);
 
-		assertEquals(measurementName, graph.getMeasurement());
-		assertEquals(repoBranches, graph.getRepoBranches());
+		assertEquals(dimension, graph.getDimensionInfo().getDimension());
 		assertEquals(1, graph.getData().size()); // Only one repo
 
 		RepoGraphData data = graph.getData().get(0);
 		assertEquals(repoId, data.getRepoId());
-		assertEquals(unit, data.getUnit());
-		assertEquals(interpretation, data.getInterpretation());
+		assertEquals(branchNames, data.getIncludedBranches());
 		assertEquals(3, data.getEntries().size());
 	}
 }

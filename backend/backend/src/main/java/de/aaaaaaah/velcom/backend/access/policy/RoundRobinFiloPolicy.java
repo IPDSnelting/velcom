@@ -21,10 +21,10 @@ import org.jooq.codegen.db.tables.records.TaskRecord;
 
 /**
  * A thread safe {@link QueuePolicy} that prioritizes tars and provides some kind of fairness to
- * repo associated tasks by ordering them in a round robin type of way while also allowing
- * tasks to be manually prioritized over all other tasks.
+ * repo associated tasks by ordering them in a round robin type of way while also allowing tasks to
+ * be manually prioritized over all other tasks.
  *
- * <p>There are three priorities:</p>
+ * <p>This queue policy recognizes three different priority levels:</p>
  * <p>
  * Priority 0: Tasks that are prioritized at priority 0 are considered manual tasks and are regarded
  * as the most important tasks. Comparing two tasks with priority 0 results in the task that got
@@ -45,6 +45,12 @@ import org.jooq.codegen.db.tables.records.TaskRecord;
  */
 public class RoundRobinFiloPolicy implements QueuePolicy {
 
+	/**
+	 * The priority at and below which tasks will be subject to the round robin ordering (below as in
+	 * less important, not a lower priority value).
+	 */
+	private static final QueuePriority ROUND_ROBIN_PRIORITY = QueuePriority.LISTENER;
+
 	private DatabaseStorage databaseStorage;
 	private RepoId lastRepo;
 
@@ -60,7 +66,7 @@ public class RoundRobinFiloPolicy implements QueuePolicy {
 			// 1.) Find manual or tar task with highest priority
 			Optional<TaskRecord> mostImportantRecord = db.selectFrom(TASK)
 				.where(
-					TASK.PRIORITY.lessThan(Task.DEFAULT_PRIORITY)
+					TASK.PRIORITY.lessThan(ROUND_ROBIN_PRIORITY.asInt())
 						.and(TASK.IN_PROCESS.eq(false))
 				)
 				.orderBy(
@@ -70,6 +76,12 @@ public class RoundRobinFiloPolicy implements QueuePolicy {
 				.fetchOptional();
 
 			if (mostImportantRecord.isPresent()) {
+				// Mark task as "in process"
+				db.update(TASK)
+					.set(TASK.IN_PROCESS, true)
+					.where(TASK.ID.eq(mostImportantRecord.get().getId()))
+					.execute();
+
 				result.set(taskFromRecord(mostImportantRecord.get()));
 				return;
 			}
@@ -87,6 +99,12 @@ public class RoundRobinFiloPolicy implements QueuePolicy {
 					Task task = taskFromRecord(repoTaskRecord.get());
 
 					lastRepo = task.getSource().getLeft().orElseThrow().getRepoId();
+
+					// Mark task as "in process"
+					db.update(TASK)
+						.set(TASK.IN_PROCESS, true)
+						.where(TASK.ID.eq(repoTaskRecord.get().getId()))
+						.execute();
 
 					result.set(task);
 					return;
@@ -162,54 +180,52 @@ public class RoundRobinFiloPolicy implements QueuePolicy {
 		databaseStorage.acquireReadTransaction(db -> {
 			// 1.) Get manual tasks
 			db.selectFrom(TASK)
-				.where(TASK.PRIORITY.lessThan(Task.DEFAULT_PRIORITY))
+				.where(TASK.PRIORITY.lessThan(ROUND_ROBIN_PRIORITY.asInt()))
 				.orderBy(TASK.PRIORITY.asc(), TASK.UPDATE_TIME.desc())
 				.forEach(record -> completeTaskList.addLast(taskFromRecord(record)));
 
 			// 2.) Get default repo tasks that have to be ordered in a round robin way
 			Map<RepoId, LinkedList<Task>> groupMap = new HashMap<>();
-			List<RepoId> repoIds = new ArrayList<>();
-
-			try (Cursor<TaskRecord> cursor = db.selectFrom(TASK)
+			db.selectFrom(TASK)
 				.where(TASK.REPO_ID.isNotNull())
 				.orderBy(TASK.INSERT_TIME.desc())
-				.fetchLazy()) {
-
-				while (cursor.hasNext()) {
-					Task task = taskFromRecord(cursor.fetchNext());
+				.forEach(record -> {
+					Task task = taskFromRecord(record);
 					RepoId repoId = task.getSource().getLeft().orElseThrow().getRepoId();
 
 					if (!groupMap.containsKey(repoId)) {
 						groupMap.put(repoId, new LinkedList<>());
-						repoIds.add(repoId);
 					}
 
 					groupMap.get(repoId).addLast(task);
-				}
-			}
+				});
 
 			if (groupMap.isEmpty()) {
 				return; // we are done here
 			}
 
+			List<RepoId> repoIds = new ArrayList<>(groupMap.keySet());
 			if (lastRepo != null && !repoIds.contains(lastRepo)) {
-				// if lastRepo is not already in the repoIds list, then there
-				// are no tasks associated with lastRepo currently in the queue
-				// however we still need to begin the repo that comes right after
-				// lastRepo (alphabetically) => add lastRepo to repoIds
+				// The repo of the next task is determined starting in order from the repo whose task was
+				// last executed. If that repo is not in the repoIds list, we add it here so we can
+				// determine the correct starting index later.
 				repoIds.add(lastRepo);
 			}
-
 			repoIds.sort(Comparator.comparing(repoId -> repoId.getId().toString()));
 
-			int start = lastRepo == null ? 0 : (repoIds.indexOf(lastRepo) + 1) % repoIds.size();
+			int startingIndex = (lastRepo == null) ? 0 : (repoIds.indexOf(lastRepo) + 1) % repoIds.size();
 
-			for (int i = start; !groupMap.isEmpty(); i = (i + 1) % repoIds.size()) {
+			for (int i = startingIndex; !groupMap.isEmpty(); i = (i + 1) % repoIds.size()) {
 				RepoId currentRepoId = repoIds.get(i);
 				LinkedList<Task> tasks = groupMap.get(currentRepoId);
 
-				completeTaskList.addLast(tasks.pollFirst());
+				// If we have  exhausted the tasks for the current repo, its task list entry will have been
+				// removed already.
+				if (tasks == null) {
+					continue;
+				}
 
+				completeTaskList.addLast(tasks.pollFirst());
 				if (tasks.isEmpty()) {
 					groupMap.remove(currentRepoId);
 				}

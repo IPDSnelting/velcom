@@ -8,14 +8,16 @@ import static org.jooq.impl.DSL.exists;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.access.entities.Dimension;
 import de.aaaaaaah.velcom.backend.access.entities.Measurement;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementError;
-import de.aaaaaaah.velcom.backend.access.entities.MeasurementName;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementValues;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
 import de.aaaaaaah.velcom.backend.access.entities.RunError;
 import de.aaaaaaah.velcom.backend.access.entities.TaskId;
+import de.aaaaaaah.velcom.backend.access.entities.benchmark.NewMeasurement;
+import de.aaaaaaah.velcom.backend.access.entities.benchmark.NewRun;
 import de.aaaaaaah.velcom.backend.storage.db.DBWriteAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import java.sql.Timestamp;
@@ -39,46 +41,54 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 	/**
 	 * Inserts the specified run into the database.
 	 *
-	 * @param run the run to insert
+	 * @param newRun the run to insert
 	 */
-	public void insertRun(Run run) {
+	public void insertRun(NewRun newRun) {
+		Run run = newRun.toRun();
+
 		// Insert run into database and delete associated task
 		databaseStorage.acquireWriteTransaction(db -> {
 			// 0.) Delete associated task
-			TaskId taskId = new TaskId(run.getId().getId());
+			TaskId taskId = new TaskId(newRun.getId().getId());
 			taskAccess.deleteTasks(List.of(taskId), db);
 
 			// 1.) Insert run
 			RunRecord runRecord = db.newRecord(RUN);
-			runRecord.setId(run.getId().getId().toString());
-			runRecord.setAuthor(run.getAuthor());
-			runRecord.setRunnerName(run.getRunnerName());
-			runRecord.setRunnerInfo(run.getRunnerInfo());
-			runRecord.setStartTime(Timestamp.from(run.getStartTime()));
-			runRecord.setStopTime(Timestamp.from(run.getStopTime()));
+			runRecord.setId(newRun.getId().getId().toString());
+			runRecord.setAuthor(newRun.getAuthor());
+			runRecord.setRunnerName(newRun.getRunnerName());
+			runRecord.setRunnerInfo(newRun.getRunnerInfo());
+			runRecord.setStartTime(Timestamp.from(newRun.getStartTime()));
+			runRecord.setStopTime(Timestamp.from(newRun.getStopTime()));
+			runRecord.setRepoId(
+				newRun.getRepoId().map(RepoId::getId)
+					.map(UUID::toString)
+					.orElse(null)
+			);
 
-			run.getRepoSource().ifPresent(repoSource -> {
-				runRecord.setRepoId(repoSource.getRepoId().getId().toString());
-				runRecord.setCommitHash(repoSource.getHash().getHash());
-			});
+			if (newRun.getSource().isLeft()) {
+				runRecord.setCommitHash(newRun.getSource().getLeft().get().getHash().getHash());
+			} else {
+				runRecord.setTarDesc(newRun.getSource().getRight().get().getDescription());
+			}
 
-			if (run.getResult().isRight()) {
-				RunError error = run.getResult().getRight().orElseThrow();
+			if (newRun.getResult().isLeft()) {
+				RunError error = newRun.getResult().getLeft().orElseThrow();
 				runRecord.setError(error.getMessage());
 				runRecord.setErrorType(error.getType().getTextualRepresentation());
 				runRecord.insert();
 			} else {
 				runRecord.insert();
 
-				Collection<Measurement> measurements = run.getResult().getLeft().orElseThrow();
-				for (Measurement measurement : measurements) {
+				Collection<NewMeasurement> measurements = newRun.getResult().getRight().orElseThrow();
+				for (NewMeasurement measurement : measurements) {
 					insertMeasurement(db, measurement);
 				}
 			}
 		});
 
-		// 2.) Invalidate measurement cache
-		run.getRepoSource().ifPresent(source -> measurementCache.remove(source.getRepoId()));
+		// 2.) Invalidate dimension cache for repo
+		newRun.getSource().getLeft().ifPresent(source -> dimensionCache.remove(source.getRepoId()));
 
 		// 3.) Insert run into cache
 		synchronized (recentRunCache) {
@@ -93,29 +103,28 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 			}
 		}
 
-		// 4.) If run is associated with a repository, insert into repoCache
-		run.getRepoSource().ifPresent(repoSource -> {
+		// 4.) If run has a commit source, insert into repoCache
+		newRun.getSource().getLeft().ifPresent(commitSource -> {
 			Cache<CommitHash, Run> cache = repoRunCache.computeIfAbsent(
-				repoSource.getRepoId(),
+				commitSource.getRepoId(),
 				r -> RUN_CACHE_BUILDER.build()
 			);
 
-			cache.put(repoSource.getHash(), run);
+			cache.put(commitSource.getHash(), run);
 		});
 	}
 
-	private void insertMeasurement(DBWriteAccess db, Measurement measurement) {
+	private void insertMeasurement(DBWriteAccess db, NewMeasurement measurement) {
 		String measurementId = UUID.randomUUID().toString();
 
 		MeasurementRecord measurementRecord = db.newRecord(MEASUREMENT);
 		measurementRecord.setId(measurementId);
 		measurementRecord.setRunId(measurement.getRunId().getId().toString());
-		measurementRecord.setBenchmark(measurement.getMeasurementName().getBenchmark());
-		measurementRecord.setMetric(measurement.getMeasurementName().getMetric());
-		measurementRecord.setUnit(measurement.getUnit().getName());
-		measurementRecord.setInterpretation(
-			measurement.getInterpretation().getTextualRepresentation()
-		);
+		measurementRecord.setBenchmark(measurement.getDimension().getBenchmark());
+		measurementRecord.setMetric(measurement.getDimension().getMetric());
+		measurement.getUnit().ifPresent(unit -> measurementRecord.setUnit(unit.getName()));
+		measurement.getInterpretation().ifPresent(interpretation -> measurementRecord
+			.setInterpretation(interpretation.getTextualRepresentation()));
 
 		if (measurement.getContent().isLeft()) {
 			MeasurementError error = measurement.getContent().getLeft().orElseThrow();
@@ -139,6 +148,8 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 
 			valuesInsertStep.execute();
 		}
+
+		updateDimensions(measurement);
 	}
 
 	/**
@@ -147,9 +158,9 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 	 * <p> This is useful when a measurement becomes outdated or is renamed.
 	 *
 	 * @param repoId the repo to delete the measurements from
-	 * @param measurementName the name specifying which measurements to delete.
+	 * @param dimension the name specifying which measurements to delete.
 	 */
-	public void deleteAllMeasurementsOfName(RepoId repoId, MeasurementName measurementName) {
+	public void deleteAllMeasurementsOfName(RepoId repoId, Dimension dimension) {
 		// Update database
 		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
 			db.deleteFrom(MEASUREMENT)
@@ -160,14 +171,14 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 								.and(RUN.REPO_ID.eq(repoId.getId().toString()))
 						)
 					)
-						.and(MEASUREMENT.BENCHMARK.eq(measurementName.getBenchmark()))
-						.and(MEASUREMENT.METRIC.eq(measurementName.getMetric()))
+						.and(MEASUREMENT.BENCHMARK.eq(dimension.getBenchmark()))
+						.and(MEASUREMENT.METRIC.eq(dimension.getMetric()))
 				)
 				.execute();
 		}
 
 		// Invalidate measurement cache
-		measurementCache.remove(repoId);
+		dimensionCache.remove(repoId);
 
 		// Repopulate recent run cache
 		synchronized (recentRunCache) {
@@ -184,24 +195,24 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 
 		for (CommitHash copiedKey : copiedKeys) {
 			Run run = repoRunCache.getIfPresent(copiedKey);
-			if (run == null || run.getResult().isRight()) {
+			if (run == null || run.getResult().isLeft()) {
 				continue; // No measurements for this run => skip!
 			}
 
-			Collection<Measurement> measurements = run.getResult().getLeft().get();
+			Collection<Measurement> measurements = run.getResult().getRight().get();
 
 			// Check if target measurement name is one of the measurements
-			List<MeasurementName> mNames = measurements.stream()
-				.map(Measurement::getMeasurementName)
+			List<Dimension> mNames = measurements.stream()
+				.map(Measurement::getDimension)
 				.collect(toList());
 
-			if (!mNames.contains(measurementName)) {
+			if (!mNames.contains(dimension)) {
 				continue; // run does not even contain deleted measurement => skip!
 			}
 
 			// This run contains the deleted measurement => need to invalidate run instance in cache
 			// (since run was cached in repoRunCache, the run must have a repo source)
-			repoRunCache.invalidate(run.getRepoSource().orElseThrow().getHash());
+			repoRunCache.invalidate(run.getSource().getLeft().orElseThrow().getHash());
 		}
 	}
 
@@ -216,7 +227,7 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 		}
 
 		// Invalidate measurement cache
-		measurementCache.remove(repoId);
+		dimensionCache.remove(repoId);
 
 		// Invalidate recent run cache and reload it from database
 		this.reloadRecentRunCache();

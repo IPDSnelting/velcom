@@ -3,7 +3,6 @@ package de.aaaaaaah.velcom.backend.access;
 import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
-import static java.util.stream.Collectors.toUnmodifiableSet;
 import static org.jooq.codegen.db.Tables.MEASUREMENT;
 import static org.jooq.codegen.db.Tables.MEASUREMENT_VALUE;
 import static org.jooq.codegen.db.tables.Run.RUN;
@@ -11,25 +10,31 @@ import static org.jooq.codegen.db.tables.Run.RUN;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
-import de.aaaaaaah.velcom.backend.access.entities.ErrorType;
+import de.aaaaaaah.velcom.backend.access.entities.Dimension;
+import de.aaaaaaah.velcom.backend.access.entities.DimensionInfo;
 import de.aaaaaaah.velcom.backend.access.entities.Interpretation;
 import de.aaaaaaah.velcom.backend.access.entities.Measurement;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementError;
-import de.aaaaaaah.velcom.backend.access.entities.MeasurementName;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementValues;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
-import de.aaaaaaah.velcom.backend.access.entities.RepoSource;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
 import de.aaaaaaah.velcom.backend.access.entities.RunError;
+import de.aaaaaaah.velcom.backend.access.entities.RunErrorType;
 import de.aaaaaaah.velcom.backend.access.entities.RunId;
 import de.aaaaaaah.velcom.backend.access.entities.Unit;
+import de.aaaaaaah.velcom.backend.access.entities.benchmark.NewMeasurement;
+import de.aaaaaaah.velcom.backend.access.entities.sources.CommitSource;
+import de.aaaaaaah.velcom.backend.access.entities.sources.TarSource;
+import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchRunException;
 import de.aaaaaaah.velcom.backend.storage.db.DBReadAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
+import de.aaaaaaah.velcom.backend.util.Either;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -37,6 +42,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 import org.jooq.codegen.db.tables.records.MeasurementRecord;
 import org.jooq.codegen.db.tables.records.RunRecord;
 
@@ -55,11 +61,15 @@ public class BenchmarkReadAccess {
 	protected final Map<RepoId, Cache<CommitHash, Run>> repoRunCache = new ConcurrentHashMap<>();
 	protected final List<Run> recentRunCache = new ArrayList<>();
 	protected final Comparator<Run> recentRunCacheOrder = comparing(Run::getStartTime).reversed();
-	protected final Map<RepoId, Set<MeasurementName>> measurementCache = new ConcurrentHashMap<>();
+	protected final Map<RepoId, Set<Dimension>> dimensionCache = new ConcurrentHashMap<>();
+
+	protected final Map<Dimension, DimensionInfo> dimensions = new ConcurrentHashMap<>();
 
 	public BenchmarkReadAccess(DatabaseStorage databaseStorage, RepoReadAccess repoAccess) {
 		this.databaseStorage = Objects.requireNonNull(databaseStorage);
 		this.repoAccess = Objects.requireNonNull(repoAccess);
+
+		loadDimensions();
 
 		// Populate recent run cache
 		reloadRecentRunCache();
@@ -118,9 +128,29 @@ public class BenchmarkReadAccess {
 	}
 
 	/**
+	 * Get a run by its id.
+	 *
+	 * @param id the run's id
+	 * @return the run, if one exists
+	 * @throws NoSuchRunException if no run with the given id is found
+	 */
+	public Run getRun(RunId id) throws NoSuchRunException {
+		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
+			Map<String, RunRecord> runRecordMap = db.selectFrom(RUN)
+				.where(RUN.ID.eq(id.getId().toString())).fetchMap(RUN.ID);
+
+			if (runRecordMap.isEmpty()) {
+				throw new NoSuchRunException(id);
+			}
+
+			return loadRunData(db, runRecordMap).get(0);
+		}
+	}
+
+	/**
 	 * Gets the latest run for the given commit.
 	 *
-	 * @param repoId the id of the repository
+	 * @param repoId the id of the repository the commit is in
 	 * @param commitHash the hash of the commit
 	 * @return the latest run for the commit, or {@link Optional#empty()} if no run for that commit
 	 * 	exists yet.
@@ -129,6 +159,24 @@ public class BenchmarkReadAccess {
 		Map<CommitHash, Run> resultMap = getLatestRuns(repoId, List.of(commitHash));
 		return resultMap.containsKey(commitHash) ? Optional.of(resultMap.get(commitHash))
 			: Optional.empty();
+	}
+
+	/**
+	 * Gets all runs for the given commit, ordered from latest to oldest.
+	 *
+	 * @param repoId the id of the repository the commit is in
+	 * @param commitHash the hash of the commit
+	 * @return all runs for the commit, ordered from latest to oldest.
+	 */
+	public List<Run> getAllRuns(RepoId repoId, CommitHash commitHash) {
+		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
+			Map<String, RunRecord> runRecordMap = db.selectFrom(RUN)
+				.where(RUN.REPO_ID.eq(repoId.getId().toString()))
+				.and(RUN.COMMIT_HASH.eq(commitHash.getHash()))
+				.fetchMap(RUN.ID);
+
+			return loadRunData(db, runRecordMap);
+		}
 	}
 
 	/**
@@ -168,7 +216,7 @@ public class BenchmarkReadAccess {
 					.fetchMap(RUN.ID);
 
 				loadRunData(db, runRecordMap).forEach(run -> {
-					CommitHash hash = run.getRepoSource().orElseThrow().getHash();
+					CommitHash hash = run.getSource().getLeft().orElseThrow().getHash();
 					resultMap.put(hash, run);
 
 					// Insert run into cache
@@ -181,37 +229,77 @@ public class BenchmarkReadAccess {
 	}
 
 	/**
-	 * Gets all available measurements for a given repository.
+	 * Gets all available dimensions for the specified repositories.
 	 *
-	 * @param repoId the id of the repository
-	 * @return a collection of measurements
+	 * @param repoIds the ids of the repositories
+	 * @return a map with each repo id as a key mapping to the set of available dimensions for the
+	 * 	given repository
 	 */
-	public Collection<MeasurementName> getAvailableMeasurements(RepoId repoId) {
-		// Check cache
+	public Map<RepoId, Set<Dimension>> getAvailableDimensions(List<RepoId> repoIds) {
+		Set<String> repoIdsAsStrings = repoIds.stream()
+			.map(repoId -> repoId.getId().toString())
+			.collect(Collectors.toCollection(HashSet::new));
+
+		Map<RepoId, Set<Dimension>> resultMap = new HashMap<>();
+
+		// 1.) Check cache
 		checkCachesForDeletedRepos();
 
-		Set<MeasurementName> result = measurementCache.get(repoId);
-		if (result != null) {
-			return result;
+		for (RepoId repoId : repoIds) {
+			Set<Dimension> dimensions = dimensionCache.get(repoId);
+
+			if (dimensions != null) {
+				resultMap.put(repoId, Collections.unmodifiableSet(dimensions));
+				repoIdsAsStrings.remove(repoId.getId().toString());
+			} else {
+				resultMap.put(repoId, new HashSet<>()); // prepare for database query
+			}
 		}
 
-		// Check database
-		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			result = db.selectDistinct(MEASUREMENT.BENCHMARK, MEASUREMENT.METRIC)
-				.from(MEASUREMENT)
-				.join(RUN).on(MEASUREMENT.RUN_ID.eq(RUN.ID))
-				.where(RUN.REPO_ID.eq(repoId.getId().toString()))
-				.stream()
-				.map(record -> new MeasurementName(record.value1(), record.value2()))
-				.collect(toUnmodifiableSet());
+		// 2.) Check database
+		if (!repoIdsAsStrings.isEmpty()) {
+			try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
+				// SQLite guarantees that we get the correct row (correct interp and unit)
+				// in each group. (See https://sqlite.org/lang_select.html#bareagg)
+				db.selectDistinct(RUN.REPO_ID, MEASUREMENT.BENCHMARK, MEASUREMENT.METRIC)
+					.from(MEASUREMENT)
+					.join(RUN).on(RUN.ID.eq(MEASUREMENT.RUN_ID))
+					.where(RUN.COMMIT_HASH.isNotNull()) // Ignore uploaded-tar runs associated
+					.and(RUN.REPO_ID.in(repoIds))
+					.forEach(record -> {
+						RepoId repoId = new RepoId(UUID.fromString(record.value1()));
+						Dimension dimension = new Dimension(record.value2(), record.value3());
+						resultMap.get(repoId).add(dimension);
+					});
+			}
 
-			measurementCache.put(repoId, result);
+			// 3.) Update cache with data collected from database
+			for (String repoIdStr : repoIdsAsStrings) { // <- all repos in this list are not in cache
+				RepoId repoId = new RepoId(UUID.fromString(repoIdStr));
+				// Create copy so that no mutation can occur from outside
+				Set<Dimension> dimensionSet = new HashSet<>(resultMap.get(repoId));
+				dimensionCache.put(repoId, dimensionSet);
+			}
 		}
 
-		return result;
+		return resultMap;
+	}
+
+	/**
+	 * Gets all available dimensions for the specified repository.
+	 *
+	 * @param repoId the id of the repository
+	 * @return all of the repository's available dimensions
+	 */
+	public Set<Dimension> getAvailableDimensions(RepoId repoId) {
+		return getAvailableDimensions(List.of(repoId)).get(repoId);
 	}
 
 	private List<Run> loadRunData(DBReadAccess db, Map<String, RunRecord> runRecordMap) {
+		if (runRecordMap.isEmpty()) {
+			return Collections.emptyList();
+		}
+
 		// 1.) Load measurements from database
 		Map<String, MeasurementRecord> measurementRecordMap = db.selectFrom(MEASUREMENT)
 			.where(MEASUREMENT.RUN_ID.in(runRecordMap.keySet()))
@@ -229,7 +317,7 @@ public class BenchmarkReadAccess {
 			// Read basic measurement data
 			RunRecord runRecord = runRecordMap.get(measurementRecord.getRunId());
 			RunId runId = new RunId(UUID.fromString(runRecord.getId()));
-			MeasurementName measurementName = new MeasurementName(
+			Dimension dimension = new Dimension(
 				measurementRecord.getBenchmark(), measurementRecord.getMetric()
 			);
 			Unit unit = new Unit(
@@ -244,17 +332,11 @@ public class BenchmarkReadAccess {
 			// Read measurement content
 			if (measurementRecord.getError() != null) {
 				var measurementError = new MeasurementError(measurementRecord.getError());
-
-				measurement = new Measurement(
-					runId, measurementName, unit, interpretation, measurementError
-				);
+				measurement = new Measurement(runId, dimension, measurementError);
 			} else {
 				List<Double> values = valueMap.get(measurementRecord.getId());
 				var measurementValues = new MeasurementValues(values);
-
-				measurement = new Measurement(
-					runId, measurementName, unit, interpretation, measurementValues
-				);
+				measurement = new Measurement(runId, dimension, measurementValues);
 			}
 
 			// Insert measurement into map
@@ -270,19 +352,22 @@ public class BenchmarkReadAccess {
 			.map(runRecord -> {
 				RunId runId = new RunId(UUID.fromString(runRecord.getId()));
 
-				RepoSource nullableSource = null;
+				final Either<CommitSource, TarSource> source;
 
-				if (runRecord.getRepoId() != null) {
-					nullableSource = new RepoSource(
+				if (runRecord.getCommitHash() != null) {
+					source = Either.ofLeft(new CommitSource(
 						new RepoId(UUID.fromString(runRecord.getRepoId())),
 						new CommitHash(runRecord.getCommitHash())
-					);
+					));
+				} else {
+					// If commit hash is null, tar desc must be present
+					source = Either.ofRight(new TarSource(runRecord.getTarDesc()));
 				}
 
 				if (runRecord.getError() != null) {
 					RunError error = new RunError(
 						runRecord.getError(),
-						ErrorType.fromTextualRepresentation(runRecord.getErrorType())
+						RunErrorType.fromTextualRepresentation(runRecord.getErrorType())
 					);
 
 					return new Run(
@@ -292,7 +377,7 @@ public class BenchmarkReadAccess {
 						runRecord.getRunnerInfo(),
 						runRecord.getStartTime().toInstant(),
 						runRecord.getStopTime().toInstant(),
-						nullableSource,
+						source,
 						error
 					);
 				} else {
@@ -305,7 +390,7 @@ public class BenchmarkReadAccess {
 						runRecord.getRunnerInfo(),
 						runRecord.getStartTime().toInstant(),
 						runRecord.getStopTime().toInstant(),
-						nullableSource,
+						source,
 						measurements
 					);
 				}
@@ -327,12 +412,14 @@ public class BenchmarkReadAccess {
 		Collection<RepoId> ids = repoAccess.getAllRepoIds();
 
 		repoRunCache.keySet().removeIf(repoId -> !ids.contains(repoId));
-		measurementCache.keySet().removeIf(repoId -> !ids.contains(repoId));
+		dimensionCache.keySet().removeIf(repoId -> !ids.contains(repoId));
 
 		synchronized (recentRunCache) {
 			boolean recentRunRepoWasDeleted = recentRunCache.stream()
-				.flatMap(run -> run.getRepoSource().stream())
-				.anyMatch(source -> !ids.contains(source.getRepoId()));
+				.map(Run::getRepoId)
+				.filter(Optional::isPresent)
+				.map(Optional::get)
+				.anyMatch(repoId -> !ids.contains(repoId));
 
 			if (recentRunRepoWasDeleted) {
 				reloadRecentRunCache(); // recentRunCache is now invalid
@@ -340,4 +427,99 @@ public class BenchmarkReadAccess {
 		}
 	}
 
+	/**
+	 * Load all dimensions and their infos from the db.
+	 */
+	private void loadDimensions() {
+		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
+
+			// Figure out which dimensions exist at all
+			db.selectDistinct(MEASUREMENT.BENCHMARK, MEASUREMENT.METRIC)
+				.from(MEASUREMENT)
+				.forEach(record -> {
+					Dimension dimension = new Dimension(record.component1(), record.component2());
+					DimensionInfo info = new DimensionInfo(dimension, Unit.DEFAULT, Interpretation.DEFAULT);
+					dimensions.put(dimension, info);
+				});
+
+			// Figure out the latest units
+			db.selectDistinct(MEASUREMENT.BENCHMARK, MEASUREMENT.METRIC, MEASUREMENT.UNIT)
+				.from(RUN)
+				.join(MEASUREMENT).on(MEASUREMENT.RUN_ID.eq(RUN.ID))
+				.where(MEASUREMENT.UNIT.isNotNull())
+				.groupBy(MEASUREMENT.BENCHMARK, MEASUREMENT.METRIC)
+				.orderBy(RUN.STOP_TIME.desc())
+				.forEach(record -> {
+					Dimension dimension = new Dimension(record.value1(), record.value2());
+					DimensionInfo info = dimensions.get(dimension);
+					DimensionInfo newInfo = new DimensionInfo(
+						info.getDimension(),
+						new Unit(record.value3()),
+						info.getInterpretation()
+					);
+					dimensions.put(dimension, newInfo);
+				});
+
+			// Figure out the latest interpretations
+
+			// Figure out the latest units
+			db.selectDistinct(MEASUREMENT.BENCHMARK, MEASUREMENT.METRIC, MEASUREMENT.INTERPRETATION)
+				.from(RUN)
+				.join(MEASUREMENT).on(MEASUREMENT.RUN_ID.eq(RUN.ID))
+				.where(MEASUREMENT.INTERPRETATION.isNotNull())
+				.groupBy(MEASUREMENT.BENCHMARK, MEASUREMENT.METRIC)
+				.orderBy(RUN.STOP_TIME.desc())
+				.forEach(record -> {
+					Dimension dimension = new Dimension(record.value1(), record.value2());
+					DimensionInfo info = dimensions.get(dimension);
+					DimensionInfo newInfo = new DimensionInfo(
+						info.getDimension(),
+						info.getUnit(),
+						Interpretation.fromTextualRepresentation(record.value3())
+					);
+					dimensions.put(dimension, newInfo);
+				});
+		}
+	}
+
+	/**
+	 * Update the measurement's dimension's info if necessary.
+	 *
+	 * @param measurement the measurement whose unit and interpretation to use for the update
+	 */
+	protected void updateDimensions(NewMeasurement measurement) {
+		if (measurement.getUnit().isPresent() || measurement.getInterpretation().isPresent()) {
+			dimensions.compute(measurement.getDimension(), (dimension, info) -> {
+				if (info == null) {
+					return new DimensionInfo(
+						dimension,
+						measurement.getUnit().orElse(null),
+						measurement.getInterpretation().orElse(null)
+					);
+				} else {
+					return new DimensionInfo(
+						dimension,
+						measurement.getUnit().orElse(info.getUnit()),
+						measurement.getInterpretation().orElse(info.getInterpretation())
+					);
+				}
+			});
+		}
+	}
+
+	public boolean doesDimensionExist(Dimension dimension) {
+		return dimensions.containsKey(dimension);
+	}
+
+	public DimensionInfo getDimensionInfo(Dimension dimension) {
+		return dimensions.getOrDefault(dimension, new DimensionInfo(dimension));
+	}
+
+	public Map<Dimension, DimensionInfo> getDimensionInfos(Collection<Dimension> dimensions) {
+		HashMap<Dimension, DimensionInfo> infoMap = new HashMap<>();
+		for (Dimension dimension : dimensions) {
+			infoMap.put(dimension, getDimensionInfo(dimension));
+		}
+		return infoMap;
+	}
 }

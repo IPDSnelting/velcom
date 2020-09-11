@@ -49,7 +49,9 @@ public class RepoId implements Comparable<RepoId> {
 
 	@Override
 	public int compareTo(RepoId other) {
-		if (other == null) { return 1; }
+		if (other == null) {
+			return 1;
+		}
 		return this.getId().toString().compareTo(other.getId().toString());
 	}
 

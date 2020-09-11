@@ -1,42 +1,45 @@
 package de.aaaaaaah.velcom.backend.restapi.jsonobjects;
 
-import de.aaaaaaah.velcom.backend.access.entities.Commit;
-import de.aaaaaaah.velcom.backend.access.entities.Run;
-import de.aaaaaaah.velcom.backend.access.entities.RunError;
-import java.util.Collection;
-import java.util.stream.Collectors;
-import javax.annotation.Nullable;
+import java.util.UUID;
 
-/**
- * A helper class for serialization representing a run.
- */
 public class JsonRun {
 
-	private final JsonCommit commit;
+	private final UUID id;
+	private final String author;
+	private final String runnerName;
+	private final String runnerInfo;
 	private final long startTime;
 	private final long stopTime;
-	@Nullable
-	private final Collection<JsonMeasurement> measurements;
-	@Nullable
-	private final String errorMessage;
+	private final JsonSource source;
+	private final JsonResult result;
 
-	public JsonRun(Run run, Commit commit) {
-		this.commit = new JsonCommit(commit);
+	public JsonRun(UUID id, String author, String runnerName, String runnerInfo, long startTime,
+		long stopTime, JsonSource source, JsonResult result) {
 
-		startTime = run.getStartTime().getEpochSecond();
-		stopTime = run.getStopTime().getEpochSecond();
-
-		measurements = run.getResult().getLeft().map(
-			m -> m.stream()
-				.map(JsonMeasurement::new)
-				.collect(Collectors.toUnmodifiableList())
-		).orElse(null);
-
-		errorMessage = run.getResult().getRight().map(RunError::getMessage).orElse(null);
+		this.id = id;
+		this.author = author;
+		this.runnerName = runnerName;
+		this.runnerInfo = runnerInfo;
+		this.startTime = startTime;
+		this.stopTime = stopTime;
+		this.source = source;
+		this.result = result;
 	}
 
-	public JsonCommit getCommit() {
-		return commit;
+	public UUID getId() {
+		return id;
+	}
+
+	public String getAuthor() {
+		return author;
+	}
+
+	public String getRunnerName() {
+		return runnerName;
+	}
+
+	public String getRunnerInfo() {
+		return runnerInfo;
 	}
 
 	public long getStartTime() {
@@ -47,12 +50,11 @@ public class JsonRun {
 		return stopTime;
 	}
 
-	public Collection<JsonMeasurement> getMeasurements() {
-		return measurements;
+	public JsonSource getSource() {
+		return source;
 	}
 
-	public String getErrorMessage() {
-		return errorMessage;
+	public JsonResult getResult() {
+		return result;
 	}
-
 }

@@ -148,7 +148,6 @@ public class RepoReadAccess {
 	 *
 	 * @param repoId the id of the repository
 	 * @return a list of all branches
-	 *
 	 * @throws RepoAccessException if access to the local repository failed
 	 */
 	public Collection<Branch> getBranches(RepoId repoId) {

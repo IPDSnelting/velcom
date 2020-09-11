@@ -1,7 +1,7 @@
 package de.aaaaaaah.velcom.backend.restapi.exception;
 
 import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchRepoException;
-import de.aaaaaaah.velcom.backend.restapi.util.ErrorResponseUtil;
+import java.util.UUID;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.ext.ExceptionMapper;
@@ -13,9 +13,31 @@ public class NoSuchRepoExceptionMapper implements ExceptionMapper<NoSuchRepoExce
 
 	@Override
 	public Response toResponse(NoSuchRepoException exception) {
-		return ErrorResponseUtil.errorResponse(
-			Status.NOT_FOUND,
-			"Repo " + exception.getInvalidId() + " not found!"
-		);
+		return Response
+			.status(Status.NOT_FOUND)
+			.entity(new Info(
+				"could not find repo",
+				exception.getInvalidId().getId()
+			))
+			.build();
+	}
+
+	private static class Info {
+
+		private final String message;
+		private final UUID id;
+
+		public Info(String message, UUID id) {
+			this.message = message;
+			this.id = id;
+		}
+
+		public String getMessage() {
+			return message;
+		}
+
+		public UUID getId() {
+			return id;
+		}
 	}
 }

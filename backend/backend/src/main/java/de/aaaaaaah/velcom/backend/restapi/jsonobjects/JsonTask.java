@@ -1,48 +1,53 @@
 package de.aaaaaaah.velcom.backend.restapi.jsonobjects;
 
-import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
+import de.aaaaaaah.velcom.backend.access.entities.Commit;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
-import de.aaaaaaah.velcom.backend.access.entities.RepoSource;
-import de.aaaaaaah.velcom.backend.access.entities.TarSource;
 import de.aaaaaaah.velcom.backend.access.entities.Task;
-import java.time.Instant;
-import java.util.Objects;
+import de.aaaaaaah.velcom.backend.access.entities.sources.CommitSource;
+import de.aaaaaaah.velcom.backend.access.entities.sources.TarSource;
 import java.util.UUID;
-import javax.annotation.Nullable;
 
 public class JsonTask {
 
 	private final UUID id;
 	private final String author;
-	private final int priority;
-	private final Instant insertTime;
-	private final Instant updateTime;
+	private final long since;
+	private final JsonSource source;
 
-	@Nullable
-	private final String tarName;
-	@Nullable
-	private final UUID repoId;
-	@Nullable
-	private final String commitHash;
+	public JsonTask(UUID id, String author, long since, JsonSource source) {
+		this.id = id;
+		this.author = author;
+		this.since = since;
+		this.source = source;
+	}
 
-	public JsonTask(Task task) {
-		Objects.requireNonNull(task);
-		this.id = task.getId().getId();
-		this.author = task.getAuthor();
-		this.priority = task.getPriority();
-		this.insertTime = task.getInsertTime();
-		this.updateTime = task.getUpdateTime();
-		this.tarName = task.getSource().getRight().map(TarSource::getTarName).orElse(null);
-		this.repoId = task.getSource()
-			.getLeft()
-			.map(RepoSource::getRepoId)
-			.map(RepoId::getId)
-			.orElse(null);
-		this.commitHash = task.getSource()
-			.getLeft()
-			.map(RepoSource::getHash)
-			.map(CommitHash::getHash)
-			.orElse(null);
+	public static JsonTask fromTask(Task task, CommitReadAccess commitAccess) {
+		JsonSource source = task.getSource().consume(
+			commitSource -> getCommitSource(commitAccess, commitSource),
+			JsonTask::getTarSource
+		);
+
+		return new JsonTask(
+			task.getId().getId(), task.getAuthor(), task.getInsertTime().getEpochSecond(), source
+		);
+	}
+
+	private static JsonSource getTarSource(TarSource tarSource) {
+		return JsonSource.fromUploadedTar(tarSource.getDescription(),
+			tarSource.getRepoId().map(RepoId::getId).orElse(null));
+	}
+
+	private static JsonSource getCommitSource(CommitReadAccess commitAccess, CommitSource it) {
+		Commit commit = commitAccess.getCommit(it.getRepoId(), it.getHash());
+
+		return JsonSource.fromCommit(new JsonCommitDescription(
+			it.getRepoId().getId(),
+			it.getHash().getHash(),
+			commit.getAuthor(),
+			commit.getAuthorDate().getEpochSecond(),
+			commit.getSummary()
+		));
 	}
 
 	public UUID getId() {
@@ -53,31 +58,11 @@ public class JsonTask {
 		return author;
 	}
 
-	public int getPriority() {
-		return priority;
+	public long getSince() {
+		return since;
 	}
 
-	public Instant getInsertTime() {
-		return insertTime;
+	public JsonSource getSource() {
+		return source;
 	}
-
-	public Instant getUpdateTime() {
-		return updateTime;
-	}
-
-	@Nullable
-	public String getTarName() {
-		return tarName;
-	}
-
-	@Nullable
-	public UUID getRepoId() {
-		return repoId;
-	}
-
-	@Nullable
-	public String getCommitHash() {
-		return commitHash;
-	}
-
 }

@@ -8,13 +8,14 @@ import de.aaaaaaah.velcom.backend.access.RepoReadAccess;
 import de.aaaaaaah.velcom.backend.access.TaskWriteAccess;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
-import de.aaaaaaah.velcom.backend.access.entities.RepoSource;
-import de.aaaaaaah.velcom.backend.access.entities.Run;
 import de.aaaaaaah.velcom.backend.access.entities.Task;
 import de.aaaaaaah.velcom.backend.access.entities.TaskId;
+import de.aaaaaaah.velcom.backend.access.entities.benchmark.NewRun;
+import de.aaaaaaah.velcom.backend.access.entities.sources.CommitSource;
 import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchTaskException;
 import de.aaaaaaah.velcom.backend.access.exceptions.PrepareTransferException;
 import de.aaaaaaah.velcom.backend.access.exceptions.TransferException;
+import de.aaaaaaah.velcom.backend.access.policy.QueuePriority;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -55,8 +56,8 @@ public class Queue {
 
 	/**
 	 * Adds a handler to this queue that is called when a task process is aborted, which means that
-	 * the task was given to a runner but the processing of the task has been subsequently
-	 * cancelled. The task still remains in the queue.
+	 * the task was given to a runner but the processing of the task has been subsequently cancelled.
+	 * The task still remains in the queue.
 	 *
 	 * @param handler the handler
 	 */
@@ -94,6 +95,9 @@ public class Queue {
 	}
 
 	/**
+	 * Gets the task that is next in line to be benchmarked. The returned task will then be marked as
+	 * "in_process" until the task is completed via {@link Queue#completeTask(NewRun)}.
+	 *
 	 * @return the next task in this queue to be processed
 	 */
 	public Optional<Task> fetchNextTask() {
@@ -109,18 +113,23 @@ public class Queue {
 	}
 
 	/**
-	 * Adds a new task to this queue.
+	 * Adds the specified commits as tasks into the queue.
 	 *
 	 * @param author the author of this addition
-	 * @param repoId the id of the repository that this task belongs to
-	 * @param commitHash the commit hash of this taks
+	 * @param repoId the id of the repository that the given commits belong to
+	 * @param hashes the commit hashes
+	 * @param priority the priority that will be given to the commit tasks
+	 * @return a collection of all tasks that were actually inserted because respective their commits
+	 * 	were not already in the queue beforehand
 	 */
-	public void addCommits(String author, RepoId repoId, List<CommitHash> commitHash) {
-		List<Task> tasks = commitHash.stream()
-			.map(hash -> new Task(author, new RepoSource(repoId, hash)))
+	public Collection<Task> addCommits(String author, RepoId repoId, List<CommitHash> hashes,
+		QueuePriority priority) {
+
+		List<Task> tasks = hashes.stream()
+			.map(hash -> new Task(author, priority, new CommitSource(repoId, hash)))
 			.collect(toList());
 
-		taskAccess.insertTasks(tasks);
+		return taskAccess.insertTasks(tasks);
 	}
 
 	/**
@@ -129,13 +138,12 @@ public class Queue {
 	 * @param taskId the id of the task
 	 * @param newPriority the new priority
 	 */
-	public void prioritizeTask(TaskId taskId, int newPriority) {
+	public void prioritizeTask(TaskId taskId, QueuePriority newPriority) {
 		taskAccess.setTaskPriority(taskId, newPriority);
 	}
 
 	/**
-	 * Transfers a task to the supplied {@link OutputStream} while also marking the task as "in
-	 * process".
+	 * Transfers a task to the supplied {@link OutputStream}.
 	 *
 	 * <p>Note that the provided output stream will be closed after the transfer operation is
 	 * done.</p>
@@ -170,7 +178,7 @@ public class Queue {
 	 *
 	 * @param result the result associated with the task
 	 */
-	public void completeTask(Run result) {
+	public void completeTask(NewRun result) {
 		benchAccess.insertRun(result);
 	}
 

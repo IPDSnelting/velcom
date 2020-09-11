@@ -36,7 +36,10 @@ public class GlobalConfig extends Configuration {
 	@Min(1)
 	private long disconnectedRunnerGracePeriodSeconds;
 
-	private double significantFactor;
+	private double significanceRelativeThreshold;
+	private double significanceStddevThreshold;
+	@Min(2)
+	private int significanceMinStddevAmount;
 
 	@NotEmpty
 	private String repoDir;
@@ -111,15 +114,35 @@ public class GlobalConfig extends Configuration {
 	 * 	rescheduled)
 	 */
 	public Duration getDisconnectedRunnerGracePeriod() {
+		// TODO: 04.09.20 This value is unused, remove it?
 		return Duration.ofSeconds(disconnectedRunnerGracePeriodSeconds);
 	}
 
 	/**
-	 * @return the factor which controls what commit differences become significant. Must be
-	 * 	positive
+	 * Explained in more detail in the example config.
+	 *
+	 * @return the relative threshold
 	 */
-	public double getSignificantFactor() {
-		return significantFactor;
+	public double getSignificanceRelativeThreshold() {
+		return significanceRelativeThreshold;
+	}
+
+	/**
+	 * Explained in more detail in the example config.
+	 *
+	 * @return the stddev threshold
+	 */
+	public double getSignificanceStddevThreshold() {
+		return significanceStddevThreshold;
+	}
+
+	/**
+	 * Explained in more detail in the example config.
+	 *
+	 * @return the minimum amount of values for stddev calculations to apply
+	 */
+	public int getSignificanceMinStddevAmount() {
+		return significanceMinStddevAmount;
 	}
 
 	/**

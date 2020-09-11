@@ -7,11 +7,13 @@ import java.util.Objects;
  */
 public class Unit {
 
-	private final String name;
+	public static Unit DEFAULT = new Unit("");
 
 	public Unit(String name) {
 		this.name = Objects.requireNonNull(name);
 	}
+
+	private final String name;
 
 	public String getName() {
 		return name;

@@ -3,6 +3,7 @@ package de.aaaaaaah.velcom.backend.runner;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
 import de.aaaaaaah.velcom.backend.access.entities.Task;
 import de.aaaaaaah.velcom.backend.access.entities.TaskId;
+import de.aaaaaaah.velcom.backend.access.entities.benchmark.NewRun;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.runner.single.TeleRunner;
 import de.aaaaaaah.velcom.shared.util.execution.DaemonThreadFactory;
@@ -132,7 +133,7 @@ public class Dispatcher implements IDispatcher {
 	 *
 	 * @param result the resulting run
 	 */
-	public void completeTask(Run result) {
+	public void completeTask(NewRun result) {
 		queue.completeTask(result);
 	}
 

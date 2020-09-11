@@ -1,11 +1,15 @@
 package de.aaaaaaah.velcom.backend.access.entities;
 
+import de.aaaaaaah.velcom.backend.access.entities.sources.CommitSource;
+import de.aaaaaaah.velcom.backend.access.entities.sources.TarSource;
 import de.aaaaaaah.velcom.backend.util.Either;
-import javax.annotation.Nullable;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 
 /**
  * A run is a single execution of the benchmark script.
@@ -23,56 +27,42 @@ public class Run {
 	private final String runnerInfo;
 	private final Instant startTime;
 	private final Instant stopTime;
-	private final Optional<RepoSource> repoSource;
-	private final Either<Collection<Measurement>, RunError> result;
+	private final Either<CommitSource, TarSource> source;
+	private final Either<RunError, Collection<Measurement>> result;
 
 	public Run(RunId runId, String author, String runnerName, String runnerInfo, Instant startTime,
-		Instant stopTime, @Nullable RepoSource repoSource, Collection<Measurement> measurements) {
+		Instant stopTime, Either<CommitSource, TarSource> source,
+		Collection<Measurement> measurements) {
 
-		this(runId, author, runnerName, runnerInfo, startTime, stopTime, repoSource, null,
-			measurements);
+		this(runId, author, runnerName, runnerInfo, startTime, stopTime, source, null, measurements);
 	}
 
 	public Run(RunId runId, String author, String runnerName, String runnerInfo, Instant startTime,
-		Instant stopTime, Collection<Measurement> measurements) {
+		Instant stopTime, Either<CommitSource, TarSource> source, RunError error) {
 
-		this(runId, author, runnerName, runnerInfo, startTime, stopTime, null, null, measurements);
+		this(runId, author, runnerName, runnerInfo, startTime, stopTime, source, error, null);
 	}
 
-	public Run(RunId runId, String author, String runnerName, String runnerInfo, Instant startTime,
-		Instant stopTime, @Nullable RepoSource repoSource, RunError error) {
-
-		this(runId, author, runnerName, runnerInfo, startTime, stopTime, repoSource, error,
-			null);
-	}
-
-	public Run(RunId runId, String author, String runnerName, String runnerInfo, Instant startTime,
-		Instant stopTime, RunError error) {
-
-		this(runId, author, runnerName, runnerInfo, startTime, stopTime, null, error, null);
-	}
-
-	private Run(RunId id, String author, String runnerName, String runnerInfo,
-		Instant startTime, Instant stopTime,
-		@Nullable RepoSource repoSource, @Nullable RunError error,
+	private Run(RunId id, String author, String runnerName, String runnerInfo, Instant startTime,
+		Instant stopTime, Either<CommitSource, TarSource> source, @Nullable RunError error,
 		@Nullable Collection<Measurement> measurements) {
+
 		this.id = Objects.requireNonNull(id);
 		this.author = Objects.requireNonNull(author);
 		this.runnerName = Objects.requireNonNull(runnerName);
 		this.runnerInfo = Objects.requireNonNull(runnerInfo);
 		this.startTime = Objects.requireNonNull(startTime);
 		this.stopTime = Objects.requireNonNull(stopTime);
-
-		this.repoSource = Optional.ofNullable(repoSource);
+		this.source = Objects.requireNonNull(source);
 
 		if (error != null && measurements != null) {
 			throw new IllegalArgumentException(
 				"either error or measurement must be present, but not both at the same time!"
 			);
 		} else if (error != null) {
-			this.result = Either.ofRight(error);
+			this.result = Either.ofLeft(error);
 		} else if (measurements != null) {
-			this.result = Either.ofLeft(measurements);
+			this.result = Either.ofRight(measurements);
 		} else {
 			throw new IllegalArgumentException("both error and measurement are null");
 		}
@@ -94,8 +84,8 @@ public class Run {
 		return runnerInfo;
 	}
 
-	public Optional<RepoSource> getRepoSource() {
-		return repoSource;
+	public Either<CommitSource, TarSource> getSource() {
+		return source;
 	}
 
 	public Instant getStartTime() {
@@ -106,7 +96,24 @@ public class Run {
 		return stopTime;
 	}
 
-	public Either<Collection<Measurement>, RunError> getResult() { return result; }
+	public Either<RunError, Collection<Measurement>> getResult() {
+		return result;
+	}
+
+	public Optional<RepoId> getRepoId() {
+		if (getSource().isLeft()) {
+			return Optional.of(getSource().getLeft().get().getRepoId());
+		} else {
+			return getSource().getRight().get().getRepoId();
+		}
+	}
+
+	public Set<Dimension> getAllDimensionsUsed() {
+		return result.getRight().stream()
+			.flatMap(Collection::stream)
+			.map(Measurement::getDimension)
+			.collect(Collectors.toSet());
+	}
 
 	@Override
 	public String toString() {
@@ -117,7 +124,7 @@ public class Run {
 			", runnerInfo='" + runnerInfo + '\'' +
 			", startTime=" + startTime +
 			", stopTime=" + stopTime +
-			", repoSource=" + repoSource +
+			", repoSource=" + source +
 			", result=" + result +
 			'}';
 	}
