@@ -114,12 +114,15 @@ class EchartsDataPoint {
   }
 })
 export default class NewEchartsDetail extends Vue {
+  // <!--<editor-fold desc="PROPS">-->
   @Prop()
   private dimensions!: Dimension[]
 
   @Prop({ default: false })
   private beginYAtZero!: boolean
+  // <!--</editor-fold>-->
 
+  // <!--<editor-fold desc="FIELDS">-->
   private chartOptions: EChartOption = {}
   private seriesGenerator: SeriesGenerationFunction = this.buildLineSeries
   private zoomStartPercent: number = 0
@@ -130,6 +133,7 @@ export default class NewEchartsDetail extends Vue {
   private pointDialogDatapoint: DetailDataPoint | null = null
   private pointDialogDimension: Dimension | null = null
   // <<<< Datapoint Dialog <<<<
+  //  <!--</editor-fold>-->
 
   private get detailDataPoints(): DetailDataPoint[] {
     return [
@@ -203,6 +207,7 @@ export default class NewEchartsDetail extends Vue {
     return map
   }
 
+  // <!--<editor-fold desc="ECHARTS GRAPH OPTIONS">-->
   private updateGraph() {
     console.log('UPDATED')
 
@@ -250,6 +255,45 @@ export default class NewEchartsDetail extends Vue {
     this.updateReferenceDatapoint()
   }
 
+  private tooltipFormatter(params: Format | Format[]) {
+    const values = Array.isArray(params) ? params : [params]
+
+    const dimensionRows = values.map(val => {
+      const dimension = this.dimensions[val.seriesIndex || 0]
+      const color = this.dimensionColor(dimension)
+      const datapoint = val.data as EchartsDataPoint
+
+      return `
+                <tr>
+                  <td>
+                    <span class="color-preview" style="background-color: ${color}"></span>
+                    ${dimension.benchmark} - ${dimension.metric}
+                  </td>
+                  <td>${this.numberFormat.format(datapoint.dataValue)}</td>
+                </tr>
+                `
+    })
+
+    const samplePoint = values[0].data as EchartsDataPoint
+
+    return `
+                <table class="echarts-tooltip-table">
+                  <tr>
+                    <td>Hash</td>
+                    <td>${samplePoint.name}</td>
+                  </tr>
+                  </tr>
+                    <td>Message</td>
+                    <td>${samplePoint.summary}</td>
+                  </tr>
+                  ${dimensionRows.join('\n')}
+                </table>
+            `
+  }
+
+  // <!--</editor-fold>-->
+
+  // <!--<editor-fold desc="SERIES GENERATION">-->
   private buildEchartsDataPoints(dimension: DimensionId): EchartsDataPoint[] {
     const findFirstSuccessful = () => {
       for (let i = 0; i < this.detailDataPoints.length; i++) {
@@ -385,7 +429,9 @@ export default class NewEchartsDetail extends Vue {
     }
     return 'unchanged'
   }
+  // <!--</editor-fold>-->
 
+  // <!--<editor-fold desc="LIFECYCLE HOOKS">-->
   mounted(): void {
     this.dimensions = [
       new Dimension('Random', 'metric', 'cats', 'LESS_IS_BETTER'),
@@ -393,8 +439,9 @@ export default class NewEchartsDetail extends Vue {
     ]
     this.updateGraph()
   }
+  // <!--</editor-fold>-->
 
-  // ==== REFERENCE LINE, COMPARE ====
+  // <!--<editor-fold desc="REFERENCE LINE, COMPARE">-->
   private get commitToCompare(): DetailDataPoint | null {
     return vxm.detailGraphModule.commitToCompare
   }
@@ -445,8 +492,9 @@ export default class NewEchartsDetail extends Vue {
     const grid = this.chartOptions.grid as EChartOption.Grid
     grid.right = hasReferenceLine ? 70 : 20
   }
+  // <!--</editor-fold>-->
 
-  // ==== DETAIL DIALOG EVENT HANDLER ====
+  // <!--<editor-fold desc="DETAIL DIALOG EVENT HANDLER">-->
   private pointDialogExecuteCompare() {
     if (!vxm.detailGraphModule.commitToCompare || !this.pointDialogDatapoint) {
       return
@@ -461,8 +509,9 @@ export default class NewEchartsDetail extends Vue {
       query: { hash1: hashFrom, hash2: hashTo }
     })
   }
+  // <!--</editor-fold>-->
 
-  // ==== ECHARTS EVENT HANDLER ====
+  // <!--<editor-fold desc="ECHARTS EVENT HANDLER">-->
   private echartsZoomed(e: any) {
     let event: {
       start?: number
@@ -525,44 +574,9 @@ export default class NewEchartsDetail extends Vue {
     this.pointDialogDimension = dimension
     this.pointDialogOpen = true
   }
+  // <!--</editor-fold>-->
 
-  private tooltipFormatter(params: Format | Format[]) {
-    const values = Array.isArray(params) ? params : [params]
-
-    const dimensionRows = values.map(val => {
-      const dimension = this.dimensions[val.seriesIndex || 0]
-      const color = this.dimensionColor(dimension)
-      const datapoint = val.data as EchartsDataPoint
-
-      return `
-                <tr>
-                  <td>
-                    <span class="color-preview" style="background-color: ${color}"></span>
-                    ${dimension.benchmark} - ${dimension.metric}
-                  </td>
-                  <td>${this.numberFormat.format(datapoint.dataValue)}</td>
-                </tr>
-                `
-    })
-
-    const samplePoint = values[0].data as EchartsDataPoint
-
-    return `
-                <table class="echarts-tooltip-table">
-                  <tr>
-                    <td>Hash</td>
-                    <td>${samplePoint.name}</td>
-                  </tr>
-                  </tr>
-                    <td>Message</td>
-                    <td>${samplePoint.summary}</td>
-                  </tr>
-                  ${dimensionRows.join('\n')}
-                </table>
-            `
-  }
-
-  // ==== THEME HELPER ====
+  // <!--<editor-fold desc="THEME HELPER">-->
   private get numberFormat(): Intl.NumberFormat {
     return new Intl.NumberFormat(
       new Intl.NumberFormat().resolvedOptions().locale,
@@ -580,6 +594,7 @@ export default class NewEchartsDetail extends Vue {
   private get graphFailedOrUnbenchmarkedColor() {
     return this.$vuetify.theme.currentTheme.graphFailedOrUnbenchmarked as string
   }
+  // <!--</editor-fold>-->
 
   private readonly crossIcon =
     'path://M24 20.188l-8.315-8.209 8.2-8.282-3.697-3.697-8.212 8.318-8.31-8.203-3.666 3.666 8.321 8.24-8.206 8.313 3.666 3.666 8.237-8.318 8.285 8.203z'
