@@ -29,7 +29,7 @@ export class UserStore extends VxModule {
       }
     })
 
-    if (response.status === 200) {
+    if (response.status === 200 || response.status === 204) {
       this.setRole(payload.role)
       this.setToken(payload.token)
     }
