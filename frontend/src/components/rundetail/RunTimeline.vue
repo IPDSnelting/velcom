@@ -9,9 +9,13 @@
         :class="[index % 2 == 1 ? 'text-right' : '']"
         class="d-flex align-center"
       >
-        <span :class="isSelected(run) ? ['text-h6'] : ['']">{{
-          formatDate(run.startTime)
-        }}</span>
+        <router-link
+          :to="{ name: 'run-detail', params: { first: run.runId } }"
+          :class="isSelected(run) ? ['text-h6'] : ['']"
+          class="concealed-link"
+        >
+          {{ formatDate(run.startTime) }}
+        </router-link>
         <template #icon>
           <v-tooltip :left="index % 2 === 0" :right="index % 2 === 1">
             <template #activator="{ on }">
@@ -28,14 +32,7 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import {
-  RunDescription,
-  RunResultSuccess,
-  RunResultVelcomError,
-  RunResultScriptError,
-  RunDescriptionSuccess,
-  RunId
-} from '@/store/types'
+import { RunDescription, RunId } from '@/store/types'
 import { Prop } from 'vue-property-decorator'
 import { formatDate } from '@/util/TimeUtil'
 import {
@@ -84,6 +81,3 @@ export default class RunTimeline extends Vue {
   }
 }
 </script>
-
-<style scoped>
-</style>
