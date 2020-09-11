@@ -26,7 +26,6 @@
       :headers="headers"
       :items="items"
       :items-per-page="5"
-      class="test-me"
     >
       <template #[`item.value`]="{ item, value }">
         <measurement-value
@@ -53,6 +52,7 @@
           <measurement-value
             :value="value"
             :tooltip-message="tooltip"
+            :color="item.changeColor"
           ></measurement-value>
         </div>
       </template>

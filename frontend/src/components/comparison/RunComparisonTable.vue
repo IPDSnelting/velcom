@@ -19,10 +19,7 @@ import {
   Dimension,
   RunResultSuccess,
   MeasurementSuccess,
-  DimensionInterpretation,
-  CommitTaskSource,
-  CommitDescription,
-  TarTaskSource
+  DimensionInterpretation
 } from '@/store/types'
 import { Prop } from 'vue-property-decorator'
 
