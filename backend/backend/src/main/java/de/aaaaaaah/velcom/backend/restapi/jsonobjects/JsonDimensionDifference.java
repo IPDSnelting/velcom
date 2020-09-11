@@ -12,17 +12,17 @@ import javax.annotation.Nullable;
 public class JsonDimensionDifference {
 
 	private final JsonDimension dimension;
-	private final double absdiff;
+	private final double diff;
 	@Nullable
 	private final Double reldiff;
 	@Nullable
 	private final Double stddev;
 
-	public JsonDimensionDifference(JsonDimension dimension, double absdiff, @Nullable Double reldiff,
+	public JsonDimensionDifference(JsonDimension dimension, double diff, @Nullable Double reldiff,
 		@Nullable Double stddev) {
 
 		this.dimension = dimension;
-		this.absdiff = absdiff;
+		this.diff = diff;
 		this.reldiff = reldiff;
 		this.stddev = stddev;
 	}
@@ -38,7 +38,7 @@ public class JsonDimensionDifference {
 
 		return new JsonDimensionDifference(
 			JsonDimension.fromDimensionInfo(dimensionInfos.get(difference.getDimension())),
-			difference.getAbsdiff(),
+			difference.getDiff(),
 			difference.getReldiff().orElse(null),
 			difference.getSecondStddev().orElse(null)
 		);
@@ -56,8 +56,8 @@ public class JsonDimensionDifference {
 		return dimension;
 	}
 
-	public double getAbsdiff() {
-		return absdiff;
+	public double getDiff() {
+		return diff;
 	}
 
 	@Nullable

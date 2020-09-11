@@ -38,7 +38,7 @@ disconnectedRunnerGracePeriodSeconds: 600
 # A commit becomes significant if the following rules hold for at least one of its measurements and
 # the corresponding measurement in the run of any parent commit:
 #
-# Rule 1: |newValue / oldValue| >= significanceRelativeThreshold
+# Rule 1: |(newValue - oldValue) / oldValue| >= significanceRelativeThreshold
 # Rule 2: |newValue - oldValue| >= significanceStddevThreshold * stddev(newValues)
 #
 # If the amount of new values is below significanceMinStddevAmount, rule 2 doesn't apply.
