@@ -15,6 +15,7 @@
             :options="chartOptions"
             @datazoom="echartsZoomed"
             @contextmenu="echartsOpenContextMenu"
+            @click="echartsClicked"
           />
         </div>
       </v-col>
@@ -610,6 +611,37 @@ export default class NewEchartsDetail extends Vue {
     this.pointDialogDatapoint = detailPoint
     this.pointDialogDimension = dimension
     this.pointDialogOpen = true
+  }
+
+  private echartsClicked(e: any) {
+    if (e.data === undefined) {
+      return
+    }
+
+    const echartsPoint = e.data as EchartsDataPoint
+
+    if ((e as any).event && (e as any).event.event) {
+      const event = (e as any).event.event as MouseEvent
+      if (event.ctrlKey) {
+        const routeData = this.$router.resolve({
+          name: 'run-detail',
+          params: {
+            first: vxm.detailGraphModule.selectedRepoId,
+            second: echartsPoint.name
+          }
+        })
+        window.open(routeData.href, '_blank')
+        return
+      }
+    }
+
+    this.$router.push({
+      name: 'run-detail',
+      params: {
+        first: vxm.detailGraphModule.selectedRepoId,
+        second: echartsPoint.name
+      }
+    })
   }
   // <!--</editor-fold>-->
 
