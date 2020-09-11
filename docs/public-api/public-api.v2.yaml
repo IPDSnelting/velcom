@@ -1074,18 +1074,21 @@ components:
       properties:
         dimension:
           $ref: '#/components/schemas/Dimension'
-        absdiff:
+        diff:
           type: number
           description: new value - old value
         reldiff:
           type: number
-          description: new value / old value (only present if the old_value is non-zero)
+          description: |-
+            (new value - old value) / old value
+
+            Only present if the old_value is non-zero.
         stddev:
           type: number
           description: The standard deviation of the run the new value is from. Only present if the amount of values in the sample is above the minimum stddev amount.
       required:
         - dimension
-        - absdiff
+        - diff
   securitySchemes:
     admin_credentials:
       type: http
