@@ -115,7 +115,7 @@ class EchartsDataPoint {
     'v-chart': EChartsComp
   }
 })
-export default class NewEchartsDetail extends Vue {
+export default class EchartsDetailGraph extends Vue {
   // <!--<editor-fold desc="PROPS">-->
   @Prop()
   private dimensions!: Dimension[]
