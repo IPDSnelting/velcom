@@ -103,7 +103,7 @@ public class Benchmarker {
 		rows.add("Runner name", runnerName);
 
 		rows.add(
-			"Machine info",
+			"System",
 			System.getProperty("os.name")
 				+ " " + System.getProperty("os.arch")
 				+ " " + System.getProperty("os.version")

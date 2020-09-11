@@ -57,7 +57,7 @@ public class RunnerMain {
 			boolean didBenchmark = false;
 
 			for (TeleBackend backend : backends) {
-				LOGGER.debug("Asking {} for a benchmark",backend);
+				LOGGER.debug("Asking {} for a benchmark", backend);
 				didBenchmark |= backend.maybePerformBenchmark();
 			}
 
