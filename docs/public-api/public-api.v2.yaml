@@ -23,6 +23,8 @@ paths:
       responses:
         '200':
           description: OK
+        '404':
+          description: Not Found
       operationId: delete-queue-taskid
       security:
         - admin_credentials: []
@@ -197,6 +199,7 @@ paths:
       parameters:
         - schema:
             type: boolean
+            default: 'false'
           in: query
           name: all_values
           description: Whether the measurements should contain all values
@@ -294,7 +297,7 @@ paths:
                     $ref: '#/components/schemas/Task'
                 required:
                   - task
-        '403':
+        '409':
           description: There is already a task for this commit in the queue
       description: 'This endpoint allows users to add a specific commit to the queue. If there is already a task for this commit in the queue, this endpoint fails.'
       tags:
@@ -348,6 +351,8 @@ paths:
       responses:
         '200':
           description: OK
+        '404':
+          description: Not Found
       security:
         - repo_admin_credentials: []
       description: Delete an entire repository and its associated measurements.
@@ -359,6 +364,8 @@ paths:
       responses:
         '200':
           description: OK
+        '404':
+          description: Not Found
       security:
         - repo_admin_credentials: []
       requestBody:
@@ -513,9 +520,17 @@ paths:
                           type: string
                         values:
                           type: array
-                          description: 'One value for each dimension. For the order, see the `dimensions` field'
+                          description: |-
+                            One value for each dimension. For the order, see the `dimensions` field.
+
+                            If there is no value for any reason, the array contains a string as placeholder describing why there is no value. `"N"` means that the commit has no correspondin run. `"O"` means that the run has no corresponding measurement. `"R"` means that the entire run has failed. `"M"` means that only the measurement itself has failed.
                           items:
-                            type: number
+                            type:
+                              - number
+                              - string
+                            pattern: '^[NORM]$'
+                            minLength: 1
+                            maxLength: 1
                       required:
                         - hash
                         - parents
@@ -1067,11 +1082,10 @@ components:
           description: new value / old value (only present if the old_value is non-zero)
         stddev:
           type: number
-          description: The standard deviation of the run the new value is from
+          description: The standard deviation of the run the new value is from. Only present if the amount of values in the sample is above the minimum stddev amount.
       required:
         - dimension
         - absdiff
-        - stddev
   securitySchemes:
     admin_credentials:
       type: http
