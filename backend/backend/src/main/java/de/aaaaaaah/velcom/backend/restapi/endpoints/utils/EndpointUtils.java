@@ -3,21 +3,16 @@ package de.aaaaaaah.velcom.backend.restapi.endpoints.utils;
 import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.access.entities.BranchName;
-import de.aaaaaaah.velcom.backend.access.entities.Commit;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.entities.Dimension;
 import de.aaaaaaah.velcom.backend.access.entities.DimensionInfo;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
 import de.aaaaaaah.velcom.backend.access.entities.RunId;
-import de.aaaaaaah.velcom.backend.access.entities.sources.CommitSource;
-import de.aaaaaaah.velcom.backend.access.entities.sources.TarSource;
 import de.aaaaaaah.velcom.backend.restapi.exception.InvalidQueryParamsException;
-import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonCommitDescription;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonResult;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRun;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonSource;
-import de.aaaaaaah.velcom.shared.util.Either;
 import de.aaaaaaah.velcom.shared.util.Pair;
 import java.time.Duration;
 import java.time.Instant;
@@ -68,7 +63,7 @@ public class EndpointUtils {
 	public static JsonRun fromRun(BenchmarkReadAccess benchmarkAccess, CommitReadAccess commitAccess,
 		Run run, boolean allValues) {
 
-		JsonSource source = convertToSource(commitAccess, run.getSource());
+		JsonSource source = JsonSource.fromSource(run.getSource(), commitAccess);
 		Map<Dimension, DimensionInfo> dimensionInfos = benchmarkAccess
 			.getDimensionInfos(run.getAllDimensionsUsed());
 
@@ -98,29 +93,6 @@ public class EndpointUtils {
 					allValues
 				)
 			);
-		}
-	}
-
-	/**
-	 * Convert a source to a {@link JsonSource}.
-	 *
-	 * @param commitAccess a {@link CommitReadAccess}
-	 * @param source the source to convert
-	 * @return the converted source
-	 */
-	public static JsonSource convertToSource(CommitReadAccess commitAccess,
-		Either<CommitSource, TarSource> source) {
-
-		if (source.isLeft()) {
-			CommitSource commitSource = source.getLeft().get();
-			Commit commit = commitAccess.getCommit(commitSource.getRepoId(), commitSource.getHash());
-			return JsonSource.fromCommit(JsonCommitDescription.fromCommit(commit));
-		} else {
-			TarSource tarSource = source.getRight().get();
-			UUID repoId = tarSource.getRepoId()
-				.map(RepoId::getId)
-				.orElse(null);
-			return JsonSource.fromUploadedTar(tarSource.getDescription(), repoId);
 		}
 	}
 
