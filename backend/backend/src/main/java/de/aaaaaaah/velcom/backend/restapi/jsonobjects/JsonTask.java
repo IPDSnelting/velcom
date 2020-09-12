@@ -7,6 +7,7 @@ import de.aaaaaaah.velcom.backend.access.entities.Task;
 import de.aaaaaaah.velcom.backend.access.entities.sources.CommitSource;
 import de.aaaaaaah.velcom.backend.access.entities.sources.TarSource;
 import java.util.UUID;
+import javax.annotation.Nullable;
 
 public class JsonTask {
 
@@ -33,17 +34,30 @@ public class JsonTask {
 		);
 	}
 
+	public static JsonTask fromTask(Task task, Commit commit) {
+		JsonSource source = task.getSource().consume(
+			commitSource -> getCommitSource(commit),
+			JsonTask::getTarSource
+		);
+
+		return new JsonTask(
+			task.getId().getId(), task.getAuthor(), task.getInsertTime().getEpochSecond(), source
+		);
+	}
+
 	private static JsonSource getTarSource(TarSource tarSource) {
 		return JsonSource.fromUploadedTar(tarSource.getDescription(),
 			tarSource.getRepoId().map(RepoId::getId).orElse(null));
 	}
 
 	private static JsonSource getCommitSource(CommitReadAccess commitAccess, CommitSource it) {
-		Commit commit = commitAccess.getCommit(it.getRepoId(), it.getHash());
+		return getCommitSource(commitAccess.getCommit(it.getRepoId(), it.getHash()));
+	}
 
+	private static JsonSource getCommitSource(Commit commit) {
 		return JsonSource.fromCommit(new JsonCommitDescription(
-			it.getRepoId().getId(),
-			it.getHash().getHash(),
+			commit.getRepoId().getId(),
+			commit.getHash().getHash(),
 			commit.getAuthor(),
 			commit.getAuthorDate().getEpochSecond(),
 			commit.getSummary()
