@@ -14,6 +14,8 @@ import javax.annotation.Nullable;
  */
 public class GetStatusReply implements ServerBound {
 
+	// TODO: 12.09.20 Include current bench script output here or create a new command and reply
+
 	private final String info;
 	@Nullable
 	private final String benchHash;

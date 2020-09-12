@@ -34,6 +34,8 @@ import javax.ws.rs.core.Response;
 @Produces(MediaType.APPLICATION_JSON)
 public class QueueEndpoint {
 
+	// TODO: 12.09.20 Add one-up endpoint (also update the API spec)
+
 	private final CommitReadAccess commitReadAccess;
 	private final RepoReadAccess repoReadAccess;
 	private final Queue queue;
@@ -94,6 +96,10 @@ public class QueueEndpoint {
 		return Response.ok().build();
 	}
 
+	// TODO: 12.09.20 Gracefully handle the case that the specified commit does not exist in the repo
+	// At the moment, a foreign key constraint violation is raised by sqlite because the task refers
+	// to the known_commit table which doesn't contain the requested commit. Instead, the
+	// TaskWriteAccess should probably throw a NoSuchCommitException.
 	@POST
 	@Path("commit/{repoId}/{hash}")
 	public PostCommitReply addCommit(@Auth RepoUser user, @PathParam("repoId") UUID repoUuid,
