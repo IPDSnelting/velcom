@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.stream.Collectors;
@@ -89,13 +90,10 @@ public class CommitReadAccess {
 	 * 	could not be found.
 	 */
 	public Commit getCommit(RepoId repoId, CommitHash commitHash) {
-		List<Commit> commits = getCommits(repoId, List.of(commitHash));
+		Map<CommitHash, Commit> commits = getCommits(repoId, List.of(commitHash));
 
-		if (!commits.isEmpty()) {
-			return commits.get(0);
-		} else {
-			throw new NoSuchCommitException(repoId, commitHash);
-		}
+		return Optional.ofNullable(commits.get(commitHash))
+			.orElseThrow(() -> new NoSuchCommitException(repoId, commitHash));
 	}
 
 	/**
@@ -107,15 +105,15 @@ public class CommitReadAccess {
 	 * 	list. If a commit could not be found, doesn't return that commit in the return value.
 	 * 	Preserves ordering of commits (and duplicate commits) from the input commit hash collection.
 	 */
-	public List<Commit> getCommits(RepoId repoId, Collection<CommitHash> commitHashes) {
+	public Map<CommitHash, Commit> getCommits(RepoId repoId, Collection<CommitHash> commitHashes) {
 		Objects.requireNonNull(repoId);
 		Objects.requireNonNull(commitHashes);
 
 		if (commitHashes.isEmpty()) {
-			return Collections.emptyList();
+			return new HashMap<>();
 		}
 
-		List<Commit> commits = new ArrayList<>();
+		Map<CommitHash, Commit> commits = new HashMap<>();
 
 		try (
 			Repository repo = repoStorage.acquireRepository(repoId.getDirectoryName());
@@ -125,7 +123,7 @@ public class CommitReadAccess {
 				try {
 					ObjectId commitPtr = repo.resolve(hash.getHash());
 					RevCommit revCommit = walk.parseCommit(commitPtr);
-					commits.add(commitFromRevCommit(repoId, revCommit));
+					commits.put(hash, commitFromRevCommit(repoId, revCommit));
 				} catch (IOException | NullPointerException ignored) {
 					// See javadoc
 				}
