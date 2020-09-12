@@ -109,8 +109,8 @@ public class Benchmarker {
 				+ " " + System.getProperty("os.version")
 		);
 
-		rows.add("CPU", systemInfo.getCpuInfo().toString());
-		rows.add("Memory", systemInfo.getMemoryInfo().toString());
+		rows.add("CPU", systemInfo.getCpuInfo().format());
+		rows.add("Memory", systemInfo.getMemoryInfo().format());
 
 		rows.add(
 			"Java version",

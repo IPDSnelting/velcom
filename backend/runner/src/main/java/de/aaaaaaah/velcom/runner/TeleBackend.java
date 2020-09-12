@@ -243,8 +243,8 @@ public class TeleBackend {
 				+ " " + System.getProperty("os.arch")
 				+ " " + System.getProperty("os.version"));
 
-		info.add("CPU", systemInfo.getCpuInfo().toString());
-		info.add("Memory", systemInfo.getMemoryInfo().toString());
+		info.add("CPU", systemInfo.getCpuInfo().format());
+		info.add("Memory", systemInfo.getMemoryInfo().format());
 
 		return info;
 	}
