@@ -3,7 +3,7 @@ package de.aaaaaaah.velcom.backend.runner.single.state;
 import de.aaaaaaah.velcom.backend.runner.Delays;
 import de.aaaaaaah.velcom.backend.runner.single.RunnerConnection;
 import de.aaaaaaah.velcom.backend.runner.single.TeleRunner;
-import de.aaaaaaah.velcom.shared.Timeout;
+import de.aaaaaaah.velcom.shared.util.Timeout;
 import de.aaaaaaah.velcom.shared.protocol.StatusCode;
 
 /**

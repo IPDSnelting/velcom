@@ -3,7 +3,7 @@ package de.aaaaaaah.velcom.backend.runner.single;
 import de.aaaaaaah.velcom.backend.runner.Delays;
 import de.aaaaaaah.velcom.backend.runner.single.state.IdleState;
 import de.aaaaaaah.velcom.backend.runner.single.state.TeleRunnerState;
-import de.aaaaaaah.velcom.shared.Timeout;
+import de.aaaaaaah.velcom.shared.util.Timeout;
 import de.aaaaaaah.velcom.shared.protocol.HeartbeatHandler;
 import de.aaaaaaah.velcom.shared.protocol.HeartbeatHandler.HeartbeatWebsocket;
 import de.aaaaaaah.velcom.shared.protocol.StatusCode;
