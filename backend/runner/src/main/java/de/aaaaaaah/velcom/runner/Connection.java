@@ -180,6 +180,7 @@ public class Connection implements WebSocket.Listener, HeartbeatWebsocket {
 
 	@Override
 	public void onTimeoutDetected() {
+		LOGGER.warn("Detected ping timeout, disconnecting");
 		close(StatusCode.PING_TIMEOUT);
 	}
 
@@ -187,6 +188,7 @@ public class Connection implements WebSocket.Listener, HeartbeatWebsocket {
 	public boolean sendPing() {
 		synchronized (this) {
 			if (closed) {
+				LOGGER.debug("Couldn't send ping because connection already closed");
 				return false;
 			}
 
