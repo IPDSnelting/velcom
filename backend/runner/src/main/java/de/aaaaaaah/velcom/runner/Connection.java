@@ -2,12 +2,14 @@ package de.aaaaaaah.velcom.runner;
 
 import de.aaaaaaah.velcom.runner.states.Idle;
 import de.aaaaaaah.velcom.runner.states.RunnerState;
-import de.aaaaaaah.velcom.shared.util.Timeout;
+import de.aaaaaaah.velcom.shared.protocol.HeartbeatHandler;
+import de.aaaaaaah.velcom.shared.protocol.HeartbeatHandler.HeartbeatWebsocket;
 import de.aaaaaaah.velcom.shared.protocol.RunnerConnectionHeader;
 import de.aaaaaaah.velcom.shared.protocol.StatusCode;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Serializer;
 import de.aaaaaaah.velcom.shared.protocol.serialization.serverbound.ServerBoundPacket;
 import de.aaaaaaah.velcom.shared.protocol.statemachine.StateMachine;
+import de.aaaaaaah.velcom.shared.util.Timeout;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.WebSocket;
@@ -19,7 +21,7 @@ import java.util.concurrent.Future;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class Connection implements WebSocket.Listener {
+public class Connection implements WebSocket.Listener, HeartbeatWebsocket {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(Connection.class);
 
@@ -30,6 +32,7 @@ public class Connection implements WebSocket.Listener {
 	private boolean closed;
 
 	private final WebSocket socket;
+	private final HeartbeatHandler heartbeatHandler;
 
 	public Connection(TeleBackend teleBackend, URI address, String name, String token)
 		throws ExecutionException, InterruptedException {
@@ -48,6 +51,8 @@ public class Connection implements WebSocket.Listener {
 			.buildAsync(address, this)
 			.get();
 		LOGGER.debug("Successfully opened connection to {}", address);
+
+		heartbeatHandler = new HeartbeatHandler(this);
 	}
 
 	public synchronized void sendPacket(ServerBoundPacket packet) {
@@ -62,8 +67,8 @@ public class Connection implements WebSocket.Listener {
 	}
 
 	/**
-	 * Do whatever needs to do when the connection transitions into the closed state. This function
-	 * is threadsafe and can be called multiple times.
+	 * Do whatever needs to do when the connection transitions into the closed state. This function is
+	 * threadsafe and can be called multiple times.
 	 */
 	private synchronized void cleanupAfterClosed() {
 		if (closed) {
@@ -74,6 +79,7 @@ public class Connection implements WebSocket.Listener {
 		LOGGER.debug("Cleaning up after closing the connection");
 		stateMachine.stop();
 		closedFuture.complete(null);
+		heartbeatHandler.shutdown();
 	}
 
 	public synchronized void close(StatusCode statusCode) {
@@ -163,5 +169,29 @@ public class Connection implements WebSocket.Listener {
 		// For some reason, this function is not called after a socket.abort().
 		LOGGER.debug("Connection closed abnormally");
 		cleanupAfterClosed();
+	}
+
+	@Override
+	public CompletionStage<?> onPong(WebSocket webSocket, ByteBuffer message) {
+		webSocket.request(1);
+		heartbeatHandler.onPong();
+		return null;
+	}
+
+	@Override
+	public void onTimeoutDetected() {
+		close(StatusCode.PING_TIMEOUT);
+	}
+
+	@Override
+	public boolean sendPing() {
+		synchronized (this) {
+			if (closed) {
+				return false;
+			}
+
+			socket.sendPing(ByteBuffer.wrap(Long.toString(System.currentTimeMillis()).getBytes()));
+			return true;
+		}
 	}
 }
