@@ -62,7 +62,7 @@ public class ServerMasterWebsocketServlet extends WebSocketServlet {
 				if (runner.hasConnection()) {
 					kickRunner(resp, RunnerDenyReason.NAME_ALREADY_USED);
 					LOGGER.info(
-						"Kicked runner {} from {} as the name as taken!", name, req.getRemoteAddress()
+						"Kicked runner {} from {} as the name is taken!", name, req.getRemoteAddress()
 					);
 					return null;
 				}
