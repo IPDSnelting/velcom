@@ -1,11 +1,10 @@
-package de.aaaaaaah.velcom.backend.util;
+package de.aaaaaaah.velcom.shared.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import de.aaaaaaah.velcom.shared.util.Either;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
