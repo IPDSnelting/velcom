@@ -3,13 +3,13 @@ package de.aaaaaaah.velcom.backend.runner.single;
 import de.aaaaaaah.velcom.backend.runner.Delays;
 import de.aaaaaaah.velcom.backend.runner.single.state.IdleState;
 import de.aaaaaaah.velcom.backend.runner.single.state.TeleRunnerState;
-import de.aaaaaaah.velcom.shared.util.Timeout;
 import de.aaaaaaah.velcom.shared.protocol.HeartbeatHandler;
 import de.aaaaaaah.velcom.shared.protocol.HeartbeatHandler.HeartbeatWebsocket;
 import de.aaaaaaah.velcom.shared.protocol.StatusCode;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Serializer;
 import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.ClientBoundPacket;
 import de.aaaaaaah.velcom.shared.protocol.statemachine.StateMachine;
+import de.aaaaaaah.velcom.shared.util.Timeout;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
@@ -48,7 +48,8 @@ public class RunnerConnection implements WebSocketListener, WebSocketFrameListen
 	private final List<Runnable> closeListeners;
 	private final HeartbeatHandler heartbeatHandler;
 
-	public RunnerConnection(Serializer serializer, TeleRunner runner, AtomicReference<Instant> lastPing) {
+	public RunnerConnection(Serializer serializer, TeleRunner runner,
+		AtomicReference<Instant> lastPing) {
 		this.serializer = serializer;
 		this.stateMachine = new StateMachine<>(new IdleState(runner, this));
 		this.lastPing = lastPing;
