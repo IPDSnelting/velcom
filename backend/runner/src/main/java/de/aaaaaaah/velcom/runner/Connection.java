@@ -159,7 +159,10 @@ public class Connection implements WebSocket.Listener, HeartbeatWebsocket {
 	public synchronized CompletionStage<?> onClose(WebSocket webSocket, int statusCode,
 		String reason) {
 
-		LOGGER.debug("Connection closed normally");
+		String statusCodeStr = StatusCode.fromCode(statusCode)
+			.map(Enum::toString)
+			.orElse(Integer.toString(statusCode));
+		LOGGER.debug("Connection closed normally, status code: {}", statusCodeStr);
 		cleanupAfterClosed();
 		return null;
 	}
