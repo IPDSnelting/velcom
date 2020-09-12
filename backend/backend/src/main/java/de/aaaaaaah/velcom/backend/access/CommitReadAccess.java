@@ -103,7 +103,6 @@ public class CommitReadAccess {
 	 * @param commitHashes the commits to retrieve
 	 * @return Those commits that could be found. If the repo could not be found, returns an empty
 	 * 	list. If a commit could not be found, doesn't return that commit in the return value.
-	 * 	Preserves ordering of commits (and duplicate commits) from the input commit hash collection.
 	 */
 	public Map<CommitHash, Commit> getCommits(RepoId repoId, Collection<CommitHash> commitHashes) {
 		Objects.requireNonNull(repoId);
