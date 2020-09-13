@@ -14,17 +14,19 @@
 
   <properties>
     <db.url>jdbc:sqlite:${project.build.directory}/data.db</db.url>
+
+    <argon2.version>2.7</argon2.version>
+    <caffeine.version>2.8.5</caffeine.version>
     <dropwizard.version>2.0.13</dropwizard.version>
+    <flyway.version>6.5.5</flyway.version>
+    <hikaricp.version>3.4.5</hikaricp.version>
+    <jakarta.xml.version>2.3.3</jakarta.xml.version>
     <jetty.version>9.4.31.v20200723</jetty.version>
     <jgit.version>5.5.1.201910021850-r</jgit.version>
     <jooq.version>3.13.4</jooq.version>
-    <flyway.version>6.5.5</flyway.version>
-    <sqlite.version>3.32.3.1</sqlite.version>
+    <metainf-services.version>1.8</metainf-services.version>
     <prometheus.version>0.9.0</prometheus.version>
-    <jakarta.xml.version>2.3.3</jakarta.xml.version>
-    <hikaricp.version>3.4.5</hikaricp.version>
-    <argon2.version>2.7</argon2.version>
-    <caffeine.version>2.8.5</caffeine.version>
+    <sqlite.version>3.32.3.1</sqlite.version>
 
     <maven-antrun-plugin.version>3.0.0</maven-antrun-plugin.version>
   </properties>
@@ -195,7 +197,7 @@
     <dependency>
       <groupId>org.kohsuke.metainf-services</groupId>
       <artifactId>metainf-services</artifactId>
-      <version>1.8</version>
+      <version>${metainf-services.version}</version>
       <scope>provided</scope>
     </dependency>
 
