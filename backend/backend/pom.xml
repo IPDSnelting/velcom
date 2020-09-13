@@ -17,7 +17,7 @@
     <dropwizard.version>2.0.13</dropwizard.version>
     <jetty.version>9.4.31.v20200723</jetty.version>
     <jgit.version>5.5.1.201910021850-r</jgit.version>
-    <jooq.version>3.12.3</jooq.version>
+    <jooq.version>3.13.4</jooq.version>
     <flyway.version>6.5.5</flyway.version>
     <sqlite.version>3.32.3.1</sqlite.version>
     <prometheus.version>0.9.0</prometheus.version>
@@ -123,6 +123,14 @@
           <generator>
             <database>
               <includes>.*</includes>
+              <!-- Associate data type rewrites with database columns -->
+              <forcedTypes>
+                <!-- Force SQLITE's Timestamps to be Instants in application code -->
+                <forcedType>
+                  <name>INSTANT</name>
+                  <includeTypes>TIMESTAMP</includeTypes>
+                </forcedType>
+              </forcedTypes>
             </database>
             <target>
               <directory>target/generated-sources/jooq</directory>

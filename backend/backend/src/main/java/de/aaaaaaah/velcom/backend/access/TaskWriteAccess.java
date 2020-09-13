@@ -142,8 +142,8 @@ public class TaskWriteAccess extends TaskReadAccess {
 						task.getId().getId().toString(),
 						task.getAuthor(),
 						task.getPriority().asInt(),
-						Timestamp.from(task.getInsertTime()),
-						Timestamp.from(task.getUpdateTime()),
+						task.getInsertTime(),
+						task.getUpdateTime(),
 						task.getSource().getRight().map(TarSource::getDescription).orElse(null),
 						task.getRepoId().map(RepoId::getId).map(UUID::toString).orElse(null),
 						task.getSource()
@@ -214,7 +214,7 @@ public class TaskWriteAccess extends TaskReadAccess {
 		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
 			db.update(TASK)
 				.set(TASK.PRIORITY, newPriority.asInt())
-				.set(TASK.UPDATE_TIME, Timestamp.from(Instant.now()))
+				.set(TASK.UPDATE_TIME, Instant.now())
 				.where(TASK.ID.eq(taskId.getId().toString()))
 				.execute();
 		}
