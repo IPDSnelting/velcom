@@ -76,6 +76,10 @@ export class Dimension {
     this.interpretation = interpretation
   }
 
+  /**
+   * Returns the metric and benchmark in the following format:
+   * '{benchmarl} - {metric}' without the {}.
+   */
   toString(): string {
     return `${this.benchmark} - ${this.metric}`
   }

@@ -39,9 +39,9 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { vxm } from '../../store'
+import { vxm } from '@/store'
 import { Prop } from 'vue-property-decorator'
-import { Dimension } from '../../store/types'
+import { Dimension } from '@/store/types'
 
 @Component
 export default class MatrixMeasurementIdSelection extends Vue {
@@ -52,13 +52,11 @@ export default class MatrixMeasurementIdSelection extends Vue {
   private selectedDimensions!: Dimension[]
 
   private get selectedDimensionSet(): Set<string> {
-    return new Set(
-      this.selectedDimensions.map(it => it.benchmark + '_' + it.metric)
-    )
+    return new Set(this.selectedDimensions.map(it => it.toString()))
   }
 
   private isSelected(benchmark: string, metric: string): boolean {
-    return this.selectedDimensionSet.has(benchmark + '_' + metric)
+    return this.selectedDimensionSet.has(benchmark + ' - ' + metric)
   }
 
   private combinationExists(benchmark: string, metric: string) {
@@ -74,26 +72,26 @@ export default class MatrixMeasurementIdSelection extends Vue {
   }
 
   private toggleAllForMetric(metric: string) {
-    let relevantBenchmarks: string[] = this.allBenchmarks.filter(benchmark =>
+    const relevantBenchmarks: string[] = this.allBenchmarks.filter(benchmark =>
       this.metricsFor(benchmark).includes(metric)
     )
 
-    let resultingSelectedDimensions: Dimension[] = []
+    let resultingSelectedDimensions: Dimension[]
 
-    let allAreSelected = relevantBenchmarks.every(benchmark =>
-      this.selectedDimensionSet.has(benchmark + metric)
+    const allAreSelected = relevantBenchmarks.every(benchmark =>
+      this.selectedDimensionSet.has(benchmark + ' - ' + metric)
     )
 
     if (allAreSelected) {
       // deselect dimensions with given metric, but keep all with other metrics
       resultingSelectedDimensions = this.selectedDimensions.filter(
-        (dimension: Dimension) => dimension.metric !== metric
+        dimension => dimension.metric !== metric
       )
     } else {
       // select all dimensions with given metric
 
       // figure out which dimensions need to bee added
-      let notYetSelectedDimensions: Dimension[] = vxm.repoModule
+      const notYetSelectedDimensions: Dimension[] = vxm.repoModule
         .occuringDimensions([this.repoId])
         .filter(it => it.metric === metric)
         .filter(dimension => !this.selectedDimensions.includes(dimension))
@@ -109,12 +107,12 @@ export default class MatrixMeasurementIdSelection extends Vue {
   }
 
   private toggleAllForBenchmark(benchmark: string) {
-    let relevantMetrics = this.metricsFor(benchmark)
+    const relevantMetrics = this.metricsFor(benchmark)
 
-    let resultingSelectedDimensions: Dimension[] = []
+    let resultingSelectedDimensions: Dimension[]
 
-    let allAreSelected = relevantMetrics.every(metric =>
-      this.selectedDimensionSet.has(benchmark + metric)
+    const allAreSelected = relevantMetrics.every(metric =>
+      this.selectedDimensionSet.has(benchmark + ' - ' + metric)
     )
     if (allAreSelected) {
       // deselect dimensions with given benchmark, but keep all with other benchmarks
@@ -126,7 +124,7 @@ export default class MatrixMeasurementIdSelection extends Vue {
       // select all dimensions with given benchmark
 
       // figure out which dimensions need to bee added
-      let notYetSelectedDimensions: Dimension[] = vxm.repoModule
+      const notYetSelectedDimensions: Dimension[] = vxm.repoModule
         .occuringDimensions([this.repoId])
         .filter(it => it.benchmark === benchmark)
         .filter(dimension => !this.selectedDimensions.includes(dimension))
@@ -163,12 +161,10 @@ export default class MatrixMeasurementIdSelection extends Vue {
         | Dimension
         | undefined = vxm.repoModule
         .occuringDimensions([this.repoId])
-        .find(it => it.benchmark !== benchmark || it.metric !== metric)
+        .find(it => it.benchmark === benchmark && it.metric === metric)
 
       if (newlyCheckedDimension) {
-        vxm.detailGraphModule.selectedDimensions = this.selectedDimensions.concat(
-          [newlyCheckedDimension]
-        )
+        vxm.detailGraphModule.selectedDimensions.push(newlyCheckedDimension)
       }
     } else {
       vxm.detailGraphModule.selectedDimensions = this.selectedDimensions.filter(
@@ -217,9 +213,10 @@ th.metric {
 
 table {
   border-collapse: collapse;
-  border-spacing: 0px;
+  border-spacing: 0;
 }
 
+/*noinspection CssUnresolvedCustomProperty*/
 tbody tr:hover,
 .hovered {
   background: var(--v-rowHighlight-base);
