@@ -44,18 +44,18 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { vxm } from '../../store'
+import { vxm } from '@/store'
 import { Prop, Watch } from 'vue-property-decorator'
-import { Dimension } from '../../store/types'
+import { Dimension } from '@/store/types'
 
 class BenchmarkItem {
   id: string
   name: string
   children: DimensionItem[]
 
-  constructor(id: string, children: DimensionItem[]) {
-    this.id = id
-    this.name = id
+  constructor(name: string, children: DimensionItem[]) {
+    this.id = name
+    this.name = name
     this.children = children
   }
 }
@@ -93,7 +93,7 @@ export default class DimensionSelection extends Vue {
       return
     }
 
-    let containsIgnoreCase = (id: string, value: string) =>
+    const containsIgnoreCase = (id: string, value: string) =>
       id.toLocaleLowerCase().includes(value.toLocaleLowerCase())
 
     this.openItems = this.benchmarkItems
@@ -106,16 +106,24 @@ export default class DimensionSelection extends Vue {
   }
 
   private get benchmarkItems(): BenchmarkItem[] {
-    return vxm.repoModule.occuringBenchmarks([this.repoId]).map(benchmark => {
-      let dimensions: DimensionItem[] = vxm.repoModule
-        .occuringDimensions([this.repoId])
-        .map(dimension => new DimensionItem(dimension))
-      return new BenchmarkItem(benchmark, dimensions)
-    })
+    const repo = vxm.repoModule.repoById(this.repoId)
+    if (!repo) {
+      return []
+    }
+
+    return vxm.repoModule.occuringBenchmarks([this.repoId]).map(
+      benchmark =>
+        new BenchmarkItem(
+          benchmark,
+          repo.dimensions
+            .filter(dimension => dimension.benchmark === benchmark)
+            .map(dimension => new DimensionItem(dimension))
+        )
+    )
   }
 
   private get dimensionItemMap(): Map<string, DimensionItem> {
-    let map = new Map()
+    const map = new Map()
     this.benchmarkItems
       .flatMap(it => it.children)
       .forEach(it => map.set(it.dimension.toString(), it))
@@ -123,12 +131,12 @@ export default class DimensionSelection extends Vue {
   }
 
   private get selectedItems(): string[] {
-    let leafs = this.selectedDimensions
+    const leaves = this.selectedDimensions
       .map(id => this.dimensionItemMap.get(id.toString()))
       .filter(it => it)
       .map(it => it!.id)
 
-    return [...this.selectedBenchmarkItems, ...leafs]
+    return [...this.selectedBenchmarkItems, ...leaves]
   }
 
   private metricColor(item: DimensionItem | BenchmarkItem): string {
@@ -151,12 +159,10 @@ export default class DimensionSelection extends Vue {
       this.benchmarkItems.find(a => a.id === it)
     )
 
-    let ids = dimensions
-      .map(it => this.dimensionItemMap.get(it))
-      .filter(it => it && it instanceof DimensionItem)
+    vxm.detailGraphModule.selectedDimensions = dimensions
+      .map(it => this.dimensionItemMap.get(it.toString()))
+      .filter(it => it)
       .map(it => it!.dimension)
-
-    vxm.detailGraphModule.selectedDimensions = ids
     vxm.detailGraphModule.fetchDetailGraph()
   }
 }
