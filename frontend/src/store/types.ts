@@ -76,6 +76,10 @@ export class Dimension {
     this.interpretation = interpretation
   }
 
+  toString(): string {
+    return `${this.benchmark} - ${this.metric}`
+  }
+
   /**
    * Checks if the dimension equals another. Only checks the benchmark and metric.
    *

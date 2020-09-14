@@ -139,33 +139,7 @@ export default class EchartsDetailGraph extends Vue {
   //  <!--</editor-fold>-->
 
   private get detailDataPoints(): DetailDataPoint[] {
-    return [
-      new DetailDataPoint(
-        'Commit1',
-        [],
-        'Peter3',
-        new Date(new Date().getTime()),
-        'this is an OG point',
-        this.randomGarbage()
-      ),
-      new DetailDataPoint(
-        'Commit2',
-        ['Commit1'],
-        'Peter',
-        new Date(new Date().getTime() - 1000 * 60 * 60),
-        'this is a point',
-        this.randomGarbage(false)
-      ),
-      new DetailDataPoint(
-        'Commit3',
-        ['Commit1', 'Commit2'],
-        'Peter2',
-        new Date(new Date().getTime() - 1000 * 60 * 120),
-        'this is a point!!',
-        this.randomGarbage()
-      )
-    ]
-    // return vxm.detailGraphModule.detailGraph
+    return vxm.detailGraphModule.detailGraph
   }
 
   private get minDateValue(): number {
@@ -211,6 +185,7 @@ export default class EchartsDetailGraph extends Vue {
   }
 
   // <!--<editor-fold desc="ECHARTS GRAPH OPTIONS">-->
+  @Watch('detailDataPoints')
   private updateGraph() {
     console.log('UPDATED')
 
@@ -456,7 +431,7 @@ export default class EchartsDetailGraph extends Vue {
     }
 
     const newGenerator: SeriesGenerationFunction =
-      visibleDataPoints > 4 ? this.buildLineSeries : this.buildGraphSeries
+      visibleDataPoints > 200 ? this.buildLineSeries : this.buildGraphSeries
 
     if (newGenerator !== this.seriesGenerator) {
       this.seriesGenerator = newGenerator
@@ -468,10 +443,6 @@ export default class EchartsDetailGraph extends Vue {
 
   // <!--<editor-fold desc="LIFECYCLE HOOKS">-->
   mounted(): void {
-    this.dimensions = [
-      new Dimension('Random', 'metric', 'cats', 'LESS_IS_BETTER'),
-      new Dimension('Random2', 'metric', 'cats', 'LESS_IS_BETTER')
-    ]
     this.updateGraph()
   }
   // <!--</editor-fold>-->
