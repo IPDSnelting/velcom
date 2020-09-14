@@ -6,6 +6,7 @@ import {
   DimensionId,
   DetailDataPointValue
 } from '@/store/types'
+import { CustomKeyEqualsMap } from '@/util/CustomKeyEqualsMap'
 
 /**
  * Parses a data point json to a DataPoint object.
@@ -19,7 +20,14 @@ export function detailDataPointFromJson(
   json: any,
   dimensions: DimensionId[]
 ): DetailDataPoint {
-  const map: Map<DimensionId, DetailDataPointValue> = new Map()
+  const map: CustomKeyEqualsMap<
+    DimensionId,
+    DetailDataPointValue
+  > = new CustomKeyEqualsMap(
+    [],
+    (first, second) =>
+      first.benchmark === second.benchmark && first.metric === second.metric
+  )
   for (let i = 0; i < dimensions.length; i++) {
     map.set(dimensions[i], detailDataPointValueFromJson(json.values[i]))
   }

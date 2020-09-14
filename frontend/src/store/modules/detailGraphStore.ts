@@ -2,6 +2,8 @@ import { createModule, mutation, action } from 'vuex-class-component'
 import { RepoId, Dimension, DetailDataPoint } from '@/store/types'
 import axios from 'axios'
 import { detailDataPointFromJson } from '@/util/GraphJsonHelper'
+import { dimensionFromJson } from '@/util/RepoJsonHelper'
+import { CustomKeyEqualsMap } from '@/util/CustomKeyEqualsMap'
 
 const VxModule = createModule({
   namespaced: 'detailGraphModule',
@@ -24,7 +26,11 @@ function hydrateDetailPoint(it: DetailDataPoint) {
     it.author,
     new Date(it.authorDate),
     it.summary,
-    new Map(it.values)
+    new CustomKeyEqualsMap(
+      it.values,
+      (first, second) =>
+        first.benchmark === second.benchmark && first.metric === second.metric
+    )
   )
 }
 
@@ -125,8 +131,18 @@ export class DetailGraphStore extends VxModule {
       }
     })
 
+    const dimensions = response.data.dimensions
+      .map(dimensionFromJson)
+      // This map is not needed as hopefully the CustomKeyEqualsMap should be used
+      // but it increases performance [O(n) => O(1)]
+      .map((dim: Dimension) =>
+        this._selectedDimensions.find(savedDimension =>
+          savedDimension.equals(dim)
+        )
+      )
+
     const dataPoints: DetailDataPoint[] = response.data.commits.map((it: any) =>
-      detailDataPointFromJson(it, this._selectedDimensions)
+      detailDataPointFromJson(it, dimensions)
     )
 
     this.setDetailGraph(dataPoints)

@@ -1,4 +1,5 @@
 import { Flavor } from '@/util/FlavorTypes'
+import { CustomKeyEqualsMap } from '@/util/CustomKeyEqualsMap'
 
 export class RepoBranch {
   readonly name: string
@@ -78,7 +79,7 @@ export class Dimension {
 
   /**
    * Returns the metric and benchmark in the following format:
-   * '{benchmarl} - {metric}' without the {}.
+   * '{benchmark} - {metric}' without the {}.
    */
   toString(): string {
     return `${this.benchmark} - ${this.metric}`
@@ -396,7 +397,7 @@ export class DetailDataPoint {
     author: string,
     authorDate: Date,
     summary: string,
-    values: Map<DimensionId, DetailDataPointValue>
+    values: CustomKeyEqualsMap<DimensionId, DetailDataPointValue>
   ) {
     this.hash = hash
     this.parents = parents
