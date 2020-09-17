@@ -41,6 +41,7 @@ import de.aaaaaaah.velcom.backend.restapi.exception.TaskAlreadyExistsExceptionMa
 import de.aaaaaaah.velcom.backend.runner.Dispatcher;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import de.aaaaaaah.velcom.backend.storage.repo.RepoStorage;
+import de.aaaaaaah.velcom.shared.GitProperties;
 import io.dropwizard.Application;
 import io.dropwizard.auth.AuthDynamicFeature;
 import io.dropwizard.auth.AuthValueFactoryProvider;
@@ -86,6 +87,12 @@ public class ServerMain extends Application<GlobalConfig> {
 	 * @throws Exception if the web server can not be started
 	 */
 	public static void main(String[] args) throws Exception {
+		System.out.println("Welcome to VelCom!");
+		System.out.printf("Version:     %s (backend)%n", GitProperties.getVersion());
+		System.out.printf("Build time:  %s%n", GitProperties.getBuildTime());
+		System.out.printf("Commit hash: %s%n", GitProperties.getHash());
+		System.out.println();
+
 		new ServerMain().run(args);
 	}
 
