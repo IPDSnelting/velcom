@@ -43,7 +43,7 @@ import javax.annotation.Nullable;
 public class TimesliceComparison implements RepoComparison {
 
 	private static final Timer TOTAL_TIMER = ServerMain.getMetricRegistry()
-		.timer(name("timeslicecomparison", "total", "duration"));
+		.timer(name("velcom", "timeslicecomparison", "total", "duration"));
 
 	// Difference of start and end time (in seconds) below which the hourly grouper should be used.
 	public static final long HOURLY_THRESHOLD = 60 * 60 * 24 * 20; // 20 days
@@ -77,7 +77,7 @@ public class TimesliceComparison implements RepoComparison {
 		@Nullable Instant startTime,
 		@Nullable Instant endTime) {
 
-		try (var timer = TOTAL_TIMER.time()) {
+		try (var ignored = TOTAL_TIMER.time()) {
 			final DimensionInfo dimensionInfo = benchmarkAccess.getDimensionInfo(dimension);
 
 			List<RepoGraphData> dataList = new ArrayList<>();
