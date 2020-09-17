@@ -109,7 +109,7 @@ public class CommitReadAccess {
 		Objects.requireNonNull(commitHashes);
 
 		if (commitHashes.isEmpty()) {
-			return new HashMap<>();
+			return Collections.emptyMap();
 		}
 
 		Map<CommitHash, Commit> commits = new HashMap<>();
