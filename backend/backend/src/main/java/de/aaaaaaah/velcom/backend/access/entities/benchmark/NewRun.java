@@ -7,7 +7,7 @@ import de.aaaaaaah.velcom.backend.access.entities.RunError;
 import de.aaaaaaah.velcom.backend.access.entities.RunId;
 import de.aaaaaaah.velcom.backend.access.entities.sources.CommitSource;
 import de.aaaaaaah.velcom.backend.access.entities.sources.TarSource;
-import de.aaaaaaah.velcom.backend.util.Either;
+import de.aaaaaaah.velcom.shared.util.Either;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;

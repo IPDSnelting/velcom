@@ -1,4 +1,4 @@
-package de.aaaaaaah.velcom.backend.util;
+package de.aaaaaaah.velcom.shared.util;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -70,6 +70,21 @@ public final class Either<L, R> {
 
 	public <Result> Result consume(Function<L, Result> left, Function<R, Result> right) {
 		return isLeft() ? left.apply(this.left) : right.apply(this.right);
+	}
+
+	public <L2, R2> Either<L2, R2> mapBoth(Function<L, L2> left, Function<R, R2> right) {
+		return consume(
+			l -> Either.ofLeft(left.apply(l)),
+			r -> Either.ofRight(right.apply(r))
+		);
+	}
+
+	public <L2> Either<L2, R> mapLeft(Function<L, L2> left) {
+		return mapBoth(left, it -> it);
+	}
+
+	public <R2> Either<L, R2> mapRight(Function<R, R2> right) {
+		return mapBoth(it -> it, right);
 	}
 
 	@Override

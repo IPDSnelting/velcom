@@ -8,7 +8,7 @@ class JsonSourceTest extends SerializingTest {
 
 	@Test
 	void serializeFromCommit() throws JsonProcessingException {
-		Object object = JsonSource.fromCommit(new JsonCommitDescription(
+		Object object = JsonSource.commitSource(new JsonCommitDescription(
 			UUID.fromString("24dd4fd3-5c6d-4542-a7a4-b181f37295a6"),
 			"e16272feb472dc4d357cc19dd97112c036a67990",
 			"authorName",
@@ -30,7 +30,7 @@ class JsonSourceTest extends SerializingTest {
 
 	@Test
 	void serializeFromUploadedTar() throws JsonProcessingException {
-		Object object = JsonSource.fromUploadedTar(
+		Object object = JsonSource.tarSource(
 			"descriptionText",
 			UUID.fromString("24dd4fd3-5c6d-4542-a7a4-b181f37295a6")
 		);
@@ -43,7 +43,7 @@ class JsonSourceTest extends SerializingTest {
 			+ "}";
 		serializedEquals(object, json);
 
-		object = JsonSource.fromUploadedTar(
+		object = JsonSource.tarSource(
 			"descriptionText",
 			null
 		);

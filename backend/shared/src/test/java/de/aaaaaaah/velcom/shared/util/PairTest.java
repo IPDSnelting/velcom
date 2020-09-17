@@ -1,4 +1,4 @@
-package de.aaaaaaah.velcom.backend.util;
+package de.aaaaaaah.velcom.shared.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;

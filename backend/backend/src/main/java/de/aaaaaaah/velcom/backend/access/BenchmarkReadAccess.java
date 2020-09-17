@@ -28,7 +28,7 @@ import de.aaaaaaah.velcom.backend.access.entities.sources.TarSource;
 import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchRunException;
 import de.aaaaaaah.velcom.backend.storage.db.DBReadAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
-import de.aaaaaaah.velcom.backend.util.Either;
+import de.aaaaaaah.velcom.shared.util.Either;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -265,7 +265,7 @@ public class BenchmarkReadAccess {
 					.from(MEASUREMENT)
 					.join(RUN).on(RUN.ID.eq(MEASUREMENT.RUN_ID))
 					.where(RUN.COMMIT_HASH.isNotNull()) // Ignore uploaded-tar runs associated
-					.and(RUN.REPO_ID.in(repoIds))
+					.and(RUN.REPO_ID.in(repoIdsAsStrings))
 					.forEach(record -> {
 						RepoId repoId = new RepoId(UUID.fromString(record.value1()));
 						Dimension dimension = new Dimension(record.value2(), record.value3());

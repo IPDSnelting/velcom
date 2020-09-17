@@ -4,7 +4,7 @@ import de.aaaaaaah.velcom.backend.access.entities.Branch;
 import de.aaaaaaah.velcom.backend.access.entities.BranchName;
 import de.aaaaaaah.velcom.backend.access.entities.Commit;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
-import de.aaaaaaah.velcom.backend.util.Pair;
+import de.aaaaaaah.velcom.shared.util.Pair;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;

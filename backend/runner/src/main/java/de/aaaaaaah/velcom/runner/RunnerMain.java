@@ -2,6 +2,7 @@ package de.aaaaaaah.velcom.runner;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
+import de.aaaaaaah.velcom.shared.GitProperties;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Status;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -18,6 +19,12 @@ public class RunnerMain {
 	private static final Logger LOGGER = LoggerFactory.getLogger(RunnerMain.class);
 
 	public static void main(String[] args) {
+		System.out.println("Welcome to VelCom!");
+		System.out.printf("Version:     %s (runner)%n", GitProperties.getVersion());
+		System.out.printf("Build time:  %s%n", GitProperties.getBuildTime());
+		System.out.printf("Commit hash: %s%n", GitProperties.getHash());
+		System.out.println();
+
 		try {
 			realMain(args);
 		} catch (InterruptedException | ExecutionException e) {
@@ -57,7 +64,7 @@ public class RunnerMain {
 			boolean didBenchmark = false;
 
 			for (TeleBackend backend : backends) {
-				LOGGER.debug("Asking {} for a benchmark",backend);
+				LOGGER.debug("Asking {} for a benchmark", backend);
 				didBenchmark |= backend.maybePerformBenchmark();
 			}
 

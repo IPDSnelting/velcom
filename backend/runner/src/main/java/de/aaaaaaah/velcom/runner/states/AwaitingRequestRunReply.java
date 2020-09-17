@@ -3,7 +3,7 @@ package de.aaaaaaah.velcom.runner.states;
 import de.aaaaaaah.velcom.runner.Connection;
 import de.aaaaaaah.velcom.runner.Delays;
 import de.aaaaaaah.velcom.runner.TeleBackend;
-import de.aaaaaaah.velcom.shared.Timeout;
+import de.aaaaaaah.velcom.shared.util.Timeout;
 import de.aaaaaaah.velcom.shared.protocol.StatusCode;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Serializer;
 import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.ClientBoundPacket;

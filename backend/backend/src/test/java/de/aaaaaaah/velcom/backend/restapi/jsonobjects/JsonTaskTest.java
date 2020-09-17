@@ -12,7 +12,7 @@ class JsonTaskTest extends SerializingTest {
 			UUID.fromString("24dd4fd3-5c6d-4542-a7a4-b181f37295a6"),
 			"authorName",
 			1596881630,
-			JsonSource.fromUploadedTar("descriptionText", null)
+			JsonSource.tarSource("descriptionText", null)
 		);
 		String json = "{"
 			+ "\"id\": \"24dd4fd3-5c6d-4542-a7a4-b181f37295a6\","

@@ -62,7 +62,7 @@ public class ServerMasterWebsocketServlet extends WebSocketServlet {
 				if (runner.hasConnection()) {
 					kickRunner(resp, RunnerDenyReason.NAME_ALREADY_USED);
 					LOGGER.info(
-						"Kicked runner {} from {} as the name as taken!", name, req.getRemoteAddress()
+						"Kicked runner {} from {} as the name is taken!", name, req.getRemoteAddress()
 					);
 					return null;
 				}
@@ -70,8 +70,7 @@ public class ServerMasterWebsocketServlet extends WebSocketServlet {
 				myTeleRunner = runner;
 			} else {
 				myTeleRunner = new TeleRunner(name, serializer, dispatcher, benchRepo);
-				dispatcher.addRunner(myTeleRunner);
-				LOGGER.info("Added runner {} from {}!", name, req.getRemoteAddress());
+				LOGGER.info("Accepted runner {} from {}!", name, req.getRemoteAddress());
 			}
 
 			// We synchronize on the runner object. A runner might join while the dispatcher cleans up

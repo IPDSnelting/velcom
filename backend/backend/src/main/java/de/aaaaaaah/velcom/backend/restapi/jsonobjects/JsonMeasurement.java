@@ -4,7 +4,7 @@ import de.aaaaaaah.velcom.backend.access.entities.DimensionInfo;
 import de.aaaaaaah.velcom.backend.access.entities.Measurement;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementError;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementValues;
-import de.aaaaaaah.velcom.backend.util.Either;
+import de.aaaaaaah.velcom.shared.util.Either;
 import java.util.List;
 import javax.annotation.Nullable;
 

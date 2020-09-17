@@ -51,9 +51,7 @@ public class TeleRunnerState implements State {
 	protected Optional<TeleRunnerState> onPacket(ServerBoundPacket packet) {
 		// Stay in the current state but prepare some work!
 		if (packet.getType() == ServerBoundPacketType.REQUEST_RUN) {
-			// TODO: 09.07.20 Do this off-thread?
-			runner.sendAvailableWork();
-			return Optional.of(this);
+			return Optional.of(new AwaitSendWorkEnd(runner, connection, this));
 		}
 
 		return Optional.empty();

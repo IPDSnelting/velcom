@@ -65,7 +65,7 @@ public class BenchRepoArchive {
 		// 2.) Create tar file
 		if (!hasTar()) {
 			try (OutputStream tarOut = Files.newOutputStream(tarPath)) {
-				TransferUtils.tarRepo(tarPath, tarOut); // tarRepo() also closes tarOut
+				TransferUtils.tarRepo(clonePath, tarOut); // tarRepo() also closes tarOut
 			} catch (Exception e) {
 				delete();
 				throw e;

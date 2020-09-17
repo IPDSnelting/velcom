@@ -14,7 +14,7 @@ import de.aaaaaaah.velcom.backend.access.entities.Commit;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.exceptions.CommitLogException;
-import de.aaaaaaah.velcom.backend.util.Pair;
+import de.aaaaaaah.velcom.shared.util.Pair;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;

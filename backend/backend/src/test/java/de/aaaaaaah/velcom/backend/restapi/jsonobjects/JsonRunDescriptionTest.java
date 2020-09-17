@@ -13,7 +13,7 @@ class JsonRunDescriptionTest extends SerializingTest {
 			UUID.fromString("24dd4fd3-5c6d-4542-a7a4-b181f37295a6"),
 			1596881630,
 			JsonSuccess.SUCCESS,
-			JsonSource.fromUploadedTar(
+			JsonSource.tarSource(
 				"descriptionText",
 				null
 			)

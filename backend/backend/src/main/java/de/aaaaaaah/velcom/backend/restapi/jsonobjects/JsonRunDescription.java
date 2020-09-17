@@ -2,7 +2,7 @@ package de.aaaaaaah.velcom.backend.restapi.jsonobjects;
 
 import de.aaaaaaah.velcom.backend.access.entities.Measurement;
 import de.aaaaaaah.velcom.backend.access.entities.RunError;
-import de.aaaaaaah.velcom.backend.util.Either;
+import de.aaaaaaah.velcom.shared.util.Either;
 import java.util.Collection;
 import java.util.UUID;
 
