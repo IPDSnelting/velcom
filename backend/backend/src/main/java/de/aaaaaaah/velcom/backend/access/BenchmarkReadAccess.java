@@ -375,8 +375,10 @@ public class BenchmarkReadAccess {
 						runRecord.getAuthor(),
 						runRecord.getRunnerName(),
 						runRecord.getRunnerInfo(),
-						runRecord.getStartTime().toInstant(),
-						runRecord.getStopTime().toInstant(),
+						runRecord.getStartTime(
+
+						),
+						runRecord.getStopTime(),
 						source,
 						error
 					);
@@ -388,8 +390,8 @@ public class BenchmarkReadAccess {
 						runRecord.getAuthor(),
 						runRecord.getRunnerName(),
 						runRecord.getRunnerInfo(),
-						runRecord.getStartTime().toInstant(),
-						runRecord.getStopTime().toInstant(),
+						runRecord.getStartTime(),
+						runRecord.getStopTime(),
 						source,
 						measurements
 					);

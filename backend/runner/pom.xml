@@ -14,7 +14,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <jbock.version>3.4.008</jbock.version>
+    <jbock.version>3.4.009</jbock.version>
   </properties>
 
   <build>
@@ -54,7 +54,7 @@
       <plugin>
         <groupId>pl.project13.maven</groupId>
         <artifactId>git-commit-id-plugin</artifactId>
-        <version>4.0.0</version>
+        <version>${git-commit-id-plugin.version}</version>
         <executions>
           <execution>
             <id>get-the-git-infos</id>
@@ -102,7 +102,7 @@
 
     <dependency>
       <groupId>org.mockito</groupId>
-      <artifactId>mockito-all</artifactId>
+      <artifactId>mockito-core</artifactId>
     </dependency>
 
     <dependency>
