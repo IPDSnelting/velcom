@@ -1,5 +1,6 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
+import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
@@ -94,6 +95,7 @@ public class RepoEndpoint {
 	}
 
 	@POST
+	@Timed
 	public PostReply post(@Auth RepoUser user, @NotNull PostRequest request) {
 		user.guardAdminAccess();
 

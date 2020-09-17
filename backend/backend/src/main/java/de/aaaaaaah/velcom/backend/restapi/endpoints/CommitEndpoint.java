@@ -1,5 +1,6 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
+import com.codahale.metrics.annotation.Timed;
 import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.access.entities.Commit;
@@ -35,6 +36,7 @@ public class CommitEndpoint {
 	}
 
 	@GET
+	@Timed
 	public GetReply get(
 		@PathParam("repoid") UUID repoUuid,
 		@PathParam("hash") String hashString

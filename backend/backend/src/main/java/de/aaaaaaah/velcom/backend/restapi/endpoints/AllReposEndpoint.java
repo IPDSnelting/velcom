@@ -1,5 +1,6 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
+import com.codahale.metrics.annotation.Timed;
 import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.access.RepoReadAccess;
 import de.aaaaaaah.velcom.backend.access.TokenReadAccess;
@@ -45,6 +46,7 @@ public class AllReposEndpoint {
 	// TODO: 12.09.20 Return actual dimensions, not empty list
 	// For some reason, this endpoint returns an empty list of dimensions for every repo.
 	@GET
+	@Timed
 	public GetReply get() {
 		Collection<Repo> repos = repoAccess.getAllRepos();
 		List<RepoId> repoIds = repos.stream().map(Repo::getRepoId).collect(Collectors.toList());

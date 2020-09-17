@@ -1,5 +1,6 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
+import com.codahale.metrics.annotation.Timed;
 import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.access.entities.Commit;
@@ -60,6 +61,7 @@ public class RunEndpoint {
 	}
 
 	@GET
+	@Timed
 	public GetReply get(
 		@PathParam("runid") UUID runUuid,
 		@QueryParam("all_values") @Nullable Boolean allValuesOptional,

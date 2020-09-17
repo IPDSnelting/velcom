@@ -2,6 +2,7 @@ package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
 import static java.util.stream.Collectors.toList;
 
+import com.codahale.metrics.annotation.Timed;
 import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.access.entities.BranchName;
 import de.aaaaaaah.velcom.backend.access.entities.Dimension;
@@ -41,6 +42,7 @@ public class GraphComparisonEndpoint {
 	}
 
 	@GET
+	@Timed
 	public GetReply get(
 		@QueryParam("repos") @NotNull String reposStr,
 		@QueryParam("start_time") @Nullable Long startTimeEpoch,

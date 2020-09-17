@@ -1,5 +1,6 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
+import com.codahale.metrics.annotation.Timed;
 import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.access.entities.Dimension;
@@ -41,6 +42,7 @@ public class CompareEndpoint {
 	}
 
 	@GET
+	@Timed
 	public GetReply get(
 		@PathParam("runid1") UUID runUuid1,
 		@PathParam("runid2") UUID runUuid2,

@@ -1,5 +1,6 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
+import com.codahale.metrics.annotation.Timed;
 import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.access.RepoReadAccess;
@@ -62,6 +63,7 @@ public class GraphDetailEndpoint {
 	}
 
 	@GET
+	@Timed
 	public GetReply get(
 		@PathParam("repoid") UUID repoUuid,
 		@QueryParam("start_time") @Nullable Long startTimeEpoch,

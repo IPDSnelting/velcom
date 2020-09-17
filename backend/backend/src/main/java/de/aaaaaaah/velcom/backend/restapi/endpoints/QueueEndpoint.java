@@ -1,5 +1,6 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
+import com.codahale.metrics.annotation.Timed;
 import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.access.RepoReadAccess;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
@@ -51,6 +52,7 @@ public class QueueEndpoint {
 	}
 
 	@GET
+	@Timed
 	public GetQueueReply getQueue() {
 		// TODO: 08.09.20 Fix NPE when calling this endpoint
 		List<JsonTask> tasks = queue.getTasksSorted()
@@ -68,6 +70,7 @@ public class QueueEndpoint {
 
 	@DELETE
 	@Path("{taskId}")
+	@Timed
 	public Response deleteTask(@Auth RepoUser user, @PathParam("taskId") UUID taskId)
 		throws NoSuchTaskException {
 		Task task = queue.getTaskById(new TaskId(taskId));
@@ -84,6 +87,7 @@ public class QueueEndpoint {
 
 	@PATCH
 	@Path("{taskId}")
+	@Timed
 	public Response patchTask(@Auth RepoUser user, @PathParam("taskId") UUID taskId)
 		throws NoSuchTaskException {
 		user.guardAdminAccess();
@@ -102,6 +106,7 @@ public class QueueEndpoint {
 	// TaskWriteAccess should probably throw a NoSuchCommitException.
 	@POST
 	@Path("commit/{repoId}/{hash}")
+	@Timed
 	public PostCommitReply addCommit(@Auth RepoUser user, @PathParam("repoId") UUID repoUuid,
 		@PathParam("hash") String commitHashString) {
 		RepoId repoId = new RepoId(repoUuid);

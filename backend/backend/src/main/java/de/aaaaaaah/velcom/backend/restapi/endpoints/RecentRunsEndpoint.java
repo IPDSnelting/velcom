@@ -1,5 +1,6 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
+import com.codahale.metrics.annotation.Timed;
 import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.utils.EndpointUtils;
@@ -35,6 +36,7 @@ public class RecentRunsEndpoint {
 	}
 
 	@GET
+	@Timed
 	public GetReply getRuns(
 		@QueryParam("n") @Nullable Integer nOptional,
 		@QueryParam("significant") @Nullable Boolean significantOptional

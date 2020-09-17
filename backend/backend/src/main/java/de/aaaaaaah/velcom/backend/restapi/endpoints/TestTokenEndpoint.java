@@ -1,5 +1,6 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
+import com.codahale.metrics.annotation.Timed;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.restapi.authentication.RepoUser;
 import io.dropwizard.auth.Auth;
@@ -24,6 +25,7 @@ public class TestTokenEndpoint {
 	 * @param repoUuid the id of the repo
 	 */
 	@GET
+	@Timed
 	public void get(@Auth RepoUser user, @QueryParam("repo_id") UUID repoUuid) {
 		if (repoUuid == null) {
 			user.guardAdminAccess();
