@@ -359,7 +359,7 @@ export default class EchartsDetailGraph extends Vue {
 
     return {
       type: 'line',
-      showSymbol: true,
+      showSymbol: false,
       symbol: ((value: EchartsDataPoint) => value.symbol) as any,
       symbolSize: 6,
       lineStyle: {
