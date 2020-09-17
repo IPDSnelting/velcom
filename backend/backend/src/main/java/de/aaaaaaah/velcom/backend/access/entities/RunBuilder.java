@@ -4,7 +4,7 @@ import de.aaaaaaah.velcom.backend.access.entities.benchmark.NewMeasurement;
 import de.aaaaaaah.velcom.backend.access.entities.benchmark.NewRun;
 import de.aaaaaaah.velcom.backend.access.entities.sources.CommitSource;
 import de.aaaaaaah.velcom.backend.access.entities.sources.TarSource;
-import de.aaaaaaah.velcom.backend.util.Either;
+import de.aaaaaaah.velcom.shared.util.Either;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;

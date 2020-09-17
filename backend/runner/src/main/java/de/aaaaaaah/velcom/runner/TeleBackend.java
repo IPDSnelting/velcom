@@ -2,6 +2,7 @@ package de.aaaaaaah.velcom.runner;
 
 import de.aaaaaaah.velcom.runner.benchmarking.BenchResult;
 import de.aaaaaaah.velcom.runner.benchmarking.Benchmarker;
+import de.aaaaaaah.velcom.runner.formatting.NamedRows;
 import de.aaaaaaah.velcom.runner.states.AwaitingRequestRunReply;
 import de.aaaaaaah.velcom.runner.states.RunnerState;
 import de.aaaaaaah.velcom.runner.tmpdirs.BenchRepoDir;
@@ -233,9 +234,19 @@ public class TeleBackend {
 		return benchmarkFinished;
 	}
 
-	public RunnerInfo getInfo() {
-		// TODO add more info
-		return RunnerInfo.fromSystemInfo();
+	public NamedRows getInfo() {
+		LinuxSystemInfo systemInfo = LinuxSystemInfo.getCurrent();
+		NamedRows info = new NamedRows();
+
+		info.add("System",
+			System.getProperty("os.name")
+				+ " " + System.getProperty("os.arch")
+				+ " " + System.getProperty("os.version"));
+
+		info.add("CPU", systemInfo.getCpuInfo().format());
+		info.add("Memory", systemInfo.getMemoryInfo().format());
+
+		return info;
 	}
 
 	public Status getStatus() {

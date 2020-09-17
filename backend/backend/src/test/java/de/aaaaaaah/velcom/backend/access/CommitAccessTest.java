@@ -116,13 +116,11 @@ public class CommitAccessTest {
 	public void testGetCommits() {
 		List<CommitHash> toTest = hashes.subList(0, hashes.size() / 2);
 
-		List<Commit> resultCommits = commitAccess.getCommits(repoId, toTest);
-		List<CommitHash> resultHashes = resultCommits.stream()
-			.map(Commit::getHash).collect(toList());
+		Map<CommitHash, Commit> resultCommits = commitAccess.getCommits(repoId, toTest);
 
-		assertThat(resultHashes).containsExactlyInAnyOrderElementsOf(toTest);
+		assertThat(resultCommits.keySet()).containsExactlyInAnyOrderElementsOf(toTest);
 
-		for (Commit commit : resultCommits) {
+		for (Commit commit : resultCommits.values()) {
 			RevCommit revCommit = testRepo.getRevCommit(commit.getHash().getHash()).orElseThrow();
 
 			assertCommitEquals(commit, revCommit);

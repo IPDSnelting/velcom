@@ -58,6 +58,10 @@ public class CpuInfo {
 			.collect(Collectors.toSet());
 	}
 
+	public String format() {
+		return String.join(",", coreModels());
+	}
+
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) {

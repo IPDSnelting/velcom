@@ -2,6 +2,7 @@ package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
 import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.access.RepoReadAccess;
+import de.aaaaaaah.velcom.backend.access.entities.Commit;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.entities.Repo;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
@@ -13,12 +14,16 @@ import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.restapi.authentication.RepoUser;
 import de.aaaaaaah.velcom.backend.restapi.exception.TaskAlreadyExistsException;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRunner;
+import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonSource;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonTask;
 import de.aaaaaaah.velcom.backend.runner.IDispatcher;
+import de.aaaaaaah.velcom.shared.util.Pair;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.PATCH;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.ws.rs.DELETE;
@@ -53,9 +58,35 @@ public class QueueEndpoint {
 	@GET
 	public GetQueueReply getQueue() {
 		// TODO: 08.09.20 Fix NPE when calling this endpoint
-		List<JsonTask> tasks = queue.getTasksSorted()
-			.stream()
-			.map(it -> JsonTask.fromTask(it, commitReadAccess))
+
+		List<Task> tasks = queue.getTasksSorted();
+
+		Map<RepoId, List<CommitHash>> hashPerRepo = tasks.stream()
+			// do
+			//   repoId <- taskRepoId t
+			//   hash <- getHash <$> getLeft (taskSource t)
+			//   pure (repoId, hash)
+			.flatMap(task -> task.getSource().getLeft()
+				.flatMap(cs -> task.getRepoId().map(rid -> new Pair<>(rid, cs.getHash())))
+				.stream())
+			.collect(Collectors.groupingBy(
+				Pair::getFirst,
+				Collectors.mapping(Pair::getSecond, Collectors.toList())
+			));
+
+		Map<RepoId, Map<CommitHash, Commit>> commitPerHashPerRepo = hashPerRepo.entrySet().stream()
+			.collect(Collectors.toMap(
+				Entry::getKey,
+				it -> commitReadAccess.getCommits(it.getKey(), it.getValue())
+			));
+
+		List<JsonTask> jsonTasks = tasks.stream()
+			.map(task -> {
+				JsonSource source = task.getSource()
+					.mapLeft(it -> commitPerHashPerRepo.get(it.getRepoId()).get(it.getHash()))
+					.consume(JsonSource::fromCommit, JsonSource::fromTarSource);
+				return JsonTask.fromTask(task, source);
+			})
 			.collect(Collectors.toList());
 
 		List<JsonRunner> worker = dispatcher.getKnownRunners()
@@ -63,7 +94,7 @@ public class QueueEndpoint {
 			.map(JsonRunner::fromKnownRunner)
 			.collect(Collectors.toList());
 
-		return new GetQueueReply(tasks, worker);
+		return new GetQueueReply(jsonTasks, worker);
 	}
 
 	@DELETE

@@ -3,7 +3,7 @@ package de.aaaaaaah.velcom.backend.restapi.endpoints.utils;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import de.aaaaaaah.velcom.backend.util.Pair;
+import de.aaaaaaah.velcom.shared.util.Pair;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 

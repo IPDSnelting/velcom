@@ -12,7 +12,7 @@ import de.aaaaaaah.velcom.backend.restapi.endpoints.utils.EndpointUtils;
 import de.aaaaaaah.velcom.backend.restapi.exception.InvalidQueryParamsException;
 import de.aaaaaaah.velcom.backend.restapi.exception.NoSuchDimensionException;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimension;
-import de.aaaaaaah.velcom.backend.util.Pair;
+import de.aaaaaaah.velcom.shared.util.Pair;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;

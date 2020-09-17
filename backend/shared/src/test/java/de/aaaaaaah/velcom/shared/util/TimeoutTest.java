@@ -1,4 +1,4 @@
-package de.aaaaaaah.velcom.shared;
+package de.aaaaaaah.velcom.shared.util;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;

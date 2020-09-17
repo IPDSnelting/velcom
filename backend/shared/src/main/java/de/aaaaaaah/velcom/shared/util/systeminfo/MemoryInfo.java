@@ -55,6 +55,15 @@ public class MemoryInfo {
 		}
 	}
 
+	public String format() {
+		if (totalMemoryKib > 256 * 1024) {
+			return String
+				.format("%d MiB used, %d MiB total", freeMemoryKib / 1024, totalMemoryKib / 1024);
+		} else {
+			return String.format("%d KiB used, %d KiB total", freeMemoryKib, totalMemoryKib);
+		}
+	}
+
 	@Override
 	public String toString() {
 		return "MemoryInfo{" +

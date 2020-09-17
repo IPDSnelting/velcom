@@ -1,4 +1,4 @@
-package de.aaaaaaah.velcom.shared;
+package de.aaaaaaah.velcom.shared.util;
 
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;

@@ -4,6 +4,8 @@ import de.aaaaaaah.velcom.runner.Delays;
 import de.aaaaaaah.velcom.runner.benchmarking.output.BenchmarkScriptOutputParser;
 import de.aaaaaaah.velcom.runner.benchmarking.output.BenchmarkScriptOutputParser.BareResult;
 import de.aaaaaaah.velcom.runner.benchmarking.output.OutputParseException;
+import de.aaaaaaah.velcom.runner.formatting.NamedRows;
+import de.aaaaaaah.velcom.runner.formatting.NamedSections;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Result;
 import de.aaaaaaah.velcom.shared.util.ExceptionHelper;
 import de.aaaaaaah.velcom.shared.util.execution.ProgramExecutor;
@@ -55,8 +57,8 @@ public class Benchmarker {
 	 * @param benchRepoHash the current hash of the bench repo, or null if the backend has not yet
 	 * 	sent us any bench repo.
 	 * @param benchRepoPath the path to the bench repo directory
-	 * @param startTime the time when the benchmark process started. When exactly this process
-	 * 	starts is not up to the benchmarker.
+	 * @param startTime the time when the benchmark process started. When exactly this process starts
+	 * 	is not up to the benchmarker.
 	 * @param runnerName the name of this runner
 	 * @param systemInfo the system information of this runner
 	 */
@@ -96,13 +98,30 @@ public class Benchmarker {
 		return Optional.ofNullable(result.get());
 	}
 
-	private BenchmarkFailureInformation getBasicFailureInfo() {
-		BenchmarkFailureInformation info = new BenchmarkFailureInformation();
-		info.addToGeneral("Runner name", '"' + runnerName + '"');
-		info.addMachineInfo(systemInfo);
-		info.addToGeneral("User", System.getProperty("user.name"));
-		info.addToGeneral("Bench repo hash", Objects.requireNonNullElse(benchRepoHash, "none"));
-		return info;
+	private NamedRows getBasicInfo() {
+		NamedRows rows = new NamedRows();
+		rows.add("Runner name", runnerName);
+
+		rows.add(
+			"System",
+			System.getProperty("os.name")
+				+ " " + System.getProperty("os.arch")
+				+ " " + System.getProperty("os.version")
+		);
+
+		rows.add("CPU", systemInfo.getCpuInfo().format());
+		rows.add("Memory", systemInfo.getMemoryInfo().format());
+
+		rows.add(
+			"Java version",
+			System.getProperty("java.version")
+				+ " by " + System.getProperty("java.vendor")
+		);
+
+		rows.add("User", System.getProperty("user.name"));
+		rows.add("Bench repo hash", Objects.requireNonNullElse(benchRepoHash, "none"));
+
+		return rows;
 	}
 
 	/**
@@ -114,22 +133,24 @@ public class Benchmarker {
 	}
 
 	private void runBenchmark() {
-		BenchmarkFailureInformation information = getBasicFailureInfo();
+		NamedRows generalInfo = getBasicInfo();
+		NamedSections infoSections = new NamedSections();
+		infoSections.addSection("General", generalInfo);
 
 		Path benchScriptPath = benchRepoPath.resolve("bench");
 
 		if (!Files.isReadable(benchScriptPath)) {
-			information.addSection("Setup error", "`bench` script not found or not readable");
-			setResult(failedBenchResult(information.toString()));
+			infoSections.addSection("Setup error", "`bench` script not found or not readable");
+			setResult(failedBenchResult(infoSections));
 			return;
 		}
 		if (!Files.isExecutable(benchScriptPath)) {
-			information.addSection("Setup error", "`bench` script is not executable");
-			setResult(failedBenchResult(information.toString()));
+			infoSections.addSection("Setup error", "`bench` script is not executable");
+			setResult(failedBenchResult(infoSections));
 			return;
 		}
 
-		Future<ProgramResult> work = startBenchExecution(information, benchScriptPath);
+		Future<ProgramResult> work = startBenchExecution(generalInfo, benchScriptPath);
 
 		try {
 			// Ensure we do not wait if the benchmark was cancelled before this thread was ready
@@ -138,18 +159,18 @@ public class Benchmarker {
 			}
 			ProgramResult programResult = work.get();
 
-			addProgramOutput(information, programResult);
+			addProgramOutput(generalInfo, infoSections, programResult);
 
-			setResult(interpretResult(information, programResult));
+			setResult(interpretResult(infoSections, programResult));
 		} catch (ExecutionException e) {
-			setResult(interpretExecutionException(information, e));
+			setResult(interpretExecutionException(infoSections, e));
 		} catch (InterruptedException e) {
 			work.cancel(true);
-			information.addSection("Failed", "The benchmark thread was interrupted");
-			setResult(failedBenchResult(information.toString()));
+			infoSections.addSection("Failed", "The benchmark thread was interrupted");
+			setResult(failedBenchResult(infoSections));
 		} catch (CancellationException e) {
-			information.addSection("Failed", "The run was aborted");
-			setResult(failedBenchResult(information.toString()));
+			infoSections.addSection("Failed", "The run was aborted");
+			setResult(failedBenchResult(infoSections));
 		}
 	}
 
@@ -163,95 +184,99 @@ public class Benchmarker {
 		finishFuture.complete(null);
 	}
 
-	private Future<ProgramResult> startBenchExecution(BenchmarkFailureInformation information,
-		Path benchScriptPath) {
+	private Future<ProgramResult> startBenchExecution(NamedRows generalInfo, Path benchScriptPath) {
 		Instant startTime = Instant.now();
 
 		String[] calledCommand = {
 			benchScriptPath.toAbsolutePath().toString(),
 			taskRepoPath.toAbsolutePath().toString()
 		};
-		information.addEscapedArrayToGeneral("Executed command", calledCommand);
-		information.addToGeneral("Start time", startTime.toString());
+		generalInfo.addEscapedArray("Executed command", calledCommand);
+		generalInfo.add("Start time", startTime.toString());
 
 		return new ProgramExecutor(Delays.TIME_TO_KILL.toMillis()).execute(calledCommand);
 	}
 
-	private void addProgramOutput(BenchmarkFailureInformation information,
+	private void addProgramOutput(NamedRows generalInfo, NamedSections infoSections,
 		ProgramResult programResult) {
-		information.addToGeneral("Stop time", Instant.now().toString());
-		information.addToGeneral("Execution time", programResult.getRuntime().toString());
-		information.addToGeneral("Exit code", programResult.getExitCode() + "");
-		information.addSection(
+
+		generalInfo.add("Stop time", Instant.now().toString());
+		generalInfo.add("Execution time", programResult.getRuntime().toString());
+		generalInfo.add("Exit code", programResult.getExitCode() + "");
+
+		infoSections.addSection(
 			"Stdout",
 			programResult.getStdOut().isEmpty() ? "<empty>" : programResult.getStdOut()
 		);
-		information.addSection(
+		infoSections.addSection(
 			"Stderr",
 			programResult.getStdErr().isEmpty() ? "<empty>" : programResult.getStdErr()
 		);
 	}
 
-	private BenchResult interpretResult(BenchmarkFailureInformation information,
-		ProgramResult programResult) {
+	private BenchResult interpretResult(NamedSections infoSections, ProgramResult programResult) {
 		if (programResult.getExitCode() == 0) {
-			return interpretZeroExitCode(information, programResult);
+			return interpretZeroExitCode(infoSections, programResult);
 		}
-		return interpretFailingExitCode(information, programResult);
+		return interpretFailingExitCode(infoSections, programResult);
 	}
 
-	private BenchResult interpretZeroExitCode(BenchmarkFailureInformation information,
+	private BenchResult interpretZeroExitCode(NamedSections infoSections,
 		ProgramResult programResult) {
+
 		BareResult bareResult;
 
 		try {
 			bareResult = new BenchmarkScriptOutputParser().parse(programResult.getStdOut());
 		} catch (OutputParseException e) {
-			information.addSection("Invalid output", e.getMessage());
-			information.addSection(
+			infoSections.addSection("Invalid output", e.getMessage());
+			infoSections.addSection(
 				"Reason",
 				"The benchmark script returned invalid output!"
 			);
-			return failedBenchResult(information.toString());
+			return failedBenchResult(infoSections);
 		}
 
 		return successfulBenchResult(new Result(bareResult.getBenchmarks(), bareResult.getError()));
 	}
 
-	private BenchResult interpretFailingExitCode(BenchmarkFailureInformation information,
+	private BenchResult interpretFailingExitCode(NamedSections infoSections,
 		ProgramResult programResult) {
-		information.addSection(
+
+		infoSections.addSection(
 			"Reason",
 			"The benchmark script terminated with a non-zero exit code"
 				+ " (" + programResult.getExitCode() + ")!"
 		);
+
 		LinuxSignal.forExitCode(programResult.getExitCode())
-			.ifPresent(signal -> information.addSection(
+			.ifPresent(signal -> infoSections.addSection(
 				"Exit code interpretation",
 				"The exit code looks like the linux signal " + signal.name() + ".\n"
 					+ "It's signal number is " + signal.getNumber() + " and it is caused by '"
 					+ signal.getExplanation() + "'."
 			));
-		return failedBenchResult(information.toString());
+
+		return failedBenchResult(infoSections);
 	}
 
-	private BenchResult interpretExecutionException(BenchmarkFailureInformation information,
+	private BenchResult interpretExecutionException(NamedSections infoSections,
 		ExecutionException e) {
-		information.addSection("Stacktrace", ExceptionHelper.getStackTrace(e));
-		information.addSection("End time", Instant.now().toString());
-		information.addSection(
+		infoSections.addSection("Stacktrace", ExceptionHelper.getStackTrace(e));
+		infoSections.addSection("End time", Instant.now().toString());
+		infoSections.addSection(
 			"Reason",
 			"Maybe an internal runner error. Rebenchmarking might solve the problem!"
 		);
-		return failedBenchResult(information.toString());
+		return failedBenchResult(infoSections);
 	}
 
 	private BenchResult successfulBenchResult(Result result) {
 		return new BenchResult(taskId, true, result, null, startTime, Instant.now());
 	}
 
-	private BenchResult failedBenchResult(String error) {
-		return new BenchResult(taskId, false, null, error, startTime, Instant.now());
+	private BenchResult failedBenchResult(NamedSections infoSections) {
+		return new BenchResult(taskId, false, null, infoSections.format(), startTime, Instant.now());
 	}
 
 }

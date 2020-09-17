@@ -15,7 +15,7 @@ class JsonRunTest extends SerializingTest {
 			"runnerInfoText",
 			1596881630,
 			1596881676,
-			JsonSource.fromUploadedTar("descriptionText", null),
+			JsonSource.tarSource("descriptionText", null),
 			JsonResult.velcomError("velcomErrorText")
 		);
 		String json = "{"
