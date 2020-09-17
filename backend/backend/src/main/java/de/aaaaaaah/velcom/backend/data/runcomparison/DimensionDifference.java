@@ -43,7 +43,7 @@ public class DimensionDifference {
 		return Optional.ofNullable(secondStddev);
 	}
 
-	public double getAbsdiff() {
+	public double getDiff() {
 		return second - first;
 	}
 
@@ -52,7 +52,7 @@ public class DimensionDifference {
 			return Optional.empty();
 		}
 
-		return Optional.of(second / first);
+		return Optional.of((second - first) / first);
 	}
 
 	public boolean isSignificant() {
@@ -61,7 +61,7 @@ public class DimensionDifference {
 			.orElse(true);
 
 		boolean stddevSignificant = getSecondStddev()
-			.map(stddev -> Math.abs(getAbsdiff()) >= significanceFactors.getStddevThreshold() * stddev)
+			.map(stddev -> Math.abs(getDiff()) >= significanceFactors.getStddevThreshold() * stddev)
 			.orElse(true);
 
 		return relSignificant && stddevSignificant;
