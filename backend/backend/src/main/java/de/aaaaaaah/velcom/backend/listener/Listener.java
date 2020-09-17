@@ -1,8 +1,9 @@
 package de.aaaaaaah.velcom.backend.listener;
 
+import static com.codahale.metrics.MetricRegistry.name;
 import static java.util.stream.Collectors.toList;
 
-import com.codahale.metrics.Histogram;
+import com.codahale.metrics.Timer;
 import de.aaaaaaah.velcom.backend.GlobalConfig;
 import de.aaaaaaah.velcom.backend.ServerMain;
 import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
@@ -44,6 +45,9 @@ public class Listener {
 	private static final Logger LOGGER = LoggerFactory.getLogger(Listener.class);
 	private static final String AUTHOR = "Listener";
 
+	private static final Timer TIMER = ServerMain.getMetricRegistry()
+		.timer(name("velcom", "listener", "duration"));
+
 	private final RepoWriteAccess repoAccess;
 	private final CommitReadAccess commitAccess;
 	private final KnownCommitWriteAccess knownCommitAccess;
@@ -53,9 +57,6 @@ public class Listener {
 	private final Lock lock = new ReentrantLock();
 
 	private final UnknownCommitFinder unknownCommitFinder;
-
-	private final Histogram updateDurations = ServerMain.getMetricRegistry()
-		.histogram("listener-update-dur");
 
 	/**
 	 * Constructs a new listener instance.
@@ -83,24 +84,21 @@ public class Listener {
 	}
 
 	private void update() {
-		long start = System.currentTimeMillis();
-
-		try {
-			benchRepo.checkForUpdates();
-		} catch (RepoAccessException e) {
-			LOGGER.warn("Could not fetch updates from benchmark repo!", e);
-		}
-
-		for (Repo repo : repoAccess.getAllRepos()) {
+		try (var ignored = TIMER.time()) {
 			try {
-				checkForUnknownCommits(repo.getRepoId());
-			} catch (CommitSearchException | RepoAccessException | NoSuchRepoException e) {
-				LOGGER.warn("Could not fetch updates for repo: " + repo, e);
+				benchRepo.checkForUpdates();
+			} catch (RepoAccessException e) {
+				LOGGER.warn("Could not fetch updates from benchmark repo!", e);
+			}
+
+			for (Repo repo : repoAccess.getAllRepos()) {
+				try {
+					checkForUnknownCommits(repo.getRepoId());
+				} catch (CommitSearchException | RepoAccessException | NoSuchRepoException e) {
+					LOGGER.warn("Could not fetch updates for repo: " + repo, e);
+				}
 			}
 		}
-
-		long end = System.currentTimeMillis();
-		updateDurations.update(end - start);
 	}
 
 	/**
