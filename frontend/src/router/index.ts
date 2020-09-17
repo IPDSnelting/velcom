@@ -146,7 +146,7 @@ const router = new VueRouterEx({
   routes
 })
 
-router.afterEach((to, from) => {
+router.afterEach(to => {
   Vue.nextTick(() => {
     document.title = to.meta.label ? 'VelCom - ' + to.meta.label : 'VelCom'
   })

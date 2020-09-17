@@ -46,7 +46,7 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
-import { Task, TarTaskSource, RunId, TaskId } from '../../store/types'
+import { TarTaskSource, RunId, TaskId } from '@/store/types'
 import CommitChip from '../CommitChip.vue'
 import InlineMinimalRepoNameDisplay from '../InlineMinimalRepoDisplay.vue'
 

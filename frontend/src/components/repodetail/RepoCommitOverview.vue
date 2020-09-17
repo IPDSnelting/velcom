@@ -145,7 +145,7 @@ export default class RepoCommitOverview extends Vue {
   }
 
   private get firstChosen(): boolean {
-    return this.firstCommit != null && this.firstCommit !== undefined
+    return this.firstCommit !== null && this.firstCommit !== undefined
   }
 
   private get commitHistory() {
@@ -164,7 +164,7 @@ export default class RepoCommitOverview extends Vue {
 
   private get secondCommitCandidates(): Commit[] {
     return this.allCommits.filter((commit: Commit) => {
-      let first = this.firstCommit
+      const first = this.firstCommit
       if (first !== null && first !== undefined) {
         return commit.hash !== this.firstCommitHash
       }
@@ -175,7 +175,7 @@ export default class RepoCommitOverview extends Vue {
     return vxm.userModule.isAdmin
   }
 
-  filterCommits(item: Commit, queryText: any, itemText: any) {
+  private filterCommits(item: Commit, queryText: any) {
     return (
       item.hash.toLocaleLowerCase().indexOf(queryText.toLocaleLowerCase()) >
         -1 ||
@@ -186,7 +186,7 @@ export default class RepoCommitOverview extends Vue {
     )
   }
 
-  navigateToComparison() {
+  private navigateToComparison() {
     if (this.firstCommitHash && this.secondCommitHash) {
       this.$router.push({
         name: 'commit-comparison',

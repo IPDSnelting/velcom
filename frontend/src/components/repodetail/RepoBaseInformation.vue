@@ -36,7 +36,7 @@
                     <v-chip
                       :class="{
                         'ma-2': true,
-                        untracked: !branch.tracked,
+                        untracked: !branch.tracked
                       }"
                       outlined
                       label
@@ -109,7 +109,7 @@ export default class RepoBaseInformation extends Vue {
   }
 
   private deleteRepository() {
-    let confirmed = window.confirm(
+    const confirmed = window.confirm(
       `Do you really want to delete ${this.repo.name} (${this.repo.id})?`
     )
     if (!confirmed) {

@@ -60,7 +60,7 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Watch } from 'vue-property-decorator'
-import { vxm } from '../store/index'
+import { vxm } from '@/store'
 import { RunDescriptionWithDifferences, RunDescription } from '@/store/types'
 import MultipleRunOverview from '@/components/overviews/MultipleRunOverview.vue'
 
@@ -82,16 +82,16 @@ export default class Home extends Vue {
   }
 
   @Watch('recentAmount')
-  fetchRecent() {
+  private fetchRecent() {
     vxm.newsModule.fetchRecentRuns(this.recentAmount)
   }
 
   @Watch('recentSignificantAmount')
-  fetchRecentSignificant() {
+  private fetchRecentSignificant() {
     vxm.newsModule.fetchRecentSignificantRuns(this.recentSignificantAmount)
   }
 
-  created() {
+  created(): void {
     this.fetchRecent()
     this.fetchRecentSignificant()
   }

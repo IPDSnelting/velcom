@@ -1,7 +1,6 @@
-import { createModule, mutation, action } from 'vuex-class-component'
+import { createModule, action } from 'vuex-class-component'
 import {
   RunId,
-  Run,
   CommitHash,
   RepoId,
   Commit,

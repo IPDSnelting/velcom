@@ -14,7 +14,7 @@
                   class="concealed-link"
                   :to="{
                     name: 'run-detail',
-                    params: { first: commit.repoId, second: commit.hash },
+                    params: { first: commit.repoId, second: commit.hash }
                   }"
                 >
                   <span class="commit-message">{{ commit.summary }}</span>
@@ -52,8 +52,8 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
-import { formatDate, formatDateUTC } from '../../util/TimeUtil'
-import { Commit, CommitDescription } from '../../store/types'
+import { formatDate, formatDateUTC } from '@/util/TimeUtil'
+import { CommitDescription } from '@/store/types'
 import InlineMinimalRepoNameDisplay from '../InlineMinimalRepoDisplay.vue'
 import CommitChip from '../CommitChip.vue'
 
@@ -67,11 +67,11 @@ export default class CommitOverviewBase extends Vue {
   @Prop()
   private commit!: CommitDescription
 
-  get formattedDate() {
+  private get formattedDate() {
     return formatDate(this.commit.authorDate || new Date(0))
   }
 
-  get formattedDateUTC() {
+  private get formattedDateUTC() {
     return formatDateUTC(this.commit.authorDate || new Date(0))
   }
 }

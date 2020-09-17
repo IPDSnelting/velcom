@@ -9,8 +9,8 @@
           name: 'run-detail',
           params: {
             first: commitDescription.repoId,
-            second: commitDescription.hash,
-          },
+            second: commitDescription.hash
+          }
         }"
       >
         <v-icon left v-if="type === 'PARENT'">{{ parentCommitIcon }}</v-icon>
@@ -42,5 +42,4 @@ export default class CommitNavigationButton extends Vue {
 }
 </script>
 
-<style scoped>
-</style>
+<style scoped></style>

@@ -45,23 +45,13 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { Prop, Watch } from 'vue-property-decorator'
-import { vxm } from '@/store/index'
+import { Prop } from 'vue-property-decorator'
+import { vxm } from '@/store'
 import {
-  Commit,
-  Run,
-  RunResultScriptError,
-  RunResultVelcomError,
-  Dimension,
-  RunResultSuccess,
-  MeasurementError,
   CommitDescription,
   CommitTaskSource,
   RunDescription
 } from '@/store/types'
-import InlineMinimalRepoNameDisplay from '../InlineMinimalRepoDisplay.vue'
-import CommitChip from '../CommitChip.vue'
-import { formatDate, formatDateUTC } from '@/util/TimeUtil'
 import {
   mdiCheckboxMarkedCircleOutline,
   mdiCloseCircleOutline,
@@ -94,6 +84,7 @@ export default class RunOverview extends Vue {
     return this.run.success === 'FAILURE'
   }
 
+  // FIXME: Delete this?
   private get isPartialFailure(): boolean {
     return this.run.success === 'PARTIAL_SUCCESS'
   }

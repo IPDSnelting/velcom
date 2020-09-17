@@ -5,7 +5,9 @@
         <v-col>
           <v-card>
             <v-card-title>
-              <v-toolbar color="primary darken-1" dark>Available Runners</v-toolbar>
+              <v-toolbar color="primary darken-1" dark>
+                Available Runners
+              </v-toolbar>
             </v-card-title>
             <v-card-text>
               <v-container fluid>
@@ -21,7 +23,9 @@
         <v-col>
           <v-card>
             <v-card-title>
-              <v-toolbar color="primary darken-1" dark>Queued commits (in planned execution order)</v-toolbar>
+              <v-toolbar color="primary darken-1" dark>
+                Queued commits (in planned execution order)
+              </v-toolbar>
             </v-card-title>
             <v-card-text>
               <v-container fluid class="ma-0 pa-0">
@@ -42,7 +46,7 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import WorkerOverview from '../components/overviews/WorkerOverview.vue'
 import QueueOverview from '../components/overviews/QueueOverview.vue'
-import { vxm } from '../store/index'
+import { vxm } from '@/store'
 import { Route, RawLocation } from 'vue-router'
 
 @Component({

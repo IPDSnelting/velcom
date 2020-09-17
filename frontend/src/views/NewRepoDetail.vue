@@ -7,6 +7,18 @@
     </v-row>
     <v-row align="baseline" justify="center">
       <v-col>
+        <v-card>
+          <v-card-text>
+            <new-echarts-detail
+              :dimensions="selectedDimensions"
+            ></new-echarts-detail>
+            <!--            <dygraph-detail></dygraph-detail>-->
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+    <v-row align="baseline" justify="center">
+      <v-col>
         <v-card
           ><v-card-text class="ma-0 pa-0">
             <v-container fluid class="ma-0 px-5 pb-0">
@@ -188,12 +200,16 @@ import RepoBaseInformation from '@/components/repodetail/RepoBaseInformation.vue
 import DimensionSelection from '../components/graphs/DimensionSelection.vue'
 import MatrixDimensionSelection from '../components/graphs/MatrixDimensionSelection.vue'
 import { Dimension, Repo } from '@/store/types'
+import EchartsDetailGraph from '@/components/graphs/EchartsDetailGraph.vue'
+import DytailGraph from '@/components/graphs/Dygraph-Detail.vue'
 
 @Component({
   components: {
     'repo-base-information': RepoBaseInformation,
     'matrix-dimension-selection': MatrixDimensionSelection,
-    'normal-dimension-selection': DimensionSelection
+    'normal-dimension-selection': DimensionSelection,
+    'new-echarts-detail': EchartsDetailGraph,
+    'dygraph-detail': DytailGraph
   }
 })
 export default class RepoDetail extends Vue {

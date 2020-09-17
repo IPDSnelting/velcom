@@ -27,7 +27,7 @@
               <v-row no-gutters align="center">
                 <transition name="fade">
                   <span
-                    v-if="tokenState == 'delete'"
+                    v-if="tokenState === 'delete'"
                     class="section-header mr-4"
                     >TOKEN WILL BE DELETED</span
                   >
@@ -35,7 +35,7 @@
                 <transition name="fade">
                   <span>
                     <v-btn
-                      v-if="tokenState == 'unchanged'"
+                      v-if="tokenState === 'unchanged'"
                       @click="tokenState = 'modify'"
                       text
                       outlined
@@ -44,7 +44,7 @@
                       >Change token</v-btn
                     >
                     <v-btn
-                      v-if="tokenState == 'unchanged'"
+                      v-if="tokenState === 'unchanged'"
                       @click="tokenState = 'delete'"
                       text
                       outlined
@@ -53,20 +53,20 @@
                       >Delete token</v-btn
                     >
                     <v-btn
-                      v-if="tokenState == 'modify' || tokenState == 'delete'"
+                      v-if="tokenState === 'modify' || tokenState === 'delete'"
                       @click="tokenState = 'unchanged'"
                       text
                       outlined
                       color="error"
                       >{{
-                        tokenState == 'modify' ? 'KEEP OLD TOKEN' : 'UNDO'
+                        tokenState === 'modify' ? 'KEEP OLD TOKEN' : 'UNDO'
                       }}</v-btn
                     >
                   </span>
                 </transition>
                 <transition name="fade">
                   <v-text-field
-                    v-if="tokenState == 'modify'"
+                    v-if="tokenState === 'modify'"
                     :rules="[notEmpty]"
                     label="*New token"
                     v-model="newToken"
@@ -98,7 +98,7 @@
                   class="my-0 pt-0 font-italic"
                   label="Track all branches"
                   :input-value="
-                    newTrackedBranches.length == repo.branches.length
+                    newTrackedBranches.length === repo.branches.length
                   "
                   @change="toggleAll"
                 ></v-checkbox>
@@ -148,7 +148,7 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Repo, RepoBranch } from '@/store/types'
 import { Prop, Watch } from 'vue-property-decorator'
-import { vxm } from '@/store/index'
+import { vxm } from '@/store'
 import { mdiMagnify } from '@mdi/js'
 
 @Component
@@ -182,7 +182,7 @@ export default class RepoUpdateDialog extends Vue {
     return vxm.repoModule.repoById(this.repoId)!
   }
 
-  private filterName(items: { lowerCased: string }[], search: string) {
+  private filterName(items: { lowerCased: string }[]) {
     return items.filter(
       input => input.lowerCased.indexOf(this.searchValue.toLowerCase()) >= 0
     )
@@ -194,7 +194,7 @@ export default class RepoUpdateDialog extends Vue {
 
   @Watch('dialogOpen')
   @Watch('repoId')
-  watchIdUpdates() {
+  private watchIdUpdates() {
     this.remoteUrl = this.repo.remoteURL
     this.repoName = this.repo.name
     this.tokenState = 'unchanged'
@@ -207,7 +207,7 @@ export default class RepoUpdateDialog extends Vue {
     )
   }
 
-  toggleAll() {
+  private toggleAll() {
     if (
       this.newTrackedBranches.length === this.repo.branches.length &&
       this.newTrackedBranches.length > 0
@@ -218,7 +218,7 @@ export default class RepoUpdateDialog extends Vue {
     }
   }
 
-  updateRepo() {
+  private updateRepo() {
     const newBranches = this.repo.branches.map(
       it => new RepoBranch(it.name, this.newTrackedBranches.includes(it.name))
     )
@@ -237,6 +237,7 @@ export default class RepoUpdateDialog extends Vue {
       hasTokenNow = true
     }
 
+    // FIXME: THis is unused?
     const newRepo = new Repo(
       this.repo.id,
       this.repoName,
@@ -256,7 +257,7 @@ export default class RepoUpdateDialog extends Vue {
       .then(() => (this.dialogOpen = false))
   }
 
-  mounted() {
+  mounted(): void {
     Vue.nextTick(() => this.watchIdUpdates())
   }
 

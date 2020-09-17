@@ -25,7 +25,7 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Model, Prop } from 'vue-property-decorator'
-import { Repo } from '../store/types'
+import { Repo } from '@/store/types'
 import { mdiSourceBranch } from '@mdi/js'
 
 @Component
@@ -33,7 +33,7 @@ export default class RepoSelectionComponent extends Vue {
   @Model('value', { type: String })
   private repoId!: string
 
-  setRepoId(newValue: string) {
+  private setRepoId(newValue: string) {
     this.$emit('value', newValue)
   }
 
@@ -52,5 +52,4 @@ export default class RepoSelectionComponent extends Vue {
 }
 </script>
 
-<style scoped>
-</style>
+<style scoped></style>

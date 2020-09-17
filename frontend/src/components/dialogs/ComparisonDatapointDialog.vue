@@ -11,7 +11,8 @@
               text
               outlined
               color="primary"
-            >use datapoint as reference</v-btn>
+              >use datapoint as reference</v-btn
+            >
           </v-col>
         </v-row>
         <v-row dense class="my-2">
@@ -22,7 +23,8 @@
               text
               outlined
               color="primary"
-            >view in detail graph</v-btn>
+              >view in detail graph</v-btn
+            >
           </v-col>
         </v-row>
         <v-row dense>
@@ -33,7 +35,8 @@
               text
               outlined
               color="primary"
-            >remove reference line</v-btn>
+              >remove reference line</v-btn
+            >
           </v-col>
         </v-row>
       </v-card-text>
@@ -48,9 +51,8 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { Prop, Watch } from 'vue-property-decorator'
-import { Commit } from '../../store/types'
-import CommitBenchmarkActions from '../CommitBenchmarkActions.vue'
+import { Prop } from 'vue-property-decorator'
+import { Commit } from '@/store/types'
 
 @Component({})
 export default class DatapointDialog extends Vue {

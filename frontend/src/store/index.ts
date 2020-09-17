@@ -9,8 +9,6 @@ import { NewsStore } from './modules/newsStore'
 import { QueueStore } from './modules/queueStore'
 import { ComparisonGraphStore } from './modules/comparisonGraphStore'
 import { DetailGraphStore } from './modules/detailGraphStore'
-import VuexPersistence from 'vuex-persist'
-import { Commit, RepoId } from './types'
 import {
   persistenceLocalStorage,
   persistenceSessionStorage

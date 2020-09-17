@@ -11,9 +11,20 @@
         </v-toolbar>
         <v-card-text>
           <v-form v-model="formValid" ref="form">
-            <v-text-field :rules="[notEmpty]" label="*Remote URL" v-model="remoteUrl"></v-text-field>
-            <v-text-field :rules="[notEmpty]" label="*Repository name" v-model="repoName"></v-text-field>
-            <v-text-field label="Repository access token" v-model="repoToken"></v-text-field>
+            <v-text-field
+              :rules="[notEmpty]"
+              label="*Remote URL"
+              v-model="remoteUrl"
+            ></v-text-field>
+            <v-text-field
+              :rules="[notEmpty]"
+              label="*Repository name"
+              v-model="repoName"
+            ></v-text-field>
+            <v-text-field
+              label="Repository access token"
+              v-model="repoToken"
+            ></v-text-field>
           </v-form>
         </v-card-text>
         <v-card-actions>
@@ -36,9 +47,7 @@
 <script lang="ts">
 import Vue from 'vue'
 import { Component, Watch } from 'vue-property-decorator'
-import { Store } from 'vuex'
-import { extractErrorMessage } from '@/util/ErrorUtils'
-import { store, vxm } from '@/store/index'
+import { vxm } from '@/store'
 
 @Component
 export default class RepoAddDialog extends Vue {
@@ -55,7 +64,7 @@ export default class RepoAddDialog extends Vue {
   }
 
   @Watch('dialogOpen')
-  clearDialogOnOpen(opened: boolean) {
+  clearDialogOnOpen(opened: boolean): void {
     if (opened) {
       this.remoteUrl = ''
       this.repoName = ''
@@ -80,5 +89,4 @@ export default class RepoAddDialog extends Vue {
 }
 </script>
 
-<style scoped>
-</style>
+<style scoped></style>

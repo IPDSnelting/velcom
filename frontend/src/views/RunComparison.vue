@@ -66,11 +66,8 @@ export default class RunComparisonView extends Vue {
     })
   }
 
-  mounted() {
+  mounted(): void {
     this.fetchData()
   }
 }
 </script>
-
-<style scoped>
-</style>

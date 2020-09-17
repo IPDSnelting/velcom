@@ -1,9 +1,5 @@
 import { createModule, mutation, action } from 'vuex-class-component'
-import {
-  Run,
-  RunDescriptionWithDifferences,
-  RunDescription
-} from '@/store/types'
+import { RunDescriptionWithDifferences, RunDescription } from '@/store/types'
 import axios from 'axios'
 import {
   differenceFromJson,
@@ -82,7 +78,7 @@ export class NewsStore extends VxModule {
    * @memberof NewsModuleStore
    */
   @mutation
-  setRecentRuns(recentRuns: RunDescription[]) {
+  setRecentRuns(recentRuns: RunDescription[]): void {
     this._recentRuns = recentRuns.slice()
   }
 
@@ -95,7 +91,7 @@ export class NewsStore extends VxModule {
   @mutation
   setRecentSignificantRuns(
     recentSignificantRuns: RunDescriptionWithDifferences[]
-  ) {
+  ): void {
     this._recentSignificantRuns = recentSignificantRuns.slice()
   }
 

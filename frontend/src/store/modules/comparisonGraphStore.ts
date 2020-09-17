@@ -1,5 +1,5 @@
 import { createModule, mutation, action } from 'vuex-class-component'
-import { Commit, ComparisonDataPoint, Dimension } from '@/store/types'
+import { ComparisonDataPoint, Dimension } from '@/store/types'
 import Vue from 'vue'
 import axios from 'axios'
 import { vxm } from '..'
@@ -168,8 +168,7 @@ export class ComparisonGraphStore extends VxModule {
   /**
    * Sets all data points.
    *
-   * @param {{ [key: string]: Run[] }} payload the payload
-   * to set it with
+   * @param payload the payload to set it with
    * @memberof RepoComparisonStore
    */
   @mutation
