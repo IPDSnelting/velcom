@@ -30,6 +30,7 @@
     <mockito.version>3.5.10</mockito.version>
     <slf4j.version>1.7.30</slf4j.version>
 
+    <git-commit-id-plugin.version>4.0.0</git-commit-id-plugin.version>
     <jacoco-maven-plugin.version>0.8.5</jacoco-maven-plugin.version>
     <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
     <maven-enforcer-plugin.version>3.0.0-M3</maven-enforcer-plugin.version>
