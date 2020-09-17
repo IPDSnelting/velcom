@@ -1,5 +1,8 @@
 package de.aaaaaaah.velcom.backend.access;
 
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Timer;
+import de.aaaaaaah.velcom.backend.ServerMain;
 import de.aaaaaaah.velcom.backend.access.archives.BenchRepoArchive;
 import de.aaaaaaah.velcom.backend.access.archives.RepoArchiveManager;
 import de.aaaaaaah.velcom.backend.access.archives.TarArchiveManager;
@@ -41,6 +44,13 @@ public class ArchiveAccess {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(ArchiveAccess.class);
 	private static final String BENCH_REPO_DIR_NAME = "benchrepo";
+
+	private static final Timer BENCH_REPO_TIMER = ServerMain.getMetricRegistry()
+		.timer(MetricRegistry.name("velcom", "transfer", "benchrepo", "duration"));
+	private static final Timer TAR_TASK_TIMER = ServerMain.getMetricRegistry()
+		.timer(MetricRegistry.name("velcom", "transfer", "tar-task", "duration"));
+	private static final Timer REPO_TASK_TIMER = ServerMain.getMetricRegistry()
+		.timer(MetricRegistry.name("velcom", "transfer", "repo-task", "duration"));
 
 	private final RepoStorage repoStorage;
 
@@ -160,24 +170,26 @@ public class ArchiveAccess {
 	public void transferBenchRepo(OutputStream outputStream)
 		throws PrepareTransferException, TransferException {
 
-		synchronized (this.benchRepoLock) {
-			// 1.) Create archive if necessary
-			try {
-				this.benchRepoArchive.createIfNecessary(
-					repoStorage, BENCH_REPO_DIR_NAME, getBenchRepoCommitHash()
-				);
-			} catch (Exception e) {
-				this.benchRepoArchive.delete();
-				throw new PrepareTransferException("Failed to prepare bench repo for transfer", e);
-			}
+		try (var ignored = BENCH_REPO_TIMER.time()) {
+			synchronized (this.benchRepoLock) {
+				// 1.) Create archive if necessary
+				try {
+					this.benchRepoArchive.createIfNecessary(
+						repoStorage, BENCH_REPO_DIR_NAME, getBenchRepoCommitHash()
+					);
+				} catch (Exception e) {
+					this.benchRepoArchive.delete();
+					throw new PrepareTransferException("Failed to prepare bench repo for transfer", e);
+				}
 
-			// 2.) Transfer bench repo
-			try {
-				Path tarFile = this.benchRepoArchive.getTar();
-				TransferUtils.transferTar(tarFile, outputStream);
-			} catch (Exception e) {
-				this.benchRepoArchive.delete();
-				throw new TransferException("Failed to transfer bench repo", e);
+				// 2.) Transfer bench repo
+				try {
+					Path tarFile = this.benchRepoArchive.getTar();
+					TransferUtils.transferTar(tarFile, outputStream);
+				} catch (Exception e) {
+					this.benchRepoArchive.delete();
+					throw new TransferException("Failed to transfer bench repo", e);
+				}
 			}
 		}
 	}
@@ -197,25 +209,29 @@ public class ArchiveAccess {
 		throws PrepareTransferException, TransferException {
 
 		if (task.getSource().isRight()) {
-			throw new PrepareTransferException("tar transfers unsupported");
-		} else {
-			RepoId repoId = task.getSource().getLeft().get().getRepoId();
-			CommitHash hash = task.getSource().getLeft().get().getHash();
-
-			// 1.) Create archive
-			Path archive;
-
-			try {
-				archive = repoArchives.createIfNecessary(repoId, hash);
-			} catch (Exception e) {
-				throw new PrepareTransferException(task, e);
+			try (var ignored = TAR_TASK_TIMER.time()) {
+				throw new PrepareTransferException("tar transfers unsupported");
 			}
+		} else {
+			try (var ignored = REPO_TASK_TIMER.time()) {
+				RepoId repoId = task.getSource().getLeft().get().getRepoId();
+				CommitHash hash = task.getSource().getLeft().get().getHash();
 
-			// 2.) Transfer with tar
-			try {
-				TransferUtils.tarRepo(archive, outputStream);
-			} catch (IOException e) {
-				throw new TransferException(task, e);
+				// 1.) Create archive
+				Path archive;
+
+				try {
+					archive = repoArchives.createIfNecessary(repoId, hash);
+				} catch (Exception e) {
+					throw new PrepareTransferException(task, e);
+				}
+
+				// 2.) Transfer with tar
+				try {
+					TransferUtils.tarRepo(archive, outputStream);
+				} catch (IOException e) {
+					throw new TransferException(task, e);
+				}
 			}
 		}
 	}
