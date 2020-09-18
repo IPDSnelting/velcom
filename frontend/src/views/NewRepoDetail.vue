@@ -188,6 +188,11 @@
         </v-card>
       </v-col>
     </v-row>
+    <v-row>
+      <v-col>
+        <commit-overview :repo="repo.id"></commit-overview>
+      </v-col>
+    </v-row>
   </v-container>
 </template>
 
@@ -199,6 +204,7 @@ import { vxm } from '../store/index'
 import RepoBaseInformation from '@/components/repodetail/RepoBaseInformation.vue'
 import DimensionSelection from '../components/graphs/DimensionSelection.vue'
 import MatrixDimensionSelection from '../components/graphs/MatrixDimensionSelection.vue'
+import RepoCommitOverview from '@/components/repodetail/RepoCommitOverview.vue'
 import { Dimension, Repo } from '@/store/types'
 import EchartsDetailGraph from '@/components/graphs/EchartsDetailGraph.vue'
 import DytailGraph from '@/components/graphs/Dygraph-Detail.vue'
@@ -209,7 +215,8 @@ import DytailGraph from '@/components/graphs/Dygraph-Detail.vue'
     'matrix-dimension-selection': MatrixDimensionSelection,
     'normal-dimension-selection': DimensionSelection,
     'new-echarts-detail': EchartsDetailGraph,
-    'dygraph-detail': DytailGraph
+    'dygraph-detail': DytailGraph,
+    'commit-overview': RepoCommitOverview
   }
 })
 export default class RepoDetail extends Vue {
