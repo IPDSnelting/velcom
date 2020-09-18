@@ -88,6 +88,13 @@ export class RepoStore extends VxModule {
     this.removeRepo(repoId)
   }
 
+  /**
+   * Updates a repo.
+   * @param payload contains the id, the new name (or undefined if unchanged),
+   * the new remote URL (or undefined if unchanged), the new tracked branches
+   * (or undefined if unchanged) and the new repo token (the new token or null
+   * if it should be deleted or undefined if it should be left unchanged)
+   */
   @action
   async updateRepo(payload: {
     id: RepoId
@@ -102,7 +109,7 @@ export class RepoStore extends VxModule {
       remote_url: payload.remoteUrl,
       tracked_branches: payload.trackedBranches
     })
-    this.fetchRepoById(payload.id)
+    await this.fetchRepoById(payload.id)
   }
 
   @mutation

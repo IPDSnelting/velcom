@@ -146,7 +146,7 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { Repo, RepoBranch } from '@/store/types'
+import { Repo } from '@/store/types'
 import { Prop, Watch } from 'vue-property-decorator'
 import { vxm } from '@/store'
 import { mdiMagnify } from '@mdi/js'
@@ -201,10 +201,9 @@ export default class RepoUpdateDialog extends Vue {
     this.newToken = ''
     this.searchValue = ''
 
-    this.newTrackedBranches = Object.assign(
-      [],
-      this.repo.branches.filter(it => it.tracked).map(it => it.name)
-    )
+    this.newTrackedBranches = this.repo.branches
+      .filter(it => it.tracked)
+      .map(it => it.name)
   }
 
   private toggleAll() {
@@ -214,38 +213,18 @@ export default class RepoUpdateDialog extends Vue {
     ) {
       this.newTrackedBranches = []
     } else {
-      this.newTrackedBranches = Object.assign([], this.repo.branches)
+      this.newTrackedBranches = this.repo.branches.map(branch => branch.name)
     }
   }
 
   private updateRepo() {
-    const newBranches = this.repo.branches.map(
-      it => new RepoBranch(it.name, this.newTrackedBranches.includes(it.name))
-    )
-
-    let newToken
+    let newToken: string | null | undefined
     if (this.tokenState === 'modify') {
       newToken = this.newToken
     } else if (this.tokenState === 'delete') {
       newToken = null
     }
 
-    let hasTokenNow = this.repo.hasToken
-    if (this.tokenState === 'delete') {
-      hasTokenNow = false
-    } else if (this.tokenState === 'modify') {
-      hasTokenNow = true
-    }
-
-    // FIXME: THis is unused?
-    const newRepo = new Repo(
-      this.repo.id,
-      this.repoName,
-      newBranches,
-      this.repo.dimensions,
-      this.remoteUrl,
-      hasTokenNow
-    )
     vxm.repoModule
       .updateRepo({
         repoToken: newToken,
@@ -275,6 +254,7 @@ export default class RepoUpdateDialog extends Vue {
 
 <style>
 /* Not scoped, as the v-label does not get any data attribute */
+/*noinspection CssUnusedSymbol*/
 .full-height-label-checkbox .v-label {
   height: 100% !important;
 }
