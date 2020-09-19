@@ -104,8 +104,6 @@ import CommitOverviewBase from './CommitOverviewBase.vue'
 import { extractErrorMessage } from '@/util/ErrorUtils'
 import TarTaskOverview from './TarTaskOverview.vue'
 
-// FIXME: Check if the "in-progress" view works
-
 @Component({
   components: {
     COMMIT: CommitOverviewBase,
@@ -123,7 +121,7 @@ export default class QueueOverview extends Vue {
   }
 
   private inProgress(task: Task): boolean {
-    return this.queueItems.find(it => it.id === task.id) !== undefined
+    return this.getWorker(task) !== undefined
   }
 
   private get isAdmin() {
