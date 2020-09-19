@@ -232,7 +232,7 @@ export default class RepoDetail extends Vue {
 
   private startDateMenuOpen: boolean = false
   private stopDateMenuOpen: boolean = false
-  private dateLocked: 'start' | 'end' | 'neither' = 'start'
+  private dateLocked: 'start' | 'end' | 'neither' = 'end'
 
   private get repo(): Repo {
     return vxm.repoModule.repoById(this.id)!
