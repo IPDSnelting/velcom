@@ -6,6 +6,7 @@ import de.aaaaaaah.velcom.runner.benchmarking.output.BenchmarkScriptOutputParser
 import de.aaaaaaah.velcom.runner.benchmarking.output.OutputParseException;
 import de.aaaaaaah.velcom.runner.formatting.NamedRows;
 import de.aaaaaaah.velcom.runner.formatting.NamedSections;
+import de.aaaaaaah.velcom.shared.GitProperties;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Result;
 import de.aaaaaaah.velcom.shared.util.ExceptionHelper;
 import de.aaaaaaah.velcom.shared.util.execution.ProgramExecutor;
@@ -101,6 +102,7 @@ public class Benchmarker {
 	private NamedRows getBasicInfo() {
 		NamedRows rows = new NamedRows();
 		rows.add("Runner name", runnerName);
+		rows.add("Hash", GitProperties.getHash());
 
 		rows.add(
 			"System",
