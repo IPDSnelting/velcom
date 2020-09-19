@@ -99,7 +99,8 @@ public class GetStatusReply implements ServerBound {
 	@Override
 	public String toString() {
 		return "GetStatusReply{" +
-			"benchHash='" + benchHash + '\'' +
+			"versionHash='" + versionHash + '\'' +
+			", benchHash='" + benchHash + '\'' +
 			", resultAvailable=" + resultAvailable +
 			", status=" + status +
 			", runId=" + runId +
