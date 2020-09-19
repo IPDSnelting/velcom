@@ -59,7 +59,9 @@ public class CpuInfo {
 	}
 
 	public String format() {
-		return String.join(",", coreModels());
+		String models = String.join(",", coreModels());
+		int n = virtualCoreCount();
+		return String.format("%s (%d %s)", models, n, (n == 1) ? "thread" : "threads");
 	}
 
 	@Override
