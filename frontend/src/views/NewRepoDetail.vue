@@ -12,7 +12,7 @@
             <new-echarts-detail
               :dimensions="selectedDimensions"
             ></new-echarts-detail>
-            <!--            <dygraph-detail></dygraph-detail>-->
+            <dygraph-detail :dimensions="selectedDimensions"></dygraph-detail>
           </v-card-text>
         </v-card>
       </v-col>
@@ -200,14 +200,14 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { mdiCalendar, mdiLock, mdiLockOpenVariant } from '@mdi/js'
-import { vxm } from '../store/index'
+import { vxm } from '@/store'
 import RepoBaseInformation from '@/components/repodetail/RepoBaseInformation.vue'
 import DimensionSelection from '../components/graphs/DimensionSelection.vue'
 import MatrixDimensionSelection from '../components/graphs/MatrixDimensionSelection.vue'
 import RepoCommitOverview from '@/components/repodetail/RepoCommitOverview.vue'
 import { Dimension, Repo } from '@/store/types'
 import EchartsDetailGraph from '@/components/graphs/EchartsDetailGraph.vue'
-import DytailGraph from '@/components/graphs/Dygraph-Detail.vue'
+import DytailGraph from '@/components/graphs/NewDytailGraph.vue'
 
 @Component({
   components: {

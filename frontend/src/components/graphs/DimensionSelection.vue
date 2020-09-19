@@ -1,3 +1,4 @@
+<script src="../../store/persistence.ts"></script>
 <template>
   <v-container fluid class="ma-0 pa-0 wrapper">
     <v-row no-gutters align="center" justify="start">
@@ -46,7 +47,7 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { vxm } from '@/store'
 import { Prop, Watch } from 'vue-property-decorator'
-import { Dimension } from '@/store/types'
+import { Dimension, DimensionId } from '@/store/types'
 
 class BenchmarkItem {
   id: string
@@ -145,7 +146,7 @@ export default class DimensionSelection extends Vue {
     }
     if (item instanceof DimensionItem) {
       return vxm.colorModule.colorByIndex(
-        this.selectedDimensions.findIndex(it => it.equals(item.dimension))
+        vxm.detailGraphModule.colorIndex(item.dimension)!
       )
     } else if (item.children) {
       return this.metricColor(item.children[0])

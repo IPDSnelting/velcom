@@ -1,5 +1,11 @@
 import { createModule, mutation, action } from 'vuex-class-component'
-import { RepoId, Dimension, DetailDataPoint } from '@/store/types'
+import {
+  RepoId,
+  Dimension,
+  DetailDataPoint,
+  DimensionId,
+  dimensionIdEqual
+} from '@/store/types'
 import axios from 'axios'
 import { detailDataPointFromJson } from '@/util/GraphJsonHelper'
 import { dimensionFromJson } from '@/util/RepoJsonHelper'
@@ -93,6 +99,12 @@ export class DetailGraphStore extends VxModule {
   private _selectedRepoId: RepoId = ''
   private _selectedDimensions: Dimension[] = []
   private _referenceDatapoint: DimensionDetailPoint | null = null
+
+  private colorIndexMap: CustomKeyEqualsMap<
+    DimensionId,
+    number
+  > = new CustomKeyEqualsMap([], dimensionIdEqual)
+  private firstFreeColorIndex: number = 0
 
   commitToCompare: DimensionDetailPoint | null = null
 
@@ -233,6 +245,9 @@ export class DetailGraphStore extends VxModule {
       if (!it) {
         throw new Error('UNDEFINED OR NULL!')
       }
+      if (!this.colorIndexMap.has(it)) {
+        this.colorIndexMap.set(it, this.firstFreeColorIndex++)
+      }
     })
     this._selectedDimensions = dimensions
   }
@@ -290,6 +305,8 @@ export class DetailGraphStore extends VxModule {
    */
   set selectedRepoId(selectedRepoId: RepoId) {
     this._selectedRepoId = selectedRepoId
+    this.colorIndexMap = new CustomKeyEqualsMap([], dimensionIdEqual)
+    this.firstFreeColorIndex = 0
   }
 
   get startTime(): Date {
@@ -314,5 +331,9 @@ export class DetailGraphStore extends VxModule {
 
   set duration(duration: number) {
     this._duration = duration
+  }
+
+  get colorIndex(): (dimension: DimensionId) => number | undefined {
+    return dimension => this.colorIndexMap.get(dimension)
   }
 }

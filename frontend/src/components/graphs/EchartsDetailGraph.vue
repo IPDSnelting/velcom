@@ -28,12 +28,7 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import {
-  DetailDataPoint,
-  DetailDataPointValue,
-  Dimension,
-  DimensionId
-} from '@/store/types'
+import { DetailDataPoint, Dimension, DimensionId } from '@/store/types'
 import { EChartOption } from 'echarts'
 import { Prop, Watch } from 'vue-property-decorator'
 import EChartsComp from 'vue-echarts'
@@ -156,32 +151,6 @@ export default class EchartsDetailGraph extends Vue {
       this.detailDataPoints.map(it => it.authorDate.getTime())
     )
     return max || 0
-  }
-
-  private randomGarbage(
-    successful: boolean = true
-  ): Map<DimensionId, DetailDataPointValue> {
-    const map: Map<DimensionId, DetailDataPointValue> = new Map()
-    if (successful) {
-      for (let i = 0; i < this.dimensions.length; i++) {
-        map.set(this.dimensions[i], Math.random() * 20 - 5)
-      }
-    } else {
-      const random = Math.random()
-      for (let i = 0; i < this.dimensions.length; i++) {
-        map.set(
-          this.dimensions[i],
-          random < 0.25
-            ? 'NO_MEASUREMENT'
-            : random < 0.5
-            ? 'NO_RUN'
-            : random < 0.75
-            ? 'RUN_FAILED'
-            : 'MEASUREMENT_FAILED'
-        )
-      }
-    }
-    return map
   }
 
   // <!--<editor-fold desc="ECHARTS GRAPH OPTIONS">-->
@@ -666,7 +635,7 @@ export default class EchartsDetailGraph extends Vue {
   }
   private dimensionColor(dimension: DimensionId) {
     return vxm.colorModule.colorByIndex(
-      this.dimensions.findIndex(it => it.equals(dimension))
+      vxm.detailGraphModule.colorIndex(dimension)!
     )
   }
   private get graphFailedOrUnbenchmarkedColor() {
