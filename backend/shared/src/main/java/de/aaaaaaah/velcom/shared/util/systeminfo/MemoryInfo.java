@@ -8,12 +8,14 @@ import java.util.Optional;
  */
 public class MemoryInfo {
 
-	private final long freeMemoryKib;
 	private final long totalMemoryKib;
+	private final long freeMemoryKib;
+	private final long availableMemoryKib;
 
-	public MemoryInfo(long freeMemoryKib, long totalMemoryKib) {
-		this.freeMemoryKib = freeMemoryKib;
+	public MemoryInfo(long totalMemoryKib, long freeMemoryKib, long availableMemoryKib) {
 		this.totalMemoryKib = totalMemoryKib;
+		this.freeMemoryKib = freeMemoryKib;
+		this.availableMemoryKib = availableMemoryKib;
 	}
 
 	public long totalMemoryKib() {
@@ -22,6 +24,10 @@ public class MemoryInfo {
 
 	public long freeMemoryKiB() {
 		return freeMemoryKib;
+	}
+
+	public long getAvailableMemoryKib() {
+		return availableMemoryKib;
 	}
 
 	/**
@@ -35,8 +41,9 @@ public class MemoryInfo {
 	public static MemoryInfo fromMeminfo(List<String> meminfo) {
 		long memTotal = lineFromMeminfo(meminfo, "MemTotal").orElse(-1L);
 		long memFree = lineFromMeminfo(meminfo, "MemFree").orElse(-1L);
+		long memAvailable = lineFromMeminfo(meminfo, "MemAvailable").orElse(-1L);
 
-		return new MemoryInfo(memFree, memTotal);
+		return new MemoryInfo(memTotal, memFree, memAvailable);
 	}
 
 	private static Optional<Long> lineFromMeminfo(List<String> meminfo, String lineName) {
@@ -58,9 +65,9 @@ public class MemoryInfo {
 	public String format() {
 		if (totalMemoryKib > 256 * 1024) {
 			return String
-				.format("%d MiB used, %d MiB total", freeMemoryKib / 1024, totalMemoryKib / 1024);
+				.format("%d MiB total, %d MiB available", totalMemoryKib / 1024, availableMemoryKib / 1024);
 		} else {
-			return String.format("%d KiB used, %d KiB total", freeMemoryKib, totalMemoryKib);
+			return String.format("%d KiB total, %d KiB available", totalMemoryKib, availableMemoryKib);
 		}
 	}
 
