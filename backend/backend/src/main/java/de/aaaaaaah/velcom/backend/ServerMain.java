@@ -182,7 +182,7 @@ public class ServerMain extends Application<GlobalConfig> {
 		environment.jersey().register(new GraphComparisonEndpoint(comparison, benchmarkAccess));
 		environment.jersey()
 			.register(new GraphDetailEndpoint(commitAccess, benchmarkAccess, repoAccess));
-		environment.jersey().register(new DebugEndpoint());
+		environment.jersey().register(new DebugEndpoint(dispatcher));
 	}
 
 	private void configureApi(Environment environment, TokenWriteAccess tokenAccess) {

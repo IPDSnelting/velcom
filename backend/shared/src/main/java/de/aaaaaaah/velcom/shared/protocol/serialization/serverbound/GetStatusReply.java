@@ -18,6 +18,8 @@ public class GetStatusReply implements ServerBound {
 
 	private final String info;
 	@Nullable
+	private final String versionHash;
+	@Nullable
 	private final String benchHash;
 	private final boolean resultAvailable;
 	private final Status status;
@@ -27,12 +29,14 @@ public class GetStatusReply implements ServerBound {
 	@JsonCreator
 	public GetStatusReply(
 		@JsonProperty(required = true) String info,
+		@Nullable String versionHash,
 		@Nullable String benchHash,
 		@JsonProperty(required = true) boolean resultAvailable,
 		@JsonProperty(required = true) Status status,
 		@Nullable UUID runId
 	) {
 		this.info = info;
+		this.versionHash = versionHash;
 		this.benchHash = benchHash;
 		this.resultAvailable = resultAvailable;
 		this.status = status;
@@ -41,6 +45,10 @@ public class GetStatusReply implements ServerBound {
 
 	public String getInfo() {
 		return info;
+	}
+
+	public Optional<String> getVersionHash() {
+		return Optional.ofNullable(versionHash);
 	}
 
 	public Optional<String> getBenchHash() {
