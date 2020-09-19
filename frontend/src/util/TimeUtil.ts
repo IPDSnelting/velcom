@@ -66,6 +66,20 @@ export function formatDateUTC(date: number | Date): string {
 }
 
 /**
+ * Formats a time as a "hh:mm:ss" string.
+ * @param date the date to format
+ */
+export function formatTime(date: Date): string {
+  return (
+    leftZeroPad(2, date.getHours()) +
+    ':' +
+    leftZeroPad(2, date.getMinutes()) +
+    ':' +
+    leftZeroPad(2, date.getSeconds())
+  )
+}
+
+/**
  * Converts an epoch seconds timestamp to a date.
  *
  * @export
