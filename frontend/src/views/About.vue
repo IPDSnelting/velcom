@@ -13,7 +13,10 @@
                   <v-col>
                     <v-row no-gutters align="baseline" justify="center">
                       <v-col class="shapeshifter-container" cols="auto">
-                        <canvas id="myCanvas" @click="flutterByMyButterfly"></canvas>
+                        <canvas
+                          id="myCanvas"
+                          @click="flutterByMyButterfly"
+                        ></canvas>
                         <div
                           id="shapeshifter-logo"
                           class="shapeshifter play"
@@ -23,32 +26,37 @@
                     </v-row>
                     <v-row align="center" justify="center">
                       <p class="text-center">
-                        "The name stands for 'Velocity Commit', and velocity is related to speed and
-                        performance.
-                        <br />It also sounds like a German saying 'welcome', which is
-                        nice and friendly."
+                        "The name stands for 'Velocity Commit', and velocity is
+                        related to speed and performance.
+                        <br />It also sounds like a German saying 'welcome',
+                        which is nice and friendly."
                       </p>
                     </v-row>
                     <v-row align="center" justify="center" class="mt-10">
                       <p class="text-center">
-                        VelCom is a project which was realized as part of the lecture "Software Engineering Practice" at the Karlsruhe Institute of Technology (KIT) during winter semester 2019/20.
+                        VelCom is a project which was realized as part of the
+                        lecture "Software Engineering Practice" at the Karlsruhe
+                        Institute of Technology (KIT) during winter semester
+                        2019/20.
                         <br />The goal was to create a website that...
                       </p>
                     </v-row>
                     <v-row align="center" justify="center">
                       <ul>
                         <li>benchmarks software in the long term</li>
-                        <li>manages repositories and commits in an intelligent manner</li>
+                        <li>
+                          manages repositories and commits in an intelligent
+                          manner
+                        </li>
                         <li>provides appealing visualisations of benchmarks</li>
                         <li>is easy to set up</li>
                       </ul>
                     </v-row>
                     <v-row align="center" justify="center" class="mt-10">
                       <p>
-                        If you are interested in learning more about the maniacs behind VelCom, please visit
-                        <a
-                          href="https://www.aaaaaaah.de/"
-                        >AAAAAAAH!</a>
+                        If you are interested in learning more about the maniacs
+                        behind VelCom, please visit
+                        <a href="https://www.aaaaaaah.de/">AAAAAAAH!</a>
                       </p>
                     </v-row>
                   </v-col>
@@ -70,24 +78,25 @@
                   <div v-if="htmlImpressum" v-html="htmlImpressum"></div>
                   <div v-else class="title">
                     <strong>
-                      Hey, this is the default impressum.
-                      Not much to see here.
+                      Hey, this is the default impressum. Not much to see here.
                       <p>
-                        You can change me by providing a file called "Impressum.html"
-                        at the root of this domain (which is
-                        <a
-                          :href="impressumLocation"
-                        >{{ impressumLocation }}</a>).
+                        You can change me by providing a file called
+                        "Impressum.html" at the root of this domain (which is
+                        <a :href="impressumLocation">{{ impressumLocation }}</a
+                        >).
                       </p>
                       <p>
-                        This should be quite easy, as you can place it into the "dist" folder
-                        this frontend is currently being served from.
+                        This should be quite easy, as you can place it into the
+                        "dist" folder this frontend is currently being served
+                        from.
                       </p>
                       <p>
                         You can use
                         <a
                           href="https://vuetifyjs.com/en/styles/typography#typography"
-                        >Vuetify html classes</a> for formatting me, or just plain HTML with style tags.
+                          >Vuetify html classes</a
+                        >
+                        for formatting me, or just plain HTML with style tags.
                       </p>
                     </strong>
                   </div>
@@ -115,17 +124,17 @@ export default class About extends Vue {
     return document.location.protocol + '//' + document.location.host + path
   }
 
-  get impressumLocation() {
+  private get impressumLocation() {
     return this.relativeUrlToBase('/Impressum.html')
   }
 
   private flutterByMyButterfly() {
-    let element = document.getElementById('shapeshifter-logo')!
+    const element = document.getElementById('shapeshifter-logo')!
 
-    let canvas = document.getElementById('myCanvas')! as HTMLCanvasElement
+    const canvas = document.getElementById('myCanvas')! as HTMLCanvasElement
     canvas.width = window.innerWidth
     canvas.height = window.innerHeight
-    let context = canvas.getContext('2d')!
+    const context = canvas.getContext('2d')!
     context.fillStyle = '#989cff'
 
     if (this.fluttering) {
@@ -137,34 +146,34 @@ export default class About extends Vue {
     this.fluttering = true
     element.classList.add('flutterByMyButterfly')
 
-    let elementWidthOffset = element.getBoundingClientRect().width / 2
+    const elementWidthOffset = element.getBoundingClientRect().width / 2
     let elementHeightOffset = element.getBoundingClientRect().height / 2
     elementHeightOffset += elementHeightOffset / 4 + 25
 
     // https://en.wikipedia.org/wiki/Lemniscate_of_Bernoulli#Equations
 
-    let { y: yMin } = this.evalLemniscate(Math.PI / 2, 0)
+    const { y: yMin } = this.evalLemniscate(Math.PI / 2, 0)
 
-    let { y: yMax } = this.evalLemniscate(Math.PI / 2, Math.PI)
+    const { y: yMax } = this.evalLemniscate(Math.PI / 2, Math.PI)
 
-    let height = Math.abs(yMax - yMin)
+    const height = Math.abs(yMax - yMin)
 
     // let theta = 5.39317816
     let theta = Math.PI / 2
     let time = 4.94277244164
-    let callback = (callTime: DOMHighResTimeStamp) => {
+    const callback = () => {
       if (!element.classList.contains('flutterByMyButterfly')) {
         return
       }
-      let xOffset = window.innerWidth / 2 - elementWidthOffset
-      let yOffset = -elementHeightOffset / 2 + height / 2
+      const xOffset = window.innerWidth / 2 - elementWidthOffset
+      const yOffset = -elementHeightOffset / 2 + height / 2
 
       let { x, y } = this.evalLemniscate(theta, time)
       x += xOffset
       y += yOffset
 
       for (let i = 0; i < Math.PI / 4; i += (Math.PI * 2) / 20) {
-        let { x, y } = this.evalLemniscate(theta - i / 2, time - i)
+        const { x, y } = this.evalLemniscate(theta - i / 2, time - i)
         context.fillRect(
           x + xOffset + elementWidthOffset,
           y + yOffset + elementHeightOffset,
@@ -188,18 +197,18 @@ export default class About extends Vue {
     theta: number,
     time: number
   ): { x: number; y: number } {
-    let sqrt2 = Math.sqrt(2)
+    const sqrt2 = Math.sqrt(2)
 
-    let a = Math.min(window.innerWidth, window.innerHeight) / 4
+    const a = Math.min(window.innerWidth, window.innerHeight) / 4
 
-    let sint = Math.sin(time)
-    let cost = Math.cos(time)
-    let denominator = sint * sint + 1
+    const sint = Math.sin(time)
+    const cost = Math.cos(time)
+    const denominator = sint * sint + 1
     let x = (a * sqrt2 * cost) / denominator
     let y = (a * sqrt2 * cost * sint) / denominator
 
-    let baseAngle = Math.atan2(y, x)
-    let baseDistance = Math.sqrt(x * x + y * y)
+    const baseAngle = Math.atan2(y, x)
+    const baseDistance = Math.sqrt(x * x + y * y)
 
     x = Math.cos(baseAngle + theta) * baseDistance
 
@@ -208,7 +217,7 @@ export default class About extends Vue {
     return { x: x, y: y }
   }
 
-  async mounted() {
+  async mounted(): Promise<void> {
     axios
       .get(this.impressumLocation, { hideFromSnackbar: true })
       .then(response => {
@@ -236,10 +245,10 @@ export default class About extends Vue {
 <style scoped>
 @keyframes play72 {
   0% {
-    background-position: 0px 0px;
+    background-position: 0 0;
   }
   100% {
-    background-position: -15264px 0px;
+    background-position: -15264px 0;
   }
 }
 .shapeshifter-container {
@@ -248,8 +257,8 @@ export default class About extends Vue {
 }
 #myCanvas {
   position: fixed;
-  top: 0%;
-  left: 0%;
+  top: 0;
+  left: 0;
   z-index: 50; /* NOTHING is more important! */
   pointer-events: none;
 }

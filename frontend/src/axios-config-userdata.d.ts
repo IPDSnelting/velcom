@@ -1,3 +1,5 @@
+// Needed for our types to refer to the real ones
+// eslint-disable-next-line
 import axios from 'axios'
 
 declare module 'axios' {

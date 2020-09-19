@@ -18,7 +18,7 @@
                 <commit-selection
                   label="First Commit"
                   v-model="firstCommit"
-                  :allCommits="allCommits"
+                  :allCommits="allCommitDescriptions"
                 ></commit-selection>
               </v-col>
               <v-col cols="5">
@@ -37,9 +37,9 @@
           <v-container fluid>
             <v-row align="center">
               <v-data-iterator
-                :items="commitHistory"
+                :items="allCommitDescriptions"
                 :hide-default-footer="
-                  commitHistory.length < defaultItemsPerPage
+                  allCommitDescriptions.length < defaultItemsPerPage
                 "
                 :items-per-page="defaultItemsPerPage"
                 :footer-props="{ itemsPerPageOptions: itemsPerPageOptions }"
@@ -50,17 +50,36 @@
                     <v-col
                       cols="12"
                       class="my-1 py-0"
-                      v-for="({ commit, comparison }, index) in props.items"
+                      v-for="(item, index) in props.items"
                       :key="index"
                     >
-                      <run-overview
-                        v-if="comparison.second"
-                        :run="comparison.second"
-                        :commit="commit"
-                        :hideActions="!isAdmin"
-                      ></run-overview>
-                      <commit-overview-base v-else :commit="commit">
+                      <commit-overview-base :commit="item">
                         <template #avatar>
+                          <v-list-item-avatar>
+                            <v-tooltip top v-if="!item.failed">
+                              <template #activator="{ on }">
+                                <v-icon v-on="on" size="32px" color="success">{{
+                                  successIcon
+                                }}</v-icon>
+                              </template>
+                              There is a successful run for this commit :)
+                            </v-tooltip>
+                            <v-tooltip top v-else>
+                              <template #activator="{ on }">
+                                <v-icon
+                                  :color="'error'"
+                                  v-on="on"
+                                  size="32px"
+                                  >{{ errorIcon }}</v-icon
+                                >
+                              </template>
+                              <span
+                                >There is no successful run for this commit
+                                :(</span
+                              >
+                            </v-tooltip>
+                          </v-list-item-avatar>
+                          <!--
                           <v-list-item-avatar>
                             <v-tooltip top>
                               <template #activator="{ on }">
@@ -71,11 +90,12 @@
                               This commit was never benchmarked!
                             </v-tooltip>
                           </v-list-item-avatar>
+-->
                         </template>
                         <template #actions v-if="isAdmin">
                           <commit-benchmark-actions
                             :hasExistingBenchmark="false"
-                            :commit="commit"
+                            :commit-description="item"
                           ></commit-benchmark-actions>
                         </template>
                       </commit-overview-base>
@@ -95,9 +115,20 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
-import { Repo, Commit, CommitComparison } from '@/store/types'
+import {
+  Commit,
+  CommitDescription,
+  DetailDataPoint,
+  RepoId
+} from '@/store/types'
 import { vxm } from '@/store'
-import { mdiHelpCircleOutline, mdiChevronUp, mdiChevronDown } from '@mdi/js'
+import {
+  mdiChevronDown,
+  mdiChevronUp,
+  mdiHelpCircleOutline,
+  mdiCheckCircleOutline,
+  mdiCloseCircleOutline
+} from '@mdi/js'
 import CommitOverviewBase from '@/components/overviews/CommitOverviewBase.vue'
 import CommitBenchmarkActions from '@/components/CommitBenchmarkActions.vue'
 import RunOverview from '@/components/overviews/RunOverview.vue'
@@ -116,14 +147,14 @@ export default class RepoCommitOverview extends Vue {
   private defaultItemsPerPage: number = 20
 
   @Prop()
-  private repo!: Repo
+  private repo!: RepoId
 
   private showList: boolean = false
   private upIcon = mdiChevronUp
   private downIcon = mdiChevronDown
 
-  private firstCommit: Commit | string | null | undefined = null
-  private secondCommit: Commit | string | null | undefined = null
+  private firstCommit: CommitDescription | string | null | undefined = null
+  private secondCommit: CommitDescription | string | null | undefined = null
 
   private get firstCommitHash(): string | null {
     if (!this.firstCommit) {
@@ -146,35 +177,37 @@ export default class RepoCommitOverview extends Vue {
   }
 
   private get firstChosen(): boolean {
-    return this.firstCommit != null && this.firstCommit !== undefined
+    return this.firstCommit !== null && this.firstCommit !== undefined
   }
 
-  private get commitHistory() {
-    return vxm.repoDetailModule.repoHistory
-  }
-
-  private get allCommits(): Commit[] {
-    return vxm.repoDetailModule.repoHistory.map(
-      (datapoint: { commit: Commit; comparison: CommitComparison }) => {
-        return datapoint.commit
+  private get allCommitDescriptions(): CommitDescription[] {
+    return vxm.detailGraphModule.detailGraph.map(
+      (datapoint: DetailDataPoint) => {
+        return new CommitDescription(
+          this.repo,
+          datapoint.hash,
+          datapoint.author,
+          datapoint.authorDate,
+          datapoint.summary
+        )
       }
     )
   }
 
-  private get secondCommitCandidates(): Commit[] {
-    return this.allCommits.filter((commit: Commit) => {
-      let first = this.firstCommit
+  private get secondCommitCandidates(): CommitDescription[] {
+    return this.allCommitDescriptions.filter((commit: CommitDescription) => {
+      const first = this.firstCommit
       if (first !== null && first !== undefined) {
         return commit.hash !== this.firstCommitHash
       }
     })
   }
 
-  private get isAdmin() {
+  private get isAdmin(): boolean {
     return vxm.userModule.isAdmin
   }
 
-  filterCommits(item: Commit, queryText: any, itemText: any) {
+  private filterCommits(item: Commit, queryText: any): boolean | '' {
     return (
       item.hash.toLocaleLowerCase().indexOf(queryText.toLocaleLowerCase()) >
         -1 ||
@@ -185,21 +218,20 @@ export default class RepoCommitOverview extends Vue {
     )
   }
 
-  navigateToComparison() {
+  private navigateToComparison() {
     if (this.firstCommitHash && this.secondCommitHash) {
       this.$router.push({
-        name: 'commit-comparison',
-        params: {
-          repoID: this.repo.id,
-          hashOne: this.firstCommitHash,
-          hashTwo: this.secondCommitHash
-        }
+        name: 'run-comparison',
+        params: { first: this.repo, second: this.repo },
+        query: { hash1: this.firstCommitHash, hash2: this.secondCommitHash }
       })
     }
   }
 
   // ============== ICONS ==============
   private notBenchmarkedIcon = mdiHelpCircleOutline
+  private successIcon = mdiCheckCircleOutline
+  private errorIcon = mdiCloseCircleOutline
   // ==============       ==============
 }
 </script>

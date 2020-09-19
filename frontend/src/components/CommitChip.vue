@@ -7,14 +7,15 @@
     @click="copyOnClick ? copyToClipboard(commitHash) : undefined"
     :to="copyOnClick ? undefined : to"
     v-on="on"
-  >{{ commitHash }}</v-chip>
+  >
+    {{ commitHash }}
+  </v-chip>
 </template>
 
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
-import { Commit } from '../store/types'
 
 @Component
 export default class CommitChip extends Vue {
@@ -28,7 +29,7 @@ export default class CommitChip extends Vue {
   private to: any
 
   @Prop()
-  private on: any
+  private on?: any
 
   private copyToClipboard(hash: string) {
     let selection = window.getSelection()
@@ -38,7 +39,7 @@ export default class CommitChip extends Vue {
     }
     navigator.clipboard
       .writeText(hash)
-      .then(it => this.$globalSnackbar.setSuccess('', 'Copied!'))
+      .then(() => this.$globalSnackbar.setSuccess('', 'Copied!'))
       .catch(error =>
         this.$globalSnackbar.setError(
           '',

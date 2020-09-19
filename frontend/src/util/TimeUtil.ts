@@ -1,12 +1,35 @@
 /**
+ * Formats a duration into an "hh:mm:ss" string.
+ *
+ * @export
+ * @param {Date} start the start date
+ * @param {Date} end the end date
+ */
+export function formatDuration(start: Date, end: Date): string {
+  const differenceMillis = Math.abs(end.getTime() - start.getTime())
+  let remainingDifferenceSeconds = differenceMillis / 1000
+
+  const hours = Math.floor(remainingDifferenceSeconds / (60 * 60))
+  remainingDifferenceSeconds -= hours * 60 * 60
+  const minutes = Math.floor(remainingDifferenceSeconds / 60)
+  remainingDifferenceSeconds -= minutes * 60
+
+  const hoursFormatted = leftZeroPad(2, hours)
+  const minutesFormatted = leftZeroPad(2, minutes)
+  const secondsFormatted = leftZeroPad(2, remainingDifferenceSeconds)
+
+  return `${hoursFormatted}:${minutesFormatted}:${secondsFormatted}`
+}
+
+/**
  * Formats a date.
  *
  * @export
- * @param {number} date the date as an epoch seconds timestamp
+ * @param {number | Date} date the date as an epoch seconds timestamp
  * @returns {string} the formatted date
  */
-export function formatDate(date: number): string {
-  let myDate = getDate(date)
+export function formatDate(date: number | Date): string {
+  const myDate = date instanceof Date ? date : getDate(date)
 
   let resultString: string = myDate.getFullYear() + ''
   resultString += '-' + leftZeroPad(2, myDate.getMonth() + 1)
@@ -23,11 +46,11 @@ export function formatDate(date: number): string {
  * Formats a date relative to UTC time (or appends a zone offset).
  *
  * @export
- * @param {number} date the date to format
+ * @param {number | Date} date the date to format
  * @returns {string} the formatted date
  */
-export function formatDateUTC(date: number): string {
-  let myDate = getDate(date)
+export function formatDateUTC(date: number | Date): string {
+  const myDate = date instanceof Date ? date : getDate(date)
 
   let resultString: string = myDate.getFullYear() + ''
   resultString += '-' + leftZeroPad(2, myDate.getUTCMonth() + 1)
@@ -50,7 +73,7 @@ export function formatDateUTC(date: number): string {
  * @returns {Date} the matching date
  */
 export function getDate(date: number): Date {
-  let myDate = new Date()
+  const myDate = new Date()
   // Time takes an epoch MILLIS string
   myDate.setTime(date * 1000)
   return myDate

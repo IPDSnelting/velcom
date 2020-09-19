@@ -15,7 +15,12 @@
               <template>
                 <div>Log in as...</div>
               </template>
-              <v-radio v-for="role in roles" :key="role" :label="role" :value="role"></v-radio>
+              <v-radio
+                v-for="role in roles"
+                :key="role"
+                :label="role"
+                :value="role"
+              ></v-radio>
             </v-radio-group>
             <repo-selection
               :disabled="!idRequired"
@@ -34,7 +39,9 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="primary" :disabled="!formValid" @click="login">Login</v-btn>
+          <v-btn color="primary" :disabled="!formValid" @click="login"
+            >Login</v-btn
+          >
           <v-spacer></v-spacer>
           <v-btn color="error" @click="dialogOpen = false">Close</v-btn>
         </v-card-actions>
@@ -46,10 +53,8 @@
 <script lang="ts">
 import Vue from 'vue'
 import { Component, Watch } from 'vue-property-decorator'
-import { Store } from 'vuex'
 import { Repo } from '@/store/types'
-import { extractErrorMessage } from '@/util/ErrorUtils'
-import { store, vxm } from '@/store/index'
+import { vxm } from '@/store'
 import RepoSelectionComponent from '../RepoSelectionComponent.vue'
 
 @Component({

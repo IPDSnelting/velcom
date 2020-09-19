@@ -14,10 +14,10 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import NavigationBar from './components/NavigationBar.vue'
 import Snackbar from './components/Snackbar.vue'
-import { Store } from 'vuex'
-import { vxm, storeToLocalStorage } from './store'
+import { vxm } from './store'
 import { Watch } from 'vue-property-decorator'
 import ThemeSelector from './components/ThemeSelector.vue'
+import { storeToLocalStorage } from './store/persistence'
 
 @Component({
   components: {
@@ -61,18 +61,18 @@ export default class App extends Vue {
     return vxm.userModule.darkThemeSelected
   }
 
-  created() {
+  created(): void {
     this.$vuetify.theme.dark = this.isDarkTheme
     document.addEventListener('click', this.clickHandler)
     document.addEventListener('mousedown', this.clickHandler)
 
     vxm.repoModule.fetchRepos()
-    this.$router.afterEach((from, to) => {
+    this.$router.afterEach(() => {
       vxm.repoModule.fetchRepos()
     })
   }
 
-  mounted() {
+  mounted(): void {
     if (vxm.userModule.usesBrowsersThemePreferences && this.isDarkTheme) {
       this.$globalSnackbar.setSuccess(
         'theme',
@@ -81,7 +81,7 @@ export default class App extends Vue {
     }
   }
 
-  beforeDestroy() {
+  beforeDestroy(): void {
     document.removeEventListener('click', this.clickHandler)
     document.removeEventListener('mousedown', this.clickHandler)
   }

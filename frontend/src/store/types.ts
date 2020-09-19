@@ -1,341 +1,447 @@
+import { Flavor } from '@/util/FlavorTypes'
+import { CustomKeyEqualsMap } from '@/util/CustomKeyEqualsMap'
+
+export class RepoBranch {
+  readonly name: string
+  readonly tracked: boolean
+
+  constructor(name: string, tracked: boolean) {
+    this.name = name
+    this.tracked = tracked
+  }
+}
+
+export type RepoId = Flavor<string, 'repo_id'>
 export class Repo {
-  id: string
+  readonly id: RepoId
   name: string
-  branches: Array<string>
-  trackedBranches: Array<string>
-  measurements: Array<MeasurementID>
+  branches: RepoBranch[]
+  dimensions: Dimension[]
   remoteURL: string
+  hasToken: boolean
 
   constructor(
-    id: string,
+    id: RepoId,
     name: string,
-    branches: Array<string>,
-    trackedBranches: Array<string>,
-    measurements: Array<MeasurementID>,
-    remoteURL: string
+    branches: RepoBranch[],
+    dimensions: Dimension[],
+    remoteURL: string,
+    hasToken: boolean
   ) {
     this.id = id
     this.name = name
-    this.branches = branches.sort((a, b) =>
-      a.localeCompare(b, undefined, { sensitivity: 'base' })
-    )
-    this.trackedBranches = trackedBranches.sort((a, b) =>
-      a.localeCompare(b, undefined, { sensitivity: 'base' })
-    )
-    this.measurements = measurements
+    this.dimensions = dimensions
     this.remoteURL = remoteURL
-  }
-}
-
-export class Measurement {
-  id: MeasurementID
-  successful: boolean
-  unit: string | null
-  interpretation: 'LESS_IS_BETTER' | 'MORE_IS_BETTER' | 'NEUTRAL' | null
-  values: number[] | null
-  value: number | null
-  errorMessage: string | null
-
-  constructor(
-    id: MeasurementID,
-    unit?: string,
-    interpretation?: 'LESS_IS_BETTER' | 'MORE_IS_BETTER' | 'NEUTRAL',
-    values?: number[],
-    value?: number,
-    errorMessage?: string
-  ) {
-    this.id = id
-    this.successful = !errorMessage
-    this.unit = unit === undefined ? null : unit
-    this.interpretation = interpretation === undefined ? null : interpretation
-    this.values = values === undefined ? null : values
-    this.value = value === undefined ? null : value
-    this.errorMessage = errorMessage === undefined ? null : errorMessage
+    this.branches = branches.sort((a, b) =>
+      a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+    )
+    this.hasToken = hasToken
   }
 
   /**
-   * Returns a real measurement (prototypes set and all) from a normal JS
-   * object that happens to have all necessary properties.
+   * Returns all tracked branches.
    *
-   * @static
-   * @param {Measurement} measurement the object to deconstruct it from
-   * @returns a real measurement
-   * @memberof Measurement
+   * @returns {string[]} all tracked branches
+   * @memberof Repo
    */
-  static fromRawObject(measurement: Measurement): Measurement {
-    return new Measurement(
-      MeasurementID.fromRawObject(measurement.id),
-      measurement.unit === null ? undefined : measurement.unit,
-      measurement.interpretation === null
-        ? undefined
-        : measurement.interpretation,
-      measurement.values === null ? undefined : measurement.values,
-      measurement.value === null ? undefined : measurement.value,
-      measurement.errorMessage === null ? undefined : measurement.errorMessage
-    )
+  public get trackedBranches(): string[] {
+    return this.branches.filter(it => it.tracked).map(it => it.name)
   }
 }
 
-export class MeasurementID {
-  benchmark: string
-  metric: string
+export type DimensionInterpretation = Flavor<
+  'LESS_IS_BETTER' | 'MORE_IS_BETTER' | 'NEUTRAL',
+  'dimension'
+>
 
-  constructor(benchmark: string, metric: string) {
+export type DimensionId = {
+  readonly benchmark: string
+  readonly metric: string
+}
+
+export class Dimension {
+  readonly benchmark: string
+  readonly metric: string
+  readonly unit: string
+  readonly interpretation: DimensionInterpretation
+
+  constructor(
+    benchmark: string,
+    metric: string,
+    unit: string,
+    interpretation: DimensionInterpretation
+  ) {
     this.benchmark = benchmark
     this.metric = metric
-  }
-
-  toString(): string {
-    return this.benchmark + ' - ' + this.metric
-  }
-
-  equals(other: MeasurementID): boolean {
-    return other.benchmark === this.benchmark && other.metric === this.metric
+    this.unit = unit
+    this.interpretation = interpretation
   }
 
   /**
-   * Returns a real measurement id (prototypes set and all) from a normal JS
-   * object that happens to have all necessary properties.
-   *
-   * @static
-   * @param {MeasurementID} measurementId the object to deconstruct it from
-   * @returns a real measurement id
-   * @memberof MeasurementID
+   * Returns the metric and benchmark in the following format:
+   * '{benchmark} - {metric}' without the {}.
    */
-  static fromRawObject(measurementId: MeasurementID): MeasurementID {
-    return new MeasurementID(measurementId.benchmark, measurementId.metric)
+  toString(): string {
+    return `${this.benchmark} - ${this.metric}`
+  }
+
+  /**
+   * Checks if the dimension equals another. Only checks the benchmark and metric.
+   *
+   * @param {DimensionId} other the other dimension
+   * @returns true if the two have the same benchmark and metric
+   */
+  equals(other: DimensionId): boolean {
+    return other.benchmark === this.benchmark && other.metric === this.metric
   }
 }
 
-export class Commit {
-  repoID: string
-  hash: string
-  author: string
-  authorDate: number
-  committer: string
-  committerDate: number | number
-  message: string
-  parents: string[]
+export type CommitHash = Flavor<string, 'commit_hash'>
 
+export class Commit {
+  readonly repoId: RepoId
+  readonly hash: CommitHash
+  readonly author: string
+  readonly authorDate: Date
+  readonly committer: string
+  readonly committerDate: Date
+  readonly summary: string
+  readonly message: string | ''
+  readonly runs: RunDescription[]
+  readonly parents: CommitDescription[]
+  readonly children: CommitDescription[]
+
+  // noinspection DuplicatedCode
   constructor(
-    repoID: string,
-    hash: string,
+    repoId: RepoId,
+    hash: CommitHash,
     author: string,
-    authorDate: number,
+    authorDate: Date,
     committer: string,
-    committerDate: number,
+    committerDate: Date,
     message: string,
-    parents: string[]
+    summary: string,
+    runs: RunDescription[],
+    parents: CommitDescription[],
+    children: CommitDescription[]
   ) {
-    this.repoID = repoID
+    this.repoId = repoId
     this.hash = hash
     this.author = author
     this.authorDate = authorDate
     this.committer = committer
     this.committerDate = committerDate
     this.message = message
+    this.summary = summary
+    this.runs = runs
     this.parents = parents
-  }
-
-  get summary(): string | null {
-    if (!this.message) {
-      return null
-    }
-    let firstNewline = this.message.indexOf('\n')
-    if (firstNewline < 0) {
-      return this.message
-    }
-    return this.message.substring(0, firstNewline).trim()
-  }
-
-  get bodyWithoutSummary(): string | null {
-    if (!this.summary) {
-      return null
-    }
-    let summaryLength = this.summary.length
-    if (summaryLength === this.message!.length) {
-      return ''
-    }
-    return this.message!.substring(summaryLength, this.message!.length)
-  }
-
-  /**
-   * Returns a real commit (prototypes set and all) from a normal JS
-   * object that happens to have all necessary properties.
-   *
-   * @static
-   * @param {Commit} commit the object to deconstruct it from
-   * @returns a real Commit
-   * @memberof Commit
-   */
-  static fromRawObject(commit: Commit): Commit {
-    return new Commit(
-      commit.repoID,
-      commit.hash,
-      commit.author,
-      commit.authorDate,
-      commit.committer,
-      commit.committerDate,
-      commit.message,
-      commit.parents
-    )
+    this.children = children
   }
 }
+
+export class CommitDescription {
+  readonly repoId: RepoId
+  readonly hash: CommitHash
+  readonly author: string
+  readonly authorDate: Date
+  readonly summary: string
+
+  constructor(
+    repoId: RepoId,
+    hash: CommitHash,
+    author: string,
+    authorDate: Date,
+    summary: string
+  ) {
+    this.repoId = repoId
+    this.hash = hash
+    this.author = author
+    this.authorDate = authorDate
+    this.summary = summary
+  }
+}
+
+export class CommitTaskSource {
+  readonly type: string = 'COMMIT'
+  readonly commitDescription: CommitDescription
+
+  constructor(commitDescription: CommitDescription) {
+    this.commitDescription = commitDescription
+  }
+}
+
+export class TarTaskSource {
+  readonly type: string = 'UPLOADED_TAR'
+  readonly description: string
+  readonly repoId: string
+
+  constructor(description: string, repoId: string) {
+    this.description = description
+    this.repoId = repoId
+  }
+}
+
+export type TaskSource = TarTaskSource | CommitTaskSource
+export type TaskId = Flavor<string, 'task_id'>
+
+export class Task {
+  readonly id: TaskId
+  readonly author: string
+  readonly since: Date
+  readonly source: TaskSource
+
+  constructor(id: TaskId, author: string, since: Date, source: TaskSource) {
+    this.id = id
+    this.author = author
+    this.since = since
+    this.source = source
+  }
+}
+
+export class MeasurementSuccess {
+  readonly dimension: Dimension
+  readonly value: number
+  readonly values: number[]
+
+  constructor(dimension: Dimension, value: number, values: number[]) {
+    this.dimension = dimension
+    this.value = value
+    this.values = values
+  }
+}
+
+export class MeasurementError {
+  readonly dimension: Dimension
+  readonly error: string
+
+  constructor(dimension: Dimension, error: string) {
+    this.dimension = dimension
+    this.error = error
+  }
+}
+
+export type Measurement = MeasurementError | MeasurementSuccess
+
+export type RunId = Flavor<string, 'run_id'>
+export type RunDescriptionSuccess = Flavor<
+  'SUCCESS' | 'PARTIAL_SUCCESS' | 'FAILURE',
+  'run_description_success'
+>
+
+export class RunResultScriptError {
+  readonly error: string
+
+  constructor(error: string) {
+    this.error = error
+  }
+}
+export class RunResultVelcomError {
+  readonly error: string
+
+  constructor(error: string) {
+    this.error = error
+  }
+}
+export class RunResultSuccess {
+  readonly measurements: Measurement[]
+
+  constructor(measurements: Measurement[]) {
+    this.measurements = measurements
+  }
+}
+export type RunResult =
+  | RunResultScriptError
+  | RunResultVelcomError
+  | RunResultSuccess
 
 export class Run {
-  startTime: number
-  stopTime: number
-  measurements: Measurement[] | null
-  errorMessage: string | null
+  readonly id: RunId
+  readonly author: string
+  readonly runnerName: string
+  readonly runnerInfo: string
+  readonly startTime: Date
+  readonly stopTime: Date
+  readonly source: TaskSource
+  readonly result: RunResult
 
+  // noinspection DuplicatedCode
   constructor(
-    startTime: number,
-    stopTime: number,
-    measurements?: Measurement[],
-    errorMessage?: string
+    id: RunId,
+    author: string,
+    runnerName: string,
+    runnerInfo: string,
+    startTime: Date,
+    stopTime: Date,
+    source: TaskSource,
+    result: RunResult
   ) {
+    this.id = id
+    this.author = author
+    this.runnerName = runnerName
+    this.runnerInfo = runnerInfo
     this.startTime = startTime
     this.stopTime = stopTime
-    this.measurements = measurements === undefined ? null : measurements
-    this.errorMessage = errorMessage === undefined ? null : errorMessage
-  }
-
-  /**
-   * Returns a real run (prototypes set and all) from a normal JS
-   * object that happens to have all necessary properties.
-   *
-   * @static
-   * @param {Run} run the object to deconstruct it from
-   * @returns a real run
-   * @memberof Run
-   */
-  static fromRawObject(run: Run): Run {
-    return new Run(
-      run.startTime,
-      run.stopTime,
-      run.measurements
-        ? run.measurements.map(it => Measurement.fromRawObject(it))
-        : undefined,
-      run.errorMessage === null ? undefined : run.errorMessage
-    )
+    this.source = source
+    this.result = result
   }
 }
 
-export class Difference {
-  measurement: MeasurementID
-  difference: number
-
-  constructor(measurement: MeasurementID, difference: number) {
-    this.measurement = measurement
-    this.difference = difference
-  }
-
-  /**
-   * Returns a real difference (prototypes set and all) from a normal JS
-   * object that happens to have all necessary properties.
-   *
-   * @static
-   * @param {Difference} difference the object to deconstruct it from
-   * @returns a real difference
-   * @memberof Difference
-   */
-  static fromRawObject(difference: Difference): Difference {
-    return new Difference(
-      MeasurementID.fromRawObject(difference.measurement),
-      difference.difference
-    )
-  }
-}
-
-export class CommitInfo {
-  comparison: CommitComparison
-  nextCommit: Commit | null
-
-  constructor(comparison: CommitComparison, nextCommit: Commit | null) {
-    this.comparison = comparison
-    this.nextCommit = nextCommit
-  }
-}
-
-export class CommitComparison {
-  first: Run | null
-  second: Run | null
-  firstCommit: Commit | null
-  secondCommit: Commit
-  differences: Difference[]
+export class RunDescription {
+  readonly runId: RunId
+  readonly startTime: Date
+  readonly success: RunDescriptionSuccess
+  readonly source: TaskSource
 
   constructor(
-    first: Run | null,
-    second: Run | null,
-    firstCommit: Commit | null,
-    secondCommit: Commit,
-    differences: Difference[]
+    runId: RunId,
+    startTime: Date,
+    success: RunDescriptionSuccess,
+    source: TaskSource
   ) {
-    this.first = first
-    this.second = second
-    this.firstCommit = firstCommit
-    this.secondCommit = secondCommit
-    this.differences = differences
-  }
-
-  /**
-   * Returns a real comparison (prototypes set and all) from a normal JS
-   * object that happens to have all necessary properties.
-   *
-   * @static
-   * @param {CommitComparison} comparison the object to deconstruct it from
-   * @returns a real commit comparison
-   * @memberof CommitComparison
-   */
-  static fromRawObject(comparison: CommitComparison) {
-    return new CommitComparison(
-      comparison.first ? Run.fromRawObject(comparison.first) : null,
-      comparison.second ? Run.fromRawObject(comparison.second) : null,
-      comparison.firstCommit
-        ? Commit.fromRawObject(comparison.firstCommit)
-        : null,
-      Commit.fromRawObject(comparison.secondCommit),
-      comparison.differences.map(it => Difference.fromRawObject(it))
-    )
+    this.runId = runId
+    this.startTime = startTime
+    this.success = success
+    this.source = source
   }
 }
 
-export class Datapoint {
-  commit: Commit
-  value: number
+export class RunWithDifferences {
+  readonly run: Run
+  readonly differences: DimensionDifference[]
 
-  constructor(commit: Commit, value: number) {
-    this.commit = commit
-    this.value = value
+  constructor(run: Run, differences: DimensionDifference[]) {
+    this.run = run
+    this.differences = differences
   }
+}
 
-  /**
-   * Returns a real datapoint (prototypes set and all) from a normal JS
-   * object that happens to have all necessary properties.
-   *
-   * @static
-   * @param {Datapoint} datapoint the object to deconstruct it from
-   * @returns a real datapoint
-   * @memberof Datapoint
-   */
-  static fromRawObject(datapoint: Datapoint): Datapoint {
-    return new Datapoint(
-      Commit.fromRawObject(datapoint.commit),
-      datapoint.value
-    )
+export class RunDescriptionWithDifferences {
+  readonly run: RunDescription
+  readonly differences: DimensionDifference[]
+
+  constructor(run: RunDescription, differences: DimensionDifference[]) {
+    this.run = run
+    this.differences = differences
   }
 }
 
 export class Worker {
-  name: string
-  osData: string | null
-  currentTask: Commit | null
+  readonly name: string
+  readonly info: string
+  readonly workingOn: string | null
+  readonly workingSince: Date | null
 
-  constructor(name: string, osData: string, currentTask: Commit | null) {
+  constructor(
+    name: string,
+    info: string,
+    workingOn: string | null,
+    workingSince: Date | null
+  ) {
     this.name = name
-    this.osData = osData
-    this.currentTask = currentTask
+    this.info = info
+    this.workingOn = workingOn
+    this.workingSince = workingSince
   }
 }
 
-export enum measurementInterpretation {}
+export class DimensionDifference {
+  readonly dimension: Dimension
+  readonly absDiff: number
+  readonly relDiff: number
+  readonly stddev: number | undefined
+
+  constructor(
+    dimension: Dimension,
+    absDiff: number,
+    relDiff: number,
+    stddev: number | undefined
+  ) {
+    this.dimension = dimension
+    this.absDiff = absDiff
+    this.relDiff = relDiff
+    this.stddev = stddev
+  }
+}
+
+export class RunComparison {
+  readonly run1: Run
+  readonly run2: Run
+  readonly differences: DimensionDifference[]
+
+  constructor(run1: Run, run2: Run, differences: DimensionDifference[]) {
+    this.run1 = run1
+    this.run2 = run2
+    this.differences = differences
+  }
+}
+
+export type DetailDataPointValue =
+  | number
+  | 'NO_RUN'
+  | 'NO_MEASUREMENT'
+  | 'RUN_FAILED'
+  | 'MEASUREMENT_FAILED'
+
+export class DetailDataPoint {
+  readonly hash: CommitHash
+  readonly parents: CommitHash[]
+  readonly author: string
+  readonly authorDate: Date
+  readonly summary: string
+  // TODO: Figure out if the map wastes too much memory
+  readonly values: Map<DimensionId, DetailDataPointValue>
+
+  constructor(
+    hash: CommitHash,
+    parents: CommitHash[],
+    author: string,
+    authorDate: Date,
+    summary: string,
+    values: CustomKeyEqualsMap<DimensionId, DetailDataPointValue>
+  ) {
+    this.hash = hash
+    this.parents = parents
+    this.author = author
+    this.authorDate = authorDate
+    this.summary = summary
+    this.values = values
+  }
+
+  public successful(dimension: DimensionId): boolean {
+    return typeof this.values.get(dimension) === 'number'
+  }
+
+  public unbenchmarked(dimension: DimensionId): boolean {
+    const value = this.values.get(dimension)
+    return value === 'NO_RUN' || value === 'NO_MEASUREMENT'
+  }
+
+  public failed(dimension: DimensionId): boolean {
+    const value = this.values.get(dimension)
+    return value === 'MEASUREMENT_FAILED' || value === 'RUN_FAILED'
+  }
+}
+export class ComparisonDataPoint {
+  readonly hash: CommitHash
+  readonly author: string
+  readonly authorDate: Date
+  readonly summary: string
+  readonly value: number
+  readonly repoId: RepoId
+
+  constructor(
+    hash: CommitHash,
+    author: string,
+    authorDate: Date,
+    summary: string,
+    value: number,
+    repoId: RepoId
+  ) {
+    this.hash = hash
+    this.author = author
+    this.authorDate = authorDate
+    this.summary = summary
+    this.value = value
+    this.repoId = repoId
+  }
+}

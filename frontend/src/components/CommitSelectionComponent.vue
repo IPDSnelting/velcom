@@ -18,7 +18,9 @@
     <template v-slot:no-data>
       <v-list-item>
         <span class="subheading">Enter commit hash:</span>
-        <v-chip class="ml-2" small color="primary" outlined>{{ search }}</v-chip>
+        <v-chip class="ml-2" small color="primary" outlined>
+          {{ search }}
+        </v-chip>
       </v-list-item>
     </template>
     <template v-slot:item="{ item }">
@@ -34,7 +36,7 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Model, Prop } from 'vue-property-decorator'
-import { Repo, Commit } from '../store/types'
+import { Commit } from '@/store/types'
 import { mdiSourceBranch } from '@mdi/js'
 
 @Component
@@ -53,7 +55,7 @@ export default class CommitSelectionComponent extends Vue {
 
   private search: string = ''
 
-  private commitFilter(item: Commit, queryText: any, itemText: any) {
+  private commitFilter(item: Commit, queryText: any) {
     return (
       item.hash.toLocaleLowerCase().indexOf(queryText.toLocaleLowerCase()) >
         -1 ||
@@ -70,5 +72,4 @@ export default class CommitSelectionComponent extends Vue {
 }
 </script>
 
-<style scoped>
-</style>
+<style scoped></style>

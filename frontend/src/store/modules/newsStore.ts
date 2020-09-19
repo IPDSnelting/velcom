@@ -1,16 +1,9 @@
 import { createModule, mutation, action } from 'vuex-class-component'
-import {
-  CommitComparison,
-  Commit,
-  Measurement,
-  MeasurementID,
-  Run,
-  Difference
-} from '@/store/types'
+import { RunDescriptionWithDifferences, RunDescription } from '@/store/types'
 import axios from 'axios'
 import {
-  commitFromJson,
-  comparisonFromJson
+  differenceFromJson,
+  runDescriptionFromJson
 } from '@/util/CommitComparisonJsonHelper'
 
 const VxModule = createModule({
@@ -19,86 +12,86 @@ const VxModule = createModule({
 })
 
 export class NewsStore extends VxModule {
-  private _recentRuns: CommitComparison[] = []
-  private _recentSignificantRuns: CommitComparison[] = []
-
-  @action
-  async fetchRuns(payload: {
-    amount: number
-    significant: boolean
-  }): Promise<CommitComparison[]> {
-    const response = await axios.get('/recently-benchmarked-commits', {
-      snackbarTag: 'recent-commits',
-      params: {
-        amount: payload.amount,
-        significant_only: payload.significant
-      }
-    })
-
-    let jsonComparisons: any[] = response.data.commits
-
-    let comparisons: CommitComparison[] = jsonComparisons.map(it =>
-      comparisonFromJson(it)
-    )
-
-    return comparisons
-  }
+  private _recentRuns: RunDescription[] = []
+  private _recentSignificantRuns: RunDescriptionWithDifferences[] = []
 
   /**
    * Fetches all recent runs from the server.
    *
    * @param {number} amount the amount of runs to fetch
-   * @returns {Promise<CommitComparison[]>} a promise resolving with the
+   * @returns {Promise<RunDescription[]>} a promise resolving with the
    * reactive recent runs
    * @memberof NewsModuleStore
    */
   @action
-  async fetchRecentRuns(amount: number): Promise<CommitComparison[]> {
-    let payload = { amount: amount, significant: false }
-    let comparisons = await this.fetchRuns(payload)
+  async fetchRecentRuns(amount: number): Promise<RunDescription[]> {
+    const response = await axios.get(`/recent/runs`, {
+      params: {
+        n: amount
+      }
+    })
 
-    this.setRecentRuns(comparisons)
-    return comparisons
+    const runs: RunDescription[] = response.data.runs.map((it: any) =>
+      runDescriptionFromJson(it.run)
+    )
+
+    this.setRecentRuns(runs)
+
+    return runs
   }
 
   /**
    * Fetches all recent significant runs from the server.
    *
    * @param {number} amount the amount of runs to fetch
-   * @returns {Promise<CommitComparison[]>} a promise resolving with the
+   * @returns {Promise<RunDescriptionWithDifferences[]>} a promise resolving with the
    * reactive recent runs
    * @memberof NewsModuleStore
    */
   @action
   async fetchRecentSignificantRuns(
     amount: number
-  ): Promise<CommitComparison[]> {
-    let payload = { amount: amount, significant: true }
-    let comparisons = await this.fetchRuns(payload)
+  ): Promise<RunDescriptionWithDifferences[]> {
+    const response = await axios.get(`/recent/runs`, {
+      params: {
+        n: amount,
+        significant: true
+      }
+    })
 
-    this.setRecentSignificantRuns(comparisons)
-    return comparisons
+    const runs = response.data.runs.map(
+      (it: any) =>
+        new RunDescriptionWithDifferences(
+          runDescriptionFromJson(it.run),
+          it.significant_dimensions.map(differenceFromJson)
+        )
+    )
+
+    this.setRecentSignificantRuns(runs)
+    return runs
   }
 
   /**
    * Sets the recent runs.
    *
-   * @param {CommitComparison[]} recentRuns the recent runs
+   * @param {RunDescription[]} recentRuns the recent runs
    * @memberof NewsModuleStore
    */
   @mutation
-  setRecentRuns(recentRuns: CommitComparison[]) {
+  setRecentRuns(recentRuns: RunDescription[]): void {
     this._recentRuns = recentRuns.slice()
   }
 
   /**
    * Sets the recent significant runs.
    *
-   * @param {CommitComparison[]} recentSignificantRuns the new runs
+   * @param {RunDescriptionWithDifferences[]} recentSignificantRuns the new runs
    * @memberof NewsModuleStore
    */
   @mutation
-  setRecentSignificantRuns(recentSignificantRuns: CommitComparison[]) {
+  setRecentSignificantRuns(
+    recentSignificantRuns: RunDescriptionWithDifferences[]
+  ): void {
     this._recentSignificantRuns = recentSignificantRuns.slice()
   }
 
@@ -106,10 +99,10 @@ export class NewsStore extends VxModule {
    * Returns all recent runs.
    *
    * @readonly
-   * @type {CommitComparison[]}
+   * @type {RunDescription[]}
    * @memberof NewsModuleStore
    */
-  get recentRuns(): CommitComparison[] {
+  get recentRuns(): RunDescription[] {
     return this._recentRuns
   }
 
@@ -117,10 +110,10 @@ export class NewsStore extends VxModule {
    * Returns the recent runs that match a significance threshold.
    *
    * @readonly
-   * @type {CommitComparison[]}
+   * @type {RunDescriptionWithDifferences[]}
    * @memberof NewsModuleStore
    */
-  get recentSignificantRuns(): CommitComparison[] {
+  get recentSignificantRuns(): RunDescriptionWithDifferences[] {
     return this._recentSignificantRuns
   }
 }

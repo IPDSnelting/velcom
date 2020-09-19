@@ -7,7 +7,7 @@
         </v-card-title>
         <v-card-text>
           <v-list>
-            <v-list-group v-for="repo in allRepos" :key="repo.index">
+            <v-list-group v-for="repo in allRepos" :key="repo.id">
               <template v-slot:activator>
                 <v-checkbox
                   v-model="selectedRepos"
@@ -23,14 +23,21 @@
                       :to="{ name: 'repo-detail', params: { id: repo.id } }"
                       tag="button"
                     >
-                      <v-list-item-title v-on="on">{{ repo.name }}</v-list-item-title>
-                      <v-list-item-subtitle v-on="on">{{ repo.id }}</v-list-item-subtitle>
+                      <v-list-item-title v-on="on">{{
+                        repo.name
+                      }}</v-list-item-title>
+                      <v-list-item-subtitle v-on="on">{{
+                        repo.id
+                      }}</v-list-item-subtitle>
                     </router-link>
                   </template>
                   <span>go to detail page of {{ repo.name }}</span>
                 </v-tooltip>
               </template>
-              <v-list-item v-for="(branch, index) in repo.trackedBranches" :key="index">
+              <v-list-item
+                v-for="(branch, index) in repo.trackedBranches"
+                :key="index"
+              >
                 <v-list-item-title>
                   <v-checkbox
                     multiple
@@ -40,7 +47,9 @@
                     :value="branch"
                     :disabled="!repoSelected(repo.id)"
                     :color="colorById(repo.id)"
-                    @change="updateSelectedBranchesForRepo(repo.id, branch, $event)"
+                    @change="
+                      updateSelectedBranchesForRepo(repo.id, branch, $event)
+                    "
                   />
                 </v-list-item-title>
               </v-list-item>
@@ -55,89 +64,84 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { Prop, Model, Watch } from 'vue-property-decorator'
+import { Watch } from 'vue-property-decorator'
 import { vxm } from '../store/index'
-import { Repo } from '../store/types'
+import { Repo, RepoId } from '../store/types'
 
 @Component
 export default class RepoSelector extends Vue {
-  @Prop({})
-  private repoID!: string
-
-  @Prop({})
-  private index!: number
-
   private notifyTimeout: number | undefined
 
-  get selectedRepos() {
-    return vxm.repoComparisonModule.selectedRepos
+  get selectedRepos(): RepoId[] {
+    return vxm.comparisonGraphModule.selectedRepos
   }
 
-  set selectedRepos(repos: string[]) {
-    vxm.repoComparisonModule.selectedRepos = repos
+  set selectedRepos(repos: RepoId[]) {
+    vxm.comparisonGraphModule.selectedRepos = repos
   }
 
   get allRepos(): Repo[] {
     return vxm.repoModule.allRepos
   }
 
-  get repoSelected(): (repoID: string) => boolean {
-    return (repoID: string) => this.selectedRepos.indexOf(repoID) > -1
+  get repoSelected(): (repoId: string) => boolean {
+    return (repoId: string) => this.selectedRepos.indexOf(repoId) > -1
   }
 
   get selectedBranchesByRepo(): (repoId: string) => string[] {
     return (repoId: string) =>
-      vxm.repoComparisonModule.selectedBranchesByRepoID[repoId]
+      vxm.comparisonGraphModule.selectedBranchesByRepoId[repoId]
   }
 
-  get allColors() {
+  get allColors(): string[] {
     return vxm.colorModule.allColors
   }
 
-  get colorById(): (repoID: string) => string {
-    return (repoID: string) => {
-      let repoIndex = vxm.repoModule.repoIndex(repoID)
+  get colorById(): (repoId: string) => string {
+    return (repoId: string) => {
+      let repoIndex = vxm.repoModule.repoIndex(repoId)
       return vxm.colorModule.colorByIndex(repoIndex)
     }
   }
 
-  updateSelectedRepos() {
+  updateSelectedRepos(): void {
     this.debounce(this.notifySelectionChanged, 1000)()
   }
 
   updateSelectedBranchesForRepo(
-    repoID: string,
+    repoId: string,
     branch: string,
     checkedValues: string[]
-  ) {
-    vxm.repoComparisonModule.setSelectedBranchesForRepo({
-      repoID: repoID,
+  ): void {
+    vxm.comparisonGraphModule.setSelectedBranchesForRepo({
+      repoId: repoId,
       selectedBranches: checkedValues
     })
     this.debounce(this.notifySelectionChanged, 1000)()
   }
 
-  debounce(func: Function, wait: number) {
+  debounce(func: (...args: any[]) => void, wait: number): () => void {
     return () => {
       if (this.notifyTimeout) {
         return
       }
-      let context = this
-      let args = arguments
+      // eslint-disable-next-line @typescript-eslint/no-this-alias
+      const context = this
+      const args = arguments
       clearTimeout(this.notifyTimeout)
       this.notifyTimeout = setTimeout(() => {
         this.notifyTimeout = undefined
-        func.apply(context, args)
+        func.apply(context, Array.from(args))
       }, wait)
     }
   }
 
-  notifySelectionChanged() {
+  notifySelectionChanged(): void {
     this.$emit('selectionChanged')
   }
 
   @Watch('allRepos')
-  addMissingColors() {
+  addMissingColors(): void {
     if (this.allColors.length < this.allRepos.length) {
       let diff = this.allRepos.length - this.allColors.length
       vxm.colorModule.addColors(diff)

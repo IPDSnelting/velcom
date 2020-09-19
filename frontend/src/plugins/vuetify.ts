@@ -18,9 +18,9 @@ export default new Vuetify({
         success: '#1faa00',
         snackbarSuccess: '#1faa00',
         warning: '#c51162',
-        graphBackground: 'white',
-        graphFailedOrUnbenchmarked: 'dimgrey',
-        graphReferenceElements: 'grey',
+        graphBackground: '#FFFFFF', // white
+        graphFailedOrUnbenchmarked: '#696969', // dimgrey
+        graphReferenceElements: '808080', // grey
         rowHighlight: '#d3d3d3'
       },
       dark: {
@@ -33,8 +33,8 @@ export default new Vuetify({
         warning: '#ff9830',
         error: '#f2495c',
         graphBackground: '#424242',
-        graphFailedOrUnbenchmarked: 'lightgrey',
-        graphReferenceElements: 'lightgrey',
+        graphFailedOrUnbenchmarked: '#d3d3d3', // lightgray
+        graphReferenceElements: '#d3d3d3', // lightgray
         rowHighlight: '#616161'
       }
     }

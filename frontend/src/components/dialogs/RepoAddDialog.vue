@@ -11,14 +11,31 @@
         </v-toolbar>
         <v-card-text>
           <v-form v-model="formValid" ref="form">
-            <v-text-field :rules="[notEmpty]" label="*Remote URL" v-model="remoteUrl"></v-text-field>
-            <v-text-field :rules="[notEmpty]" label="*Repository name" v-model="repoName"></v-text-field>
-            <v-text-field label="Repository access token" v-model="repoToken"></v-text-field>
+            <v-text-field
+              :rules="[notEmpty]"
+              label="*Remote URL"
+              v-model="remoteUrl"
+            ></v-text-field>
+            <v-text-field
+              :rules="[notEmpty]"
+              label="*Repository name"
+              v-model="repoName"
+            ></v-text-field>
+            <v-text-field
+              label="Repository access token"
+              v-model="repoToken"
+            ></v-text-field>
           </v-form>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="primary" :disabled="!formValid" @click="addRepository">Add Repository</v-btn>
+          <v-btn
+            color="primary"
+            :loading="addInProgress"
+            :disabled="!formValid || addInProgress"
+            @click="addRepository"
+            >Add Repository</v-btn
+          >
           <v-spacer></v-spacer>
           <v-btn color="error" @click="dialogOpen = false">Close</v-btn>
         </v-card-actions>
@@ -30,9 +47,7 @@
 <script lang="ts">
 import Vue from 'vue'
 import { Component, Watch } from 'vue-property-decorator'
-import { Store } from 'vuex'
-import { extractErrorMessage } from '@/util/ErrorUtils'
-import { store, vxm } from '@/store/index'
+import { vxm } from '@/store'
 
 @Component
 export default class RepoAddDialog extends Vue {
@@ -42,13 +57,14 @@ export default class RepoAddDialog extends Vue {
 
   private formValid: boolean = false
   private dialogOpen: boolean = false
+  private addInProgress: boolean = false
 
   private notEmpty(input: string): boolean | string {
     return input.trim().length > 0 ? true : 'This field must not be empty!'
   }
 
   @Watch('dialogOpen')
-  clearDialogOnOpen(opened: boolean) {
+  clearDialogOnOpen(opened: boolean): void {
     if (opened) {
       this.remoteUrl = ''
       this.repoName = ''
@@ -57,6 +73,7 @@ export default class RepoAddDialog extends Vue {
   }
 
   private addRepository() {
+    this.addInProgress = true
     vxm.repoModule
       .addRepo({
         repoName: this.repoName,
@@ -67,9 +84,9 @@ export default class RepoAddDialog extends Vue {
         this.$emit('value', it)
         this.dialogOpen = false
       })
+      .finally(() => (this.addInProgress = false))
   }
 }
 </script>
 
-<style scoped>
-</style>
+<style scoped></style>

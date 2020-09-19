@@ -28,7 +28,7 @@
 
 <script lang="ts">
 import Vue from 'vue'
-import { Component, Watch } from 'vue-property-decorator'
+import { Component } from 'vue-property-decorator'
 import { vxm } from '../store/index'
 import { Repo } from '../store/types'
 import RepoSelectionComponent from '../components/RepoSelectionComponent.vue'
@@ -53,23 +53,24 @@ export default class RepoDetailFrame extends Vue {
       return
     }
     this.$router.replace({ name: 'repo-detail', params: { id: repoId } })
+    vxm.detailGraphModule.selectedRepoId = repoId
   }
 
-  get selectedRepo() {
+  get selectedRepo(): Repo | null {
     return this.selectedRepoId == null
       ? null
-      : vxm.repoModule.repoByID(this.selectedRepoId)!
+      : vxm.repoModule.repoById(this.selectedRepoId)!
   }
 
   get allRepos(): Repo[] {
     return vxm.repoModule.allRepos
   }
 
-  get isAdmin() {
+  get isAdmin(): boolean {
     return vxm.userModule.isAdmin
   }
 
-  get isDarkMode() {
+  get isDarkMode(): boolean {
     return vxm.userModule.darkThemeSelected
   }
 
@@ -77,9 +78,9 @@ export default class RepoDetailFrame extends Vue {
     return this.selectedRepo !== null
   }
 
-  mounted() {
-    if (!this.selectedRepoId && vxm.repoDetailModule.selectedRepoId) {
-      this.selectedRepoId = vxm.repoDetailModule.selectedRepoId
+  mounted(): void {
+    if (!this.selectedRepoId && vxm.detailGraphModule.selectedRepoId) {
+      this.selectedRepoId = vxm.detailGraphModule.selectedRepoId
     }
     if (vxm.repoModule.allRepos.length === 1) {
       this.selectedRepoId = vxm.repoModule.allRepos[0].id
