@@ -21,6 +21,7 @@
     <jooq.version>3.12.3</jooq.version>
     <flyway.version>6.5.2</flyway.version>
     <sqlite.version>3.32.3.1</sqlite.version>
+    <micrometer.version>1.5.5</micrometer.version>
   </properties>
 
   <build>
@@ -314,6 +315,14 @@
       <artifactId>caffeine</artifactId>
       <version>2.8.1</version>
     </dependency>
+
+    <!-- https://mvnrepository.com/artifact/io.micrometer/micrometer-registry-prometheus -->
+    <dependency>
+      <groupId>io.micrometer</groupId>
+      <artifactId>micrometer-registry-prometheus</artifactId>
+      <version>${micrometer.version}</version>
+    </dependency>
+
   </dependencies>
 
 </project>

@@ -1,5 +1,6 @@
 package de.aaaaaaah.velcom.backend.access;
 
+import static de.aaaaaaah.velcom.backend.util.MetricsUtils.timer;
 import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
@@ -29,6 +30,7 @@ import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchRunException;
 import de.aaaaaaah.velcom.backend.storage.db.DBReadAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import de.aaaaaaah.velcom.backend.util.Either;
+import io.micrometer.core.instrument.Timer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -50,6 +52,9 @@ import org.jooq.codegen.db.tables.records.RunRecord;
  * Provides read access to benchmark related entities such as runs and measurements.
  */
 public class BenchmarkReadAccess {
+
+	private static final Timer LOAD_RUN_DATA_TIMER =
+		timer("velcom.access.benchmark.loadRunData");
 
 	protected static final Caffeine<Object, Object> RUN_CACHE_BUILDER = Caffeine.newBuilder()
 		.maximumSize(10000);
@@ -296,106 +301,108 @@ public class BenchmarkReadAccess {
 	}
 
 	private List<Run> loadRunData(DBReadAccess db, Map<String, RunRecord> runRecordMap) {
-		if (runRecordMap.isEmpty()) {
-			return Collections.emptyList();
-		}
-
-		// 1.) Load measurements from database
-		Map<String, MeasurementRecord> measurementRecordMap = db.selectFrom(MEASUREMENT)
-			.where(MEASUREMENT.RUN_ID.in(runRecordMap.keySet()))
-			.fetchMap(MEASUREMENT.ID);
-
-		// 2.) Load measurement values from database
-		Map<String, List<Double>> valueMap = db.selectFrom(MEASUREMENT_VALUE)
-			.where(MEASUREMENT_VALUE.MEASUREMENT_ID.in(measurementRecordMap.keySet()))
-			.fetchGroups(MEASUREMENT_VALUE.MEASUREMENT_ID, MEASUREMENT_VALUE.VALUE);
-
-		// 3.) Create measurement entities
-		Map<RunId, List<Measurement>> runToMeasurementMap = new HashMap<>();
-
-		measurementRecordMap.values().forEach(measurementRecord -> {
-			// Read basic measurement data
-			RunRecord runRecord = runRecordMap.get(measurementRecord.getRunId());
-			RunId runId = new RunId(UUID.fromString(runRecord.getId()));
-			Dimension dimension = new Dimension(
-				measurementRecord.getBenchmark(), measurementRecord.getMetric()
-			);
-			Unit unit = new Unit(
-				measurementRecord.getUnit() == null ? "" : measurementRecord.getUnit()
-			);
-			Interpretation interpretation = measurementRecord.getInterpretation() == null
-				? Interpretation.NEUTRAL
-				: Interpretation.fromTextualRepresentation(measurementRecord.getInterpretation());
-
-			final Measurement measurement;
-
-			// Read measurement content
-			if (measurementRecord.getError() != null) {
-				var measurementError = new MeasurementError(measurementRecord.getError());
-				measurement = new Measurement(runId, dimension, measurementError);
-			} else {
-				List<Double> values = valueMap.get(measurementRecord.getId());
-				var measurementValues = new MeasurementValues(values);
-				measurement = new Measurement(runId, dimension, measurementValues);
+		return LOAD_RUN_DATA_TIMER.record(() -> {
+			if (runRecordMap.isEmpty()) {
+				return Collections.emptyList();
 			}
 
-			// Insert measurement into map
-			if (!runToMeasurementMap.containsKey(runId)) {
-				runToMeasurementMap.put(runId, new ArrayList<>());
-			}
+			// 1.) Load measurements from database
+			Map<String, MeasurementRecord> measurementRecordMap = db.selectFrom(MEASUREMENT)
+				.where(MEASUREMENT.RUN_ID.in(runRecordMap.keySet()))
+				.fetchMap(MEASUREMENT.ID);
 
-			runToMeasurementMap.get(runId).add(measurement);
-		});
+			// 2.) Load measurement values from database
+			Map<String, List<Double>> valueMap = db.selectFrom(MEASUREMENT_VALUE)
+				.where(MEASUREMENT_VALUE.MEASUREMENT_ID.in(measurementRecordMap.keySet()))
+				.fetchGroups(MEASUREMENT_VALUE.MEASUREMENT_ID, MEASUREMENT_VALUE.VALUE);
 
-		// 4.) Create run entities
-		return runRecordMap.values().stream()
-			.map(runRecord -> {
+			// 3.) Create measurement entities
+			Map<RunId, List<Measurement>> runToMeasurementMap = new HashMap<>();
+
+			measurementRecordMap.values().forEach(measurementRecord -> {
+				// Read basic measurement data
+				RunRecord runRecord = runRecordMap.get(measurementRecord.getRunId());
 				RunId runId = new RunId(UUID.fromString(runRecord.getId()));
+				Dimension dimension = new Dimension(
+					measurementRecord.getBenchmark(), measurementRecord.getMetric()
+				);
+				Unit unit = new Unit(
+					measurementRecord.getUnit() == null ? "" : measurementRecord.getUnit()
+				);
+				Interpretation interpretation = measurementRecord.getInterpretation() == null
+					? Interpretation.NEUTRAL
+					: Interpretation.fromTextualRepresentation(measurementRecord.getInterpretation());
 
-				final Either<CommitSource, TarSource> source;
+				final Measurement measurement;
 
-				if (runRecord.getCommitHash() != null) {
-					source = Either.ofLeft(new CommitSource(
-						new RepoId(UUID.fromString(runRecord.getRepoId())),
-						new CommitHash(runRecord.getCommitHash())
-					));
+				// Read measurement content
+				if (measurementRecord.getError() != null) {
+					var measurementError = new MeasurementError(measurementRecord.getError());
+					measurement = new Measurement(runId, dimension, measurementError);
 				} else {
-					// If commit hash is null, tar desc must be present
-					source = Either.ofRight(new TarSource(runRecord.getTarDesc()));
+					List<Double> values = valueMap.get(measurementRecord.getId());
+					var measurementValues = new MeasurementValues(values);
+					measurement = new Measurement(runId, dimension, measurementValues);
 				}
 
-				if (runRecord.getError() != null) {
-					RunError error = new RunError(
-						runRecord.getError(),
-						RunErrorType.fromTextualRepresentation(runRecord.getErrorType())
-					);
-
-					return new Run(
-						runId,
-						runRecord.getAuthor(),
-						runRecord.getRunnerName(),
-						runRecord.getRunnerInfo(),
-						runRecord.getStartTime().toInstant(),
-						runRecord.getStopTime().toInstant(),
-						source,
-						error
-					);
-				} else {
-					List<Measurement> measurements = runToMeasurementMap.get(runId);
-
-					return new Run(
-						runId,
-						runRecord.getAuthor(),
-						runRecord.getRunnerName(),
-						runRecord.getRunnerInfo(),
-						runRecord.getStartTime().toInstant(),
-						runRecord.getStopTime().toInstant(),
-						source,
-						measurements
-					);
+				// Insert measurement into map
+				if (!runToMeasurementMap.containsKey(runId)) {
+					runToMeasurementMap.put(runId, new ArrayList<>());
 				}
-			})
-			.collect(toList());
+
+				runToMeasurementMap.get(runId).add(measurement);
+			});
+
+			// 4.) Create run entities
+			return runRecordMap.values().stream()
+				.map(runRecord -> {
+					RunId runId = new RunId(UUID.fromString(runRecord.getId()));
+
+					final Either<CommitSource, TarSource> source;
+
+					if (runRecord.getCommitHash() != null) {
+						source = Either.ofLeft(new CommitSource(
+							new RepoId(UUID.fromString(runRecord.getRepoId())),
+							new CommitHash(runRecord.getCommitHash())
+						));
+					} else {
+						// If commit hash is null, tar desc must be present
+						source = Either.ofRight(new TarSource(runRecord.getTarDesc()));
+					}
+
+					if (runRecord.getError() != null) {
+						RunError error = new RunError(
+							runRecord.getError(),
+							RunErrorType.fromTextualRepresentation(runRecord.getErrorType())
+						);
+
+						return new Run(
+							runId,
+							runRecord.getAuthor(),
+							runRecord.getRunnerName(),
+							runRecord.getRunnerInfo(),
+							runRecord.getStartTime().toInstant(),
+							runRecord.getStopTime().toInstant(),
+							source,
+							error
+						);
+					} else {
+						List<Measurement> measurements = runToMeasurementMap.get(runId);
+
+						return new Run(
+							runId,
+							runRecord.getAuthor(),
+							runRecord.getRunnerName(),
+							runRecord.getRunnerInfo(),
+							runRecord.getStartTime().toInstant(),
+							runRecord.getStopTime().toInstant(),
+							source,
+							measurements
+						);
+					}
+				})
+				.collect(toList());
+		});
 	}
 
 	protected void reloadRecentRunCache() {

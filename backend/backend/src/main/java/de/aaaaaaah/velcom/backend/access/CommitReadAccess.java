@@ -1,10 +1,7 @@
 package de.aaaaaaah.velcom.backend.access;
 
+import static de.aaaaaaah.velcom.backend.util.MetricsUtils.timer;
 
-import static com.codahale.metrics.MetricRegistry.name;
-
-import com.codahale.metrics.Timer;
-import de.aaaaaaah.velcom.backend.ServerMain;
 import de.aaaaaaah.velcom.backend.access.entities.BranchName;
 import de.aaaaaaah.velcom.backend.access.entities.Commit;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
@@ -16,6 +13,7 @@ import de.aaaaaaah.velcom.backend.access.exceptions.RepoAccessException;
 import de.aaaaaaah.velcom.backend.access.filter.AuthorTimeRevFilter;
 import de.aaaaaaah.velcom.backend.storage.repo.RepoStorage;
 import de.aaaaaaah.velcom.backend.storage.repo.exception.RepositoryAcquisitionException;
+import io.micrometer.core.instrument.Timer;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -44,16 +42,14 @@ import org.eclipse.jgit.revwalk.RevWalk;
 
 public class CommitReadAccess {
 
-	private static final Timer GET_COMMITS_TIMER = ServerMain.getMetricRegistry()
-		.timer(name("velcom", "access", "commit", "getCommits"));
-	private static final Timer GET_CHILDREN_TIMER = ServerMain.getMetricRegistry()
-		.timer(name("velcom", "access", "commit", "getChildren"));
-	private static final Timer GET_COMMITS_BETWEEN_TIMER = ServerMain.getMetricRegistry()
-		.timer(name("velcom", "access", "commit", "getCommitsBetween"));
-	private static final Timer GET_COMMIT_WALK_TIMER = ServerMain.getMetricRegistry()
-		.timer(name("velcom", "access", "commit", "getCommitWalk"));
-	private static final Timer GET_COMMIT_LOG_TIMER = ServerMain.getMetricRegistry()
-		.timer(name("velcom", "access", "commit", "getCommitLog"));
+	private static final Timer GET_COMMITS_TIMER = timer("velcom.access.commit.getCommits");
+	private static final Timer GET_CHILDREN_TIMER = timer("velcom.access.commit.getChildren");
+	private static final Timer GET_COMMITS_BETWEEN_TIMER =
+		timer("velcom.access.commit.getCommitsBetween");
+	private static final Timer GET_COMMIT_WALK_TIMER =
+		timer("velcom.access.commit.getCommitWalk");
+	private static final Timer GET_COMMIT_LOG_TIMER =
+		timer("velcom.access.commit.getCommitLog");
 
 	private final RepoStorage repoStorage;
 
@@ -123,7 +119,7 @@ public class CommitReadAccess {
 	 * 	Preserves ordering of commits (and duplicate commits) from the input commit hash collection.
 	 */
 	public List<Commit> getCommits(RepoId repoId, Collection<CommitHash> commitHashes) {
-		try (var ignored1 = GET_COMMITS_TIMER.time()) {
+		return GET_COMMITS_TIMER.record(() -> {
 			Objects.requireNonNull(repoId);
 			Objects.requireNonNull(commitHashes);
 
@@ -151,7 +147,7 @@ public class CommitReadAccess {
 			}
 
 			return commits;
-		}
+		});
 	}
 
 	/**
@@ -162,10 +158,11 @@ public class CommitReadAccess {
 	 * @return the commit's children
 	 */
 	public Collection<CommitHash> getChildren(RepoId repoId, CommitHash commitHash) {
-		try (var ignored = GET_CHILDREN_TIMER.time()) {
+		return GET_CHILDREN_TIMER.record(() -> {
 			// TODO implement
-			return null;
-		}
+
+			return Collections.emptyList();
+		});
 	}
 
 	/**
@@ -175,7 +172,7 @@ public class CommitReadAccess {
 	 * @return the commit walk instance
 	 */
 	public CommitWalk getCommitWalk(Commit startCommit) {
-		try (var ignored = GET_COMMIT_WALK_TIMER.time()) {
+		return GET_COMMIT_WALK_TIMER.record(() -> {
 			RepoId repoId = startCommit.getRepoId();
 			Repository repo = null;
 			RevWalk walk = null;
@@ -195,7 +192,7 @@ public class CommitReadAccess {
 				throw new CommitAccessException("Failed to create commit walk", e,
 					startCommit.getRepoId(), startCommit.getHash());
 			}
-		}
+		});
 	}
 
 	/**
@@ -215,7 +212,7 @@ public class CommitReadAccess {
 	public Map<CommitHash, Commit> getCommitsBetween(RepoId repoId,
 		Collection<BranchName> branches, @Nullable Instant startTime, @Nullable Instant stopTime) {
 
-		try (var ignored = GET_COMMITS_BETWEEN_TIMER.time()) {
+		return GET_COMMITS_BETWEEN_TIMER.record(() -> {
 			Objects.requireNonNull(repoId);
 			Objects.requireNonNull(branches);
 
@@ -265,13 +262,13 @@ public class CommitReadAccess {
 			} catch (RepositoryAcquisitionException | GitAPIException | IOException e) {
 				throw new RepoAccessException(repoId, e);
 			}
-		}
+		});
 	}
 
 	public Stream<Commit> getCommitLog(RepoId repoId, Collection<BranchName> branches)
 		throws CommitLogException {
 
-		try (var ignored = GET_COMMIT_LOG_TIMER.time()) {
+		return GET_COMMIT_LOG_TIMER.record(() -> {
 			// Step -1: Check arguments
 			Objects.requireNonNull(repoId);
 			Objects.requireNonNull(branches);
@@ -313,7 +310,7 @@ public class CommitReadAccess {
 				jgitRepo.close(); // Release repo storage lock if this fails
 				throw new CommitLogException(repoId, branches, e);
 			}
-		}
+		});
 	}
 
 }

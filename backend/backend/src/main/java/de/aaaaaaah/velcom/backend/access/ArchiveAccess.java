@@ -1,8 +1,7 @@
 package de.aaaaaaah.velcom.backend.access;
 
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.Timer;
-import de.aaaaaaah.velcom.backend.ServerMain;
+import static de.aaaaaaah.velcom.backend.util.MetricsUtils.timer;
+
 import de.aaaaaaah.velcom.backend.access.archives.BenchRepoArchive;
 import de.aaaaaaah.velcom.backend.access.archives.RepoArchiveManager;
 import de.aaaaaaah.velcom.backend.access.archives.TarArchiveManager;
@@ -20,6 +19,7 @@ import de.aaaaaaah.velcom.backend.storage.repo.RepoStorage;
 import de.aaaaaaah.velcom.backend.storage.repo.exception.AddRepositoryException;
 import de.aaaaaaah.velcom.backend.storage.repo.exception.RepositoryAcquisitionException;
 import de.aaaaaaah.velcom.backend.util.TransferUtils;
+import io.micrometer.core.instrument.Timer;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Path;
@@ -45,12 +45,9 @@ public class ArchiveAccess {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ArchiveAccess.class);
 	private static final String BENCH_REPO_DIR_NAME = "benchrepo";
 
-	private static final Timer BENCH_REPO_TIMER = ServerMain.getMetricRegistry()
-		.timer(MetricRegistry.name("velcom", "transfer", "benchrepo", "duration"));
-	private static final Timer TAR_TASK_TIMER = ServerMain.getMetricRegistry()
-		.timer(MetricRegistry.name("velcom", "transfer", "tar-task", "duration"));
-	private static final Timer REPO_TASK_TIMER = ServerMain.getMetricRegistry()
-		.timer(MetricRegistry.name("velcom", "transfer", "repo-task", "duration"));
+	private static final Timer BENCH_REPO_TIMER = timer("velcom.transfer.benchrepo");
+	private static final Timer TAR_TASK_TIMER = timer("velcom.transfer.tar-task.benchrepo");
+	private static final Timer REPO_TASK_TIMER = timer("velcom.transfer.repo-task.benchrepo");
 
 	private final RepoStorage repoStorage;
 
@@ -170,7 +167,7 @@ public class ArchiveAccess {
 	public void transferBenchRepo(OutputStream outputStream)
 		throws PrepareTransferException, TransferException {
 
-		try (var ignored = BENCH_REPO_TIMER.time()) {
+		BENCH_REPO_TIMER.recordCallable(() -> {
 			synchronized (this.benchRepoLock) {
 				// 1.) Create archive if necessary
 				try {
@@ -191,7 +188,7 @@ public class ArchiveAccess {
 					throw new TransferException("Failed to transfer bench repo", e);
 				}
 			}
-		}
+		});
 	}
 
 	/**

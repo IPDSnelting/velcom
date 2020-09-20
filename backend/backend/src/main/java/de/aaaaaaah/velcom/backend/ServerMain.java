@@ -1,5 +1,6 @@
 package de.aaaaaaah.velcom.backend;
 
+import com.codahale.metrics.ConsoleReporter;
 import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
@@ -47,12 +48,18 @@ import io.dropwizard.auth.AuthValueFactoryProvider;
 import io.dropwizard.auth.basic.BasicCredentialAuthFilter;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.Metrics;
+import io.micrometer.core.instrument.dropwizard.DropwizardConfig;
+import io.micrometer.core.instrument.dropwizard.DropwizardMeterRegistry;
+import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.dropwizard.DropwizardExports;
 import io.prometheus.client.exporter.MetricsServlet;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.EnumSet;
+import java.util.concurrent.TimeUnit;
 import javax.servlet.DispatcherType;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.slf4j.Logger;
@@ -99,6 +106,34 @@ public class ServerMain extends Application<GlobalConfig> {
 		metricRegistry = environment.metrics();
 
 		CollectorRegistry collectorRegistry = new CollectorRegistry();
+
+		final DropwizardConfig dropwizardConfig = new DropwizardConfig() {
+
+			@Override
+			public String prefix() {
+				return "wtf?";
+			}
+
+			@Override
+			public String get(String s) {
+				return null;
+			}
+		};
+
+		var dropwizardMeterRegistry = new DropwizardMeterRegistry(
+			dropwizardConfig, getMetricRegistry(), HierarchicalNameMapper.DEFAULT, Clock.SYSTEM) {
+			@Override
+			protected Double nullGaugeValue() {
+				return null;
+			}
+		};
+
+		Metrics.globalRegistry.add(dropwizardMeterRegistry);
+
+		final var counter = dropwizardMeterRegistry.counter("bla", "bla", "peng");
+		counter.increment();
+		counter.increment();
+
 		collectorRegistry.register(new DropwizardExports(environment.metrics()));
 		environment.admin()
 			.addServlet("prometheusMetrics", new MetricsServlet(collectorRegistry))
@@ -174,6 +209,10 @@ public class ServerMain extends Application<GlobalConfig> {
 		environment.jersey().register(new GraphComparisonEndpoint(comparison, benchmarkAccess));
 		environment.jersey()
 			.register(new GraphDetailEndpoint(commitAccess, benchmarkAccess, repoAccess));
+
+		ConsoleReporter reporter = ConsoleReporter.forRegistry(metricRegistry).build();
+		reporter.start(30000, TimeUnit.MILLISECONDS);
+		reporter.report();
 	}
 
 	private void configureApi(Environment environment, TokenWriteAccess tokenAccess) {
