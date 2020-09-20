@@ -167,28 +167,30 @@ public class ArchiveAccess {
 	public void transferBenchRepo(OutputStream outputStream)
 		throws PrepareTransferException, TransferException {
 
-		BENCH_REPO_TIMER.recordCallable(() -> {
-			synchronized (this.benchRepoLock) {
-				// 1.) Create archive if necessary
-				try {
-					this.benchRepoArchive.createIfNecessary(
-						repoStorage, BENCH_REPO_DIR_NAME, getBenchRepoCommitHash()
-					);
-				} catch (Exception e) {
-					this.benchRepoArchive.delete();
-					throw new PrepareTransferException("Failed to prepare bench repo for transfer", e);
-				}
+		final var timer = Timer.start();
 
-				// 2.) Transfer bench repo
-				try {
-					Path tarFile = this.benchRepoArchive.getTar();
-					TransferUtils.transferTar(tarFile, outputStream);
-				} catch (Exception e) {
-					this.benchRepoArchive.delete();
-					throw new TransferException("Failed to transfer bench repo", e);
-				}
+		synchronized (this.benchRepoLock) {
+			// 1.) Create archive if necessary
+			try {
+				this.benchRepoArchive.createIfNecessary(
+					repoStorage, BENCH_REPO_DIR_NAME, getBenchRepoCommitHash()
+				);
+			} catch (Exception e) {
+				this.benchRepoArchive.delete();
+				throw new PrepareTransferException("Failed to prepare bench repo for transfer", e);
 			}
-		});
+
+			// 2.) Transfer bench repo
+			try {
+				Path tarFile = this.benchRepoArchive.getTar();
+				TransferUtils.transferTar(tarFile, outputStream);
+			} catch (Exception e) {
+				this.benchRepoArchive.delete();
+				throw new TransferException("Failed to transfer bench repo", e);
+			}
+		}
+
+		timer.stop(BENCH_REPO_TIMER);
 	}
 
 	/**
@@ -205,31 +207,33 @@ public class ArchiveAccess {
 	public void transferTask(Task task, OutputStream outputStream)
 		throws PrepareTransferException, TransferException {
 
+		final var timer = Timer.start();
+
 		if (task.getSource().isRight()) {
-			try (var ignored = TAR_TASK_TIMER.time()) {
-				throw new PrepareTransferException("tar transfers unsupported");
-			}
+			throw new PrepareTransferException("tar transfers unsupported");
+
+			// timer.stop(TAR_TASK_TIMER);
 		} else {
-			try (var ignored = REPO_TASK_TIMER.time()) {
-				RepoId repoId = task.getSource().getLeft().get().getRepoId();
-				CommitHash hash = task.getSource().getLeft().get().getHash();
+			RepoId repoId = task.getSource().getLeft().get().getRepoId();
+			CommitHash hash = task.getSource().getLeft().get().getHash();
 
-				// 1.) Create archive
-				Path archive;
+			// 1.) Create archive
+			Path archive;
 
-				try {
-					archive = repoArchives.createIfNecessary(repoId, hash);
-				} catch (Exception e) {
-					throw new PrepareTransferException(task, e);
-				}
-
-				// 2.) Transfer with tar
-				try {
-					TransferUtils.tarRepo(archive, outputStream);
-				} catch (IOException e) {
-					throw new TransferException(task, e);
-				}
+			try {
+				archive = repoArchives.createIfNecessary(repoId, hash);
+			} catch (Exception e) {
+				throw new PrepareTransferException(task, e);
 			}
+
+			// 2.) Transfer with tar
+			try {
+				TransferUtils.tarRepo(archive, outputStream);
+			} catch (IOException e) {
+				throw new TransferException(task, e);
+			}
+
+			timer.stop(REPO_TASK_TIMER);
 		}
 	}
 

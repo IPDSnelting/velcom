@@ -1,5 +1,7 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
+import static de.aaaaaaah.velcom.backend.util.MetricsUtils.timer;
+
 import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -21,6 +23,7 @@ import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimension;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRepo;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.PATCH;
+import io.micrometer.core.instrument.Timer;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +47,10 @@ import org.slf4j.LoggerFactory;
 @Produces(MediaType.APPLICATION_JSON)
 public class RepoEndpoint {
 	// Most of the logic found here was copied pretty much directly from the old repo endpoint.
+
+	private static final Timer ENDPOINT_TIMER_GET = timer("velcom.endpoint.repo.get");
+	private static final Timer ENDPOINT_TIMER_PATCH = timer("velcom.endpoint.repo.patch");
+	private static final Timer ENDPOINT_TIMER_POST = timer("velcom.endpoint.repo.post");
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(RepoEndpoint.class);
 
@@ -97,6 +104,8 @@ public class RepoEndpoint {
 	@POST
 	@Timed
 	public PostReply post(@Auth RepoUser user, @NotNull PostRequest request) {
+		final var timer = Timer.start();
+
 		user.guardAdminAccess();
 
 		RemoteUrl remoteUrl = new RemoteUrl(request.getRemoteUrl());
@@ -114,6 +123,8 @@ public class RepoEndpoint {
 				LOGGER.warn("Failed to run listener for new repo: {}", repo, e);
 			}
 		}, "ListenerThreadFor" + repo.getRepoId().getId().toString()).start();
+
+		timer.stop(ENDPOINT_TIMER_POST);
 
 		return new PostReply(toJsonRepo(repo));
 	}
@@ -165,8 +176,13 @@ public class RepoEndpoint {
 	@GET
 	@Path("{repoid}")
 	public GetReply get(@PathParam("repoid") UUID repoUuid) {
+		final var timer = Timer.start();
+
 		RepoId repoId = new RepoId(repoUuid);
 		Repo repo = repoAccess.getRepo(repoId);
+
+		timer.stop(ENDPOINT_TIMER_GET);
+
 		return new GetReply(toJsonRepo(repo));
 	}
 
@@ -187,6 +203,7 @@ public class RepoEndpoint {
 	@Path("{repoid}")
 	public void patch(@Auth RepoUser user, @PathParam("repoid") UUID repoUuid,
 		@NotNull PatchRequest request) {
+		final var timer = Timer.start();
 
 		RepoId repoId = new RepoId(repoUuid);
 		user.guardRepoAccess(repoId);
@@ -213,6 +230,8 @@ public class RepoEndpoint {
 				.collect(Collectors.toSet());
 			repoAccess.setTrackedBranches(repoId, trackedBranchNames);
 		});
+
+		timer.stop(ENDPOINT_TIMER_PATCH);
 	}
 
 	private static class PatchRequest {

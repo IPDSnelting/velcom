@@ -1,5 +1,6 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
+import static de.aaaaaaah.velcom.backend.util.MetricsUtils.timer;
 import static java.util.stream.Collectors.toList;
 
 import com.codahale.metrics.annotation.Timed;
@@ -14,6 +15,7 @@ import de.aaaaaaah.velcom.backend.restapi.exception.InvalidQueryParamsException;
 import de.aaaaaaah.velcom.backend.restapi.exception.NoSuchDimensionException;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimension;
 import de.aaaaaaah.velcom.backend.util.Pair;
+import io.micrometer.core.instrument.Timer;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +35,8 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 public class GraphComparisonEndpoint {
 
+	private static final Timer ENDPOINT_TIMER = timer("velcom.endpoint.graph.comparison.get");
+
 	private final RepoComparison comparison;
 	private final BenchmarkReadAccess benchmarkAccess;
 
@@ -50,6 +54,8 @@ public class GraphComparisonEndpoint {
 		@QueryParam("duration") @Nullable Integer durationInSeconds,
 		@QueryParam("dimension") @NotNull String dimensionStr
 	) {
+		final var timer = Timer.start();
+
 		// Parse dimension
 		Set<Dimension> dimensionSet = EndpointUtils.parseDimensions(dimensionStr);
 		if (dimensionSet.size() != 1) {
@@ -86,6 +92,8 @@ public class GraphComparisonEndpoint {
 					graphEntry.getValue()
 				)).collect(toList())
 			)).collect(toList());
+
+		timer.stop(ENDPOINT_TIMER);
 
 		return new GetReply(jsonDimension, repoResults);
 	}

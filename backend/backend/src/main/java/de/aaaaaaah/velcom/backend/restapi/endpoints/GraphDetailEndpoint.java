@@ -1,5 +1,7 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
+import static de.aaaaaaah.velcom.backend.util.MetricsUtils.timer;
+
 import com.codahale.metrics.annotation.Timed;
 import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
@@ -19,6 +21,7 @@ import de.aaaaaaah.velcom.backend.restapi.endpoints.utils.EndpointUtils;
 import de.aaaaaaah.velcom.backend.restapi.exception.InvalidQueryParamsException;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimension;
 import de.aaaaaaah.velcom.backend.util.Pair;
+import io.micrometer.core.instrument.Timer;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -44,6 +47,8 @@ import javax.ws.rs.core.MediaType;
 @Path("/graph/detail/{repoid}")
 @Produces(MediaType.APPLICATION_JSON)
 public class GraphDetailEndpoint {
+
+	private static final Timer ENDPOINT_TIMER = timer("velcom.endpoint.graph.detail.get");
 
 	private static final String NO_RUN_FOUND = "N";
 	private static final String NO_MEASUREMENT_FOUND = "O";
@@ -71,6 +76,8 @@ public class GraphDetailEndpoint {
 		@QueryParam("duration") @Nullable Integer durationInSeconds,
 		@QueryParam("dimensions") @NotNull String dimensionStr
 	) {
+		final var timer = Timer.start();
+
 		// Figure out tracked branches
 		RepoId repoId = new RepoId(repoUuid);
 		// By getting the tracked branches indirectly via the repo instead of directly from the
@@ -120,6 +127,9 @@ public class GraphDetailEndpoint {
 				extractValuesFromCommit(existingDimensions, runs, commit)
 			))
 			.collect(Collectors.toList());
+
+		timer.stop(ENDPOINT_TIMER);
+
 		return new GetReply(jsonDimensions, jsonGraphCommits);
 	}
 

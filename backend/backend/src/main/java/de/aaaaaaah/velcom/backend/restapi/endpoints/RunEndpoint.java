@@ -1,5 +1,7 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
+import static de.aaaaaaah.velcom.backend.util.MetricsUtils.timer;
+
 import com.codahale.metrics.annotation.Timed;
 import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
@@ -14,6 +16,7 @@ import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparison;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.utils.EndpointUtils;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimensionDifference;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRun;
+import io.micrometer.core.instrument.Timer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +33,8 @@ import javax.ws.rs.core.MediaType;
 @Path("/run/{runid}")
 @Produces(MediaType.APPLICATION_JSON)
 public class RunEndpoint {
+
+	private static final Timer ENDPOINT_TIMER = timer("velcom.endpoint.run.get");
 
 	private final BenchmarkReadAccess benchmarkAccess;
 	private final CommitReadAccess commitAccess;
@@ -68,6 +73,8 @@ public class RunEndpoint {
 		@QueryParam("hash") @Nullable String hashString,
 		@QueryParam("diff_prev") @Nullable Boolean diffPrevOptional
 	) {
+		final var timer = Timer.start();
+
 		boolean allValues = (allValuesOptional != null) && allValuesOptional;
 		boolean diffPrev = (diffPrevOptional != null) && diffPrevOptional;
 
@@ -86,6 +93,8 @@ public class RunEndpoint {
 		} else {
 			differences = Optional.empty();
 		}
+
+		timer.stop(ENDPOINT_TIMER);
 
 		return new GetReply(
 			EndpointUtils.fromRun(benchmarkAccess, commitAccess, run, allValues),

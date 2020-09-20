@@ -1,11 +1,8 @@
 package de.aaaaaaah.velcom.backend.listener;
 
-import static com.codahale.metrics.MetricRegistry.name;
 import static java.util.stream.Collectors.toList;
 
-import com.codahale.metrics.Timer;
 import de.aaaaaaah.velcom.backend.GlobalConfig;
-import de.aaaaaaah.velcom.backend.ServerMain;
 import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.access.KnownCommitWriteAccess;
 import de.aaaaaaah.velcom.backend.access.RepoWriteAccess;
@@ -21,6 +18,8 @@ import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchRepoException;
 import de.aaaaaaah.velcom.backend.access.exceptions.RepoAccessException;
 import de.aaaaaaah.velcom.backend.access.policy.QueuePriority;
 import de.aaaaaaah.velcom.backend.data.benchrepo.BenchRepo;
+import de.aaaaaaah.velcom.backend.util.MetricsUtils;
+import io.micrometer.core.instrument.Timer;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -45,8 +44,7 @@ public class Listener {
 	private static final Logger LOGGER = LoggerFactory.getLogger(Listener.class);
 	private static final String AUTHOR = "Listener";
 
-	private static final Timer TIMER = ServerMain.getMetricRegistry()
-		.timer(name("velcom", "listener", "duration"));
+	private static final Timer TIMER = MetricsUtils.timer("velcom.listener");
 
 	private final RepoWriteAccess repoAccess;
 	private final CommitReadAccess commitAccess;
@@ -84,21 +82,23 @@ public class Listener {
 	}
 
 	private void update() {
-		try (var ignored = TIMER.time()) {
-			try {
-				benchRepo.checkForUpdates();
-			} catch (RepoAccessException e) {
-				LOGGER.warn("Could not fetch updates from benchmark repo!", e);
-			}
+		final var timer = Timer.start();
 
-			for (Repo repo : repoAccess.getAllRepos()) {
-				try {
-					checkForUnknownCommits(repo.getRepoId());
-				} catch (CommitSearchException | RepoAccessException | NoSuchRepoException e) {
-					LOGGER.warn("Could not fetch updates for repo: " + repo, e);
-				}
+		try {
+			benchRepo.checkForUpdates();
+		} catch (RepoAccessException e) {
+			LOGGER.warn("Could not fetch updates from benchmark repo!", e);
+		}
+
+		for (Repo repo : repoAccess.getAllRepos()) {
+			try {
+				checkForUnknownCommits(repo.getRepoId());
+			} catch (CommitSearchException | RepoAccessException | NoSuchRepoException e) {
+				LOGGER.warn("Could not fetch updates for repo: " + repo, e);
 			}
 		}
+
+		timer.stop(TIMER);
 	}
 
 	/**
