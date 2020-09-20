@@ -18,14 +18,25 @@ public class MemoryInfo {
 		this.availableMemoryKib = availableMemoryKib;
 	}
 
+	/**
+	 * @return the total memory available on the system, in KiB
+	 */
 	public long totalMemoryKib() {
 		return totalMemoryKib;
 	}
 
+	/**
+	 * @return the amount of memory that is currently unused, in KiB
+	 */
 	public long freeMemoryKiB() {
 		return freeMemoryKib;
 	}
 
+	/**
+	 * @return an estimate of the amount of memory available for starting new applications without
+	 * 	swapping, in KiB. See also <a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=34e431b0ae398fc54ea69ff85ec700722c9da773">this
+	 * 	commit in the linux kernel</a>.
+	 */
 	public long getAvailableMemoryKib() {
 		return availableMemoryKib;
 	}
