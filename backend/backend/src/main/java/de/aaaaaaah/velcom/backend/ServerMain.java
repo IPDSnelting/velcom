@@ -23,6 +23,7 @@ import de.aaaaaaah.velcom.backend.restapi.authentication.RepoUser;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.AllReposEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.CommitEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.CompareEndpoint;
+import de.aaaaaaah.velcom.backend.restapi.endpoints.DebugEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.GraphComparisonEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.GraphDetailEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.QueueEndpoint;
@@ -181,6 +182,7 @@ public class ServerMain extends Application<GlobalConfig> {
 		environment.jersey().register(new GraphComparisonEndpoint(comparison, benchmarkAccess));
 		environment.jersey()
 			.register(new GraphDetailEndpoint(commitAccess, benchmarkAccess, repoAccess));
+		environment.jersey().register(new DebugEndpoint(dispatcher));
 	}
 
 	private void configureApi(Environment environment, TokenWriteAccess tokenAccess) {

@@ -157,7 +157,12 @@ public class TeleRunner {
 		GetStatusReply reply = runnerInformation.get();
 
 		return new KnownRunner(
-			getRunnerName(), reply.getInfo(), reply.getStatus(), myCurrentTask.get(), !hasConnection()
+			getRunnerName(),
+			reply.getInfo(),
+			reply.getVersionHash().orElse(null),
+			reply.getStatus(),
+			myCurrentTask.get(),
+			!hasConnection()
 		);
 	}
 
