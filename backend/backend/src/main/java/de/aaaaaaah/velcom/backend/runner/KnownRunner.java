@@ -35,9 +35,8 @@ public class KnownRunner {
 	 * @param workingSince the time the runner is working on a run now
 	 */
 	public KnownRunner(String name, String information, @Nullable String versionHash,
-		Status lastStatus,
-		@Nullable Task task, boolean lostConnection, @Nullable Instant workingSince) {
-
+		Status lastStatus, @Nullable Task task, boolean lostConnection,
+		@Nullable Instant workingSince) {
 		this.name = Objects.requireNonNull(name, "name can not be null!");
 		this.information = Objects.requireNonNull(information, "information can not be null!");
 		this.versionHash = versionHash;

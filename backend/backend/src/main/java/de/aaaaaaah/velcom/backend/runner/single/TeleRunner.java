@@ -183,7 +183,7 @@ public class TeleRunner {
 	 */
 	public void abort() {
 		myCurrentTask.set(null);
-		this.workingSince.set(null);
+		workingSince.set(null);
 
 		if (!hasConnection()) {
 			LOGGER.info(
@@ -207,7 +207,7 @@ public class TeleRunner {
 	 * @param resultReply the results
 	 */
 	public void handleResults(GetResultReply resultReply) {
-		this.workingSince.set(null);
+		workingSince.set(null);
 
 		Task task = myCurrentTask.get();
 		if (task == null) {
