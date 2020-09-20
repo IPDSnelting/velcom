@@ -68,8 +68,8 @@ public class Listener {
 	 * @param benchRepo used to keep the bench repo up-to-date
 	 */
 	public Listener(GlobalConfig config, RepoWriteAccess repoAccess, CommitReadAccess commitAccess,
-		KnownCommitWriteAccess knownCommitAccess,
-		BenchRepo benchRepo) {
+		KnownCommitWriteAccess knownCommitAccess, BenchRepo benchRepo) {
+
 		this.repoAccess = repoAccess;
 		this.commitAccess = commitAccess;
 		this.knownCommitAccess = knownCommitAccess;
@@ -113,7 +113,7 @@ public class Listener {
 
 			repoAccess.updateRepo(repoId);
 
-			manageTrackedBranches(repoId);
+			pruneTrackedBranches(repoId);
 			checkForUnknownCommits(repoId);
 		} finally {
 			this.lock.unlock();
@@ -126,9 +126,9 @@ public class Listener {
 	/**
 	 * Remove all tracked branches that don't actually exist in our repo.
 	 *
-	 * @param repo the repo whose tracked branches to update
+	 * @param repoId the id of the repo whose tracked branches to update
 	 */
-	private void manageTrackedBranches(RepoId repoId) {
+	private void pruneTrackedBranches(RepoId repoId) {
 		Repo repo = repoAccess.getRepo(repoId);
 
 		Set<BranchName> existingBranches = repoAccess.getBranches(repo.getRepoId())
@@ -147,7 +147,7 @@ public class Listener {
 	/**
 	 * Checks for new commits on the specified repository and passes the new commits to the queue.
 	 *
-	 * @param repo the repository to check for
+	 * @param repoId the id of the repository to check for
 	 */
 	private void checkForUnknownCommits(RepoId repoId)
 		throws CommitSearchException, RepoAccessException, NoSuchRepoException {
