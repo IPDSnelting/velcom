@@ -28,7 +28,7 @@ public class JsonRunner {
 			runner.getName(),
 			runner.getInformation(),
 			runner.getCurrentTask().map(it -> it.getId().getId()).orElse(null),
-			Instant.now().getEpochSecond() // TODO: Implement
+			runner.getWorkingSince().map(Instant::getEpochSecond).orElse(null)
 		);
 	}
 
