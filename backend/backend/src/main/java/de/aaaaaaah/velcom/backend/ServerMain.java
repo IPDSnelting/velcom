@@ -53,14 +53,22 @@ import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.dropwizard.DropwizardConfig;
 import io.micrometer.core.instrument.dropwizard.DropwizardMeterRegistry;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
+import io.micrometer.prometheus.PrometheusConfig;
+import io.micrometer.prometheus.PrometheusMeterRegistry;
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.dropwizard.DropwizardExports;
 import io.prometheus.client.exporter.MetricsServlet;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.concurrent.TimeUnit;
 import javax.servlet.DispatcherType;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -106,38 +114,25 @@ public class ServerMain extends Application<GlobalConfig> {
 		metricRegistry = environment.metrics();
 
 		CollectorRegistry collectorRegistry = new CollectorRegistry();
-
-		final DropwizardConfig dropwizardConfig = new DropwizardConfig() {
-
-			@Override
-			public String prefix() {
-				return "wtf?";
-			}
-
-			@Override
-			public String get(String s) {
-				return null;
-			}
-		};
-
-		var dropwizardMeterRegistry = new DropwizardMeterRegistry(
-			dropwizardConfig, getMetricRegistry(), HierarchicalNameMapper.DEFAULT, Clock.SYSTEM) {
-			@Override
-			protected Double nullGaugeValue() {
-				return null;
-			}
-		};
-
-		Metrics.globalRegistry.add(dropwizardMeterRegistry);
-
-		final var counter = dropwizardMeterRegistry.counter("bla", "bla", "peng");
-		counter.increment();
-		counter.increment();
-
 		collectorRegistry.register(new DropwizardExports(environment.metrics()));
 		environment.admin()
 			.addServlet("prometheusMetrics", new MetricsServlet(collectorRegistry))
 			.addMapping("/prometheusMetrics");
+
+		PrometheusMeterRegistry registry = new PrometheusMeterRegistry(
+			PrometheusConfig.DEFAULT, collectorRegistry, Clock.SYSTEM
+		);
+		Metrics.globalRegistry.add(registry);
+		environment.admin()
+			.addServlet("prometheusMetrics2", new HttpServlet() {
+				@Override
+				protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+					throws ServletException, IOException {
+					resp.setStatus(HttpServletResponse.SC_OK);
+					resp.getWriter().write(registry.scrape());
+				}
+			})
+			.addMapping("/prometheusMetrics2");
 
 		// Storage layer
 		RepoStorage repoStorage = new RepoStorage(configuration.getRepoDir());
