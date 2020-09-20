@@ -59,7 +59,7 @@
                   <template #activator="{ on }">
                     <span style="flex: 0 0;" class="pt-3">
                       <v-chip v-on="on" outlined label>
-                        Running on » {{ getWorker(task).name }} « since
+                        Running on » {{ getWorker(task).name }} « for over
                         {{ formatWorkingSince(task) }}
                       </v-chip>
                     </span>
@@ -104,7 +104,7 @@ import { mdiDelete, mdiRocket } from '@mdi/js'
 import CommitOverviewBase from './CommitOverviewBase.vue'
 import { extractErrorMessage } from '@/util/ErrorUtils'
 import TarTaskOverview from './TarTaskOverview.vue'
-import { formatTime } from '@/util/TimeUtil'
+import { formatDurationHuman } from '@/util/TimeUtil'
 
 @Component({
   components: {
@@ -228,7 +228,7 @@ export default class QueueOverview extends Vue {
     if (!worker || !worker.workingSince) {
       return ''
     }
-    return formatTime(worker.workingSince)
+    return formatDurationHuman(worker.workingSince, new Date())
   }
 
   private cancelAllFetched() {

@@ -76,7 +76,7 @@ import {
   RunWithDifferences
 } from '@/store/types'
 import { Prop } from 'vue-property-decorator'
-import { formatDate, formatDuration } from '@/util/TimeUtil'
+import { formatDate, formatDurationHuman } from '@/util/TimeUtil'
 import MeasurementsDisplay from '@/components/rundetail/MeasurementsDisplay.vue'
 import {
   mdiFlash,
@@ -100,7 +100,7 @@ export default class RunDetail extends Vue {
   }
 
   private formatDuration(start: Date, end: Date) {
-    return formatDuration(start, end)
+    return formatDurationHuman(start, end)
   }
 
   private get run(): Run {

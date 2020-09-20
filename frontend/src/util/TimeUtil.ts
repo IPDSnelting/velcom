@@ -1,11 +1,34 @@
 /**
- * Formats a duration into an "hh:mm:ss" string.
+ * Formats a duration into a human readable string.
  *
  * @export
  * @param {Date} start the start date
  * @param {Date} end the end date
  */
-export function formatDuration(start: Date, end: Date): string {
+export function formatDurationHuman(start: Date, end: Date): string {
+  const [hours, minutes, seconds] = durationToParts(start, end)
+  let result = ''
+
+  if (hours === 0 && minutes === 0 && seconds === 0) {
+    return '0 seconds'
+  }
+
+  if (hours > 0) {
+    result += `${hours} hours`
+  }
+  if (minutes > 0) {
+    result += result.length > 0 ? ' and ' : ''
+    result += `${minutes} minutes`
+  }
+  if (seconds > 0) {
+    result += result.length > 0 ? ' and ' : ''
+    result += `${seconds} seconds`
+  }
+
+  return result
+}
+
+function durationToParts(start: Date, end: Date): [number, number, number] {
   const differenceMillis = Math.abs(end.getTime() - start.getTime())
   let remainingDifferenceSeconds = differenceMillis / 1000
 
@@ -14,11 +37,7 @@ export function formatDuration(start: Date, end: Date): string {
   const minutes = Math.floor(remainingDifferenceSeconds / 60)
   remainingDifferenceSeconds -= minutes * 60
 
-  const hoursFormatted = leftZeroPad(2, hours)
-  const minutesFormatted = leftZeroPad(2, minutes)
-  const secondsFormatted = leftZeroPad(2, remainingDifferenceSeconds)
-
-  return `${hoursFormatted}:${minutesFormatted}:${secondsFormatted}`
+  return [hours, minutes, Math.floor(remainingDifferenceSeconds)]
 }
 
 /**
