@@ -142,12 +142,9 @@ public class QueueEndpoint {
 
 		Repo repo = repoReadAccess.getRepo(repoId);
 
-		String author = String.format(
-			"%s %s(%s)",
-			user.isAdmin() ? "Admin" : "Repo-Admin",
-			repo.getName(),
-			repoId
-		);
+		// There's no need to include the repo name or ID since that info is already included in the
+		// task's source.
+		String author = user.isAdmin() ? "Admin" : "Repo-Admin";
 
 		// TODO: Really don't tell them the id of the existing task?
 		final Collection<Task> insertedTasks = queue
