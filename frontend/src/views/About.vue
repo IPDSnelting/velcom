@@ -5,7 +5,11 @@
         <v-col>
           <v-card>
             <v-card-title>
-              <v-toolbar color="primary darken-1" dark>About VelCom</v-toolbar>
+              <v-toolbar color="primary darken-1" dark>
+                About VelCom
+                <v-spacer></v-spacer>
+                <span class="text-sm-body-1">Version: {{ gitHash }}</span>
+              </v-toolbar>
             </v-card-title>
             <v-card-text>
               <v-container fluid class="ma-0 pa-0">
@@ -122,6 +126,10 @@ export default class About extends Vue {
 
   private relativeUrlToBase(path: string) {
     return document.location.protocol + '//' + document.location.host + path
+  }
+
+  private get gitHash() {
+    return process.env.__COMMIT_HASH__
   }
 
   private get impressumLocation() {
