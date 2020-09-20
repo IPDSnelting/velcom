@@ -107,7 +107,7 @@ public class RepoEndpoint {
 		// Run listener on this repo on a separate thread
 		new Thread(() -> {
 			try {
-				listener.checkForUnknownCommits(repo.getRepoId());
+				listener.updateRepo(repo.getRepoId());
 			} catch (CommitSearchException e) {
 				LOGGER.warn("Failed to run listener for new repo: {}", repo, e);
 			}
