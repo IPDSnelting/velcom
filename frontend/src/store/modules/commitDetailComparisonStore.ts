@@ -37,10 +37,11 @@ export class CommitDetailComparisonStore extends VxModule {
       }
     })
 
-    return new RunWithDifferences(
-      runFromJson(response.data.run),
-      response.data.differences.map(differenceFromJson)
-    )
+    const differences = response.data.differences
+      ? response.data.differences.map(differenceFromJson)
+      : undefined
+
+    return new RunWithDifferences(runFromJson(response.data.run), differences)
   }
 
   /**

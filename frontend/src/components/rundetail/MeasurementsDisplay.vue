@@ -183,7 +183,7 @@ export default class MeasurementsDisplay extends Vue {
   @Prop()
   private measurements!: Measurement[]
   @Prop()
-  private differences!: DimensionDifference[]
+  private differences?: DimensionDifference[]
 
   private showDetailErrorDialog: boolean = false
   private detailErrorDialogMessage: string = ''
@@ -257,6 +257,9 @@ export default class MeasurementsDisplay extends Vue {
   private differenceForDimension(
     dimension: Dimension
   ): DimensionDifference | undefined {
+    if (!this.differences) {
+      return undefined
+    }
     return this.differences.find(it => it.dimension.equals(dimension))
   }
 
