@@ -188,6 +188,7 @@ public class RoundRobinFiloPolicy implements QueuePolicy {
 			Map<RepoId, LinkedList<Task>> groupMap = new HashMap<>();
 			db.selectFrom(TASK)
 				.where(TASK.REPO_ID.isNotNull())
+				.and(TASK.PRIORITY.ge(ROUND_ROBIN_PRIORITY.asInt()))
 				.orderBy(TASK.INSERT_TIME.desc())
 				.forEach(record -> {
 					Task task = taskFromRecord(record);
