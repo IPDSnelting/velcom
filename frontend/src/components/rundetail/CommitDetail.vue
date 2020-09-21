@@ -30,7 +30,7 @@
               </v-container>
             </v-toolbar>
           </v-card-title>
-          <v-card-text class="body-1 mx-2" style="color: inherit;">
+          <v-card-text class="body-1" style="color: inherit;">
             <v-container fluid class="my-0 py-0">
               <v-row
                 v-for="({ parent, child }, index) in navigationTargets"
@@ -38,20 +38,22 @@
                 justify="space-between"
                 no-gutters
               >
-                <v-col cols="auto" class="pa-0 ma-0 pb-2">
-                  <commit-navigation-button
-                    v-if="parent"
-                    :commitDescription="parent"
-                    type="PARENT"
-                  ></commit-navigation-button>
+                <v-col cols="6" class="pr-4">
+                  <div v-if="parent" class="d-flex justify-start">
+                    <commit-navigation-button
+                      :commitDescription="parent"
+                      type="PARENT"
+                    ></commit-navigation-button>
+                  </div>
                   <v-spacer v-else></v-spacer>
                 </v-col>
-                <v-col cols="auto" class="pa-0 ma-0 pb-2">
-                  <commit-navigation-button
-                    v-if="child"
-                    :commitDescription="child"
-                    type="CHILD"
-                  ></commit-navigation-button>
+                <v-col cols="6">
+                  <div v-if="child" class="d-flex justify-end">
+                    <commit-navigation-button
+                      :commitDescription="child"
+                      type="CHILD"
+                    ></commit-navigation-button>
+                  </div>
                   <v-spacer v-else></v-spacer>
                 </v-col>
               </v-row>

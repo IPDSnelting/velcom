@@ -3,8 +3,10 @@
     <template #activator="{ on }">
       <v-btn
         v-on="on"
+        left
         text
         outlined
+        class="d-flex commit-navigation-button"
         :to="{
           name: 'run-detail',
           params: {
@@ -13,9 +15,13 @@
           }
         }"
       >
-        <v-icon left v-if="type === 'PARENT'">{{ parentCommitIcon }}</v-icon>
-        {{ commitDescription.summary }}
-        <v-icon right v-if="type === 'CHILD'">{{ childCommitIcon }}</v-icon>
+        <v-icon class="button-icon" left v-if="type === 'PARENT'">
+          {{ parentCommitIcon }}
+        </v-icon>
+        <span class="button-text">{{ commitDescription.summary }}</span>
+        <v-icon class="button-icon" right v-if="type === 'CHILD'">
+          {{ childCommitIcon }}
+        </v-icon>
       </v-btn>
     </template>
     {{ commitDescription.hash }} by {{ commitDescription.author }}
@@ -42,4 +48,21 @@ export default class CommitNavigationButton extends Vue {
 }
 </script>
 
-<style scoped></style>
+<style scoped>
+.button-icon {
+  flex-shrink: 0;
+}
+.button-text {
+  min-width: 10px;
+  flex-shrink: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+</style>
+
+<style>
+.commit-navigation-button,
+.commit-navigation-button .v-btn__content {
+  max-width: 100%;
+}
+</style>
