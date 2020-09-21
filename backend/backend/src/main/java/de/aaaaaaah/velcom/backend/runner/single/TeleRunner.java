@@ -46,6 +46,7 @@ public class TeleRunner {
 	private final Serializer serializer;
 	private final Dispatcher dispatcher;
 	private final AtomicReference<Task> myCurrentTask;
+	private final AtomicReference<Instant> workingSince;
 	private final BenchRepo benchRepo;
 	private final AtomicReference<Instant> lastPing;
 
@@ -61,6 +62,7 @@ public class TeleRunner {
 		this.benchRepo = benchRepo;
 		this.runnerInformation = new AtomicReference<>();
 		this.myCurrentTask = new AtomicReference<>();
+		this.workingSince = new AtomicReference<>();
 		this.lastPing = new AtomicReference<>();
 	}
 
@@ -162,7 +164,8 @@ public class TeleRunner {
 			reply.getVersionHash().orElse(null),
 			reply.getStatus(),
 			myCurrentTask.get(),
-			!hasConnection()
+			!hasConnection(),
+			workingSince.get()
 		);
 	}
 
@@ -180,6 +183,7 @@ public class TeleRunner {
 	 */
 	public void abort() {
 		myCurrentTask.set(null);
+		workingSince.set(null);
 
 		if (!hasConnection()) {
 			LOGGER.info(
@@ -203,6 +207,8 @@ public class TeleRunner {
 	 * @param resultReply the results
 	 */
 	public void handleResults(GetResultReply resultReply) {
+		workingSince.set(null);
+
 		Task task = myCurrentTask.get();
 		if (task == null) {
 			LOGGER.warn("{} has no task but got results :(", getRunnerName());
@@ -314,6 +320,7 @@ public class TeleRunner {
 		}
 		Task task = workOptional.get();
 		myCurrentTask.set(task);
+		workingSince.set(Instant.now());
 
 		String benchRepoHash = benchRepo.getCurrentHash().getHash();
 		boolean benchRepoUpToDate = runnerInformation.get().getBenchHash()
