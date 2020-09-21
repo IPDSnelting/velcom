@@ -58,9 +58,10 @@
                 <v-tooltip top>
                   <template #activator="{ on }">
                     <span style="flex: 0 0;" class="pt-3">
-                      <v-chip v-on="on" outlined label
-                        >Running on » {{ getWorker(task).name }} «</v-chip
-                      >
+                      <v-chip v-on="on" outlined label>
+                        Running on » {{ getWorker(task).name }} « for over
+                        {{ formatWorkingSince(task) }}
+                      </v-chip>
                     </span>
                   </template>
                   <span style="white-space: pre; font-family: monospace;">{{
@@ -103,8 +104,7 @@ import { mdiDelete, mdiRocket } from '@mdi/js'
 import CommitOverviewBase from './CommitOverviewBase.vue'
 import { extractErrorMessage } from '@/util/ErrorUtils'
 import TarTaskOverview from './TarTaskOverview.vue'
-
-// FIXME: Check if the "in-progress" view works
+import { formatDurationHuman } from '@/util/TimeUtil'
 
 @Component({
   components: {
@@ -123,7 +123,7 @@ export default class QueueOverview extends Vue {
   }
 
   private inProgress(task: Task): boolean {
-    return this.queueItems.find(it => it.id === task.id) !== undefined
+    return this.getWorker(task) !== undefined
   }
 
   private get isAdmin() {
@@ -221,6 +221,14 @@ export default class QueueOverview extends Vue {
 
   private getWorker(task: Task): Worker | undefined {
     return vxm.queueModule.workers.find(it => it.workingOn === task.id)
+  }
+
+  private formatWorkingSince(task: Task) {
+    const worker = this.getWorker(task)
+    if (!worker || !worker.workingSince) {
+      return ''
+    }
+    return formatDurationHuman(worker.workingSince, new Date())
   }
 
   private cancelAllFetched() {

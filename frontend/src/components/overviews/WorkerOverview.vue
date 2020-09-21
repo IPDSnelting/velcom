@@ -49,7 +49,7 @@ export default class WorkerOverview extends Vue {
     if (!worker.info) {
       return 'No data known :/'
     }
-    return worker.info.split(/\s*,\s*/).join('\n')
+    return worker.info
   }
 }
 </script>
