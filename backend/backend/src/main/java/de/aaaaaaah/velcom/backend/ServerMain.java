@@ -91,6 +91,8 @@ public class ServerMain extends Application<GlobalConfig> {
 			PrometheusConfig.DEFAULT
 		);
 
+		registry.config().commonTags("application", "Velcom");
+
 		Metrics.globalRegistry.add(registry);
 
 		environment.admin()
