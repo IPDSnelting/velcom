@@ -47,6 +47,14 @@ import io.dropwizard.auth.basic.BasicCredentialAuthFilter;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import io.micrometer.core.instrument.Metrics;
+import io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics;
+import io.micrometer.core.instrument.binder.jvm.JvmCompilationMetrics;
+import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics;
+import io.micrometer.core.instrument.binder.jvm.JvmHeapPressureMetrics;
+import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics;
+import io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics;
+import io.micrometer.core.instrument.binder.system.ProcessorMetrics;
+import io.micrometer.core.instrument.binder.system.UptimeMetrics;
 import io.micrometer.prometheus.PrometheusConfig;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
 import java.io.IOException;
@@ -94,6 +102,14 @@ public class ServerMain extends Application<GlobalConfig> {
 		registry.config().commonTags("application", "Velcom");
 
 		Metrics.globalRegistry.add(registry);
+		new ClassLoaderMetrics().bindTo(Metrics.globalRegistry);
+		new JvmCompilationMetrics().bindTo(Metrics.globalRegistry);
+		new JvmGcMetrics().bindTo(Metrics.globalRegistry);
+		new JvmHeapPressureMetrics().bindTo(Metrics.globalRegistry);
+		new JvmMemoryMetrics().bindTo(Metrics.globalRegistry);
+		new JvmThreadMetrics().bindTo(Metrics.globalRegistry);
+		new ProcessorMetrics().bindTo(Metrics.globalRegistry);
+		new UptimeMetrics().bindTo(Metrics.globalRegistry);
 
 		environment.admin()
 			.addServlet("prometheusMetrics", new HttpServlet() {

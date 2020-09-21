@@ -30,6 +30,8 @@ import de.aaaaaaah.velcom.backend.storage.db.DBReadAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import de.aaaaaaah.velcom.backend.util.Either;
 import io.micrometer.core.annotation.Timed;
+import io.micrometer.core.instrument.Metrics;
+import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -52,8 +54,20 @@ import org.jooq.codegen.db.tables.records.RunRecord;
  */
 public class BenchmarkReadAccess {
 
-	protected static final Caffeine<Object, Object> RUN_CACHE_BUILDER = Caffeine.newBuilder()
-		.maximumSize(10000);
+	protected static Cache<CommitHash, Run> buildRunCache(RepoId repoId) {
+		final Cache<CommitHash, Run> cache = Caffeine.newBuilder().maximumSize(10000).build();
+
+		CaffeineCacheMetrics.monitor(
+			Metrics.globalRegistry,
+			cache,
+			"repoRunCache",
+			"repo",
+			repoId.getId().toString()
+		);
+
+		return cache;
+	}
+
 	protected static final int RECENT_RUN_CACHE_SIZE = 10;
 
 	protected final DatabaseStorage databaseStorage;
@@ -197,7 +211,7 @@ public class BenchmarkReadAccess {
 		checkCachesForDeletedRepos();
 
 		final Cache<CommitHash, Run> repoRunCache = this.repoRunCache.computeIfAbsent(repoId,
-			r -> RUN_CACHE_BUILDER.build()
+			r -> buildRunCache(repoId)
 		);
 
 		repoRunCache.getAllPresent(commitHashes).forEach(resultMap::put);
