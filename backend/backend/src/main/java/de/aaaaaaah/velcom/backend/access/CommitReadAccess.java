@@ -36,6 +36,10 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.revplot.PlotCommit;
+import org.eclipse.jgit.revplot.PlotCommitList;
+import org.eclipse.jgit.revplot.PlotLane;
+import org.eclipse.jgit.revplot.PlotWalk;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 
@@ -142,8 +146,41 @@ public class CommitReadAccess {
 	 * @return the commit's children
 	 */
 	public Collection<CommitHash> getChildren(RepoId repoId, CommitHash commitHash) {
-		// TODO implement
-		return null;
+		try (
+			Repository repo = repoStorage.acquireRepository(repoId.getDirectoryName());
+			PlotWalk plotWalk = new PlotWalk(repo);
+		) {
+			ObjectId targetId = repo.resolve(commitHash.getHash());
+
+			List<RevCommit> startPoints = new ArrayList<>();
+			for (Ref ref : repo.getRefDatabase().getRefs()) {
+				ObjectId objectId = ref.getObjectId();
+				RevCommit revCommit = plotWalk.parseCommit(objectId);
+				startPoints.add(revCommit);
+			}
+			plotWalk.markStart(startPoints);
+
+			PlotCommitList<PlotLane> plotCommitList = new PlotCommitList<>();
+			plotCommitList.source(plotWalk);
+			plotCommitList.fillTo(Integer.MAX_VALUE);
+
+			PlotCommit<PlotLane> commit = plotCommitList.stream()
+				.filter(targetId::equals)
+				.findAny()
+				.orElseThrow(() -> new NoSuchCommitException(repoId, commitHash));
+
+			List<PlotCommit<PlotLane>> children = new ArrayList<>();
+			for (int i = 0; i < commit.getChildCount(); i++) {
+				children.add(commit.getChild(i));
+			}
+
+			return children.stream()
+				.map(AnyObjectId::getName)
+				.map(CommitHash::new)
+				.collect(Collectors.toList());
+		} catch (Exception e) {
+			throw new CommitAccessException("Failed to find children", e, repoId, commitHash);
+		}
 	}
 
 	/**

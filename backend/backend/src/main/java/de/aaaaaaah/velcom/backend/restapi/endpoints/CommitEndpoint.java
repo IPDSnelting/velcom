@@ -46,13 +46,12 @@ public class CommitEndpoint {
 
 		List<JsonCommitDescription> parents = commit.getParentHashes().stream()
 			.map(parentHash -> commitAccess.getCommit(repoId, parentHash))
-			.map(c -> new JsonCommitDescription(
-				c.getRepoId().getId(),
-				c.getHash().getHash(),
-				c.getAuthor(),
-				c.getAuthorDate().getEpochSecond(),
-				c.getSummary()
-			))
+			.map(JsonCommitDescription::fromCommit)
+			.collect(Collectors.toList());
+
+		List<JsonCommitDescription> children = commitAccess.getChildren(repoId, hash).stream()
+			.map(childHash -> commitAccess.getCommit(repoId, childHash))
+			.map(JsonCommitDescription::fromCommit)
 			.collect(Collectors.toList());
 
 		List<JsonRunDescription> runs = benchmarkAccess.getAllRuns(repoId, hash).stream()
@@ -68,7 +67,7 @@ public class CommitEndpoint {
 			commit.getRepoId().getId(),
 			commit.getHash().getHash(),
 			parents,
-			List.of(), // TODO implement getting children of a commit
+			children,
 			commit.getAuthor(),
 			commit.getAuthorDate().getEpochSecond(),
 			commit.getCommitter(),
