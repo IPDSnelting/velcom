@@ -1,7 +1,5 @@
 package de.aaaaaaah.velcom.backend.access;
 
-import static de.aaaaaaah.velcom.backend.util.MetricsUtils.timer;
-
 import de.aaaaaaah.velcom.backend.access.entities.BranchName;
 import de.aaaaaaah.velcom.backend.access.entities.Commit;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
@@ -13,7 +11,7 @@ import de.aaaaaaah.velcom.backend.access.exceptions.RepoAccessException;
 import de.aaaaaaah.velcom.backend.access.filter.AuthorTimeRevFilter;
 import de.aaaaaaah.velcom.backend.storage.repo.RepoStorage;
 import de.aaaaaaah.velcom.backend.storage.repo.exception.RepositoryAcquisitionException;
-import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.annotation.Timed;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -41,15 +39,6 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 
 public class CommitReadAccess {
-
-	private static final Timer GET_COMMITS_TIMER = timer("velcom.access.commit.getCommits");
-	private static final Timer GET_CHILDREN_TIMER = timer("velcom.access.commit.getChildren");
-	private static final Timer GET_COMMITS_BETWEEN_TIMER =
-		timer("velcom.access.commit.getCommitsBetween");
-	private static final Timer GET_COMMIT_WALK_TIMER =
-		timer("velcom.access.commit.getCommitWalk");
-	private static final Timer GET_COMMIT_LOG_TIMER =
-		timer("velcom.access.commit.getCommitLog");
 
 	private final RepoStorage repoStorage;
 
@@ -118,36 +107,35 @@ public class CommitReadAccess {
 	 * 	list. If a commit could not be found, doesn't return that commit in the return value.
 	 * 	Preserves ordering of commits (and duplicate commits) from the input commit hash collection.
 	 */
+	@Timed(histogram = true)
 	public List<Commit> getCommits(RepoId repoId, Collection<CommitHash> commitHashes) {
-		return GET_COMMITS_TIMER.record(() -> {
-			Objects.requireNonNull(repoId);
-			Objects.requireNonNull(commitHashes);
+		Objects.requireNonNull(repoId);
+		Objects.requireNonNull(commitHashes);
 
-			if (commitHashes.isEmpty()) {
-				return Collections.emptyList();
-			}
+		if (commitHashes.isEmpty()) {
+			return Collections.emptyList();
+		}
 
-			List<Commit> commits = new ArrayList<>();
+		List<Commit> commits = new ArrayList<>();
 
-			try (
-				Repository repo = repoStorage.acquireRepository(repoId.getDirectoryName());
-				RevWalk walk = new RevWalk(repo)
-			) {
-				for (CommitHash hash : commitHashes) {
-					try {
-						ObjectId commitPtr = repo.resolve(hash.getHash());
-						RevCommit revCommit = walk.parseCommit(commitPtr);
-						commits.add(commitFromRevCommit(repoId, revCommit));
-					} catch (IOException | NullPointerException ignored) {
-						// See javadoc
-					}
+		try (
+			Repository repo = repoStorage.acquireRepository(repoId.getDirectoryName());
+			RevWalk walk = new RevWalk(repo)
+		) {
+			for (CommitHash hash : commitHashes) {
+				try {
+					ObjectId commitPtr = repo.resolve(hash.getHash());
+					RevCommit revCommit = walk.parseCommit(commitPtr);
+					commits.add(commitFromRevCommit(repoId, revCommit));
+				} catch (IOException | NullPointerException ignored) {
+					// See javadoc
 				}
-			} catch (RepositoryAcquisitionException ignored) {
-				// See javadoc
 			}
+		} catch (RepositoryAcquisitionException ignored) {
+			// See javadoc
+		}
 
-			return commits;
-		});
+		return commits;
 	}
 
 	/**
@@ -157,12 +145,10 @@ public class CommitReadAccess {
 	 * @param commitHash the commit's hash
 	 * @return the commit's children
 	 */
+	@Timed(histogram = true)
 	public Collection<CommitHash> getChildren(RepoId repoId, CommitHash commitHash) {
-		return GET_CHILDREN_TIMER.record(() -> {
-			// TODO implement
-
-			return Collections.emptyList();
-		});
+		// TODO implement
+		return Collections.emptyList();
 	}
 
 	/**
@@ -171,28 +157,27 @@ public class CommitReadAccess {
 	 * @param startCommit the commit to start at
 	 * @return the commit walk instance
 	 */
+	@Timed(histogram = true)
 	public CommitWalk getCommitWalk(Commit startCommit) {
-		return GET_COMMIT_WALK_TIMER.record(() -> {
-			RepoId repoId = startCommit.getRepoId();
-			Repository repo = null;
-			RevWalk walk = null;
+		RepoId repoId = startCommit.getRepoId();
+		Repository repo = null;
+		RevWalk walk = null;
 
-			try {
-				repo = repoStorage.acquireRepository(repoId.getDirectoryName());
-				walk = new RevWalk(repo);
+		try {
+			repo = repoStorage.acquireRepository(repoId.getDirectoryName());
+			walk = new RevWalk(repo);
 
-				return new CommitWalk(repoId, repo, walk, startCommit);
-			} catch (Exception e) {
-				if (walk != null) {
-					walk.close();
-				}
-				if (repo != null) {
-					repo.close();
-				}
-				throw new CommitAccessException("Failed to create commit walk", e,
-					startCommit.getRepoId(), startCommit.getHash());
+			return new CommitWalk(repoId, repo, walk, startCommit);
+		} catch (Exception e) {
+			if (walk != null) {
+				walk.close();
 			}
-		});
+			if (repo != null) {
+				repo.close();
+			}
+			throw new CommitAccessException("Failed to create commit walk", e,
+				startCommit.getRepoId(), startCommit.getHash());
+		}
 	}
 
 	/**
@@ -209,108 +194,106 @@ public class CommitReadAccess {
 	 * @return a map with each commit hash pointing to its respective commit
 	 * @throws IllegalArgumentException if startTime is after stopTime
 	 */
+	@Timed(histogram = true)
 	public Map<CommitHash, Commit> getCommitsBetween(RepoId repoId,
 		Collection<BranchName> branches, @Nullable Instant startTime, @Nullable Instant stopTime) {
 
-		return GET_COMMITS_BETWEEN_TIMER.record(() -> {
-			Objects.requireNonNull(repoId);
-			Objects.requireNonNull(branches);
+		Objects.requireNonNull(repoId);
+		Objects.requireNonNull(branches);
 
-			if (startTime != null && stopTime != null && startTime.isAfter(stopTime)) {
-				throw new IllegalArgumentException(
-					"start time is after stop time: " + startTime + " > " + stopTime
-				);
+		if (startTime != null && stopTime != null && startTime.isAfter(stopTime)) {
+			throw new IllegalArgumentException(
+				"start time is after stop time: " + startTime + " > " + stopTime
+			);
+		}
+
+		if (branches.isEmpty()) {
+			return Collections.emptyMap();
+		}
+
+		try (Repository repo = repoStorage.acquireRepository(repoId.getDirectoryName())) {
+			RevWalk walk = new RevWalk(repo);
+			Git git = Git.wrap(repo);
+
+			// Start the walk from the specified branches
+			Map<CommitHash, Commit> commitMap = new HashMap<>();
+
+			for (Ref branchRef : git.branchList().call()) {
+				BranchName branchName = BranchName.fromFullName(branchRef.getName());
+
+				if (branches.contains(branchName)) {
+					ObjectId branchObjectId = branchRef.getObjectId();
+					RevCommit revCommit = walk.parseCommit(branchObjectId); // Doesn't load body
+
+					walk.markStart(revCommit);
+				}
 			}
 
-			if (branches.isEmpty()) {
-				return Collections.emptyMap();
+			// Restrict the search results
+			if (startTime != null && stopTime != null) {
+				walk.setRevFilter(AuthorTimeRevFilter.between(startTime, stopTime));
+			} else if (startTime != null) {
+				walk.setRevFilter(AuthorTimeRevFilter.after(startTime));
+			} else if (stopTime != null) {
+				walk.setRevFilter(AuthorTimeRevFilter.before(stopTime));
 			}
 
-			try (Repository repo = repoStorage.acquireRepository(repoId.getDirectoryName())) {
-				RevWalk walk = new RevWalk(repo);
-				Git git = Git.wrap(repo);
-
-				// Start the walk from the specified branches
-				Map<CommitHash, Commit> commitMap = new HashMap<>();
-
-				for (Ref branchRef : git.branchList().call()) {
-					BranchName branchName = BranchName.fromFullName(branchRef.getName());
-
-					if (branches.contains(branchName)) {
-						ObjectId branchObjectId = branchRef.getObjectId();
-						RevCommit revCommit = walk.parseCommit(branchObjectId); // Doesn't load body
-
-						walk.markStart(revCommit);
-					}
-				}
-
-				// Restrict the search results
-				if (startTime != null && stopTime != null) {
-					walk.setRevFilter(AuthorTimeRevFilter.between(startTime, stopTime));
-				} else if (startTime != null) {
-					walk.setRevFilter(AuthorTimeRevFilter.after(startTime));
-				} else if (stopTime != null) {
-					walk.setRevFilter(AuthorTimeRevFilter.before(stopTime));
-				}
-
-				for (RevCommit revCommit : walk) {
-					Commit commit = commitFromRevCommit(repoId, revCommit);
-					commitMap.put(commit.getHash(), commit);
-				}
-
-				return commitMap;
-			} catch (RepositoryAcquisitionException | GitAPIException | IOException e) {
-				throw new RepoAccessException(repoId, e);
+			for (RevCommit revCommit : walk) {
+				Commit commit = commitFromRevCommit(repoId, revCommit);
+				commitMap.put(commit.getHash(), commit);
 			}
-		});
+
+			return commitMap;
+		} catch (RepositoryAcquisitionException | GitAPIException | IOException e) {
+			throw new RepoAccessException(repoId, e);
+		}
 	}
 
+	@Timed(histogram = true)
 	public Stream<Commit> getCommitLog(RepoId repoId, Collection<BranchName> branches)
 		throws CommitLogException {
 
-		return GET_COMMIT_LOG_TIMER.record(() -> {
-			// Step -1: Check arguments
-			Objects.requireNonNull(repoId);
-			Objects.requireNonNull(branches);
-			if (branches.isEmpty()) {
-				return Stream.empty();
+		// Step -1: Check arguments
+		Objects.requireNonNull(repoId);
+		Objects.requireNonNull(branches);
+		if (branches.isEmpty()) {
+			return Stream.empty();
+		}
+
+		// Step 0: Sort branches so that the outcome is deterministic
+		List<BranchName> sortedBranches = new ArrayList<>(branches);
+		Collections.sort(sortedBranches);
+
+		// Step 1: Acquire repository
+		Repository jgitRepo;
+
+		try {
+			String directoryName = repoId.getDirectoryName();
+			jgitRepo = repoStorage.acquireRepository(directoryName);
+		} catch (RepositoryAcquisitionException e) {
+			throw new CommitLogException(repoId, branches, e);
+		}
+
+		try {
+			// Step 2: Run log command
+			LogCommand logCommand = Git.wrap(jgitRepo).log();
+
+			for (BranchName branchName : sortedBranches) {
+				ObjectId branchId = jgitRepo.resolve(branchName.getFullName());
+				logCommand.add(branchId);
 			}
 
-			// Step 0: Sort branches so that the outcome is deterministic
-			List<BranchName> sortedBranches = new ArrayList<>(branches);
-			Collections.sort(sortedBranches);
+			// Step 3: Prepare stream
+			Spliterator<RevCommit> commitSpliterator = Spliterators.spliteratorUnknownSize(
+				logCommand.call().iterator(), 0);
 
-			// Step 1: Acquire repository
-			Repository jgitRepo;
-
-			try {
-				String directoryName = repoId.getDirectoryName();
-				jgitRepo = repoStorage.acquireRepository(directoryName);
-			} catch (RepositoryAcquisitionException e) {
-				throw new CommitLogException(repoId, branches, e);
-			}
-
-			try {
-				// Step 2: Run log command
-				LogCommand logCommand = Git.wrap(jgitRepo).log();
-
-				for (BranchName branchName : sortedBranches) {
-					ObjectId branchId = jgitRepo.resolve(branchName.getFullName());
-					logCommand.add(branchId);
-				}
-
-				// Step 3: Prepare stream
-				Spliterator<RevCommit> commitSpliterator = Spliterators.spliteratorUnknownSize(
-					logCommand.call().iterator(), 0);
-
-				return StreamSupport.stream(commitSpliterator, false)
-					.map(revCommit -> commitFromRevCommit(repoId, revCommit))
-					.onClose(jgitRepo::close);
-			} catch (Exception e) {
-				jgitRepo.close(); // Release repo storage lock if this fails
-				throw new CommitLogException(repoId, branches, e);
-			}
-		});
+			return StreamSupport.stream(commitSpliterator, false)
+				.map(revCommit -> commitFromRevCommit(repoId, revCommit))
+				.onClose(jgitRepo::close);
+		} catch (Exception e) {
+			jgitRepo.close(); // Release repo storage lock if this fails
+			throw new CommitLogException(repoId, branches, e);
+		}
 	}
 
 }

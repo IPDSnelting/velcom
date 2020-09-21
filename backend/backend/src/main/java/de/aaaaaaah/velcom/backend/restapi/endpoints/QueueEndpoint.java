@@ -1,8 +1,5 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
-import static de.aaaaaaah.velcom.backend.util.MetricsUtils.timer;
-
-import com.codahale.metrics.annotation.Timed;
 import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.access.RepoReadAccess;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
@@ -20,7 +17,7 @@ import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonTask;
 import de.aaaaaaah.velcom.backend.runner.IDispatcher;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.PATCH;
-import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.annotation.Timed;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
@@ -40,11 +37,6 @@ public class QueueEndpoint {
 
 	// TODO: 12.09.20 Add one-up endpoint (also update the API spec)
 
-	private static final Timer ENDPOINT_TIMER_GET = timer("velcom.endpoint.queue.get");
-	private static final Timer ENDPOINT_TIMER_DELETE = timer("velcom.endpoint.queue.delete");
-	private static final Timer ENDPOINT_TIMER_PATCH = timer("velcom.endpoint.queue.patch");
-	private static final Timer ENDPOINT_TIMER_POST = timer("velcom.endpoint.queue.post");
-
 	private final CommitReadAccess commitReadAccess;
 	private final RepoReadAccess repoReadAccess;
 	private final Queue queue;
@@ -60,10 +52,8 @@ public class QueueEndpoint {
 	}
 
 	@GET
-	@Timed
+	@Timed(histogram = true)
 	public GetQueueReply getQueue() {
-		final var timer = Timer.start();
-
 		// TODO: 08.09.20 Fix NPE when calling this endpoint
 		List<JsonTask> tasks = queue.getTasksSorted()
 			.stream()
@@ -75,18 +65,14 @@ public class QueueEndpoint {
 			.map(JsonRunner::fromKnownRunner)
 			.collect(Collectors.toList());
 
-		timer.stop(ENDPOINT_TIMER_GET);
-
 		return new GetQueueReply(tasks, worker);
 	}
 
 	@DELETE
 	@Path("{taskId}")
-	@Timed
+	@Timed(histogram = true)
 	public Response deleteTask(@Auth RepoUser user, @PathParam("taskId") UUID taskId)
 		throws NoSuchTaskException {
-		final var timer = Timer.start();
-
 		Task task = queue.getTaskById(new TaskId(taskId));
 		if (task.getRepoId().isEmpty()) {
 			user.guardAdminAccess();
@@ -96,26 +82,20 @@ public class QueueEndpoint {
 
 		queue.deleteTasks(List.of(new TaskId(taskId)));
 
-		timer.stop(ENDPOINT_TIMER_DELETE);
-
 		return Response.ok().build();
 	}
 
 	@PATCH
 	@Path("{taskId}")
-	@Timed
+	@Timed(histogram = true)
 	public Response patchTask(@Auth RepoUser user, @PathParam("taskId") UUID taskId)
 		throws NoSuchTaskException {
-		final var timer = Timer.start();
-
 		user.guardAdminAccess();
 
 		// Throws an exception if the task does not exist! This is needed.
 		Task task = queue.getTaskById(new TaskId(taskId));
 
 		queue.prioritizeTask(task.getId(), QueuePriority.MANUAL);
-
-		timer.stop(ENDPOINT_TIMER_PATCH);
 
 		return Response.ok().build();
 	}
@@ -126,11 +106,9 @@ public class QueueEndpoint {
 	// TaskWriteAccess should probably throw a NoSuchCommitException.
 	@POST
 	@Path("commit/{repoId}/{hash}")
-	@Timed
+	@Timed(histogram = true)
 	public PostCommitReply addCommit(@Auth RepoUser user, @PathParam("repoId") UUID repoUuid,
 		@PathParam("hash") String commitHashString) {
-		final var timer = Timer.start();
-
 		RepoId repoId = new RepoId(repoUuid);
 		CommitHash commitHash = new CommitHash(commitHashString);
 
@@ -154,8 +132,6 @@ public class QueueEndpoint {
 		}
 
 		Task task = insertedTasks.iterator().next();
-
-		timer.stop(ENDPOINT_TIMER_POST);
 
 		return new PostCommitReply(JsonTask.fromTask(task, commitReadAccess));
 	}

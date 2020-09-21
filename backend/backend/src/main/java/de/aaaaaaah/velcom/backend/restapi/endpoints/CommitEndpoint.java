@@ -1,8 +1,5 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
-import static de.aaaaaaah.velcom.backend.util.MetricsUtils.timer;
-
-import com.codahale.metrics.annotation.Timed;
 import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.access.entities.Commit;
@@ -13,7 +10,7 @@ import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonCommit;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonCommitDescription;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRunDescription;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRunDescription.JsonSuccess;
-import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.annotation.Timed;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -30,8 +27,6 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 public class CommitEndpoint {
 
-	private static final Timer ENDPOINT_TIMER = timer("velcom.endpoint.commit.get");
-
 	private final CommitReadAccess commitAccess;
 	private final BenchmarkReadAccess benchmarkAccess;
 
@@ -41,12 +36,11 @@ public class CommitEndpoint {
 	}
 
 	@GET
-	@Timed
+	@Timed(histogram = true)
 	public GetReply get(
 		@PathParam("repoid") UUID repoUuid,
 		@PathParam("hash") String hashString
 	) {
-		final var timer = Timer.start();
 
 		RepoId repoId = new RepoId(repoUuid);
 		CommitHash hash = new CommitHash(hashString);
@@ -72,8 +66,6 @@ public class CommitEndpoint {
 				EndpointUtils.convertToSource(commitAccess, run.getSource())
 			))
 			.collect(Collectors.toList());
-
-		timer.stop(ENDPOINT_TIMER);
 
 		return new GetReply(new JsonCommit(
 			commit.getRepoId().getId(),

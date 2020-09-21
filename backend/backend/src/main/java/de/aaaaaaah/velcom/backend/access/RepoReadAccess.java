@@ -93,6 +93,7 @@ public class RepoReadAccess {
 	 * @return Gets a list of all tracked repositories.
 	 */
 	public Collection<Repo> getAllRepos() {
+
 		// Check cache
 		List<Repo> repoList = new ArrayList<>(this.repoCache.asMap().values());
 

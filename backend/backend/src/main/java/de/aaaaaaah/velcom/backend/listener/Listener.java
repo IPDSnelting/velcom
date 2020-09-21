@@ -18,8 +18,7 @@ import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchRepoException;
 import de.aaaaaaah.velcom.backend.access.exceptions.RepoAccessException;
 import de.aaaaaaah.velcom.backend.access.policy.QueuePriority;
 import de.aaaaaaah.velcom.backend.data.benchrepo.BenchRepo;
-import de.aaaaaaah.velcom.backend.util.MetricsUtils;
-import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.annotation.Timed;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -43,8 +42,6 @@ public class Listener {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(Listener.class);
 	private static final String AUTHOR = "Listener";
-
-	private static final Timer TIMER = MetricsUtils.timer("velcom.listener");
 
 	private final RepoWriteAccess repoAccess;
 	private final CommitReadAccess commitAccess;
@@ -81,9 +78,8 @@ public class Listener {
 		unknownCommitFinder = new BreadthFirstSearchFinder();
 	}
 
+	@Timed(histogram = true)
 	private void update() {
-		final var timer = Timer.start();
-
 		try {
 			benchRepo.checkForUpdates();
 		} catch (RepoAccessException e) {
@@ -97,8 +93,6 @@ public class Listener {
 				LOGGER.warn("Could not fetch updates for repo: " + repo, e);
 			}
 		}
-
-		timer.stop(TIMER);
 	}
 
 	/**

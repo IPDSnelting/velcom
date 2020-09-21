@@ -1,6 +1,5 @@
 package de.aaaaaaah.velcom.backend.data.repocomparison;
 
-import static de.aaaaaaah.velcom.backend.util.MetricsUtils.timer;
 import static java.util.stream.Collectors.toList;
 
 import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
@@ -19,7 +18,7 @@ import de.aaaaaaah.velcom.backend.data.repocomparison.grouping.CommitGrouper;
 import de.aaaaaaah.velcom.backend.data.repocomparison.grouping.GroupByDay;
 import de.aaaaaaah.velcom.backend.data.repocomparison.grouping.GroupByHour;
 import de.aaaaaaah.velcom.backend.data.repocomparison.grouping.GroupByWeek;
-import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.annotation.Timed;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -40,8 +39,6 @@ import javax.annotation.Nullable;
  * removing small one-off performance drops and peaks, which lends itself better for comparisons.
  */
 public class TimesliceComparison implements RepoComparison {
-
-	private static final Timer TOTAL_TIMER = timer("velcom.timeslicecomparison.total");
 
 	// Difference of start and end time (in seconds) below which the hourly grouper should be used.
 	public static final long HOURLY_THRESHOLD = 60 * 60 * 24 * 20; // 20 days
@@ -70,12 +67,12 @@ public class TimesliceComparison implements RepoComparison {
 	}
 
 	@Override
+	@Timed(histogram = true)
 	public RepoComparisonGraph generateGraph(Dimension dimension,
 		Map<RepoId, Set<BranchName>> repoBranches,
 		@Nullable Instant startTime,
 		@Nullable Instant endTime) {
 
-		final var timer = Timer.start();
 		final DimensionInfo dimensionInfo = benchmarkAccess.getDimensionInfo(dimension);
 
 		List<RepoGraphData> dataList = new ArrayList<>();
@@ -84,7 +81,6 @@ public class TimesliceComparison implements RepoComparison {
 			collectData(repoId, dimensionInfo, branchNames, startTime, endTime)
 				.ifPresent(dataList::add));
 
-		timer.stop(TOTAL_TIMER);
 		return new RepoComparisonGraph(dimensionInfo, dataList, startTime, endTime);
 	}
 

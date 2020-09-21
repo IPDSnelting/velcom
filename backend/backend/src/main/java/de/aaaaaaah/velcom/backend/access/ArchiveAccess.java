@@ -1,7 +1,5 @@
 package de.aaaaaaah.velcom.backend.access;
 
-import static de.aaaaaaah.velcom.backend.util.MetricsUtils.timer;
-
 import de.aaaaaaah.velcom.backend.access.archives.BenchRepoArchive;
 import de.aaaaaaah.velcom.backend.access.archives.RepoArchiveManager;
 import de.aaaaaaah.velcom.backend.access.archives.TarArchiveManager;
@@ -19,7 +17,7 @@ import de.aaaaaaah.velcom.backend.storage.repo.RepoStorage;
 import de.aaaaaaah.velcom.backend.storage.repo.exception.AddRepositoryException;
 import de.aaaaaaah.velcom.backend.storage.repo.exception.RepositoryAcquisitionException;
 import de.aaaaaaah.velcom.backend.util.TransferUtils;
-import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.annotation.Timed;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Path;
@@ -44,10 +42,6 @@ public class ArchiveAccess {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(ArchiveAccess.class);
 	private static final String BENCH_REPO_DIR_NAME = "benchrepo";
-
-	private static final Timer BENCH_REPO_TIMER = timer("velcom.transfer.benchrepo");
-	private static final Timer TAR_TASK_TIMER = timer("velcom.transfer.tar-task.benchrepo");
-	private static final Timer REPO_TASK_TIMER = timer("velcom.transfer.repo-task.benchrepo");
 
 	private final RepoStorage repoStorage;
 
@@ -164,10 +158,9 @@ public class ArchiveAccess {
 	 * @throws PrepareTransferException if something goes wrong trying to prepare the transfer
 	 * @throws TransferException if the transfer itself fails
 	 */
+	@Timed(histogram = true)
 	public void transferBenchRepo(OutputStream outputStream)
 		throws PrepareTransferException, TransferException {
-
-		final var timer = Timer.start();
 
 		synchronized (this.benchRepoLock) {
 			// 1.) Create archive if necessary
@@ -189,8 +182,6 @@ public class ArchiveAccess {
 				throw new TransferException("Failed to transfer bench repo", e);
 			}
 		}
-
-		timer.stop(BENCH_REPO_TIMER);
 	}
 
 	/**
@@ -204,15 +195,12 @@ public class ArchiveAccess {
 	 * @throws PrepareTransferException if something goes wrong trying to prepare the transfer
 	 * @throws TransferException if the transfer itself fails
 	 */
+	@Timed(histogram = true)
 	public void transferTask(Task task, OutputStream outputStream)
 		throws PrepareTransferException, TransferException {
 
-		final var timer = Timer.start();
-
 		if (task.getSource().isRight()) {
 			throw new PrepareTransferException("tar transfers unsupported");
-
-			// timer.stop(TAR_TASK_TIMER);
 		} else {
 			RepoId repoId = task.getSource().getLeft().get().getRepoId();
 			CommitHash hash = task.getSource().getLeft().get().getHash();
@@ -232,8 +220,6 @@ public class ArchiveAccess {
 			} catch (IOException e) {
 				throw new TransferException(task, e);
 			}
-
-			timer.stop(REPO_TASK_TIMER);
 		}
 	}
 

@@ -1,13 +1,12 @@
 package de.aaaaaaah.velcom.backend.access.policy;
 
 import static de.aaaaaaah.velcom.backend.access.TaskReadAccess.taskFromRecord;
-import static de.aaaaaaah.velcom.backend.util.MetricsUtils.timer;
 import static org.jooq.codegen.db.Tables.TASK;
 
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.entities.Task;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
-import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.annotation.Timed;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -47,11 +46,6 @@ import org.jooq.codegen.db.tables.records.TaskRecord;
  */
 public class RoundRobinFiloPolicy implements QueuePolicy {
 
-	private static final Timer FETCH_NEXT_TIMER =
-		timer("velcom.queuepolicy.roundrobinfilo.fetch");
-	private static final Timer GET_TASKS_TIMER =
-		timer("velcom.queuepolicy.roundrobinfilo.get");
-
 	/**
 	 * The priority at and below which tasks will be subject to the round robin ordering (below as in
 	 * less important, not a lower priority value).
@@ -66,9 +60,8 @@ public class RoundRobinFiloPolicy implements QueuePolicy {
 	}
 
 	@Override
+	@Timed(histogram = true)
 	public synchronized Optional<Task> fetchNextTask() {
-		final var timer = Timer.start();
-
 		AtomicReference<Task> result = new AtomicReference<>(null);
 
 		databaseStorage.acquireWriteTransaction(db -> {
@@ -178,14 +171,12 @@ public class RoundRobinFiloPolicy implements QueuePolicy {
 			}
 		});
 
-		timer.stop(FETCH_NEXT_TIMER);
 		return Optional.ofNullable(result.get());
 	}
 
 	@Override
+	@Timed(histogram = true)
 	public List<Task> getTasksSorted() {
-		final var timer = Timer.start();
-
 		// The final ordered list that represents the queue
 		LinkedList<Task> completeTaskList = new LinkedList<>();
 
@@ -245,7 +236,6 @@ public class RoundRobinFiloPolicy implements QueuePolicy {
 			}
 		});
 
-		timer.stop(GET_TASKS_TIMER);
 		return completeTaskList;
 	}
 

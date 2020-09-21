@@ -1,7 +1,5 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
-import static de.aaaaaaah.velcom.backend.util.MetricsUtils.timer;
-
 import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.access.RepoReadAccess;
 import de.aaaaaaah.velcom.backend.access.TokenReadAccess;
@@ -13,7 +11,7 @@ import de.aaaaaaah.velcom.backend.access.entities.Repo;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimension;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRepo;
-import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.annotation.Timed;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -32,8 +30,6 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 public class AllReposEndpoint {
 
-	private static final Timer ENDPOINT_TIMER = timer("velcom.endpoint.allrepos.get");
-
 	private final RepoReadAccess repoAccess;
 	private final BenchmarkReadAccess benchmarkAccess;
 	private final TokenReadAccess tokenAccess;
@@ -50,9 +46,8 @@ public class AllReposEndpoint {
 	// TODO: 12.09.20 Return actual dimensions, not empty list
 	// For some reason, this endpoint returns an empty list of dimensions for every repo.
 	@GET
+	@Timed(histogram = true)
 	public GetReply get() {
-		final var timer = Timer.start();
-
 		Collection<Repo> repos = repoAccess.getAllRepos();
 		List<RepoId> repoIds = repos.stream().map(Repo::getRepoId).collect(Collectors.toList());
 		Map<RepoId, Set<Dimension>> allDimensions = benchmarkAccess.getAvailableDimensions(repoIds);
@@ -97,7 +92,6 @@ public class AllReposEndpoint {
 			})
 			.collect(Collectors.toList());
 
-		timer.stop(ENDPOINT_TIMER);
 		return new GetReply(jsonRepos);
 	}
 

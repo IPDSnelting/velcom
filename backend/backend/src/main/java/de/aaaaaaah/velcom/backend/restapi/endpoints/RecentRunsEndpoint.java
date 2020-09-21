@@ -1,15 +1,12 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
-import static de.aaaaaaah.velcom.backend.util.MetricsUtils.timer;
-
-import com.codahale.metrics.annotation.Timed;
 import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.utils.EndpointUtils;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimensionDifference;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRunDescription;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRunDescription.JsonSuccess;
-import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.annotation.Timed;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -26,8 +23,6 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 public class RecentRunsEndpoint {
 
-	private static final Timer ENDPOINT_TIMER = timer("velcom.endpoint.recentruns.get");
-
 	private static final int DEFAULT_N = 10;
 	private static final int MIN_N = 1;
 	private static final int MAX_N = 100;
@@ -41,13 +36,11 @@ public class RecentRunsEndpoint {
 	}
 
 	@GET
-	@Timed
+	@Timed(histogram = true)
 	public GetReply getRuns(
 		@QueryParam("n") @Nullable Integer nOptional,
 		@QueryParam("significant") @Nullable Boolean significantOptional
 	) {
-		final var timer = Timer.start();
-
 		int n = (nOptional == null) ? DEFAULT_N : nOptional;
 		n = Math.max(MIN_N, Math.min(MAX_N, n));
 
@@ -69,8 +62,6 @@ public class RecentRunsEndpoint {
 				null
 			))
 			.collect(Collectors.toList());
-
-		timer.stop(ENDPOINT_TIMER);
 
 		return new GetReply(recentRuns);
 	}

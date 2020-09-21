@@ -22,6 +22,7 @@
     <flyway.version>6.5.2</flyway.version>
     <sqlite.version>3.32.3.1</sqlite.version>
     <micrometer.version>1.5.5</micrometer.version>
+    <aspectj.version>1.9.6</aspectj.version>
   </properties>
 
   <build>
@@ -321,6 +322,19 @@
       <groupId>io.micrometer</groupId>
       <artifactId>micrometer-registry-prometheus</artifactId>
       <version>${micrometer.version}</version>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/org.aspectj/aspectjrt -->
+    <dependency>
+      <groupId>org.aspectj</groupId>
+      <artifactId>aspectjrt</artifactId>
+      <version>${aspectj.version}</version>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/org.aspectj/aspectjweaver -->
+    <dependency>
+      <groupId>org.aspectj</groupId>
+      <artifactId>aspectjweaver</artifactId>
+      <version>${aspectj.version}</version>
+      <scope>runtime</scope>
     </dependency>
 
   </dependencies>
