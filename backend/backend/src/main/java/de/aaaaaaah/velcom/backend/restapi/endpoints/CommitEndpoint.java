@@ -7,13 +7,13 @@ import de.aaaaaaah.velcom.backend.access.entities.Branch;
 import de.aaaaaaah.velcom.backend.access.entities.BranchName;
 import de.aaaaaaah.velcom.backend.access.entities.Commit;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
-import de.aaaaaaah.velcom.backend.access.entities.Repo;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonCommit;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonCommitDescription;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRunDescription;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRunDescription.JsonSuccess;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonSource;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -51,7 +51,6 @@ public class CommitEndpoint {
 		RepoId repoId = new RepoId(repoUuid);
 		CommitHash hash = new CommitHash(hashString);
 
-		Repo repo = repoAccess.getRepo(repoId);
 		Commit commit = commitAccess.getCommit(repoId, hash);
 
 		List<JsonCommitDescription> parents = commit.getParentHashes().stream()
@@ -59,11 +58,24 @@ public class CommitEndpoint {
 			.map(JsonCommitDescription::fromCommit)
 			.collect(Collectors.toList());
 
-		Set<BranchName> trackedBranches = repo.getTrackedBranches().stream()
+		Set<BranchName> trackedBranches = repoAccess.getTrackedBranches(repoId).stream()
 			.map(Branch::getName)
 			.collect(Collectors.toSet());
-		List<JsonCommitDescription> children = commitAccess.getChildren(repoId, hash, trackedBranches)
-			.stream()
+		Set<BranchName> allBranches = repoAccess.getBranches(repoId).stream()
+			.map(Branch::getName)
+			.collect(Collectors.toSet());
+
+		Set<CommitHash> trackedChildHashes = new HashSet<>(
+			commitAccess.getChildren(repoId, hash, trackedBranches));
+		Set<CommitHash> untrackedChildHashes = new HashSet<>(
+			commitAccess.getChildren(repoId, hash, allBranches));
+		untrackedChildHashes.removeAll(trackedChildHashes);
+
+		List<JsonCommitDescription> trackedChildren = trackedChildHashes.stream()
+			.map(childHash -> commitAccess.getCommit(repoId, childHash))
+			.map(JsonCommitDescription::fromCommit)
+			.collect(Collectors.toList());
+		List<JsonCommitDescription> untrackedChildren = untrackedChildHashes.stream()
 			.map(childHash -> commitAccess.getCommit(repoId, childHash))
 			.map(JsonCommitDescription::fromCommit)
 			.collect(Collectors.toList());
@@ -81,7 +93,8 @@ public class CommitEndpoint {
 			commit.getRepoId().getId(),
 			commit.getHash().getHash(),
 			parents,
-			children,
+			trackedChildren,
+			untrackedChildren,
 			commit.getAuthor(),
 			commit.getAuthorDate().getEpochSecond(),
 			commit.getCommitter(),

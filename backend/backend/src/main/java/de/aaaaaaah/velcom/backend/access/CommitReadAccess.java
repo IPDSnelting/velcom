@@ -148,7 +148,7 @@ public class CommitReadAccess {
 	 * @throws CommitAccessException when accessing the repo fails
 	 */
 	public Collection<CommitHash> getChildren(RepoId repoId, CommitHash commitHash,
-		Set<BranchName> targetBranches) {
+		Set<BranchName> startingBranches) {
 
 		try (
 			Repository repo = repoStorage.acquireRepository(repoId.getDirectoryName());
@@ -156,11 +156,10 @@ public class CommitReadAccess {
 		) {
 			ObjectId targetId = repo.resolve(commitHash.getHash());
 
-			// TODO: 21/09/2020 Maybe use all branches instead of only tracked branches?
 			List<RevCommit> startPoints = new ArrayList<>();
 			for (Ref branchRef : Git.wrap(repo).branchList().call()) {
 				BranchName branchName = BranchName.fromFullName(branchRef.getName());
-				if (targetBranches.contains(branchName)) {
+				if (startingBranches.contains(branchName)) {
 					RevCommit revCommit = plotWalk.parseCommit(branchRef.getObjectId());
 					startPoints.add(revCommit);
 				}
