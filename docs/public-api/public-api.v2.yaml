@@ -797,8 +797,14 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CommitDescription'
-        children:
+        tracked_children:
           type: array
+          description: Child commits that can be reached from at least one tracked branch
+          items:
+            $ref: '#/components/schemas/CommitDescription'
+        untracked_children:
+          type: array
+          description: 'Child commits that can''t be reached from any tracked branch, but from at least one untracked branch'
           items:
             $ref: '#/components/schemas/CommitDescription'
         author:
@@ -824,7 +830,8 @@ components:
         - repo_id
         - hash
         - parents
-        - children
+        - tracked_children
+        - untracked_children
         - author
         - author_date
         - committer
