@@ -2,8 +2,12 @@ package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
 import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
+import de.aaaaaaah.velcom.backend.access.RepoReadAccess;
+import de.aaaaaaah.velcom.backend.access.entities.Branch;
+import de.aaaaaaah.velcom.backend.access.entities.BranchName;
 import de.aaaaaaah.velcom.backend.access.entities.Commit;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.access.entities.Repo;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonCommit;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonCommitDescription;
@@ -11,6 +15,7 @@ import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRunDescription;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRunDescription.JsonSuccess;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonSource;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.ws.rs.GET;
@@ -27,10 +32,14 @@ import javax.ws.rs.core.MediaType;
 public class CommitEndpoint {
 
 	private final CommitReadAccess commitAccess;
+	private final RepoReadAccess repoAccess;
 	private final BenchmarkReadAccess benchmarkAccess;
 
-	public CommitEndpoint(CommitReadAccess commitAccess, BenchmarkReadAccess benchmarkAccess) {
+	public CommitEndpoint(CommitReadAccess commitAccess, RepoReadAccess repoAccess,
+		BenchmarkReadAccess benchmarkAccess) {
+
 		this.commitAccess = commitAccess;
+		this.repoAccess = repoAccess;
 		this.benchmarkAccess = benchmarkAccess;
 	}
 
@@ -42,6 +51,7 @@ public class CommitEndpoint {
 		RepoId repoId = new RepoId(repoUuid);
 		CommitHash hash = new CommitHash(hashString);
 
+		Repo repo = repoAccess.getRepo(repoId);
 		Commit commit = commitAccess.getCommit(repoId, hash);
 
 		List<JsonCommitDescription> parents = commit.getParentHashes().stream()
@@ -49,7 +59,11 @@ public class CommitEndpoint {
 			.map(JsonCommitDescription::fromCommit)
 			.collect(Collectors.toList());
 
-		List<JsonCommitDescription> children = commitAccess.getChildren(repoId, hash).stream()
+		Set<BranchName> trackedBranches = repo.getTrackedBranches().stream()
+			.map(Branch::getName)
+			.collect(Collectors.toSet());
+		List<JsonCommitDescription> children = commitAccess.getChildren(repoId, hash, trackedBranches)
+			.stream()
 			.map(childHash -> commitAccess.getCommit(repoId, childHash))
 			.map(JsonCommitDescription::fromCommit)
 			.collect(Collectors.toList());

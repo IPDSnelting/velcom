@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.stream.Collectors;
@@ -144,19 +145,25 @@ public class CommitReadAccess {
 	 * @param repoId the repo the commit is in
 	 * @param commitHash the commit's hash
 	 * @return the commit's children
+	 * @throws CommitAccessException when accessing the repo fails
 	 */
-	public Collection<CommitHash> getChildren(RepoId repoId, CommitHash commitHash) {
+	public Collection<CommitHash> getChildren(RepoId repoId, CommitHash commitHash,
+		Set<BranchName> targetBranches) {
+
 		try (
 			Repository repo = repoStorage.acquireRepository(repoId.getDirectoryName());
 			PlotWalk plotWalk = new PlotWalk(repo);
 		) {
 			ObjectId targetId = repo.resolve(commitHash.getHash());
 
+			// TODO: 21/09/2020 Maybe use all branches instead of only tracked branches?
 			List<RevCommit> startPoints = new ArrayList<>();
-			for (Ref ref : repo.getRefDatabase().getRefs()) {
-				ObjectId objectId = ref.getObjectId();
-				RevCommit revCommit = plotWalk.parseCommit(objectId);
-				startPoints.add(revCommit);
+			for (Ref branchRef : Git.wrap(repo).branchList().call()) {
+				BranchName branchName = BranchName.fromFullName(branchRef.getName());
+				if (targetBranches.contains(branchName)) {
+					RevCommit revCommit = plotWalk.parseCommit(branchRef.getObjectId());
+					startPoints.add(revCommit);
+				}
 			}
 			plotWalk.markStart(startPoints);
 
