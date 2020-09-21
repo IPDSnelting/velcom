@@ -1,7 +1,5 @@
 package de.aaaaaaah.velcom.backend;
 
-import com.codahale.metrics.ConsoleReporter;
-import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import de.aaaaaaah.velcom.backend.access.ArchiveAccess;
@@ -48,22 +46,13 @@ import io.dropwizard.auth.AuthValueFactoryProvider;
 import io.dropwizard.auth.basic.BasicCredentialAuthFilter;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
-import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Metrics;
-import io.micrometer.core.instrument.dropwizard.DropwizardConfig;
-import io.micrometer.core.instrument.dropwizard.DropwizardMeterRegistry;
-import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.prometheus.PrometheusConfig;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
-import io.prometheus.client.CollectorRegistry;
-import io.prometheus.client.dropwizard.DropwizardExports;
-import io.prometheus.client.exporter.MetricsServlet;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.Collection;
 import java.util.EnumSet;
-import java.util.concurrent.TimeUnit;
 import javax.servlet.DispatcherType;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -79,20 +68,6 @@ import org.slf4j.LoggerFactory;
 public class ServerMain extends Application<GlobalConfig> {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(ServerMain.class);
-
-	private static MetricRegistry metricRegistry;
-
-	/**
-	 * @return the global metric registry
-	 */
-	public static MetricRegistry getMetricRegistry() {
-		// Called before `run` was called (in a Test`)
-		if (metricRegistry == null) {
-			LOGGER.warn("Returning bogus metrics factory!");
-			return new MetricRegistry();
-		}
-		return metricRegistry;
-	}
 
 	/**
 	 * The backend's main class's main method. Starts the web server.
@@ -111,20 +86,15 @@ public class ServerMain extends Application<GlobalConfig> {
 
 	@Override
 	public void run(GlobalConfig configuration, Environment environment) throws Exception {
-		metricRegistry = environment.metrics();
-
-		CollectorRegistry collectorRegistry = new CollectorRegistry();
-		collectorRegistry.register(new DropwizardExports(environment.metrics()));
-		environment.admin()
-			.addServlet("prometheusMetrics", new MetricsServlet(collectorRegistry))
-			.addMapping("/prometheusMetrics");
-
+		// Setup metrics & prometheus
 		PrometheusMeterRegistry registry = new PrometheusMeterRegistry(
-			PrometheusConfig.DEFAULT, collectorRegistry, Clock.SYSTEM
+			PrometheusConfig.DEFAULT
 		);
+
 		Metrics.globalRegistry.add(registry);
+
 		environment.admin()
-			.addServlet("prometheusMetrics2", new HttpServlet() {
+			.addServlet("prometheusMetrics", new HttpServlet() {
 				@Override
 				protected void doGet(HttpServletRequest req, HttpServletResponse resp)
 					throws ServletException, IOException {
@@ -132,7 +102,7 @@ public class ServerMain extends Application<GlobalConfig> {
 					resp.getWriter().write(registry.scrape());
 				}
 			})
-			.addMapping("/prometheusMetrics2");
+			.addMapping("/prometheusMetrics");
 
 		// Storage layer
 		RepoStorage repoStorage = new RepoStorage(configuration.getRepoDir());
@@ -204,10 +174,6 @@ public class ServerMain extends Application<GlobalConfig> {
 		environment.jersey().register(new GraphComparisonEndpoint(comparison, benchmarkAccess));
 		environment.jersey()
 			.register(new GraphDetailEndpoint(commitAccess, benchmarkAccess, repoAccess));
-
-		ConsoleReporter reporter = ConsoleReporter.forRegistry(metricRegistry).build();
-		reporter.start(30000, TimeUnit.MILLISECONDS);
-		reporter.report();
 	}
 
 	private void configureApi(Environment environment, TokenWriteAccess tokenAccess) {
