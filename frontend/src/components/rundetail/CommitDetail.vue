@@ -37,11 +37,13 @@
                 :key="index"
                 justify="space-between"
                 no-gutters
+                class="py-1"
               >
                 <v-col cols="6" class="pr-4">
                   <div v-if="parent" class="d-flex justify-start">
                     <commit-navigation-button
                       :commitDescription="parent"
+                      :tracked="true"
                       type="PARENT"
                     ></commit-navigation-button>
                   </div>
@@ -50,7 +52,8 @@
                 <v-col cols="6">
                   <div v-if="child" class="d-flex justify-end">
                     <commit-navigation-button
-                      :commitDescription="child"
+                      :commitDescription="child.description"
+                      :tracked="child.tracked"
                       type="CHILD"
                     ></commit-navigation-button>
                   </div>
@@ -92,21 +95,17 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
-import { Commit, CommitDescription } from '@/store/types'
+import { Commit, CommitChild, CommitDescription } from '@/store/types'
 import { formatDateUTC, formatDate } from '@/util/TimeUtil'
 import InlineMinimalRepoNameDisplay from '../InlineMinimalRepoDisplay.vue'
 import CommitBenchmarkActions from '../CommitBenchmarkActions.vue'
-import { mdiArrowLeft, mdiArrowRight } from '@mdi/js'
 import CommitNavigationButton from './CommitNavigationButton.vue'
 
 class NavigationTarget {
   readonly parent: CommitDescription | null
-  readonly child: CommitDescription | null
+  readonly child: CommitChild | null
 
-  constructor(
-    parent: CommitDescription | null,
-    child: CommitDescription | null
-  ) {
+  constructor(parent: CommitDescription | null, child: CommitChild | null) {
     this.parent = parent
     this.child = child
   }
@@ -133,7 +132,7 @@ export default class CommitDetail extends Vue {
 
   private get navigationTargets(): NavigationTarget[] {
     const targets: NavigationTarget[] = []
-    let mutualItems = Math.min(
+    const mutualItems = Math.min(
       this.commit.parents.length,
       this.commit.children.length
     )
@@ -156,10 +155,6 @@ export default class CommitDetail extends Vue {
 
     return targets
   }
-
-  // Icons
-  private parentCommitIcon = mdiArrowLeft
-  private childCommitIcon = mdiArrowRight
 }
 </script>
 

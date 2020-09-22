@@ -3,10 +3,10 @@
     <template #activator="{ on }">
       <v-btn
         v-on="on"
-        left
         text
         outlined
         class="d-flex commit-navigation-button"
+        :class="tracked ? '' : 'text--disabled'"
         :to="{
           name: 'run-detail',
           params: {
@@ -24,6 +24,7 @@
         </v-icon>
       </v-btn>
     </template>
+    <span v-if="!tracked" class="font-weight-bold">(On untracked branch)</span>
     {{ commitDescription.hash }} by {{ commitDescription.author }}
   </v-tooltip>
 </template>
@@ -41,6 +42,8 @@ export default class CommitNavigationButton extends Vue {
   private commitDescription!: CommitDescription
   @Prop({ default: 'PARENT' })
   private type!: 'PARENT' | 'CHILD'
+  @Prop({ default: true })
+  private tracked!: boolean
 
   // ICONS
   private parentCommitIcon = mdiArrowLeft

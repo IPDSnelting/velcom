@@ -98,6 +98,16 @@ export class Dimension {
 
 export type CommitHash = Flavor<string, 'commit_hash'>
 
+export class CommitChild {
+  readonly tracked: boolean
+  readonly description: CommitDescription
+
+  constructor(tracked: boolean, description: CommitDescription) {
+    this.tracked = tracked
+    this.description = description
+  }
+}
+
 export class Commit {
   readonly repoId: RepoId
   readonly hash: CommitHash
@@ -108,8 +118,15 @@ export class Commit {
   readonly summary: string
   readonly message: string | ''
   readonly runs: RunDescription[]
+  /**
+   * Sorted alphabetically.
+   */
   readonly parents: CommitDescription[]
-  readonly children: CommitDescription[]
+  /**
+   * Tracked children will come before tracked children,
+   * inside the buckets they are sorted alphabetically
+   */
+  readonly children: CommitChild[]
 
   // noinspection DuplicatedCode
   constructor(
@@ -123,7 +140,7 @@ export class Commit {
     summary: string,
     runs: RunDescription[],
     parents: CommitDescription[],
-    children: CommitDescription[]
+    children: CommitChild[]
   ) {
     this.repoId = repoId
     this.hash = hash
@@ -136,6 +153,17 @@ export class Commit {
     this.runs = runs
     this.parents = parents
     this.children = children
+
+    this.parents.sort((a, b) => a.summary.localeCompare(b.summary))
+    this.children.sort((a, b) => {
+      if (a.tracked && b.tracked) {
+        return a.description.summary.localeCompare(b.description.summary)
+      }
+      if (a.tracked) {
+        return -1
+      }
+      return 1
+    })
   }
 }
 
