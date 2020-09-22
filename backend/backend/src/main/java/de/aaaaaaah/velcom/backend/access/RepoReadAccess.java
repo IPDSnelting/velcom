@@ -97,7 +97,6 @@ public class RepoReadAccess {
 	 * @return Gets a list of all tracked repositories.
 	 */
 	public Collection<Repo> getAllRepos() {
-
 		// Check cache
 		List<Repo> repoList = new ArrayList<>(this.repoCache.asMap().values());
 
@@ -121,7 +120,6 @@ public class RepoReadAccess {
 	 */
 	public Collection<RepoId> getAllRepoIds() {
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-
 			return db.fetch(REPO)
 				.stream()
 				.map(record -> new RepoId(UUID.fromString(record.getId())))
