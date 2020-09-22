@@ -48,6 +48,7 @@ import io.dropwizard.auth.AuthValueFactoryProvider;
 import io.dropwizard.auth.basic.BasicCredentialAuthFilter;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
+import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics;
 import io.micrometer.core.instrument.binder.jvm.JvmCompilationMetrics;
@@ -64,7 +65,6 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.EnumSet;
 import javax.servlet.DispatcherType;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -102,33 +102,7 @@ public class ServerMain extends Application<GlobalConfig> {
 
 	@Override
 	public void run(GlobalConfig configuration, Environment environment) throws Exception {
-		// Setup metrics & prometheus
-		PrometheusMeterRegistry registry = new PrometheusMeterRegistry(
-			PrometheusConfig.DEFAULT
-		);
-
-		registry.config().commonTags("application", "Velcom");
-
-		Metrics.globalRegistry.add(registry);
-		new ClassLoaderMetrics().bindTo(Metrics.globalRegistry);
-		new JvmCompilationMetrics().bindTo(Metrics.globalRegistry);
-		new JvmGcMetrics().bindTo(Metrics.globalRegistry);
-		new JvmHeapPressureMetrics().bindTo(Metrics.globalRegistry);
-		new JvmMemoryMetrics().bindTo(Metrics.globalRegistry);
-		new JvmThreadMetrics().bindTo(Metrics.globalRegistry);
-		new ProcessorMetrics().bindTo(Metrics.globalRegistry);
-		new UptimeMetrics().bindTo(Metrics.globalRegistry);
-
-		environment.admin()
-			.addServlet("prometheusMetrics", new HttpServlet() {
-				@Override
-				protected void doGet(HttpServletRequest req, HttpServletResponse resp)
-					throws ServletException, IOException {
-					resp.setStatus(HttpServletResponse.SC_OK);
-					resp.getWriter().write(registry.scrape());
-				}
-			})
-			.addMapping("/prometheusMetrics");
+		configureMetrics(environment);
 
 		// Storage layer
 		RepoStorage repoStorage = new RepoStorage(configuration.getRepoDir());
@@ -201,6 +175,45 @@ public class ServerMain extends Application<GlobalConfig> {
 		environment.jersey()
 			.register(new GraphDetailEndpoint(commitAccess, benchmarkAccess, repoAccess));
 		environment.jersey().register(new DebugEndpoint(dispatcher));
+	}
+
+	private void configureMetrics(Environment environment) {
+		PrometheusMeterRegistry registry = new PrometheusMeterRegistry(
+			PrometheusConfig.DEFAULT
+		);
+
+		registry.config().commonTags("application", "Velcom");
+
+		Metrics.globalRegistry.add(registry);
+
+		try {
+			Class.forName("org.aspectj.weaver.WeaverMessages");
+			LOGGER.info("AspectJ weaver agent detected, providing detailed timing metrics");
+			Gauge.builder("aspectj.weaver.enabled", () -> 1).register(registry);
+		} catch (ClassNotFoundException e) {
+			LOGGER.warn("AspectJ weaver agent NOT FOUND! Many metrics will NOT be available");
+			Gauge.builder("aspectj.weaver.enabled", () -> 0).register(registry);
+		}
+
+		new ClassLoaderMetrics().bindTo(Metrics.globalRegistry);
+		new JvmCompilationMetrics().bindTo(Metrics.globalRegistry);
+		new JvmGcMetrics().bindTo(Metrics.globalRegistry);
+		new JvmHeapPressureMetrics().bindTo(Metrics.globalRegistry);
+		new JvmMemoryMetrics().bindTo(Metrics.globalRegistry);
+		new JvmThreadMetrics().bindTo(Metrics.globalRegistry);
+		new ProcessorMetrics().bindTo(Metrics.globalRegistry);
+		new UptimeMetrics().bindTo(Metrics.globalRegistry);
+
+		environment.admin()
+			.addServlet("prometheusMetrics", new HttpServlet() {
+				@Override
+				protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+					throws IOException {
+					resp.setStatus(HttpServletResponse.SC_OK);
+					resp.getWriter().write(registry.scrape());
+				}
+			})
+			.addMapping("/prometheusMetrics");
 	}
 
 	private void configureApi(Environment environment, TokenWriteAccess tokenAccess) {
