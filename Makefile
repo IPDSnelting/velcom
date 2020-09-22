@@ -34,6 +34,7 @@ clean:
 docker-build-server: backend frontend
 	mkdir -p .docker
 	cp backend/backend/target/backend.jar .docker
+	cp backend/backend/target/dependency/aspectjweaver.jar .docker
 	cp -r frontend/dist .docker
 	cp -r docs/* .docker
 	cp Dockerfile .docker
@@ -43,6 +44,7 @@ docker-build-server-single-port: backend
 	make -C frontend/ mode=production-single-port
 	mkdir -p .docker
 	cp backend/backend/target/backend.jar .docker
+	cp backend/backend/target/dependency/aspectjweaver.jar .docker
 	cp -r frontend/dist .docker
 	cp -r docs/* .docker
 	cp Dockerfile-Single-Port .docker/Dockerfile

@@ -31,7 +31,10 @@ EXPOSE 82
 COPY start-backend-docker.sh /home/velcom/start.sh
 
 # Include backend files
-COPY backend.jar /home/velcom/velcom.jar
+# Copy aspectjweaver if it exists. Copy needs at least one existing file as an
+# argument, so we need the backend.jar there as well
+COPY backend.jar aspectjweaver.ja[r] /home/velcom/
+RUN mv /home/velcom/backend.jar /home/velcom/velcom.jar
 COPY dist /home/velcom/frontend
 
 # We should be able to place temp data in there
