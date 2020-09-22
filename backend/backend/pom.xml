@@ -31,6 +31,7 @@
     <sqlite.version>3.32.3.1</sqlite.version>
     
     <maven-antrun-plugin.version>3.0.0</maven-antrun-plugin.version>
+    <maven-dependency-plugin.version>3.1.2</maven-dependency-plugin.version>
   </properties>
 
   <build>
@@ -180,6 +181,31 @@
             <includeOnlyProperty>^git.commit.id.(abbrev|full)$</includeOnlyProperty>
           </includeOnlyProperties>
           <commitIdGenerationMode>full</commitIdGenerationMode>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>${maven-dependency-plugin.version}</version>
+        <executions>
+          <execution>
+            <id>copy-aspectj-weaver</id>
+            <phase>package</phase>
+            <goals>
+              <goal>copy</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <artifactItems>
+            <artifactItem>
+              <groupId>org.aspectj</groupId>
+              <artifactId>aspectjweaver</artifactId>
+              <overWrite>true</overWrite>
+              <destFileName>aspectjweaver.jar</destFileName>
+            </artifactItem>
+          </artifactItems>
         </configuration>
       </plugin>
 
