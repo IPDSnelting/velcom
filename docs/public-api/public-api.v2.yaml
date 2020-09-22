@@ -297,6 +297,8 @@ paths:
                     $ref: '#/components/schemas/Task'
                 required:
                   - task
+        '404':
+          description: The repo or commit could not be found
         '409':
           description: There is already a task for this commit in the queue
       description: 'This endpoint allows users to add a specific commit to the queue. If there is already a task for this commit in the queue, this endpoint fails.'
