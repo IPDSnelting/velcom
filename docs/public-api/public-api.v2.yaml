@@ -541,8 +541,8 @@ paths:
                 required:
                   - dimensions
                   - commits
-        '403':
-          description: 'The `start_time`, `end_time` and/or `duration` parameters are invalid'
+        '400':
+          description: 'The `start_time`, `end_time`, `duration` and/or `dimensions` parameters are invalid'
         '404':
           description: "Repo doesn't exist"
       operationId: get-graph-detail-repoid
@@ -683,8 +683,8 @@ paths:
                 required:
                   - dimension
                   - repos
-        '403':
-          description: 'The `start_time`, `end_time` and/or `duration` parameters are invalid'
+        '400':
+          description: 'The `start_time`, `end_time`, `duration` and/or `dimension` parameters are invalid'
         '404':
           description: "The dimension doesn't exist"
       operationId: get-graph-comparison
