@@ -1,14 +1,14 @@
 package de.aaaaaaah.velcom.backend.restapi.exception;
 
+import de.aaaaaaah.velcom.backend.restapi.endpoints.utils.ArgumentParseException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.ext.ExceptionMapper;
 
-public class InvalidQueryParamsExceptionMapper implements
-	ExceptionMapper<InvalidQueryParamsException> {
+public class ArgumentParseExceptionMapper implements ExceptionMapper<ArgumentParseException> {
 
 	@Override
-	public Response toResponse(InvalidQueryParamsException exception) {
+	public Response toResponse(ArgumentParseException exception) {
 		return Response
 			.status(Status.BAD_REQUEST)
 			.entity(new Info(exception.getMessage()))

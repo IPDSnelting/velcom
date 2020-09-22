@@ -100,7 +100,9 @@ public class EndpointUtils {
 		return Arrays.stream(args.split("::"))
 			.map(s -> {
 				String[] elements = s.split(":");
-				if (elements.length < 2) {
+				if (elements.length == 0 || elements[0].equals("")) {
+					throw new ArgumentParseException("there needs to be at least one section");
+				} else if (elements.length < 2) {
 					throw new ArgumentParseException("section \"" + s + "\" needs at least two elements");
 				}
 
