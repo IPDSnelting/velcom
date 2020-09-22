@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import de.aaaaaaah.velcom.runner.Connection;
 import de.aaaaaaah.velcom.runner.TeleBackend;
 import de.aaaaaaah.velcom.runner.benchmarking.BenchResult;
+import de.aaaaaaah.velcom.shared.GitProperties;
 import de.aaaaaaah.velcom.shared.protocol.StatusCode;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Serializer;
 import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.AbortRun;
@@ -59,8 +60,8 @@ public abstract class RunnerState implements State {
 	}
 
 	/**
-	 * Called by the default {@link #onText(String)} implementation if the text could be decoded to
-	 * a {@link ClientBoundPacket}.
+	 * Called by the default {@link #onText(String)} implementation if the text could be decoded to a
+	 * {@link ClientBoundPacket}.
 	 *
 	 * @param packet the packet the text was deserialized into
 	 * @return whether this function call handled the packet
@@ -92,6 +93,7 @@ public abstract class RunnerState implements State {
 
 		GetStatusReply getStatusReply = new GetStatusReply(
 			teleBackend.getInfo().format(),
+			GitProperties.getHash(),
 			teleBackend.getBenchHash().orElse(null),
 			teleBackend.getBenchResult().isPresent(),
 			teleBackend.getStatus(),

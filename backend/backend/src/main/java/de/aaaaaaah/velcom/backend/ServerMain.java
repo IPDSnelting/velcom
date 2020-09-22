@@ -22,6 +22,7 @@ import de.aaaaaaah.velcom.backend.restapi.authentication.RepoUser;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.AllReposEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.CommitEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.CompareEndpoint;
+import de.aaaaaaah.velcom.backend.restapi.endpoints.DebugEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.GraphComparisonEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.GraphDetailEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.QueueEndpoint;
@@ -40,6 +41,7 @@ import de.aaaaaaah.velcom.backend.restapi.exception.TaskAlreadyExistsExceptionMa
 import de.aaaaaaah.velcom.backend.runner.Dispatcher;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import de.aaaaaaah.velcom.backend.storage.repo.RepoStorage;
+import de.aaaaaaah.velcom.shared.GitProperties;
 import io.dropwizard.Application;
 import io.dropwizard.auth.AuthDynamicFeature;
 import io.dropwizard.auth.AuthValueFactoryProvider;
@@ -84,6 +86,12 @@ public class ServerMain extends Application<GlobalConfig> {
 	 * @throws Exception if the web server can not be started
 	 */
 	public static void main(String[] args) throws Exception {
+		System.out.println("Welcome to VelCom!");
+		System.out.printf("Version:     %s (backend)%n", GitProperties.getVersion());
+		System.out.printf("Build time:  %s%n", GitProperties.getBuildTime());
+		System.out.printf("Commit hash: %s%n", GitProperties.getHash());
+		System.out.println();
+
 		new ServerMain().run(args);
 	}
 
@@ -192,6 +200,7 @@ public class ServerMain extends Application<GlobalConfig> {
 		environment.jersey().register(new GraphComparisonEndpoint(comparison, benchmarkAccess));
 		environment.jersey()
 			.register(new GraphDetailEndpoint(commitAccess, benchmarkAccess, repoAccess));
+		environment.jersey().register(new DebugEndpoint(dispatcher));
 	}
 
 	private void configureApi(Environment environment, TokenWriteAccess tokenAccess) {

@@ -45,13 +45,13 @@ export class ColorStore extends VxModule {
    * @memberof ColorModuleStore
    */
   @action
-  async addColors(amount: number) {
+  async addColors(amount: number): Promise<void> {
     this.addColorToTheme({ amount: amount, muted: true })
     this.addColorToTheme({ amount: amount, muted: false })
   }
 
   @mutation
-  addColorToTheme(payload: { amount: number; muted: boolean }) {
+  addColorToTheme(payload: { amount: number; muted: boolean }): void {
     // generating new colors in hsl color space using golden ratio to maximize difference
     const colors = payload.muted ? this.mutedColors : this.pastelColors
 
@@ -61,7 +61,7 @@ export class ColorStore extends VxModule {
 
     for (let i = 0; i < payload.amount; i++) {
       const lastColor = colors[colors.length - 1]
-      var hue = hexToHsl(lastColor)[0]
+      let hue = hexToHsl(lastColor)[0]
 
       hue += phi
       hue %= 1

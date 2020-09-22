@@ -17,21 +17,27 @@ class GetStatusReplyTest extends SerializerBasedTest {
 		Optional<GetStatusReply> result = serializer.deserialize(json, GetStatusReply.class);
 
 		assertTrue(result.isPresent());
-		assertEquals(
-			new GetStatusReply("system info goes here", null, false, Status.IDLE, null),
+		assertEquals(new GetStatusReply(
+				"system info goes here",
+				null,
+				null,
+				false,
+				Status.IDLE,
+				null
+			),
 			result.get()
 		);
 	}
 
 	@Test
 	void deserializeWithAllOptionals() {
-		String json = "{\"info\": \"system info goes here\", \"bench_hash\": \"blabla\", \"result_available\": false, \"status\": \"ABORT\", \"run_id\": \"576afdcb-eaf9-46b2-9287-fc3bf8df83df\"}";
+		String json = "{\"info\": \"system info goes here\", \"version_hash\": \"bloop\", \"bench_hash\": \"blabla\", \"result_available\": false, \"status\": \"ABORT\", \"run_id\": \"576afdcb-eaf9-46b2-9287-fc3bf8df83df\"}";
 		Optional<GetStatusReply> result = serializer.deserialize(json, GetStatusReply.class);
 
 		UUID uuid = UUID.fromString("576afdcb-eaf9-46b2-9287-fc3bf8df83df");
 		assertTrue(result.isPresent());
 		assertEquals(
-			new GetStatusReply("system info goes here", "blabla", false, Status.ABORT, uuid),
+			new GetStatusReply("system info goes here", "bloop", "blabla", false, Status.ABORT, uuid),
 			result.get()
 		);
 	}

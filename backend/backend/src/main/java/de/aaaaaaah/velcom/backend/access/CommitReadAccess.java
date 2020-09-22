@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.stream.Collectors;
@@ -35,6 +36,10 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.revplot.PlotCommit;
+import org.eclipse.jgit.revplot.PlotCommitList;
+import org.eclipse.jgit.revplot.PlotLane;
+import org.eclipse.jgit.revplot.PlotWalk;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 
@@ -89,13 +94,10 @@ public class CommitReadAccess {
 	 * 	could not be found.
 	 */
 	public Commit getCommit(RepoId repoId, CommitHash commitHash) {
-		List<Commit> commits = getCommits(repoId, List.of(commitHash));
+		Map<CommitHash, Commit> commits = getCommits(repoId, List.of(commitHash));
 
-		if (!commits.isEmpty()) {
-			return commits.get(0);
-		} else {
-			throw new NoSuchCommitException(repoId, commitHash);
-		}
+		return Optional.ofNullable(commits.get(commitHash))
+			.orElseThrow(() -> new NoSuchCommitException(repoId, commitHash));
 	}
 
 	/**
@@ -105,18 +107,17 @@ public class CommitReadAccess {
 	 * @param commitHashes the commits to retrieve
 	 * @return Those commits that could be found. If the repo could not be found, returns an empty
 	 * 	list. If a commit could not be found, doesn't return that commit in the return value.
-	 * 	Preserves ordering of commits (and duplicate commits) from the input commit hash collection.
 	 */
 	@Timed(histogram = true)
-	public List<Commit> getCommits(RepoId repoId, Collection<CommitHash> commitHashes) {
+	public Map<CommitHash, Commit> getCommits(RepoId repoId, Collection<CommitHash> commitHashes) {
 		Objects.requireNonNull(repoId);
 		Objects.requireNonNull(commitHashes);
 
 		if (commitHashes.isEmpty()) {
-			return Collections.emptyList();
+			return Collections.emptyMap();
 		}
 
-		List<Commit> commits = new ArrayList<>();
+		Map<CommitHash, Commit> commits = new HashMap<>();
 
 		try (
 			Repository repo = repoStorage.acquireRepository(repoId.getDirectoryName());
@@ -126,7 +127,7 @@ public class CommitReadAccess {
 				try {
 					ObjectId commitPtr = repo.resolve(hash.getHash());
 					RevCommit revCommit = walk.parseCommit(commitPtr);
-					commits.add(commitFromRevCommit(repoId, revCommit));
+					commits.put(hash, commitFromRevCommit(repoId, revCommit));
 				} catch (IOException | NullPointerException ignored) {
 					// See javadoc
 				}
@@ -147,8 +148,41 @@ public class CommitReadAccess {
 	 */
 	@Timed(histogram = true)
 	public Collection<CommitHash> getChildren(RepoId repoId, CommitHash commitHash) {
-		// TODO implement
-		return Collections.emptyList();
+		try (
+			Repository repo = repoStorage.acquireRepository(repoId.getDirectoryName());
+			PlotWalk plotWalk = new PlotWalk(repo);
+		) {
+			ObjectId targetId = repo.resolve(commitHash.getHash());
+
+			List<RevCommit> startPoints = new ArrayList<>();
+			for (Ref ref : repo.getRefDatabase().getRefs()) {
+				ObjectId objectId = ref.getObjectId();
+				RevCommit revCommit = plotWalk.parseCommit(objectId);
+				startPoints.add(revCommit);
+			}
+			plotWalk.markStart(startPoints);
+
+			PlotCommitList<PlotLane> plotCommitList = new PlotCommitList<>();
+			plotCommitList.source(plotWalk);
+			plotCommitList.fillTo(Integer.MAX_VALUE);
+
+			PlotCommit<PlotLane> commit = plotCommitList.stream()
+				.filter(targetId::equals)
+				.findAny()
+				.orElseThrow(() -> new NoSuchCommitException(repoId, commitHash));
+
+			List<PlotCommit<PlotLane>> children = new ArrayList<>();
+			for (int i = 0; i < commit.getChildCount(); i++) {
+				children.add(commit.getChild(i));
+			}
+
+			return children.stream()
+				.map(AnyObjectId::getName)
+				.map(CommitHash::new)
+				.collect(Collectors.toList());
+		} catch (Exception e) {
+			throw new CommitAccessException("Failed to find children", e, repoId, commitHash);
+		}
 	}
 
 	/**

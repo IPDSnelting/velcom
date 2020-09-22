@@ -3,11 +3,11 @@ import VueRouter, { RouteConfig, RouterOptions } from 'vue-router'
 import Home from '../views/Home.vue'
 import RepoComparison from '../views/RepoComparison.vue'
 import RepoDetailFrame from '../views/RepoDetailFrame.vue'
-import RepoDetail from '../views/RepoDetail.vue'
+import RepoDetail from '../views/NewRepoDetail.vue'
 import Queue from '../views/Queue.vue'
 import NotFound404 from '../views/NotFound404.vue'
-import CommitComparisonDisplay from '../views/CommitComparisonDisplay.vue'
-import CommitDetail from '../views/CommitDetail.vue'
+import RunCommitDetailView from '../views/RunCommitDetailView.vue'
+import RunComparison from '../views/RunComparison.vue'
 import {
   mdiHome,
   mdiScaleBalance,
@@ -21,6 +21,7 @@ Vue.use(VueRouter)
 
 const routes = [
   {
+    // Redirect / to /home
     path: '/',
     redirect: '/home',
     meta: {
@@ -29,7 +30,6 @@ const routes = [
     }
   },
   {
-    // Redirect / to /home
     path: '/home',
     name: 'home',
     component: Home,
@@ -77,21 +77,21 @@ const routes = [
     }
   },
   {
-    path: '/commit-comparison/:repoID/:hashOne/:hashTwo',
-    name: 'commit-comparison',
-    component: CommitComparisonDisplay,
+    path: '/compare/:first/to/:second',
+    name: 'run-comparison',
+    component: RunComparison,
     meta: {
       navigable: false,
-      label: 'Commit Comparison'
+      label: 'Run Comparison'
     }
   },
   {
-    path: '/commit-detail/:repoID/:hash',
-    name: 'commit-detail',
-    component: CommitDetail,
+    path: '/run-detail/:first/:second?',
+    name: 'run-detail',
+    component: RunCommitDetailView,
     meta: {
       navigable: false,
-      label: 'Commit Detail'
+      label: 'Run Detail'
     }
   },
   {
@@ -146,7 +146,7 @@ const router = new VueRouterEx({
   routes
 })
 
-router.afterEach((to, from) => {
+router.afterEach(to => {
   Vue.nextTick(() => {
     document.title = to.meta.label ? 'VelCom - ' + to.meta.label : 'VelCom'
   })
@@ -154,14 +154,14 @@ router.afterEach((to, from) => {
 
 router.beforeEach((to, from, next) => {
   if (to.name === 'repo-detail') {
-    vxm.repoDetailModule.selectedRepoId = to.params.id
+    vxm.detailGraphModule.selectedRepoId = to.params.id
   }
   next()
 })
 
 router.beforeEach((to, from, next) => {
   if (to.name === 'repo-detail-frame' && !to.params['id']) {
-    let saved = vxm.repoDetailModule.selectedRepoId
+    const saved = vxm.detailGraphModule.selectedRepoId
     if (saved) {
       next({ name: 'repo-detail', params: { id: saved } })
       return

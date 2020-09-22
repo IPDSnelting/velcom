@@ -1,5 +1,11 @@
 package de.aaaaaaah.velcom.backend.restapi.jsonobjects;
 
+import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
+import de.aaaaaaah.velcom.backend.access.entities.Commit;
+import de.aaaaaaah.velcom.backend.access.entities.RepoId;
+import de.aaaaaaah.velcom.backend.access.entities.sources.CommitSource;
+import de.aaaaaaah.velcom.backend.access.entities.sources.TarSource;
+import de.aaaaaaah.velcom.shared.util.Either;
 import java.util.UUID;
 import javax.annotation.Nullable;
 
@@ -20,13 +26,32 @@ public class JsonSource {
 		this.uploadedTar = uploadedTar;
 	}
 
-	public static JsonSource fromCommit(JsonCommitDescription commitDescription) {
+	public static JsonSource commitSource(JsonCommitDescription commitDescription) {
 		return new JsonSource(JsonSourceType.COMMIT, commitDescription, null);
 	}
 
-	public static JsonSource fromUploadedTar(String description, @Nullable UUID repoId) {
+	public static JsonSource tarSource(String description, @Nullable UUID repoId) {
 		return new JsonSource(JsonSourceType.UPLOADED_TAR, null,
 			new JsonSourceUploadedTar(description, repoId));
+	}
+
+	public static JsonSource fromCommit(Commit commit) {
+		return commitSource(JsonCommitDescription.fromCommit(commit));
+	}
+
+	public static JsonSource fromTarSource(TarSource source) {
+		return tarSource(
+			source.getDescription(),
+			source.getRepoId().map(RepoId::getId).orElse(null)
+		);
+	}
+
+	public static JsonSource fromSource(Either<CommitSource, TarSource> source,
+		CommitReadAccess commitAccess) {
+
+		return source
+			.mapLeft(it -> commitAccess.getCommit(it.getRepoId(), it.getHash()))
+			.consume(JsonSource::fromCommit, JsonSource::fromTarSource);
 	}
 
 	public JsonSourceType getType() {

@@ -5,7 +5,7 @@
  * @param {string} hex the color in hex form
  * @returns tripel of hue, saturation and value as numbers
  */
-export function hexToHsl(hex: string) {
+export function hexToHsl(hex: string): [number, number, number] {
   // convert hex to rgb
   let r: number = parseInt(hex.substr(1, 2), 16)
   let g: number = parseInt(hex.substr(3, 2), 16)
@@ -16,17 +16,17 @@ export function hexToHsl(hex: string) {
   g /= 255
   b /= 255
 
-  let max: number = Math.max(r, g, b)
-  let min: number = Math.min(r, g, b)
+  const max: number = Math.max(r, g, b)
+  const min: number = Math.min(r, g, b)
 
   let h: number = 0
-  let s: number = 0
-  let l: number = (max + min) / 2
+  let s: number
+  const l: number = (max + min) / 2
 
   if (max === min) {
     h = s = 0 // achromatic
   } else {
-    let diff: number = max - min
+    const diff: number = max - min
     s = l > 0.5 ? diff / (2 - max - min) : diff / (max + min)
 
     switch (max) {
@@ -55,10 +55,10 @@ export function hexToHsl(hex: string) {
  * @param {number} l the value
  * @returns {string} the given color in hex form
  */
-export function hslToHex(h: number, s: number, l: number) {
-  let r: number = 0
-  let g: number = 0
-  let b: number = 0
+export function hslToHex(h: number, s: number, l: number): string {
+  let r: number
+  let g: number
+  let b: number
 
   if (s === 0) {
     r = g = b = l // achromatic

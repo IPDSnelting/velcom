@@ -27,8 +27,7 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { Prop } from 'vue-property-decorator'
-import { ISnackbar } from '../util/Snackbar'
+import { ISnackbar } from '@/util/Snackbar'
 
 declare type Color = 'error' | 'snackbarSuccess' | 'info'
 
@@ -41,7 +40,7 @@ export default class Snackbar extends Vue implements ISnackbar {
   private loading: boolean = false
   private currentPriority: number = 1
 
-  setError(tag: string, error: string, priority?: number) {
+  setError(tag: string, error: string, priority?: number): void {
     this.displayNormalText(
       this.appendTag(error, `'${tag}'`, ' for '),
       'error',
@@ -50,7 +49,7 @@ export default class Snackbar extends Vue implements ISnackbar {
     )
   }
 
-  setSuccess(tag: string, message: string, priority?: number) {
+  setSuccess(tag: string, message: string, priority?: number): void {
     this.displayNormalText(
       this.appendTag(message, `(${tag})`),
       'snackbarSuccess',
@@ -59,7 +58,7 @@ export default class Snackbar extends Vue implements ISnackbar {
     )
   }
 
-  setLoading(tag: string, priority?: number) {
+  setLoading(tag: string, priority?: number): void {
     this.displayNormalText(
       this.appendTag('Please stand by, processing', `'${tag}'`) + '...',
       'info',
@@ -69,8 +68,8 @@ export default class Snackbar extends Vue implements ISnackbar {
     this.loading = true
   }
 
-  finishedLoading(tag: string, priority?: number) {
-    let shouldHideExisting = this.currentPriority <= (priority || 1)
+  finishedLoading(tag: string, priority?: number): void {
+    const shouldHideExisting = this.currentPriority <= (priority || 1)
 
     if (shouldHideExisting && this.displaySnackbar) {
       this.displaySnackbar = false
@@ -104,11 +103,8 @@ export default class Snackbar extends Vue implements ISnackbar {
     Vue.nextTick(() => (this.displaySnackbar = true))
   }
 
-  created() {
+  created(): void {
     Vue.prototype.$globalSnackbar = this
   }
 }
 </script>
-
-<style scoped>
-</style>

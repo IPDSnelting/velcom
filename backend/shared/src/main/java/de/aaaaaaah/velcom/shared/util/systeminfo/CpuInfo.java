@@ -58,6 +58,12 @@ public class CpuInfo {
 			.collect(Collectors.toSet());
 	}
 
+	public String format() {
+		String models = String.join(",", coreModels());
+		int n = virtualCoreCount();
+		return String.format("%s (%d %s)", models, n, (n == 1) ? "thread" : "threads");
+	}
+
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) {

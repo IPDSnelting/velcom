@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -63,8 +64,8 @@ public class Listener {
 	 * @param benchRepo used to keep the bench repo up-to-date
 	 */
 	public Listener(GlobalConfig config, RepoWriteAccess repoAccess, CommitReadAccess commitAccess,
-		KnownCommitWriteAccess knownCommitAccess,
-		BenchRepo benchRepo) {
+		KnownCommitWriteAccess knownCommitAccess, BenchRepo benchRepo) {
+
 		this.repoAccess = repoAccess;
 		this.commitAccess = commitAccess;
 		this.knownCommitAccess = knownCommitAccess;
@@ -88,11 +89,51 @@ public class Listener {
 
 		for (Repo repo : repoAccess.getAllRepos()) {
 			try {
-				checkForUnknownCommits(repo.getRepoId());
+				updateRepo(repo.getRepoId());
 			} catch (CommitSearchException | RepoAccessException | NoSuchRepoException e) {
 				LOGGER.warn("Could not fetch updates for repo: " + repo, e);
 			}
 		}
+	}
+
+	public void updateRepo(RepoId repoId) throws CommitSearchException {
+		LOGGER.info("Updating repo {}", repoId.getId());
+		long start = System.currentTimeMillis();
+
+		try {
+			this.lock.lock();
+
+			repoAccess.updateRepo(repoId);
+
+			pruneTrackedBranches(repoId);
+			checkForUnknownCommits(repoId);
+		} finally {
+			this.lock.unlock();
+		}
+
+		long end = System.currentTimeMillis();
+		LOGGER.debug("Updating repo {} took {} ms", repoId.getId(), (end - start));
+	}
+
+	/**
+	 * Remove all tracked branches that don't actually exist in our repo.
+	 *
+	 * @param repoId the id of the repo whose tracked branches to update
+	 */
+	private void pruneTrackedBranches(RepoId repoId) {
+		Repo repo = repoAccess.getRepo(repoId);
+
+		Set<BranchName> existingBranches = repoAccess.getBranches(repo.getRepoId())
+			.stream()
+			.map(Branch::getName)
+			.collect(Collectors.toSet());
+
+		Set<BranchName> trackedBranches = repo.getTrackedBranches().stream()
+			.map(Branch::getName)
+			.filter(existingBranches::contains)
+			.collect(Collectors.toSet());
+
+		repoAccess.setTrackedBranches(repo.getRepoId(), trackedBranches);
 	}
 
 	/**
@@ -100,42 +141,31 @@ public class Listener {
 	 *
 	 * @param repoId the id of the repository to check for
 	 */
-	public void checkForUnknownCommits(RepoId repoId)
+	private void checkForUnknownCommits(RepoId repoId)
 		throws CommitSearchException, RepoAccessException, NoSuchRepoException {
 
-		long start = System.currentTimeMillis();
+		Repo repo = repoAccess.getRepo(repoId);
 
 		try {
-			this.lock.lock();
-
-			LOGGER.info("Checking for unknown commits on repo: {}", repoId);
-
-			Repo repo = repoAccess.getRepo(repoId);
-
-			repoAccess.updateRepo(repoId);
-
-			if (!knownCommitAccess.hasKnownCommits(repoId)) {
+			if (!knownCommitAccess.hasKnownCommits(repo.getRepoId())) {
 				// this repository does not have any known commits which means that it must be new
 				// therefore only the first commit of each tracked branch is inserted into the queue
 				// and all other commits that exist so far will be marked as known
 
 				// (1): Mark all commits as known (NO_BENCHMARK_REQUIRED)
-				List<BranchName> branches = repoAccess.getBranches(repoId)
+				List<BranchName> branches = repoAccess.getBranches(repo.getRepoId())
 					.stream()
 					.map(Branch::getName)
 					.collect(toList());
 
 				Collection<CommitHash> commits;
-
-				try (Stream<Commit> commitStream = commitAccess.getCommitLog(
-					repo.getRepoId(), branches)) {
-
+				try (Stream<Commit> commitStream = commitAccess.getCommitLog(repo.getRepoId(), branches)) {
 					commits = commitStream
 						.map(Commit::getHash)
 						.collect(Collectors.toUnmodifiableList());
 				}
 
-				knownCommitAccess.markCommitsAsKnown(repoId, commits);
+				knownCommitAccess.markCommitsAsKnown(repo.getRepoId(), commits);
 
 				// (2): Make last commit of each tracked branch known
 				List<CommitHash> latestHashes = repo.getTrackedBranches()
@@ -144,10 +174,11 @@ public class Listener {
 					.collect(toList());
 
 				List<Task> tasks = latestHashes.stream()
-					.map(hash -> commitToTask(repoId, hash))
+					.map(hash -> commitToTask(repo.getRepoId(), hash))
 					.collect(toList());
 
-				knownCommitAccess.markCommitsAsKnownAndInsertIntoQueue(repoId, latestHashes, tasks);
+				knownCommitAccess
+					.markCommitsAsKnownAndInsertIntoQueue(repo.getRepoId(), latestHashes, tasks);
 			} else {
 				// The repo already has some known commits so we need to be smart about it
 				// Group all new commits across all tracked branches into this
@@ -158,7 +189,7 @@ public class Listener {
 				try {
 					for (Branch trackedBranch : repo.getTrackedBranches()) {
 						CommitHash startCommitHash = repoAccess.getLatestCommitHash(trackedBranch);
-						Commit startCommit = commitAccess.getCommit(repoId, startCommitHash);
+						Commit startCommit = commitAccess.getCommit(repo.getRepoId(), startCommitHash);
 
 						Collection<Commit> newCommits = unknownCommitFinder.find(
 							commitAccess, knownCommitAccess, startCommit
@@ -168,7 +199,7 @@ public class Listener {
 					}
 				} catch (IOException e) {
 					throw new CommitSearchException(
-						"failed to check for unknown commits in repo: " + repoId, e
+						"failed to check for unknown commits in repo: " + repo.getTrackedBranches(), e
 					);
 				}
 
@@ -183,15 +214,10 @@ public class Listener {
 					.map(this::commitToTask)
 					.collect(toList());
 
-				knownCommitAccess.markCommitsAsKnownAndInsertIntoQueue(repoId, hashes, tasks);
+				knownCommitAccess.markCommitsAsKnownAndInsertIntoQueue(repo.getRepoId(), hashes, tasks);
 			}
 		} catch (Exception e) {
-			throw new CommitSearchException(repoId, e);
-		} finally {
-			this.lock.unlock();
-
-			long end = System.currentTimeMillis();
-			LOGGER.debug("checkForUnknownCommits({}) took {} ms", repoId.getId(), (end - start));
+			throw new CommitSearchException(repo.getRepoId(), e);
 		}
 	}
 

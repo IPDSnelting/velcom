@@ -70,8 +70,8 @@ public class TaskReadAccess {
 					taskId,
 					taskRecord.getAuthor(),
 					QueuePriority.fromInt(taskRecord.getPriority()),
-					taskRecord.getInsertTime().toInstant(),
-					taskRecord.getUpdateTime().toInstant(),
+					taskRecord.getInsertTime(),
+					taskRecord.getUpdateTime(),
 					new TarSource(taskRecord.getDescription(), nullableRepoId)
 				);
 			} else {
@@ -82,8 +82,8 @@ public class TaskReadAccess {
 					taskId,
 					taskRecord.getAuthor(),
 					QueuePriority.fromInt(taskRecord.getPriority()),
-					taskRecord.getInsertTime().toInstant(),
-					taskRecord.getUpdateTime().toInstant(),
+					taskRecord.getInsertTime(),
+					taskRecord.getUpdateTime(),
 					new CommitSource(nullableRepoId, hash)
 				);
 			}
@@ -105,8 +105,8 @@ public class TaskReadAccess {
 				new TaskId(UUID.fromString(taskRecord.getId())),
 				taskRecord.getAuthor(),
 				QueuePriority.fromInt(taskRecord.getPriority()),
-				taskRecord.getInsertTime().toInstant(),
-				taskRecord.getUpdateTime().toInstant(),
+				taskRecord.getInsertTime(),
+				taskRecord.getUpdateTime(),
 				new TarSource(taskRecord.getDescription(), nullableRepoId)
 			);
 		} else {
@@ -117,8 +117,8 @@ public class TaskReadAccess {
 				new TaskId(UUID.fromString(taskRecord.getId())),
 				taskRecord.getAuthor(),
 				QueuePriority.fromInt(taskRecord.getPriority()),
-				taskRecord.getInsertTime().toInstant(),
-				taskRecord.getUpdateTime().toInstant(),
+				taskRecord.getInsertTime(),
+				taskRecord.getUpdateTime(),
 				new CommitSource(nullableRepoId, hash)
 			);
 		}

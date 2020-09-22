@@ -58,8 +58,8 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 			runRecord.setAuthor(newRun.getAuthor());
 			runRecord.setRunnerName(newRun.getRunnerName());
 			runRecord.setRunnerInfo(newRun.getRunnerInfo());
-			runRecord.setStartTime(Timestamp.from(newRun.getStartTime()));
-			runRecord.setStopTime(Timestamp.from(newRun.getStopTime()));
+			runRecord.setStartTime(newRun.getStartTime());
+			runRecord.setStopTime(newRun.getStopTime());
 			runRecord.setRepoId(
 				newRun.getRepoId().map(RepoId::getId)
 					.map(UUID::toString)

@@ -144,7 +144,7 @@ public abstract class GuickCloning {
 		@Override
 		public void updateBareRepo(Path repoDir) throws CloneException {
 			try {
-				Git.open(repoDir.toFile()).fetch().call();
+				Git.open(repoDir.toFile()).fetch().setRemoveDeletedRefs(true).call();
 			} catch (GitAPIException | IOException e) {
 				throw new CloneException(
 					"Error when pulling the latest changes from a bare git repo",
@@ -240,7 +240,7 @@ public abstract class GuickCloning {
 				ProgramResult programResult = new ProgramExecutor()
 					.execute(
 						GIT_EXECUTABLE, "-C", repoDir.toAbsolutePath().toString(),
-						"fetch", "--all"
+						"fetch", "--all", "--prune"
 					).get();
 				guardResult("Fetch failed :/", programResult);
 			} catch (InterruptedException | ExecutionException e) {

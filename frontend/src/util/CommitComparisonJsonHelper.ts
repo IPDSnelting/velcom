@@ -1,104 +1,96 @@
+/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 import {
-  Difference,
-  MeasurementID,
   Run,
+  RunResult,
+  RunResultScriptError,
+  RunResultVelcomError,
+  RunResultSuccess,
+  MeasurementError,
+  MeasurementSuccess,
   Measurement,
   Commit,
-  CommitComparison,
-  CommitInfo
+  RunDescription,
+  RunComparison,
+  DimensionDifference
 } from '@/store/types'
+import {
+  sourceFromJson,
+  commitDescriptionFromJson
+} from '@/util/QueueJsonHelper'
+import { dimensionFromJson } from '@/util/RepoJsonHelper'
 
-/**
- * Parses a json commit to a Commit object.
- *
- * @export
- * @param {*} jsonCommit the json commit
- * @returns {Commit} the commit object
- */
-export function commitFromJson(jsonCommit: any): Commit {
-  return new Commit(
-    jsonCommit.repo_id,
-    jsonCommit.hash,
-    jsonCommit.author,
-    jsonCommit.author_date,
-    jsonCommit.committer,
-    jsonCommit.committer_date,
-    jsonCommit.message,
-    jsonCommit.parents
-  )
-}
-
-export function commitDetailFromJson(jsonCommitInfo: any): CommitInfo {
-  let comparison = comparisonFromJson(jsonCommitInfo.comparison)
-  let nextCommit = jsonCommitInfo.next
-    ? commitFromJson(jsonCommitInfo.next)
-    : null
-  return new CommitInfo(comparison, nextCommit)
-}
-
-export function comparisonFromJson(jsonComparison: any): CommitComparison {
-  let firstRun: Run | null = jsonComparison.first_run
-    ? runFromJson(jsonComparison.first_run)
-    : null
-  let secondRun: Run | null = jsonComparison.second_run
-    ? runFromJson(jsonComparison.second_run)
-    : null
-  let differences: Difference[] = jsonComparison.differences.map((it: any) =>
-    differenceFromJson(it)
-  )
-  let firstCommit: Commit | null = jsonComparison.first_commit
-    ? commitFromJson(jsonComparison.first_commit)
-    : null
-  let secondCommit: Commit | null = commitFromJson(jsonComparison.second_commit)
-
-  return new CommitComparison(
-    firstRun,
-    secondRun,
-    firstCommit,
-    secondCommit,
-    differences
-  )
-}
-
-/**
- * Converts a run (comparison.first or comparison.second) json object to a Run object.
- *
- * @private
- * @param {*} jsonRun the received json Run
- * @returns {Run} the built run
- * @memberof RepoDetailStore
- */
-export function runFromJson(jsonRun: any): Run {
+export function runFromJson(json: any): Run {
   return new Run(
-    jsonRun.start_time,
-    jsonRun.stop_time,
-    jsonRun.measurements
-      ? measurementsFromJson(jsonRun.measurements)
-      : undefined,
-    jsonRun.error_message
+    json.id,
+    json.author,
+    json.runner_name,
+    json.runner_info,
+    new Date(json.start_time * 1000),
+    new Date(json.stop_time * 1000),
+    sourceFromJson(json.source),
+    resultFromJson(json.result)
   )
 }
 
-export function measurementsFromJson(jsonMeasurements: any[]): Measurement[] {
-  return jsonMeasurements.reduce((accumulated: Measurement[], next) => {
-    let id: MeasurementID = new MeasurementID(next.benchmark, next.metric)
-    accumulated.push(
-      new Measurement(
-        id,
-        next.unit,
-        next.interpretation,
-        next.values,
-        next.value,
-        next.error_message
-      )
-    )
-    return accumulated
-  }, [])
+function resultFromJson(json: any): RunResult {
+  if (json.bench_error !== undefined) {
+    return new RunResultScriptError(json.bench_error)
+  }
+  if (json.velcom_error !== undefined) {
+    return new RunResultVelcomError(json.velcom_error)
+  }
+  return new RunResultSuccess(json.measurements.map(measurementFromJson))
 }
 
-export function differenceFromJson(jsonDifference: any): Difference {
-  return new Difference(
-    new MeasurementID(jsonDifference.benchmark, jsonDifference.metric),
-    jsonDifference.difference
+function measurementFromJson(json: any): Measurement {
+  if (json.error !== undefined) {
+    return new MeasurementError(dimensionFromJson(json.dimension), json.error)
+  }
+  return new MeasurementSuccess(
+    dimensionFromJson(json.dimension),
+    json.value,
+    json.values
+  )
+}
+
+export function runDescriptionFromJson(json: any): RunDescription {
+  return new RunDescription(
+    json.id,
+    new Date(json.start_time * 1000),
+    json.success,
+    sourceFromJson(json.source)
+  )
+}
+
+export function commitFromJson(json: any): Commit {
+  return new Commit(
+    json.repo_id,
+    json.hash,
+    json.author,
+    new Date(json.author_date * 1000),
+    json.committer,
+    new Date(json.committer_date * 1000),
+    json.message || '',
+    json.summary,
+    json.runs.map(runDescriptionFromJson),
+    json.parents.map(commitDescriptionFromJson),
+    json.children.map(commitDescriptionFromJson)
+  )
+}
+
+export function differenceFromJson(json: any): DimensionDifference {
+  return new DimensionDifference(
+    dimensionFromJson(json.dimension),
+    json.absdiff,
+    json.reldiff,
+    json.stddev
+  )
+}
+
+export function comparisonFromJson(json: any): RunComparison {
+  return new RunComparison(
+    runFromJson(json.run1),
+    runFromJson(json.run2),
+    json.differences.map(differenceFromJson)
   )
 }

@@ -88,18 +88,18 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { VuetifyIcon } from 'vuetify/types/services/icons'
-import VueRouterEx, { RouteConfig } from 'vue-router/types/router'
+import VueRouterEx from 'vue-router/types/router'
 import router from '../router'
 import LoginDialog from '../components/dialogs/LoginDialog.vue'
 import { mdiAccountCircleOutline, mdiLogout } from '@mdi/js'
-import { vxm } from '../store/index'
+import { vxm } from '@/store'
 
 class NavigationItem {
-  readonly routeName: String
+  readonly routeName: string
   readonly icon: VuetifyIcon
-  readonly label: String
+  readonly label: string
 
-  constructor(routeName: String, icon: VuetifyIcon, label: String) {
+  constructor(routeName: string, icon: VuetifyIcon, label: string) {
     this.routeName = routeName
     this.icon = icon
     this.label = label
@@ -117,7 +117,7 @@ export default class NavigationBar extends Vue {
 
   private drawerShown = false
 
-  get validRoutes() {
+  get validRoutes(): NavigationItem[] {
     return router.routes
       .filter(this.filterRoute)
       .map(
@@ -136,11 +136,11 @@ export default class NavigationBar extends Vue {
     return route.meta.navigable
   }
 
-  get loggedIn() {
+  get loggedIn(): boolean {
     return vxm.userModule.loggedIn
   }
 
-  logout() {
+  logout(): void {
     vxm.userModule.logOut()
   }
 
@@ -152,6 +152,7 @@ export default class NavigationBar extends Vue {
 </script>
 
 <style>
+/*noinspection CssUnusedSymbol*/
 .v-tooltip__content {
   opacity: 1 !important;
 }

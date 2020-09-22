@@ -5,12 +5,12 @@ import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.access.entities.Commit;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
-import de.aaaaaaah.velcom.backend.restapi.endpoints.utils.EndpointUtils;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonCommit;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonCommitDescription;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRunDescription;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRunDescription.JsonSuccess;
 import io.micrometer.core.annotation.Timed;
+import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonSource;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -49,13 +49,12 @@ public class CommitEndpoint {
 
 		List<JsonCommitDescription> parents = commit.getParentHashes().stream()
 			.map(parentHash -> commitAccess.getCommit(repoId, parentHash))
-			.map(c -> new JsonCommitDescription(
-				c.getRepoId().getId(),
-				c.getHash().getHash(),
-				c.getAuthor(),
-				c.getAuthorDate().getEpochSecond(),
-				c.getSummary()
-			))
+			.map(JsonCommitDescription::fromCommit)
+			.collect(Collectors.toList());
+
+		List<JsonCommitDescription> children = commitAccess.getChildren(repoId, hash).stream()
+			.map(childHash -> commitAccess.getCommit(repoId, childHash))
+			.map(JsonCommitDescription::fromCommit)
 			.collect(Collectors.toList());
 
 		List<JsonRunDescription> runs = benchmarkAccess.getAllRuns(repoId, hash).stream()
@@ -63,7 +62,7 @@ public class CommitEndpoint {
 				run.getId().getId(),
 				run.getStartTime().getEpochSecond(),
 				JsonSuccess.fromRunResult(run.getResult()),
-				EndpointUtils.convertToSource(commitAccess, run.getSource())
+				JsonSource.fromSource(run.getSource(), commitAccess)
 			))
 			.collect(Collectors.toList());
 
@@ -71,7 +70,7 @@ public class CommitEndpoint {
 			commit.getRepoId().getId(),
 			commit.getHash().getHash(),
 			parents,
-			List.of(), // TODO implement getting children of a commit
+			children,
 			commit.getAuthor(),
 			commit.getAuthorDate().getEpochSecond(),
 			commit.getCommitter(),

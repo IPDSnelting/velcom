@@ -28,10 +28,10 @@ import de.aaaaaaah.velcom.backend.access.entities.sources.TarSource;
 import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchRunException;
 import de.aaaaaaah.velcom.backend.storage.db.DBReadAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
-import de.aaaaaaah.velcom.backend.util.Either;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics;
+import de.aaaaaaah.velcom.shared.util.Either;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -391,8 +391,10 @@ public class BenchmarkReadAccess {
 						runRecord.getAuthor(),
 						runRecord.getRunnerName(),
 						runRecord.getRunnerInfo(),
-						runRecord.getStartTime().toInstant(),
-						runRecord.getStopTime().toInstant(),
+						runRecord.getStartTime(
+
+						),
+						runRecord.getStopTime(),
 						source,
 						error
 					);
@@ -404,8 +406,8 @@ public class BenchmarkReadAccess {
 						runRecord.getAuthor(),
 						runRecord.getRunnerName(),
 						runRecord.getRunnerInfo(),
-						runRecord.getStartTime().toInstant(),
-						runRecord.getStopTime().toInstant(),
+						runRecord.getStartTime(),
+						runRecord.getStopTime(),
 						source,
 						measurements
 					);

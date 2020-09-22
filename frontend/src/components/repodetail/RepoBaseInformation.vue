@@ -36,16 +36,16 @@
                     <v-chip
                       :class="{
                         'ma-2': true,
-                        untracked: !isBranchTracked(branch)
+                        untracked: !branch.tracked
                       }"
                       outlined
                       label
                       v-on="on"
-                      :color="isBranchTracked(branch) ? 'success' : undefined"
-                      >{{ branch }}</v-chip
+                      :color="branch.tracked ? 'success' : undefined"
+                      >{{ branch.name }}</v-chip
                     >
                   </template>
-                  {{ isBranchTracked(branch) ? 'Tracked' : 'Not Tracked' }}
+                  {{ branch.tracked ? 'Tracked' : 'Not Tracked' }}
                 </v-tooltip>
               </v-col>
             </v-row>
@@ -76,7 +76,7 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
-import { Repo } from '@/store/types'
+import { Repo, RepoBranch } from '@/store/types'
 import { vxm } from '@/store'
 import RepoUpdateDialog from '@/components/dialogs/RepoUpdateDialog.vue'
 import { mdiChevronUp, mdiChevronDown } from '@mdi/js'
@@ -99,7 +99,7 @@ export default class RepoBaseInformation extends Vue {
       .slice()
       .sort(
         this.chainComparators(this.comparatorTrackStatus, (a, b) =>
-          a.localeCompare(b)
+          a.name.localeCompare(b.name)
         )
       )
   }
@@ -109,41 +109,35 @@ export default class RepoBaseInformation extends Vue {
   }
 
   private deleteRepository() {
-    let confirmed = window.confirm(
+    const confirmed = window.confirm(
       `Do you really want to delete ${this.repo.name} (${this.repo.id})?`
     )
     if (!confirmed) {
       return
     }
     vxm.repoModule.deleteRepo(this.repo.id).then(() => {
-      vxm.repoDetailModule.selectedRepoId = ''
+      vxm.detailGraphModule.selectedRepoId = ''
       this.$router.replace({ name: 'repo-detail-frame', params: { id: '' } })
     })
   }
 
-  private isBranchTracked(branch: string): boolean {
-    return this.repo.trackedBranches.includes(branch)
-  }
-
-  private comparatorTrackStatus(branchA: string, branchB: string) {
-    const aTracked = this.isBranchTracked(branchA)
-    const bTracked = this.isBranchTracked(branchB)
-    if (aTracked && bTracked) {
+  private comparatorTrackStatus(branchA: RepoBranch, branchB: RepoBranch) {
+    if (branchA.tracked && branchB.tracked) {
       return 0
     }
-    if (aTracked) {
+    if (branchA.tracked) {
       return -1
     }
-    if (bTracked) {
+    if (branchB.tracked) {
       return 1
     }
     return 0
   }
 
-  private chainComparators(
-    a: (a: string, b: string) => number,
-    b: (a: string, b: string) => number
-  ): (a: string, b: string) => number {
+  private chainComparators<T>(
+    a: (a: T, b: T) => number,
+    b: (a: T, b: T) => number
+  ): (a: T, b: T) => number {
     return (x, y) => {
       if (a(x, y) !== 0) {
         return a(x, y)

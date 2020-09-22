@@ -4,13 +4,20 @@
       <v-spacer></v-spacer>
       <v-btn text @click="toggleDarkTheme">
         <v-icon left>{{ darkThemeIcon }}</v-icon>
-        Use {{ isDarkTheme ? 'light' :'dark' }} theme
+        Use {{ isDarkTheme ? 'light' : 'dark' }} theme
       </v-btn>
     </v-toolbar>
     <v-tooltip left>
       <template #activator="{ on }">
-        <v-btn v-on="on" icon @click="toggleDarkTheme" class="hidden-sm-and-down floater">
-          <v-icon :class="{'icon': true, 'light-icon': !isDarkTheme }">{{ darkThemeIcon }}</v-icon>
+        <v-btn
+          v-on="on"
+          icon
+          @click="toggleDarkTheme"
+          class="hidden-sm-and-down floater"
+        >
+          <v-icon :class="{ icon: true, 'light-icon': !isDarkTheme }">
+            {{ darkThemeIcon }}
+          </v-icon>
         </v-btn>
       </template>
       Use {{ isDarkTheme ? 'light' : 'dark' }} theme
@@ -22,7 +29,7 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { mdiInvertColors } from '@mdi/js'
-import { vxm } from '../store'
+import { vxm } from '@/store'
 
 @Component
 export default class ThemeSelector extends Vue {

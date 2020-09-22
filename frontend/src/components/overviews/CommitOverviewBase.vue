@@ -1,6 +1,6 @@
 <template>
   <v-card>
-    <slot name="body.top"></slot>
+    <slot name="body_top"></slot>
     <v-list-item>
       <slot name="avatar"></slot>
       <v-list-item-content>
@@ -8,18 +8,23 @@
           <v-row no-gutters align="center" justify="space-between">
             <v-col cols="auto" class="flex-shrink-too mr-3">
               <v-list-item-title>
-                <repo-display :repoId="commit.repoID"></repo-display>
+                <repo-display :repoId="commit.repoId"></repo-display>
                 <span class="mx-2">—</span>
                 <router-link
                   class="concealed-link"
-                  :to="{ name: 'commit-detail', params: { repoID: commit.repoID, hash: commit.hash } }"
+                  :to="{
+                    name: 'run-detail',
+                    params: { first: commit.repoId, second: commit.hash }
+                  }"
                 >
                   <span class="commit-message">{{ commit.summary }}</span>
                 </router-link>
               </v-list-item-title>
               <v-list-item-subtitle>
                 <span class="author">{{ commit.author }}</span> authored on
-                <span class="time" :title="formattedDateUTC">{{ formattedDate }}</span>
+                <span class="time" :title="formattedDateUTC">{{
+                  formattedDate
+                }}</span>
               </v-list-item-subtitle>
               <v-list-item-content v-if="$scopedSlots['content']" class="py-0">
                 <slot name="content"></slot>
@@ -31,7 +36,7 @@
                   <v-col cols="auto">
                     <commit-chip :commitHash="commit.hash"></commit-chip>
                   </v-col>
-                  <span :class="$scopedSlots['actions'] ? ['pl-3']: ['']">
+                  <span :class="$scopedSlots['actions'] ? ['pl-3'] : ['']">
                     <slot name="actions"></slot>
                   </span>
                 </v-row>
@@ -47,8 +52,8 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
-import { formatDate, formatDateUTC } from '../../util/TimeUtil'
-import { Commit } from '../../store/types'
+import { formatDate, formatDateUTC } from '@/util/TimeUtil'
+import { CommitDescription } from '@/store/types'
 import InlineMinimalRepoNameDisplay from '../InlineMinimalRepoDisplay.vue'
 import CommitChip from '../CommitChip.vue'
 
@@ -60,14 +65,14 @@ import CommitChip from '../CommitChip.vue'
 })
 export default class CommitOverviewBase extends Vue {
   @Prop()
-  private commit!: Commit
+  private commit!: CommitDescription
 
-  get formattedDate() {
-    return formatDate(this.commit.authorDate || 0)
+  private get formattedDate() {
+    return formatDate(this.commit.authorDate || new Date(0))
   }
 
-  get formattedDateUTC() {
-    return formatDateUTC(this.commit.authorDate || 0)
+  private get formattedDateUTC() {
+    return formatDateUTC(this.commit.authorDate || new Date(0))
   }
 }
 </script>

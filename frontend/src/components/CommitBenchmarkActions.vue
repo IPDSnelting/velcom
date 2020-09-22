@@ -3,10 +3,14 @@
     <v-tooltip top>
       <template #activator="{ on }">
         <v-btn v-on="on" icon @click="benchmark">
-          <v-icon class="rocket">{{ hasExistingBenchmark ? rebenchmarkIcon : benchmarkIcon }}</v-icon>
+          <v-icon class="rocket">{{
+            hasExistingBenchmark ? rebenchmarkIcon : benchmarkIcon
+          }}</v-icon>
         </v-btn>
       </template>
-      <span v-if="hasExistingBenchmark">Re-runs all benchmarks for this commit</span>
+      <span v-if="hasExistingBenchmark"
+        >Re-runs all benchmarks for this commit</span
+      >
       <span v-else>Runs all benchmarks for this commit</span>
     </v-tooltip>
     <v-tooltip top>
@@ -16,8 +20,7 @@
         </v-btn>
       </template>
       Benchmarks all commits upwards of this commit (this
-      <strong>one</strong> and
-      <strong>up</strong>)
+      <strong>one</strong> and <strong>up</strong>)
     </v-tooltip>
   </span>
 </template>
@@ -27,8 +30,8 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { mdiHistory, mdiFlash, mdiOneUp } from '@mdi/js'
 import { Prop } from 'vue-property-decorator'
-import { vxm } from '../store'
-import { Commit } from '../store/types'
+import { vxm } from '@/store'
+import { CommitDescription } from '@/store/types'
 
 @Component
 export default class CommitBenchmarkActions extends Vue {
@@ -36,18 +39,21 @@ export default class CommitBenchmarkActions extends Vue {
   private hasExistingBenchmark!: boolean
 
   @Prop()
-  private commit!: Commit
+  private commitDescription!: CommitDescription
 
-  get isAdmin() {
+  private get isAdmin(): boolean {
     return vxm.userModule.isAdmin
   }
 
   private benchmark() {
-    vxm.queueModule.dispatchPrioritizeOpenTask(this.commit)
+    vxm.queueModule.startManualTask({
+      repoId: this.commitDescription.repoId,
+      hash: this.commitDescription.hash
+    })
   }
 
   private benchmarkUpwards() {
-    vxm.queueModule.dispatchQueueUpwardsOf(this.commit)
+    vxm.queueModule.dispatchQueueUpwardsOf(this.commitDescription)
   }
 
   // ============== ICONS ==============

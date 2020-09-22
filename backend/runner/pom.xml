@@ -14,11 +14,12 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <jbock.version>3.4.008</jbock.version>
+    <jbock.version>3.4.009</jbock.version>
   </properties>
 
   <build>
     <plugins>
+
       <plugin>
         <artifactId>maven-shade-plugin</artifactId>
         <executions>
@@ -42,10 +43,40 @@
           </transformers>
         </configuration>
       </plugin>
+
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
       </plugin>
+
+      <!-- Current commit hash available to jars -->
+      <!-- When changing this, also change backend/pom.xml and GitProperties.java -->
+      <plugin>
+        <groupId>pl.project13.maven</groupId>
+        <artifactId>git-commit-id-plugin</artifactId>
+        <version>${git-commit-id-plugin.version}</version>
+        <executions>
+          <execution>
+            <id>get-the-git-infos</id>
+            <goals>
+              <goal>revision</goal>
+            </goals>
+            <phase>initialize</phase>
+          </execution>
+        </executions>
+        <configuration>
+          <dotGitDirectory>${project.basedir}/../../.git</dotGitDirectory>
+          <generateGitPropertiesFile>true</generateGitPropertiesFile>
+          <generateGitPropertiesFilename>${project.build.outputDirectory}/git.properties
+          </generateGitPropertiesFilename>
+          <includeOnlyProperties>
+            <includeOnlyProperty>^git.build.(time|version)$</includeOnlyProperty>
+            <includeOnlyProperty>^git.commit.id.(abbrev|full)$</includeOnlyProperty>
+          </includeOnlyProperties>
+          <commitIdGenerationMode>full</commitIdGenerationMode>
+        </configuration>
+      </plugin>
+
     </plugins>
   </build>
 
@@ -71,7 +102,7 @@
 
     <dependency>
       <groupId>org.mockito</groupId>
-      <artifactId>mockito-all</artifactId>
+      <artifactId>mockito-core</artifactId>
     </dependency>
 
     <dependency>

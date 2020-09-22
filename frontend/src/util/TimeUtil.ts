@@ -1,12 +1,54 @@
 /**
+ * Formats a duration into a human readable string.
+ *
+ * @export
+ * @param {Date} start the start date
+ * @param {Date} end the end date
+ */
+export function formatDurationHuman(start: Date, end: Date): string {
+  const [hours, minutes, seconds] = durationToParts(start, end)
+  let result = ''
+
+  if (hours === 0 && minutes === 0 && seconds === 0) {
+    return '0 seconds'
+  }
+
+  if (hours > 0) {
+    result += `${hours} hours`
+  }
+  if (minutes > 0) {
+    result += result.length > 0 ? ' and ' : ''
+    result += `${minutes} minutes`
+  }
+  if (seconds > 0) {
+    result += result.length > 0 ? ' and ' : ''
+    result += `${seconds} seconds`
+  }
+
+  return result
+}
+
+function durationToParts(start: Date, end: Date): [number, number, number] {
+  const differenceMillis = Math.abs(end.getTime() - start.getTime())
+  let remainingDifferenceSeconds = differenceMillis / 1000
+
+  const hours = Math.floor(remainingDifferenceSeconds / (60 * 60))
+  remainingDifferenceSeconds -= hours * 60 * 60
+  const minutes = Math.floor(remainingDifferenceSeconds / 60)
+  remainingDifferenceSeconds -= minutes * 60
+
+  return [hours, minutes, Math.floor(remainingDifferenceSeconds)]
+}
+
+/**
  * Formats a date.
  *
  * @export
- * @param {number} date the date as an epoch seconds timestamp
+ * @param {number | Date} date the date as an epoch seconds timestamp
  * @returns {string} the formatted date
  */
-export function formatDate(date: number): string {
-  let myDate = getDate(date)
+export function formatDate(date: number | Date): string {
+  const myDate = date instanceof Date ? date : getDate(date)
 
   let resultString: string = myDate.getFullYear() + ''
   resultString += '-' + leftZeroPad(2, myDate.getMonth() + 1)
@@ -23,11 +65,11 @@ export function formatDate(date: number): string {
  * Formats a date relative to UTC time (or appends a zone offset).
  *
  * @export
- * @param {number} date the date to format
+ * @param {number | Date} date the date to format
  * @returns {string} the formatted date
  */
-export function formatDateUTC(date: number): string {
-  let myDate = getDate(date)
+export function formatDateUTC(date: number | Date): string {
+  const myDate = date instanceof Date ? date : getDate(date)
 
   let resultString: string = myDate.getFullYear() + ''
   resultString += '-' + leftZeroPad(2, myDate.getUTCMonth() + 1)
@@ -43,6 +85,20 @@ export function formatDateUTC(date: number): string {
 }
 
 /**
+ * Formats a time as a "hh:mm:ss" string.
+ * @param date the date to format
+ */
+export function formatTime(date: Date): string {
+  return (
+    leftZeroPad(2, date.getHours()) +
+    ':' +
+    leftZeroPad(2, date.getMinutes()) +
+    ':' +
+    leftZeroPad(2, date.getSeconds())
+  )
+}
+
+/**
  * Converts an epoch seconds timestamp to a date.
  *
  * @export
@@ -50,7 +106,7 @@ export function formatDateUTC(date: number): string {
  * @returns {Date} the matching date
  */
 export function getDate(date: number): Date {
-  let myDate = new Date()
+  const myDate = new Date()
   // Time takes an epoch MILLIS string
   myDate.setTime(date * 1000)
   return myDate

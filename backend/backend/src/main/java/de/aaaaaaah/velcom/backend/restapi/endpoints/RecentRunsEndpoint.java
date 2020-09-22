@@ -2,11 +2,11 @@ package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
 import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
-import de.aaaaaaah.velcom.backend.restapi.endpoints.utils.EndpointUtils;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimensionDifference;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRunDescription;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRunDescription.JsonSuccess;
 import io.micrometer.core.annotation.Timed;
+import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonSource;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -57,7 +57,7 @@ public class RecentRunsEndpoint {
 					run.getId().getId(),
 					run.getStartTime().getEpochSecond(),
 					JsonSuccess.fromRunResult(run.getResult()),
-					EndpointUtils.convertToSource(commitAccess, run.getSource())
+					JsonSource.fromSource(run.getSource(), commitAccess)
 				),
 				null
 			))
