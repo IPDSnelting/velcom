@@ -47,9 +47,13 @@ export class QueueStore extends VxModule {
     hash: CommitHash
     repoId: RepoId
   }): Promise<void> {
-    await axios.post(`/queue/commit/${payload.repoId}/${payload.hash}`, {
-      showSuccessSnackbar: true
-    })
+    await axios.post(
+      `/queue/commit/${payload.repoId}/${payload.hash}`,
+      {},
+      {
+        showSuccessSnackbar: true
+      }
+    )
     // We do not insert the task locally as we don't know where!
     // Fetching the queue is not needed, as this option is only called from
     // other pages
@@ -64,7 +68,7 @@ export class QueueStore extends VxModule {
    */
   @action
   async dispatchPrioritizeOpenTask(id: TaskId): Promise<void> {
-    await axios.patch(`/queue/${id}`, { showSuccessSnackbar: true })
+    await axios.patch(`/queue/${id}`, {}, { showSuccessSnackbar: true })
     this.prioritizeOpenTask(id)
   }
 
