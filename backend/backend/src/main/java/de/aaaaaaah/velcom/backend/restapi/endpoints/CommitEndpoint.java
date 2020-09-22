@@ -65,10 +65,15 @@ public class CommitEndpoint {
 			.map(Branch::getName)
 			.collect(Collectors.toSet());
 
+		// If the commit can't be reached from any tracked branch, none of its children can either. so
+		// an empty list of tracked child hashes is appropriate.
 		Set<CommitHash> trackedChildHashes = new HashSet<>(
-			commitAccess.getChildren(repoId, hash, trackedBranches));
+			commitAccess.getChildren(repoId, hash, trackedBranches).orElse(List.of()));
+		// If the commit can't be reached from any branch, none of its children can either, so an empty
+		// list of (untracked) child hashes is appropriate. Otherwise, commits like GitHub's auto
+		// generated merge commits would be visible as children.
 		Set<CommitHash> untrackedChildHashes = new HashSet<>(
-			commitAccess.getChildren(repoId, hash, allBranches));
+			commitAccess.getChildren(repoId, hash, allBranches).orElse(List.of()));
 		untrackedChildHashes.removeAll(trackedChildHashes);
 
 		List<JsonCommitDescription> trackedChildren = trackedChildHashes.stream()

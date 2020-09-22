@@ -144,10 +144,13 @@ public class CommitReadAccess {
 	 *
 	 * @param repoId the repo the commit is in
 	 * @param commitHash the commit's hash
-	 * @return the commit's children
+	 * @param startingBranches only commits reachable from any of these branches are included in the
+	 * 	search
+	 * @return the commit's children. Returns {@link Optional#empty()} if the commit could not be
+	 * 	reached from any of the starting branches.
 	 * @throws CommitAccessException when accessing the repo fails
 	 */
-	public Collection<CommitHash> getChildren(RepoId repoId, CommitHash commitHash,
+	public Optional<Collection<CommitHash>> getChildren(RepoId repoId, CommitHash commitHash,
 		Set<BranchName> startingBranches) {
 
 		try (
@@ -170,20 +173,25 @@ public class CommitReadAccess {
 			plotCommitList.source(plotWalk);
 			plotCommitList.fillTo(Integer.MAX_VALUE);
 
-			PlotCommit<PlotLane> commit = plotCommitList.stream()
+			Optional<PlotCommit<PlotLane>> maybeCommit = plotCommitList.stream()
 				.filter(targetId::equals)
-				.findAny()
-				.orElseThrow(() -> new NoSuchCommitException(repoId, commitHash));
+				.findAny();
+			if (maybeCommit.isEmpty()) {
+				return Optional.empty();
+			}
+			PlotCommit<PlotLane> commit = maybeCommit.get();
 
 			List<PlotCommit<PlotLane>> children = new ArrayList<>();
 			for (int i = 0; i < commit.getChildCount(); i++) {
 				children.add(commit.getChild(i));
 			}
 
-			return children.stream()
+			List<CommitHash> childHashes = children.stream()
 				.map(AnyObjectId::getName)
 				.map(CommitHash::new)
 				.collect(Collectors.toList());
+			return Optional.of(childHashes);
+
 		} catch (Exception e) {
 			throw new CommitAccessException("Failed to find children", e, repoId, commitHash);
 		}
