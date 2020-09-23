@@ -1,4 +1,4 @@
-import { DetailDataPoint, Dimension } from '@/store/types'
+import { ComparisonDataPoint, DetailDataPoint, Dimension } from '@/store/types'
 import { CustomKeyEqualsMap } from '@/util/CustomKeyEqualsMap'
 import {
   DetailGraphStore,
@@ -94,9 +94,38 @@ export function detailGraphStoreToJson(store: DetailGraphStore): string {
 }
 // </editor-fold>
 
+// <editor-fold desc="COMPARISON DATA POINT">
+function comparisonDataPointToJson(point: ComparisonDataPoint | null) {
+  if (!point) {
+    return undefined
+  }
+  return JSON.stringify(point)
+}
+
+function hydrateComparisonDataPoint(point: ComparisonDataPoint) {
+  return new ComparisonDataPoint(
+    point.hash,
+    point.author,
+    new Date(point.authorDate),
+    point.summary,
+    point.value,
+    point.repoId
+  )
+}
+// </editor-fold>
+
 // <editor-fold desc="COMPARISON GRAPH">
 export function comparisonGraphStoreFromJson(json?: string): any {
-  return json ? JSON.parse(json) : {}
+  if (!json) {
+    return {}
+  }
+  const parsed = JSON.parse(json)
+
+  if (parsed.referenceCommit) {
+    parsed.referenceCommit = hydrateComparisonDataPoint(parsed.referenceCommit)
+  }
+
+  return parsed
 }
 
 export function comparisonGraphStoreToJson(
@@ -108,7 +137,8 @@ export function comparisonGraphStoreToJson(
     startTime: (store as any).startTime,
     stopTime: (store as any).stopTime,
     selectedMetric: store.selectedMetric,
-    selectedBenchmark: store.selectedBenchmark
+    selectedBenchmark: store.selectedBenchmark,
+    referenceCommit: comparisonDataPointToJson(store.referenceCommit)
   })
 }
 // </editor-fold>
