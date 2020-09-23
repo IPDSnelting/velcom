@@ -128,8 +128,8 @@ export default class EchartsDetailGraph extends Vue {
   // <!--<editor-fold desc="FIELDS">-->
   private chartOptions: EChartOption = {}
   private seriesGenerator: SeriesGenerationFunction = this.buildLineSeries
-  private zoomStartPercent: number = 0
-  private zoomEndPercent: number = 1
+  private zoomStartValue: number | undefined = undefined
+  private zoomEndValue: number | undefined = undefined
 
   // >>>> Datapoint Dialog >>>>
   private pointDialogOpen: boolean = false
@@ -192,9 +192,7 @@ export default class EchartsDetailGraph extends Vue {
             title: {
               zoom: 'Zoom (brush)',
               back: 'Reset zoom'
-            },
-            start: this.zoomStartPercent * 100,
-            end: this.zoomEndPercent * 100
+            }
           }
         },
         tooltip: {
@@ -205,14 +203,14 @@ export default class EchartsDetailGraph extends Vue {
         {
           type: 'inside',
           // Start at the correct place when changing the series type
-          start: this.zoomStartPercent * 100,
-          end: this.zoomEndPercent * 100
+          startValue: this.zoomStartValue,
+          endValue: this.zoomEndValue
         },
         {
           type: 'slider',
           // Start at the correct place when changing the series type
-          start: this.zoomStartPercent * 100,
-          end: this.zoomEndPercent * 100
+          startValue: this.zoomStartValue,
+          endValue: this.zoomEndValue
         }
       ],
       tooltip: {
@@ -393,10 +391,8 @@ export default class EchartsDetailGraph extends Vue {
    * If the number is manageable, the graph type will be selected.
    */
   private selectAppropriateSeries(): 're-render' | 'unchanged' {
-    const percentToAbsolute = (percent: number) =>
-      (this.maxDateValue - this.minDateValue) * percent + this.minDateValue
-    const startValue = percentToAbsolute(this.zoomStartPercent)
-    const endValue = percentToAbsolute(this.zoomEndPercent)
+    const startValue = this.zoomStartValue || this.minDateValue
+    const endValue = this.zoomEndValue || this.maxDateValue
 
     // TODO: Is this a performance problem? There might be 10.000+ items here
     // and this method is called every time the slider is dragged or the user
@@ -547,23 +543,26 @@ export default class EchartsDetailGraph extends Vue {
       event = e.batch[0]
     }
 
-    let startPercent: number
-    let endPercent: number
+    let startValue: number
+    let endValue: number
 
     // Batch and un-batched events set either the percent or absolute value
     // we normalize to percentages
     if (event.start !== undefined && event.end !== undefined) {
-      startPercent = event.start / 100
-      endPercent = event.end / 100
+      const percentToAbsolute = (percent: number) =>
+        this.minDateValue + (this.maxDateValue - this.minDateValue) * percent
+
+      startValue = percentToAbsolute(event.start / 100)
+      endValue = percentToAbsolute(event.end / 100)
     } else if (event.startValue !== undefined && event.endValue !== undefined) {
-      startPercent = event.startValue / (this.maxDateValue - this.minDateValue)
-      endPercent = event.endValue / (this.maxDateValue - this.minDateValue)
+      startValue = event.startValue
+      endValue = event.endValue
     } else {
       return
     }
 
-    this.zoomStartPercent = startPercent
-    this.zoomEndPercent = endPercent
+    this.zoomStartValue = startValue
+    this.zoomEndValue = endValue
 
     if (this.selectAppropriateSeries() === 're-render') {
       this.updateGraph()
@@ -571,8 +570,8 @@ export default class EchartsDetailGraph extends Vue {
   }
 
   private echartsZoomReset() {
-    this.zoomStartPercent = 0
-    this.zoomEndPercent = 1
+    this.zoomStartValue = this.minDateValue
+    this.zoomEndValue = this.maxDateValue
     this.updateGraph()
   }
 
