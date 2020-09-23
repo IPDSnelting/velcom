@@ -50,19 +50,24 @@ jobs:
 
       - name: "Build backend"
         run: "make backend"
-      - name: "Upload backend/backend artifacts"
+      - name: "Upload backend/backend artifact"
         uses: actions/upload-artifact@v2
         with:
           name: backend-artifacts
           path: backend/backend/target/backend.jar
+      - name: "Upload aspectjweaver artifact"
+        uses: actions/upload-artifact@v2
+        with:
+          name: aspectjweaver-artifact
+          path: backend/backend/target/dependency/aspectjweaver.jar
       - name: "Upload backend/runner artifacts"
         uses: actions/upload-artifact@v2
         with:
           name: backend-artifacts
           path: backend/runner/target/runner.jar
 
-  # Push image to GitHub Packages.
-  push:
+  # Push aaaaaaah image to GitHub Packages.
+  push-aaaaaaah:
     # Ensure build job passes before pushing image.
     needs: [build]
 
@@ -85,10 +90,14 @@ jobs:
         with:
           name: frontend-artifacts
           path: dist
-      - name: "Download backend artifacts"
+      - name: "Download backend artifact"
         uses: actions/download-artifact@v2
         with:
           name: backend-artifacts
+      - name: "Download aspectjweaver artifact"
+        uses: actions/download-artifact@v2
+        with:
+          name: aspectjweaver-artifact
 
       # BUILDING
       - name: "Build image"
@@ -120,9 +129,9 @@ jobs:
           docker push $IMAGE_ID:$VERSION
 
   # Deploy main branch to velcom.aaaaaaah.de
-  deploy:
+  deploy-aaaaaaah:
     # Ensure build job passes before pushing image.
-    needs: [push]
+    needs: [push-aaaaaaah]
 
     runs-on: ubuntu-latest
     if: "github.event_name == 'push' && github.ref == 'refs/heads/main'"

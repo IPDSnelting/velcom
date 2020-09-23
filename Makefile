@@ -53,6 +53,8 @@ docker-build-server-single-port: backend
 docker-github-ci:
 	mkdir -p .docker
 	cp backend.jar .docker
+	# Copy aspextj agent if it exists
+	[ -f aspectjweaver.jar ] && cp aspectjweaver.jar .docker
 	cp -r dist .docker
 	cp -r docs/* .docker
 	cp Dockerfile-Single-Port .docker/Dockerfile
