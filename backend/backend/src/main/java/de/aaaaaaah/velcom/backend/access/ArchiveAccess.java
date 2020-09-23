@@ -8,6 +8,7 @@ import de.aaaaaaah.velcom.backend.access.entities.RemoteUrl;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.entities.Task;
 import de.aaaaaaah.velcom.backend.access.exceptions.AddRepoException;
+import de.aaaaaaah.velcom.backend.access.exceptions.MalformedRepoException;
 import de.aaaaaaah.velcom.backend.access.exceptions.PrepareTransferException;
 import de.aaaaaaah.velcom.backend.access.exceptions.RepoAccessException;
 import de.aaaaaaah.velcom.backend.access.exceptions.TransferException;
@@ -20,6 +21,7 @@ import de.aaaaaaah.velcom.backend.util.TransferUtils;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Path;
+import javax.annotation.Nullable;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Repository;
@@ -50,10 +52,11 @@ public class ArchiveAccess {
 
 	private final Object benchRepoLock = new Object();
 	private final RemoteUrl benchRepoUrl;
+	@Nullable
 	private CommitHash currentBenchRepoHash;
 
 	public ArchiveAccess(Path archivesRootDir, RemoteUrl benchRepoUrl, RepoStorage repoStorage)
-		throws IOException {
+		throws IOException, MalformedRepoException {
 
 		this.repoStorage = repoStorage;
 
@@ -68,9 +71,20 @@ public class ArchiveAccess {
 
 		this.benchRepoUrl = benchRepoUrl;
 
-		// Initialize bench repo if it does not yet exist
+		// Check if we have a bench repo with a valid hash
+		if (repoStorage.containsRepository(BENCH_REPO_DIR_NAME)) {
+			try {
+				currentBenchRepoHash = loadLatestBenchRepoHash();
+			} catch (Exception e) {
+				LOGGER.warn("Failed to get latest commit hash from benchmark repo. "
+					+ "Trying to re-clone it to maybe fix it.");
+				repoStorage.deleteRepository(BENCH_REPO_DIR_NAME);
+			}
+		}
+
+		// Initialize bench repo if it doesn't exist
 		if (!repoStorage.containsRepository(BENCH_REPO_DIR_NAME)) {
-			LOGGER.info("Could not find bench repo locally. Cloning...");
+			LOGGER.info("Cloning bench repo...");
 			try {
 				repoStorage.addRepository(BENCH_REPO_DIR_NAME, benchRepoUrl.getUrl());
 				LOGGER.info("Bench repo successfully cloned.");
@@ -80,12 +94,15 @@ public class ArchiveAccess {
 			}
 		}
 
-		// Check if bench repo is valid
-		try {
-			currentBenchRepoHash = loadLatestBenchRepoHash();
-		} catch (Exception e) {
-			LOGGER.error("Failed to get latest commit hash from benchmark repo! "
-				+ "Please make sure that the benchmark repository has at least one commit.");
+		// Try again to acquire bench repo hash, if we didn't already get it earlier
+		if (currentBenchRepoHash == null) {
+			try {
+				currentBenchRepoHash = loadLatestBenchRepoHash();
+			} catch (Exception e) {
+				LOGGER.error("Failed to get latest commit hash from benchmark repo. "
+					+ "Please make sure that the benchmark repository has at least one commit.");
+				throw new MalformedRepoException("bench repo has no commits in its default branch");
+			}
 		}
 
 		// Clean up any archives that exist at this moment
