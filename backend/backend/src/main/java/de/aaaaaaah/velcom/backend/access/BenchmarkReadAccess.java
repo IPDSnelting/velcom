@@ -28,10 +28,10 @@ import de.aaaaaaah.velcom.backend.access.entities.sources.TarSource;
 import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchRunException;
 import de.aaaaaaah.velcom.backend.storage.db.DBReadAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
+import de.aaaaaaah.velcom.shared.util.Either;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics;
-import de.aaaaaaah.velcom.shared.util.Either;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -53,20 +53,6 @@ import org.jooq.codegen.db.tables.records.RunRecord;
  * Provides read access to benchmark related entities such as runs and measurements.
  */
 public class BenchmarkReadAccess {
-
-	protected static Cache<CommitHash, Run> buildRunCache(RepoId repoId) {
-		final Cache<CommitHash, Run> cache = Caffeine.newBuilder().maximumSize(10000).build();
-
-		CaffeineCacheMetrics.monitor(
-			Metrics.globalRegistry,
-			cache,
-			"repoRunCache",
-			"repo",
-			repoId.getId().toString()
-		);
-
-		return cache;
-	}
 
 	protected static final int RECENT_RUN_CACHE_SIZE = 10;
 
@@ -540,4 +526,19 @@ public class BenchmarkReadAccess {
 		}
 		return infoMap;
 	}
+
+	protected static Cache<CommitHash, Run> buildRunCache(RepoId repoId) {
+		final Cache<CommitHash, Run> cache = Caffeine.newBuilder().maximumSize(10000).build();
+
+		CaffeineCacheMetrics.monitor(
+			Metrics.globalRegistry,
+			cache,
+			"repoRunCache",
+			"repo",
+			repoId.getId().toString()
+		);
+
+		return cache;
+	}
+
 }
