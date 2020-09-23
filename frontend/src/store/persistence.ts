@@ -5,12 +5,10 @@ import VuexPersistence from 'vuex-persist'
 import { repoStoreToJson, repoStoreFromJson } from './modules/repoStore'
 import {
   comparisonGraphStoreFromJson,
-  comparisonGraphStoreToJson
-} from './modules/comparisonGraphStore'
-import {
-  detailGraphStoreToJson,
-  detailGraphStoreFromJson
-} from './modules/detailGraphStore'
+  comparisonGraphStoreToJson,
+  detailGraphStoreFromJson,
+  detailGraphStoreToJson
+} from '@/util/StorePersistenceUtilities'
 
 interface LocalStoragePersisted {
   userModule?: UserStore

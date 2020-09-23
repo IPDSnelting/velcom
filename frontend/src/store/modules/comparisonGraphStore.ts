@@ -11,23 +11,6 @@ const VxModule = createModule({
   strict: false
 })
 
-export function comparisonGraphStoreFromJson(json?: string): any {
-  return json ? JSON.parse(json) : {}
-}
-
-export function comparisonGraphStoreToJson(
-  store: ComparisonGraphStore
-): string {
-  return JSON.stringify({
-    _selectedRepos: (store as any)._selectedRepos,
-    _selectedBranchesByRepoId: (store as any)._selectedBranchesByRepoId,
-    startTime: (store as any).startTime,
-    stopTime: (store as any).stopTime,
-    selectedMetric: store.selectedMetric,
-    selectedBenchmark: store.selectedBenchmark
-  })
-}
-
 /**
  * Builds a string out of the requested repos and branches
  *
