@@ -416,32 +416,32 @@ export default class RepoComparison extends Vue {
   }
 
   private autoZoom() {
-    /*    vxm.comparisonGraphModule
+    vxm.comparisonGraphModule
       .fetchComparisonGraph({
         startTime: null,
         endTime: null,
         ...this.payload
       })
       .then(data => {
-        let { min, max } = Object.values(data)
+        const { min, max } = Object.values(data)
           .flatMap(it => it)
           .reduce(
             (accumulated, next) => {
-              let time = next.authorDate
-              if (time && time < accumulated.min) {
-                accumulated.min = time
+              const time = next.authorDate
+              if (time && time.getTime() < accumulated.min) {
+                accumulated.min = time.getTime()
               }
-              if (time && time > accumulated.max) {
-                accumulated.max = time
+              if (time && time.getTime() > accumulated.max) {
+                accumulated.max = time.getTime()
               }
               return accumulated
             },
             { min: 1e200, max: 0 }
           )
 
-        vxm.comparisonGraphModule.startDate = new Date(min * 1000)
-        vxm.comparisonGraphModule.stopDate = new Date(max * 1000)
-      }) */
+        vxm.comparisonGraphModule.startDate = new Date(min)
+        vxm.comparisonGraphModule.stopDate = new Date(max)
+      })
   }
 
   private zoomToBrush() {
