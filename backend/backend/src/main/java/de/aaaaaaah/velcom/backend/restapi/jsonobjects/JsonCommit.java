@@ -9,7 +9,8 @@ public class JsonCommit {
 	private final UUID repoId;
 	private final String hash;
 	private final List<JsonCommitDescription> parents;
-	private final List<JsonCommitDescription> children;
+	private final List<JsonCommitDescription> trackedChildren;
+	private final List<JsonCommitDescription> untrackedChildren;
 	private final String author;
 	private final long authorDate;
 	private final String committer;
@@ -20,13 +21,15 @@ public class JsonCommit {
 	private final List<JsonRunDescription> runs;
 
 	public JsonCommit(UUID repoId, String hash, List<JsonCommitDescription> parents,
-		List<JsonCommitDescription> children, String author, long authorDate, String committer,
-		long committerDate, String summary, @Nullable String message, List<JsonRunDescription> runs) {
+		List<JsonCommitDescription> trackedChildren, List<JsonCommitDescription> untrackedChildren,
+		String author, long authorDate, String committer, long committerDate, String summary,
+		@Nullable String message, List<JsonRunDescription> runs) {
 
 		this.repoId = repoId;
 		this.hash = hash;
 		this.parents = parents;
-		this.children = children;
+		this.trackedChildren = trackedChildren;
+		this.untrackedChildren = untrackedChildren;
 		this.author = author;
 		this.authorDate = authorDate;
 		this.committer = committer;
@@ -48,8 +51,12 @@ public class JsonCommit {
 		return parents;
 	}
 
-	public List<JsonCommitDescription> getChildren() {
-		return children;
+	public List<JsonCommitDescription> getTrackedChildren() {
+		return trackedChildren;
+	}
+
+	public List<JsonCommitDescription> getUntrackedChildren() {
+		return untrackedChildren;
 	}
 
 	public String getAuthor() {
