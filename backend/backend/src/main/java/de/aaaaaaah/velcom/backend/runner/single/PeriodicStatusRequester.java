@@ -50,45 +50,58 @@ public class PeriodicStatusRequester {
 	private void run() {
 		while (!cancelled) {
 			try {
-				//noinspection BusyWait
-				Thread.sleep(5000);
-
-				// TODO: 10.07.20 We can disconnect at any point. Handle it. 
-				GetStatusReply statusReply = requestStatus();
-				teleRunner.setRunnerInformation(statusReply);
-
-				if (!statusReply.isResultAvailable()) {
-					continue;
-				}
-
-				GetResultReply requestResults = requestResults();
-				UUID runId = requestResults.getRunId();
-
-				// The runner has a result - we don't know why :( Tell it to clear it and move on
-				if (teleRunner.getCurrentTask().isEmpty()) {
-					LOGGER.info(
-						"{} had a result but we don't know why. Clearing it.", teleRunner.getRunnerName()
-					);
+				iteration();
+			} catch (Exception e) {
+				LOGGER.error("Error communicating with runner or handling results", e);
+				try {
 					clearResults();
-					continue;
+				} catch (InterruptedException | ExecutionException e2) {
+					LOGGER.error("Error telling runner to clear results", e2);
+					connection.close(StatusCode.INTERNAL_ERROR);
 				}
-				// The runner has a *different* result than we expected. Disconnect.
-				if (!teleRunner.getCurrentTask().get().getId().getId().equals(runId)) {
-					LOGGER.info(
-						"{} had a different result than we expected: {} instead of {}.",
-						teleRunner.getRunnerName(), runId, teleRunner.getCurrentTask().get().getId().getId()
-					);
-					clearResults();
-					connection.close(StatusCode.ILLEGAL_BEHAVIOUR);
-					continue;
-				}
-
-				LOGGER.info("Got results for run {} from {}", runId, teleRunner.getRunnerName());
-				teleRunner.handleResults(requestResults);
-
-				clearResults();
-			} catch (InterruptedException | ExecutionException | CancellationException ignored) {
 			}
+		}
+	}
+
+	private void iteration() {
+		try {
+			Thread.sleep(5000);
+
+			// TODO: 10.07.20 We can disconnect at any point. Handle it.
+			GetStatusReply statusReply = requestStatus();
+			teleRunner.setRunnerInformation(statusReply);
+
+			if (!statusReply.isResultAvailable()) {
+				return;
+			}
+
+			GetResultReply requestResults = requestResults();
+			UUID runId = requestResults.getRunId();
+
+			// The runner has a result - we don't know why :( Tell it to clear it and move on
+			if (teleRunner.getCurrentTask().isEmpty()) {
+				LOGGER.info(
+					"{} had a result but we don't know why. Clearing it.", teleRunner.getRunnerName()
+				);
+				clearResults();
+				return;
+			}
+			// The runner has a *different* result than we expected. Disconnect.
+			if (!teleRunner.getCurrentTask().get().getId().getId().equals(runId)) {
+				LOGGER.info(
+					"{} had a different result than we expected: {} instead of {}.",
+					teleRunner.getRunnerName(), runId, teleRunner.getCurrentTask().get().getId().getId()
+				);
+				clearResults();
+				connection.close(StatusCode.ILLEGAL_BEHAVIOUR);
+				return;
+			}
+
+			LOGGER.info("Got results for run {} from {}", runId, teleRunner.getRunnerName());
+			teleRunner.handleResults(requestResults);
+
+			clearResults();
+		} catch (InterruptedException | ExecutionException | CancellationException ignored) {
 		}
 	}
 
