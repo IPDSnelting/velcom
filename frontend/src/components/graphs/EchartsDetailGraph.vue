@@ -48,6 +48,7 @@ import 'echarts/lib/component/markPoint'
 import { vxm } from '@/store'
 import DetailDatapointDialog from '@/components/dialogs/DetailDatapointDialog.vue'
 import { DimensionDetailPoint } from '@/store/modules/detailGraphStore'
+import { formatDate } from '@/util/TimeUtil'
 
 type ValidEchartsSeries = EChartOption.SeriesLine | EChartOption.SeriesGraph
 type SeriesGenerationFunction = (id: DimensionId) => ValidEchartsSeries
@@ -81,6 +82,7 @@ class EchartsDataPoint {
   }
 
   readonly summary: string
+  readonly author: string
 
   constructor(
     time: Date,
@@ -89,7 +91,8 @@ class EchartsDataPoint {
     name: string,
     color: string,
     borderColor: string,
-    summary: string
+    summary: string,
+    author: string
   ) {
     this.time = time
     this.dataValue = dataValue
@@ -102,6 +105,7 @@ class EchartsDataPoint {
       borderWidth: 2
     }
     this.summary = summary
+    this.author = author
   }
 }
 
@@ -113,6 +117,7 @@ class EchartsDataPoint {
 })
 export default class EchartsDetailGraph extends Vue {
   // <!--<editor-fold desc="PROPS">-->
+  // noinspection JSMismatchedCollectionQueryUpdate
   @Prop()
   private dimensions!: Dimension[]
 
@@ -255,6 +260,12 @@ export default class EchartsDetailGraph extends Vue {
                     <td>Message</td>
                     <td>${samplePoint.summary}</td>
                   </tr>
+                  <tr>
+                    <td>Author</td>
+                    <td>
+                      ${samplePoint.author} at ${formatDate(samplePoint.time)}
+                    </td>
+                  </tr>
                   ${dimensionRows.join('\n')}
                 </table>
             `
@@ -305,7 +316,8 @@ export default class EchartsDetailGraph extends Vue {
         point.hash,
         color,
         borderColor,
-        point.summary
+        point.summary,
+        point.author
       )
     })
   }
@@ -678,6 +690,7 @@ export default class EchartsDetailGraph extends Vue {
   font-size: 1.1em;
 }
 
+/*noinspection CssUnusedSymbol*/
 .echarts-tooltip-table .color-preview {
   width: 10px;
   height: 10px;
