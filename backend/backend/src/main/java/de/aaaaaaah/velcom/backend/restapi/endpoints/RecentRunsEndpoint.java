@@ -5,6 +5,7 @@ import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimensionDifference;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRunDescription;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRunDescription.JsonSuccess;
+import io.micrometer.core.annotation.Timed;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonSource;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -35,6 +36,7 @@ public class RecentRunsEndpoint {
 	}
 
 	@GET
+	@Timed(histogram = true)
 	public GetReply getRuns(
 		@QueryParam("n") @Nullable Integer nOptional,
 		@QueryParam("significant") @Nullable Boolean significantOptional

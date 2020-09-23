@@ -13,6 +13,7 @@ import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparison;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.utils.EndpointUtils;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimensionDifference;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRun;
+import io.micrometer.core.annotation.Timed;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -60,6 +61,7 @@ public class RunEndpoint {
 	}
 
 	@GET
+	@Timed(histogram = true)
 	public GetReply get(
 		@PathParam("runid") UUID runUuid,
 		@QueryParam("all_values") @Nullable Boolean allValuesOptional,

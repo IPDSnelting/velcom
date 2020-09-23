@@ -20,6 +20,8 @@ import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import de.aaaaaaah.velcom.backend.storage.repo.RepoStorage;
 import de.aaaaaaah.velcom.backend.storage.repo.exception.NoSuchRepositoryException;
 import de.aaaaaaah.velcom.backend.storage.repo.exception.RepositoryAcquisitionException;
+import io.micrometer.core.instrument.Metrics;
+import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -53,6 +55,8 @@ public class RepoReadAccess {
 	public RepoReadAccess(DatabaseStorage databaseStorage, RepoStorage repoStorage) {
 		this.databaseStorage = databaseStorage;
 		this.repoStorage = repoStorage;
+
+		CaffeineCacheMetrics.monitor(Metrics.globalRegistry, repoCache, "repoCache");
 	}
 
 	// --- Repo Getters ---------------------------------------------------------------------------

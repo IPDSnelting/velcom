@@ -1,0 +1,5 @@
+<aspectj>
+  <aspects>
+    <aspect name="io.micrometer.core.aop.TimedAspect" />
+  </aspects>
+</aspectj>

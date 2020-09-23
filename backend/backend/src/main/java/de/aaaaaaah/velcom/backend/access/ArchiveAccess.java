@@ -18,6 +18,7 @@ import de.aaaaaaah.velcom.backend.storage.repo.RepoStorage;
 import de.aaaaaaah.velcom.backend.storage.repo.exception.AddRepositoryException;
 import de.aaaaaaah.velcom.backend.storage.repo.exception.RepositoryAcquisitionException;
 import de.aaaaaaah.velcom.backend.util.TransferUtils;
+import io.micrometer.core.annotation.Timed;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Path;
@@ -174,6 +175,7 @@ public class ArchiveAccess {
 	 * @throws PrepareTransferException if something goes wrong trying to prepare the transfer
 	 * @throws TransferException if the transfer itself fails
 	 */
+	@Timed(histogram = true)
 	public void transferBenchRepo(OutputStream outputStream)
 		throws PrepareTransferException, TransferException {
 
@@ -210,6 +212,7 @@ public class ArchiveAccess {
 	 * @throws PrepareTransferException if something goes wrong trying to prepare the transfer
 	 * @throws TransferException if the transfer itself fails
 	 */
+	@Timed(histogram = true)
 	public void transferTask(Task task, OutputStream outputStream)
 		throws PrepareTransferException, TransferException {
 

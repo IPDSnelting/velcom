@@ -16,7 +16,11 @@ cd "/home/velcom"
 echo "Running in $PWD"
 
 # Start our backend
-sudo -Eu velcom $(which java) -jar /home/velcom/velcom.jar server "$1" &
+if [ -f /home/velcom/aspectjweaver.jar ]; then
+    sudo -Eu velcom $(which java) -javaagent:"/home/velcom/aspectjweaver.jar" -jar /home/velcom/velcom.jar server "$1" &
+else
+    sudo -Eu velcom $(which java) -jar /home/velcom/velcom.jar server "$1" &
+fi
 
 # Save its PID so we can relay kill signals
 JAVA_PID="$!"

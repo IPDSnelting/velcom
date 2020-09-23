@@ -34,6 +34,7 @@ clean:
 docker-build-server: backend frontend
 	mkdir -p .docker
 	cp backend/backend/target/backend.jar .docker
+	cp backend/backend/target/dependency/aspectjweaver.jar .docker
 	cp -r frontend/dist .docker
 	cp -r docs/* .docker
 	cp Dockerfile .docker
@@ -43,6 +44,7 @@ docker-build-server-single-port: backend
 	make -C frontend/ mode=production-single-port
 	mkdir -p .docker
 	cp backend/backend/target/backend.jar .docker
+	cp backend/backend/target/dependency/aspectjweaver.jar .docker
 	cp -r frontend/dist .docker
 	cp -r docs/* .docker
 	cp Dockerfile-Single-Port .docker/Dockerfile
@@ -51,6 +53,8 @@ docker-build-server-single-port: backend
 docker-github-ci:
 	mkdir -p .docker
 	cp backend.jar .docker
+	# Copy aspextj agent if it exists
+	[ -f aspectjweaver.jar ] && cp aspectjweaver.jar .docker
 	cp -r dist .docker
 	cp -r docs/* .docker
 	cp Dockerfile-Single-Port .docker/Dockerfile

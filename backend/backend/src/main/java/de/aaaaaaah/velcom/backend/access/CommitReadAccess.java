@@ -1,6 +1,5 @@
 package de.aaaaaaah.velcom.backend.access;
 
-
 import de.aaaaaaah.velcom.backend.access.entities.BranchName;
 import de.aaaaaaah.velcom.backend.access.entities.Commit;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
@@ -12,6 +11,7 @@ import de.aaaaaaah.velcom.backend.access.exceptions.RepoAccessException;
 import de.aaaaaaah.velcom.backend.access.filter.AuthorTimeRevFilter;
 import de.aaaaaaah.velcom.backend.storage.repo.RepoStorage;
 import de.aaaaaaah.velcom.backend.storage.repo.exception.RepositoryAcquisitionException;
+import io.micrometer.core.annotation.Timed;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -109,6 +109,7 @@ public class CommitReadAccess {
 	 * @return Those commits that could be found. If the repo could not be found, returns an empty
 	 * 	list. If a commit could not be found, doesn't return that commit in the return value.
 	 */
+	@Timed(histogram = true)
 	public Map<CommitHash, Commit> getCommits(RepoId repoId, Collection<CommitHash> commitHashes) {
 		Objects.requireNonNull(repoId);
 		Objects.requireNonNull(commitHashes);
@@ -150,9 +151,9 @@ public class CommitReadAccess {
 	 * 	reached from any of the starting branches.
 	 * @throws CommitAccessException when accessing the repo fails
 	 */
+	@Timed(histogram = true)
 	public Optional<Collection<CommitHash>> getChildren(RepoId repoId, CommitHash commitHash,
 		Set<BranchName> startingBranches) {
-
 		try (
 			Repository repo = repoStorage.acquireRepository(repoId.getDirectoryName());
 			PlotWalk plotWalk = new PlotWalk(repo);
@@ -203,6 +204,7 @@ public class CommitReadAccess {
 	 * @param startCommit the commit to start at
 	 * @return the commit walk instance
 	 */
+	@Timed(histogram = true)
 	public CommitWalk getCommitWalk(Commit startCommit) {
 		RepoId repoId = startCommit.getRepoId();
 		Repository repo = null;
@@ -239,6 +241,7 @@ public class CommitReadAccess {
 	 * @return a map with each commit hash pointing to its respective commit
 	 * @throws IllegalArgumentException if startTime is after stopTime
 	 */
+	@Timed(histogram = true)
 	public Map<CommitHash, Commit> getCommitsBetween(RepoId repoId,
 		Collection<BranchName> branches, @Nullable Instant startTime, @Nullable Instant stopTime) {
 
@@ -293,6 +296,7 @@ public class CommitReadAccess {
 		}
 	}
 
+	@Timed(histogram = true)
 	public Stream<Commit> getCommitLog(RepoId repoId, Collection<BranchName> branches)
 		throws CommitLogException {
 

@@ -3,8 +3,8 @@ package de.aaaaaaah.velcom.backend.storage.db;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import de.aaaaaaah.velcom.backend.GlobalConfig;
-import de.aaaaaaah.velcom.backend.ServerMain;
 import de.aaaaaaah.velcom.backend.util.CheckedConsumer;
+import io.micrometer.core.instrument.Metrics;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import org.flywaydb.core.Flyway;
@@ -55,7 +55,7 @@ public class DatabaseStorage {
 		HikariConfig hikariConfig = new HikariConfig();
 		hikariConfig.setDataSource(sqLiteDataSource);
 		hikariConfig.setPoolName("velcom-db-pool");
-		hikariConfig.setMetricRegistry(ServerMain.getMetricRegistry());
+		hikariConfig.setMetricRegistry(Metrics.globalRegistry);
 
 		HikariDataSource hikariDataSource = new HikariDataSource(hikariConfig);
 

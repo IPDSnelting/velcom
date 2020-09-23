@@ -11,6 +11,7 @@ import de.aaaaaaah.velcom.backend.access.entities.Repo;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimension;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRepo;
+import io.micrometer.core.annotation.Timed;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -45,6 +46,7 @@ public class AllReposEndpoint {
 	// TODO: 12.09.20 Return actual dimensions, not empty list
 	// For some reason, this endpoint returns an empty list of dimensions for every repo.
 	@GET
+	@Timed(histogram = true)
 	public GetReply get() {
 		Collection<Repo> repos = repoAccess.getAllRepos();
 		List<RepoId> repoIds = repos.stream().map(Repo::getRepoId).collect(Collectors.toList());

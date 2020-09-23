@@ -20,6 +20,7 @@ import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimension;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRepo;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.PATCH;
+import io.micrometer.core.annotation.Timed;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -94,6 +95,7 @@ public class RepoEndpoint {
 	}
 
 	@POST
+	@Timed(histogram = true)
 	public PostReply post(@Auth RepoUser user, @NotNull PostRequest request) {
 		user.guardAdminAccess();
 
@@ -162,9 +164,11 @@ public class RepoEndpoint {
 
 	@GET
 	@Path("{repoid}")
+	@Timed(histogram = true)
 	public GetReply get(@PathParam("repoid") UUID repoUuid) {
 		RepoId repoId = new RepoId(repoUuid);
 		Repo repo = repoAccess.getRepo(repoId);
+
 		return new GetReply(toJsonRepo(repo));
 	}
 
@@ -183,9 +187,9 @@ public class RepoEndpoint {
 
 	@PATCH
 	@Path("{repoid}")
+	@Timed(histogram = true)
 	public void patch(@Auth RepoUser user, @PathParam("repoid") UUID repoUuid,
 		@NotNull PatchRequest request) {
-
 		RepoId repoId = new RepoId(repoUuid);
 		user.guardRepoAccess(repoId);
 
@@ -253,6 +257,7 @@ public class RepoEndpoint {
 
 	@DELETE
 	@Path("{repoid}")
+	@Timed(histogram = true)
 	public void delete(@Auth RepoUser user, @PathParam("repoid") UUID repoUuid) {
 		RepoId repoId = new RepoId(repoUuid);
 		user.guardRepoAccess(repoId);

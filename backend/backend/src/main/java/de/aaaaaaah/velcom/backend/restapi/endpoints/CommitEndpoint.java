@@ -12,6 +12,7 @@ import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonCommit;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonCommitDescription;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRunDescription;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRunDescription.JsonSuccess;
+import io.micrometer.core.annotation.Timed;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonSource;
 import java.util.HashSet;
 import java.util.List;
@@ -44,10 +45,12 @@ public class CommitEndpoint {
 	}
 
 	@GET
+	@Timed(histogram = true)
 	public GetReply get(
 		@PathParam("repoid") UUID repoUuid,
 		@PathParam("hash") String hashString
 	) {
+
 		RepoId repoId = new RepoId(repoUuid);
 		CommitHash hash = new CommitHash(hashString);
 

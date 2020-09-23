@@ -17,6 +17,7 @@ import de.aaaaaaah.velcom.backend.access.entities.Run;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.utils.EndpointUtils;
 import de.aaaaaaah.velcom.backend.restapi.exception.InvalidQueryParamsException;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimension;
+import io.micrometer.core.annotation.Timed;
 import de.aaaaaaah.velcom.shared.util.Pair;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -62,6 +63,7 @@ public class GraphDetailEndpoint {
 	}
 
 	@GET
+	@Timed(histogram = true)
 	public GetReply get(
 		@PathParam("repoid") UUID repoUuid,
 		@QueryParam("start_time") @Nullable Long startTimeEpoch,
@@ -118,6 +120,7 @@ public class GraphDetailEndpoint {
 				extractValuesFromCommit(existingDimensions, runs, commit)
 			))
 			.collect(Collectors.toList());
+
 		return new GetReply(jsonDimensions, jsonGraphCommits);
 	}
 

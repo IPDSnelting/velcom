@@ -20,7 +20,6 @@ import de.aaaaaaah.velcom.backend.access.entities.benchmark.NewMeasurement;
 import de.aaaaaaah.velcom.backend.access.entities.benchmark.NewRun;
 import de.aaaaaaah.velcom.backend.storage.db.DBWriteAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -107,7 +106,7 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 		newRun.getSource().getLeft().ifPresent(commitSource -> {
 			Cache<CommitHash, Run> cache = repoRunCache.computeIfAbsent(
 				commitSource.getRepoId(),
-				r -> RUN_CACHE_BUILDER.build()
+				r -> buildRunCache(commitSource.getRepoId())
 			);
 
 			cache.put(commitSource.getHash(), run);
@@ -189,7 +188,7 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 
 		// Update repo run cache
 		Cache<CommitHash, Run> repoRunCache = this.repoRunCache.computeIfAbsent(repoId,
-			i -> RUN_CACHE_BUILDER.build());
+			i -> buildRunCache(repoId));
 
 		List<CommitHash> copiedKeys = new ArrayList<>(repoRunCache.asMap().keySet());
 

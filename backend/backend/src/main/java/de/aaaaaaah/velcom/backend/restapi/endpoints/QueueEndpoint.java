@@ -20,6 +20,7 @@ import de.aaaaaaah.velcom.backend.runner.IDispatcher;
 import de.aaaaaaah.velcom.shared.util.Pair;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.PATCH;
+import io.micrometer.core.annotation.Timed;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -56,6 +57,7 @@ public class QueueEndpoint {
 	}
 
 	@GET
+	@Timed(histogram = true)
 	public GetQueueReply getQueue() {
 		// TODO: 08.09.20 Fix NPE when calling this endpoint
 
@@ -99,6 +101,7 @@ public class QueueEndpoint {
 
 	@DELETE
 	@Path("{taskId}")
+	@Timed(histogram = true)
 	public Response deleteTask(@Auth RepoUser user, @PathParam("taskId") UUID taskId)
 		throws NoSuchTaskException {
 		Task task = queue.getTaskById(new TaskId(taskId));
@@ -115,6 +118,7 @@ public class QueueEndpoint {
 
 	@PATCH
 	@Path("{taskId}")
+	@Timed(histogram = true)
 	public Response patchTask(@Auth RepoUser user, @PathParam("taskId") UUID taskId)
 		throws NoSuchTaskException {
 		user.guardAdminAccess();
@@ -133,6 +137,7 @@ public class QueueEndpoint {
 	// TaskWriteAccess should probably throw a NoSuchCommitException.
 	@POST
 	@Path("commit/{repoId}/{hash}")
+	@Timed(histogram = true)
 	public PostCommitReply addCommit(@Auth RepoUser user, @PathParam("repoId") UUID repoUuid,
 		@PathParam("hash") String commitHashString) {
 		RepoId repoId = new RepoId(repoUuid);

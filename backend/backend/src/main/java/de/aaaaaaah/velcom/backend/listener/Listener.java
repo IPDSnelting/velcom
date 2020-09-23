@@ -2,9 +2,7 @@ package de.aaaaaaah.velcom.backend.listener;
 
 import static java.util.stream.Collectors.toList;
 
-import com.codahale.metrics.Histogram;
 import de.aaaaaaah.velcom.backend.GlobalConfig;
-import de.aaaaaaah.velcom.backend.ServerMain;
 import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.access.KnownCommitWriteAccess;
 import de.aaaaaaah.velcom.backend.access.RepoWriteAccess;
@@ -20,6 +18,7 @@ import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchRepoException;
 import de.aaaaaaah.velcom.backend.access.exceptions.RepoAccessException;
 import de.aaaaaaah.velcom.backend.access.policy.QueuePriority;
 import de.aaaaaaah.velcom.backend.data.benchrepo.BenchRepo;
+import io.micrometer.core.annotation.Timed;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -55,9 +54,6 @@ public class Listener {
 
 	private final UnknownCommitFinder unknownCommitFinder;
 
-	private final Histogram updateDurations = ServerMain.getMetricRegistry()
-		.histogram("listener-update-dur");
-
 	/**
 	 * Constructs a new listener instance.
 	 *
@@ -83,9 +79,8 @@ public class Listener {
 		unknownCommitFinder = new BreadthFirstSearchFinder();
 	}
 
+	@Timed(histogram = true)
 	private void update() {
-		long start = System.currentTimeMillis();
-
 		try {
 			benchRepo.checkForUpdates();
 		} catch (RepoAccessException e) {
@@ -99,9 +94,6 @@ public class Listener {
 				LOGGER.warn("Could not fetch updates for repo: " + repo, e);
 			}
 		}
-
-		long end = System.currentTimeMillis();
-		updateDurations.update(end - start);
 	}
 
 	public void updateRepo(RepoId repoId) throws CommitSearchException {

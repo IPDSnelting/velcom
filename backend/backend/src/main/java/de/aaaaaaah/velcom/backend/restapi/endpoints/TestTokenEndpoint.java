@@ -3,6 +3,7 @@ package de.aaaaaaah.velcom.backend.restapi.endpoints;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.restapi.authentication.RepoUser;
 import io.dropwizard.auth.Auth;
+import io.micrometer.core.annotation.Timed;
 import java.util.UUID;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -24,6 +25,7 @@ public class TestTokenEndpoint {
 	 * @param repoUuid the id of the repo
 	 */
 	@GET
+	@Timed(histogram = true)
 	public void get(@Auth RepoUser user, @QueryParam("repo_id") UUID repoUuid) {
 		if (repoUuid == null) {
 			user.guardAdminAccess();

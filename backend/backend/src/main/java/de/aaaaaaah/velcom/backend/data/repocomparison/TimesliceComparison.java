@@ -1,10 +1,7 @@
 package de.aaaaaaah.velcom.backend.data.repocomparison;
 
-import static com.codahale.metrics.MetricRegistry.name;
 import static java.util.stream.Collectors.toList;
 
-import com.codahale.metrics.Timer;
-import de.aaaaaaah.velcom.backend.ServerMain;
 import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.access.entities.BranchName;
@@ -21,6 +18,7 @@ import de.aaaaaaah.velcom.backend.data.repocomparison.grouping.CommitGrouper;
 import de.aaaaaaah.velcom.backend.data.repocomparison.grouping.GroupByDay;
 import de.aaaaaaah.velcom.backend.data.repocomparison.grouping.GroupByHour;
 import de.aaaaaaah.velcom.backend.data.repocomparison.grouping.GroupByWeek;
+import io.micrometer.core.annotation.Timed;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -41,9 +39,6 @@ import javax.annotation.Nullable;
  * removing small one-off performance drops and peaks, which lends itself better for comparisons.
  */
 public class TimesliceComparison implements RepoComparison {
-
-	private static final Timer TOTAL_TIMER = ServerMain.getMetricRegistry()
-		.timer(name("timeslicecomparison", "total", "duration"));
 
 	// Difference of start and end time (in seconds) below which the hourly grouper should be used.
 	public static final long HOURLY_THRESHOLD = 60 * 60 * 24 * 20; // 20 days
@@ -72,22 +67,21 @@ public class TimesliceComparison implements RepoComparison {
 	}
 
 	@Override
+	@Timed(histogram = true)
 	public RepoComparisonGraph generateGraph(Dimension dimension,
 		Map<RepoId, Set<BranchName>> repoBranches,
 		@Nullable Instant startTime,
 		@Nullable Instant endTime) {
 
-		try (var timer = TOTAL_TIMER.time()) {
-			final DimensionInfo dimensionInfo = benchmarkAccess.getDimensionInfo(dimension);
+		final DimensionInfo dimensionInfo = benchmarkAccess.getDimensionInfo(dimension);
 
-			List<RepoGraphData> dataList = new ArrayList<>();
+		List<RepoGraphData> dataList = new ArrayList<>();
 
-			repoBranches.forEach((repoId, branchNames) ->
-				collectData(repoId, dimensionInfo, branchNames, startTime, endTime)
-					.ifPresent(dataList::add));
+		repoBranches.forEach((repoId, branchNames) ->
+			collectData(repoId, dimensionInfo, branchNames, startTime, endTime)
+				.ifPresent(dataList::add));
 
-			return new RepoComparisonGraph(dimensionInfo, dataList, startTime, endTime);
-		}
+		return new RepoComparisonGraph(dimensionInfo, dataList, startTime, endTime);
 	}
 
 	private Optional<RepoGraphData> collectData(RepoId repoId, DimensionInfo dimensionInfo,

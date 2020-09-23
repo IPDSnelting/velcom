@@ -16,6 +16,7 @@
     <db.url>jdbc:sqlite:${project.build.directory}/data.db</db.url>
 
     <argon2.version>2.7</argon2.version>
+    <aspectj.version>1.9.6</aspectj.version>
     <caffeine.version>2.8.5</caffeine.version>
     <dropwizard.version>2.0.13</dropwizard.version>
     <flyway.version>6.5.5</flyway.version>
@@ -25,10 +26,12 @@
     <jgit.version>5.5.1.201910021850-r</jgit.version>
     <jooq.version>3.13.4</jooq.version>
     <metainf-services.version>1.8</metainf-services.version>
+    <micrometer.version>1.5.5</micrometer.version>
     <prometheus.version>0.9.0</prometheus.version>
     <sqlite.version>3.32.3.1</sqlite.version>
-
+    
     <maven-antrun-plugin.version>3.0.0</maven-antrun-plugin.version>
+    <maven-dependency-plugin.version>3.1.2</maven-dependency-plugin.version>
   </properties>
 
   <build>
@@ -178,6 +181,31 @@
             <includeOnlyProperty>^git.commit.id.(abbrev|full)$</includeOnlyProperty>
           </includeOnlyProperties>
           <commitIdGenerationMode>full</commitIdGenerationMode>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>${maven-dependency-plugin.version}</version>
+        <executions>
+          <execution>
+            <id>copy-aspectj-weaver</id>
+            <phase>package</phase>
+            <goals>
+              <goal>copy</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <artifactItems>
+            <artifactItem>
+              <groupId>org.aspectj</groupId>
+              <artifactId>aspectjweaver</artifactId>
+              <overWrite>true</overWrite>
+              <destFileName>aspectjweaver.jar</destFileName>
+            </artifactItem>
+          </artifactItems>
         </configuration>
       </plugin>
 
@@ -357,6 +385,27 @@
       <artifactId>caffeine</artifactId>
       <version>${caffeine.version}</version>
     </dependency>
+
+    <!-- https://mvnrepository.com/artifact/io.micrometer/micrometer-registry-prometheus -->
+    <dependency>
+      <groupId>io.micrometer</groupId>
+      <artifactId>micrometer-registry-prometheus</artifactId>
+      <version>${micrometer.version}</version>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/org.aspectj/aspectjrt -->
+    <dependency>
+      <groupId>org.aspectj</groupId>
+      <artifactId>aspectjrt</artifactId>
+      <version>${aspectj.version}</version>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/org.aspectj/aspectjweaver -->
+    <dependency>
+      <groupId>org.aspectj</groupId>
+      <artifactId>aspectjweaver</artifactId>
+      <version>${aspectj.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
   </dependencies>
 
 </project>

@@ -6,6 +6,7 @@ import static org.jooq.codegen.db.Tables.TASK;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.entities.Task;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
+import io.micrometer.core.annotation.Timed;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -59,6 +60,7 @@ public class RoundRobinFiloPolicy implements QueuePolicy {
 	}
 
 	@Override
+	@Timed(histogram = true)
 	public synchronized Optional<Task> fetchNextTask() {
 		AtomicReference<Task> result = new AtomicReference<>(null);
 
@@ -173,6 +175,7 @@ public class RoundRobinFiloPolicy implements QueuePolicy {
 	}
 
 	@Override
+	@Timed(histogram = true)
 	public List<Task> getTasksSorted() {
 		// The final ordered list that represents the queue
 		LinkedList<Task> completeTaskList = new LinkedList<>();
@@ -214,14 +217,15 @@ public class RoundRobinFiloPolicy implements QueuePolicy {
 			}
 			repoIds.sort(Comparator.comparing(repoId -> repoId.getId().toString()));
 
-			int startingIndex = (lastRepo == null) ? 0 : (repoIds.indexOf(lastRepo) + 1) % repoIds.size();
+			int startingIndex =
+				(lastRepo == null) ? 0 : (repoIds.indexOf(lastRepo) + 1) % repoIds.size();
 
 			for (int i = startingIndex; !groupMap.isEmpty(); i = (i + 1) % repoIds.size()) {
 				RepoId currentRepoId = repoIds.get(i);
 				LinkedList<Task> tasks = groupMap.get(currentRepoId);
 
-				// If we have  exhausted the tasks for the current repo, its task list entry will have been
-				// removed already.
+				// If we have  exhausted the tasks for the current repo, its task list entry will have
+				// been removed already.
 				if (tasks == null) {
 					continue;
 				}

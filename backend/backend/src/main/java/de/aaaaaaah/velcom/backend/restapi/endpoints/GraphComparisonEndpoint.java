@@ -12,6 +12,7 @@ import de.aaaaaaah.velcom.backend.restapi.endpoints.utils.EndpointUtils;
 import de.aaaaaaah.velcom.backend.restapi.exception.InvalidQueryParamsException;
 import de.aaaaaaah.velcom.backend.restapi.exception.NoSuchDimensionException;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimension;
+import io.micrometer.core.annotation.Timed;
 import de.aaaaaaah.velcom.shared.util.Pair;
 import java.time.Instant;
 import java.util.List;
@@ -42,6 +43,7 @@ public class GraphComparisonEndpoint {
 	}
 
 	@GET
+	@Timed(histogram = true)
 	public GetReply get(
 		@QueryParam("repos") @NotNull String reposStr,
 		@QueryParam("start_time") @Nullable Long startTimeEpoch,
