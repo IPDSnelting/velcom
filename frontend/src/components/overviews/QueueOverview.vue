@@ -59,8 +59,10 @@
                   <template #activator="{ on }">
                     <span style="flex: 0 0;" class="pt-3">
                       <v-chip v-on="on" outlined label>
-                        Running on » {{ getWorkerUnsafe(task).name }} « for over
-                        {{ formatWorkingSince(task) }}
+                        Running on » {{ getWorkerUnsafe(task).name }} « for
+                        {{
+                          workerFormattedSinceDurations[getWorker(task).name]
+                        }}
                       </v-chip>
                     </span>
                   </template>
@@ -113,11 +115,13 @@ import { formatDurationHuman } from '@/util/TimeUtil'
   }
 })
 export default class QueueOverview extends Vue {
-  private timerId: number | undefined = undefined
+  private timerIds: number[] = []
   // noinspection JSMismatchedCollectionQueryUpdate
   private itemsPerPageOptions: number[] = [10, 20, 50, 100, 200, -1]
   private defaultItemsPerPage: number = 20
   private liftsInProgress: Set<string> = new Set()
+  // Reactivity can be a bit annoying. We need to store this explicitly
+  private workerFormattedSinceDurations: { [workerName: string]: string } = {}
 
   private get queueItems(): Task[] {
     return vxm.queueModule.openTasks.slice()
@@ -229,8 +233,7 @@ export default class QueueOverview extends Vue {
     return this.getWorker(task)!
   }
 
-  private formatWorkingSince(task: Task) {
-    const worker = this.getWorker(task)
+  private formatWorkingSince(worker: Worker) {
     if (!worker || !worker.workingSince) {
       return ''
     }
@@ -270,16 +273,28 @@ export default class QueueOverview extends Vue {
       })
   }
 
+  private updateWorkerTimes() {
+    vxm.queueModule.workers.forEach(it =>
+      Vue.set(
+        this.workerFormattedSinceDurations,
+        it.name,
+        this.formatWorkingSince(it)
+      )
+    )
+  }
+
   created(): void {
     vxm.queueModule.fetchQueue()
-    // this.timerId = setInterval(() => vxm.queueModule.fetchQueue(), 10 * 1000)
+    this.timerIds.push(
+      setInterval(() => vxm.queueModule.fetchQueue(), 10 * 1000)
+    )
+    this.updateWorkerTimes()
+    this.timerIds.push(setInterval(this.updateWorkerTimes, 1000))
   }
 
   // noinspection JSUnusedGlobalSymbols
   beforeDestroy(): void {
-    if (this.timerId) {
-      clearInterval(this.timerId)
-    }
+    this.timerIds.forEach(clearInterval)
   }
 
   // ============== ICONS ==============
