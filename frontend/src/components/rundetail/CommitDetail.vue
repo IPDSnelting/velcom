@@ -6,21 +6,25 @@
           <v-card-title>
             <v-toolbar dark color="primary" class="wrapping-toolbar">
               <v-container fluid>
-                <v-row no-gutters align="center" justify="space-between">
-                  <v-col style="flex: 1 1 60%;">
+                <v-row
+                  no-gutters
+                  align="center"
+                  justify="center"
+                  justify-lg="space-between"
+                >
+                  <v-col cols="auto">
                     <span class="mx-2 message font-weight-regular">
                       {{ commit.summary }}
                     </span>
                   </v-col>
-                  <v-col cols="4" class="ml-3 body-1">
-                    <v-spacer></v-spacer>
+                  <v-col cols="auto" class="ml-3 body-1 pt-2 pt-lg-0">
                     <inline-repo-display
                       :repoId="commit.repoId"
                     ></inline-repo-display>
                     <br />
                     <span class="mr-2 hash">{{ commit.hash }}</span>
                   </v-col>
-                  <v-col cols="auto">
+                  <v-col cols="auto" v-if="isAdmin">
                     <commit-benchmark-actions
                       :commitDescription="commit"
                       :hasExistingBenchmark="commit.runs.length > 0"
@@ -100,6 +104,7 @@ import { formatDateUTC, formatDate } from '@/util/TimeUtil'
 import InlineMinimalRepoNameDisplay from '../InlineMinimalRepoDisplay.vue'
 import CommitBenchmarkActions from '../CommitBenchmarkActions.vue'
 import CommitNavigationButton from './CommitNavigationButton.vue'
+import { vxm } from '@/store'
 
 class NavigationTarget {
   readonly parent: CommitDescription | null
@@ -128,6 +133,10 @@ export default class CommitDetail extends Vue {
 
   private formatDateUTC(date: Date) {
     return formatDateUTC(date)
+  }
+
+  private get isAdmin(): boolean {
+    return vxm.userModule.isAdmin
   }
 
   private get navigationTargets(): NavigationTarget[] {
