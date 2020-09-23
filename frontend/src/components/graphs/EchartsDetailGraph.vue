@@ -128,8 +128,6 @@ export default class EchartsDetailGraph extends Vue {
   // <!--<editor-fold desc="FIELDS">-->
   private chartOptions: EChartOption = {}
   private seriesGenerator: SeriesGenerationFunction = this.buildLineSeries
-  private zoomStartValue: number | undefined = undefined
-  private zoomEndValue: number | undefined = undefined
 
   // >>>> Datapoint Dialog >>>>
   private pointDialogOpen: boolean = false
@@ -203,14 +201,14 @@ export default class EchartsDetailGraph extends Vue {
         {
           type: 'inside',
           // Start at the correct place when changing the series type
-          startValue: this.zoomStartValue,
-          endValue: this.zoomEndValue
+          startValue: vxm.detailGraphModule.zoomStartValue || undefined,
+          endValue: vxm.detailGraphModule.zoomEndValue || undefined
         },
         {
           type: 'slider',
           // Start at the correct place when changing the series type
-          startValue: this.zoomStartValue,
-          endValue: this.zoomEndValue
+          startValue: vxm.detailGraphModule.zoomStartValue || undefined,
+          endValue: vxm.detailGraphModule.zoomEndValue || undefined
         }
       ],
       tooltip: {
@@ -391,8 +389,8 @@ export default class EchartsDetailGraph extends Vue {
    * If the number is manageable, the graph type will be selected.
    */
   private selectAppropriateSeries(): 're-render' | 'unchanged' {
-    const startValue = this.zoomStartValue || this.minDateValue
-    const endValue = this.zoomEndValue || this.maxDateValue
+    const startValue = vxm.detailGraphModule.zoomStartValue || this.minDateValue
+    const endValue = vxm.detailGraphModule.zoomEndValue || this.maxDateValue
 
     // TODO: Is this a performance problem? There might be 10.000+ items here
     // and this method is called every time the slider is dragged or the user
@@ -421,6 +419,8 @@ export default class EchartsDetailGraph extends Vue {
   // <!--<editor-fold desc="LIFECYCLE HOOKS">-->
   mounted(): void {
     this.updateGraph()
+    console.log(vxm.detailGraphModule)
+    console.log(JSON.stringify(vxm.detailGraphModule))
   }
   // <!--</editor-fold>-->
 
@@ -561,8 +561,8 @@ export default class EchartsDetailGraph extends Vue {
       return
     }
 
-    this.zoomStartValue = startValue
-    this.zoomEndValue = endValue
+    vxm.detailGraphModule.zoomStartValue = startValue
+    vxm.detailGraphModule.zoomEndValue = endValue
 
     if (this.selectAppropriateSeries() === 're-render') {
       this.updateGraph()
@@ -570,8 +570,8 @@ export default class EchartsDetailGraph extends Vue {
   }
 
   private echartsZoomReset() {
-    this.zoomStartValue = this.minDateValue
-    this.zoomEndValue = this.maxDateValue
+    vxm.detailGraphModule.zoomStartValue = this.minDateValue
+    vxm.detailGraphModule.zoomEndValue = this.maxDateValue
     this.updateGraph()
   }
 
