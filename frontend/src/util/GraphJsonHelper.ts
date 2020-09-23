@@ -35,7 +35,7 @@ export function detailDataPointFromJson(
     json.hash,
     json.parents,
     json.author,
-    new Date(json.author_date),
+    new Date(json.author_date * 1000),
     json.summary,
     map
   )
