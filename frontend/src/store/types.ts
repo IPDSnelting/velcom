@@ -335,9 +335,9 @@ export class RunDescription {
 
 export class RunWithDifferences {
   readonly run: Run
-  readonly differences: DimensionDifference[]
+  readonly differences?: DimensionDifference[]
 
-  constructor(run: Run, differences: DimensionDifference[]) {
+  constructor(run: Run, differences?: DimensionDifference[]) {
     this.run = run
     this.differences = differences
   }
