@@ -121,6 +121,12 @@ export class DetailGraphStore extends VxModule {
       this._endTime.getTime() / 1000 + 60 * 60 * 24
     )
 
+    // If we have selected no dimensions, we don't event need to make a request
+    if (this.selectedDimensions.length === 0) {
+      this.setDetailGraph([])
+      return []
+    }
+
     const response = await axios.get(`/graph/detail/${this._selectedRepoId}`, {
       snackbarTag: 'commit-history',
       params: {
