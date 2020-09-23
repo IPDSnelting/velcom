@@ -59,13 +59,13 @@
                   <template #activator="{ on }">
                     <span style="flex: 0 0;" class="pt-3">
                       <v-chip v-on="on" outlined label>
-                        Running on » {{ getWorker(task).name }} « for over
+                        Running on » {{ getWorkerUnsafe(task).name }} « for over
                         {{ formatWorkingSince(task) }}
                       </v-chip>
                     </span>
                   </template>
                   <span style="white-space: pre; font-family: monospace;">{{
-                    getWorker(task).info
+                    getWorkerUnsafe(task).info
                   }}</span>
                 </v-tooltip>
               </template>
@@ -114,6 +114,7 @@ import { formatDurationHuman } from '@/util/TimeUtil'
 })
 export default class QueueOverview extends Vue {
   private timerId: number | undefined = undefined
+  // noinspection JSMismatchedCollectionQueryUpdate
   private itemsPerPageOptions: number[] = [10, 20, 50, 100, 200, -1]
   private defaultItemsPerPage: number = 20
   private liftsInProgress: Set<string> = new Set()
@@ -223,6 +224,11 @@ export default class QueueOverview extends Vue {
     return vxm.queueModule.workers.find(it => it.workingOn === task.id)
   }
 
+  // VTI inference is too bad to realize that never changes
+  private getWorkerUnsafe(task: Task): Worker {
+    return this.getWorker(task)!
+  }
+
   private formatWorkingSince(task: Task) {
     const worker = this.getWorker(task)
     if (!worker || !worker.workingSince) {
@@ -284,51 +290,26 @@ export default class QueueOverview extends Vue {
 </script>
 
 <style scoped>
-.author {
-  text-decoration: underline;
-}
-
 .index-indicator {
   font-weight: bold;
   font-size: 1.5em;
-}
-
-.commit-message {
-  font-style: italic;
 }
 
 .rocket:hover {
   animation: shake 4s linear;
   transform: translate3d(0, 0, 0);
   animation-iteration-count: infinite;
-  animation-delay: 0;
+  animation-delay: 0s;
 }
 
-.my-row-col {
-  justify-content: space-between;
-}
-
-.flex-shrink-too {
-  flex: 1 1 0;
-  min-width: 200px;
-}
-
+/*noinspection CssUnusedSymbol*/
 .shoot-off {
   transition: top 1s ease-in, left 1s ease-in;
   position: fixed;
   z-index: 200;
   animation: shake 1s linear;
-  animation-delay: 0;
+  animation-delay: 0s;
   animation-iteration-count: infinite;
-}
-
-@keyframes rotate {
-  0% {
-    rotate: 0deg;
-  }
-  100% {
-    rotate: 360deg;
-  }
 }
 
 @keyframes shake {

@@ -51,7 +51,9 @@
         <div :key="slotName">
           <measurement-value
             :value="value"
-            :tooltip-message="tooltip"
+            :tooltip-message="
+              typeof tooltip === 'string' ? tooltip : tooltip(item)
+            "
             :color="item.changeColor"
           ></measurement-value>
         </div>
@@ -196,7 +198,12 @@ export default class MeasurementsDisplay extends Vue {
       },
       {
         slotName: 'item.changePercent',
-        tooltip: 'No unambiguous parent commit found'
+        tooltip: (item: Item) => {
+          if (!item.change) {
+            return 'No unambiguous parent commit found'
+          }
+          return 'The old value was zero. I can\'t divide by it :/'
+        }
       },
       {
         slotName: 'item.standardDeviation',

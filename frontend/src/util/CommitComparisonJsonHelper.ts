@@ -88,7 +88,7 @@ export function commitFromJson(json: any): Commit {
 export function differenceFromJson(json: any): DimensionDifference {
   return new DimensionDifference(
     dimensionFromJson(json.dimension),
-    json.absdiff,
+    json.diff,
     json.reldiff,
     json.stddev
   )
