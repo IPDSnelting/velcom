@@ -39,6 +39,7 @@ import NotFound404 from './NotFound404.vue'
 import RunDetail from '@/components/rundetail/RunDetail.vue'
 import CommitDetail from '@/components/rundetail/CommitDetail.vue'
 import RunTimeline from '@/components/rundetail/RunTimeline.vue'
+import { NotFoundError } from '@/store/modules/commitDetailComparisonStore'
 
 @Component({
   components: {
@@ -64,6 +65,18 @@ export default class RunCommitDetailView extends Vue {
   @Watch('firstComponent')
   @Watch('secondComponent')
   private async fetchCommitAndRun() {
+    try {
+      await this.fetchCommitAndRunImpl()
+    } catch (e) {
+      if (e instanceof NotFoundError) {
+        this.show404 = true
+        return
+      }
+      throw e
+    }
+  }
+
+  private async fetchCommitAndRunImpl() {
     this.show404 = false
     this.runWithDifferences = null
     this.commit = null
