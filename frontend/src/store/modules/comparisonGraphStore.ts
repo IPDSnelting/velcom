@@ -1,5 +1,5 @@
 import { createModule, mutation, action } from 'vuex-class-component'
-import { ComparisonDataPoint, Dimension } from '@/store/types'
+import { ComparisonDataPoint, Dimension, Repo } from '@/store/types'
 import Vue from 'vue'
 import axios from 'axios'
 import { vxm } from '..'
@@ -88,6 +88,11 @@ export class ComparisonGraphStore extends VxModule {
       effectiveEndTime = undefined
     } else {
       effectiveEndTime = this.stopDate.getTime() / 1000 + 60 * 60 * 24
+    }
+
+    if (this.selectedReposWithBranches.length === 0) {
+      this.setDatapoints({})
+      return {}
     }
 
     const response = await axios.get('/graph/comparison', {
@@ -218,20 +223,19 @@ export class ComparisonGraphStore extends VxModule {
   }
 
   get selectedBranchesByRepoId(): { [key: string]: string[] } {
+    const repoBranches: (repo: Repo) => string[] = repo => {
+      if (this._selectedBranchesByRepoId[repo.id]) {
+        return this._selectedBranchesByRepoId[repo.id]
+      }
+      // all branches are selected if the user has never selected any manually
+      return repo.branches.filter(b => b.tracked).map(b => b.name)
+    }
+
     return (
       vxm.repoModule.allRepos
         .map(repo => ({
           id: repo.id,
-          branches:
-            // all branches are selected if user has never selected any manually
-            (
-              this._selectedBranchesByRepoId[repo.id] || repo.branches.slice()
-            ).filter(it =>
-              repo.branches
-                .filter(b => b.tracked)
-                .map(b => b.name)
-                .includes(it)
-            )
+          branches: repoBranches(repo)
         }))
         // reduce list above to required object structure
         .reduce((accumulated, repoBranch) => {
