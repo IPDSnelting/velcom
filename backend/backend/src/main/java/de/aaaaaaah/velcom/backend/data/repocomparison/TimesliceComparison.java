@@ -69,22 +69,39 @@ public class TimesliceComparison implements RepoComparison {
 	@Override
 	@Timed(histogram = true)
 	public RepoComparisonGraph generateGraph(Dimension dimension,
-		Map<RepoId, Set<BranchName>> repoBranches,
-		@Nullable Instant startTime,
+		Map<RepoId, Set<BranchName>> repoBranches, @Nullable Instant startTime,
 		@Nullable Instant endTime) {
 
 		final DimensionInfo dimensionInfo = benchmarkAccess.getDimensionInfo(dimension);
 
 		List<RepoGraphData> dataList = new ArrayList<>();
+		Instant actualStartTime = startTime;
+		Instant actualEndTime = endTime;
 
-		repoBranches.forEach((repoId, branchNames) ->
-			collectData(repoId, dimensionInfo, branchNames, startTime, endTime)
-				.ifPresent(dataList::add));
+		for (RepoId repoId : repoBranches.keySet()) {
+			Set<BranchName> branchNames = repoBranches.get(repoId);
 
-		return new RepoComparisonGraph(dimensionInfo, dataList, startTime, endTime);
+			RepoDataResult result = collectData(repoId, dimensionInfo, branchNames, startTime, endTime)
+				.orElse(null);
+
+			if (result != null) {
+				dataList.add(result.getGraphData());
+
+				if (actualStartTime == null || result.getStartTime().isBefore(actualStartTime)) {
+					actualStartTime = result.getStartTime();
+				}
+
+				if (actualEndTime == null || result.getEndTime().isAfter(actualEndTime)) {
+					actualEndTime = result.getEndTime();
+				}
+
+			}
+		}
+
+		return new RepoComparisonGraph(dimensionInfo, dataList, actualStartTime, actualEndTime);
 	}
 
-	private Optional<RepoGraphData> collectData(RepoId repoId, DimensionInfo dimensionInfo,
+	private Optional<RepoDataResult> collectData(RepoId repoId, DimensionInfo dimensionInfo,
 		Set<BranchName> branches, @Nullable Instant startTime, @Nullable Instant endTime) {
 
 		// 1.) Get commits
@@ -168,7 +185,11 @@ public class TimesliceComparison implements RepoComparison {
 			.map(bestEntries::get)
 			.collect(toList());
 
-		return Optional.of(new RepoGraphData(repoId, branches, graphEntries));
+		return Optional.of(new RepoDataResult(
+			new RepoGraphData(repoId, branches, graphEntries),
+			startTime,
+			endTime
+		));
 	}
 
 	private Map<Long, List<GraphEntry>> groupEntries(Instant startTime,

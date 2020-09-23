@@ -5,6 +5,8 @@ import static java.util.Objects.requireNonNull;
 import de.aaaaaaah.velcom.backend.access.entities.DimensionInfo;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
+import javax.annotation.Nullable;
 
 public class RepoComparisonGraph {
 
@@ -14,11 +16,11 @@ public class RepoComparisonGraph {
 	private final Instant endTime;
 
 	public RepoComparisonGraph(DimensionInfo dimensionInfo,
-		List<RepoGraphData> data, Instant startTime, Instant endTime) {
+		List<RepoGraphData> data, @Nullable Instant startTime, @Nullable Instant endTime) {
 		this.dimensionInfo = requireNonNull(dimensionInfo);
 		this.data = requireNonNull(data);
-		this.startTime = requireNonNull(startTime);
-		this.endTime = requireNonNull(endTime);
+		this.startTime = startTime;
+		this.endTime = endTime;
 	}
 
 	public DimensionInfo getDimensionInfo() {
@@ -29,12 +31,12 @@ public class RepoComparisonGraph {
 		return data;
 	}
 
-	public Instant getStartTime() {
-		return startTime;
+	public Optional<Instant> getStartTime() {
+		return Optional.ofNullable(startTime);
 	}
 
-	public Instant getEndTime() {
-		return endTime;
+	public Optional<Instant> getEndTime() {
+		return Optional.ofNullable(endTime);
 	}
 
 	@Override
