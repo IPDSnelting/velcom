@@ -164,8 +164,7 @@ public abstract class GuickCloning {
 			try {
 				ProgramResult programResult = new ProgramExecutor()
 					.execute(
-						GIT_EXECUTABLE, "clone",
-						"--mirror", "--recursive", "--recurse-submodules",
+						GIT_EXECUTABLE, "clone", "--mirror",
 						source,
 						targetDir.toAbsolutePath().toString()
 					).get();

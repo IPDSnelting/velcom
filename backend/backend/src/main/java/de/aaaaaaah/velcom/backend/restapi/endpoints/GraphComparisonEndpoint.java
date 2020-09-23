@@ -18,6 +18,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.GET;
@@ -77,7 +78,7 @@ public class GraphComparisonEndpoint {
 
 		final List<JsonGraphRepo> repoResults = result.getData().stream()
 			.map(data -> new JsonGraphRepo(
-				data.getRepoId(),
+				data.getRepoId().getId(),
 				data.getEntries().stream().map(graphEntry -> new JsonGraphCommit(
 					graphEntry.getHash().getHash(),
 					graphEntry.getAuthor(),
@@ -111,15 +112,15 @@ public class GraphComparisonEndpoint {
 
 	private static class JsonGraphRepo {
 
-		private final RepoId repoId;
+		private final UUID repoId;
 		private final List<JsonGraphCommit> commits;
 
-		public JsonGraphRepo(RepoId repoId, List<JsonGraphCommit> commits) {
+		public JsonGraphRepo(UUID repoId, List<JsonGraphCommit> commits) {
 			this.repoId = repoId;
 			this.commits = commits;
 		}
 
-		public RepoId getRepoId() {
+		public UUID getRepoId() {
 			return repoId;
 		}
 

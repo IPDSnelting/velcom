@@ -297,6 +297,8 @@ paths:
                     $ref: '#/components/schemas/Task'
                 required:
                   - task
+        '404':
+          description: The repo or commit could not be found
         '409':
           description: There is already a task for this commit in the queue
       description: 'This endpoint allows users to add a specific commit to the queue. If there is already a task for this commit in the queue, this endpoint fails.'
@@ -541,8 +543,8 @@ paths:
                 required:
                   - dimensions
                   - commits
-        '403':
-          description: 'The `start_time`, `end_time` and/or `duration` parameters are invalid'
+        '400':
+          description: 'The `start_time`, `end_time`, `duration` and/or `dimensions` parameters are invalid'
         '404':
           description: "Repo doesn't exist"
       operationId: get-graph-detail-repoid
@@ -683,8 +685,8 @@ paths:
                 required:
                   - dimension
                   - repos
-        '403':
-          description: 'The `start_time`, `end_time` and/or `duration` parameters are invalid'
+        '400':
+          description: 'The `start_time`, `end_time`, `duration` and/or `dimension` parameters are invalid'
         '404':
           description: "The dimension doesn't exist"
       operationId: get-graph-comparison
@@ -797,8 +799,14 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CommitDescription'
-        children:
+        tracked_children:
           type: array
+          description: Child commits that can be reached from at least one tracked branch
+          items:
+            $ref: '#/components/schemas/CommitDescription'
+        untracked_children:
+          type: array
+          description: 'Child commits that can''t be reached from any tracked branch, but from at least one untracked branch'
           items:
             $ref: '#/components/schemas/CommitDescription'
         author:
@@ -824,7 +832,8 @@ components:
         - repo_id
         - hash
         - parents
-        - children
+        - tracked_children
+        - untracked_children
         - author
         - author_date
         - committer

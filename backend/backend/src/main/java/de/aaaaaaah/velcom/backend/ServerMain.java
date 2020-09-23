@@ -30,6 +30,7 @@ import de.aaaaaaah.velcom.backend.restapi.endpoints.RecentRunsEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.RepoEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.RunEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.TestTokenEndpoint;
+import de.aaaaaaah.velcom.backend.restapi.exception.ArgumentParseExceptionMapper;
 import de.aaaaaaah.velcom.backend.restapi.exception.CommitAccessExceptionMapper;
 import de.aaaaaaah.velcom.backend.restapi.exception.InvalidQueryParamsExceptionMapper;
 import de.aaaaaaah.velcom.backend.restapi.exception.NoSuchCommitExceptionMapper;
@@ -163,7 +164,7 @@ public class ServerMain extends Application<GlobalConfig> {
 
 		// Endpoints
 		environment.jersey().register(new AllReposEndpoint(repoAccess, benchmarkAccess, tokenAccess));
-		environment.jersey().register(new CommitEndpoint(commitAccess, benchmarkAccess));
+		environment.jersey().register(new CommitEndpoint(commitAccess, repoAccess, benchmarkAccess));
 		environment.jersey().register(new CompareEndpoint(benchmarkAccess, commitAccess, comparer));
 		environment.jersey().register(new RunEndpoint(benchmarkAccess, commitAccess, comparer));
 		environment.jersey().register(new TestTokenEndpoint());
@@ -232,6 +233,7 @@ public class ServerMain extends Application<GlobalConfig> {
 		environment.jersey().register(new NoSuchRunExceptionMapper());
 		environment.jersey().register(new NoSuchTaskExceptionMapper());
 		environment.jersey().register(new TaskAlreadyExistsExceptionMapper());
+		environment.jersey().register(new ArgumentParseExceptionMapper());
 
 		// Authentication
 		environment.jersey().register(

@@ -11,7 +11,8 @@ import {
   Commit,
   RunDescription,
   RunComparison,
-  DimensionDifference
+  DimensionDifference,
+  CommitChild
 } from '@/store/types'
 import {
   sourceFromJson,
@@ -63,6 +64,12 @@ export function runDescriptionFromJson(json: any): RunDescription {
 }
 
 export function commitFromJson(json: any): Commit {
+  const trackedChildren = json.tracked_children.map(
+    (it: any) => new CommitChild(true, commitDescriptionFromJson(it))
+  )
+  const untrackedChildren = json.untracked_children.map(
+    (it: any) => new CommitChild(false, commitDescriptionFromJson(it))
+  )
   return new Commit(
     json.repo_id,
     json.hash,
@@ -74,7 +81,7 @@ export function commitFromJson(json: any): Commit {
     json.summary,
     json.runs.map(runDescriptionFromJson),
     json.parents.map(commitDescriptionFromJson),
-    json.children.map(commitDescriptionFromJson)
+    trackedChildren.concat(untrackedChildren)
   )
 }
 

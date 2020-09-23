@@ -103,6 +103,8 @@ public class Listener {
 		try {
 			this.lock.lock();
 
+			// TODO: 23.09.20 Check if remote url has changed and re-clone if necessary
+
 			repoAccess.updateRepo(repoId);
 
 			pruneTrackedBranches(repoId);
