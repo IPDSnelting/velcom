@@ -50,7 +50,9 @@ import io.dropwizard.auth.basic.BasicCredentialAuthFilter;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.Meter.Id;
 import io.micrometer.core.instrument.Metrics;
+import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics;
 import io.micrometer.core.instrument.binder.jvm.JvmCompilationMetrics;
 import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics;
@@ -59,6 +61,8 @@ import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics;
 import io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics;
 import io.micrometer.core.instrument.binder.system.ProcessorMetrics;
 import io.micrometer.core.instrument.binder.system.UptimeMetrics;
+import io.micrometer.core.instrument.config.MeterFilter;
+import io.micrometer.core.instrument.config.MeterFilterReply;
 import io.micrometer.prometheus.PrometheusConfig;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
 import java.io.IOException;
@@ -186,6 +190,28 @@ public class ServerMain extends Application<GlobalConfig> {
 		registry.config().commonTags("application", "Velcom");
 
 		Metrics.globalRegistry.add(registry);
+
+		Metrics.globalRegistry.config().meterFilter(new MeterFilter() {
+			@Override
+			public MeterFilterReply accept(Id id) {
+				return MeterFilterReply.NEUTRAL;
+			}
+
+			@Override
+			public Id map(Id id) {
+				final String cacheTag = id.getTag("cache");
+				if (cacheTag == null) { return id; }
+
+				// meter is a cache meter => prepend cacheTag to name
+				return new Id(
+					cacheTag + "_" + id.getName(),
+					Tags.of(id.getTags()),
+					id.getBaseUnit(),
+					id.getDescription(),
+					id.getType()
+				);
+			}
+		});
 
 		try {
 			Class.forName("org.aspectj.weaver.WeaverMessages");
