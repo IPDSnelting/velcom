@@ -11,11 +11,11 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 
-public class RunComparer {
+public class RunComparator {
 
 	private final SignificanceFactors significanceFactors;
 
-	public RunComparer(SignificanceFactors significanceFactors) {
+	public RunComparator(SignificanceFactors significanceFactors) {
 		this.significanceFactors = significanceFactors;
 	}
 

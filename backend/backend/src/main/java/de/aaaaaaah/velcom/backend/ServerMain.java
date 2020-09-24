@@ -14,7 +14,7 @@ import de.aaaaaaah.velcom.backend.access.entities.RemoteUrl;
 import de.aaaaaaah.velcom.backend.data.benchrepo.BenchRepo;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.data.repocomparison.TimesliceComparison;
-import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparer;
+import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparator;
 import de.aaaaaaah.velcom.backend.data.runcomparison.SignificanceFactors;
 import de.aaaaaaah.velcom.backend.listener.Listener;
 import de.aaaaaaah.velcom.backend.restapi.authentication.RepoAuthenticator;
@@ -147,7 +147,7 @@ public class ServerMain extends Application<GlobalConfig> {
 			configuration.getSignificanceStddevThreshold(),
 			configuration.getSignificanceMinStddevAmount()
 		);
-		RunComparer comparer = new RunComparer(significanceFactors);
+		RunComparator runComparator = new RunComparator(significanceFactors);
 		TimesliceComparison comparison = new TimesliceComparison(commitAccess, benchmarkAccess);
 
 		// Listener
@@ -169,11 +169,13 @@ public class ServerMain extends Application<GlobalConfig> {
 		// Endpoints
 		environment.jersey().register(new AllReposEndpoint(repoAccess, benchmarkAccess, tokenAccess));
 		environment.jersey().register(new CommitEndpoint(commitAccess, repoAccess, benchmarkAccess));
-		environment.jersey().register(new CompareEndpoint(benchmarkAccess, commitAccess, comparer));
-		environment.jersey().register(new RunEndpoint(benchmarkAccess, commitAccess, comparer));
+		environment.jersey()
+			.register(new CompareEndpoint(benchmarkAccess, commitAccess, runComparator));
+		environment.jersey().register(new RunEndpoint(benchmarkAccess, commitAccess, runComparator));
 		environment.jersey().register(new TestTokenEndpoint());
 		environment.jersey().register(new QueueEndpoint(commitAccess, repoAccess, queue, dispatcher));
-		environment.jersey().register(new RecentRunsEndpoint(benchmarkAccess, commitAccess));
+		environment.jersey()
+			.register(new RecentRunsEndpoint(benchmarkAccess, commitAccess, runComparator));
 		environment.jersey()
 			.register(new RepoEndpoint(repoAccess, tokenAccess, benchmarkAccess, listener));
 		environment.jersey().register(new GraphComparisonEndpoint(comparison, benchmarkAccess));
@@ -200,7 +202,9 @@ public class ServerMain extends Application<GlobalConfig> {
 			@Override
 			public Id map(Id id) {
 				final String cacheTag = id.getTag("cache");
-				if (cacheTag == null) { return id; }
+				if (cacheTag == null) {
+					return id;
+				}
 
 				// meter is a cache meter => prepend cacheTag to name
 				return new Id(

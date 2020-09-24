@@ -69,6 +69,11 @@ import {
   mdiChevronTripleUp
 } from '@mdi/js'
 
+const numberFormat: Intl.NumberFormat = new Intl.NumberFormat(
+  new Intl.NumberFormat().resolvedOptions().locale,
+  { maximumFractionDigits: 3 }
+)
+
 const iconMappings = {
   up: {
     small: mdiChevronUp,
@@ -91,10 +96,16 @@ class RelevantChange {
   constructor(difference: DimensionDifference) {
     this.id = difference.dimension
     if (difference.stddev !== undefined) {
-      this.change =
-        this.formatPercentage(difference.relDiff) + ` (${difference.stddev} σ)`
+      let change = difference.relDiff
+        ? this.formatPercentage(difference.relDiff)
+        : this.formatNumber(difference.absDiff)
+      change += ` (${difference.stddev} σ)`
+
+      this.change = change
     } else {
-      this.change = this.formatPercentage(difference.relDiff)
+      this.change = difference.relDiff
+        ? this.formatPercentage(difference.relDiff)
+        : this.formatNumber(difference.absDiff)
     }
     this.color = this.changeColor(
       difference.absDiff,
@@ -106,6 +117,10 @@ class RelevantChange {
   private formatPercentage(percentage: number): string {
     const scaled = Math.round(percentage * 100)
     return `${scaled}%`
+  }
+
+  private formatNumber(value: number): string {
+    return numberFormat.format(value)
   }
 
   private changeColor(change: number, interpretation: DimensionInterpretation) {
