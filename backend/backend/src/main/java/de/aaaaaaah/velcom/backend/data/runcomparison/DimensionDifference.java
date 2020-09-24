@@ -58,10 +58,14 @@ public class DimensionDifference {
 	public boolean isSignificant() {
 		boolean relSignificant = getReldiff()
 			.map(reldiff -> Math.abs(reldiff) >= significanceFactors.getRelativeThreshold())
-			.orElse(true);
+			// There is no reldiff if the first value is 0. But if the second value is also zero, that
+			// hardly constitutes a significant difference. Otherwise, it is a move away from 0, which is
+			// always significant.
+			.orElse(first != second);
 
 		boolean stddevSignificant = getSecondStddev()
 			.map(stddev -> Math.abs(getDiff()) >= significanceFactors.getStddevThreshold() * stddev)
+			// If there is no stddev, this check should not prevent differences from being significant
 			.orElse(true);
 
 		return relSignificant && stddevSignificant;
