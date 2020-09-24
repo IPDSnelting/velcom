@@ -92,7 +92,7 @@
                           </v-list-item-avatar>
 -->
                         </template>
-                        <template #actions v-if="isAdmin">
+                        <template #actions>
                           <commit-benchmark-actions
                             :hasExistingBenchmark="false"
                             :commit-description="item"

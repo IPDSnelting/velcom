@@ -17,14 +17,18 @@
                       {{ commit.summary }}
                     </span>
                   </v-col>
-                  <v-col cols="auto" class="ml-3 body-1 pt-2 pt-lg-0">
+                  <v-col
+                    cols="auto"
+                    class="ml-3 body-1 pt-2 pt-lg-0"
+                    style="margin-left: auto !important;"
+                  >
                     <inline-repo-display
                       :repoId="commit.repoId"
                     ></inline-repo-display>
                     <br />
                     <span class="mr-2 hash">{{ commit.hash }}</span>
                   </v-col>
-                  <v-col cols="auto" v-if="isAdmin">
+                  <v-col cols="auto">
                     <commit-benchmark-actions
                       :commitDescription="commit"
                       :hasExistingBenchmark="commit.runs.length > 0"
