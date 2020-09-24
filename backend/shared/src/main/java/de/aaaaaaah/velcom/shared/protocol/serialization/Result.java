@@ -124,7 +124,9 @@ public class Result {
 		private final String name;
 		@Nullable
 		private final String error;
+		@Nullable
 		private final String unit;
+		@Nullable
 		private final Interpretation interpretation;
 		@Nullable
 		private final List<Double> values;
@@ -133,8 +135,8 @@ public class Result {
 		public Metric(
 			@JsonProperty(required = true) String name,
 			@Nullable String error,
-			@JsonProperty(required = true) String unit,
-			@JsonProperty(required = true) Interpretation interpretation,
+			@Nullable String unit,
+			@Nullable Interpretation interpretation,
 			@Nullable List<Double> values
 		) {
 			if (error == null && values == null) {
@@ -143,8 +145,8 @@ public class Result {
 
 			this.name = name;
 			this.error = error;
-			this.unit = Objects.requireNonNull(unit);
-			this.interpretation = Objects.requireNonNull(interpretation);
+			this.unit = unit;
+			this.interpretation = interpretation;
 			this.values = values;
 		}
 
@@ -156,12 +158,12 @@ public class Result {
 			return Optional.ofNullable(error);
 		}
 
-		public String getUnit() {
-			return unit;
+		public Optional<String> getUnit() {
+			return Optional.ofNullable(unit);
 		}
 
-		public Interpretation getInterpretation() {
-			return interpretation;
+		public Optional<Interpretation> getInterpretation() {
+			return Optional.ofNullable(interpretation);
 		}
 
 		public Optional<List<Double>> getValues() {

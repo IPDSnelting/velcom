@@ -465,8 +465,6 @@ public class BenchmarkReadAccess {
 				});
 
 			// Figure out the latest interpretations
-
-			// Figure out the latest units
 			db.selectDistinct(MEASUREMENT.BENCHMARK, MEASUREMENT.METRIC, MEASUREMENT.INTERPRETATION)
 				.from(RUN)
 				.join(MEASUREMENT).on(MEASUREMENT.RUN_ID.eq(RUN.ID))

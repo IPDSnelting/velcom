@@ -278,8 +278,8 @@ public class TeleRunner {
 				if (metric.getError().isPresent()) {
 					builder.addFailedMeasurement(
 						name,
-						new Unit(metric.getUnit()),
-						Interpretation.fromSharedRepresentation(metric.getInterpretation()),
+						metric.getUnit().map(Unit::new).orElse(null),
+						metric.getInterpretation().map(Interpretation::fromSharedRepresentation).orElse(null),
 						metric.getError().get()
 					);
 				} else {
@@ -287,8 +287,8 @@ public class TeleRunner {
 					//noinspection OptionalGetWithoutIsPresent
 					builder.addSuccessfulMeasurement(
 						name,
-						Interpretation.fromSharedRepresentation(metric.getInterpretation()),
-						new Unit(metric.getUnit()),
+						metric.getUnit().map(Unit::new).orElse(null),
+						metric.getInterpretation().map(Interpretation::fromSharedRepresentation).orElse(null),
 						metric.getValues().get()
 					);
 				}

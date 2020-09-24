@@ -99,52 +99,34 @@ public class BenchmarkScriptOutputParser {
 			throw new OutputParseException("Metric is no object: " + node);
 		}
 
+		Optional<String> unit = Optional.empty();
+		if (node.hasNonNull("unit")) {
+			// parseUnit will throw if the value is invalid
+			unit = Optional.of(parseUnit(node.get("unit")));
+		}
+
+		Optional<Interpretation> interpretation = getInterpretationFieldName(node)
+			.map(node::get)
+			// parseInterpretation will throw if the value is invalid
+			.map(this::parseInterpretation);
+
 		if (node.hasNonNull("error")) {
 			if (!node.get("error").isTextual()) {
 				throw new OutputParseException("Error is no string: " + node);
 			}
-			Interpretation interpretation = getInterpretationFieldName(node)
-				.map(node::get)
-				// Will throw if the value is invalid
-				.map(this::parseInterpretation)
-				.orElse(Interpretation.NEUTRAL);
-
-			String unit = "";
-			if (node.hasNonNull("unit")) {
-				JsonNode unitNode = node.get("unit");
-				if (!unitNode.isTextual()) {
-					throw new OutputParseException(
-						"Unit '" + unitNode + "' is no string (has type " + unitNode.getNodeType() + ")!"
-					);
-				}
-				unit = unitNode.asText();
-			}
 
 			return new Metric(
-				name, node.get("error").asText(), unit, interpretation, null
+				name, node.get("error").asText(), unit.orElse(null), interpretation.orElse(null), null
+			);
+		} else {
+			String resultsFieldName = getResultsFieldName(node)
+				.orElseThrow(() -> new OutputParseException("Metric has no results: " + node));
+
+			return new Metric(
+				name, null, unit.orElse(null), interpretation.orElse(null),
+				parseResults(node.get(resultsFieldName))
 			);
 		}
-
-		if (!node.hasNonNull("unit")) {
-			throw new OutputParseException("Metric has no unit: " + node);
-		}
-		if (!node.get("unit").isTextual()) {
-			throw new OutputParseException("Unit is no string: " + node);
-		}
-
-		String interpretationFieldName = getInterpretationFieldName(node)
-			.orElseThrow(() -> new OutputParseException("Metric has no interpretation: " + node));
-		String resultsFieldName = getResultsFieldName(node)
-			.orElseThrow(() -> new OutputParseException("Metric has no results: " + node));
-
-		String unit = node.get("unit").asText();
-		Interpretation interpretation = parseInterpretation(
-			node.get(interpretationFieldName)
-		);
-
-		return new Metric(
-			name, null, unit, interpretation, parseResults(node.get(resultsFieldName))
-		);
 	}
 
 	private Optional<String> getInterpretationFieldName(JsonNode node) {
@@ -194,16 +176,23 @@ public class BenchmarkScriptOutputParser {
 		return results;
 	}
 
-	private Interpretation parseInterpretation(JsonNode node) {
-		Interpretation interpretation;
-		try {
-			interpretation = Interpretation.valueOf(node.asText());
-		} catch (IllegalArgumentException e) {
-			throw new OutputParseException(
-				"Unknown result interpretation '" + node.asText() + "'"
-			);
+	private String parseUnit(JsonNode node) {
+		if (!node.isTextual()) {
+			throw new OutputParseException("Unit is no string: " + node);
 		}
-		return interpretation;
+		return node.asText();
+	}
+
+	private Interpretation parseInterpretation(JsonNode node) {
+		if (!node.isTextual()) {
+			throw new OutputParseException("Interpretation is no string: " + node);
+		}
+
+		try {
+			return Interpretation.valueOf(node.asText());
+		} catch (IllegalArgumentException e) {
+			throw new OutputParseException("Unknown interpretation: " + node);
+		}
 	}
 
 	/**
