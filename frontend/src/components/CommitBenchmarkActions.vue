@@ -28,8 +28,7 @@
           <v-icon>{{ commitRemoteIcon }}</v-icon>
         </v-btn>
       </template>
-      Benchmarks all commits upwards of this commit (this
-      <strong>one</strong> and <strong>up</strong>)
+      View this commit on <strong>{{ getRemoteHostname }}</strong>
     </v-tooltip>
   </span>
 </template>
@@ -38,12 +37,12 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import {
-  mdiHistory,
-  mdiFlash,
-  mdiOneUp,
-  mdiGitlab,
-  mdiGithubCircle,
   mdiBitbucket,
+  mdiFlash,
+  mdiGithubCircle,
+  mdiGitlab,
+  mdiHistory,
+  mdiOneUp,
   mdiOpenInNew
 } from '@mdi/js'
 import { Prop } from 'vue-property-decorator'
@@ -96,6 +95,19 @@ export default class CommitBenchmarkActions extends Vue {
       : 'commit'
 
     return `https://${domain}/${account}/${projectName}/${commitMarker}/${this.commitDescription.hash}`
+  }
+
+  private get getRemoteHostname(): string | undefined {
+    if (!this.repo) {
+      return undefined
+    }
+    const match = /^(https:\/\/(.+)\/|git@(.+):)(.+)\/(.+?)(\.git)?$/.exec(
+      this.repo.remoteURL
+    )
+    if (!match) {
+      return undefined
+    }
+    return match[2] || match[3]
   }
 
   private get commitRemoteIcon(): string | undefined {
