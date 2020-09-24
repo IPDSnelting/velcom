@@ -8,7 +8,7 @@ import de.aaaaaaah.velcom.backend.access.entities.Dimension;
 import de.aaaaaaah.velcom.backend.access.entities.DimensionInfo;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
 import de.aaaaaaah.velcom.backend.access.entities.sources.CommitSource;
-import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparer;
+import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparator;
 import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparison;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.utils.EndpointUtils;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimensionDifference;
@@ -33,10 +33,10 @@ public class RunEndpoint {
 
 	private final BenchmarkReadAccess benchmarkAccess;
 	private final CommitReadAccess commitAccess;
-	private final RunComparer comparer;
+	private final RunComparator comparer;
 
 	public RunEndpoint(BenchmarkReadAccess benchmarkAccess, CommitReadAccess commitAccess,
-		RunComparer comparer) {
+		RunComparator comparer) {
 
 		this.benchmarkAccess = benchmarkAccess;
 		this.commitAccess = commitAccess;

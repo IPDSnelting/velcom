@@ -8,7 +8,7 @@ import de.aaaaaaah.velcom.backend.access.entities.DimensionInfo;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
 import de.aaaaaaah.velcom.backend.access.entities.sources.CommitSource;
 import de.aaaaaaah.velcom.backend.data.runcomparison.DimensionDifference;
-import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparer;
+import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparator;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimensionDifference;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRunDescription;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRunDescription.JsonSuccess;
@@ -42,14 +42,14 @@ public class RecentRunsEndpoint {
 
 	private final BenchmarkReadAccess benchmarkAccess;
 	private final CommitReadAccess commitAccess;
-	private final RunComparer runComparer;
+	private final RunComparator runComparator;
 
 	public RecentRunsEndpoint(BenchmarkReadAccess benchmarkAccess, CommitReadAccess commitAccess,
-		RunComparer runComparer) {
+		RunComparator runComparator) {
 
 		this.benchmarkAccess = benchmarkAccess;
 		this.commitAccess = commitAccess;
-		this.runComparer = runComparer;
+		this.runComparator = runComparator;
 	}
 
 	@GET
@@ -144,7 +144,7 @@ public class RecentRunsEndpoint {
 			.getLatestRuns(sourceCommit.getRepoId(), sourceCommit.getParentHashes())
 			.values()
 			.stream()
-			.map(parentRun -> runComparer.compare(parentRun, run))
+			.map(parentRun -> runComparator.compare(parentRun, run))
 			.flatMap(comparison -> comparison.getDifferences().stream())
 			.filter(DimensionDifference::isSignificant)
 			.collect(Collectors.toList());
