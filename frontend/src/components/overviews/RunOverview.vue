@@ -81,11 +81,6 @@ export default class RunOverview extends Vue {
     return this.run.success === 'FAILURE'
   }
 
-  // FIXME: Delete this?
-  private get isPartialFailure(): boolean {
-    return this.run.success === 'PARTIAL_SUCCESS'
-  }
-
   private get runLinkLocation(): RawLocation {
     return {
       name: 'run-detail',
@@ -106,13 +101,3 @@ export default class RunOverview extends Vue {
   // ==============       ==============
 }
 </script>
-
-<style scoped>
-.commit-message {
-  font-style: italic;
-}
-.flex-shrink-too {
-  flex: 1 1 0;
-  min-width: 200px;
-}
-</style>
