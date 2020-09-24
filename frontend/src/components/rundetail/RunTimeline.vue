@@ -1,12 +1,13 @@
 <template>
   <v-container fluid>
-    <v-timeline>
+    <v-timeline reverse>
       <v-timeline-item
         v-for="(run, index) in runs"
         :key="run.runId"
         :color="runInfo(run).color"
+        :small="!isSelected(run)"
         fill-dot
-        :class="[index % 2 == 1 ? 'text-right' : '']"
+        :class="[index % 2 === 0 ? 'text-right' : '']"
         class="d-flex align-center"
       >
         <router-link
@@ -17,9 +18,11 @@
           {{ formatDate(run.startTime) }}
         </router-link>
         <template #icon>
-          <v-tooltip :left="index % 2 === 0" :right="index % 2 === 1">
+          <v-tooltip :left="index % 2 === 1" :right="index % 2 === 0">
             <template #activator="{ on }">
-              <v-icon v-on="on" dark>{{ runInfo(run).icon }}</v-icon>
+              <v-icon :small="!isSelected(run)" v-on="on" dark>
+                {{ runInfo(run).icon }}
+              </v-icon>
             </template>
             {{ runInfo(run).explanation }}
           </v-tooltip>
