@@ -38,7 +38,8 @@ public class RecentRunsEndpoint {
 	private static final int MIN_N = 1;
 	private static final int MAX_N = 100;
 
-	private static final int SIGNIFICANT_BATCH_SIZE = 100;
+	private static final int SIGNIFICANT_MAX_OFFSET = 500;
+	private static final int SIGNIFICANT_BATCH_SIZE = 50;
 
 	private final BenchmarkReadAccess benchmarkAccess;
 	private final CommitReadAccess commitAccess;
@@ -107,7 +108,8 @@ public class RecentRunsEndpoint {
 	private List<Pair<Run, List<DimensionDifference>>> getSignificantRuns(int n) {
 		List<Pair<Run, List<DimensionDifference>>> runs = new ArrayList<>();
 
-		for (int offset = 0; runs.size() < n; offset += SIGNIFICANT_BATCH_SIZE) {
+		outer:
+		for (int offset = 0; offset < SIGNIFICANT_MAX_OFFSET; offset += SIGNIFICANT_BATCH_SIZE) {
 			List<Run> recentRuns = benchmarkAccess.getRecentRuns(offset, SIGNIFICANT_BATCH_SIZE);
 			if (recentRuns.isEmpty()) {
 				break;
@@ -118,11 +120,8 @@ public class RecentRunsEndpoint {
 				if (!dimensions.isEmpty()) {
 					runs.add(new Pair<>(run, dimensions));
 
-					// We don't want to keep requesting or testing runs if the runs list is already full
 					if (runs.size() >= n) {
-						// If this condition is true, then the outer for loop's condition is false and we
-						// continue on to the end of the function
-						break;
+						break outer;
 					}
 				}
 			}
