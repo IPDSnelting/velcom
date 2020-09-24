@@ -375,14 +375,14 @@ export class Worker {
 export class DimensionDifference {
   readonly dimension: Dimension
   readonly absDiff: number
-  readonly relDiff: number
-  readonly stddev: number | undefined
+  readonly relDiff?: number
+  readonly stddev?: number
 
   constructor(
     dimension: Dimension,
     absDiff: number,
-    relDiff: number,
-    stddev: number | undefined
+    relDiff?: number,
+    stddev?: number
   ) {
     this.dimension = dimension
     this.absDiff = absDiff
