@@ -9,7 +9,8 @@
     </v-card-title>
     <v-card-text class="py-0">
       <v-container fluid class="ma-0 pa-0">
-        <v-row align="center" justify="space-around">
+        <slot name="before-body"></slot>
+        <v-row align="center" justify="space-around" class="mx-1">
           <v-col
             :lg="item.alwaysAuto ? 'auto' : '2'"
             md="auto"

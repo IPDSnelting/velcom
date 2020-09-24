@@ -119,7 +119,7 @@ export default class RunCommitDetailView extends Vue {
         })
       }
     } else if (this.firstComponent && this.secondComponent) {
-      // we have a repo id and run id
+      // we have a repo id and commit hash
       this.commit = await vxm.commitDetailComparisonModule.fetchCommit({
         repoId: this.firstComponent,
         commitHash: this.secondComponent
