@@ -8,7 +8,6 @@
 # Invalid unit
 { "test": { "metric": { "results": [ 1341173530.8587837 ], "unit": 20, "resultInterpretation": "LESS_IS_BETTER" } } }
 { "test": { "metric": { "results": [ 1341173530.8587837 ], "unit": false, "resultInterpretation": "LESS_IS_BETTER" } } }
-{ "test": { "metric": { "results": [ 1341173530.8587837 ], "unit": null, "resultInterpretation": "LESS_IS_BETTER" } } }
 { "test": { "metric": { "results": [ 1341173530.8587837 ], "unit": [], "resultInterpretation": "LESS_IS_BETTER" } } }
 { "test": { "metric": { "results": [ 1341173530.8587837 ], "unit": {}, "resultInterpretation": "LESS_IS_BETTER" } } }
 # Invalid results
@@ -30,6 +29,5 @@
 { "test": { "metric": { "results": [ 1341173530.8587837 ], "unit": "cats", "resultInterpretation": {} } } }
 { "test": { "metric": { "results": [ 1341173530.8587837 ], "unit": "cats", "resultInterpretation": 20 } } }
 { "test": { "metric": { "results": [ 1341173530.8587837 ], "unit": "cats", "resultInterpretation": false } } }
-{ "test": { "metric": { "results": [ 1341173530.8587837 ], "unit": "cats", "resultInterpretation": null } } }
 # Invalid interpretation in error
 { "test": { "metric": { "error": "Yes", "interpretation": "WHO KNOWS" } } }

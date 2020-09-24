@@ -101,7 +101,7 @@ public class BenchmarkScriptOutputParser {
 
 		Optional<String> unit = Optional.empty();
 		if (node.hasNonNull("unit")) {
-			// parseUnill throw if the value is invalid
+			// parseUnit will throw if the value is invalid
 			unit = Optional.of(parseUnit(node.get("unit")));
 		}
 

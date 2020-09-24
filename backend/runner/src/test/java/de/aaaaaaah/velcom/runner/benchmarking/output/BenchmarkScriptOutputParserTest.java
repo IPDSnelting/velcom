@@ -146,8 +146,7 @@ class BenchmarkScriptOutputParserTest {
 			"{ \"test\": { \"metric\": { \"error\": \"Yes\", \"unit\": 42 } } }"
 		))
 			.isInstanceOf(OutputParseException.class)
-			.hasMessageContaining("42")
-			.hasMessageContaining("NUMBER");
+			.hasMessageContaining("42");
 	}
 
 	@Test

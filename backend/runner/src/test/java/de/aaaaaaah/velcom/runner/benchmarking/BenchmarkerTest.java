@@ -198,7 +198,7 @@ class BenchmarkerTest {
 				assertThat(result.getResult().getBenchmarks().get()).containsExactly(new Benchmark(
 					"test",
 					List.of(
-						new Metric("metric", "20", "", Interpretation.NEUTRAL, null)
+						new Metric("metric", "20", null, null, null)
 					)
 				));
 				assertThat(result.getResult().getError()).isEmpty();
