@@ -16,6 +16,46 @@
         </v-card>
       </v-col>
     </v-row>
+    <v-row v-if="comparison && comparison.run1">
+      <v-col>
+        <run-info :run="comparison.run1">
+          <template #title>
+            <span>First Run Information</span>
+            <v-spacer></v-spacer>
+            <v-chip
+              :to="{
+                name: 'run-detail',
+                params: { first: comparison.run1.id }
+              }"
+              outlined
+              label
+            >
+              Run id: {{ comparison.run1.id }}
+            </v-chip>
+          </template>
+        </run-info>
+      </v-col>
+    </v-row>
+    <v-row v-if="comparison && comparison.run2">
+      <v-col>
+        <run-info :run="comparison.run2">
+          <template #title>
+            <span>Second Run Information</span>
+            <v-spacer></v-spacer>
+            <v-chip
+              :to="{
+                name: 'run-detail',
+                params: { first: comparison.run2.id }
+              }"
+              outlined
+              label
+            >
+              Run id: {{ comparison.run2.id }}
+            </v-chip>
+          </template>
+        </run-info>
+      </v-col>
+    </v-row>
   </v-container>
 </template>
 
@@ -26,9 +66,11 @@ import { vxm } from '@/store'
 import { Watch } from 'vue-property-decorator'
 import { RunComparison } from '@/store/types'
 import RunComparisonTable from '@/components/comparison/RunComparisonTable.vue'
+import RunInfo from '@/components/rundetail/RunInfo.vue'
 
 @Component({
   components: {
+    'run-info': RunInfo,
     'comparison-table': RunComparisonTable
   }
 })
