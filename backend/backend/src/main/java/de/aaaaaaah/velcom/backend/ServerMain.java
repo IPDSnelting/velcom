@@ -173,7 +173,7 @@ public class ServerMain extends Application<GlobalConfig> {
 		environment.jersey().register(new RunEndpoint(benchmarkAccess, commitAccess, comparer));
 		environment.jersey().register(new TestTokenEndpoint());
 		environment.jersey().register(new QueueEndpoint(commitAccess, repoAccess, queue, dispatcher));
-		environment.jersey().register(new RecentRunsEndpoint(benchmarkAccess, commitAccess));
+		environment.jersey().register(new RecentRunsEndpoint(benchmarkAccess, commitAccess, comparer));
 		environment.jersey()
 			.register(new RepoEndpoint(repoAccess, tokenAccess, benchmarkAccess, listener));
 		environment.jersey().register(new GraphComparisonEndpoint(comparison, benchmarkAccess));
@@ -200,7 +200,9 @@ public class ServerMain extends Application<GlobalConfig> {
 			@Override
 			public Id map(Id id) {
 				final String cacheTag = id.getTag("cache");
-				if (cacheTag == null) { return id; }
+				if (cacheTag == null) {
+					return id;
+				}
 
 				// meter is a cache meter => prepend cacheTag to name
 				return new Id(
