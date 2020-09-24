@@ -1,12 +1,13 @@
 package de.aaaaaaah.velcom.backend.util;
 
+import static java.util.function.Predicate.not;
+
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.storage.repo.GuickCloning;
 import de.aaaaaaah.velcom.backend.storage.repo.GuickCloning.CloneException;
 import de.aaaaaaah.velcom.backend.storage.repo.RepoStorage;
 import de.aaaaaaah.velcom.backend.storage.repo.exception.RepositoryAcquisitionException;
 import de.aaaaaaah.velcom.shared.util.FileHelper;
-import de.aaaaaaah.velcom.shared.util.OSCheck;
 import de.aaaaaaah.velcom.shared.util.compression.PermissionsHelper;
 import java.io.IOException;
 import java.io.InputStream;
@@ -107,26 +108,23 @@ public class TransferUtils {
 			tarOut.setBigNumberMode(TarArchiveOutputStream.BIGNUMBER_POSIX);
 
 			Files.walk(repoDir)
-				.filter(Files::isRegularFile)
+				.filter(not(Files::isSymbolicLink))
 				.forEach(handleError(file -> {
-						String relativePath = repoDir.relativize(file).toString();
+					String relativePath = repoDir.relativize(file).toString();
 
-						TarArchiveEntry entry = new TarArchiveEntry(file.toFile(), relativePath);
-						if (!OSCheck.isStupidWindows()) {
-							entry.setMode(
-								PermissionsHelper.toOctal(Files.getPosixFilePermissions(file))
-							);
-						}
+					TarArchiveEntry entry = new TarArchiveEntry(file.toFile(), relativePath);
+					entry.setMode(PermissionsHelper.toOctal(Files.getPosixFilePermissions(file)));
 
+					tarOut.putArchiveEntry(entry);
+
+					if (Files.isRegularFile(file)) {
 						try (InputStream in = Files.newInputStream(file)) {
-							tarOut.putArchiveEntry(entry);
-
 							IOUtils.copy(in, tarOut);
-
-							tarOut.closeArchiveEntry();
 						}
 					}
-				));
+
+					tarOut.closeArchiveEntry();
+				}));
 		} finally {
 			long end = System.currentTimeMillis();
 			LOGGER.info("Tar operation took {} ms... ({})", end - start, repoDir);
