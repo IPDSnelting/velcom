@@ -104,8 +104,8 @@ public class RunBuilder {
 	 * @param unit the unit
 	 * @param values the values
 	 */
-	public void addSuccessfulMeasurement(Dimension name, Interpretation interpretation,
-		Unit unit, List<Double> values) {
+	public void addSuccessfulMeasurement(Dimension name, Unit unit, Interpretation interpretation,
+		List<Double> values) {
 
 		MeasurementValues measurementValues = new MeasurementValues(values);
 		NewMeasurement measurement = new NewMeasurement(
