@@ -112,7 +112,7 @@ const routes: RouteInfo[] = [
     component: RunCommitDetailView,
     meta: {
       navigable: false,
-      label: 'Run Detail'
+      label: 'Detail'
     }
   },
   {
