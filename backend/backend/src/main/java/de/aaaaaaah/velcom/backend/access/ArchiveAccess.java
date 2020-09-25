@@ -236,6 +236,8 @@ public class ArchiveAccess {
 				TransferUtils.tarRepo(archive, outputStream);
 			} catch (IOException e) {
 				throw new TransferException(task, e);
+			} finally {
+				repoArchives.deleteArchive(repoId, hash); // Cleanup
 			}
 		}
 	}
