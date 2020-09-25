@@ -13,6 +13,7 @@ import { CustomKeyEqualsMap } from '@/util/CustomKeyEqualsMap'
 import { vxm } from '@/store'
 import router from '@/router'
 import { Route } from 'vue-router'
+import { dateFromRelative } from '@/util/TimeUtil'
 
 const VxModule = createModule({
   namespaced: 'detailGraphModule',
@@ -122,21 +123,48 @@ export class DetailGraphStore extends VxModule {
     ) => void = (name, action) => {
       const queryValue = link.query[name]
       if (queryValue && typeof queryValue === 'string') {
-        action(parseFloat(queryValue))
+        if (!isNaN(parseFloat(queryValue))) {
+          action(parseFloat(queryValue))
+        }
       }
     }
 
+    const extractDate: (
+      name: string,
+      relative: Date,
+      action: (value: number) => void
+    ) => void = (name, relative, action) => {
+      const queryValue = link.query[name]
+      if (queryValue && typeof queryValue === 'string') {
+        if (queryValue.match(/^([+-])?(\d|\.)+$/)) {
+          action(parseFloat(queryValue))
+          return
+        }
+        const relativeDate = dateFromRelative(queryValue, relative)
+        console.log(queryValue, relativeDate)
+        if (relativeDate) {
+          action(relativeDate.getTime())
+        }
+      }
+    }
+
+    // Anchors to the current date
+    extractDate('zoomXEnd', new Date(), value => {
+      this.zoomXEndValue = value
+    })
+    // Anchors to the end date (or the current one if not specified)
+    extractDate(
+      'zoomXStart',
+      new Date(this.zoomXEndValue || new Date().getTime()),
+      value => {
+        this.zoomXStartValue = value
+      }
+    )
     extractFloat('zoomYStart', value => {
       this.zoomYStartValue = value
     })
     extractFloat('zoomYEnd', value => {
       this.zoomYEndValue = value
-    })
-    extractFloat('zoomXStart', value => {
-      this.zoomXStartValue = value
-    })
-    extractFloat('zoomXEnd', value => {
-      this.zoomXEndValue = value
     })
 
     if (link.query.dimensions && typeof link.query.dimensions === 'string') {
