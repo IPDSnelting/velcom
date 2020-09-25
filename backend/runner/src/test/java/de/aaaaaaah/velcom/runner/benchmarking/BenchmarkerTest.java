@@ -279,6 +279,26 @@ class BenchmarkerTest {
 		assertThat(benchmarker.getTaskId()).isEqualTo(taskId);
 	}
 
+	@Test
+	void abortBeforeStarting()
+		throws IOException, InterruptedException, ExecutionException, TimeoutException {
+		writeBenchScript("#!bin/sh", "echo 'hey'");
+
+		Benchmarker benchmarker = new Benchmarker(finishFuture, taskId, workPath, BENCH_REPO_HASH,
+			benchRepoPath, startTime, RUNNER_NAME, systemInfo);
+
+		benchmarker.abort();
+
+		finishFuture.get(10, TimeUnit.SECONDS);
+
+		Optional<BenchResult> result = benchmarker.getResult();
+
+		assertThat(result).isPresent();
+		assertThat(result.get().isSuccess()).isFalse();
+		assertThat(result.get().getError()).isNotNull().contains("interrupt");
+		assertThat(result.get().getResult()).isNull();
+	}
+
 	private void doWithResult(Consumer<BenchResult> resultConsumer)
 		throws InterruptedException, ExecutionException, TimeoutException {
 
