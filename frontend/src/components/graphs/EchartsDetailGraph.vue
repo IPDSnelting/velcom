@@ -419,8 +419,6 @@ export default class EchartsDetailGraph extends Vue {
   // <!--<editor-fold desc="LIFECYCLE HOOKS">-->
   mounted(): void {
     this.updateGraph()
-    console.log(vxm.detailGraphModule)
-    console.log(JSON.stringify(vxm.detailGraphModule))
   }
   // <!--</editor-fold>-->
 
