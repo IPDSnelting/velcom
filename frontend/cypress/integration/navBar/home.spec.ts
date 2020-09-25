@@ -7,9 +7,13 @@ function countRuns(alias: string) {
 function loadMoreRuns(countAfter: number, alias: string) {
   const significantOnly = alias.indexOf('significant') > 0
 
-  cy.route(
-    `api/recently-benchmarked-commits?amount=${countAfter}&significant_only=${significantOnly}`
-  ).as('fetch_more')
+  if (significantOnly) {
+    cy.route(`/api/recent/runs?n=${countAfter}&significant=true`).as(
+      'fetch_more'
+    )
+  } else {
+    cy.route(`/api/recent/runs?n=${countAfter}`).as('fetch_more')
+  }
 
   cy.get(alias)
     .contains('load more')
@@ -26,15 +30,15 @@ context('Homepage', () => {
     cy.visit('home')
   })
 
-  it('displays recently benchmarked commits', () => {
+  it('displays recently benchmarked runs', () => {
     cy.route({
       method: 'GET',
-      url: 'api/recently-benchmarked-commits?amount=10&significant_only=true',
+      url: '/api/recent/runs?n=10&significant=true',
       response: 'fixture:homepage_run_example.json'
     }).as('significantDefaultRoute')
     cy.visit('home')
 
-    cy.contains('Recent Significant Commits').should('exist')
+    cy.contains('Recent Significant Runs').should('exist')
 
     cy.get('[data-cy="recent_significant"]')
       .find('[data-cy="run_overview"]')
@@ -43,17 +47,15 @@ context('Homepage', () => {
     cy.get('@run_overview').contains('VelCom')
 
     cy.get('@run_overview').contains(
-      '[frontend] Only show ECharts config menu on right click'
+      '[backend] Find and return significant recent runs'
     )
 
-    cy.get('@run_overview').contains(
-      'I-Al-Istannen <i-al-istannen@users.noreply.github.com>'
-    )
+    cy.get('@run_overview').contains('Joscha <joscha@plugh.de>')
 
-    cy.get('@run_overview').contains('frontend')
-    cy.get('@run_overview').contains('build_time')
+    cy.get('@run_overview').contains('backend')
+    cy.get('@run_overview').contains('coverage')
 
-    cy.get('@run_overview').contains('051795dfafa7f78167cbb171ef643e22df746886')
+    cy.get('@run_overview').contains('ccbfc79b611cb4132e0c097ac9d412f6ca6a1b31')
   })
 
   it('fetches more significant runs', () => {
@@ -105,24 +107,24 @@ context('Homepage', () => {
   })
 
   it('should take you to the detail page when clicking the message', () => {
-    cy.contains('Recent Significant Commits').should('exist')
+    cy.contains('Recent Significant Runs').should('exist')
 
     cy.get('[data-cy="recent_significant"]')
       .find('[data-cy="run_overview"]')
       .as('run_overview')
 
     cy.get('@run_overview')
-      .contains('[frontend] Only show ECharts config men')
+      .contains('[backend] Find and return significant recent runs')
       .click()
 
-    cy.location('pathname').should('include', 'commit-detail')
+    cy.location('pathname').should('include', 'run-detail')
     cy.location('pathname').should(
       'include',
       '44bb5c8d-b20d-4bef-bdad-c92767dfa489'
     )
     cy.location('pathname').should(
       'include',
-      '051795dfafa7f78167cbb171ef643e22df746886'
+      'ccbfc79b611cb4132e0c097ac9d412f6ca6a1b31'
     )
 
     cy.go('back')
@@ -130,7 +132,7 @@ context('Homepage', () => {
   })
 
   it('should take you to the repo detail page when clicking the repo', () => {
-    cy.contains('Recent Significant Commits').should('exist')
+    cy.contains('Recent Significant Runs').should('exist')
 
     cy.get('[data-cy="recent_significant"]')
       .find('[data-cy="run_overview"]')

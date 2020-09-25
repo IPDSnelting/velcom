@@ -1,158 +1,292 @@
 {
-  "commits": [
+  "runs": [
     {
-      "first_commit": {
-        "repo_id": "44bb5c8d-b20d-4bef-bdad-c92767dfa489",
-        "hash": "70d3a3c8388109b328d2e624e0b1e99b9171b602",
-        "parents": [
-          "e57f1ffe3502a76302e004277c1ff73f4fe34e04",
-          "deabe002b2ae2e84f7845ae7cd05c1badecc8027"
-        ],
-        "author": "I-Al-Istannen <I-Al-Istannen@users.noreply.github.com>",
-        "author_date": 1595601474.0,
-        "committer": "GitHub <noreply@github.com>",
-        "committer_date": 1595601474.0,
-        "message": "Merge pull request #40 from IPDSnelting/fix-siteurl-on-repo-pages\n\nRespect site-url on manually updated pages"
+      "run": {
+        "id": "fd9e7bf9-e8e7-4866-b5a4-87f4735c942f",
+        "start_time": 1600982277,
+        "success": "PARTIAL_SUCCESS",
+        "source": {
+          "type": "COMMIT",
+          "source": {
+            "repo_id": "44bb5c8d-b20d-4bef-bdad-c92767dfa489",
+            "hash": "147413df6d64ab54ceafbd5b0a38a1d72cefed5d",
+            "author": "Garmelon <joscha@plugh.de>",
+            "author_date": 1600981528,
+            "summary": "Merge pull request #89 from IPDSnelting/fix-units-sometimes-missing\n"
+          }
+        }
       },
-      "first_run": {
-        "commit": {
-          "repo_id": "44bb5c8d-b20d-4bef-bdad-c92767dfa489",
-          "hash": "70d3a3c8388109b328d2e624e0b1e99b9171b602",
-          "parents": [
-            "e57f1ffe3502a76302e004277c1ff73f4fe34e04",
-            "deabe002b2ae2e84f7845ae7cd05c1badecc8027"
-          ],
-          "author": "I-Al-Istannen <I-Al-Istannen@users.noreply.github.com>",
-          "author_date": 1595601474.0,
-          "committer": "GitHub <noreply@github.com>",
-          "committer_date": 1595601474.0,
-          "message": "Merge pull request #40 from IPDSnelting/fix-siteurl-on-repo-pages\n\nRespect site-url on manually updated pages"
-        },
-        "start_time": 1595601658,
-        "stop_time": 1595601848,
-        "measurements": [
-          {
-            "benchmark": "frontend",
-            "metric": "build_time",
-            "unit": "seconds",
-            "interpretation": "LESS_IS_BETTER",
-            "values": [103.55585646629333],
-            "value": 103.55585646629333,
-            "error_message": null
-          },
-          {
-            "benchmark": "backend",
-            "metric": "build_time",
-            "unit": "seconds",
-            "interpretation": "LESS_IS_BETTER",
-            "values": [86.14389443397522],
-            "value": 86.14389443397522,
-            "error_message": null
-          },
-          {
+      "significant_dimensions": [
+        {
+          "dimension": {
             "benchmark": "backend",
             "metric": "coverage",
             "unit": "percent",
-            "interpretation": "MORE_IS_BETTER",
-            "values": [58.0],
-            "value": 58.0,
-            "error_message": null
+            "interpretation": "MORE_IS_BETTER"
           },
-          {
-            "benchmark": "misc",
-            "metric": "always zero",
-            "unit": "cats",
-            "interpretation": "NEUTRAL",
-            "values": [0.0],
-            "value": 0.0,
-            "error_message": null
+          "diff": -1.0,
+          "reldiff": -0.05
+        }
+      ]
+    },
+    {
+      "run": {
+        "id": "21684e98-9911-412c-9cda-64ca03c0dfeb",
+        "start_time": 1600982812,
+        "success": "PARTIAL_SUCCESS",
+        "source": {
+          "type": "COMMIT",
+          "source": {
+            "repo_id": "44bb5c8d-b20d-4bef-bdad-c92767dfa489",
+            "hash": "ccbfc79b611cb4132e0c097ac9d412f6ca6a1b31",
+            "author": "Joscha <joscha@plugh.de>",
+            "author_date": 1600980105,
+            "summary": "[backend] Find and return significant recent runs\n"
           }
-        ],
-        "error_message": null
+        }
       },
-      "second_commit": {
-        "repo_id": "44bb5c8d-b20d-4bef-bdad-c92767dfa489",
-        "hash": "051795dfafa7f78167cbb171ef643e22df746886",
-        "parents": ["70d3a3c8388109b328d2e624e0b1e99b9171b602"],
-        "author": "I-Al-Istannen <i-al-istannen@users.noreply.github.com>",
-        "author_date": 1595792700.0,
-        "committer": "I-Al-Istannen <i-al-istannen@users.noreply.github.com>",
-        "committer_date": 1595792700.0,
-        "message": "[frontend] Only show ECharts config menu on right click\n"
-      },
-      "second_run": {
-        "commit": {
-          "repo_id": "44bb5c8d-b20d-4bef-bdad-c92767dfa489",
-          "hash": "051795dfafa7f78167cbb171ef643e22df746886",
-          "parents": ["70d3a3c8388109b328d2e624e0b1e99b9171b602"],
-          "author": "I-Al-Istannen <i-al-istannen@users.noreply.github.com>",
-          "author_date": 1595792700.0,
-          "committer": "I-Al-Istannen <i-al-istannen@users.noreply.github.com>",
-          "committer_date": 1595792700.0,
-          "message": "[frontend] Only show ECharts config menu on right click\n"
-        },
-        "start_time": 1596187246,
-        "stop_time": 1596187438,
-        "measurements": [
-          {
-            "benchmark": "frontend",
-            "metric": "build_time",
-            "unit": "seconds",
-            "interpretation": "LESS_IS_BETTER",
-            "values": [104.7769763469696],
-            "value": 104.7769763469696,
-            "error_message": null
-          },
-          {
-            "benchmark": "backend",
-            "metric": "build_time",
-            "unit": "seconds",
-            "interpretation": "LESS_IS_BETTER",
-            "values": [86.48002123832703],
-            "value": 86.48002123832703,
-            "error_message": null
-          },
-          {
+      "significant_dimensions": [
+        {
+          "dimension": {
             "benchmark": "backend",
             "metric": "coverage",
             "unit": "percent",
-            "interpretation": "MORE_IS_BETTER",
-            "values": [58.0],
-            "value": 58.0,
-            "error_message": null
+            "interpretation": "MORE_IS_BETTER"
           },
-          {
-            "benchmark": "misc",
-            "metric": "always zero",
-            "unit": "cats",
-            "interpretation": "NEUTRAL",
-            "values": [0.0],
-            "value": 0.0,
-            "error_message": null
+          "diff": -1.0,
+          "reldiff": -0.05
+        }
+      ]
+    },
+    {
+      "run": {
+        "id": "7cdb62d3-fa04-4bc0-8ddd-9bf3413530d6",
+        "start_time": 1601036618,
+        "success": "PARTIAL_SUCCESS",
+        "source": {
+          "type": "COMMIT",
+          "source": {
+            "repo_id": "44bb5c8d-b20d-4bef-bdad-c92767dfa489",
+            "hash": "33f2e1e5e0bcfb976088bcc19a30f5ac28ab22b1",
+            "author": "I-Al-Istannen <I-Al-Istannen@users.noreply.github.com>",
+            "author_date": 1601036223,
+            "summary": "Merge pull request #88 from IPDSnelting/fix-task-repo-taring\n"
           }
-        ],
-        "error_message": null
+        }
       },
-      "differences": [
+      "significant_dimensions": [
         {
-          "benchmark": "frontend",
-          "metric": "build_time",
-          "difference": 1.2211198806762695
-        },
+          "dimension": {
+            "benchmark": "backend",
+            "metric": "coverage",
+            "unit": "percent",
+            "interpretation": "MORE_IS_BETTER"
+          },
+          "diff": -1.0,
+          "reldiff": -0.05
+        }
+      ]
+    },
+    {
+      "run": {
+        "id": "974e730d-e321-42b7-b8df-d0c0e8baafb1",
+        "start_time": 1601046487,
+        "success": "SUCCESS",
+        "source": {
+          "type": "COMMIT",
+          "source": {
+            "repo_id": "44bb5c8d-b20d-4bef-bdad-c92767dfa489",
+            "hash": "33f2e1e5e0bcfb976088bcc19a30f5ac28ab22b1",
+            "author": "I-Al-Istannen <I-Al-Istannen@users.noreply.github.com>",
+            "author_date": 1601036223,
+            "summary": "Merge pull request #88 from IPDSnelting/fix-task-repo-taring\n"
+          }
+        }
+      },
+      "significant_dimensions": [
         {
-          "benchmark": "backend",
-          "metric": "build_time",
-          "difference": 0.33612680435180664
-        },
+          "dimension": {
+            "benchmark": "backend",
+            "metric": "coverage",
+            "unit": "percent",
+            "interpretation": "MORE_IS_BETTER"
+          },
+          "diff": -1.0,
+          "reldiff": -0.05
+        }
+      ]
+    },
+    {
+      "run": {
+        "id": "5e6e850c-bed9-4c5c-b747-17e223bb8487",
+        "start_time": 1601047038,
+        "success": "SUCCESS",
+        "source": {
+          "type": "COMMIT",
+          "source": {
+            "repo_id": "44bb5c8d-b20d-4bef-bdad-c92767dfa489",
+            "hash": "cc5b2670d57ede03f36394b6321ee0638dc21cf7",
+            "author": "I-Al-Istannen <I-Al-Istannen@users.noreply.github.com>",
+            "author_date": 1600634320,
+            "summary": "Merge pull request #72 from IPDSnelting/recent-runs-name\n"
+          }
+        }
+      },
+      "significant_dimensions": [
         {
-          "benchmark": "backend",
-          "metric": "coverage",
-          "difference": 0.0
-        },
+          "dimension": {
+            "benchmark": "frontend",
+            "metric": "build_time",
+            "unit": "seconds",
+            "interpretation": "LESS_IS_BETTER"
+          },
+          "diff": 10.17676830291748,
+          "reldiff": 0.0675024074911291
+        }
+      ]
+    },
+    {
+      "run": {
+        "id": "8ea4e6ac-656e-4946-9bd3-cf38035f46f9",
+        "start_time": 1601048280,
+        "success": "SUCCESS",
+        "source": {
+          "type": "COMMIT",
+          "source": {
+            "repo_id": "44bb5c8d-b20d-4bef-bdad-c92767dfa489",
+            "hash": "9a0689c09d203dbdc3efa5976b49c43aa88df743",
+            "author": "Garmelon <joscha@plugh.de>",
+            "author_date": 1600981968,
+            "summary": "Merge pull request #92 from IPDSnelting/significant-runs\n"
+          }
+        }
+      },
+      "significant_dimensions": [
         {
-          "benchmark": "misc",
-          "metric": "always zero",
-          "difference": 0.0
+          "dimension": {
+            "benchmark": "backend",
+            "metric": "build_time",
+            "unit": "seconds",
+            "interpretation": "LESS_IS_BETTER"
+          },
+          "diff": -4.706666946411133,
+          "reldiff": -0.05838484281877233
+        }
+      ]
+    },
+    {
+      "run": {
+        "id": "aeaf8fb7-830f-4f6b-9d5e-152ebcc34055",
+        "start_time": 1601048535,
+        "success": "SUCCESS",
+        "source": {
+          "type": "COMMIT",
+          "source": {
+            "repo_id": "44bb5c8d-b20d-4bef-bdad-c92767dfa489",
+            "hash": "147413df6d64ab54ceafbd5b0a38a1d72cefed5d",
+            "author": "Garmelon <joscha@plugh.de>",
+            "author_date": 1600981528,
+            "summary": "Merge pull request #89 from IPDSnelting/fix-units-sometimes-missing\n"
+          }
+        }
+      },
+      "significant_dimensions": [
+        {
+          "dimension": {
+            "benchmark": "backend",
+            "metric": "coverage",
+            "unit": "percent",
+            "interpretation": "MORE_IS_BETTER"
+          },
+          "diff": -1.0,
+          "reldiff": -0.05
+        }
+      ]
+    },
+    {
+      "run": {
+        "id": "01551a11-4c95-49d6-b585-e8475a9d36b8",
+        "start_time": 1601049558,
+        "success": "SUCCESS",
+        "source": {
+          "type": "COMMIT",
+          "source": {
+            "repo_id": "44bb5c8d-b20d-4bef-bdad-c92767dfa489",
+            "hash": "ccbfc79b611cb4132e0c097ac9d412f6ca6a1b31",
+            "author": "Joscha <joscha@plugh.de>",
+            "author_date": 1600980105,
+            "summary": "[backend] Find and return significant recent runs\n"
+          }
+        }
+      },
+      "significant_dimensions": [
+        {
+          "dimension": {
+            "benchmark": "backend",
+            "metric": "coverage",
+            "unit": "percent",
+            "interpretation": "MORE_IS_BETTER"
+          },
+          "diff": -1.0,
+          "reldiff": -0.05
+        }
+      ]
+    },
+    {
+      "run": {
+        "id": "a788831e-08d4-4b20-96e7-de65e9d90360",
+        "start_time": 1601050067,
+        "success": "SUCCESS",
+        "source": {
+          "type": "COMMIT",
+          "source": {
+            "repo_id": "44bb5c8d-b20d-4bef-bdad-c92767dfa489",
+            "hash": "ea40467bbeb0d000c7adcbd778c5fe6d1cb93f21",
+            "author": "Joscha <joscha@plugh.de>",
+            "author_date": 1600975493,
+            "summary": "[runner] Fix bench output parser tests\n"
+          }
+        }
+      },
+      "significant_dimensions": [
+        {
+          "dimension": {
+            "benchmark": "frontend",
+            "metric": "build_time",
+            "unit": "seconds",
+            "interpretation": "LESS_IS_BETTER"
+          },
+          "diff": 8.155909061431885,
+          "reldiff": 0.05378028913237079
+        }
+      ]
+    },
+    {
+      "run": {
+        "id": "cfe8ccf3-a510-4f0e-ad25-92399631d861",
+        "start_time": 1601051014,
+        "success": "SUCCESS",
+        "source": {
+          "type": "COMMIT",
+          "source": {
+            "repo_id": "44bb5c8d-b20d-4bef-bdad-c92767dfa489",
+            "hash": "33f2e1e5e0bcfb976088bcc19a30f5ac28ab22b1",
+            "author": "I-Al-Istannen <I-Al-Istannen@users.noreply.github.com>",
+            "author_date": 1601036223,
+            "summary": "Merge pull request #88 from IPDSnelting/fix-task-repo-taring\n"
+          }
+        }
+      },
+      "significant_dimensions": [
+        {
+          "dimension": {
+            "benchmark": "backend",
+            "metric": "coverage",
+            "unit": "percent",
+            "interpretation": "MORE_IS_BETTER"
+          },
+          "diff": -1.0,
+          "reldiff": -0.05
         }
       ]
     }
