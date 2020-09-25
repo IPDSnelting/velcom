@@ -36,8 +36,10 @@ export class DetailGraphStore extends VxModule {
   referenceDatapoint: DimensionDetailPoint | null = null
   commitToCompare: DimensionDetailPoint | null = null
 
-  zoomStartValue: number | null = null
-  zoomEndValue: number | null = null
+  zoomXStartValue: number | null = null
+  zoomXEndValue: number | null = null
+  zoomYStartValue: number | null = null
+  zoomYEndValue: number | null = null
 
   // One week in the past, as elegant as ever
   startTime: Date = new Date(new Date().setDate(new Date().getDate() - 7))

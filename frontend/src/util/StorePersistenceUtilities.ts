@@ -128,8 +128,10 @@ export function detailGraphStoreToJson(store: DetailGraphStore): string {
     startTime: store.startTime,
     endTime: store.endTime,
     duration: store.duration,
-    zoomStartValue: store.zoomStartValue,
-    zoomEndValue: store.zoomEndValue,
+    zoomXStartValue: store.zoomXStartValue,
+    zoomXEndValue: store.zoomXEndValue,
+    zoomYStartValue: store.zoomYStartValue,
+    zoomYEndValue: store.zoomYEndValue,
     firstFreeColorIndex: (store as any).firstFreeColorIndex,
     colorIndexMap: Array.from((store as any).colorIndexMap.entries()),
     commitToCompare: serializeDimensionDetailPoint(store.commitToCompare)

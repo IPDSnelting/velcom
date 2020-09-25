@@ -199,16 +199,24 @@ export default class EchartsDetailGraph extends Vue {
       },
       dataZoom: [
         {
+          xAxisIndex: [0],
           type: 'inside',
           // Start at the correct place when changing the series type
-          startValue: vxm.detailGraphModule.zoomStartValue || undefined,
-          endValue: vxm.detailGraphModule.zoomEndValue || undefined
+          startValue: vxm.detailGraphModule.zoomXStartValue || undefined,
+          endValue: vxm.detailGraphModule.zoomXEndValue || undefined
+        },
+        {
+          type: 'inside',
+          yAxisIndex: [0],
+          startValue: vxm.detailGraphModule.zoomYStartValue || undefined,
+          endValue: vxm.detailGraphModule.zoomYEndValue || undefined,
+          zoomOnMouseWheel: false
         },
         {
           type: 'slider',
           // Start at the correct place when changing the series type
-          startValue: vxm.detailGraphModule.zoomStartValue || undefined,
-          endValue: vxm.detailGraphModule.zoomEndValue || undefined
+          startValue: vxm.detailGraphModule.zoomXStartValue || undefined,
+          endValue: vxm.detailGraphModule.zoomXEndValue || undefined
         }
       ],
       tooltip: {
@@ -389,8 +397,9 @@ export default class EchartsDetailGraph extends Vue {
    * If the number is manageable, the graph type will be selected.
    */
   private selectAppropriateSeries(): 're-render' | 'unchanged' {
-    const startValue = vxm.detailGraphModule.zoomStartValue || this.minDateValue
-    const endValue = vxm.detailGraphModule.zoomEndValue || this.maxDateValue
+    const startValue =
+      vxm.detailGraphModule.zoomXStartValue || this.minDateValue
+    const endValue = vxm.detailGraphModule.zoomXEndValue || this.maxDateValue
 
     // TODO: Is this a performance problem? There might be 10.000+ items here
     // and this method is called every time the slider is dragged or the user
@@ -529,47 +538,56 @@ export default class EchartsDetailGraph extends Vue {
 
   // <!--<editor-fold desc="ECHARTS EVENT HANDLER">-->
   private echartsZoomed(e: any) {
-    let event: {
-      start?: number
-      end?: number
-      startValue?: number
-      endValue?: number
-    }
     if (!e.batch || e.batch.length === 0) {
-      event = e
+      const [start, end] = this.extractStartEndFromZoomEvent(e, [
+        this.minDateValue,
+        this.maxDateValue
+      ])
+      vxm.detailGraphModule.zoomXStartValue = start
+      vxm.detailGraphModule.zoomXEndValue = end
     } else {
-      event = e.batch[0]
+      const [start, end] = this.extractStartEndFromZoomEvent(e.batch[0], [
+        this.minDateValue,
+        this.maxDateValue
+      ])
+      vxm.detailGraphModule.zoomXStartValue = start
+      vxm.detailGraphModule.zoomXEndValue = end
+
+      if (e.batch.length > 1) {
+        const [start, end] = this.extractStartEndFromZoomEvent(e.batch[1], [
+          null,
+          null
+        ])
+        vxm.detailGraphModule.zoomYStartValue = start
+        vxm.detailGraphModule.zoomYEndValue = end
+      }
     }
-
-    let startValue: number
-    let endValue: number
-
-    // Batch and un-batched events set either the percent or absolute value
-    // we normalize to percentages
-    if (event.start !== undefined && event.end !== undefined) {
-      const percentToAbsolute = (percent: number) =>
-        this.minDateValue + (this.maxDateValue - this.minDateValue) * percent
-
-      startValue = percentToAbsolute(event.start / 100)
-      endValue = percentToAbsolute(event.end / 100)
-    } else if (event.startValue !== undefined && event.endValue !== undefined) {
-      startValue = event.startValue
-      endValue = event.endValue
-    } else {
-      return
-    }
-
-    vxm.detailGraphModule.zoomStartValue = startValue
-    vxm.detailGraphModule.zoomEndValue = endValue
 
     if (this.selectAppropriateSeries() === 're-render') {
       this.updateGraph()
     }
   }
 
+  private extractStartEndFromZoomEvent(
+    e: any,
+    defaultValue: [number | null, number | null]
+  ): [number | null, number | null] {
+    if (e.startValue !== undefined && e.endValue !== undefined) {
+      return [e.startValue, e.endValue]
+    }
+    if (e.start !== undefined && e.end !== undefined) {
+      const percentToAbsolute = (percent: number) =>
+        this.minDateValue + (this.maxDateValue - this.minDateValue) * percent
+      return [percentToAbsolute(e.start / 100), percentToAbsolute(e.end / 100)]
+    }
+    return defaultValue
+  }
+
   private echartsZoomReset() {
-    vxm.detailGraphModule.zoomStartValue = this.minDateValue
-    vxm.detailGraphModule.zoomEndValue = this.maxDateValue
+    vxm.detailGraphModule.zoomXStartValue = this.minDateValue
+    vxm.detailGraphModule.zoomXEndValue = this.maxDateValue
+    vxm.detailGraphModule.zoomYStartValue = null
+    vxm.detailGraphModule.zoomYEndValue = null
     this.updateGraph()
   }
 
