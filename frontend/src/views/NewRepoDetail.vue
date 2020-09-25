@@ -208,6 +208,7 @@ import RepoCommitOverview from '@/components/repodetail/RepoCommitOverview.vue'
 import { Dimension, Repo } from '@/store/types'
 import EchartsDetailGraph from '@/components/graphs/EchartsDetailGraph.vue'
 import DytailGraph from '@/components/graphs/NewDytailGraph.vue'
+import { Watch } from 'vue-property-decorator'
 
 @Component({
   components: {
@@ -250,10 +251,6 @@ export default class RepoDetail extends Vue {
     return vxm.detailGraphModule.selectedDimensions
   }
 
-  private set selectedDimensions(dimensions: Dimension[]) {
-    vxm.detailGraphModule.selectedDimensions = dimensions
-  }
-
   private saveStartDateMenu(date: string) {
     ;(this.$refs.startDateMenu as any).save(date)
     vxm.detailGraphModule.startTime = new Date(date)
@@ -291,6 +288,8 @@ export default class RepoDetail extends Vue {
     return vxm.detailGraphModule.startTime.toISOString().substring(0, 10)
   }
 
+  // v-model binding
+  // noinspection JSUnusedGlobalSymbols
   set startTimeString(value: string) {
     vxm.detailGraphModule.startTime = new Date(value)
   }
@@ -299,6 +298,8 @@ export default class RepoDetail extends Vue {
     return vxm.detailGraphModule.endTime.toISOString().substring(0, 10)
   }
 
+  // v-model binding
+  // noinspection JSUnusedGlobalSymbols
   set endTimeString(value: string) {
     vxm.detailGraphModule.endTime = new Date(value)
   }
@@ -338,10 +339,15 @@ export default class RepoDetail extends Vue {
       : 'You have to select a date after the first one!'
   }
 
+  @Watch('id')
   private retrieveGraphData(): void {
     if (this.stopAfterStart()) {
       vxm.detailGraphModule.fetchDetailGraph()
     }
+  }
+
+  mounted(): void {
+    this.retrieveGraphData()
   }
 }
 </script>

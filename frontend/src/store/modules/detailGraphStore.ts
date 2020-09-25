@@ -10,6 +10,7 @@ import axios from 'axios'
 import { detailDataPointFromJson } from '@/util/GraphJsonHelper'
 import { dimensionFromJson } from '@/util/RepoJsonHelper'
 import { CustomKeyEqualsMap } from '@/util/CustomKeyEqualsMap'
+import { vxm } from '@/store'
 
 const VxModule = createModule({
   namespaced: 'detailGraphModule',
@@ -198,8 +199,25 @@ export class DetailGraphStore extends VxModule {
    */
   set selectedRepoId(selectedRepoId: RepoId) {
     this._selectedRepoId = selectedRepoId
+    // reset colors
     this.colorIndexMap = new CustomKeyEqualsMap([], dimensionIdEqual)
     this.firstFreeColorIndex = 0
+
+    // rebuild selected dimensions so colors are correct
+    const repo = vxm.repoModule.repoById(selectedRepoId)
+
+    if (repo) {
+      const isInRepo = (dimension: Dimension) =>
+        repo.dimensions.find(it => it.equals(dimension)) !== undefined
+
+      // we need to trigger the setter
+      vxm.detailGraphModule.selectedDimensions = this._selectedDimensions.filter(
+        isInRepo
+      )
+    } else {
+      // we need to trigger the setter
+      vxm.detailGraphModule.selectedDimensions = []
+    }
   }
 
   get colorIndex(): (dimension: DimensionId) => number | undefined {
