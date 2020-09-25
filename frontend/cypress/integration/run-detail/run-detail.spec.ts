@@ -1,6 +1,6 @@
 /// <reference types="cypress" />
 
-context('Homepage', () => {
+context('Run Detail', () => {
   beforeEach(() => {
     cy.server()
 
