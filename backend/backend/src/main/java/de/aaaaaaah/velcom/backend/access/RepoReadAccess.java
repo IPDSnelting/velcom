@@ -49,6 +49,7 @@ public class RepoReadAccess {
 	protected final RepoStorage repoStorage;
 
 	protected final Cache<RepoId, Repo> repoCache = Caffeine.newBuilder()
+		.recordStats()
 		.maximumSize(100)
 		.build();
 

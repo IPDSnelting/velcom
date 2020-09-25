@@ -528,7 +528,10 @@ public class BenchmarkReadAccess {
 	}
 
 	protected static Cache<CommitHash, Run> buildRunCache(RepoId repoId) {
-		final Cache<CommitHash, Run> cache = Caffeine.newBuilder().maximumSize(10000).build();
+		final Cache<CommitHash, Run> cache = Caffeine.newBuilder()
+			.recordStats()
+			.maximumSize(10000)
+			.build();
 
 		CaffeineCacheMetrics.monitor(
 			Metrics.globalRegistry,
