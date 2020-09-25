@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 import javax.annotation.Nullable;
@@ -52,7 +53,11 @@ public class BenchRepoDir {
 		}
 	}
 
-	private void writeHash(String hash) throws IOException {
+	private void writeHash(@Nullable String hash) throws IOException {
+		if (hash == null) {
+			Files.deleteIfExists(hashFilePath);
+			return;
+		}
 		FileWriter writer = new FileWriter(hashFilePath.toFile());
 		writer.write(hash);
 		writer.flush();
