@@ -5,8 +5,8 @@
         <slot :on="on" name="activator"></slot>
       </template>
 
-      <v-card id='login-dialog'>
-        <v-toolbar dark color="toolbarColor">
+      <v-card id="login-dialog">
+        <v-toolbar dark color="primary">
           <v-toolbar-title>Login</v-toolbar-title>
         </v-toolbar>
         <v-card-text>
@@ -35,7 +35,7 @@
               label="Access token"
               v-model="token"
               @keyup.enter="login"
-              data-cy='password-input'
+              data-cy="password-input"
             ></v-text-field>
           </v-form>
         </v-card-text>

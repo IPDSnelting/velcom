@@ -63,7 +63,7 @@
       v-model="drawerShown"
       app
       temporary
-      data-cy='nav-burger'
+      data-cy="nav-burger"
     >
       <v-toolbar dark color="toolbarColor">
         <v-list>
