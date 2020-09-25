@@ -59,14 +59,4 @@ public final class FileHelper {
 			throw new UncheckedIOException(e);
 		}
 	}
-
-	/**
-	 * Deletes the given path on VM exit.
-	 *
-	 * @param path the path to delete
-	 */
-	public static void deleteOnExit(Path path) {
-		Runtime.getRuntime()
-			.addShutdownHook(new Thread(() -> uncheckedDeleteDirectoryOrFile(path)));
-	}
 }
