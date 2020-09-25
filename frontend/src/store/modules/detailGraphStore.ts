@@ -11,6 +11,8 @@ import { detailDataPointFromJson } from '@/util/GraphJsonHelper'
 import { dimensionFromJson } from '@/util/RepoJsonHelper'
 import { CustomKeyEqualsMap } from '@/util/CustomKeyEqualsMap'
 import { vxm } from '@/store'
+import router from '@/router'
+import { Route } from 'vue-router'
 
 const VxModule = createModule({
   namespaced: 'detailGraphModule',
@@ -100,6 +102,57 @@ export class DetailGraphStore extends VxModule {
   }
 
   /**
+   * Adjusts this store to the values defined in the permanent link.
+   *
+   * @param link the link to adjust to
+   */
+  @action
+  async adjustToPermanentLink(link: Route): Promise<void> {
+    if (!link.params.id) {
+      return
+    }
+    const repoId: RepoId = link.params.id
+    const repo =
+      vxm.repoModule.repoById(repoId) ||
+      (await vxm.repoModule.fetchRepoById(repoId))
+
+    const extractFloat: (
+      name: string,
+      action: (value: number) => void
+    ) => void = (name, action) => {
+      const queryValue = link.query[name]
+      if (queryValue && typeof queryValue === 'string') {
+        action(parseFloat(queryValue))
+      }
+    }
+
+    extractFloat('zoomYStart', value => {
+      this.zoomYStartValue = value
+    })
+    extractFloat('zoomYEnd', value => {
+      this.zoomYEndValue = value
+    })
+    extractFloat('zoomXStart', value => {
+      this.zoomXStartValue = value
+    })
+    extractFloat('zoomXEnd', value => {
+      this.zoomXEndValue = value
+    })
+
+    if (link.query.dimensions && typeof link.query.dimensions === 'string') {
+      const dimensionString = link.query.dimensions
+      const parts = dimensionString.split('::')
+      vxm.detailGraphModule.selectedDimensions = parts.flatMap(it => {
+        const [benchmark, ...metrics] = it.split(':')
+
+        return repo.dimensions.filter(
+          it => it.benchmark === benchmark && metrics.includes(it.metric)
+        )
+      })
+    }
+  }
+
+  /**
    * string of requested dimensions for a detail graph,
    * formatted as 'bench1:metric1.1:metric1.2::bench2:metric2.1' etc.
    *
@@ -142,6 +195,27 @@ export class DetailGraphStore extends VxModule {
   @mutation
   setDetailGraph(graph: DetailDataPoint[]): void {
     this._detailGraph = graph
+  }
+
+  /**
+   * Returns a permanent link to the current detail graph state
+   */
+  get permanentLink(): string {
+    const orUndefined = (it: any) => (it ? '' + it : undefined)
+
+    const route = router.resolve({
+      name: 'repo-detail',
+      params: { id: this.selectedRepoId },
+      query: {
+        zoomYStart: orUndefined(this.zoomYStartValue),
+        zoomYEnd: orUndefined(this.zoomYEndValue),
+        zoomXStart: orUndefined(this.zoomXStartValue),
+        zoomXEnd: orUndefined(this.zoomXEndValue),
+        dimensions: this.dimensionString
+      }
+    })
+
+    return location.origin + route.href
   }
 
   /**

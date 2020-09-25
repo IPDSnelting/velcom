@@ -68,6 +68,12 @@
                     <span v-else>Begin Y-Axis at zero</span>
                   </v-btn>
                 </v-col>
+                <v-col cols="auto">
+                  <v-btn text color="primary" :href="permanentLinkUrl">
+                    Permanent Link
+                    <v-icon right>{{ permanentLinkIcon }}</v-icon>
+                  </v-btn>
+                </v-col>
               </v-row>
             </v-container>
           </v-card-text>
@@ -223,7 +229,12 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { mdiCalendar, mdiLock, mdiLockOpenVariant } from '@mdi/js'
+import {
+  mdiCalendar,
+  mdiLinkVariantPlus,
+  mdiLock,
+  mdiLockOpenVariant
+} from '@mdi/js'
 import { vxm } from '@/store'
 import RepoBaseInformation from '@/components/repodetail/RepoBaseInformation.vue'
 import DimensionSelection from '../components/graphs/DimensionSelection.vue'
@@ -388,6 +399,10 @@ export default class RepoDetail extends Vue {
       : 'You have to select a date after the first one!'
   }
 
+  private get permanentLinkUrl() {
+    return vxm.detailGraphModule.permanentLink
+  }
+
   @Watch('id')
   private retrieveGraphData(): void {
     if (this.stopAfterStart()) {
@@ -404,6 +419,9 @@ export default class RepoDetail extends Vue {
   mounted(): void {
     this.retrieveGraphData()
   }
+
+  // ICONS
+  private permanentLinkIcon = mdiLinkVariantPlus
 }
 </script>
 
