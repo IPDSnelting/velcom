@@ -1,0 +1,70 @@
+{
+  "commit": {
+    "repo_id": "44bb5c8d-b20d-4bef-bdad-c92767dfa489",
+    "hash": "147413df6d64ab54ceafbd5b0a38a1d72cefed5d",
+    "parents": [
+      {
+        "repo_id": "44bb5c8d-b20d-4bef-bdad-c92767dfa489",
+        "hash": "27288d6c510d67d0c20e299f37fa0f7c41d96c8d",
+        "author": "I-Al-Istannen <I-Al-Istannen@users.noreply.github.com>",
+        "author_date": 1600890547,
+        "summary": "Merge pull request #85 from IPDSnelting/minor-frontend-improvements\n"
+      },
+      {
+        "repo_id": "44bb5c8d-b20d-4bef-bdad-c92767dfa489",
+        "hash": "ea40467bbeb0d000c7adcbd778c5fe6d1cb93f21",
+        "author": "Joscha <joscha@plugh.de>",
+        "author_date": 1600975493,
+        "summary": "[runner] Fix bench output parser tests\n"
+      }
+    ],
+    "tracked_children": [
+      {
+        "repo_id": "44bb5c8d-b20d-4bef-bdad-c92767dfa489",
+        "hash": "9a0689c09d203dbdc3efa5976b49c43aa88df743",
+        "author": "Garmelon <joscha@plugh.de>",
+        "author_date": 1600981968,
+        "summary": "Merge pull request #92 from IPDSnelting/significant-runs\n"
+      }
+    ],
+    "untracked_children": [],
+    "author": "Garmelon <joscha@plugh.de>",
+    "author_date": 1600981528,
+    "committer": "GitHub <noreply@github.com>",
+    "committer_date": 1600981528,
+    "summary": "Merge pull request #89 from IPDSnelting/fix-units-sometimes-missing\n",
+    "message": "Fix units and interpretations missing for a metric after semi-failed run\n",
+    "runs": [
+      {
+        "id": "fd9e7bf9-e8e7-4866-b5a4-87f4735c942f",
+        "start_time": 1600982277,
+        "success": "PARTIAL_SUCCESS",
+        "source": {
+          "type": "COMMIT",
+          "source": {
+            "repo_id": "44bb5c8d-b20d-4bef-bdad-c92767dfa489",
+            "hash": "147413df6d64ab54ceafbd5b0a38a1d72cefed5d",
+            "author": "Garmelon <joscha@plugh.de>",
+            "author_date": 1600981528,
+            "summary": "Merge pull request #89 from IPDSnelting/fix-units-sometimes-missing\n"
+          }
+        }
+      },
+      {
+        "id": "aeaf8fb7-830f-4f6b-9d5e-152ebcc34055",
+        "start_time": 1601048535,
+        "success": "SUCCESS",
+        "source": {
+          "type": "COMMIT",
+          "source": {
+            "repo_id": "44bb5c8d-b20d-4bef-bdad-c92767dfa489",
+            "hash": "147413df6d64ab54ceafbd5b0a38a1d72cefed5d",
+            "author": "Garmelon <joscha@plugh.de>",
+            "author_date": 1600981528,
+            "summary": "Merge pull request #89 from IPDSnelting/fix-units-sometimes-missing\n"
+          }
+        }
+      }
+    ]
+  }
+}

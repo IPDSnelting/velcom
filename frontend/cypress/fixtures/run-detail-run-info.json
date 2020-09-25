@@ -1,0 +1,63 @@
+{
+  "run": {
+    "id": "fd9e7bf9-e8e7-4866-b5a4-87f4735c942f",
+    "author": "Listener",
+    "runner_name": "I-Al-VPS - Runner",
+    "runner_info": "System: Linux amd64 4.9.0-13-amd64\nCPU:    Intel Xeon Processor (Skylake, IBRS) (2 threads)\nMemory: 7797 MiB total, 4239 MiB available\n",
+    "start_time": 1600982277,
+    "stop_time": 1600982368,
+    "source": {
+      "type": "COMMIT",
+      "source": {
+        "repo_id": "44bb5c8d-b20d-4bef-bdad-c92767dfa489",
+        "hash": "147413df6d64ab54ceafbd5b0a38a1d72cefed5d",
+        "author": "Garmelon <joscha@plugh.de>",
+        "author_date": 1600981528,
+        "summary": "Merge pull request #89 from IPDSnelting/fix-units-sometimes-missing\n"
+      }
+    },
+    "result": {
+      "measurements": [
+        {
+          "dimension": {
+            "benchmark": "frontend",
+            "metric": "build_time",
+            "unit": "seconds",
+            "interpretation": "LESS_IS_BETTER"
+          },
+          "error": "Command '['make', '-C', '/home/velcom-runner/config/aaaaaaah/task_repo', 'frontend']' returned non-zero exit status 2.\n StdOut: make: Entering directory '/home/velcom-runner/config/aaaaaaah/task_repo'\n#######################\n## Building frontend ##\n#######################\nmake -C frontend/ --trace\nmake[1]: Entering directory '/home/velcom-runner/config/aaaaaaah/task_repo/frontend'\nMakefile:8: update target 'node_modules' due to: package.json yarn.lock\nyarn install\nyarn install v1.22.4\n[1/4] Resolving packages...\n[2/4] Fetching packages...\ninfo fsevents@2.1.3: The platform \"linux\" is incompatible with this module.\ninfo \"fsevents@2.1.3\" is an optional dependency and failed compatibility check. Excluding it from installation.\ninfo fsevents@1.2.13: The platform \"linux\" is incompatible with this module.\ninfo \"fsevents@1.2.13\" is an optional dependency and failed compatibility check. Excluding it from installation.\n[3/4] Linking dependencies...\n[4/4] Building fresh packages...\nDone in 10.44s.\ntouch node_modules\nMakefile:12: update target 'dist' due to: src/shims-vue.d.ts src/vue-snackbar.d.ts src/axios-config-userdata.d.ts src/views/NewRepoDetail.vue src/views/Queue.vue src/views/RunCommitDetailView.vue src/views/NotFound404.vue src/views/Home.vue src/views/RepoComparison.vue src/views/RepoDetailFrame.vue src/views/About.vue src/views/RunComparison.vue src/App.vue src/plugins/vuetify.ts src/store/index.ts src/store/types.ts src/store/modules/userStore.ts src/store/modules/commitDetailComparisonStore.ts src/store/modules/repoStore.ts src/store/modules/detailGraphStore.ts src/store/modules/colorStore.ts src/store/modules/comparisonGraphStore.ts src/store/modules/newsStore.ts src/store/modules/queueStore.ts src/store/persistence.ts src/router/index.ts src/util/GraphJsonHelper.ts src/util/ErrorUtils.ts src/util/QueueJsonHelper.ts src/util/CustomKeyEqualsMap.ts src/util/Snackbar.ts src/util/FlavorTypes.ts src/util/ColorUtil.ts src/util/CommitComparisonJsonHelper.ts src/util/RepoJsonHelper.ts src/util/TimeUtil.ts src/vue-class-components.d.ts src/main.ts src/components/overviews/CommitOverviewBase.vue src/components/overviews/TarTaskOverview.vue src/components/overviews/QueueOverview.vue src/components/overviews/MultipleRunOverview.vue src/components/overviews/WorkerOverview.vue src/components/overviews/RunOverview.vue src/components/CommitChip.vue src/components/RepoSelector.vue src/components/ThemeSelector.vue src/components/Snackbar.vue src/components/RepoSelectionComponent.vue src/components/repodetail/RepoCommitOverview.vue src/components/repodetail/RepoBaseInformation.vue src/components/graphs/ComparisonGraph.vue src/components/graphs/MatrixDimensionSelection.vue src/components/graphs/EchartsDetailGraph.vue src/components/graphs/Dygraph-Detail.vue src/components/graphs/crosshairIcon.ts src/components/graphs/DimensionSelection.vue src/components/CommitBenchmarkActions.vue src/components/comparison/RunComparisonTable.vue src/components/rundetail/MeasurementValueDisplay.vue src/components/rundetail/RunTimeline.vue src/components/rundetail/CommitNavigationButton.vue src/components/rundetail/MeasurementsDisplay.vue src/components/rundetail/CommitDetail.vue src/components/rundetail/RunDetail.vue src/components/CommitSelectionComponent.vue src/components/InlineMinimalRepoDisplay.vue src/components/dialogs/DetailDatapointDialog.vue src/components/dialogs/RepoUpdateDialog.vue src/components/dialogs/ComparisonDatapointDialog.vue src/components/dialogs/LoginDialog.vue src/components/dialogs/RepoAddDialog.vue src/components/NavigationBar.vue src/shims-tsx.d.ts src/class-components-router-hooks.ts src/vue-echarts.d.ts node_modules .env.production\nyarn build --mode=\"production\"\nyarn run v1.22.4\n$ vue-cli-service build --mode=production\n\ninfo Visit https://yarnpkg.com/en/docs/cli/run for documentation about this command.\nmake[1]: Leaving directory '/home/velcom-runner/config/aaaaaaah/task_repo/frontend'\nmake: Leaving directory '/home/velcom-runner/config/aaaaaaah/task_repo'\n\n StdErr: warning \" > @vue/eslint-config-typescript@5.0.2\" has incorrect peer dependency \"@typescript-eslint/eslint-plugin@^2.7.0\".\nwarning \" > @vue/eslint-config-typescript@5.0.2\" has incorrect peer dependency \"@typescript-eslint/parser@^2.7.0\".\nwarning \" > sass-loader@8.0.2\" has unmet peer dependency \"webpack@^4.36.0 || ^5.0.0\".\nwarning \"vue-cli-plugin-vuetify > null-loader@3.0.0\" has unmet peer dependency \"webpack@^4.3.0\".\nwarning \" > vuetify-loader@1.6.0\" has unmet peer dependency \"webpack@^4.0.0\".\n-  Building for production...\nfatal: not a git repository (or any parent up to mount point /home/velcom-runner)\nStopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set).\n ERROR  Error: Command failed: git rev-parse HEAD\nfatal: not a git repository (or any parent up to mount point /home/velcom-runner)\nStopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set).\n       \nError: Command failed: git rev-parse HEAD\nfatal: not a git repository (or any parent up to mount point /home/velcom-runner)\nStopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set).\n\n    at checkExecSyncError (child_process.js:629:11)\n    at Object.execSync (child_process.js:666:13)\n    at config.plugin.tap.definitions (/home/velcom-runner/config/aaaaaaah/task_repo/frontend/vue.config.js:8:10)\n    at Object.tap (/home/velcom-runner/config/aaaaaaah/task_repo/frontend/node_modules/webpack-chain/src/Plugin.js:25:24)\n    at chainWebpack (/home/velcom-runner/config/aaaaaaah/task_repo/frontend/vue.config.js:5:29)\n    at webpackChainFns.forEach.fn (/home/velcom-runner/config/aaaaaaah/task_repo/frontend/node_modules/@vue/cli-service/lib/Service.js:236:40)\n    at Array.forEach (<anonymous>)\n    at Service.resolveChainableWebpackConfig (/home/velcom-runner/config/aaaaaaah/task_repo/frontend/node_modules/@vue/cli-service/lib/Service.js:236:26)\n    at PluginAPI.resolveChainableWebpackConfig (/home/velcom-runner/config/aaaaaaah/task_repo/frontend/node_modules/@vue/cli-service/lib/PluginAPI.js:145:25)\n    at module.exports (/home/velcom-runner/config/aaaaaaah/task_repo/frontend/node_modules/@vue/cli-service/lib/commands/build/resolveAppConfig.js:9:22)\n    at build (/home/velcom-runner/config/aaaaaaah/task_repo/frontend/node_modules/@vue/cli-service/lib/commands/build/index.js:147:50)\n    at api.registerCommand (/home/velcom-runner/config/aaaaaaah/task_repo/frontend/node_modules/@vue/cli-service/lib/commands/build/index.js:89:13)\n    at Service.run (/home/velcom-runner/config/aaaaaaah/task_repo/frontend/node_modules/@vue/cli-service/lib/Service.js:230:12)\n    at Object.<anonymous> (/home/velcom-runner/config/aaaaaaah/task_repo/frontend/node_modules/@vue/cli-service/bin/vue-cli-service.js:36:9)\n    at Module._compile (internal/modules/cjs/loader.js:778:30)\n    at Object.Module._extensions..js (internal/modules/cjs/loader.js:789:10)\nerror Command failed with exit code 1.\nmake[1]: *** [Makefile:12: dist] Error 1\nmake: *** [Makefile:11: frontend] Error 2\n"
+        },
+        {
+          "dimension": {
+            "benchmark": "backend",
+            "metric": "build_time",
+            "unit": "seconds",
+            "interpretation": "LESS_IS_BETTER"
+          },
+          "value": 75.97107148170471,
+          "values": [75.97107148170471]
+        },
+        {
+          "dimension": {
+            "benchmark": "backend",
+            "metric": "coverage",
+            "unit": "percent",
+            "interpretation": "MORE_IS_BETTER"
+          },
+          "value": 19.0,
+          "values": [19.0]
+        },
+        {
+          "dimension": {
+            "benchmark": "misc",
+            "metric": "always zero",
+            "unit": "cats",
+            "interpretation": "NEUTRAL"
+          },
+          "value": 0.0,
+          "values": [0.0]
+        }
+      ]
+    }
+  }
+}
