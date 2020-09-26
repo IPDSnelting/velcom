@@ -179,44 +179,40 @@ public class Listener {
 					.map(hash -> commitToTask(repo.getRepoId(), hash))
 					.collect(toList());
 
-				knownCommitAccess
-					.markCommitsAsKnownAndInsertIntoQueue(repo.getRepoId(), latestHashes, tasks);
+				knownCommitAccess.markCommitsAsKnownAndInsertIntoQueue(
+					repo.getRepoId(), latestHashes, tasks
+				);
 			} else {
-				// The repo already has some known commits so we need to be smart about it
-				// Group all new commits across all tracked branches into this
-				// list before inserting them into the queue
-				List<Commit> allNewCommits = new ArrayList<>();
+				// (1): Find new commits (both from tracked and untracked branches)
+				Collection<Branch> trackedBranches = repo.getTrackedBranches();
+				List<Commit> trackedCommits = new ArrayList<>();
+				List<CommitHash> untrackedCommits = new ArrayList<>();
 
-				// (1): Find new commits
-				try {
-					for (Branch trackedBranch : repo.getTrackedBranches()) {
-						CommitHash startCommitHash = repoAccess.getLatestCommitHash(trackedBranch);
-						Commit startCommit = commitAccess.getCommit(repo.getRepoId(), startCommitHash);
+				for (Branch branch : repoAccess.getBranches(repoId)) {
+					Collection<Commit> newCommits = findUnknownCommitsFromBranch(branch);
 
-						Collection<Commit> newCommits = unknownCommitFinder.find(
-							commitAccess, knownCommitAccess, startCommit
-						);
-
-						allNewCommits.addAll(newCommits);
+					if (trackedBranches.contains(branch)) {
+						trackedCommits.addAll(newCommits);
+					} else {
+						untrackedCommits.addAll(newCommits.stream().map(Commit::getHash).collect(toList()));
 					}
-				} catch (IOException e) {
-					throw new CommitSearchException(
-						"failed to check for unknown commits in repo: " + repo.getTrackedBranches(), e
-					);
 				}
 
-				// (2): Add new commits to queue (in a sorted manner)
-				allNewCommits.sort(Comparator.comparing(Commit::getAuthorDate));
+				// (2): Insert tracked commits into queue and mark them as known
+				trackedCommits.sort(Comparator.comparing(Commit::getAuthorDate));
 
-				List<CommitHash> hashes = allNewCommits.stream()
-					.map(Commit::getHash)
-					.collect(toList());
-
-				List<Task> tasks = allNewCommits.stream()
+				List<Task> tasks = trackedCommits.stream()
 					.map(this::commitToTask)
 					.collect(toList());
 
-				knownCommitAccess.markCommitsAsKnownAndInsertIntoQueue(repo.getRepoId(), hashes, tasks);
+				List<CommitHash> trackedCommitHashes = trackedCommits.stream()
+					.map(Commit::getHash)
+					.collect(toList());
+
+				knownCommitAccess.markCommitsAsKnownAndInsertIntoQueue(repoId, trackedCommitHashes, tasks);
+
+				// (3): Mark untracked commits as known
+				knownCommitAccess.markCommitsAsKnown(repoId, untrackedCommits);
 			}
 		} catch (Exception e) {
 			throw new CommitSearchException(repo.getRepoId(), e);
@@ -233,6 +229,13 @@ public class Listener {
 			QueuePriority.LISTENER,
 			new CommitSource(repoId, commitHash)
 		);
+	}
+
+	private Collection<Commit> findUnknownCommitsFromBranch(Branch branch) throws IOException {
+		CommitHash startCommitHash = repoAccess.getLatestCommitHash(branch);
+		Commit startCommit = commitAccess.getCommit(branch.getRepoId(), startCommitHash);
+
+		return unknownCommitFinder.find(commitAccess, knownCommitAccess, startCommit);
 	}
 
 }
