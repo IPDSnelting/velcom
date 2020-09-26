@@ -1,13 +1,13 @@
 <template>
   <v-container fluid>
-    <v-timeline reverse>
+    <v-timeline>
       <v-timeline-item
-        v-for="(run, index) in runs"
+        v-for="(run, index) in sortedRuns"
         :key="run.runId"
         :color="runInfo(run).color"
         :small="!isSelected(run)"
         fill-dot
-        :class="[index % 2 === 0 ? 'text-right' : '']"
+        :class="[index % 2 === 1 ? 'text-right' : '']"
         class="d-flex align-center"
       >
         <router-link
@@ -18,7 +18,7 @@
           {{ formatDate(run.startTime) }}
         </router-link>
         <template #icon>
-          <v-tooltip :left="index % 2 === 1" :right="index % 2 === 0">
+          <v-tooltip :left="index % 2 === 0" :right="index % 2 === 1">
             <template #activator="{ on }">
               <v-icon :small="!isSelected(run)" v-on="on" dark>
                 {{ runInfo(run).icon }}
@@ -69,6 +69,12 @@ export default class RunTimeline extends Vue {
       color: 'error',
       explanation: 'This run failed completely'
     }
+  }
+
+  private get sortedRuns(): RunDescription[] {
+    return this.runs
+      .slice()
+      .sort((a, b) => b.startTime.getTime() - a.startTime.getTime())
   }
 
   private formatDate(date: Date) {

@@ -117,6 +117,9 @@ export class Commit {
   readonly committerDate: Date
   readonly summary: string
   readonly message: string | ''
+  /**
+   * Sorted in reverse start order (newest run first)
+   */
   readonly runs: RunDescription[]
   /**
    * Sorted alphabetically.
@@ -154,6 +157,7 @@ export class Commit {
     this.parents = parents
     this.children = children
 
+    this.runs.sort((a, b) => b.startTime.getTime() - a.startTime.getTime())
     this.parents.sort((a, b) => a.summary.localeCompare(b.summary))
     this.children.sort((a, b) => {
       if (a.tracked && b.tracked) {

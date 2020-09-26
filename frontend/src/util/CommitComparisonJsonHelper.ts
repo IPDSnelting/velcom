@@ -1,22 +1,22 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 import {
-  Run,
-  RunResult,
-  RunResultScriptError,
-  RunResultVelcomError,
-  RunResultSuccess,
+  Commit,
+  CommitChild,
+  DimensionDifference,
+  Measurement,
   MeasurementError,
   MeasurementSuccess,
-  Measurement,
-  Commit,
-  RunDescription,
+  Run,
   RunComparison,
-  DimensionDifference,
-  CommitChild
+  RunDescription,
+  RunResult,
+  RunResultScriptError,
+  RunResultSuccess,
+  RunResultVelcomError
 } from '@/store/types'
 import {
-  sourceFromJson,
-  commitDescriptionFromJson
+  commitDescriptionFromJson,
+  sourceFromJson
 } from '@/util/QueueJsonHelper'
 import { dimensionFromJson } from '@/util/RepoJsonHelper'
 
