@@ -86,7 +86,6 @@ public class ServerMasterWebsocketServlet extends WebSocketServlet {
 			synchronized (myTeleRunner) {
 				if (myTeleRunner.isDisposed()) {
 					myTeleRunner = new TeleRunner(name, serializer, dispatcher, benchRepo);
-					dispatcher.addRunner(myTeleRunner);
 					LOGGER.info(
 						"Revived runner {} connecting from {} with new instance!", name, req.getRemoteAddress()
 					);
