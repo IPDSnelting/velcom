@@ -50,7 +50,7 @@ public class Dispatcher implements IDispatcher {
 			LOGGER.debug("Checking for disconnected runners (I know {} runners)", teleRunners.size());
 			Predicate<TeleRunner> outOfGracePeriod = runner -> {
 				Duration timeSinceLastPing = Duration.between(runner.getLastPing(), Instant.now());
-				return timeSinceLastPing.toSeconds() > disconnectedRunnerGracePeriod.toSeconds();
+				return timeSinceLastPing.compareTo(disconnectedRunnerGracePeriod) > 0;
 			};
 
 			List<TeleRunner> runnersToRemove = new ArrayList<>();
@@ -81,6 +81,7 @@ public class Dispatcher implements IDispatcher {
 	 * Adds a runner to the dispatcher.
 	 *
 	 * @param teleRunner the runner to add
+	 * @throws IllegalArgumentException if the runner name is already taken
 	 */
 	public void addRunner(TeleRunner teleRunner) {
 		synchronized (teleRunners) {
