@@ -125,6 +125,9 @@ export default class EchartsDetailGraph extends Vue {
 
   @Prop({ default: false })
   private beginYAtZero!: boolean
+
+  @Prop({ default: true })
+  private dayEquidistant!: boolean
   // <!--</editor-fold>-->
 
   // <!--<editor-fold desc="FIELDS">-->
@@ -286,19 +289,85 @@ export default class EchartsDetailGraph extends Vue {
   // <!--</editor-fold>-->
 
   // <!--<editor-fold desc="SERIES GENERATION">-->
-  private buildPointsForSingle(dimension: DimensionId) {
-    const findFirstSuccessful = () => {
-      for (let i = 0; i < this.detailDataPoints.length; i++) {
-        const value = this.detailDataPoints[i].values.get(dimension)
-        if (typeof value === 'number') {
-          return value
-        }
+
+  // https://stackoverflow.com/questions/14446511/most-efficient-method-to-groupby-on-an-array-of-objects
+  private groupBy<K, V>(list: K[], keyGetter: (key: K) => V) {
+    const map = new Map()
+    list.forEach(item => {
+      const key = keyGetter(item)
+      const collection = map.get(key)
+      if (!collection) {
+        map.set(key, [item])
+      } else {
+        collection.push(item)
       }
-      return 0
+    })
+    return map
+  }
+
+  // <!--<editor-fold desc="SERIES GENERATION">-->
+  private findFirstSuccessful = (dimension: DimensionId) => {
+    const point = this.detailDataPoints.find(it => it.successful(dimension))
+
+    if (point) {
+      return point.values.get(dimension) as number
     }
+    return 0
+  }
 
-    let lastSuccessfulValue: number = findFirstSuccessful()
+  private buildDayEquidistantPointsForSingle(dimension: DimensionId) {
+    let lastSuccessfulValue: number = this.findFirstSuccessful(dimension)
 
+    const millisInDay = 1000 * 60 * 60 * 24
+
+    const dayGroups: Map<number, DetailDataPoint[]> = this.groupBy(
+      this.detailDataPoints,
+      key =>
+        // round to day
+        Math.floor(key.authorDate.getTime() / millisInDay) * millisInDay
+    )
+
+    return Array.from(dayGroups.entries()).flatMap(([day, points]) => {
+      const spacingBetweenElementsMillis = millisInDay / points.length
+
+      return points.map((point, index) => {
+        let symbol = 'circle'
+        let color = this.dimensionColor(dimension)
+        let borderColor = color
+
+        let pointValue = point.values.get(dimension)
+        if (typeof pointValue !== 'number') {
+          pointValue = lastSuccessfulValue
+        }
+        lastSuccessfulValue = pointValue
+
+        if (point.failed(dimension)) {
+          // grey circle
+          symbol = this.crossIcon
+          color = this.graphFailedOrUnbenchmarkedColor
+          borderColor = color
+        } else if (point.unbenchmarked(dimension)) {
+          // empty circle with outline
+          color = this.graphBackgroundColor
+          borderColor = this.graphFailedOrUnbenchmarkedColor
+        }
+
+        return new EchartsDataPoint(
+          new Date(day + spacingBetweenElementsMillis * index),
+          pointValue,
+          symbol,
+          point.hash,
+          color,
+          borderColor,
+          point.summary,
+          point.author
+        )
+      })
+    })
+  }
+
+  private buildNormalPointsForSingle(dimension: DimensionId) {
+    let lastSuccessfulValue: number = this.findFirstSuccessful(dimension)
     return this.detailDataPoints.map(point => {
       let symbol = 'circle'
       let color = this.dimensionColor(dimension)
@@ -337,9 +406,17 @@ export default class EchartsDetailGraph extends Vue {
   private get echartsDataPoints(): Map<DimensionId, EchartsDataPoint[]> {
     const map: Map<DimensionId, EchartsDataPoint[]> = new Map()
 
-    this.dimensions.forEach(dimension =>
-      map.set(dimension, this.buildPointsForSingle(dimension))
-    )
+    console.time('complete setup')
+    console.log(this.dimensions)
+    this.dimensions.forEach(dimension => {
+      if (this.dayEquidistant) {
+        map.set(dimension, this.buildDayEquidistantPointsForSingle(dimension))
+      } else {
+        map.set(dimension, this.buildNormalPointsForSingle(dimension))
+      }
+    })
+    console.log('\n\n===\n\n')
+    console.timeEnd('complete setup')
 
     return map
   }
