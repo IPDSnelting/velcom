@@ -25,6 +25,12 @@ export type DimensionDetailPoint = {
   dimension: Dimension
 }
 
+export type PermanentLinkOptions = Partial<{
+  includeXZoom: boolean
+  includeYZoom: boolean
+  includeDimensions: boolean
+}>
+
 export class DetailGraphStore extends VxModule {
   private _detailGraph: DetailDataPoint[] = []
   private _selectedRepoId: RepoId = ''
@@ -228,22 +234,45 @@ export class DetailGraphStore extends VxModule {
   /**
    * Returns a permanent link to the current detail graph state
    */
-  get permanentLink(): string {
-    const orUndefined = (it: any) => (it ? '' + it : undefined)
-
-    const route = router.resolve({
-      name: 'repo-detail',
-      params: { id: this.selectedRepoId },
-      query: {
-        zoomYStart: orUndefined(this.zoomYStartValue),
-        zoomYEnd: orUndefined(this.zoomYEndValue),
-        zoomXStart: orUndefined(this.zoomXStartValue),
-        zoomXEnd: orUndefined(this.zoomXEndValue),
-        dimensions: this.dimensionString
+  get permanentLink(): (options?: PermanentLinkOptions) => string {
+    return options => {
+      const orUndefined = (it: any) => (it ? '' + it : undefined)
+      function respectOptions<T>(
+        name: keyof PermanentLinkOptions,
+        value: T
+      ): T | undefined {
+        if (!options || options[name]) {
+          return value
+        }
+        return undefined
       }
-    })
 
-    return location.origin + route.href
+      const route = router.resolve({
+        name: 'repo-detail',
+        params: { id: this.selectedRepoId },
+        query: {
+          zoomYStart: respectOptions(
+            'includeYZoom',
+            orUndefined(this.zoomYStartValue)
+          ),
+          zoomYEnd: respectOptions(
+            'includeYZoom',
+            orUndefined(this.zoomYEndValue)
+          ),
+          zoomXStart: respectOptions(
+            'includeXZoom',
+            orUndefined(this.zoomXStartValue)
+          ),
+          zoomXEnd: respectOptions(
+            'includeXZoom',
+            orUndefined(this.zoomXEndValue)
+          ),
+          dimensions: respectOptions('includeDimensions', this.dimensionString)
+        }
+      })
+
+      return decodeURIComponent(location.origin + route.href)
+    }
   }
 
   /**

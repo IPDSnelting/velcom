@@ -20,6 +20,11 @@
             </v-btn-toggle>
           </v-card-title>
           <v-card-text>
+            <v-row justify="end" class="mx-4">
+              <v-col cols="auto">
+                <share-graph-link-dialog />
+              </v-col>
+            </v-row>
             <component
               :is="selectedGraphComponent"
               :dimensions="selectedDimensions"
@@ -229,12 +234,7 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import {
-  mdiCalendar,
-  mdiLinkVariantPlus,
-  mdiLock,
-  mdiLockOpenVariant
-} from '@mdi/js'
+import { mdiCalendar, mdiLock, mdiLockOpenVariant } from '@mdi/js'
 import { vxm } from '@/store'
 import RepoBaseInformation from '@/components/repodetail/RepoBaseInformation.vue'
 import DimensionSelection from '../components/graphs/DimensionSelection.vue'
@@ -244,9 +244,11 @@ import { Dimension, Repo } from '@/store/types'
 import EchartsDetailGraph from '@/components/graphs/EchartsDetailGraph.vue'
 import DytailGraph from '@/components/graphs/NewDytailGraph.vue'
 import { Watch } from 'vue-property-decorator'
+import ShareGraphLinkDialog from '@/views/ShareGraphLinkDialog.vue'
 
 @Component({
   components: {
+    'share-graph-link-dialog': ShareGraphLinkDialog,
     'repo-base-information': RepoBaseInformation,
     'matrix-dimension-selection': MatrixDimensionSelection,
     'normal-dimension-selection': DimensionSelection,
@@ -399,10 +401,6 @@ export default class RepoDetail extends Vue {
       : 'You have to select a date after the first one!'
   }
 
-  private get permanentLinkUrl() {
-    return vxm.detailGraphModule.permanentLink
-  }
-
   @Watch('id')
   private retrieveGraphData(): void {
     if (this.stopAfterStart()) {
@@ -419,9 +417,6 @@ export default class RepoDetail extends Vue {
   mounted(): void {
     this.retrieveGraphData()
   }
-
-  // ICONS
-  private permanentLinkIcon = mdiLinkVariantPlus
 }
 </script>
 
