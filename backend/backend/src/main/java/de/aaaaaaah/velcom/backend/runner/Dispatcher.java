@@ -143,6 +143,13 @@ public class Dispatcher implements IDispatcher {
 	 * @return the next available task.
 	 */
 	public Optional<Task> getWork(TeleRunner runner) {
+		synchronized (teleRunners) {
+			// We do not know the runner yet or we know an old version of it apparently.
+			Optional<TeleRunner> knownRunner = getTeleRunner(runner.getRunnerName());
+			if (knownRunner.isEmpty() || knownRunner.get() != runner) {
+				return Optional.empty();
+			}
+		}
 		Optional<Task> nextTask = queue.fetchNextTask();
 		if (nextTask.isEmpty()) {
 			return Optional.empty();
