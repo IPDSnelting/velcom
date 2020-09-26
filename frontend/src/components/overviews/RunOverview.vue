@@ -4,6 +4,7 @@
     :commit="commit"
     :source="run.source"
     :id="run.runId"
+    :linkLocation="runLinkLocation"
   >
     <template #avatar>
       <v-list-item-avatar>
@@ -60,6 +61,7 @@ import {
 import CommitBenchmarkActions from '../CommitBenchmarkActions.vue'
 import CommitOverviewBase from './CommitOverviewBase.vue'
 import TarTaskOverview from './TarTaskOverview.vue'
+import { RawLocation } from 'vue-router'
 
 @Component({
   components: {
@@ -87,6 +89,13 @@ export default class RunOverview extends Vue {
   // FIXME: Delete this?
   private get isPartialFailure(): boolean {
     return this.run.success === 'PARTIAL_SUCCESS'
+  }
+
+  private get runLinkLocation(): RawLocation {
+    return {
+      name: 'run-detail',
+      params: { first: this.run.runId }
+    }
   }
 
   private get commit(): CommitDescription | undefined {
