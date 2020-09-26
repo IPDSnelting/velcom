@@ -77,6 +77,9 @@ public class TeleRunner {
 		if (connection != null) {
 			throw new IllegalStateException("I already have a connection");
 		}
+		if (disposed) {
+			throw new IllegalStateException("I am disposed");
+		}
 		connection = new RunnerConnection(serializer, this, lastPing);
 		connection.addCloseListener(this::disposeConnection);
 

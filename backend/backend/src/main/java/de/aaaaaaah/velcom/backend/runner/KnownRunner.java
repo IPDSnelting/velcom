@@ -91,4 +91,42 @@ public class KnownRunner {
 	public Optional<Instant> getWorkingSince() {
 		return Optional.ofNullable(workingSince);
 	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) {
+			return true;
+		}
+		if (o == null || getClass() != o.getClass()) {
+			return false;
+		}
+		KnownRunner that = (KnownRunner) o;
+		return lostConnection == that.lostConnection &&
+			Objects.equals(name, that.name) &&
+			Objects.equals(information, that.information) &&
+			Objects.equals(versionHash, that.versionHash) &&
+			lastStatus == that.lastStatus &&
+			Objects.equals(currentTask, that.currentTask) &&
+			Objects.equals(workingSince, that.workingSince);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(
+			name, information, versionHash, lastStatus, lostConnection, currentTask, workingSince
+		);
+	}
+
+	@Override
+	public String toString() {
+		return "KnownRunner{" +
+			"name='" + name + '\'' +
+			", information='" + information + '\'' +
+			", versionHash='" + versionHash + '\'' +
+			", lastStatus=" + lastStatus +
+			", lostConnection=" + lostConnection +
+			", currentTask=" + currentTask +
+			", workingSince=" + workingSince +
+			'}';
+	}
 }
