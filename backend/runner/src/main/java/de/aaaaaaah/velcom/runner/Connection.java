@@ -108,9 +108,8 @@ public class Connection implements WebSocket.Listener, HeartbeatWebsocket {
 		cleanupAfterClosed();
 	}
 
-	// TODO maybe not expose the state machine?
-	public StateMachine<RunnerState> getStateMachine() {
-		return stateMachine;
+	public boolean switchFromRestingState(RunnerState state) throws InterruptedException {
+		return stateMachine.switchFromRestingState(state);
 	}
 
 	public Serializer getSerializer() {

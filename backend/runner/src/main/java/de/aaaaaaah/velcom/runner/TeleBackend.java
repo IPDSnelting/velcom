@@ -200,7 +200,7 @@ public class TeleBackend {
 		CompletableFuture<RequestRunReply> replyFuture = new CompletableFuture<>();
 		RunnerState newState = new AwaitingRequestRunReply(this, conn, replyFuture);
 
-		boolean switchSuccessful = conn.getStateMachine().switchFromRestingState(newState);
+		boolean switchSuccessful = conn.switchFromRestingState(newState);
 		if (switchSuccessful) {
 			conn.sendPacket(new RequestRun().asPacket(conn.getSerializer()));
 		} else {
