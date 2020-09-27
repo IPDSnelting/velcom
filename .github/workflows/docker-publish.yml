@@ -142,9 +142,15 @@ jobs:
       CD_USER: ${{ secrets.CD_USER }}
       SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
       SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      AAAAAAAH_CD_RUNNER_URL: ${{ secrets.AAAAAAAH_CD_RUNNER_URL }}
+      AAAAAAAH_CD_RUNNER_PORT: ${{ secrets.AAAAAAAH_CD_RUNNER_PORT }}
 
     steps:
       - uses: actions/checkout@v2
+      - name: "Download backend artifacts"
+        uses: actions/download-artifact@v2
+        with:
+          name: backend-artifacts
       - name: "Call deploy script"
         run: "bash docs/deploy.sh ${{ github.actor }} ${{ secrets.GITHUB_TOKEN }}"
 

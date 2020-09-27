@@ -12,6 +12,16 @@ function executeOnServer() {
     ssh -p "$CD_PORT" "$CD_USER@$CD_URL" "$1"
 }
 
+function executeOnRunner() {
+    echo "Executing on runner: '$1'"
+    ssh -p "$AAAAAAAH_CD_RUNNER_PORT" "$CD_USER@$AAAAAAAH_CD_RUNNER_URL" "$1"
+}
+
+function copyToRunner() {
+    echo "Copying to runner: '$1' to '$2'"
+    scp -P "$AAAAAAAH_CD_RUNNER_PORT" "$1" "$CD_USER@$AAAAAAAH_CD_RUNNER_URL:$2"
+}
+
 function setup() {
     ##
     ## Create the SSH directory and give it the right permissions
@@ -61,3 +71,9 @@ executeOnServer "sudo /home/velcom/update-docker-image.sh"
 
 # Restart the docker container :)
 executeOnServer "sudo systemctl restart velcom.service"
+
+# Push artifact to runner
+copyToRunner "runner.jar" "/home/velcom/velcom_runner/runner.jar"
+
+# Restart runner
+executeOnRunner "sudo /home/velcom/velcom_runner/restart_runner.sh"
