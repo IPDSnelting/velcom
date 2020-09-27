@@ -397,23 +397,7 @@ export default class EchartsDetailGraph extends Vue {
    * If the number is manageable, the graph type will be selected.
    */
   private selectAppropriateSeries(): 're-render' | 'unchanged' {
-    const startValue =
-      vxm.detailGraphModule.zoomXStartValue || this.minDateValue
-    const endValue = vxm.detailGraphModule.zoomXEndValue || this.maxDateValue
-
-    // TODO: Is this a performance problem? There might be 10.000+ items here
-    // and this method is called every time the slider is dragged or the user
-    // zooms using the mouse wheel
-    let visibleDataPoints = 0
-    for (const point of this.detailDataPoints) {
-      if (
-        point.authorDate.getTime() >= startValue &&
-        point.authorDate.getTime() <= endValue
-      ) {
-        visibleDataPoints += this.dimensions.length
-      }
-    }
-
+    const visibleDataPoints = vxm.detailGraphModule.visiblePoints
     const newGenerator: SeriesGenerationFunction =
       visibleDataPoints > 200 ? this.buildLineSeries : this.buildGraphSeries
 

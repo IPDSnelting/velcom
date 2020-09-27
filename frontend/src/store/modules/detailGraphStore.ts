@@ -154,6 +154,28 @@ export class DetailGraphStore extends VxModule {
   }
 
   /**
+   * Returns an approximation of the currently visible number of points.
+   */
+  get visiblePoints(): number {
+    const startValue = vxm.detailGraphModule.zoomXStartValue
+    const endValue = vxm.detailGraphModule.zoomXEndValue
+
+    // TODO: Is this a performance problem? There might be 10.000+ items here
+    // and this method is called every time the slider is dragged or the user
+    // zooms using the mouse wheel
+    let visibleDataPoints = 0
+    for (const point of this._detailGraph) {
+      if (
+        (startValue === null || point.authorDate.getTime() >= startValue) &&
+        (endValue === null || point.authorDate.getTime() <= endValue)
+      ) {
+        visibleDataPoints += this._selectedDimensions.length
+      }
+    }
+    return visibleDataPoints
+  }
+
+  /**
    * Returns all selected dimensions.
    *
    * @readonly
