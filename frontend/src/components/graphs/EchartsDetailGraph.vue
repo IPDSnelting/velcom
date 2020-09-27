@@ -12,6 +12,7 @@
         ></datapoint-dialog>
         <div id="chart-container">
           <v-chart
+            ref="chart"
             :autoresize="true"
             :options="chartOptions"
             @datazoom="echartsZoomed"
@@ -198,7 +199,9 @@ export default class EchartsDetailGraph extends Vue {
         }
       },
       dataZoom: [
+        // DO NOT REORDER THE FIRST TWO OR echartsZoomed WILL BREAK!
         {
+          id: 'x',
           xAxisIndex: [0],
           type: 'inside',
           // Start at the correct place when changing the series type
@@ -206,6 +209,7 @@ export default class EchartsDetailGraph extends Vue {
           endValue: vxm.detailGraphModule.zoomXEndValue || undefined
         },
         {
+          id: 'y',
           type: 'inside',
           yAxisIndex: [0],
           startValue: vxm.detailGraphModule.zoomYStartValue || undefined,
@@ -523,28 +527,11 @@ export default class EchartsDetailGraph extends Vue {
   // <!--<editor-fold desc="ECHARTS EVENT HANDLER">-->
   private echartsZoomed(e: any) {
     if (!e.batch || e.batch.length === 0) {
-      const [start, end] = this.extractStartEndFromZoomEvent(e, [
-        this.minDateValue,
-        this.maxDateValue
-      ])
-      vxm.detailGraphModule.zoomXStartValue = start
-      vxm.detailGraphModule.zoomXEndValue = end
+      this.setZoomOnCorrectAxis(e.dataZoomId)
     } else {
-      const [start, end] = this.extractStartEndFromZoomEvent(e.batch[0], [
-        this.minDateValue,
-        this.maxDateValue
-      ])
-      vxm.detailGraphModule.zoomXStartValue = start
-      vxm.detailGraphModule.zoomXEndValue = end
-
-      if (e.batch.length > 1) {
-        const [start, end] = this.extractStartEndFromZoomEvent(e.batch[1], [
-          null,
-          null
-        ])
-        vxm.detailGraphModule.zoomYStartValue = start
-        vxm.detailGraphModule.zoomYEndValue = end
-      }
+      e.batch.forEach((batch: any) => {
+        this.setZoomOnCorrectAxis(batch.dataZoomId)
+      })
     }
 
     if (this.selectAppropriateSeries() === 're-render') {
@@ -552,19 +539,32 @@ export default class EchartsDetailGraph extends Vue {
     }
   }
 
-  private extractStartEndFromZoomEvent(
-    e: any,
-    defaultValue: [number | null, number | null]
-  ): [number | null, number | null] {
-    if (e.startValue !== undefined && e.endValue !== undefined) {
-      return [e.startValue, e.endValue]
+  private setZoomOnCorrectAxis(seriesId: string) {
+    const actualOptions: EChartOption = (this.$refs['chart'] as any)
+      .computedOptions
+
+    const orNull = (value: any) => {
+      if (value === null || value === undefined) {
+        return null
+      }
+      return value
     }
-    if (e.start !== undefined && e.end !== undefined) {
-      const percentToAbsolute = (percent: number) =>
-        this.minDateValue + (this.maxDateValue - this.minDateValue) * percent
-      return [percentToAbsolute(e.start / 100), percentToAbsolute(e.end / 100)]
+
+    if (seriesId === 'x' || seriesId.includes('xAxis')) {
+      vxm.detailGraphModule.zoomXStartValue = orNull(
+        actualOptions.dataZoom![0].startValue
+      )
+      vxm.detailGraphModule.zoomXEndValue = orNull(
+        actualOptions.dataZoom![0].endValue
+      )
+    } else {
+      vxm.detailGraphModule.zoomYStartValue = orNull(
+        actualOptions.dataZoom![1].startValue
+      )
+      vxm.detailGraphModule.zoomYEndValue = orNull(
+        actualOptions.dataZoom![1].endValue
+      )
     }
-    return defaultValue
   }
 
   private echartsZoomReset() {
