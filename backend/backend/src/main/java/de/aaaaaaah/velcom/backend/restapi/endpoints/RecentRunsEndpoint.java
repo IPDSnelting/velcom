@@ -111,6 +111,7 @@ public class RecentRunsEndpoint {
 		outer:
 		for (int offset = 0; offset < SIGNIFICANT_MAX_OFFSET; offset += SIGNIFICANT_BATCH_SIZE) {
 			List<Run> recentRuns = benchmarkAccess.getRecentRuns(offset, SIGNIFICANT_BATCH_SIZE);
+			Collections.reverse(recentRuns); // Ordered from newest to oldest now
 			if (recentRuns.isEmpty()) {
 				break;
 			}
