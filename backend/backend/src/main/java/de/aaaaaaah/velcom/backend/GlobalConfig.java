@@ -114,7 +114,6 @@ public class GlobalConfig extends Configuration {
 	 * 	rescheduled)
 	 */
 	public Duration getDisconnectedRunnerGracePeriod() {
-		// TODO: 04.09.20 This value is unused, remove it?
 		return Duration.ofSeconds(disconnectedRunnerGracePeriodSeconds);
 	}
 

@@ -67,7 +67,6 @@ import io.micrometer.prometheus.PrometheusConfig;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.time.Duration;
 import java.util.EnumSet;
 import javax.servlet.DispatcherType;
 import javax.servlet.http.HttpServlet;
@@ -157,7 +156,7 @@ public class ServerMain extends Application<GlobalConfig> {
 		// Dispatcher
 		Dispatcher dispatcher = new Dispatcher(
 			queue,
-			Duration.ofSeconds(configuration.getDisconnectedRunnerGracePeriodSeconds())
+			configuration.getDisconnectedRunnerGracePeriod()
 		);
 		RunnerAwareServerFactory.getInstance().setDispatcher(dispatcher);
 		RunnerAwareServerFactory.getInstance().setBenchRepo(benchRepo);
