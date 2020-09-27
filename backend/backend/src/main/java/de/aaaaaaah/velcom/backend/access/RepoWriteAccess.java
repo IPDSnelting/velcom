@@ -19,6 +19,7 @@ import de.aaaaaaah.velcom.backend.storage.repo.GuickCloning;
 import de.aaaaaaah.velcom.backend.storage.repo.GuickCloning.CloneException;
 import de.aaaaaaah.velcom.backend.storage.repo.RepoStorage;
 import de.aaaaaaah.velcom.backend.storage.repo.exception.AddRepositoryException;
+import de.aaaaaaah.velcom.backend.storage.repo.exception.NoSuchRepositoryException;
 import de.aaaaaaah.velcom.backend.storage.repo.exception.RepositoryAcquisitionException;
 import java.io.IOException;
 import java.util.Collection;
@@ -199,7 +200,7 @@ public class RepoWriteAccess extends RepoReadAccess {
 			String defaultBranchStr = repo.getBranch();
 			trackedBranchName = BranchName.fromName(defaultBranchStr);
 			setTrackedBranches(repoId, List.of(trackedBranchName));
-		} catch (RepositoryAcquisitionException | IOException e) {
+		} catch (RepositoryAcquisitionException | NoSuchRepositoryException | IOException e) {
 			throw new AddRepoException(name, remoteUrl, e);
 		}
 

@@ -10,6 +10,7 @@ import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchCommitException;
 import de.aaaaaaah.velcom.backend.access.exceptions.RepoAccessException;
 import de.aaaaaaah.velcom.backend.access.filter.AuthorTimeRevFilter;
 import de.aaaaaaah.velcom.backend.storage.repo.RepoStorage;
+import de.aaaaaaah.velcom.backend.storage.repo.exception.NoSuchRepositoryException;
 import de.aaaaaaah.velcom.backend.storage.repo.exception.RepositoryAcquisitionException;
 import io.micrometer.core.annotation.Timed;
 import java.io.IOException;
@@ -133,7 +134,7 @@ public class CommitReadAccess {
 					// See javadoc
 				}
 			}
-		} catch (RepositoryAcquisitionException ignored) {
+		} catch (RepositoryAcquisitionException | NoSuchRepositoryException ignored) {
 			// See javadoc
 		}
 
@@ -291,7 +292,7 @@ public class CommitReadAccess {
 			}
 
 			return commitMap;
-		} catch (RepositoryAcquisitionException | GitAPIException | IOException e) {
+		} catch (RepositoryAcquisitionException | NoSuchRepositoryException | GitAPIException | IOException e) {
 			throw new RepoAccessException(repoId, e);
 		}
 	}
@@ -317,7 +318,7 @@ public class CommitReadAccess {
 		try {
 			String directoryName = repoId.getDirectoryName();
 			jgitRepo = repoStorage.acquireRepository(directoryName);
-		} catch (RepositoryAcquisitionException e) {
+		} catch (RepositoryAcquisitionException | NoSuchRepositoryException e) {
 			throw new CommitLogException(repoId, branches, e);
 		}
 
