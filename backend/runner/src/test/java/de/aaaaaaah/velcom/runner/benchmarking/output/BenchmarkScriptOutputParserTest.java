@@ -3,10 +3,10 @@ package de.aaaaaaah.velcom.runner.benchmarking.output;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import de.aaaaaaah.velcom.runner.benchmarking.output.BenchmarkScriptOutputParser.BareResult;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Result.Benchmark;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Result.Interpretation;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Result.Metric;
+import de.aaaaaaah.velcom.shared.util.Either;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,13 +26,11 @@ class BenchmarkScriptOutputParserTest {
 	@ParameterizedTest
 	@CsvFileSource(resources = {"/benchmark-script/valid-input.csv"}, delimiter = '|')
 	void parseSomeValidInput(boolean error, String line) {
-		BareResult result = parser.parse(line);
+		Either<String, List<Benchmark>> result = parser.parse(line);
 		if (error) {
-			assertThat(result.getError()).isNotNull();
-			assertThat(result.getBenchmarks()).isNull();
+			assertThat(result.isLeft()).isTrue();
 		} else {
-			assertThat(result.getError()).isNull();
-			assertThat(result.getBenchmarks()).isNotNull();
+			assertThat(result.isRight()).isTrue();
 		}
 	}
 
@@ -58,12 +56,12 @@ class BenchmarkScriptOutputParserTest {
 
 	@Test
 	void parseMetricWithErrorAndOtherStuff() {
-		BareResult result = parser.parse(
+		Either<String, List<Benchmark>> result = parser.parse(
 			"{ \"benchmarks\": { \"test\": { \"unit\": \"cats\", \"error\": \"Hey\" } } }"
 		);
 
-		assertThat(result.getBenchmarks()).isNotEmpty();
-		Benchmark benchmark = result.getBenchmarks().get(0);
+		assertThat(result.getRight()).isPresent();
+		Benchmark benchmark = result.getRight().get().get(0);
 		assertThat(benchmark.getName()).isEqualTo("benchmarks");
 
 		assertThat(benchmark.getMetrics()).isNotEmpty();
@@ -116,12 +114,12 @@ class BenchmarkScriptOutputParserTest {
 
 	@Test
 	void parseMetricCalledError() {
-		BareResult result = parser.parse(
+		Either<String, List<Benchmark>> result = parser.parse(
 			"{ \"error\": { \"test\": { \"unit\": \"cats\", \"error\": \"Hey\" } } }"
 		);
 
-		assertThat(result.getBenchmarks()).isNotEmpty();
-		Benchmark benchmark = result.getBenchmarks().get(0);
+		assertThat(result.getRight()).isPresent();
+		Benchmark benchmark = result.getRight().get().get(0);
 		assertThat(benchmark.getName()).isEqualTo("error");
 
 		assertThat(benchmark.getMetrics()).isNotEmpty();
@@ -156,33 +154,19 @@ class BenchmarkScriptOutputParserTest {
 			"{ \"test\": { \"metric\": { \"values\": [1,2], \"unit\": \"unit\","
 				+ " \"interpretation\": \"NEUTRAL\" } } }"
 		))
-			.isEqualTo(new BareResult(
-				List.of(
-					new Benchmark(
-						"test",
-						List.of(
-							new Metric("metric", null, "unit", Interpretation.NEUTRAL, List.of(1.0, 2.0))
-						)
-					)
-				),
-				null
-			));
+			.isEqualTo(Either.ofRight(List.of(new Benchmark(
+				"test",
+				List.of(new Metric("metric", null, "unit", Interpretation.NEUTRAL, List.of(1.0, 2.0)))
+			))));
 
 		// new results, old resultInterpretation
 		assertThat(parser.parse(
 			"{ \"test\": { \"metric\": { \"results\": [1,2], \"unit\": \"unit\","
 				+ " \"resultInterpretation\": \"NEUTRAL\" } } }"
 		))
-			.isEqualTo(new BareResult(
-				List.of(
-					new Benchmark(
-						"test",
-						List.of(
-							new Metric("metric", null, "unit", Interpretation.NEUTRAL, List.of(1.0, 2.0))
-						)
-					)
-				),
-				null
-			));
+			.isEqualTo(Either.ofRight(List.of(new Benchmark(
+				"test",
+				List.of(new Metric("metric", null, "unit", Interpretation.NEUTRAL, List.of(1.0, 2.0)))
+			))));
 	}
 }

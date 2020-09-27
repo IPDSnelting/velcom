@@ -2,12 +2,13 @@ package de.aaaaaaah.velcom.runner.benchmarking;
 
 import de.aaaaaaah.velcom.runner.Delays;
 import de.aaaaaaah.velcom.runner.benchmarking.output.BenchmarkScriptOutputParser;
-import de.aaaaaaah.velcom.runner.benchmarking.output.BenchmarkScriptOutputParser.BareResult;
 import de.aaaaaaah.velcom.runner.benchmarking.output.OutputParseException;
 import de.aaaaaaah.velcom.runner.formatting.NamedRows;
 import de.aaaaaaah.velcom.runner.formatting.NamedSections;
 import de.aaaaaaah.velcom.shared.GitProperties;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Result;
+import de.aaaaaaah.velcom.shared.protocol.serialization.Result.Benchmark;
+import de.aaaaaaah.velcom.shared.util.Either;
 import de.aaaaaaah.velcom.shared.util.ExceptionHelper;
 import de.aaaaaaah.velcom.shared.util.execution.ProgramExecutor;
 import de.aaaaaaah.velcom.shared.util.execution.ProgramResult;
@@ -15,6 +16,7 @@ import de.aaaaaaah.velcom.shared.util.systeminfo.LinuxSystemInfo;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -226,7 +228,7 @@ public class Benchmarker {
 	private BenchResult interpretZeroExitCode(NamedSections infoSections,
 		ProgramResult programResult) {
 
-		BareResult bareResult;
+		Either<String, List<Benchmark>> bareResult;
 
 		try {
 			bareResult = new BenchmarkScriptOutputParser().parse(programResult.getStdOut());
@@ -239,7 +241,10 @@ public class Benchmarker {
 			return failedBenchResult(infoSections);
 		}
 
-		return successfulBenchResult(new Result(bareResult.getBenchmarks(), bareResult.getError()));
+		return successfulBenchResult(new Result(
+			bareResult.getRight().orElse(null),
+			bareResult.getLeft().orElse(null)
+		));
 	}
 
 	private BenchResult interpretFailingExitCode(NamedSections infoSections,

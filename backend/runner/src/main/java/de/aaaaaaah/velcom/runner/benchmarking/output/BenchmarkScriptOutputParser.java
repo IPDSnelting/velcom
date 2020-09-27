@@ -10,13 +10,12 @@ import de.aaaaaaah.velcom.shared.protocol.serialization.Result;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Result.Benchmark;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Result.Interpretation;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Result.Metric;
+import de.aaaaaaah.velcom.shared.util.Either;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.Optional;
-import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,7 +37,7 @@ public class BenchmarkScriptOutputParser {
 	 * @return the parsed benchmark results
 	 * @throws OutputParseException if an error occurs
 	 */
-	public BareResult parse(String data) throws OutputParseException {
+	public Either<String, List<Benchmark>> parse(String data) throws OutputParseException {
 		LOGGER.debug("Parsing message '{}'", data);
 
 		JsonNode root;
@@ -56,7 +55,7 @@ public class BenchmarkScriptOutputParser {
 			if (!root.get("error").isTextual()) {
 				throw new OutputParseException("Error is no string: " + root);
 			}
-			return new BareResult(null, root.get("error").asText());
+			return Either.ofLeft(root.get("error").asText());
 		}
 
 		List<Benchmark> benchmarks = new ArrayList<>();
@@ -71,7 +70,7 @@ public class BenchmarkScriptOutputParser {
 			throw new OutputParseException("Root element has no benchmarks");
 		}
 
-		return new BareResult(benchmarks, null);
+		return Either.ofRight(benchmarks);
 	}
 
 	private Benchmark parseBenchmark(String name, JsonNode node) {
@@ -192,58 +191,6 @@ public class BenchmarkScriptOutputParser {
 			return Interpretation.valueOf(node.asText());
 		} catch (IllegalArgumentException e) {
 			throw new OutputParseException("Unknown interpretation: " + node);
-		}
-	}
-
-	/**
-	 * A bare result with just the parsed properties and errors.
-	 */
-	public static class BareResult {
-
-		@Nullable
-		private final List<Benchmark> benchmarks;
-		@Nullable
-		private final String error;
-
-		public BareResult(@Nullable List<Benchmark> benchmarks, @Nullable String error) {
-			// TODO maybe use Either?
-			if (benchmarks == null && error == null) {
-				throw new IllegalArgumentException("benchmarks and error must not both be null");
-			} else if (benchmarks != null && error != null) {
-				throw new IllegalArgumentException(
-					"benchmarks and error can not both be set at the same time");
-			}
-
-			this.benchmarks = benchmarks;
-			this.error = error;
-		}
-
-		@Nullable
-		public List<Benchmark> getBenchmarks() {
-			return benchmarks;
-		}
-
-		@Nullable
-		public String getError() {
-			return error;
-		}
-
-		@Override
-		public boolean equals(Object o) {
-			if (this == o) {
-				return true;
-			}
-			if (o == null || getClass() != o.getClass()) {
-				return false;
-			}
-			BareResult that = (BareResult) o;
-			return Objects.equals(benchmarks, that.benchmarks) &&
-				Objects.equals(error, that.error);
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(benchmarks, error);
 		}
 	}
 }
