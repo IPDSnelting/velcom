@@ -60,6 +60,22 @@ export default class DytailGraph extends Vue {
     return this.dimensions.map(this.dimensionColor)
   }
 
+  private get minDateValue(): number {
+    const min = Math.min.apply(
+      Math,
+      this.datapoints.map(it => it.authorDate.getTime())
+    )
+    return min || 0
+  }
+
+  private get maxDateValue(): number {
+    const max = Math.max.apply(
+      Math,
+      this.datapoints.map(it => it.authorDate.getTime())
+    )
+    return max || 0
+  }
+
   @Watch('datapoints')
   @Watch('dimensions')
   private up() {
@@ -89,7 +105,15 @@ export default class DytailGraph extends Vue {
         'x',
         ...this.dimensions.map(it => it.benchmark + ' - ' + it.metric)
       ],
-      colors: this.dimensionsColors()
+      colors: this.dimensionsColors(),
+      dateWindow: [
+        vxm.detailGraphModule.zoomXStartValue || this.minDateValue,
+        vxm.detailGraphModule.zoomXEndValue || this.maxDateValue
+      ],
+      valueRange: [
+        vxm.detailGraphModule.zoomYStartValue,
+        vxm.detailGraphModule.zoomYEndValue
+      ]
     })
   }
 
@@ -117,11 +141,25 @@ export default class DytailGraph extends Vue {
         connectSeparatedPoints: true,
         drawPoints: false,
         animatedZooms: true,
-        panEdgeFraction: 0.00001
+        panEdgeFraction: 0.00001,
+        zoomCallback: this.dygraphsZoomed
       }
     )
 
     this.up()
+  }
+
+  private dygraphsZoomed(
+    startX: number,
+    endX: number,
+    yRanges: [number, number][]
+  ) {
+    vxm.detailGraphModule.zoomXStartValue = startX
+    vxm.detailGraphModule.zoomXEndValue = endX
+
+    const [yZoomStart, yZoomEnd] = yRanges[0]
+    vxm.detailGraphModule.zoomYStartValue = yZoomStart
+    vxm.detailGraphModule.zoomYEndValue = yZoomEnd
   }
 }
 </script>
