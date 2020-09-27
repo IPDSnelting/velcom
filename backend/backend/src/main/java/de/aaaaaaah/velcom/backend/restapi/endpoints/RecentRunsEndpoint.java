@@ -117,7 +117,7 @@ public class RecentRunsEndpoint {
 
 			for (Run run : recentRuns) {
 				List<DimensionDifference> dimensions = getSignificantDimensions(run);
-				if (!dimensions.isEmpty()) {
+				if (run.hasFails() || !dimensions.isEmpty()) {
 					runs.add(new Pair<>(run, dimensions));
 
 					if (runs.size() >= n) {
