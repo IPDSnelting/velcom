@@ -119,8 +119,8 @@ public abstract class RunnerState implements State {
 		GetResultReply getResultReply = new GetResultReply(
 			result.getRunId(),
 			result.isSuccess(),
-			result.getResult(),
-			result.getError(),
+			result.getResult().getRight().orElse(null),
+			result.getResult().getLeft().orElse(null),
 			result.getStartTime(),
 			result.getStopTime()
 		);

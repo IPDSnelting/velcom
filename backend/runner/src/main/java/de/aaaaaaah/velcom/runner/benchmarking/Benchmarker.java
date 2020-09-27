@@ -274,11 +274,11 @@ public class Benchmarker {
 	}
 
 	private BenchResult successfulBenchResult(Result result) {
-		return new BenchResult(taskId, true, result, null, startTime, Instant.now());
+		return BenchResult.successful(taskId, result, startTime, Instant.now());
 	}
 
 	private BenchResult failedBenchResult(NamedSections infoSections) {
-		return new BenchResult(taskId, false, null, infoSections.format(), startTime, Instant.now());
+		return BenchResult.failed(taskId, infoSections.format(), startTime, Instant.now());
 	}
 
 }

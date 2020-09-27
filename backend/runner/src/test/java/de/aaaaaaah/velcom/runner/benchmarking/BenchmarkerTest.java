@@ -3,6 +3,7 @@ package de.aaaaaaah.velcom.runner.benchmarking;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
+import de.aaaaaaah.velcom.shared.protocol.serialization.Result;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Result.Benchmark;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Result.Interpretation;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Result.Metric;
@@ -59,10 +60,11 @@ class BenchmarkerTest {
 	void testBenchDoesNotExist() throws Exception {
 		doWithResult(
 			result -> {
-				assertThat(result.getResult()).isNull();
-				assertThat(result.getError()).isNotNull();
 				assertThat(result.getRunId()).isEqualTo(taskId);
-				assertThat(result.getError()).containsIgnoringCase("not found");
+
+				assertThat(result.getResult().getLeft()).isPresent();
+				String error = result.getResult().getLeft().get();
+				assertThat(error).containsIgnoringCase("not found");
 			}
 		);
 	}
@@ -83,10 +85,11 @@ class BenchmarkerTest {
 
 		doWithResult(
 			result -> {
-				assertThat(result.getResult()).isNull();
-				assertThat(result.getError()).isNotNull();
 				assertThat(result.getRunId()).isEqualTo(taskId);
-				assertThat(result.getError()).containsIgnoringCase("readable");
+
+				assertThat(result.getResult().getLeft()).isPresent();
+				String error = result.getResult().getLeft().get();
+				assertThat(error).containsIgnoringCase("readable");
 			});
 	}
 
@@ -98,10 +101,11 @@ class BenchmarkerTest {
 
 		doWithResult(
 			result -> {
-				assertThat(result.getResult()).isNull();
-				assertThat(result.getError()).isNotNull();
 				assertThat(result.getRunId()).isEqualTo(taskId);
-				assertThat(result.getError()).containsIgnoringCase("executable");
+
+				assertThat(result.getResult().getLeft()).isPresent();
+				String error = result.getResult().getLeft().get();
+				assertThat(error).containsIgnoringCase("executable");
 			}
 		);
 	}
@@ -115,11 +119,12 @@ class BenchmarkerTest {
 
 		doWithResult(
 			result -> {
-				assertThat(result.getResult()).isNull();
-				assertThat(result.getError()).isNotNull();
 				assertThat(result.getRunId()).isEqualTo(taskId);
-				assertThat(result.getError()).containsIgnoringCase("invalid");
-				assertThat(result.getError()).containsIgnoringCase("output");
+
+				assertThat(result.getResult().getLeft()).isPresent();
+				String error = result.getResult().getLeft().get();
+				assertThat(error).containsIgnoringCase("invalid");
+				assertThat(error).containsIgnoringCase("output");
 			}
 		);
 	}
@@ -133,11 +138,12 @@ class BenchmarkerTest {
 
 		doWithResult(
 			result -> {
-				assertThat(result.getResult()).isNull();
-				assertThat(result.getError()).isNotNull();
 				assertThat(result.getRunId()).isEqualTo(taskId);
-				assertThat(result.getError()).containsIgnoringCase("exit code");
-				assertThat(result.getError()).containsIgnoringCase("1");
+
+				assertThat(result.getResult().getLeft()).isPresent();
+				String error = result.getResult().getLeft().get();
+				assertThat(error).containsIgnoringCase("exit code");
+				assertThat(error).containsIgnoringCase("1");
 			}
 		);
 	}
@@ -151,14 +157,15 @@ class BenchmarkerTest {
 
 		doWithResult(
 			result -> {
-				assertThat(result.getResult()).isNull();
-				assertThat(result.getError()).isNotNull();
 				assertThat(result.getRunId()).isEqualTo(taskId);
-				assertThat(result.getError()).containsIgnoringCase("exit code");
-				assertThat(result.getError()).containsIgnoringCase("130");
-				assertThat(result.getError()).containsIgnoringCase("SIGINT");
-				assertThat(result.getError()).containsIgnoringCase("signal");
-				assertThat(result.getError()).containsIgnoringCase("Terminal interrupt");
+
+				assertThat(result.getResult().getLeft()).isPresent();
+				String error = result.getResult().getLeft().get();
+				assertThat(error).containsIgnoringCase("exit code");
+				assertThat(error).containsIgnoringCase("130");
+				assertThat(error).containsIgnoringCase("SIGINT");
+				assertThat(error).containsIgnoringCase("signal");
+				assertThat(error).containsIgnoringCase("Terminal interrupt");
 			}
 		);
 	}
@@ -172,12 +179,13 @@ class BenchmarkerTest {
 
 		doWithResult(
 			result -> {
-				assertThat(result.getResult()).isNotNull();
-				assertThat(result.getError()).isNull();
 				assertThat(result.getRunId()).isEqualTo(taskId);
-				assertThat(result.getResult().getBenchmarks()).isEmpty();
-				assertThat(result.getResult().getError()).isPresent();
-				assertThat(result.getResult().getError().get()).isEqualTo("Halloooo");
+
+				assertThat(result.getResult().getRight()).isPresent();
+				Result success = result.getResult().getRight().get();
+				assertThat(success.getBenchmarks()).isEmpty();
+				assertThat(success.getError()).isPresent();
+				assertThat(success.getError().get()).isEqualTo("Halloooo");
 			}
 		);
 	}
@@ -191,17 +199,18 @@ class BenchmarkerTest {
 
 		doWithResult(
 			result -> {
-				assertThat(result.getResult()).isNotNull();
-				assertThat(result.getError()).isNull();
 				assertThat(result.getRunId()).isEqualTo(taskId);
-				assertThat(result.getResult().getBenchmarks()).isPresent();
-				assertThat(result.getResult().getBenchmarks().get()).containsExactly(new Benchmark(
+
+				assertThat(result.getResult().getRight()).isPresent();
+				Result success = result.getResult().getRight().get();
+				assertThat(success.getBenchmarks()).isPresent();
+				assertThat(success.getBenchmarks().get()).containsExactly(new Benchmark(
 					"test",
 					List.of(
 						new Metric("metric", "20", null, null, null)
 					)
 				));
-				assertThat(result.getResult().getError()).isEmpty();
+				assertThat(success.getError()).isEmpty();
 			}
 		);
 	}
@@ -217,17 +226,18 @@ class BenchmarkerTest {
 
 		doWithResult(
 			result -> {
-				assertThat(result.getError()).isNull();
-				assertThat(result.getResult()).isNotNull();
 				assertThat(result.getRunId()).isEqualTo(taskId);
-				assertThat(result.getResult().getBenchmarks()).isPresent();
-				assertThat(result.getResult().getBenchmarks().get()).containsExactly(new Benchmark(
+
+				assertThat(result.getResult().getRight()).isPresent();
+				Result success = result.getResult().getRight().get();
+				assertThat(success.getBenchmarks()).isPresent();
+				assertThat(success.getBenchmarks().get()).containsExactly(new Benchmark(
 					"test",
 					List.of(
 						new Metric("metric", null, "cats", Interpretation.NEUTRAL, List.of(20d, 5d))
 					)
 				));
-				assertThat(result.getResult().getError()).isEmpty();
+				assertThat(success.getError()).isEmpty();
 			}
 		);
 	}

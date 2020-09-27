@@ -1,40 +1,34 @@
 package de.aaaaaaah.velcom.runner.benchmarking;
 
 import de.aaaaaaah.velcom.shared.protocol.serialization.Result;
+import de.aaaaaaah.velcom.shared.util.Either;
 import java.time.Instant;
 import java.util.UUID;
-import javax.annotation.Nullable;
 
 public class BenchResult {
 
-	// TODO consider using Either?
-
 	private final UUID runId;
-	private final boolean success;
-	@Nullable
-	private final Result result;
-	@Nullable
-	private final String error;
+	private Either<String, Result> result;
 	private final Instant startTime;
 	private final Instant stopTime;
 
-	public BenchResult(UUID runId, boolean success, @Nullable Result result,
-		@Nullable String error, Instant startTime, Instant stopTime) {
-
-		if (success && (result == null || error != null)) {
-			throw new IllegalArgumentException(
-				"if successful, there must be a result and no error");
-		} else if (!success && (result != null || error == null)) {
-			throw new IllegalArgumentException(
-				"if unsuccessful, there must be an error and no result");
-		}
+	private BenchResult(UUID runId, Either<String, Result> result, Instant startTime,
+		Instant stopTime) {
 
 		this.runId = runId;
-		this.success = success;
 		this.result = result;
-		this.error = error;
 		this.startTime = startTime;
 		this.stopTime = stopTime;
+	}
+
+	public static BenchResult successful(UUID runId, Result result, Instant startTime,
+		Instant stopTime) {
+
+		return new BenchResult(runId, Either.ofRight(result), startTime, stopTime);
+	}
+
+	public static BenchResult failed(UUID runId, String error, Instant startTime, Instant stopTime) {
+		return new BenchResult(runId, Either.ofLeft(error), startTime, stopTime);
 	}
 
 	public UUID getRunId() {
@@ -42,17 +36,11 @@ public class BenchResult {
 	}
 
 	public boolean isSuccess() {
-		return success;
+		return result.isRight();
 	}
 
-	@Nullable
-	public Result getResult() {
+	public Either<String, Result> getResult() {
 		return result;
-	}
-
-	@Nullable
-	public String getError() {
-		return error;
 	}
 
 	public Instant getStartTime() {
