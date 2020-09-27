@@ -43,8 +43,6 @@ public class AllReposEndpoint {
 		this.tokenAccess = tokenAccess;
 	}
 
-	// TODO: 12.09.20 Return actual dimensions, not empty list
-	// For some reason, this endpoint returns an empty list of dimensions for every repo.
 	@GET
 	@Timed(histogram = true)
 	public GetReply get() {

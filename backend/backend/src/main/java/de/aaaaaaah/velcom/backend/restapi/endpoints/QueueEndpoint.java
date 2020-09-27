@@ -59,8 +59,6 @@ public class QueueEndpoint {
 	@GET
 	@Timed(histogram = true)
 	public GetQueueReply getQueue() {
-		// TODO: 08.09.20 Fix NPE when calling this endpoint
-
 		List<Task> tasks = queue.getTasksSorted();
 
 		Map<RepoId, List<CommitHash>> hashPerRepo = tasks.stream()
@@ -131,10 +129,6 @@ public class QueueEndpoint {
 		return Response.ok().build();
 	}
 
-	// TODO: 12.09.20 Gracefully handle the case that the specified commit does not exist in the repo
-	// At the moment, a foreign key constraint violation is raised by sqlite because the task refers
-	// to the known_commit table which doesn't contain the requested commit. Instead, the
-	// TaskWriteAccess should probably throw a NoSuchCommitException.
 	@POST
 	@Path("commit/{repoId}/{hash}")
 	@Timed(histogram = true)

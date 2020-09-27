@@ -103,7 +103,8 @@ public class Listener {
 		try {
 			this.lock.lock();
 
-			// TODO: 23.09.20 Check if remote url has changed and re-clone if necessary
+			// No need to check whether the remote url has changed (like the bench repo does) because the
+			// repo patch endpoint also updates and fetches the repo if the remote url is changed.
 
 			repoAccess.updateRepo(repoId);
 
