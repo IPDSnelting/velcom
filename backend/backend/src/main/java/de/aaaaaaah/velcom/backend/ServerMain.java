@@ -150,7 +150,7 @@ public class ServerMain extends Application<GlobalConfig> {
 		RunComparator runComparator = new RunComparator(significanceFactors);
 		TimesliceComparison comparison = new TimesliceComparison(commitAccess, benchmarkAccess);
 		SignificantRunsCollector significantRunsCollector = new SignificantRunsCollector(
-			benchmarkAccess, commitAccess, runComparator
+			significanceFactors, benchmarkAccess, commitAccess, runComparator
 		);
 
 		// Listener
