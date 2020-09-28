@@ -15,7 +15,20 @@
             >
           </v-col>
         </v-row>
-        <v-row v-if="allowSelectCompare">
+        <v-row dense>
+          <v-col>
+            <v-btn
+              v-if="hasReferenceLine"
+              width="100%"
+              color="primary"
+              text
+              outlined
+              @click="removeReferenceLine"
+              >remove reference line</v-btn
+            >
+          </v-col>
+        </v-row>
+        <v-row v-if="allowSelectCompare" class="mt-4" dense>
           <v-col>
             <v-btn
               width="100%"
@@ -28,7 +41,7 @@
           </v-col>
         </v-row>
         <v-row v-if="allowSelectCompare && commitToCompare" dense>
-          <v-col class="mb-2">
+          <v-col>
             <v-btn
               width="100%"
               color="primary"
@@ -40,16 +53,16 @@
             >
           </v-col>
         </v-row>
-        <v-row dense>
-          <v-col>
+        <v-row v-if="commitToCompare" dense>
+          <v-col class="mb-2">
             <v-btn
-              v-if="hasReferenceLine"
               width="100%"
               color="primary"
               text
               outlined
-              @click="removeReferenceLine"
-              >remove reference line</v-btn
+              class="reflow-button py-2"
+              @click="removeCompare"
+              >Reset comparison</v-btn
             >
           </v-col>
         </v-row>
@@ -148,6 +161,11 @@ export default class DetailDatapointDialog extends Vue {
       dimension: this.dimension,
       dataPoint: this.selectedDatapoint
     }
+    this.$emit('close')
+  }
+
+  private removeCompare() {
+    vxm.detailGraphModule.commitToCompare = null
     this.$emit('close')
   }
 
