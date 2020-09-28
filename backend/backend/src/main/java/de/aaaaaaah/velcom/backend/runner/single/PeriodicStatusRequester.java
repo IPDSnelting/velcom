@@ -67,7 +67,6 @@ public class PeriodicStatusRequester {
 		try {
 			Thread.sleep(5000);
 
-			// TODO: 10.07.20 We can disconnect at any point. Handle it.
 			GetStatusReply statusReply = requestStatus();
 			teleRunner.setRunnerInformation(statusReply);
 

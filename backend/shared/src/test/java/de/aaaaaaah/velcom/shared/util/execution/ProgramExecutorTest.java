@@ -120,7 +120,6 @@ class ProgramExecutorTest {
 
 		assertThatThrownBy(future::get).isInstanceOf(CancellationException.class);
 
-		// TODO: 21.06.20 Is this too flaky?
 		assertThat(Duration.between(start, Instant.now()).toMillis())
 			.isLessThan(timeToForceKillMillis);
 	}
