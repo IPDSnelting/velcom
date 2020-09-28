@@ -33,9 +33,6 @@ public class RecentRunsEndpoint {
 	private static final int MIN_N = 1;
 	private static final int MAX_N = 100;
 
-	private static final int SIGNIFICANT_MAX_OFFSET = 500;
-	private static final int SIGNIFICANT_BATCH_SIZE = 50;
-
 	private final BenchmarkReadAccess benchmarkAccess;
 	private final CommitReadAccess commitAccess;
 	private final SignificantRunsCollector significantRunsCollector;
