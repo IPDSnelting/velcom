@@ -895,7 +895,10 @@ export default class ComparisonGraph extends Vue {
   }
 
   private async showInDetailGraph() {
-    if (!this.selectedDatapoint) {
+    if (
+      !this.selectedDatapoint ||
+      !vxm.comparisonGraphModule.selectedDimension
+    ) {
       return
     }
     this.closeDialog()
@@ -909,11 +912,14 @@ export default class ComparisonGraph extends Vue {
       dataPoint.authorDate.getTime() + 1000 * 60 * 60 * 24 * 4
     )
     vxm.detailGraphModule.selectedRepoId = repoId
+    vxm.detailGraphModule.selectedDimensions = [
+      vxm.comparisonGraphModule.selectedDimension
+    ]
     const allDataPoints = await vxm.detailGraphModule.fetchDetailGraph()
 
     const detailPoint = allDataPoints.find(it => it.hash === dataPoint.hash)
 
-    if (detailPoint && vxm.comparisonGraphModule.selectedDimension) {
+    if (detailPoint) {
       vxm.detailGraphModule.referenceDatapoint = {
         dataPoint: detailPoint,
         dimension: vxm.comparisonGraphModule.selectedDimension

@@ -233,6 +233,7 @@ export default class EchartsDetailGraph extends Vue {
     }
 
     this.updateReferenceDatapoint()
+    this.updateMarkPoints()
   }
 
   private tooltipFormatter(
@@ -428,18 +429,34 @@ export default class EchartsDetailGraph extends Vue {
     return vxm.detailGraphModule.referenceDatapoint
   }
 
+  private get showReferenceMarkers() {
+    if (!this.referenceDatapoint) {
+      return false
+    }
+    const dimensions = this.referenceDatapoint.dimension
+
+    return this.dimensions.find(it => it.equals(dimensions))
+  }
+
   @Watch('referenceDatapoint')
+  @Watch('commitToCompare')
   private updateReferenceDatapoint() {
     const series = this.chartOptions.series! as ValidEchartsSeries[]
 
     // noinspection JSMismatchedCollectionQueryUpdate
-    let markLineData: { yAxis: number }[] = []
-    if (this.referenceDatapoint !== null) {
-      const reference = this.referenceDatapoint
+    const markLineData: any[] = []
+    if (this.showReferenceMarkers) {
+      const reference = this.referenceDatapoint!
       const referenceValue = reference.dataPoint.values.get(reference.dimension)
       if (typeof referenceValue === 'number') {
-        markLineData = [{ yAxis: referenceValue }]
+        markLineData.push({ yAxis: referenceValue, name: 'Reference' })
       }
+    }
+    if (this.commitToCompare !== null) {
+      markLineData.push({
+        xAxis: this.commitToCompare.dataPoint.authorDate,
+        name: 'Comparing…'
+      })
     }
     const hasReferenceLine = markLineData.length > 0
 
@@ -451,8 +468,8 @@ export default class EchartsDetailGraph extends Vue {
       },
       label: {
         show: true,
-        formatter: () => {
-          return 'Reference'
+        formatter: (it: any) => {
+          return it.name as string
         }
       },
       silent: true,
@@ -460,7 +477,7 @@ export default class EchartsDetailGraph extends Vue {
     }
 
     // Set on one, delete on all (as the order might change)
-    if (hasReferenceLine) {
+    if (hasReferenceLine && series.length > 0) {
       Vue.set(series[0], 'markLine', markLineJson)
     } else {
       series.forEach(it => Vue.set(it, 'markLine', markLineJson))
@@ -471,24 +488,24 @@ export default class EchartsDetailGraph extends Vue {
     grid.right = hasReferenceLine ? 70 : 20
   }
 
-  @Watch('commitToCompare')
-  private updateCommitToCompare() {
+  @Watch('referenceDatapoint')
+  private updateMarkPoints() {
     const series = this.chartOptions.series! as ValidEchartsSeries[]
     // noinspection JSMismatchedCollectionQueryUpdate
     const markPointData: any[] = []
 
-    if (this.commitToCompare) {
-      const point = this.commitToCompare.dataPoint
+    if (this.showReferenceMarkers) {
+      const point = this.referenceDatapoint!.dataPoint
 
       markPointData.push({
         coord: [
           point.authorDate,
-          point.values.get(this.commitToCompare.dimension)
+          point.values.get(this.referenceDatapoint!.dimension)
         ],
         label: {
           show: true,
           position: 'inside',
-          formatter: () => 'A'
+          formatter: () => 'R'
         }
       })
     }
@@ -499,7 +516,7 @@ export default class EchartsDetailGraph extends Vue {
     }
 
     // Set on one, delete on all (as the order might change)
-    if (this.commitToCompare) {
+    if (this.commitToCompare && series.length > 0) {
       Vue.set(series[0], 'markPoint', markPointJson)
     } else {
       series.forEach(it => Vue.set(it, 'markPoint', markPointJson))
