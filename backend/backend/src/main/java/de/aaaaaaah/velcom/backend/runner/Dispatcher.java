@@ -39,6 +39,8 @@ public class Dispatcher implements IDispatcher {
 		this.teleRunners = new ArrayList<>();
 		this.workToRunnerMap = new HashMap<>();
 
+		this.queue.onTaskDelete(this::abort);
+
 		ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(
 			new DaemonThreadFactory()
 		);
