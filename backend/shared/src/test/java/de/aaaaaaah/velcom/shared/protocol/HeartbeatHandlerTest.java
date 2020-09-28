@@ -1,8 +1,8 @@
 package de.aaaaaaah.velcom.shared.protocol;
 
-import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -31,10 +31,8 @@ class HeartbeatHandlerTest {
 
 
 	@Test
-	void testSendsPing() throws InterruptedException {
-		Thread.sleep(200);
-
-		verify(heartbeatWebsocket, atLeastOnce()).onTimeoutDetected();
+	void testSendsPing() {
+		verify(heartbeatWebsocket, timeout(200).atLeastOnce()).onTimeoutDetected();
 	}
 
 	@Test

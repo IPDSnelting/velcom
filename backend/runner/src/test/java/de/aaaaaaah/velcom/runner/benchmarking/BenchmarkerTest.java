@@ -1,7 +1,6 @@
 package de.aaaaaaah.velcom.runner.benchmarking;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
 
 import de.aaaaaaah.velcom.shared.protocol.serialization.Result;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Result.Benchmark;
@@ -12,6 +11,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermission;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -24,7 +24,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -255,16 +254,10 @@ class BenchmarkerTest {
 		Thread.sleep(400);
 		benchmarker.abort();
 
-		// Give it a few seconds to really cancel it (though ~500ms should be enough currently)
-		for (int i = 0; i < 10; i++) {
-			Thread.sleep(250);
-			if (finishFuture.isDone()) {
-				assertThat(benchmarker.getResult()).isNotEmpty();
-				assertThat(benchmarker.getTaskId()).isEqualTo(taskId);
-				return;
-			}
-		}
-		fail("Cancel should have been done by now");
+		assertThat(finishFuture).succeedsWithin(Duration.ofSeconds(3));
+
+		assertThat(benchmarker.getResult()).isNotEmpty();
+		assertThat(benchmarker.getTaskId()).isEqualTo(taskId);
 	}
 
 	@Test
@@ -280,16 +273,10 @@ class BenchmarkerTest {
 		Thread.sleep(1000);
 		benchmarker.abort();
 
-		// Give it a few seconds to really cancel it (though ~500ms should be enough currently)
-		for (int i = 0; i < 10; i++) {
-			Thread.sleep(250);
-			if (finishFuture.isDone()) {
-				assertThat(benchmarker.getResult()).isNotEmpty();
-				assertThat(benchmarker.getTaskId()).isEqualTo(taskId);
-				return;
-			}
-		}
-		fail("Cancel should have been done by now");
+		assertThat(finishFuture).succeedsWithin(Duration.ofSeconds(3));
+
+		assertThat(benchmarker.getResult()).isNotEmpty();
+		assertThat(benchmarker.getTaskId()).isEqualTo(taskId);
 	}
 
 	private void doWithResult(Consumer<BenchResult> resultConsumer)
@@ -302,7 +289,7 @@ class BenchmarkerTest {
 
 		Optional<BenchResult> resultOptional = benchmarker.getResult();
 
-		Assertions.assertThat(resultOptional).isPresent();
+		assertThat(resultOptional).isPresent();
 
 		BenchResult result = resultOptional.get();
 		resultConsumer.accept(result);
