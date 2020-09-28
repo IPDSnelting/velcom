@@ -77,10 +77,13 @@ public class ProgramExecutor {
 					LOGGER.warn(
 						"Interrupted while waiting for process to gracefully shutdown. Killing it");
 				}
-				LOGGER.debug("Waited " + timeToForceKillMillis + " killing it");
+				// Only kill it if it is still alive
+				if (process.toHandle().isAlive()) {
+					LOGGER.debug("Waited " + timeToForceKillMillis + " killing it");
 
-				process.toHandle().descendants().forEach(ProcessHandle::destroyForcibly);
-				process.toHandle().destroyForcibly();
+					process.toHandle().descendants().forEach(ProcessHandle::destroyForcibly);
+					process.toHandle().destroyForcibly();
+				}
 
 				throw new CancellationException("Killed process");
 			}
