@@ -78,6 +78,7 @@ export default class DytailGraph extends Vue {
 
   @Watch('datapoints')
   @Watch('dimensions')
+  @Watch('beginYAtZero')
   private up() {
     const data: number[][] = []
 
@@ -113,7 +114,8 @@ export default class DytailGraph extends Vue {
       valueRange: [
         vxm.detailGraphModule.zoomYStartValue,
         vxm.detailGraphModule.zoomYEndValue
-      ]
+      ],
+      includeZero: this.beginYAtZero
     })
   }
 

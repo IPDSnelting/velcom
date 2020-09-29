@@ -46,6 +46,8 @@ export class DetailGraphStore extends VxModule {
   endTime: Date = new Date()
   duration: number = 7
 
+  beginYScaleAtZero: boolean = false
+
   /**
    * Fetches the data necessary to display the data points
    * in a detail graph of a given time frame.

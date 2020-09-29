@@ -23,6 +23,7 @@
             <component
               :is="selectedGraphComponent"
               :dimensions="selectedDimensions"
+              :beginYAtZero="yStartsAtZero"
             ></component>
           </v-card-text>
         </v-card>
@@ -33,7 +34,7 @@
         <v-card
           ><v-card-text class="ma-0 pa-0">
             <v-container fluid class="ma-0 px-5 pb-0">
-              <v-row align="center" justify="space-between" no-gutters>
+              <v-row align="start" justify="space-between" no-gutters>
                 <v-col :md="useMatrixSelector ? '' : '5'" sm="12" cols="12">
                   <v-btn
                     @click="useMatrixSelector = !useMatrixSelector"
@@ -54,6 +55,18 @@
                     :repoId="id"
                   >
                   </normal-dimension-selection>
+                </v-col>
+                <v-col class="d-flex justify-end">
+                  <v-btn
+                    @click="yStartsAtZero = !yStartsAtZero"
+                    color="primary"
+                    outlined
+                  >
+                    <span v-if="yStartsAtZero"
+                      >Begin Y-Axis at minimum value</span
+                    >
+                    <span v-else>Begin Y-Axis at zero</span>
+                  </v-btn>
                 </v-col>
               </v-row>
             </v-container>
@@ -338,6 +351,14 @@ export default class RepoDetail extends Vue {
 
   set duration(duration: number) {
     vxm.detailGraphModule.duration = Number(duration) // the number is a lie :(
+  }
+
+  private get yStartsAtZero(): boolean {
+    return vxm.detailGraphModule.beginYScaleAtZero
+  }
+
+  private set yStartsAtZero(startsAtZero: boolean) {
+    vxm.detailGraphModule.beginYScaleAtZero = startsAtZero
   }
 
   private lockDates(date: 'start' | 'end'): void {

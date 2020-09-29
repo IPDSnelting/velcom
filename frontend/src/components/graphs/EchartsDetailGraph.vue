@@ -159,6 +159,7 @@ export default class EchartsDetailGraph extends Vue {
 
   // <!--<editor-fold desc="ECHARTS GRAPH OPTIONS">-->
   @Watch('detailDataPoints')
+  @Watch('beginYAtZero')
   private updateGraph() {
     console.log('UPDATED')
 
