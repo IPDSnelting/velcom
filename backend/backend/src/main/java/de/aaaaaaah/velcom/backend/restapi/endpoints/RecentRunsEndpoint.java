@@ -2,21 +2,16 @@ package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
 import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
-import de.aaaaaaah.velcom.backend.access.entities.Commit;
 import de.aaaaaaah.velcom.backend.access.entities.Dimension;
 import de.aaaaaaah.velcom.backend.access.entities.DimensionInfo;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
-import de.aaaaaaah.velcom.backend.access.entities.sources.CommitSource;
+import de.aaaaaaah.velcom.backend.data.recentruns.SignificantRunsCollector;
 import de.aaaaaaah.velcom.backend.data.runcomparison.DimensionDifference;
-import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparator;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimensionDifference;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRunDescription;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRunDescription.JsonSuccess;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonSource;
-import de.aaaaaaah.velcom.shared.util.Pair;
 import io.micrometer.core.annotation.Timed;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -38,19 +33,16 @@ public class RecentRunsEndpoint {
 	private static final int MIN_N = 1;
 	private static final int MAX_N = 100;
 
-	private static final int SIGNIFICANT_MAX_OFFSET = 500;
-	private static final int SIGNIFICANT_BATCH_SIZE = 50;
-
 	private final BenchmarkReadAccess benchmarkAccess;
 	private final CommitReadAccess commitAccess;
-	private final RunComparator runComparator;
+	private final SignificantRunsCollector significantRunsCollector;
 
-	public RecentRunsEndpoint(BenchmarkReadAccess benchmarkAccess, CommitReadAccess commitAccess,
-		RunComparator runComparator) {
-
+	public RecentRunsEndpoint(BenchmarkReadAccess benchmarkAccess,
+		CommitReadAccess commitAccess,
+		SignificantRunsCollector significantRunsCollector) {
 		this.benchmarkAccess = benchmarkAccess;
 		this.commitAccess = commitAccess;
-		this.runComparator = runComparator;
+		this.significantRunsCollector = significantRunsCollector;
 	}
 
 	@GET
@@ -66,8 +58,8 @@ public class RecentRunsEndpoint {
 
 		final List<JsonRunEntry> runEntries;
 		if (significant) {
-			runEntries = getSignificantRuns(n).stream()
-				.map(pair -> toJsonRunEntry(pair.getFirst(), pair.getSecond()))
+			runEntries = significantRunsCollector.collectMostRecent(n).stream()
+				.map(run -> toJsonRunEntry(run.getRun(), run.getDifferences()))
 				.collect(Collectors.toList());
 		} else {
 			runEntries = benchmarkAccess.getRecentRuns(0, n).stream()
@@ -102,52 +94,6 @@ public class RecentRunsEndpoint {
 			),
 			jsonDiffs
 		);
-	}
-
-	@Timed(histogram = true)
-	private List<Pair<Run, List<DimensionDifference>>> getSignificantRuns(int n) {
-		List<Pair<Run, List<DimensionDifference>>> runs = new ArrayList<>();
-
-		outer:
-		for (int offset = 0; offset < SIGNIFICANT_MAX_OFFSET; offset += SIGNIFICANT_BATCH_SIZE) {
-			List<Run> recentRuns = benchmarkAccess.getRecentRuns(offset, SIGNIFICANT_BATCH_SIZE);
-			Collections.reverse(recentRuns); // Ordered from newest to oldest now
-			if (recentRuns.isEmpty()) {
-				break;
-			}
-
-			for (Run run : recentRuns) {
-				List<DimensionDifference> dimensions = getSignificantDimensions(run);
-				if (run.hasFails() || !dimensions.isEmpty()) {
-					runs.add(new Pair<>(run, dimensions));
-
-					if (runs.size() >= n) {
-						break outer;
-					}
-				}
-			}
-		}
-
-		Collections.reverse(runs);
-		return runs;
-	}
-
-	private List<DimensionDifference> getSignificantDimensions(Run run) {
-		if (run.getSource().getLeft().isEmpty()) {
-			return List.of();
-		}
-
-		CommitSource source = run.getSource().getLeft().get();
-		Commit sourceCommit = commitAccess.getCommit(source.getRepoId(), source.getHash());
-
-		return benchmarkAccess
-			.getLatestRuns(sourceCommit.getRepoId(), sourceCommit.getParentHashes())
-			.values()
-			.stream()
-			.map(parentRun -> runComparator.compare(parentRun, run))
-			.flatMap(comparison -> comparison.getDifferences().stream())
-			.filter(DimensionDifference::isSignificant)
-			.collect(Collectors.toList());
 	}
 
 	private static class GetReply {

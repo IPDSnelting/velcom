@@ -39,7 +39,6 @@ public class RunComparator {
 			MeasurementValues secondValues = secondMap.get(dimension);
 
 			DimensionDifference difference = new DimensionDifference(
-				significanceFactors,
 				dimension,
 				firstValues.getAverageValue(),
 				secondValues.getAverageValue(),

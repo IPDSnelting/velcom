@@ -13,6 +13,7 @@ import de.aaaaaaah.velcom.backend.access.entities.AuthToken;
 import de.aaaaaaah.velcom.backend.access.entities.RemoteUrl;
 import de.aaaaaaah.velcom.backend.data.benchrepo.BenchRepo;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
+import de.aaaaaaah.velcom.backend.data.recentruns.SignificantRunsCollector;
 import de.aaaaaaah.velcom.backend.data.repocomparison.TimesliceComparison;
 import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparator;
 import de.aaaaaaah.velcom.backend.data.runcomparison.SignificanceFactors;
@@ -148,6 +149,9 @@ public class ServerMain extends Application<GlobalConfig> {
 		);
 		RunComparator runComparator = new RunComparator(significanceFactors);
 		TimesliceComparison comparison = new TimesliceComparison(commitAccess, benchmarkAccess);
+		SignificantRunsCollector significantRunsCollector = new SignificantRunsCollector(
+			significanceFactors, benchmarkAccess, commitAccess, runComparator
+		);
 
 		// Listener
 		Listener listener = new Listener(configuration, repoAccess, commitAccess, knownCommitAccess,
@@ -174,7 +178,7 @@ public class ServerMain extends Application<GlobalConfig> {
 		environment.jersey().register(new TestTokenEndpoint());
 		environment.jersey().register(new QueueEndpoint(commitAccess, repoAccess, queue, dispatcher));
 		environment.jersey()
-			.register(new RecentRunsEndpoint(benchmarkAccess, commitAccess, runComparator));
+			.register(new RecentRunsEndpoint(benchmarkAccess, commitAccess, significantRunsCollector));
 		environment.jersey()
 			.register(new RepoEndpoint(repoAccess, tokenAccess, benchmarkAccess, listener));
 		environment.jersey().register(new GraphComparisonEndpoint(comparison, benchmarkAccess));

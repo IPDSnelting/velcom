@@ -115,15 +115,6 @@ public class Run {
 			.collect(Collectors.toSet());
 	}
 
-	/**
-	 * @return true if the run has failed measurements or is entirely failed
-	 */
-	public boolean hasFails() {
-		return getResult().getRight()
-			.map(ms -> ms.stream().anyMatch(m -> m.getContent().isLeft()))
-			.orElse(true);
-	}
-
 	@Override
 	public String toString() {
 		return "Run{" +

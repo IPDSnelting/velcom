@@ -1,5 +1,6 @@
 package de.aaaaaaah.velcom.backend.access.entities.sources;
 
+import de.aaaaaaah.velcom.backend.access.entities.Commit;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import java.util.Objects;
@@ -15,6 +16,10 @@ public class CommitSource {
 	public CommitSource(RepoId repoId, CommitHash hash) {
 		this.repoId = Objects.requireNonNull(repoId);
 		this.hash = Objects.requireNonNull(hash);
+	}
+
+	public static CommitSource fromCommit(Commit commit) {
+		return new CommitSource(commit.getRepoId(), commit.getHash());
 	}
 
 	public RepoId getRepoId() {
