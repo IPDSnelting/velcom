@@ -322,12 +322,6 @@ public class BenchmarkReadAccess {
 			Dimension dimension = new Dimension(
 				measurementRecord.getBenchmark(), measurementRecord.getMetric()
 			);
-			Unit unit = new Unit(
-				measurementRecord.getUnit() == null ? "" : measurementRecord.getUnit()
-			);
-			Interpretation interpretation = measurementRecord.getInterpretation() == null
-				? Interpretation.NEUTRAL
-				: Interpretation.fromTextualRepresentation(measurementRecord.getInterpretation());
 
 			final Measurement measurement;
 
@@ -442,8 +436,7 @@ public class BenchmarkReadAccess {
 				.from(MEASUREMENT)
 				.forEach(record -> {
 					Dimension dimension = new Dimension(record.component1(), record.component2());
-					DimensionInfo info = new DimensionInfo(dimension, Unit.DEFAULT, Interpretation.DEFAULT);
-					dimensions.put(dimension, info);
+					dimensions.put(dimension, new DimensionInfo(dimension));
 				});
 
 			// Figure out the latest units
@@ -495,8 +488,8 @@ public class BenchmarkReadAccess {
 				if (info == null) {
 					return new DimensionInfo(
 						dimension,
-						measurement.getUnit().orElse(null),
-						measurement.getInterpretation().orElse(null)
+						measurement.getUnit().orElse(Unit.DEFAULT),
+						measurement.getInterpretation().orElse(Interpretation.DEFAULT)
 					);
 				} else {
 					return new DimensionInfo(
