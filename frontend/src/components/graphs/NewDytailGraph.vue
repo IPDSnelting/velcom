@@ -20,10 +20,10 @@ import 'dygraphs/dist/dygraph.css'
 @Component({})
 export default class DytailGraph extends Vue {
   @Prop()
-  dimensions!: Dimension[]
+  private dimensions!: Dimension[]
 
   @Prop({ default: true })
-  beginYAtZero!: boolean
+  private beginYAtZero!: boolean
 
   private graph!: Dygraph
 

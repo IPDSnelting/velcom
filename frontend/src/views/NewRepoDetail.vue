@@ -79,8 +79,8 @@
         <v-card>
           <v-card-text class="ma-0 pa-0">
             <v-container fluid class="ma-0 px-5">
-              <v-row align="center" justify="space-between" no-gutters
-                ><v-col>
+              <v-row align="center" justify="space-between" no-gutters>
+                <v-col>
                   <v-menu
                     ref="startDateMenu"
                     v-model="startDateMenuOpen"
@@ -325,31 +325,31 @@ export default class RepoDetail extends Vue {
     this.retrieveGraphData()
   }
 
-  get startTimeString(): string {
+  private get startTimeString(): string {
     return vxm.detailGraphModule.startTime.toISOString().substring(0, 10)
   }
 
   // v-model binding
   // noinspection JSUnusedGlobalSymbols
-  set startTimeString(value: string) {
+  private set startTimeString(value: string) {
     vxm.detailGraphModule.startTime = new Date(value)
   }
 
-  get endTimeString(): string {
+  private get endTimeString(): string {
     return vxm.detailGraphModule.endTime.toISOString().substring(0, 10)
   }
 
   // v-model binding
   // noinspection JSUnusedGlobalSymbols
-  set endTimeString(value: string) {
+  private set endTimeString(value: string) {
     vxm.detailGraphModule.endTime = new Date(value)
   }
 
-  get duration(): number {
+  private get duration(): number {
     return vxm.detailGraphModule.duration
   }
 
-  set duration(duration: number) {
+  private set duration(duration: number) {
     vxm.detailGraphModule.duration = Number(duration) // the number is a lie :(
   }
 
