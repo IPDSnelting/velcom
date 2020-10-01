@@ -16,6 +16,7 @@ import Dygraph from 'dygraphs'
 import { DetailDataPoint, Dimension, DimensionId } from '@/store/types'
 import { vxm } from '@/store'
 import 'dygraphs/dist/dygraph.css'
+import { formatDate } from '@/util/TimeUtil'
 
 @Component({})
 export default class DytailGraph extends Vue {
@@ -48,6 +49,22 @@ export default class DytailGraph extends Vue {
       return this.dimensions[0].metric + ' in ' + this.dimensions[0].unit
     }
     return ''
+  }
+
+  private xAxisFormatter(d: Date, [start, end]: [number, number]): string {
+    const dateString: string = d.getDate() + '-' + (d.getMonth() + 1)
+    const hourString: string | number =
+      d.getHours().toString().length === 1 ? '0' + d.getHours() : d.getHours()
+    const minuteString: string | number =
+      d.getMinutes().toString().length === 1
+        ? '0' + d.getMinutes()
+        : d.getMinutes()
+
+    let daysShown: number = Math.floor((end - start) / (1000 * 60 * 60 * 24))
+    if (daysShown < 2) {
+      return hourString + ':' + minuteString + '\n' + dateString
+    }
+    return dateString + '\n' + d.getFullYear()
   }
 
   private dimensionColor(dimension: DimensionId) {
@@ -132,8 +149,19 @@ export default class DytailGraph extends Vue {
       {
         axes: {
           x: {
-            axisLabelFormatter: function(x: number | Date) {
-              return x instanceof Date || x % 1 === 0 ? x : ''
+            axisLabelFormatter: (
+              x: number | Date,
+              granularity: number,
+              opts: (name: string) => any,
+              dygraph: Dygraph
+            ) => {
+              const [start, end] = dygraph.xAxisRange()
+              if (x instanceof Date) {
+                return this.xAxisFormatter(x, [start, end])
+              }
+              return x % 1 === 0
+                ? this.xAxisFormatter(new Date(x), [start, end])
+                : ''
             }
           }
         },
