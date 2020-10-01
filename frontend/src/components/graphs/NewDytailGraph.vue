@@ -16,7 +16,6 @@ import Dygraph from 'dygraphs'
 import { DetailDataPoint, Dimension, DimensionId } from '@/store/types'
 import { vxm } from '@/store'
 import 'dygraphs/dist/dygraph.css'
-import { formatDate } from '@/util/TimeUtil'
 
 @Component({})
 export default class DytailGraph extends Vue {
@@ -91,6 +90,57 @@ export default class DytailGraph extends Vue {
       this.datapoints.map(it => it.authorDate.getTime())
     )
     return max || 0
+  }
+
+  private get numberFormat(): Intl.NumberFormat {
+    return new Intl.NumberFormat(
+      new Intl.NumberFormat().resolvedOptions().locale,
+      { maximumFractionDigits: 3 }
+    )
+  }
+
+  private tooltipFormatter(legendData: dygraphs.LegendData) {
+    let datapoint: DetailDataPoint | undefined = this.datapoints.find(
+      point => point.authorDate.getTime() === legendData.x
+    )
+    if (datapoint) {
+      const dimensionRows = legendData.series.map(val => {
+        const dimension = val.labelHTML
+        const color = val.color
+
+        return `
+                <tr>
+                  <td>
+                    <span class="color-preview" style="background-color: ${color}"></span>
+                    ${dimension}
+                  </td>
+                  <td>${this.numberFormat.format(val.y)}</td>
+                </tr>
+                `
+      })
+
+      return `<table class="dygraphs-tooltip-table">
+                  <tr>
+                    <td>Hash</td>
+                    <td>${datapoint ? datapoint.hash : 'xxx'}</td>
+                  </tr>
+                  </tr>
+                    <td>Message</td>
+                    <td>${datapoint ? datapoint.summary : 'xxx'}</td>
+                  </tr>
+                  <tr>
+                    <td>Author</td>
+                    <td>
+                      ${datapoint ? datapoint.author : 'xxx'} at ${
+        datapoint ? datapoint.authorDate.toLocaleString() : 'xxx'
+      }
+                    </td>
+                  </tr>
+                 ${dimensionRows.join('\n')}
+              </table>
+            `
+    }
+    return 'something went wrong :(\n couldn\'t find commit'
   }
 
   @Watch('datapoints')
@@ -172,7 +222,8 @@ export default class DytailGraph extends Vue {
         drawPoints: false,
         animatedZooms: true,
         panEdgeFraction: 0.00001,
-        zoomCallback: this.dygraphsZoomed
+        zoomCallback: this.dygraphsZoomed,
+        legendFormatter: this.tooltipFormatter
       }
     )
 
@@ -203,3 +254,50 @@ export default class DytailGraph extends Vue {
   }
 }
 </script>
+
+<style>
+.dygraph-legend {
+  position: absolute;
+  width: auto;
+  border-style: solid;
+  white-space: nowrap;
+  z-index: 9999999;
+  transition: left 0.4s cubic-bezier(0.23, 1, 0.32, 1) 0s,
+    top 0.4s cubic-bezier(0.23, 1, 0.32, 1) 0s;
+  transition-duration: 150ms;
+  background-color: rgba(50, 50, 50, 0.7);
+  border-width: 0px;
+  border-color: rgb(51, 51, 51);
+  border-radius: 4px;
+  color: rgb(255, 255, 255);
+  font: 14px / 21px sans-serif;
+  padding: 5px;
+  left: 378px;
+  top: -49px;
+  pointer-events: none;
+}
+
+.dygraphs-tooltip-table tr td {
+  padding: 2px;
+}
+
+.dygraphs-tooltip-table tr td:nth-child(2) {
+  font-family: monospace;
+}
+.dygraphs-tooltip-table tr td:first-child {
+  padding-right: 10px;
+}
+.dygraphs-tooltip-table tr td:only-child {
+  font-weight: bold;
+  padding-top: 1em;
+  font-size: 1.1em;
+}
+
+/*noinspection CssUnusedSymbol*/
+.dygraphs-tooltip-table .color-preview {
+  width: 10px;
+  height: 10px;
+  border-radius: 25%;
+  display: inline-block;
+}
+</style>
