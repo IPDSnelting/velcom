@@ -156,12 +156,22 @@ export default class DytailGraph extends Vue {
     endX: number,
     yRanges: [number, number][]
   ) {
-    vxm.detailGraphModule.zoomXStartValue = startX
-    vxm.detailGraphModule.zoomXEndValue = endX
+    if (this.graph.isZoomed('x')) {
+      vxm.detailGraphModule.zoomXStartValue = startX
+      vxm.detailGraphModule.zoomXEndValue = endX
+    } else {
+      vxm.detailGraphModule.zoomXStartValue = null
+      vxm.detailGraphModule.zoomXEndValue = null
+    }
 
-    const [yZoomStart, yZoomEnd] = yRanges[0]
-    vxm.detailGraphModule.zoomYStartValue = yZoomStart
-    vxm.detailGraphModule.zoomYEndValue = yZoomEnd
+    if (this.graph.isZoomed('y')) {
+      const [yZoomStart, yZoomEnd] = yRanges[0]
+      vxm.detailGraphModule.zoomYStartValue = yZoomStart
+      vxm.detailGraphModule.zoomYEndValue = yZoomEnd
+    } else {
+      vxm.detailGraphModule.zoomYStartValue = null
+      vxm.detailGraphModule.zoomYEndValue = null
+    }
   }
 }
 </script>
