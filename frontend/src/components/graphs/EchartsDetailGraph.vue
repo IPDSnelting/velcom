@@ -561,26 +561,41 @@ export default class EchartsDetailGraph extends Vue {
     const actualOptions: EChartOption = (this.$refs['chart'] as any)
       .computedOptions
 
-    const orNull = (value: any) => {
+    const orNull = (zoom: EChartOption.DataZoom, start: 'start' | 'end') => {
+      const value =
+        start === 'start'
+          ? (zoom.startValue as number | undefined | null)
+          : (zoom.endValue as number | undefined | null)
       if (value === null || value === undefined) {
         return null
       }
+
+      // We are fully zoomed out ==> set that to null
+      const zoomPercent = start === 'start' ? zoom.start : zoom.end
+      if (zoomPercent === 0 || zoomPercent === 100) {
+        return null
+      }
+
       return value
     }
 
     if (seriesId === 'x' || seriesId.includes('xAxis')) {
       vxm.detailGraphModule.zoomXStartValue = orNull(
-        actualOptions.dataZoom![0].startValue
+        actualOptions.dataZoom![0],
+        'start'
       )
       vxm.detailGraphModule.zoomXEndValue = orNull(
-        actualOptions.dataZoom![0].endValue
+        actualOptions.dataZoom![0],
+        'end'
       )
     } else {
       vxm.detailGraphModule.zoomYStartValue = orNull(
-        actualOptions.dataZoom![1].startValue
+        actualOptions.dataZoom![1],
+        'start'
       )
       vxm.detailGraphModule.zoomYEndValue = orNull(
-        actualOptions.dataZoom![1].endValue
+        actualOptions.dataZoom![1],
+        'end'
       )
     }
   }
