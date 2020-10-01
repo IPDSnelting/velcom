@@ -1,4 +1,3 @@
-<script src="../../store/persistence.ts"></script>
 <template>
   <v-container fluid class="ma-0 pa-0 wrapper">
     <v-row no-gutters align="center" justify="start">
@@ -47,7 +46,7 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { vxm } from '@/store'
 import { Prop, Watch } from 'vue-property-decorator'
-import { Dimension, DimensionId } from '@/store/types'
+import { Dimension } from '@/store/types'
 
 class BenchmarkItem {
   id: string
