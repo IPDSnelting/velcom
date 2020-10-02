@@ -19,7 +19,28 @@ import { vxm } from '@/store'
 
 Vue.use(VueRouter)
 
-const routes = [
+export type RouteName =
+  | 'home'
+  | 'repo-comparison'
+  | 'repo-detail-frame'
+  | 'repo-detail'
+  | 'queue'
+  | 'run-comparison'
+  | 'run-detail'
+  | 'about'
+  | '404'
+
+type RouteInfo = Partial<{
+  name: RouteName
+  meta: Partial<{
+    navigable: boolean
+    label: string
+    icon: string
+  }>
+}> &
+  RouteConfig
+
+const routes: RouteInfo[] = [
   {
     // Redirect / to /home
     path: '/',
@@ -91,7 +112,7 @@ const routes = [
     component: RunCommitDetailView,
     meta: {
       navigable: false,
-      label: 'Run Detail'
+      label: 'Detail'
     }
   },
   {
@@ -143,7 +164,7 @@ Vue.use(VueRouterEx)
 const router = new VueRouterEx({
   mode: 'history',
   base: process.env.BASE_URL,
-  routes
+  routes: routes
 })
 
 router.afterEach(to => {
