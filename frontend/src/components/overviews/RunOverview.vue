@@ -30,7 +30,7 @@
         </v-tooltip>
       </v-list-item-avatar>
     </template>
-    <template #actions v-if="!hideActions && commit" class="ml-3">
+    <template #actions v-if="commit" class="ml-3">
       <commit-benchmark-actions
         :hasExistingBenchmark="true"
         :commitDescription="commit"
@@ -47,7 +47,6 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
-import { vxm } from '@/store'
 import {
   CommitDescription,
   CommitTaskSource,
@@ -74,21 +73,12 @@ export default class RunOverview extends Vue {
   @Prop()
   private run!: RunDescription
 
-  private get hideActions(): boolean {
-    return !vxm.userModule.isAdmin
-  }
-
   private get isSuccessful(): boolean {
     return this.run.success === 'SUCCESS'
   }
 
   private get isCompleteFailure(): boolean {
     return this.run.success === 'FAILURE'
-  }
-
-  // FIXME: Delete this?
-  private get isPartialFailure(): boolean {
-    return this.run.success === 'PARTIAL_SUCCESS'
   }
 
   private get runLinkLocation(): RawLocation {
@@ -111,13 +101,3 @@ export default class RunOverview extends Vue {
   // ==============       ==============
 }
 </script>
-
-<style scoped>
-.commit-message {
-  font-style: italic;
-}
-.flex-shrink-too {
-  flex: 1 1 0;
-  min-width: 200px;
-}
-</style>

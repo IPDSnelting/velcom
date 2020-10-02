@@ -1,6 +1,6 @@
 <template>
-  <span v-if="isAdmin">
-    <v-tooltip top>
+  <span>
+    <v-tooltip top v-if="isAdmin">
       <template #activator="{ on }">
         <v-btn v-on="on" icon @click="benchmark">
           <v-icon class="rocket">{{
@@ -13,7 +13,7 @@
       >
       <span v-else>Runs all benchmarks for this commit</span>
     </v-tooltip>
-    <v-tooltip top>
+    <v-tooltip top v-if="isAdmin">
       <template #activator="{ on }">
         <v-btn icon v-on="on" @click="benchmarkUpwards">
           <v-icon>{{ benchmarkUpwardsIcon }}</v-icon>
@@ -22,16 +22,32 @@
       Benchmarks all commits upwards of this commit (this
       <strong>one</strong> and <strong>up</strong>)
     </v-tooltip>
+    <v-tooltip top v-if="commitRemoteLink && commitRemoteIcon">
+      <template #activator="{ on }">
+        <v-btn icon v-on="on" :href="commitRemoteLink">
+          <v-icon>{{ commitRemoteIcon }}</v-icon>
+        </v-btn>
+      </template>
+      View this commit on <strong>{{ getRemoteHostname }}</strong>
+    </v-tooltip>
   </span>
 </template>
 
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { mdiHistory, mdiFlash, mdiOneUp } from '@mdi/js'
+import {
+  mdiBitbucket,
+  mdiFlash,
+  mdiGithubCircle,
+  mdiGitlab,
+  mdiHistory,
+  mdiOneUp,
+  mdiOpenInNew
+} from '@mdi/js'
 import { Prop } from 'vue-property-decorator'
 import { vxm } from '@/store'
-import { CommitDescription } from '@/store/types'
+import { CommitDescription, Repo } from '@/store/types'
 
 @Component
 export default class CommitBenchmarkActions extends Vue {
@@ -54,6 +70,60 @@ export default class CommitBenchmarkActions extends Vue {
 
   private benchmarkUpwards() {
     vxm.queueModule.dispatchQueueUpwardsOf(this.commitDescription)
+  }
+
+  private get repo(): Repo | undefined {
+    return vxm.repoModule.repoById(this.commitDescription.repoId)
+  }
+
+  private get commitRemoteLink(): string | undefined {
+    if (!this.repo) {
+      return undefined
+    }
+    const match = /^(https:\/\/(.+)\/|git@(.+):)(.+)\/(.+?)(\.git)?$/.exec(
+      this.repo.remoteURL
+    )
+    if (!match) {
+      return undefined
+    }
+    const domain = match[2] || match[3]
+    const account = match[4]
+    const projectName = match[5]
+
+    const commitMarker = this.repo.remoteURL.includes('bitbucket')
+      ? 'commits'
+      : 'commit'
+
+    return `https://${domain}/${account}/${projectName}/${commitMarker}/${this.commitDescription.hash}`
+  }
+
+  private get getRemoteHostname(): string | undefined {
+    if (!this.repo) {
+      return undefined
+    }
+    const match = /^(https:\/\/(.+)\/|git@(.+):)(.+)\/(.+?)(\.git)?$/.exec(
+      this.repo.remoteURL
+    )
+    if (!match) {
+      return undefined
+    }
+    return match[2] || match[3]
+  }
+
+  private get commitRemoteIcon(): string | undefined {
+    if (!this.repo) {
+      return undefined
+    }
+    if (this.repo.remoteURL.includes('github.com')) {
+      return mdiGithubCircle
+    }
+    if (this.repo.remoteURL.includes('gitlab.com')) {
+      return mdiGitlab
+    }
+    if (this.repo.remoteURL.includes('bitbucket')) {
+      return mdiBitbucket
+    }
+    return mdiOpenInNew
   }
 
   // ============== ICONS ==============
