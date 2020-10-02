@@ -15,16 +15,38 @@
         <run-detail :runWithDifferences="runWithDifferences"></run-detail>
       </v-col>
     </v-row>
-    <v-row v-if="commit" no-gutters>
+    <v-row v-if="finishedLoading && !runWithDifferences">
+      <v-col>
+        <v-card>
+          <v-card-title>
+            <v-toolbar color="primary" dark>
+              Benchmark Status: Not much's going on here
+            </v-toolbar>
+          </v-card-title>
+          <v-card-text class="text-center">
+            Hey, this commit was
+            <span class="font-weight-bold">never benchmarked</span>. Maybe it is
+            already in the queue, but if it is not, you can place it there.
+            <br />To do so you need
+            <span class="font-weight-bold">admin privileges</span>
+            (or a way to ask your friendly admin!)
+            <br />Then just click the
+            <span class="font-weight-bold">icon next to the Repo name</span>
+            and id that says "benchmark" when you hover over it :)
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+    <v-row v-if="show404">
+      <page-404></page-404>
+    </v-row>
+    <v-row v-if="commit && runWithDifferences" no-gutters>
       <v-col>
         <run-timeline
           :selectedRunId="runWithDifferences ? runWithDifferences.run.id : null"
           :runs="commit.runs"
         ></run-timeline>
       </v-col>
-    </v-row>
-    <v-row v-if="show404">
-      <page-404></page-404>
     </v-row>
   </v-container>
 </template>
@@ -53,6 +75,7 @@ export default class RunCommitDetailView extends Vue {
   private runWithDifferences: RunWithDifferences | null = null
   private commit: Commit | null = null
   private show404: boolean = false
+  private finishedLoading: boolean = false
 
   private get firstComponent(): string {
     return this.$route.params['first']
@@ -80,6 +103,7 @@ export default class RunCommitDetailView extends Vue {
     this.show404 = false
     this.runWithDifferences = null
     this.commit = null
+    this.finishedLoading = false
 
     if (this.firstComponent && !this.secondComponent) {
       // we have a run id
@@ -109,6 +133,8 @@ export default class RunCommitDetailView extends Vue {
       // We got weird things
       this.show404 = true
     }
+
+    this.finishedLoading = true
   }
 
   mounted(): void {
