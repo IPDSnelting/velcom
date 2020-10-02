@@ -164,9 +164,10 @@ export default class EchartsDetailGraph extends Vue {
   // <!--<editor-fold desc="ECHARTS GRAPH OPTIONS">-->
   @Watch('detailDataPoints')
   @Watch('beginYAtZero')
+  @Watch('dayEquidistant')
   @Watch('graphFailedOrUnbenchmarkedColor') // DataPoints need adjusting, they store the color
   private updateGraph() {
-    console.log('UPDATED')
+    console.log('Echarts updated')
 
     this.selectAppropriateSeries()
 
@@ -406,8 +407,6 @@ export default class EchartsDetailGraph extends Vue {
   private get echartsDataPoints(): Map<DimensionId, EchartsDataPoint[]> {
     const map: Map<DimensionId, EchartsDataPoint[]> = new Map()
 
-    console.time('complete setup')
-    console.log(this.dimensions)
     this.dimensions.forEach(dimension => {
       if (this.dayEquidistant) {
         map.set(dimension, this.buildDayEquidistantPointsForSingle(dimension))
@@ -415,8 +414,6 @@ export default class EchartsDetailGraph extends Vue {
         map.set(dimension, this.buildNormalPointsForSingle(dimension))
       }
     })
-    console.log('\n\n===\n\n')
-    console.timeEnd('complete setup')
 
     return map
   }
