@@ -20,6 +20,11 @@
             </v-btn-toggle>
           </v-card-title>
           <v-card-text>
+            <v-row justify="end" class="mx-4">
+              <v-col cols="auto">
+                <share-graph-link-dialog />
+              </v-col>
+            </v-row>
             <component
               :is="selectedGraphComponent"
               :dimensions="selectedDimensions"
@@ -66,6 +71,12 @@
                       >Begin Y-Axis at minimum value</span
                     >
                     <span v-else>Begin Y-Axis at zero</span>
+                  </v-btn>
+                </v-col>
+                <v-col cols="auto">
+                  <v-btn text color="primary" :href="permanentLinkUrl">
+                    Permanent Link
+                    <v-icon right>{{ permanentLinkIcon }}</v-icon>
                   </v-btn>
                 </v-col>
               </v-row>
@@ -233,9 +244,11 @@ import { Dimension, Repo } from '@/store/types'
 import EchartsDetailGraph from '@/components/graphs/EchartsDetailGraph.vue'
 import DytailGraph from '@/components/graphs/NewDytailGraph.vue'
 import { Watch } from 'vue-property-decorator'
+import ShareGraphLinkDialog from '@/views/ShareGraphLinkDialog.vue'
 
 @Component({
   components: {
+    'share-graph-link-dialog': ShareGraphLinkDialog,
     'repo-base-information': RepoBaseInformation,
     'matrix-dimension-selection': MatrixDimensionSelection,
     'normal-dimension-selection': DimensionSelection,

@@ -11,6 +11,9 @@ import { detailDataPointFromJson } from '@/util/GraphJsonHelper'
 import { dimensionFromJson } from '@/util/RepoJsonHelper'
 import { CustomKeyEqualsMap } from '@/util/CustomKeyEqualsMap'
 import { vxm } from '@/store'
+import router from '@/router'
+import { Route } from 'vue-router'
+import { dateFromRelative } from '@/util/TimeUtil'
 
 const VxModule = createModule({
   namespaced: 'detailGraphModule',
@@ -21,6 +24,12 @@ export type DimensionDetailPoint = {
   dataPoint: DetailDataPoint
   dimension: Dimension
 }
+
+export type PermanentLinkOptions = Partial<{
+  includeXZoom: boolean
+  includeYZoom: boolean
+  includeDimensions: boolean
+}>
 
 export class DetailGraphStore extends VxModule {
   private _detailGraph: DetailDataPoint[] = []
@@ -100,6 +109,84 @@ export class DetailGraphStore extends VxModule {
   }
 
   /**
+   * Adjusts this store to the values defined in the permanent link.
+   *
+   * @param link the link to adjust to
+   */
+  @action
+  async adjustToPermanentLink(link: Route): Promise<void> {
+    if (!link.params.id) {
+      return
+    }
+    const repoId: RepoId = link.params.id
+    const repo =
+      vxm.repoModule.repoById(repoId) ||
+      (await vxm.repoModule.fetchRepoById(repoId))
+
+    const extractFloat: (
+      name: string,
+      action: (value: number) => void
+    ) => void = (name, action) => {
+      const queryValue = link.query[name]
+      if (queryValue && typeof queryValue === 'string') {
+        if (!isNaN(parseFloat(queryValue))) {
+          action(parseFloat(queryValue))
+        }
+      }
+    }
+
+    const extractDate: (
+      name: string,
+      relative: Date,
+      action: (value: number) => void
+    ) => void = (name, relative, action) => {
+      const queryValue = link.query[name]
+      if (queryValue && typeof queryValue === 'string') {
+        if (queryValue.match(/^([+-])?(\d|\.)+$/)) {
+          action(parseFloat(queryValue))
+          return
+        }
+        const relativeDate = dateFromRelative(queryValue, relative)
+        console.log(queryValue, relativeDate)
+        if (relativeDate) {
+          action(relativeDate.getTime())
+        }
+      }
+    }
+
+    // Anchors to the current date
+    extractDate('zoomXEnd', new Date(), value => {
+      this.zoomXEndValue = value
+    })
+    // Anchors to the end date (or the current one if not specified)
+    extractDate(
+      'zoomXStart',
+      new Date(this.zoomXEndValue || new Date().getTime()),
+      value => {
+        this.zoomXStartValue = value
+      }
+    )
+    extractFloat('zoomYStart', value => {
+      this.zoomYStartValue = value
+    })
+    extractFloat('zoomYEnd', value => {
+      this.zoomYEndValue = value
+    })
+
+    if (link.query.dimensions && typeof link.query.dimensions === 'string') {
+      const dimensionString = link.query.dimensions
+      const parts = dimensionString.split('::')
+      vxm.detailGraphModule.selectedDimensions = parts.flatMap(it => {
+        const [benchmark, ...metrics] = it.split(':')
+
+        return repo.dimensions.filter(
+          it => it.benchmark === benchmark && metrics.includes(it.metric)
+        )
+      })
+    }
+  }
+
+  /**
    * string of requested dimensions for a detail graph,
    * formatted as 'bench1:metric1.1:metric1.2::bench2:metric2.1' etc.
    *
@@ -142,6 +229,50 @@ export class DetailGraphStore extends VxModule {
   @mutation
   setDetailGraph(graph: DetailDataPoint[]): void {
     this._detailGraph = graph
+  }
+
+  /**
+   * Returns a permanent link to the current detail graph state
+   */
+  get permanentLink(): (options?: PermanentLinkOptions) => string {
+    return options => {
+      const orUndefined = (it: any) => (it ? '' + it : undefined)
+      function respectOptions<T>(
+        name: keyof PermanentLinkOptions,
+        value: T
+      ): T | undefined {
+        if (!options || options[name]) {
+          return value
+        }
+        return undefined
+      }
+
+      const route = router.resolve({
+        name: 'repo-detail',
+        params: { id: this.selectedRepoId },
+        query: {
+          zoomYStart: respectOptions(
+            'includeYZoom',
+            orUndefined(this.zoomYStartValue)
+          ),
+          zoomYEnd: respectOptions(
+            'includeYZoom',
+            orUndefined(this.zoomYEndValue)
+          ),
+          zoomXStart: respectOptions(
+            'includeXZoom',
+            orUndefined(this.zoomXStartValue)
+          ),
+          zoomXEnd: respectOptions(
+            'includeXZoom',
+            orUndefined(this.zoomXEndValue)
+          ),
+          dimensions: respectOptions('includeDimensions', this.dimensionString)
+        }
+      })
+
+      return decodeURIComponent(location.origin + route.href)
+    }
   }
 
   /**

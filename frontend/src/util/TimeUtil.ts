@@ -85,17 +85,39 @@ export function formatDateUTC(date: number | Date): string {
 }
 
 /**
- * Formats a time as a "hh:mm:ss" string.
- * @param date the date to format
+ * Converts a relative date "<number>d" or "<number>w" or "<number>m" or
+ * "<number>y" to a Date.
+ *
+ * @param relative the input string
+ * @param anchor the anchor it is relative to
  */
-export function formatTime(date: Date): string {
-  return (
-    leftZeroPad(2, date.getHours()) +
-    ':' +
-    leftZeroPad(2, date.getMinutes()) +
-    ':' +
-    leftZeroPad(2, date.getSeconds())
-  )
+export function dateFromRelative(
+  relative: string,
+  anchor: Date = new Date()
+): Date | undefined {
+  const number: number = parseFloat(relative.substring(0, relative.length - 1))
+
+  let multiplier: number
+  if (relative.endsWith('d')) {
+    // millis * seconds in minute * minutes in hour * day
+    multiplier = 1000 * 60 * 60 * 24
+  } else if (relative.endsWith('w')) {
+    // millis * seconds in minute * minutes in hour * day * 7
+    multiplier = 1000 * 60 * 60 * 24 * 7
+  } else if (relative.endsWith('m')) {
+    // millis * seconds in minute * minutes in hour * day * 30
+    multiplier = 1000 * 60 * 60 * 24 * 30
+  } else if (relative.endsWith('y')) {
+    // millis * seconds in minute * minutes in hour * day * 365
+    multiplier = 1000 * 60 * 60 * 24 * 465
+  } else {
+    return undefined
+  }
+
+  if (isNaN(number)) {
+    return undefined
+  }
+  return new Date(anchor.getTime() + number * multiplier)
 }
 
 /**

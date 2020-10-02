@@ -85,6 +85,7 @@ export default class RepoDetailFrame extends Vue {
     if (vxm.repoModule.allRepos.length === 1) {
       this.selectedRepoId = vxm.repoModule.allRepos[0].id
     }
+    vxm.detailGraphModule.adjustToPermanentLink(this.$route)
   }
 
   // ============== ICONS ==============

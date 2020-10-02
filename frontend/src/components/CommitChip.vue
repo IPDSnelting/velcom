@@ -16,6 +16,7 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
+import { copyToClipboard } from '@/util/ClipboardUtils'
 
 @Component
 export default class CommitChip extends Vue {
@@ -32,20 +33,12 @@ export default class CommitChip extends Vue {
   private on?: any
 
   private copyToClipboard(hash: string) {
-    let selection = window.getSelection()
+    const selection = window.getSelection()
     if (selection && selection.toString() !== '') {
       // Do not overwrite user text selection
       return
     }
-    navigator.clipboard
-      .writeText(hash)
-      .then(() => this.$globalSnackbar.setSuccess('', 'Copied!'))
-      .catch(error =>
-        this.$globalSnackbar.setError(
-          '',
-          'Could not copy to clipboard :( ' + error
-        )
-      )
+    copyToClipboard(hash, this.$globalSnackbar)
   }
 }
 </script>
