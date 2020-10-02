@@ -10,6 +10,7 @@ import { QueueStore } from './modules/queueStore'
 import { ComparisonGraphStore } from './modules/comparisonGraphStore'
 import { DetailGraphStore } from './modules/detailGraphStore'
 import {
+  deletedOutdatedLocalData,
   persistenceLocalStorage,
   persistenceSessionStorage
 } from './persistence'
@@ -25,6 +26,8 @@ export interface RootState {
   detailGraphModule: DetailGraphStore
   userModule: UserStore
 }
+
+deletedOutdatedLocalData()
 
 Vue.use(Vuex)
 
