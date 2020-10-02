@@ -12,10 +12,7 @@
                 <span class="mx-2">—</span>
                 <router-link
                   class="concealed-link"
-                  :to="{
-                    name: 'run-detail',
-                    params: { first: commit.repoId, second: commit.hash }
-                  }"
+                  :to="linkLocation || commitLinkLocation"
                 >
                   <span class="commit-message">{{ commit.summary }}</span>
                 </router-link>
@@ -56,6 +53,7 @@ import { formatDate, formatDateUTC } from '@/util/TimeUtil'
 import { CommitDescription } from '@/store/types'
 import InlineMinimalRepoNameDisplay from '../InlineMinimalRepoDisplay.vue'
 import CommitChip from '../CommitChip.vue'
+import { RawLocation } from 'vue-router'
 
 @Component({
   components: {
@@ -67,12 +65,22 @@ export default class CommitOverviewBase extends Vue {
   @Prop()
   private commit!: CommitDescription
 
+  @Prop({ default: null })
+  private linkLocation!: RawLocation
+
   private get formattedDate() {
     return formatDate(this.commit.authorDate || new Date(0))
   }
 
   private get formattedDateUTC() {
     return formatDateUTC(this.commit.authorDate || new Date(0))
+  }
+
+  private get commitLinkLocation(): RawLocation {
+    return {
+      name: 'run-detail',
+      params: { first: this.commit.repoId, second: this.commit.hash }
+    }
   }
 }
 </script>
