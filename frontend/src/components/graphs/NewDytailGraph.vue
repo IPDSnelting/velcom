@@ -16,6 +16,7 @@ import Dygraph from 'dygraphs'
 import { DetailDataPoint, Dimension, DimensionId } from '@/store/types'
 import { vxm } from '@/store'
 import 'dygraphs/css/dygraph.css'
+import Crosshair from 'dygraphs/src/extras/crosshair.js'
 
 @Component({})
 export default class DytailGraph extends Vue {
@@ -223,7 +224,8 @@ export default class DytailGraph extends Vue {
         animatedZooms: true,
         panEdgeFraction: 0.00001,
         zoomCallback: this.dygraphsZoomed,
-        legendFormatter: this.tooltipFormatter
+        legendFormatter: this.tooltipFormatter,
+        plugins: [new Crosshair({ direction: 'vertical' })]
       }
     )
 
