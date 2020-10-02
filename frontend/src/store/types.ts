@@ -59,6 +59,15 @@ export type DimensionId = {
   readonly metric: string
 }
 
+export function dimensionIdEqual(
+  dimOne: DimensionId,
+  dimTwo: DimensionId
+): boolean {
+  return (
+    dimOne.benchmark === dimTwo.benchmark && dimOne.metric === dimTwo.metric
+  )
+}
+
 export class Dimension {
   readonly benchmark: string
   readonly metric: string

@@ -146,7 +146,7 @@ export default class DimensionSelection extends Vue {
     }
     if (item instanceof DimensionItem) {
       return vxm.colorModule.colorByIndex(
-        this.selectedDimensions.findIndex(it => it.equals(item.dimension))
+        vxm.detailGraphModule.colorIndex(item.dimension)!
       )
     } else if (item.children) {
       return this.metricColor(item.children[0])

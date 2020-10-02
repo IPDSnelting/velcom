@@ -8,11 +8,23 @@
     <v-row align="baseline" justify="center">
       <v-col>
         <v-card>
+          <v-card-title>
+            <v-btn-toggle v-model="selectedGraphComponent" mandatory>
+              <v-btn
+                v-for="{ component, name } in availableGraphComponents"
+                :key="name"
+                :value="component"
+              >
+                {{ name }}
+              </v-btn>
+            </v-btn-toggle>
+          </v-card-title>
           <v-card-text>
-            <new-echarts-detail
+            <component
+              :is="selectedGraphComponent"
               :dimensions="selectedDimensions"
-            ></new-echarts-detail>
-            <!--            <dygraph-detail></dygraph-detail>-->
+              :beginYAtZero="yStartsAtZero"
+            ></component>
           </v-card-text>
         </v-card>
       </v-col>
@@ -22,7 +34,7 @@
         <v-card
           ><v-card-text class="ma-0 pa-0">
             <v-container fluid class="ma-0 px-5 pb-0">
-              <v-row align="center" justify="space-between" no-gutters>
+              <v-row align="start" justify="space-between" no-gutters>
                 <v-col :md="useMatrixSelector ? '' : '5'" sm="12" cols="12">
                   <v-btn
                     @click="useMatrixSelector = !useMatrixSelector"
@@ -44,6 +56,18 @@
                   >
                   </normal-dimension-selection>
                 </v-col>
+                <v-col class="d-flex justify-end">
+                  <v-btn
+                    @click="yStartsAtZero = !yStartsAtZero"
+                    color="primary"
+                    outlined
+                  >
+                    <span v-if="yStartsAtZero"
+                      >Begin Y-Axis at minimum value</span
+                    >
+                    <span v-else>Begin Y-Axis at zero</span>
+                  </v-btn>
+                </v-col>
               </v-row>
             </v-container>
           </v-card-text>
@@ -55,8 +79,8 @@
         <v-card>
           <v-card-text class="ma-0 pa-0">
             <v-container fluid class="ma-0 px-5">
-              <v-row align="center" justify="space-between" no-gutters
-                ><v-col>
+              <v-row align="center" justify="space-between" no-gutters>
+                <v-col>
                   <v-menu
                     ref="startDateMenu"
                     v-model="startDateMenuOpen"
@@ -200,14 +224,15 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { mdiCalendar, mdiLock, mdiLockOpenVariant } from '@mdi/js'
-import { vxm } from '../store/index'
+import { vxm } from '@/store'
 import RepoBaseInformation from '@/components/repodetail/RepoBaseInformation.vue'
 import DimensionSelection from '../components/graphs/DimensionSelection.vue'
 import MatrixDimensionSelection from '../components/graphs/MatrixDimensionSelection.vue'
 import RepoCommitOverview from '@/components/repodetail/RepoCommitOverview.vue'
 import { Dimension, Repo } from '@/store/types'
 import EchartsDetailGraph from '@/components/graphs/EchartsDetailGraph.vue'
-import DytailGraph from '@/components/graphs/Dygraph-Detail.vue'
+import DytailGraph from '@/components/graphs/NewDytailGraph.vue'
+import { Watch } from 'vue-property-decorator'
 
 @Component({
   components: {
@@ -232,7 +257,24 @@ export default class RepoDetail extends Vue {
 
   private startDateMenuOpen: boolean = false
   private stopDateMenuOpen: boolean = false
-  private dateLocked: 'start' | 'end' | 'neither' = 'start'
+  private dateLocked: 'start' | 'end' | 'neither' = 'end'
+  private availableGraphComponents = [
+    {
+      predicate: () => {
+        return vxm.detailGraphModule.visiblePoints < 100_000
+      },
+      component: EchartsDetailGraph,
+      name: 'Fancy'
+    },
+    {
+      predicate: () => {
+        return vxm.detailGraphModule.visiblePoints >= 100_000
+      },
+      component: DytailGraph,
+      name: 'Fast'
+    }
+  ]
+  private selectedGraphComponent: typeof Vue | null = null
 
   private get repo(): Repo {
     return vxm.repoModule.repoById(this.id)!
@@ -248,10 +290,6 @@ export default class RepoDetail extends Vue {
 
   private get selectedDimensions(): Dimension[] {
     return vxm.detailGraphModule.selectedDimensions
-  }
-
-  private set selectedDimensions(dimensions: Dimension[]) {
-    vxm.detailGraphModule.selectedDimensions = dimensions
   }
 
   private saveStartDateMenu(date: string) {
@@ -287,28 +325,40 @@ export default class RepoDetail extends Vue {
     this.retrieveGraphData()
   }
 
-  get startTimeString(): string {
+  private get startTimeString(): string {
     return vxm.detailGraphModule.startTime.toISOString().substring(0, 10)
   }
 
-  set startTimeString(value: string) {
+  // v-model binding
+  // noinspection JSUnusedGlobalSymbols
+  private set startTimeString(value: string) {
     vxm.detailGraphModule.startTime = new Date(value)
   }
 
-  get endTimeString(): string {
+  private get endTimeString(): string {
     return vxm.detailGraphModule.endTime.toISOString().substring(0, 10)
   }
 
-  set endTimeString(value: string) {
+  // v-model binding
+  // noinspection JSUnusedGlobalSymbols
+  private set endTimeString(value: string) {
     vxm.detailGraphModule.endTime = new Date(value)
   }
 
-  get duration(): number {
+  private get duration(): number {
     return vxm.detailGraphModule.duration
   }
 
-  set duration(duration: number) {
+  private set duration(duration: number) {
     vxm.detailGraphModule.duration = Number(duration) // the number is a lie :(
+  }
+
+  private get yStartsAtZero(): boolean {
+    return vxm.detailGraphModule.beginYScaleAtZero
+  }
+
+  private set yStartsAtZero(startsAtZero: boolean) {
+    vxm.detailGraphModule.beginYScaleAtZero = startsAtZero
   }
 
   private lockDates(date: 'start' | 'end'): void {
@@ -338,21 +388,26 @@ export default class RepoDetail extends Vue {
       : 'You have to select a date after the first one!'
   }
 
+  @Watch('id')
   private retrieveGraphData(): void {
     if (this.stopAfterStart()) {
       vxm.detailGraphModule.fetchDetailGraph()
+      const correctSeries = this.availableGraphComponents.find(it =>
+        it.predicate()
+      )
+      if (correctSeries) {
+        this.selectedGraphComponent = correctSeries.component
+      }
     }
+  }
+
+  mounted(): void {
+    this.retrieveGraphData()
   }
 }
 </script>
 
 <style scoped>
-.hint {
-  font-size: 14px;
-  font-weight: 400;
-  opacity: 0.7;
-}
-
 /*  https://stackoverflow.com/questions/53391733/untie-text-fields-icon-click-enabling-from-the-input-one */
 .lock-button {
   pointer-events: auto;

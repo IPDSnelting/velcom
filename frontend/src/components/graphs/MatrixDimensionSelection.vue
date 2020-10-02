@@ -147,11 +147,18 @@ export default class MatrixMeasurementIdSelection extends Vue {
   }
 
   private metricColor(benchmark: string, metric: string): string {
-    if (this.selectedDimensionSet.has(benchmark + metric)) {
+    if (this.selectedDimensionSet.has(benchmark + ' - ' + metric)) {
+      console.log(
+        vxm.detailGraphModule.colorIndex({
+          benchmark: benchmark,
+          metric: metric
+        })
+      )
       return vxm.colorModule.colorByIndex(
-        this.selectedDimensions.findIndex(
-          it => it.benchmark === benchmark && it.metric === metric
-        )
+        vxm.detailGraphModule.colorIndex({
+          benchmark: benchmark,
+          metric: metric
+        })!
       )
     }
     return 'accent'
@@ -166,7 +173,10 @@ export default class MatrixMeasurementIdSelection extends Vue {
         .find(it => it.benchmark === benchmark && it.metric === metric)
 
       if (newlyCheckedDimension) {
-        vxm.detailGraphModule.selectedDimensions.push(newlyCheckedDimension)
+        // reassigning fires change listener
+        vxm.detailGraphModule.selectedDimensions = vxm.detailGraphModule.selectedDimensions.concat(
+          newlyCheckedDimension
+        )
       }
     } else {
       vxm.detailGraphModule.selectedDimensions = this.selectedDimensions.filter(

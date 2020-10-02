@@ -4,7 +4,8 @@ import {
   ComparisonDataPoint,
   RepoId,
   DimensionId,
-  DetailDataPointValue
+  DetailDataPointValue,
+  dimensionIdEqual
 } from '@/store/types'
 import { CustomKeyEqualsMap } from '@/util/CustomKeyEqualsMap'
 
@@ -23,11 +24,7 @@ export function detailDataPointFromJson(
   const map: CustomKeyEqualsMap<
     DimensionId,
     DetailDataPointValue
-  > = new CustomKeyEqualsMap(
-    [],
-    (first, second) =>
-      first.benchmark === second.benchmark && first.metric === second.metric
-  )
+  > = new CustomKeyEqualsMap([], dimensionIdEqual)
   for (let i = 0; i < dimensions.length; i++) {
     map.set(dimensions[i], detailDataPointValueFromJson(json.values[i]))
   }
@@ -35,7 +32,7 @@ export function detailDataPointFromJson(
     json.hash,
     json.parents,
     json.author,
-    new Date(json.author_date),
+    new Date(json.author_date * 1000),
     json.summary,
     map
   )

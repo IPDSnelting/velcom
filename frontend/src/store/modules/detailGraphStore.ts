@@ -1,9 +1,16 @@
-import { createModule, mutation, action } from 'vuex-class-component'
-import { RepoId, Dimension, DetailDataPoint } from '@/store/types'
+import { action, createModule, mutation } from 'vuex-class-component'
+import {
+  DetailDataPoint,
+  Dimension,
+  DimensionId,
+  dimensionIdEqual,
+  RepoId
+} from '@/store/types'
 import axios from 'axios'
 import { detailDataPointFromJson } from '@/util/GraphJsonHelper'
 import { dimensionFromJson } from '@/util/RepoJsonHelper'
 import { CustomKeyEqualsMap } from '@/util/CustomKeyEqualsMap'
+import { vxm } from '@/store'
 
 const VxModule = createModule({
   namespaced: 'detailGraphModule',
@@ -15,95 +22,31 @@ export type DimensionDetailPoint = {
   dimension: Dimension
 }
 
-function hydrateDimension(it: Dimension) {
-  return new Dimension(it.benchmark, it.metric, it.unit, it.interpretation)
-}
-
-function hydrateDetailPoint(it: DetailDataPoint) {
-  return new DetailDataPoint(
-    it.hash,
-    it.parents,
-    it.author,
-    new Date(it.authorDate),
-    it.summary,
-    new CustomKeyEqualsMap(
-      it.values,
-      (first, second) =>
-        first.benchmark === second.benchmark && first.metric === second.metric
-    )
-  )
-}
-
-function deserializeDimensionDetailPoint(
-  point: any
-): DimensionDetailPoint | null {
-  if (!point) {
-    return null
-  }
-  return {
-    dimension: hydrateDimension(point.dimension),
-    dataPoint: hydrateDetailPoint(point.dataPoint)
-  }
-}
-
-export function detailGraphStoreFromJson(json?: string): any {
-  if (!json) {
-    return {}
-  }
-
-  const parsed = JSON.parse(json)
-  // Convert flat json to real object
-  parsed._selectedDimensions = parsed._selectedDimensions.map(hydrateDimension)
-  parsed._referenceDatapoint = deserializeDimensionDetailPoint(
-    parsed._referenceDatapoint
-  )
-  parsed.commitToCompare = deserializeDimensionDetailPoint(
-    parsed.commitToCompare
-  )
-
-  return parsed
-}
-
-function serializeDimensionDetailPoint(point: DimensionDetailPoint | null) {
-  if (!point) {
-    return null
-  }
-  const persistablePoint: any = Object.assign({}, point.dataPoint)
-  persistablePoint.values = Array.from(persistablePoint.values.entries())
-  return {
-    dataPoint: persistablePoint,
-    dimension: point.dimension
-  }
-}
-
-export function detailGraphStoreToJson(store: DetailGraphStore): string {
-  const referenceDataPoint = serializeDimensionDetailPoint(
-    (store as any)._referenceDatapoint
-  )
-  return JSON.stringify({
-    _selectedRepoId: (store as any)._selectedRepoId,
-    _selectedDimensions: (store as any)._selectedDimensions,
-    _referenceDatapoint: referenceDataPoint,
-    commitToCompare: serializeDimensionDetailPoint(store.commitToCompare)
-  })
-}
-
 export class DetailGraphStore extends VxModule {
   private _detailGraph: DetailDataPoint[] = []
   private _selectedRepoId: RepoId = ''
   private _selectedDimensions: Dimension[] = []
-  private _referenceDatapoint: DimensionDetailPoint | null = null
 
+  private colorIndexMap: CustomKeyEqualsMap<
+    DimensionId,
+    number
+  > = new CustomKeyEqualsMap([], dimensionIdEqual)
+  private firstFreeColorIndex: number = 0
+
+  referenceDatapoint: DimensionDetailPoint | null = null
   commitToCompare: DimensionDetailPoint | null = null
 
+  zoomXStartValue: number | null = null
+  zoomXEndValue: number | null = null
+  zoomYStartValue: number | null = null
+  zoomYEndValue: number | null = null
+
   // One week in the past, as elegant as ever
-  private _defaultStartTime: Date = new Date(
-    new Date().setDate(new Date().getDate() - 7)
-  )
-  private _defaultEndTime: Date = new Date()
-  private _startTime: Date = this._defaultStartTime
-  private _endTime: Date = this._defaultEndTime
-  private _duration: number = 7
+  startTime: Date = new Date(new Date().setDate(new Date().getDate() - 7))
+  endTime: Date = new Date()
+  duration: number = 7
+
+  beginYScaleAtZero: boolean = false
 
   /**
    * Fetches the data necessary to display the data points
@@ -115,10 +58,10 @@ export class DetailGraphStore extends VxModule {
   @action
   async fetchDetailGraph(): Promise<DetailDataPoint[]> {
     const effectiveStartTime: number = Math.floor(
-      this._startTime.getTime() / 1000
+      this.startTime.getTime() / 1000
     )
     const effectiveEndTime: number = Math.floor(
-      this._endTime.getTime() / 1000 + 60 * 60 * 24
+      this.endTime.getTime() / 1000 + 60 * 60 * 24
     )
 
     // If we have selected no dimensions, we don't event need to make a request
@@ -213,6 +156,28 @@ export class DetailGraphStore extends VxModule {
   }
 
   /**
+   * Returns an approximation of the currently visible number of points.
+   */
+  get visiblePoints(): number {
+    const startValue = vxm.detailGraphModule.zoomXStartValue
+    const endValue = vxm.detailGraphModule.zoomXEndValue
+
+    // TODO: Is this a performance problem? There might be 10.000+ items here
+    // and this method is called every time the slider is dragged or the user
+    // zooms using the mouse wheel
+    let visibleDataPoints = 0
+    for (const point of this._detailGraph) {
+      if (
+        (startValue === null || point.authorDate.getTime() >= startValue) &&
+        (endValue === null || point.authorDate.getTime() <= endValue)
+      ) {
+        visibleDataPoints += this._selectedDimensions.length
+      }
+    }
+    return visibleDataPoints
+  }
+
+  /**
    * Returns all selected dimensions.
    *
    * @readonly
@@ -233,41 +198,11 @@ export class DetailGraphStore extends VxModule {
       if (!it) {
         throw new Error('UNDEFINED OR NULL!')
       }
+      if (!this.colorIndexMap.has(it)) {
+        this.colorIndexMap.set(it, this.firstFreeColorIndex++)
+      }
     })
     this._selectedDimensions = dimensions
-  }
-
-  /**
-   * Returns the reference data point.
-   *
-   * @type {({
-   *     dataPoint: DetailDataPoint
-   *     dimension: Dimension
-   *   } | null)}
-   * @memberof detailGraphStore
-   */
-  get referenceDatapoint(): {
-    dataPoint: DetailDataPoint
-    dimension: Dimension
-  } | null {
-    if (!this._referenceDatapoint) {
-      return null
-    }
-    return this._referenceDatapoint
-  }
-
-  /**
-   * Sets the reference data point.
-   *
-   * @memberof RepoDetailStore
-   */
-  set referenceDatapoint(
-    datapoint: {
-      dataPoint: DetailDataPoint
-      dimension: Dimension
-    } | null
-  ) {
-    this._referenceDatapoint = datapoint
   }
 
   /**
@@ -290,29 +225,28 @@ export class DetailGraphStore extends VxModule {
    */
   set selectedRepoId(selectedRepoId: RepoId) {
     this._selectedRepoId = selectedRepoId
+    // reset colors
+    this.colorIndexMap = new CustomKeyEqualsMap([], dimensionIdEqual)
+    this.firstFreeColorIndex = 0
+
+    // rebuild selected dimensions so colors are correct
+    const repo = vxm.repoModule.repoById(selectedRepoId)
+
+    if (repo) {
+      const isInRepo = (dimension: Dimension) =>
+        repo.dimensions.find(it => it.equals(dimension)) !== undefined
+
+      // we need to trigger the setter
+      vxm.detailGraphModule.selectedDimensions = this._selectedDimensions.filter(
+        isInRepo
+      )
+    } else {
+      // we need to trigger the setter
+      vxm.detailGraphModule.selectedDimensions = []
+    }
   }
 
-  get startTime(): Date {
-    return this._startTime
-  }
-
-  set startTime(start: Date) {
-    this._startTime = start
-  }
-
-  get endTime(): Date {
-    return this._endTime
-  }
-
-  set endTime(end: Date) {
-    this._endTime = end
-  }
-
-  get duration(): number {
-    return this._duration
-  }
-
-  set duration(duration: number) {
-    this._duration = duration
+  get colorIndex(): (dimension: DimensionId) => number | undefined {
+    return dimension => this.colorIndexMap.get(dimension)
   }
 }

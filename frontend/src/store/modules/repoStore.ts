@@ -10,19 +10,6 @@ const VxModule = createModule({
   strict: false
 })
 
-export function repoStoreToJson(store: RepoStore): string {
-  // I want to be a friend so I can see the private field :/
-  // Or file-private visibility
-  return JSON.stringify({
-    repoIndex: (store as any).currentRepoIndex,
-    repoIndices: (store as any).repoIndices
-  })
-}
-
-export function repoStoreFromJson(json?: string): any {
-  return json ? JSON.parse(json) : {}
-}
-
 export class RepoStore extends VxModule {
   private repos: { [repoId: string]: Repo } = {}
   private currentRepoIndex: number = 0

@@ -12,6 +12,7 @@
         ></datapoint-dialog>
         <div id="chart-container">
           <v-chart
+            ref="chart"
             :autoresize="true"
             :options="chartOptions"
             @datazoom="echartsZoomed"
@@ -28,12 +29,7 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import {
-  DetailDataPoint,
-  DetailDataPointValue,
-  Dimension,
-  DimensionId
-} from '@/store/types'
+import { DetailDataPoint, Dimension, DimensionId } from '@/store/types'
 import { EChartOption } from 'echarts'
 import { Prop, Watch } from 'vue-property-decorator'
 import EChartsComp from 'vue-echarts'
@@ -53,6 +49,7 @@ import 'echarts/lib/component/markPoint'
 import { vxm } from '@/store'
 import DetailDatapointDialog from '@/components/dialogs/DetailDatapointDialog.vue'
 import { DimensionDetailPoint } from '@/store/modules/detailGraphStore'
+import { formatDate } from '@/util/TimeUtil'
 
 type ValidEchartsSeries = EChartOption.SeriesLine | EChartOption.SeriesGraph
 type SeriesGenerationFunction = (id: DimensionId) => ValidEchartsSeries
@@ -86,6 +83,7 @@ class EchartsDataPoint {
   }
 
   readonly summary: string
+  readonly author: string
 
   constructor(
     time: Date,
@@ -94,7 +92,8 @@ class EchartsDataPoint {
     name: string,
     color: string,
     borderColor: string,
-    summary: string
+    summary: string,
+    author: string
   ) {
     this.time = time
     this.dataValue = dataValue
@@ -107,6 +106,7 @@ class EchartsDataPoint {
       borderWidth: 2
     }
     this.summary = summary
+    this.author = author
   }
 }
 
@@ -118,6 +118,7 @@ class EchartsDataPoint {
 })
 export default class EchartsDetailGraph extends Vue {
   // <!--<editor-fold desc="PROPS">-->
+  // noinspection JSMismatchedCollectionQueryUpdate
   @Prop()
   private dimensions!: Dimension[]
 
@@ -128,8 +129,6 @@ export default class EchartsDetailGraph extends Vue {
   // <!--<editor-fold desc="FIELDS">-->
   private chartOptions: EChartOption = {}
   private seriesGenerator: SeriesGenerationFunction = this.buildLineSeries
-  private zoomStartPercent: number = 0
-  private zoomEndPercent: number = 1
 
   // >>>> Datapoint Dialog >>>>
   private pointDialogOpen: boolean = false
@@ -158,34 +157,9 @@ export default class EchartsDetailGraph extends Vue {
     return max || 0
   }
 
-  private randomGarbage(
-    successful: boolean = true
-  ): Map<DimensionId, DetailDataPointValue> {
-    const map: Map<DimensionId, DetailDataPointValue> = new Map()
-    if (successful) {
-      for (let i = 0; i < this.dimensions.length; i++) {
-        map.set(this.dimensions[i], Math.random() * 20 - 5)
-      }
-    } else {
-      const random = Math.random()
-      for (let i = 0; i < this.dimensions.length; i++) {
-        map.set(
-          this.dimensions[i],
-          random < 0.25
-            ? 'NO_MEASUREMENT'
-            : random < 0.5
-            ? 'NO_RUN'
-            : random < 0.75
-            ? 'RUN_FAILED'
-            : 'MEASUREMENT_FAILED'
-        )
-      }
-    }
-    return map
-  }
-
   // <!--<editor-fold desc="ECHARTS GRAPH OPTIONS">-->
   @Watch('detailDataPoints')
+  @Watch('beginYAtZero')
   private updateGraph() {
     console.log('UPDATED')
 
@@ -218,9 +192,7 @@ export default class EchartsDetailGraph extends Vue {
             title: {
               zoom: 'Zoom (brush)',
               back: 'Reset zoom'
-            },
-            start: this.zoomStartPercent * 100,
-            end: this.zoomEndPercent * 100
+            }
           }
         },
         tooltip: {
@@ -228,17 +200,28 @@ export default class EchartsDetailGraph extends Vue {
         }
       },
       dataZoom: [
+        // DO NOT REORDER THE FIRST TWO OR echartsZoomed WILL BREAK!
         {
+          id: 'x',
+          xAxisIndex: [0],
           type: 'inside',
           // Start at the correct place when changing the series type
-          start: this.zoomStartPercent * 100,
-          end: this.zoomEndPercent * 100
+          startValue: vxm.detailGraphModule.zoomXStartValue || undefined,
+          endValue: vxm.detailGraphModule.zoomXEndValue || undefined
+        },
+        {
+          id: 'y',
+          type: 'inside',
+          yAxisIndex: [0],
+          startValue: vxm.detailGraphModule.zoomYStartValue || undefined,
+          endValue: vxm.detailGraphModule.zoomYEndValue || undefined,
+          zoomOnMouseWheel: false
         },
         {
           type: 'slider',
           // Start at the correct place when changing the series type
-          start: this.zoomStartPercent * 100,
-          end: this.zoomEndPercent * 100
+          startValue: vxm.detailGraphModule.zoomXStartValue || undefined,
+          endValue: vxm.detailGraphModule.zoomXEndValue || undefined
         }
       ],
       tooltip: {
@@ -251,6 +234,7 @@ export default class EchartsDetailGraph extends Vue {
     }
 
     this.updateReferenceDatapoint()
+    this.updateMarkPoints()
   }
 
   private tooltipFormatter(
@@ -285,6 +269,12 @@ export default class EchartsDetailGraph extends Vue {
                   </tr>
                     <td>Message</td>
                     <td>${samplePoint.summary}</td>
+                  </tr>
+                  <tr>
+                    <td>Author</td>
+                    <td>
+                      ${samplePoint.author} at ${formatDate(samplePoint.time)}
+                    </td>
                   </tr>
                   ${dimensionRows.join('\n')}
                 </table>
@@ -336,7 +326,8 @@ export default class EchartsDetailGraph extends Vue {
         point.hash,
         color,
         borderColor,
-        point.summary
+        point.summary,
+        point.author
       )
     })
   }
@@ -412,24 +403,7 @@ export default class EchartsDetailGraph extends Vue {
    * If the number is manageable, the graph type will be selected.
    */
   private selectAppropriateSeries(): 're-render' | 'unchanged' {
-    const percentToAbsolute = (percent: number) =>
-      (this.maxDateValue - this.minDateValue) * percent + this.minDateValue
-    const startValue = percentToAbsolute(this.zoomStartPercent)
-    const endValue = percentToAbsolute(this.zoomEndPercent)
-
-    // TODO: Is this a performance problem? There might be 10.000+ items here
-    // and this method is called every time the slider is dragged or the user
-    // zooms using the mouse wheel
-    let visibleDataPoints = 0
-    for (const point of this.detailDataPoints) {
-      if (
-        point.authorDate.getTime() >= startValue &&
-        point.authorDate.getTime() <= endValue
-      ) {
-        visibleDataPoints += this.dimensions.length
-      }
-    }
-
+    const visibleDataPoints = vxm.detailGraphModule.visiblePoints
     const newGenerator: SeriesGenerationFunction =
       visibleDataPoints > 200 ? this.buildLineSeries : this.buildGraphSeries
 
@@ -456,18 +430,34 @@ export default class EchartsDetailGraph extends Vue {
     return vxm.detailGraphModule.referenceDatapoint
   }
 
+  private get showReferenceMarkers() {
+    if (!this.referenceDatapoint) {
+      return false
+    }
+    const dimensions = this.referenceDatapoint.dimension
+
+    return this.dimensions.find(it => it.equals(dimensions))
+  }
+
   @Watch('referenceDatapoint')
+  @Watch('commitToCompare')
   private updateReferenceDatapoint() {
     const series = this.chartOptions.series! as ValidEchartsSeries[]
 
     // noinspection JSMismatchedCollectionQueryUpdate
-    let markLineData: { yAxis: number }[] = []
-    if (this.referenceDatapoint !== null) {
-      const reference = this.referenceDatapoint
+    const markLineData: any[] = []
+    if (this.showReferenceMarkers) {
+      const reference = this.referenceDatapoint!
       const referenceValue = reference.dataPoint.values.get(reference.dimension)
       if (typeof referenceValue === 'number') {
-        markLineData = [{ yAxis: referenceValue }]
+        markLineData.push({ yAxis: referenceValue, name: 'Reference' })
       }
+    }
+    if (this.commitToCompare !== null) {
+      markLineData.push({
+        xAxis: this.commitToCompare.dataPoint.authorDate,
+        name: 'Comparing…'
+      })
     }
     const hasReferenceLine = markLineData.length > 0
 
@@ -479,8 +469,8 @@ export default class EchartsDetailGraph extends Vue {
       },
       label: {
         show: true,
-        formatter: () => {
-          return 'Reference'
+        formatter: (it: any) => {
+          return it.name as string
         }
       },
       silent: true,
@@ -488,7 +478,7 @@ export default class EchartsDetailGraph extends Vue {
     }
 
     // Set on one, delete on all (as the order might change)
-    if (hasReferenceLine) {
+    if (hasReferenceLine && series.length > 0) {
       Vue.set(series[0], 'markLine', markLineJson)
     } else {
       series.forEach(it => Vue.set(it, 'markLine', markLineJson))
@@ -499,24 +489,24 @@ export default class EchartsDetailGraph extends Vue {
     grid.right = hasReferenceLine ? 70 : 20
   }
 
-  @Watch('commitToCompare')
-  private updateCommitToCompare() {
+  @Watch('referenceDatapoint')
+  private updateMarkPoints() {
     const series = this.chartOptions.series! as ValidEchartsSeries[]
     // noinspection JSMismatchedCollectionQueryUpdate
     const markPointData: any[] = []
 
-    if (this.commitToCompare) {
-      const point = this.commitToCompare.dataPoint
+    if (this.showReferenceMarkers) {
+      const point = this.referenceDatapoint!.dataPoint
 
       markPointData.push({
         coord: [
           point.authorDate,
-          point.values.get(this.commitToCompare.dimension)
+          point.values.get(this.referenceDatapoint!.dimension)
         ],
         label: {
           show: true,
           position: 'inside',
-          formatter: () => 'A'
+          formatter: () => 'R'
         }
       })
     }
@@ -527,7 +517,7 @@ export default class EchartsDetailGraph extends Vue {
     }
 
     // Set on one, delete on all (as the order might change)
-    if (this.commitToCompare) {
+    if (this.commitToCompare && series.length > 0) {
       Vue.set(series[0], 'markPoint', markPointJson)
     } else {
       series.forEach(it => Vue.set(it, 'markPoint', markPointJson))
@@ -554,44 +544,67 @@ export default class EchartsDetailGraph extends Vue {
 
   // <!--<editor-fold desc="ECHARTS EVENT HANDLER">-->
   private echartsZoomed(e: any) {
-    let event: {
-      start?: number
-      end?: number
-      startValue?: number
-      endValue?: number
-    }
     if (!e.batch || e.batch.length === 0) {
-      event = e
+      this.setZoomOnCorrectAxis(e.dataZoomId)
     } else {
-      event = e.batch[0]
+      e.batch.forEach((batch: any) => {
+        this.setZoomOnCorrectAxis(batch.dataZoomId)
+      })
     }
-
-    let startPercent: number
-    let endPercent: number
-
-    // Batch and un-batched events set either the percent or absolute value
-    // we normalize to percentages
-    if (event.start !== undefined && event.end !== undefined) {
-      startPercent = event.start / 100
-      endPercent = event.end / 100
-    } else if (event.startValue !== undefined && event.endValue !== undefined) {
-      startPercent = event.startValue / (this.maxDateValue - this.minDateValue)
-      endPercent = event.endValue / (this.maxDateValue - this.minDateValue)
-    } else {
-      return
-    }
-
-    this.zoomStartPercent = startPercent
-    this.zoomEndPercent = endPercent
 
     if (this.selectAppropriateSeries() === 're-render') {
       this.updateGraph()
     }
   }
 
+  private setZoomOnCorrectAxis(seriesId: string) {
+    const actualOptions: EChartOption = (this.$refs['chart'] as any)
+      .computedOptions
+
+    const orNull = (zoom: EChartOption.DataZoom, start: 'start' | 'end') => {
+      const value =
+        start === 'start'
+          ? (zoom.startValue as number | undefined | null)
+          : (zoom.endValue as number | undefined | null)
+      if (value === null || value === undefined) {
+        return null
+      }
+
+      // We are fully zoomed out ==> set that to null
+      const zoomPercent = start === 'start' ? zoom.start : zoom.end
+      if (zoomPercent === 0 || zoomPercent === 100) {
+        return null
+      }
+
+      return value
+    }
+
+    if (seriesId === 'x' || seriesId.includes('xAxis')) {
+      vxm.detailGraphModule.zoomXStartValue = orNull(
+        actualOptions.dataZoom![0],
+        'start'
+      )
+      vxm.detailGraphModule.zoomXEndValue = orNull(
+        actualOptions.dataZoom![0],
+        'end'
+      )
+    } else {
+      vxm.detailGraphModule.zoomYStartValue = orNull(
+        actualOptions.dataZoom![1],
+        'start'
+      )
+      vxm.detailGraphModule.zoomYEndValue = orNull(
+        actualOptions.dataZoom![1],
+        'end'
+      )
+    }
+  }
+
   private echartsZoomReset() {
-    this.zoomStartPercent = 0
-    this.zoomEndPercent = 1
+    vxm.detailGraphModule.zoomXStartValue = this.minDateValue
+    vxm.detailGraphModule.zoomXEndValue = this.maxDateValue
+    vxm.detailGraphModule.zoomYStartValue = null
+    vxm.detailGraphModule.zoomYEndValue = null
     this.updateGraph()
   }
 
@@ -666,7 +679,7 @@ export default class EchartsDetailGraph extends Vue {
   }
   private dimensionColor(dimension: DimensionId) {
     return vxm.colorModule.colorByIndex(
-      this.dimensions.findIndex(it => it.equals(dimension))
+      vxm.detailGraphModule.colorIndex(dimension)!
     )
   }
   private get graphFailedOrUnbenchmarkedColor() {
@@ -709,6 +722,7 @@ export default class EchartsDetailGraph extends Vue {
   font-size: 1.1em;
 }
 
+/*noinspection CssUnusedSymbol*/
 .echarts-tooltip-table .color-preview {
   width: 10px;
   height: 10px;

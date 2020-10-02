@@ -2,15 +2,14 @@ import { UserStore } from './modules/userStore'
 import { ColorStore } from './modules/colorStore'
 import { RootState, vxm } from './index'
 import VuexPersistence from 'vuex-persist'
-import { repoStoreToJson, repoStoreFromJson } from './modules/repoStore'
 import {
   comparisonGraphStoreFromJson,
-  comparisonGraphStoreToJson
-} from './modules/comparisonGraphStore'
-import {
+  comparisonGraphStoreToJson,
+  detailGraphStoreFromJson,
   detailGraphStoreToJson,
-  detailGraphStoreFromJson
-} from './modules/detailGraphStore'
+  repoStoreFromJson,
+  repoStoreToJson
+} from '@/util/StorePersistenceUtilities'
 
 interface LocalStoragePersisted {
   userModule?: UserStore

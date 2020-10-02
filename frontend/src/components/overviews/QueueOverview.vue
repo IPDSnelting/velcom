@@ -61,7 +61,9 @@
                       <v-chip v-on="on" outlined label>
                         Running on » {{ getWorkerUnsafe(task).name }} « for
                         {{
-                          workerFormattedSinceDurations[getWorker(task).name]
+                          workerFormattedSinceDurations[
+                            getWorkerUnsafe(task).name
+                          ]
                         }}
                       </v-chip>
                     </span>

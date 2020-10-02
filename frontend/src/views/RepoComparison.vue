@@ -210,10 +210,10 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Watch } from 'vue-property-decorator'
-import { vxm } from '../store/index'
+import { vxm } from '@/store'
 import RepoAddDialog from '../components/dialogs/RepoAddDialog.vue'
 import RepoSelector from '../components/RepoSelector.vue'
-import { Repo, DimensionId } from '../store/types'
+import { Repo, DimensionId } from '@/store/types'
 import { mdiCalendar } from '@mdi/js'
 import { Route, RawLocation } from 'vue-router'
 import { Dictionary } from 'vue-router/types/router'
@@ -256,7 +256,7 @@ export default class RepoComparison extends Vue {
 
   set selectedBenchmark(newBenchmark: string) {
     if (vxm.comparisonGraphModule.selectedBenchmark !== newBenchmark) {
-      let newMetrics = this.metricsForBenchmark(newBenchmark)
+      const newMetrics = this.metricsForBenchmark(newBenchmark)
       if (!newMetrics.includes(this.selectedMetric)) {
         if (newMetrics) {
           this.selectedMetric = newMetrics[0]
@@ -338,9 +338,9 @@ export default class RepoComparison extends Vue {
   }
 
   private notAfterToday(input: string): boolean | string {
-    let inputDate = new Date(input)
-    let inputTime = inputDate.getTime()
-    let today: Date = new Date()
+    const inputDate = new Date(input)
+    const inputTime = inputDate.getTime()
+    const today: Date = new Date()
     return inputTime <= today.getTime()
       ? true
       : 'This date must not be after today!'
@@ -416,36 +416,36 @@ export default class RepoComparison extends Vue {
   }
 
   private autoZoom() {
-    /*    vxm.comparisonGraphModule
+    vxm.comparisonGraphModule
       .fetchComparisonGraph({
         startTime: null,
         endTime: null,
         ...this.payload
       })
       .then(data => {
-        let { min, max } = Object.values(data)
+        const { min, max } = Object.values(data)
           .flatMap(it => it)
           .reduce(
             (accumulated, next) => {
-              let time = next.authorDate
-              if (time && time < accumulated.min) {
-                accumulated.min = time
+              const time = next.authorDate
+              if (time && time.getTime() < accumulated.min) {
+                accumulated.min = time.getTime()
               }
-              if (time && time > accumulated.max) {
-                accumulated.max = time
+              if (time && time.getTime() > accumulated.max) {
+                accumulated.max = time.getTime()
               }
               return accumulated
             },
             { min: 1e200, max: 0 }
           )
 
-        vxm.comparisonGraphModule.startDate = new Date(min * 1000)
-        vxm.comparisonGraphModule.stopDate = new Date(max * 1000)
-      }) */
+        vxm.comparisonGraphModule.startDate = new Date(min)
+        vxm.comparisonGraphModule.stopDate = new Date(max)
+      })
   }
 
   private zoomToBrush() {
-    let brushedArea: number[] = (this.$refs
+    const brushedArea: number[] = (this.$refs
       .graph as ComparisonGraph).brushedArea()
     this.updateTimeframe(
       new Date(brushedArea[0]),
@@ -459,10 +459,10 @@ export default class RepoComparison extends Vue {
   @Watch('stopTimeString')
   @Watch('selectedRepos')
   updateUrl(): void {
-    let repos: { [repoId: string]: string[] } = {}
+    const repos: { [repoId: string]: string[] } = {}
     vxm.comparisonGraphModule.selectedReposWithBranches.forEach(
       ({ repoId, branches }) => {
-        let repo = vxm.repoModule.repoById(repoId)
+        const repo = vxm.repoModule.repoById(repoId)
         if (!repo) {
           return
         }
@@ -473,7 +473,7 @@ export default class RepoComparison extends Vue {
         }
       }
     )
-    let newQuery: { [param: string]: string } = {
+    const newQuery: { [param: string]: string } = {
       metric: this.selectedMetric,
       benchmark: this.selectedBenchmark,
       repos: JSON.stringify(repos),
@@ -508,7 +508,7 @@ export default class RepoComparison extends Vue {
     next: (to?: RawLocation | false | ((vm: Vue) => any) | void) => void
   ): void {
     next(component => {
-      let vm = component as RepoComparison
+      const vm = component as RepoComparison
       vxm.repoModule.fetchRepos().then(() => {
         vm.updateToUrl(to.query)
 
@@ -519,14 +519,14 @@ export default class RepoComparison extends Vue {
 
   private updateToUrl(query: Dictionary<string | (string | null)[]>) {
     if (query.repos) {
-      let branchesByRepoId: { [key: string]: string[] } = JSON.parse(
+      const branchesByRepoId: { [key: string]: string[] } = JSON.parse(
         query.repos as string
       )
       vxm.comparisonGraphModule.selectedRepos = Object.keys(branchesByRepoId)
       Object.keys(branchesByRepoId).forEach(repoId => {
         let branches = branchesByRepoId[repoId]
         if (branches.length === 0) {
-          let repo = vxm.repoModule.repoById(repoId)
+          const repo = vxm.repoModule.repoById(repoId)
           if (!repo) {
             return
           }
