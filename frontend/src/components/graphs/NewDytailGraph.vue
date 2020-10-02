@@ -225,7 +225,16 @@ export default class DytailGraph extends Vue {
         panEdgeFraction: 0.00001,
         zoomCallback: this.dygraphsZoomed,
         legendFormatter: this.tooltipFormatter,
-        plugins: [new Crosshair({ direction: 'vertical' })]
+        plugins: [new Crosshair({ direction: 'vertical' })],
+        showRangeSelector: true,
+        rangeSelectorHeight: 30,
+        rangeSelectorPlotLineWidth: 1,
+        rangeSelectorAlpha: 0.5,
+        rangeSelectorForegroundLineWidth: 0.5,
+        rangeSelectorPlotFillColor: 'lightgrey',
+        rangeSelectorPlotStrokeColor: 'grey',
+        // and, to keep the ability to brush and zoom:
+        interactionModel: Dygraph.defaultInteractionModel
       }
     )
 
@@ -301,5 +310,17 @@ export default class DytailGraph extends Vue {
   height: 10px;
   border-radius: 25%;
   display: inline-block;
+}
+
+.dygraph-rangesel-fgcanvas {
+  margin-top: 15px;
+}
+
+.dygraph-rangesel-bgcanvas {
+  margin-top: 15px;
+}
+
+.dygraph-rangesel-zoomhandle {
+  margin-top: 15px;
 }
 </style>
