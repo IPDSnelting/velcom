@@ -16,6 +16,66 @@
         </v-card>
       </v-col>
     </v-row>
+    <v-row v-if="comparison && comparison.run1">
+      <v-col>
+        <run-info :run="comparison.run1">
+          <template #title>
+            <span>First Run Information</span>
+            <v-spacer></v-spacer>
+            <v-chip
+              :to="{
+                name: 'run-detail',
+                params: { first: comparison.run1.id }
+              }"
+              outlined
+              label
+            >
+              Run id: {{ comparison.run1.id }}
+            </v-chip>
+          </template>
+          <template #before-body v-if="firstCommit">
+            <v-row class="mx-1">
+              <v-col>
+                <commit-overview-base
+                  :commit="firstCommit"
+                  :outlined="true"
+                ></commit-overview-base>
+              </v-col>
+            </v-row>
+          </template>
+        </run-info>
+      </v-col>
+    </v-row>
+    <v-row v-if="comparison && comparison.run2">
+      <v-col>
+        <run-info :run="comparison.run2">
+          <template #title>
+            <span>Second Run Information</span>
+            <v-spacer></v-spacer>
+            <v-chip
+              :to="{
+                name: 'run-detail',
+                params: { first: comparison.run2.id }
+              }"
+              outlined
+              label
+            >
+              Run id: {{ comparison.run2.id }}
+            </v-chip>
+          </template>
+          <template #before-body v-if="secondCommit">
+            <v-row class="mx-1">
+              <v-col>
+                <commit-overview-base
+                  :commit="secondCommit"
+                  :outlined="true"
+                ></commit-overview-base>
+              </v-col>
+            </v-row>
+          </template>
+        </run-info>
+      </v-col>
+    </v-row>
   </v-container>
 </template>
 
@@ -24,11 +84,21 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { vxm } from '@/store'
 import { Watch } from 'vue-property-decorator'
-import { RunComparison } from '@/store/types'
+import {
+  CommitDescription,
+  CommitTaskSource,
+  Run,
+  RunComparison
+} from '@/store/types'
 import RunComparisonTable from '@/components/comparison/RunComparisonTable.vue'
+import CommitDetail from '@/components/rundetail/CommitDetail.vue'
+import CommitOverviewBase from '@/components/overviews/CommitOverviewBase.vue'
+import RunInfo from '@/components/rundetail/RunInfo.vue'
 
 @Component({
   components: {
+    'commit-overview-base': CommitOverviewBase,
+    'run-info': RunInfo,
     'comparison-table': RunComparisonTable
   }
 })
@@ -64,6 +134,27 @@ export default class RunComparisonView extends Vue {
       hash1: this.hash1,
       hash2: this.hash2
     })
+  }
+
+  private get firstCommit() {
+    if (!this.comparison) {
+      return null
+    }
+    return this.commitForRun(this.comparison.run1)
+  }
+
+  private get secondCommit() {
+    if (!this.comparison) {
+      return null
+    }
+    return this.commitForRun(this.comparison.run1)
+  }
+
+  private commitForRun(run: Run): CommitDescription | null {
+    if (!(run.source instanceof CommitTaskSource)) {
+      return null
+    }
+    return run.source.commitDescription
   }
 
   mounted(): void {

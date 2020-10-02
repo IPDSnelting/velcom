@@ -1,5 +1,5 @@
 <template>
-  <v-card>
+  <v-card :outlined="outlined">
     <slot name="body_top"></slot>
     <v-list-item>
       <slot name="avatar"></slot>
@@ -64,6 +64,9 @@ import { RawLocation } from 'vue-router'
 export default class CommitOverviewBase extends Vue {
   @Prop()
   private commit!: CommitDescription
+
+  @Prop({ default: false })
+  private outlined!: boolean
 
   @Prop({ default: null })
   private linkLocation!: RawLocation

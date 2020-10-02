@@ -13,9 +13,17 @@
                   justify-lg="space-between"
                 >
                   <v-col cols="auto">
-                    <span class="mx-2 message font-weight-regular">
-                      {{ commit.summary }}
-                    </span>
+                    <router-link
+                      class="concealed-link"
+                      :to="{
+                        name: 'run-detail',
+                        params: { first: commit.repoId, second: commit.hash }
+                      }"
+                    >
+                      <span class="mx-2 message font-weight-regular">
+                        {{ commit.summary }}
+                      </span>
+                    </router-link>
                   </v-col>
                   <v-col
                     cols="auto"
