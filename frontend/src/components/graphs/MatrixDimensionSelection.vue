@@ -64,7 +64,9 @@ export default class MatrixMeasurementIdSelection extends Vue {
   }
 
   private get allBenchmarks(): string[] {
-    return vxm.repoModule.occuringBenchmarks([this.repoId])
+    return vxm.repoModule
+      .occuringBenchmarks([this.repoId])
+      .sort((a, b) => a.localeCompare(b))
   }
 
   private metricsFor(benchmark: string): string[] {
@@ -141,7 +143,7 @@ export default class MatrixMeasurementIdSelection extends Vue {
   private get allMetrics(): string[] {
     return Array.from(
       new Set(this.allBenchmarks.flatMap(it => this.metricsFor(it))).values()
-    ).sort()
+    ).sort((a, b) => a.localeCompare(b))
   }
 
   private metricColor(benchmark: string, metric: string): string {

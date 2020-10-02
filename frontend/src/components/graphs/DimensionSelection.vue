@@ -56,7 +56,7 @@ class BenchmarkItem {
   constructor(name: string, children: DimensionItem[]) {
     this.id = name
     this.name = name
-    this.children = children
+    this.children = children.sort((a, b) => a.name.localeCompare(b.name))
   }
 }
 
@@ -118,6 +118,7 @@ export default class DimensionSelection extends Vue {
           repo.dimensions
             .filter(dimension => dimension.benchmark === benchmark)
             .map(dimension => new DimensionItem(dimension))
+            .sort((a, b) => a.name.localeCompare(b.name))
         )
     )
   }
