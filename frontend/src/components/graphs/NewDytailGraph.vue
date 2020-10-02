@@ -15,7 +15,7 @@ import { Prop, Watch } from 'vue-property-decorator'
 import Dygraph from 'dygraphs'
 import { DetailDataPoint, Dimension, DimensionId } from '@/store/types'
 import { vxm } from '@/store'
-import 'dygraphs/dist/dygraph.css'
+import 'dygraphs/css/dygraph.css'
 
 @Component({})
 export default class DytailGraph extends Vue {
@@ -264,7 +264,7 @@ export default class DytailGraph extends Vue {
   z-index: 9999999;
   transition: left 0.4s cubic-bezier(0.23, 1, 0.32, 1) 0s,
     top 0.4s cubic-bezier(0.23, 1, 0.32, 1) 0s;
-  transition-duration: 150ms;
+  transition-duration: 1s;
   background-color: rgba(50, 50, 50, 0.7);
   border-width: 0px;
   border-color: rgb(51, 51, 51);

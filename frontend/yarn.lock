@@ -3717,10 +3717,9 @@ duplexify@^3.4.2, duplexify@^3.6.0:
     readable-stream "^2.0.0"
     stream-shift "^1.0.0"
 
-dygraphs@^2.1.0:
+"dygraphs@git://github.com/I-Al-Istannen/dygraphs.git#master":
   version "2.1.0"
-  resolved "https://registry.yarnpkg.com/dygraphs/-/dygraphs-2.1.0.tgz#2fbfd2c803ead02307df3faf8d4dd3ef55cb2075"
-  integrity sha1-L7/SyAPq0CMH3z+vjU3T71XLIHU=
+  resolved "git://github.com/I-Al-Istannen/dygraphs.git#cc27deb2d680c9dcc0076806e0a8d8e44d5a7ebb"
 
 easy-stack@^1.0.0:
   version "1.0.0"
