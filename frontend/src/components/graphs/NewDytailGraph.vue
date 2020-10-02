@@ -18,6 +18,10 @@ import { vxm } from '@/store'
 import 'dygraphs/css/dygraph.css'
 import Crosshair from 'dygraphs/src/extras/crosshair.js'
 
+type RealOptions = dygraphs.Options & {
+  rangeSelectorPlotLineWidth?: number
+}
+
 @Component({})
 export default class DytailGraph extends Vue {
   @Prop()
@@ -235,7 +239,7 @@ export default class DytailGraph extends Vue {
         rangeSelectorPlotStrokeColor: 'grey',
         // and, to keep the ability to brush and zoom:
         interactionModel: Dygraph.defaultInteractionModel
-      }
+      } as RealOptions
     )
 
     this.up()
