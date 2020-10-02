@@ -1,5 +1,5 @@
 <template>
-  <v-container fluid>
+  <v-container fluid class="mt-0 pt-0">
     <v-row align="center" justify="center">
       <v-col>
         <datapoint-dialog
