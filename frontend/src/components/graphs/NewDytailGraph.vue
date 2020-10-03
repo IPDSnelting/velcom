@@ -148,9 +148,16 @@ export default class DytailGraph extends Vue {
     return 'something went wrong :(\n couldn\'t find commit'
   }
 
+  // Used in the watcher for up()
+  // noinspection JSUnusedLocalSymbols
+  private get darkTheme() {
+    return vxm.userModule.darkThemeSelected
+  }
+
   @Watch('datapoints')
   @Watch('dimensions')
   @Watch('beginYAtZero')
+  @Watch('darkTheme')
   private up() {
     const data: number[][] = []
 
@@ -204,6 +211,7 @@ export default class DytailGraph extends Vue {
       {
         axes: {
           x: {
+            axisLineColor: 'currentColor',
             axisLabelFormatter: (
               x: number | Date,
               granularity: number,
@@ -218,6 +226,9 @@ export default class DytailGraph extends Vue {
                 ? this.xAxisFormatter(new Date(x), [start, end])
                 : ''
             }
+          },
+          y: {
+            axisLineColor: 'currentColor'
           }
         },
         ylabel: this.yLabel,
@@ -229,14 +240,16 @@ export default class DytailGraph extends Vue {
         panEdgeFraction: 0.00001,
         zoomCallback: this.dygraphsZoomed,
         legendFormatter: this.tooltipFormatter,
+        crosshairColor: 'currentColor',
         plugins: [new Crosshair({ direction: 'vertical' })],
         showRangeSelector: true,
         rangeSelectorHeight: 30,
         rangeSelectorPlotLineWidth: 1,
         rangeSelectorAlpha: 0.5,
         rangeSelectorForegroundLineWidth: 0.5,
-        rangeSelectorPlotFillColor: 'lightgrey',
+        rangeSelectorPlotFillColor: 'lightgray',
         rangeSelectorPlotStrokeColor: 'grey',
+        rangeSelectorBackgroundStrokeColor: 'currentColor',
         // and, to keep the ability to brush and zoom:
         interactionModel: Dygraph.defaultInteractionModel
       } as RealOptions
@@ -326,5 +339,9 @@ export default class DytailGraph extends Vue {
 
 .dygraph-rangesel-zoomhandle {
   margin-top: 15px;
+}
+
+.dygraph-axis-label {
+  color: currentColor;
 }
 </style>
