@@ -15,6 +15,7 @@
             ref="chart"
             :autoresize="true"
             :options="chartOptions"
+            :theme="chartTheme"
             @datazoom="echartsZoomed"
             @contextmenu="echartsOpenContextMenu"
             @click="echartsClicked"
@@ -160,13 +161,13 @@ export default class EchartsDetailGraph extends Vue {
   // <!--<editor-fold desc="ECHARTS GRAPH OPTIONS">-->
   @Watch('detailDataPoints')
   @Watch('beginYAtZero')
+  @Watch('graphFailedOrUnbenchmarkedColor') // DataPoints need adjusting, they store the color
   private updateGraph() {
     console.log('UPDATED')
 
     this.selectAppropriateSeries()
 
     this.chartOptions = {
-      backgroundColor: this.graphBackgroundColor,
       grid: {
         left: 20,
         right: 20,
@@ -465,6 +466,7 @@ export default class EchartsDetailGraph extends Vue {
       symbol: 'none',
       lineStyle: {
         type: 'dotted',
+        color: this.themeColor('error'),
         width: 2
       },
       label: {
@@ -674,16 +676,70 @@ export default class EchartsDetailGraph extends Vue {
       { maximumFractionDigits: 3 }
     )
   }
+
   private get graphBackgroundColor() {
     return this.$vuetify.theme.currentTheme.graphBackground as string
   }
+
   private dimensionColor(dimension: DimensionId) {
     return vxm.colorModule.colorByIndex(
       vxm.detailGraphModule.colorIndex(dimension)!
     )
   }
+
   private get graphFailedOrUnbenchmarkedColor() {
     return this.$vuetify.theme.currentTheme.graphFailedOrUnbenchmarked as string
+  }
+
+  private get themeColor(): (key: string) => string {
+    return key => this.$vuetify.theme.currentTheme[key] as string
+  }
+
+  private get chartTheme() {
+    const axisSettings = () => ({
+      axisLine: {
+        lineStyle: {
+          color: 'currentColor'
+        }
+      },
+      axisTick: {
+        lineStyle: {
+          color: 'currentColor'
+        }
+      },
+      axisLabel: {
+        textStyle: {
+          color: 'currentColor'
+        }
+      },
+      splitLine: {
+        lineStyle: {
+          color: this.themeColor('rowHighlight')
+        }
+      },
+      splitArea: {
+        areaStyle: {
+          color: this.themeColor('rowHighlight')
+        }
+      }
+    })
+    return {
+      backgroundColor: this.graphBackgroundColor,
+      valueAxis: axisSettings(),
+      timeAxis: axisSettings(),
+      dataZoom: {
+        textStyle: {
+          color: 'currentColor'
+        }
+      },
+      toolbox: {
+        iconStyle: {
+          normal: {
+            borderColor: 'currentColor'
+          }
+        }
+      }
+    }
   }
   // <!--</editor-fold>-->
 
