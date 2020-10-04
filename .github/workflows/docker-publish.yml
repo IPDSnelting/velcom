@@ -11,23 +11,14 @@ env:
 
 jobs:
   # Runs the build.
-  build:
+  build-frontend:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-java@v1
-        with:
-          java-version: '11'
       - uses: actions/setup-node@v2-beta
         with:
           node-version: '12'
-      - uses: actions/cache@v2
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: |
-            ${{ runner.os }}-maven-
 
       - name: "Build frontend (kit.edu)"
         run: "make frontend mode=production-kit-single-port"
@@ -48,8 +39,25 @@ jobs:
           name: frontend-artifacts
           path: frontend/dist
 
+  # Runs the build.
+  build-backend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-java@v1
+        with:
+          java-version: '11'
+      - uses: actions/cache@v2
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
       - name: "Build backend"
         run: "make backend"
+
       - name: "Upload backend/backend artifact"
         uses: actions/upload-artifact@v2
         with:
@@ -69,7 +77,7 @@ jobs:
   # Push aaaaaaah image to GitHub Packages.
   push-aaaaaaah:
     # Ensure build job passes before pushing image.
-    needs: [build]
+    needs: [build-frontend, build-backend]
 
     runs-on: ubuntu-latest
     if: "github.event_name == 'push' && github.ref == 'refs/heads/main'"
@@ -158,7 +166,7 @@ jobs:
   # Push image to GitHub Packages.
   push-kit:
     # Ensure build job passes before pushing image.
-    needs: [build]
+    needs: [build-frontend, build-backend]
 
     runs-on: ubuntu-latest
     if: "github.event_name == 'push' && github.ref == 'refs/heads/stable'"
