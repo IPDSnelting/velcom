@@ -101,19 +101,22 @@ FROM known_commit;
 
 INSERT INTO "task"
 SELECT
-  ( -- Create a random UUID
-    -- Based on https://stackoverflow.com/a/22725697 and
+  (
+    -- Create a random UUID. Based on:
+    -- https://en.wikipedia.org/wiki/Universally_unique_identifier
+    -- https://stackoverflow.com/a/22725697
     -- https://stackoverflow.com/a/105074
-    SELECT
-      SUBSTR(u, 1, 8)
-      || '-' || SUBSTR(u, 9, 4)
-      || '-4' || SUBSTR(u, 14, 3)
-      || '-' || v || SUBSTR(u, 18, 3)
-      || '-' || SUBSTR(u, 21, 12)
-    FROM (SELECT
-      LOWER(HEX(RANDOMBLOB(16))) AS u,
-      SUBSTR('89ab', ABS(RANDOM())%4+1, 1) AS v
-    )
+    LOWER(HEX(RANDOMBLOB(4))) -- 8 digits
+    || '-'
+    || LOWER(HEX(RANDOMBLOB(2))) -- 4 digits
+    || '-'
+    || '4' -- '4' meaning this UUID is a Version 4 UUID (random)
+    || SUBSTR(LOWER(HEX(RANDOMBLOB(2))), 1, 3) -- 3 more digits
+    || '-'
+    || SUBSTR('89ab', ABS(RANDOM())%4+1, 1) -- One of '89ab', meaning this UUID is a Variant 1 UUID (Leach-Salz)
+    || SUBSTR(LOWER(HEX(RANDOMBLOB(2))), 1, 3) -- 3 more digits
+    || '-'
+    || LOWER(HEX(RANDOMBLOB(6))) -- 12 more digits
   ), -- id
   'migrated', -- author
   CASE
