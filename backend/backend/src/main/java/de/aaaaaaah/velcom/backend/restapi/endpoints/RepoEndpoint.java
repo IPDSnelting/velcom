@@ -214,6 +214,12 @@ public class RepoEndpoint {
 				.map(BranchName::fromName)
 				.collect(Collectors.toSet());
 			repoAccess.setTrackedBranches(repoId, trackedBranchNames);
+
+			try {
+				listener.updateRepo(repoId);
+			} catch (CommitSearchException e) {
+				LOGGER.warn("Failed to update repo {} successfully", repoId, e);
+			}
 		});
 	}
 
