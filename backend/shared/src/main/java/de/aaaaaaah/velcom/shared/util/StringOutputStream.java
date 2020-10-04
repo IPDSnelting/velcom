@@ -6,28 +6,28 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 
 /**
- * An {@link OutputStream} that writes to a String.
+ * A synchronized {@link OutputStream} that writes to a String.
  */
 public class StringOutputStream extends OutputStream {
 
-	private ByteArrayOutputStream byteArrayOutputStream;
+	private final ByteArrayOutputStream byteArrayOutputStream;
 
 	public StringOutputStream() {
 		this.byteArrayOutputStream = new ByteArrayOutputStream();
 	}
 
 	@Override
-	public void write(int b) {
+	public synchronized void write(int b) {
 		byteArrayOutputStream.write(b);
 	}
 
 	@Override
-	public void write(byte[] b) throws IOException {
+	public synchronized void write(byte[] b) throws IOException {
 		byteArrayOutputStream.write(b);
 	}
 
 	@Override
-	public void write(byte[] b, int off, int len) {
+	public synchronized void write(byte[] b, int off, int len) {
 		byteArrayOutputStream.write(b, off, len);
 	}
 
@@ -36,7 +36,7 @@ public class StringOutputStream extends OutputStream {
 	 *
 	 * @return the underlying string
 	 */
-	public String getString() {
+	public synchronized String getString() {
 		return new String(byteArrayOutputStream.toByteArray(), StandardCharsets.UTF_8);
 	}
 }

@@ -157,4 +157,32 @@ class ProgramExecutorTest {
 
 		assertThat(result.getRuntime().toSeconds()).isBetween(3L, 6L);
 	}
+
+	@Test
+	void streamsStandardOutAndError() throws InterruptedException, ExecutionException {
+		ProgramExecutor executor = new ProgramExecutor();
+		StreamsProcessOutput<ProgramResult> processOutput = executor.execute("/usr/bin/env", "bash",
+			"-c",
+			"echo 'Hello world'\n"
+				+ "echo 'Hello world error' >&2\n"
+				+ "\n"
+				+ "sleep 2\n"
+				+ "\n"
+				+ "echo -n ' after!'\n"
+				+ "echo -n ' after error!' >&2\n"
+		);
+
+		Thread.sleep(1000);
+
+		assertThat(processOutput.getCurrentStdOut()).isEqualTo("Hello world\n");
+		assertThat(processOutput.getCurrentStdErr()).isEqualTo("Hello world error\n");
+
+		Thread.sleep(2000);
+
+		assertThat(processOutput.getCurrentStdOut()).isEqualTo("Hello world\n after!");
+		assertThat(processOutput.getCurrentStdErr()).isEqualTo("Hello world error\n after error!");
+
+		assertThat(processOutput.isDone());
+		assertThat(processOutput.get().getExitCode()).isEqualTo(0);
+	}
 }
