@@ -15,12 +15,20 @@ public class RepoId implements Comparable<RepoId> {
 		this(UUID.randomUUID());
 	}
 
+	public static RepoId fromString(String string) {
+		return new RepoId(UUID.fromString(string));
+	}
+
 	public String getDirectoryName() {
 		return getId().toString();
 	}
 
 	public UUID getId() {
 		return id;
+	}
+
+	public String getIdAsString() {
+		return id.toString();
 	}
 
 	@Override

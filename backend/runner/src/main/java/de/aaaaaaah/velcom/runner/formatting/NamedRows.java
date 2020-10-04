@@ -1,5 +1,6 @@
 package de.aaaaaaah.velcom.runner.formatting;
 
+import de.aaaaaaah.velcom.shared.util.StringHelper;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -13,28 +14,17 @@ public class NamedRows {
 		rows = new ArrayList<>();
 	}
 
-	public static String escape(String string) {
-		String escaped = string
-			.replace("\\", "\\\\")
-			.replace("\"", "\\\"")
-			.replace("\n", "\\n")
-			.replace("\t", "\\t")
-			.replace("\b", "\\b");
-
-		return "\"" + escaped + "\"";
-	}
-
 	public void add(String name, String value) {
 		rows.add(new Row(name, value));
 	}
 
 	public void addEscaped(String name, String value) {
-		add(name, escape(value));
+		add(name, StringHelper.escape(value));
 	}
 
 	public void addEscapedArray(String name, String[] array) {
 		String entries = Arrays.stream(array)
-			.map(NamedRows::escape)
+			.map(StringHelper::escape)
 			.collect(Collectors.joining(", "));
 
 		add(name, "[" + entries + "]");
