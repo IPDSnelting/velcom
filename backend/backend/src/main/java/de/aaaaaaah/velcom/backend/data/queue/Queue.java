@@ -10,7 +10,7 @@ import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.entities.Task;
 import de.aaaaaaah.velcom.backend.access.entities.TaskId;
 import de.aaaaaaah.velcom.backend.access.entities.benchmark.NewRun;
-import de.aaaaaaah.velcom.backend.access.entities.sources.CommitSource;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.CommitSource;
 import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchTaskException;
 import de.aaaaaaah.velcom.backend.access.exceptions.PrepareTransferException;
 import de.aaaaaaah.velcom.backend.access.exceptions.TransferException;

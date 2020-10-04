@@ -3,6 +3,9 @@ package de.aaaaaaah.velcom.backend.access.entities;
 import java.util.Objects;
 import java.util.UUID;
 
+/**
+ * A unique identifier for a {@link Repo}.
+ */
 public class RepoId implements Comparable<RepoId> {
 
 	private final UUID id;
@@ -11,6 +14,9 @@ public class RepoId implements Comparable<RepoId> {
 		this.id = id;
 	}
 
+	/**
+	 * Create a new, random {@link RepoId}.
+	 */
 	public RepoId() {
 		this(UUID.randomUUID());
 	}

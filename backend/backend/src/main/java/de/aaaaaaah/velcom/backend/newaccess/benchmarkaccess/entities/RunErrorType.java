@@ -1,4 +1,4 @@
-package de.aaaaaaah.velcom.backend.access.entities;
+package de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities;
 
 /**
  * Describes which type of error has occurred when trying to perform a benchmark run.

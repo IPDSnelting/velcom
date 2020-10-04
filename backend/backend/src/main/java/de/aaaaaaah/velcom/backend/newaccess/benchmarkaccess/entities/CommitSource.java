@@ -1,4 +1,4 @@
-package de.aaaaaaah.velcom.backend.access.entities.sources;
+package de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities;
 
 import de.aaaaaaah.velcom.backend.access.entities.Commit;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
@@ -38,9 +38,9 @@ public class CommitSource {
 		if (o == null || getClass() != o.getClass()) {
 			return false;
 		}
-		CommitSource source = (CommitSource) o;
-		return repoId.equals(source.repoId) &&
-			hash.equals(source.hash);
+		CommitSource that = (CommitSource) o;
+		return Objects.equals(repoId, that.repoId) &&
+			Objects.equals(hash, that.hash);
 	}
 
 	@Override

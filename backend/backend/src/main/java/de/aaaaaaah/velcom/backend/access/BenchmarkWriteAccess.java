@@ -14,7 +14,7 @@ import de.aaaaaaah.velcom.backend.access.entities.MeasurementError;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementValues;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
-import de.aaaaaaah.velcom.backend.access.entities.RunError;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.RunError;
 import de.aaaaaaah.velcom.backend.access.entities.TaskId;
 import de.aaaaaaah.velcom.backend.access.entities.benchmark.NewMeasurement;
 import de.aaaaaaah.velcom.backend.access.entities.benchmark.NewRun;

@@ -21,8 +21,16 @@ public class RunId {
 		this(UUID.randomUUID());
 	}
 
+	public static RunId fromString(String string) {
+		return new RunId(UUID.fromString(string));
+	}
+
 	public UUID getId() {
 		return id;
+	}
+
+	public String getIdAsString() {
+		return id.toString();
 	}
 
 	@Override

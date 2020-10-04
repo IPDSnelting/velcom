@@ -1,4 +1,4 @@
-package de.aaaaaaah.velcom.backend.access.entities.sources;
+package de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities;
 
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import java.util.Objects;

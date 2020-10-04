@@ -3,7 +3,7 @@ package de.aaaaaaah.velcom.backend.runner.single;
 import de.aaaaaaah.velcom.backend.access.entities.Dimension;
 import de.aaaaaaah.velcom.backend.access.entities.Interpretation;
 import de.aaaaaaah.velcom.backend.access.entities.RunBuilder;
-import de.aaaaaaah.velcom.backend.access.entities.RunErrorType;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.RunErrorType;
 import de.aaaaaaah.velcom.backend.access.entities.Task;
 import de.aaaaaaah.velcom.backend.access.entities.TaskId;
 import de.aaaaaaah.velcom.backend.access.entities.Unit;

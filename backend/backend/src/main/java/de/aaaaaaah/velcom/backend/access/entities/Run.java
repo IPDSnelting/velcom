@@ -1,7 +1,8 @@
 package de.aaaaaaah.velcom.backend.access.entities;
 
-import de.aaaaaaah.velcom.backend.access.entities.sources.CommitSource;
-import de.aaaaaaah.velcom.backend.access.entities.sources.TarSource;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.CommitSource;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.TarSource;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.RunError;
 import de.aaaaaaah.velcom.shared.util.Either;
 import java.time.Instant;
 import java.util.Collection;
