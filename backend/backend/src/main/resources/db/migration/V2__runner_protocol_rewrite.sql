@@ -51,7 +51,7 @@ CREATE TABLE new_run (
   start_time  TIMESTAMP NOT NULL,
   stop_time   TIMESTAMP NOT NULL,
   repo_id     CHAR(36),
-  commit_hash CHAR(36),
+  commit_hash CHAR(40),
   tar_desc    TEXT,
   error_type  TEXT,
   error       TEXT,
