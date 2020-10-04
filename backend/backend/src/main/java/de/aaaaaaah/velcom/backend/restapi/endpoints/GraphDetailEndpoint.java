@@ -2,8 +2,6 @@ package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
 import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
-import de.aaaaaaah.velcom.backend.access.RepoReadAccess;
-import de.aaaaaaah.velcom.backend.access.entities.Branch;
 import de.aaaaaaah.velcom.backend.access.entities.BranchName;
 import de.aaaaaaah.velcom.backend.access.entities.Commit;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
@@ -11,14 +9,15 @@ import de.aaaaaaah.velcom.backend.access.entities.Dimension;
 import de.aaaaaaah.velcom.backend.access.entities.DimensionInfo;
 import de.aaaaaaah.velcom.backend.access.entities.Measurement;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementValues;
-import de.aaaaaaah.velcom.backend.access.entities.Repo;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
+import de.aaaaaaah.velcom.backend.newaccess.repoaccess.RepoReadAccess;
+import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.Branch;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.utils.EndpointUtils;
 import de.aaaaaaah.velcom.backend.restapi.exception.InvalidQueryParamsException;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimension;
-import io.micrometer.core.annotation.Timed;
 import de.aaaaaaah.velcom.shared.util.Pair;
+import io.micrometer.core.annotation.Timed;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -73,12 +72,8 @@ public class GraphDetailEndpoint {
 	) {
 		// Figure out tracked branches
 		RepoId repoId = new RepoId(repoUuid);
-		// By getting the tracked branches indirectly via the repo instead of directly from the
-		// repoAccess, we ensure a NoSuchRepoException is thrown when the repo doesn't exist. This
-		// should probably be handled differently though (e. g. by making repoAccess#getTrackedBranches
-		// throw a NoSuchRepoException when no such repo exists).
-		Repo repo = repoAccess.getRepo(repoId);
-		Collection<BranchName> trackedBranches = repo.getTrackedBranches().stream()
+		repoAccess.guardRepoExists(repoId);
+		List<BranchName> trackedBranches = repoAccess.getTrackedBranches(repoId).stream()
 			.map(Branch::getName)
 			.collect(Collectors.toList());
 

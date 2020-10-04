@@ -4,7 +4,6 @@ import static java.util.stream.Collectors.toList;
 
 import de.aaaaaaah.velcom.backend.access.ArchiveAccess;
 import de.aaaaaaah.velcom.backend.access.BenchmarkWriteAccess;
-import de.aaaaaaah.velcom.backend.access.RepoReadAccess;
 import de.aaaaaaah.velcom.backend.access.TaskWriteAccess;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
@@ -37,18 +36,15 @@ import java.util.function.Consumer;
  */
 public class Queue {
 
-	private final RepoReadAccess repoAccess;
 	private final TaskWriteAccess taskAccess;
 	private final ArchiveAccess archiveAccess;
 	private final BenchmarkWriteAccess benchAccess;
 
 	private final Collection<Consumer<TaskId>> abortHandlers = new ArrayList<>();
 
-	public Queue(RepoReadAccess repoAccess,
-		TaskWriteAccess taskAccess, ArchiveAccess archiveAccess,
+	public Queue(TaskWriteAccess taskAccess, ArchiveAccess archiveAccess,
 		BenchmarkWriteAccess benchAccess) {
 
-		this.repoAccess = repoAccess;
 		this.taskAccess = taskAccess;
 		this.archiveAccess = archiveAccess;
 		this.benchAccess = benchAccess;

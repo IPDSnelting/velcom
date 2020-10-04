@@ -24,6 +24,16 @@ public class Repo {
 		return name;
 	}
 
+	/**
+	 * An alias for {@link #getId()} so initial diffs don't get too large...
+	 *
+	 * @return the repo's id
+	 */
+	// TODO: 04.10.20 Remove this function
+	public RepoId getRepoId() {
+		return id;
+	}
+
 	public RemoteUrl getRemoteUrl() {
 		return remoteUrl;
 	}

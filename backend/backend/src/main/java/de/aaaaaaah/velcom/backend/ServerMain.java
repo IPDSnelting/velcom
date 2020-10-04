@@ -6,7 +6,6 @@ import de.aaaaaaah.velcom.backend.access.ArchiveAccess;
 import de.aaaaaaah.velcom.backend.access.BenchmarkWriteAccess;
 import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.access.KnownCommitWriteAccess;
-import de.aaaaaaah.velcom.backend.access.RepoWriteAccess;
 import de.aaaaaaah.velcom.backend.access.TaskWriteAccess;
 import de.aaaaaaah.velcom.backend.access.TokenWriteAccess;
 import de.aaaaaaah.velcom.backend.access.entities.AuthToken;
@@ -18,6 +17,7 @@ import de.aaaaaaah.velcom.backend.data.repocomparison.TimesliceComparison;
 import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparator;
 import de.aaaaaaah.velcom.backend.data.runcomparison.SignificanceFactors;
 import de.aaaaaaah.velcom.backend.listener.Listener;
+import de.aaaaaaah.velcom.backend.newaccess.repoaccess.RepoWriteAccess;
 import de.aaaaaaah.velcom.backend.restapi.authentication.RepoAuthenticator;
 import de.aaaaaaah.velcom.backend.restapi.authentication.RepoUser;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.AllReposEndpoint;
@@ -120,10 +120,7 @@ public class ServerMain extends Application<GlobalConfig> {
 			databaseStorage,
 			taskAccess
 		);
-		RepoWriteAccess repoAccess = new RepoWriteAccess(
-			databaseStorage,
-			repoStorage
-		);
+		RepoWriteAccess repoAccess = new RepoWriteAccess(databaseStorage);
 		TokenWriteAccess tokenAccess = new TokenWriteAccess(
 			databaseStorage,
 			new AuthToken(configuration.getWebAdminToken()),
@@ -140,7 +137,7 @@ public class ServerMain extends Application<GlobalConfig> {
 		);
 
 		// Data layer
-		Queue queue = new Queue(repoAccess, taskAccess, archiveAccess, benchmarkAccess);
+		Queue queue = new Queue(taskAccess, archiveAccess, benchmarkAccess);
 		BenchRepo benchRepo = new BenchRepo(archiveAccess);
 		SignificanceFactors significanceFactors = new SignificanceFactors(
 			configuration.getSignificanceRelativeThreshold(),

@@ -1,16 +1,15 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
 import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
-import de.aaaaaaah.velcom.backend.access.RepoReadAccess;
 import de.aaaaaaah.velcom.backend.access.entities.Commit;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
-import de.aaaaaaah.velcom.backend.access.entities.Repo;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.entities.Task;
 import de.aaaaaaah.velcom.backend.access.entities.TaskId;
 import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchTaskException;
 import de.aaaaaaah.velcom.backend.access.policy.QueuePriority;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
+import de.aaaaaaah.velcom.backend.newaccess.repoaccess.RepoReadAccess;
 import de.aaaaaaah.velcom.backend.restapi.authentication.RepoUser;
 import de.aaaaaaah.velcom.backend.restapi.exception.TaskAlreadyExistsException;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRunner;
@@ -52,9 +51,9 @@ public class QueueEndpoint {
 	private final Queue queue;
 	private final IDispatcher dispatcher;
 
-	public QueueEndpoint(CommitReadAccess commitReadAccess,
-		RepoReadAccess repoReadAccess, Queue queue,
-		IDispatcher dispatcher) {
+	public QueueEndpoint(CommitReadAccess commitReadAccess, RepoReadAccess repoReadAccess,
+		Queue queue, IDispatcher dispatcher) {
+
 		this.commitReadAccess = commitReadAccess;
 		this.repoReadAccess = repoReadAccess;
 		this.queue = queue;
@@ -144,8 +143,7 @@ public class QueueEndpoint {
 
 		user.guardRepoAccess(repoId);
 
-		// Ensure the repository exists, 404s otherwise
-		Repo repo = repoReadAccess.getRepo(repoId);
+		repoReadAccess.guardRepoExists(repoId);
 		// Ensure the commit exists, 404s otherwise
 		Commit commit = commitReadAccess.getCommit(repoId, commitHash);
 		// If at any point between these checks and inserting the task the repo is deleted, JOOQ will

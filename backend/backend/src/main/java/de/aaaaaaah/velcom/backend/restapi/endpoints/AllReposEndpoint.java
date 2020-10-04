@@ -1,19 +1,18 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
 import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
-import de.aaaaaaah.velcom.backend.access.RepoReadAccess;
 import de.aaaaaaah.velcom.backend.access.TokenReadAccess;
-import de.aaaaaaah.velcom.backend.access.entities.Branch;
 import de.aaaaaaah.velcom.backend.access.entities.BranchName;
 import de.aaaaaaah.velcom.backend.access.entities.Dimension;
 import de.aaaaaaah.velcom.backend.access.entities.DimensionInfo;
-import de.aaaaaaah.velcom.backend.access.entities.Repo;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
+import de.aaaaaaah.velcom.backend.newaccess.repoaccess.RepoReadAccess;
+import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.Branch;
+import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.Repo;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimension;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRepo;
 import io.micrometer.core.annotation.Timed;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -59,17 +58,14 @@ public class AllReposEndpoint {
 			.map(repo -> {
 				RepoId repoId = repo.getRepoId();
 
-				Set<Branch> branches = new HashSet<>(repoAccess.getBranches(repoId));
-				Set<Branch> trackedBranches = new HashSet<>(branches);
-				trackedBranches.retainAll(repo.getTrackedBranches());
-				Set<Branch> untrackedBranches = new HashSet<>(branches);
-				untrackedBranches.removeAll(trackedBranches);
-
-				List<String> trackedNames = trackedBranches.stream()
+				List<Branch> allBranches = repoAccess.getAllBranches(repoId);
+				List<String> trackedNames = allBranches.stream()
+					.filter(Branch::isTracked)
 					.map(Branch::getName)
 					.map(BranchName::getName)
 					.collect(Collectors.toList());
-				List<String> untrackedNames = untrackedBranches.stream()
+				List<String> untrackedNames = allBranches.stream()
+					.filter(branch -> !branch.isTracked())
 					.map(Branch::getName)
 					.map(BranchName::getName)
 					.collect(Collectors.toList());
