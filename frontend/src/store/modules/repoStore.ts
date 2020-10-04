@@ -23,11 +23,6 @@ export class RepoStore extends VxModule {
       // still show errors
     })
 
-    // FIXME: Remove this. But this keeps the API a bit more stable.
-    if (Object.keys(this.repos).length > 0) {
-      return this.allRepos
-    }
-
     const repos: Repo[] = response.data.repos.map(repoFromJson)
 
     this.setRepos(repos)
