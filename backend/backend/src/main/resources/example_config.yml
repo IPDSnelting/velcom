@@ -25,7 +25,7 @@ webAdminToken: "12345"
 runnerPort: 3546
 
 # The remote url where the benchmark repo remote url can be cloned from
-benchmarkRepoRemoteUrl: "git@git.scc.kit.edu:aaaaaaah/pseubench.git"
+benchmarkRepoRemoteUrl: "https://github.com/IPDSnelting/velcom-unibench.git"
 
 # The token runners need to provide in order to connect successfully.
 # Will be transmitted in plain text over an HTTPS connection.
