@@ -5,26 +5,28 @@
         <repo-base-information :repo="repo"></repo-base-information>
       </v-col>
     </v-row>
-    <v-row align="baseline" justify="center">
-      <v-col>
+    <v-row align="baseline" justify="center" no-gutters>
+      <v-col class="ma-0 pa-0">
         <v-card>
-          <v-card-title>
-            <v-btn-toggle v-model="selectedGraphComponent" mandatory>
-              <v-btn
-                v-for="{ component, name } in availableGraphComponents"
-                :key="name"
-                :value="component"
-              >
-                {{ name }}
-              </v-btn>
-            </v-btn-toggle>
-          </v-card-title>
-          <v-card-text>
-            <v-row justify="end" class="mx-4">
+          <v-card-title class="mb-0 pb-0">
+            <v-row no-gutters align="center" justify="space-between">
+              <v-col class="ma-0 pa-0">
+                <v-btn-toggle v-model="selectedGraphComponent" mandatory>
+                  <v-btn
+                    v-for="{ component, name } in availableGraphComponents"
+                    :key="name"
+                    :value="component"
+                  >
+                    {{ name }}
+                  </v-btn>
+                </v-btn-toggle>
+              </v-col>
               <v-col cols="auto">
                 <share-graph-link-dialog />
               </v-col>
             </v-row>
+          </v-card-title>
+          <v-card-text>
             <component
               :is="selectedGraphComponent"
               :dimensions="selectedDimensions"
@@ -36,8 +38,8 @@
     </v-row>
     <v-row align="baseline" justify="center">
       <v-col>
-        <v-card
-          ><v-card-text class="ma-0 pa-0">
+        <v-card>
+          <v-card-text>
             <v-container fluid class="ma-0 px-5 pb-0">
               <v-row align="start" justify="space-between" no-gutters>
                 <v-col :md="useMatrixSelector ? '' : '5'" sm="12" cols="12">
@@ -71,12 +73,6 @@
                       >Begin Y-Axis at minimum value</span
                     >
                     <span v-else>Begin Y-Axis at zero</span>
-                  </v-btn>
-                </v-col>
-                <v-col cols="auto">
-                  <v-btn text color="primary" :href="permanentLinkUrl">
-                    Permanent Link
-                    <v-icon right>{{ permanentLinkIcon }}</v-icon>
                   </v-btn>
                 </v-col>
               </v-row>
