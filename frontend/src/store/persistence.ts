@@ -10,6 +10,7 @@ import {
   repoStoreFromJson,
   repoStoreToJson
 } from '@/util/StorePersistenceUtilities'
+import Vue from 'vue'
 
 const STORAGE_VERSION_KEY = 'VELCOM_STORAGE_VERSION'
 const STORAGE_VERSION_CURRENT = '1'
@@ -106,22 +107,20 @@ export const persistenceSessionStorage = new VuexPersistence<
 
 export function storeToLocalStorage(): void {
   const data = {
-    data: JSON.stringify(sessionStorage),
+    data: sessionStorage.getItem('vuex'),
     accessTime: new Date().getTime()
   }
   localStorage.setItem('persisted_session_state', JSON.stringify(data))
 }
 
-export function restoreFromPassedSession(rawData: string | null): void {
+export async function restoreFromPassedSession(): Promise<void> {
   console.log('Trying to restore')
 
-  if (rawData === null) {
-    rawData = localStorage.getItem('persisted_session_state')
+  const rawData = localStorage.getItem('persisted_session_state')
 
-    if (rawData === null) {
-      console.log('Raw data really null')
-      return
-    }
+  if (rawData === null) {
+    console.log('Raw data really null')
+    return
   }
 
   const { data, accessTime } = JSON.parse(rawData)
@@ -134,7 +133,19 @@ export function restoreFromPassedSession(rawData: string | null): void {
 
   console.log('Used data: ' + data)
 
-  const state: RootState = JSON.parse(JSON.parse(data)['vuex'])
+  sessionStorage.setItem('persisted_session_state_unwrapped', data)
+
+  const stateWrapped = persistenceSessionStorage.restoreState(
+    'persisted_session_state_unwrapped',
+    sessionStorage
+  )
+
+  let state: Partial<RootState>
+  if (stateWrapped instanceof Promise) {
+    state = await stateWrapped
+  } else {
+    state = stateWrapped
+  }
 
   console.log('Used state')
   console.log(state)
@@ -144,4 +155,6 @@ export function restoreFromPassedSession(rawData: string | null): void {
 
   // Comparison module
   Object.assign(vxm.comparisonGraphModule, state.comparisonGraphModule)
+
+  sessionStorage.removeItem('persisted_session_state_unwrapped')
 }
