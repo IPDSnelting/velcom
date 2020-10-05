@@ -11,6 +11,23 @@ import {
   repoStoreToJson
 } from '@/util/StorePersistenceUtilities'
 
+const STORAGE_VERSION_KEY = 'VELCOM_STORAGE_VERSION'
+const STORAGE_VERSION_CURRENT = '1'
+
+/**
+ * Deletes old stored data which does not conform to what the store expects to
+ * deserialize now.
+ */
+export function deletedOutdatedLocalData(): void {
+  const storedVersion = window.localStorage.getItem(STORAGE_VERSION_KEY)
+  if (!storedVersion || storedVersion !== STORAGE_VERSION_CURRENT) {
+    window.localStorage.removeItem('vuex')
+    window.localStorage.removeItem('vuex-persist')
+    window.sessionStorage.removeItem('vuex')
+    window.sessionStorage.removeItem('vuex-persist')
+  }
+}
+
 interface LocalStoragePersisted {
   userModule?: UserStore
   colorModule?: ColorStore
@@ -28,6 +45,8 @@ export const persistenceLocalStorage = new VuexPersistence<Partial<RootState>>({
       repoModule: repoStoreToJson(state.repoModule)
     }
     storage!.setItem(key, JSON.stringify(persistable))
+
+    storage!.setItem(STORAGE_VERSION_KEY, STORAGE_VERSION_CURRENT)
   },
   restoreState: (key, storage) => {
     const data = storage!.getItem(key)
@@ -66,6 +85,7 @@ export const persistenceSessionStorage = new VuexPersistence<
     }
 
     storage!.setItem(key, JSON.stringify(persistable))
+    storage!.setItem(STORAGE_VERSION_KEY, STORAGE_VERSION_CURRENT)
   },
   restoreState: (key, storage) => {
     const data = storage!.getItem(key)
