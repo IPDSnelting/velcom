@@ -18,12 +18,13 @@ window.addEventListener('storage', event => {
   }
 
   if (event.key === 'persisted_session_state' && sessionStorage.length === 0) {
-    restoreFromPassedSession(event.newValue)
+    Vue.nextTick(() => restoreFromPassedSession())
   }
 })
 
 if (sessionStorage.length === 0) {
-  restoreFromPassedSession(null)
+  // noinspection JSIgnoredPromiseFromCall
+  restoreFromPassedSession()
 }
 
 const vue = new Vue({
