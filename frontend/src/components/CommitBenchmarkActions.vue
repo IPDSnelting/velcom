@@ -13,7 +13,7 @@
       >
       <span v-else>Runs all benchmarks for this commit</span>
     </v-tooltip>
-    <v-tooltip top v-if="isAdmin">
+    <v-tooltip top v-if="isAdmin && oneUpImplemented">
       <template #activator="{ on }">
         <v-btn icon v-on="on" @click="benchmarkUpwards">
           <v-icon>{{ benchmarkUpwardsIcon }}</v-icon>
@@ -59,6 +59,11 @@ export default class CommitBenchmarkActions extends Vue {
 
   private get isAdmin(): boolean {
     return vxm.userModule.isAdmin
+  }
+
+  // FIXME: Implement One-Up in backend and then re-enable it
+  private get oneUpImplemented() {
+    return false
   }
 
   private benchmark() {
