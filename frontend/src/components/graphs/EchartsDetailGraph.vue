@@ -218,6 +218,7 @@ export default class EchartsDetailGraph extends Vue {
           zoomOnMouseWheel: false
         },
         {
+          id: 'xAxis',
           type: 'slider',
           // Start at the correct place when changing the series type
           startValue: vxm.detailGraphModule.zoomXStartValue || undefined,
