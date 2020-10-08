@@ -1,5 +1,5 @@
 <template>
-  <v-container fluid>
+  <v-container fluid style="max-width: 1185px">
     <v-dialog v-model="showDetailErrorDialog">
       <v-card>
         <v-toolbar dark color="primary">
@@ -22,10 +22,12 @@
     </v-dialog>
 
     <v-data-table
+      dense
       multi-sort
       :headers="headers"
       :items="items"
-      :items-per-page="5"
+      :items-per-page="-1"
+      class="measurement-table"
     >
       <template #[`item.value`]="{ item, value }">
         <measurement-value
@@ -304,5 +306,15 @@ export default class MeasurementsDisplay extends Vue {
 
 .error-message-tooltip {
   cursor: pointer;
+}
+</style>
+
+<style>
+.measurement-table tbody tr:nth-child(even) {
+  background-color: var(--v-rowHighlight-darken1);
+}
+
+.measurement-table tbody tr:hover {
+  background-color: var(--v-rowHighlight-lighten1) !important;
 }
 </style>
