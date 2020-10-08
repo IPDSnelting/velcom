@@ -20,6 +20,7 @@ import Crosshair from 'dygraphs/src/extras/crosshair.js'
 
 type RealOptions = dygraphs.Options & {
   rangeSelectorPlotLineWidth?: number
+  rangeSelectorAlpha?: number
 }
 
 @Component({})
@@ -79,6 +80,14 @@ export default class DytailGraph extends Vue {
 
   private dimensionsColors(): string[] {
     return this.dimensions.map(this.dimensionColor)
+  }
+
+  private get selectorAlpha(): number {
+    return vxm.userModule.darkThemeSelected ? 0.2 : 0.7
+  }
+
+  private get selectorLineWidth(): number {
+    return vxm.userModule.darkThemeSelected ? 2 : 1.5
   }
 
   private get minDateValue(): number {
@@ -194,8 +203,10 @@ export default class DytailGraph extends Vue {
         vxm.detailGraphModule.zoomYStartValue,
         vxm.detailGraphModule.zoomYEndValue
       ],
-      includeZero: this.beginYAtZero
-    })
+      includeZero: this.beginYAtZero,
+      rangeSelectorPlotLineWidth: this.selectorLineWidth,
+      rangeSelectorAlpha: this.selectorAlpha
+    } as RealOptions)
   }
 
   mounted(): void {
@@ -244,10 +255,10 @@ export default class DytailGraph extends Vue {
         plugins: [new Crosshair({ direction: 'vertical' })],
         showRangeSelector: true,
         rangeSelectorHeight: 30,
-        rangeSelectorPlotLineWidth: 1,
-        rangeSelectorAlpha: 0.5,
+        rangeSelectorPlotLineWidth: this.selectorLineWidth,
+        rangeSelectorAlpha: this.selectorAlpha,
         rangeSelectorForegroundLineWidth: 0.5,
-        rangeSelectorPlotFillColor: 'lightgray',
+        rangeSelectorPlotFillColor: '',
         rangeSelectorPlotStrokeColor: 'grey',
         rangeSelectorBackgroundStrokeColor: 'currentColor',
         // and, to keep the ability to brush and zoom:
