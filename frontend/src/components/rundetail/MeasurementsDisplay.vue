@@ -26,7 +26,7 @@
       multi-sort
       :headers="headers"
       :items="items"
-      :items-per-page="5"
+      :items-per-page="-1"
       class="measurement-table"
     >
       <template #[`item.value`]="{ item, value }">
