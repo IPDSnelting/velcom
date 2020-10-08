@@ -311,10 +311,10 @@ export default class MeasurementsDisplay extends Vue {
 
 <style>
 .measurement-table tbody tr:nth-child(even) {
-  background-color: var(--v-rowHighlight-lighten1);
+  background-color: var(--v-rowHighlight-darken1);
 }
 
 .measurement-table tbody tr:hover {
-  background-color: var(--v-rowHighlight-darken1) !important;
+  background-color: var(--v-rowHighlight-lighten1) !important;
 }
 </style>
