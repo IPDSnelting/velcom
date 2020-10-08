@@ -99,7 +99,7 @@ class RelevantChange {
       let change = difference.relDiff
         ? this.formatPercentage(difference.relDiff)
         : this.formatNumber(difference.absDiff)
-      change += ` (${difference.stddev} σ)`
+      change += ` (${this.formatNumber(difference.stddev)} σ)`
 
       this.change = change
     } else {

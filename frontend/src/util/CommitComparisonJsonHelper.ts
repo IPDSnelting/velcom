@@ -90,7 +90,7 @@ export function differenceFromJson(json: any): DimensionDifference {
     dimensionFromJson(json.dimension),
     json.diff,
     json.reldiff,
-    json.stddev
+    json.stddev ? json.diff / json.stddev : undefined
   )
 }
 
