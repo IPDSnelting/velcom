@@ -191,6 +191,48 @@ export default class DytailGraph extends Vue {
     return vxm.userModule.darkThemeSelected
   }
 
+  private pointClickCallback(e: MouseEvent, graphPoint: dygraphs.Point) {
+    let datapoint: DetailDataPoint | undefined = this.datapoints.find(
+      point => point.committerDate.getTime() === graphPoint.xval
+    )
+
+    if (!datapoint) {
+      return
+    }
+
+    // Datapoint dialog on right click
+    if(e.button === 2) {
+      this.pointDialogDatapoint = dataPoint
+      this.pointDialogDimension = this.dimensions.find(
+          it => it.toString() === graphPoint.name
+      )!
+      this.pointDialogOpen = true
+
+      return
+    }
+
+    // New tab on control
+    if (e.ctrlKey) {
+      const routeData = this.$router.resolve({
+        name: 'run-detail',
+        params: {
+          first: vxm.detailGraphModule.selectedRepoId,
+          second: datapoint.hash
+        }
+      })
+      window.open(routeData.href, '_blank')
+    } else {
+      // open it in place on a normal left click
+      this.$router.push({
+        name: 'run-detail',
+        params: {
+          first: vxm.detailGraphModule.selectedRepoId,
+          second: datapoint.hash
+        }
+      })
+    }
+  }
+
   @Watch('datapoints')
   @Watch('dimensions')
   @Watch('beginYAtZero')
@@ -289,12 +331,14 @@ export default class DytailGraph extends Vue {
           }
         },
         ylabel: this.yLabel,
+        pointClickCallback: this.pointClickCallback,
         labels: ['', ''], // will be replaced in update
         legend: 'follow',
         labelsSeparateLines: true,
         connectSeparatedPoints: true,
         drawPoints: false,
         animatedZooms: false, // does not work with slider
+        pointSize: 3,
         panEdgeFraction: 0.00001,
         zoomCallback: this.dygraphsZoomed,
         legendFormatter: this.tooltipFormatter,
