@@ -103,6 +103,10 @@ export default class DytailGraph extends Vue {
     return this.dimensions.map(this.dimensionColor)
   }
 
+  private get graphFailedOrUnbenchmarkedColor() {
+    return this.$vuetify.theme.currentTheme.graphFailedOrUnbenchmarked as string
+  }
+
   private get selectorAlpha(): number {
     return vxm.userModule.darkThemeSelected ? 0.2 : 0.7
   }
@@ -136,9 +140,7 @@ export default class DytailGraph extends Vue {
 
   // eslint-disable-next-line no-undef
   private tooltipFormatter(legendData: dygraphs.LegendData) {
-    const datapoint: DetailDataPoint | undefined = this.datapoints.find(
-      point => point.positionDate.getTime() === legendData.x
-    )
+    const datapoint = this.datapointByPositionDate(legendData.x)
     if (datapoint) {
       const data = legendData.series.slice()
       // Sort them so the order corresponds to the order of the lines
@@ -191,20 +193,28 @@ export default class DytailGraph extends Vue {
     return vxm.userModule.darkThemeSelected
   }
 
-  private pointClickCallback(e: MouseEvent, graphPoint: dygraphs.Point) {
-    let datapoint: DetailDataPoint | undefined = this.datapoints.find(
-      point => point.committerDate.getTime() === graphPoint.xval
+  private datapointByPositionDate(
+    authorDate: number
+  ): DetailDataPoint | undefined {
+    return this.datapoints.find(
+      point => point.positionDate.getTime() === authorDate
     )
+  }
+
+  private pointClickCallback(e: MouseEvent, graphPoint: any) {
+    const datapoint: DetailDataPoint | undefined = graphPoint.xval
+      ? this.datapointByPositionDate(graphPoint.xval)
+      : undefined
 
     if (!datapoint) {
       return
     }
 
     // Datapoint dialog on right click
-    if(e.button === 2) {
-      this.pointDialogDatapoint = dataPoint
+    if (e.button === 2) {
+      this.pointDialogDatapoint = datapoint
       this.pointDialogDimension = this.dimensions.find(
-          it => it.toString() === graphPoint.name
+        it => it.toString() === graphPoint.name
       )!
       this.pointDialogOpen = true
 
@@ -230,6 +240,57 @@ export default class DytailGraph extends Vue {
           second: datapoint.hash
         }
       })
+    }
+  }
+
+  private drawHighlightPointCallback(
+    g: Dygraph,
+    seriesName: string,
+    canvasContext: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+    color: string,
+    pointSize: number,
+    idx: number
+  ) {
+    const datapoint: DetailDataPoint = this.datapoints[idx]
+    const dimension: DimensionId | undefined = this.dimensions.find(
+      it => it.benchmark + ' - ' + it.metric === seriesName
+    )
+    if (!dimension) {
+      return
+    }
+
+    if (datapoint.failed(dimension)) {
+      // gray cross icon
+      color = this.graphFailedOrUnbenchmarkedColor
+      canvasContext.beginPath()
+      canvasContext.strokeStyle = this.graphFailedOrUnbenchmarkedColor
+      canvasContext.lineWidth = 4
+      canvasContext.moveTo(cx - pointSize, cy - pointSize)
+      canvasContext.lineTo(cx + pointSize, cy + pointSize)
+      canvasContext.stroke()
+
+      canvasContext.moveTo(cx + pointSize, cy - pointSize)
+      canvasContext.lineTo(cx - pointSize, cy + pointSize)
+      canvasContext.stroke()
+      canvasContext.closePath()
+    } else if (datapoint.unbenchmarked(dimension)) {
+      // grey empty circle
+      canvasContext.beginPath()
+      canvasContext.lineWidth = 2
+      canvasContext.strokeStyle = this.graphFailedOrUnbenchmarkedColor
+      canvasContext.arc(cx, cy, pointSize, 0, 360)
+      canvasContext.stroke()
+      canvasContext.closePath()
+    } else {
+      // filled in circle in dimension color
+      canvasContext.beginPath()
+      canvasContext.lineWidth = 2
+      canvasContext.arc(cx, cy, pointSize, 0, 360)
+      canvasContext.stroke()
+      canvasContext.fill()
+      canvasContext.closePath()
     }
   }
 
@@ -351,6 +412,8 @@ export default class DytailGraph extends Vue {
         rangeSelectorForegroundLineWidth: 0.5,
         rangeSelectorPlotFillColor: '',
         rangeSelectorPlotStrokeColor: 'grey',
+        drawHighlightPointCallback: this.drawHighlightPointCallback,
+        highlightCircleSize: 5,
         rangeSelectorBackgroundStrokeColor: 'currentColor',
         // and, to keep the ability to brush and zoom:
         interactionModel: Dygraph.defaultInteractionModel
