@@ -227,12 +227,12 @@ export default class MeasurementsDisplay extends Vue {
       { text: 'Unit', value: 'unit', align: 'left' },
       { text: 'Value', value: 'value', align: 'right' },
       {
-        text: 'Standard Deviation',
+        text: 'Stddev',
         value: 'standardDeviation',
         align: 'right'
       },
       {
-        text: 'Standard Deviation %',
+        text: 'Stddev %',
         value: 'standardDeviationPercent',
         align: 'right'
       },
