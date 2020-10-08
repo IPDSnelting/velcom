@@ -32,7 +32,7 @@ export default new Vuetify({
         snackbarSuccess: '#3db223',
         warning: '#ff9830',
         error: '#f2495c',
-        graphBackground: '#424242',
+        graphBackground: '#2f3136',
         graphFailedOrUnbenchmarked: '#d3d3d3', // lightgray
         graphReferenceElements: '#d3d3d3', // lightgray
         rowHighlight: '#616161'
