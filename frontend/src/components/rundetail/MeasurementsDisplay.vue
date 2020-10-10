@@ -50,7 +50,7 @@
         v-for="{ slotName, tooltip } in headerFormats"
         v-slot:[slotName]="{ item, value }"
       >
-        <div :key="slotName">
+        <span :key="slotName">
           <measurement-value
             :value="value"
             :tooltip-message="
@@ -58,7 +58,7 @@
             "
             :color="item.changeColor"
           ></measurement-value>
-        </div>
+        </span>
       </template>
     </v-data-table>
   </v-container>
