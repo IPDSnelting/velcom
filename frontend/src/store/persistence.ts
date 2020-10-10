@@ -10,7 +10,6 @@ import {
   repoStoreFromJson,
   repoStoreToJson
 } from '@/util/StorePersistenceUtilities'
-import Vue from 'vue'
 
 const STORAGE_VERSION_KEY = 'VELCOM_STORAGE_VERSION'
 const STORAGE_VERSION_CURRENT = '1'
