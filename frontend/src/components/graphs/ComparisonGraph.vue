@@ -32,6 +32,7 @@ import { formatDateUTC } from '@/util/TimeUtil'
 import { ComparisonDataPoint, Repo } from '@/store/types'
 import ComparisonDatapointDialog from '../dialogs/ComparisonDatapointDialog.vue'
 import { crosshairIcon } from '../graphs/crosshairIcon'
+import { showCommitInDetailGraph } from '@/util/GraphNavigation'
 
 @Component({
   components: {
@@ -903,33 +904,14 @@ export default class ComparisonGraph extends Vue {
     }
     this.closeDialog()
     const dataPoint = this.selectedDatapoint
-    const repoId = dataPoint.repoId
 
-    vxm.detailGraphModule.startTime = new Date(
-      dataPoint.authorDate.getTime() - 1000 * 60 * 60 * 24 * 4
+    await showCommitInDetailGraph(
+      vxm.comparisonGraphModule.selectedDimension,
+      dataPoint.repoId,
+      dataPoint.hash,
+      dataPoint.authorDate,
+      this.$router
     )
-    vxm.detailGraphModule.endTime = new Date(
-      dataPoint.authorDate.getTime() + 1000 * 60 * 60 * 24 * 4
-    )
-    vxm.detailGraphModule.selectedRepoId = repoId
-    vxm.detailGraphModule.selectedDimensions = [
-      vxm.comparisonGraphModule.selectedDimension
-    ]
-    const allDataPoints = await vxm.detailGraphModule.fetchDetailGraph()
-
-    const detailPoint = allDataPoints.find(it => it.hash === dataPoint.hash)
-
-    if (detailPoint) {
-      vxm.detailGraphModule.referenceDatapoint = {
-        dataPoint: detailPoint,
-        dimension: vxm.comparisonGraphModule.selectedDimension
-      }
-    }
-
-    await this.$router.push({
-      name: 'repo-detail',
-      params: { id: repoId }
-    })
   }
 
   // initializing
