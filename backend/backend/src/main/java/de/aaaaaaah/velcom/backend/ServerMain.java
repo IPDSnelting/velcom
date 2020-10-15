@@ -17,6 +17,7 @@ import de.aaaaaaah.velcom.backend.data.repocomparison.TimesliceComparison;
 import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparator;
 import de.aaaaaaah.velcom.backend.data.runcomparison.SignificanceFactors;
 import de.aaaaaaah.velcom.backend.listener.Listener;
+import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.DimensionReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.RepoWriteAccess;
 import de.aaaaaaah.velcom.backend.restapi.authentication.RepoAuthenticator;
 import de.aaaaaaah.velcom.backend.restapi.authentication.RepoUser;
@@ -69,6 +70,7 @@ import io.micrometer.prometheus.PrometheusMeterRegistry;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.EnumSet;
+import java.util.stream.Stream;
 import javax.servlet.DispatcherType;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -116,6 +118,7 @@ public class ServerMain extends Application<GlobalConfig> {
 		// Access layer
 		TaskWriteAccess taskAccess = new TaskWriteAccess(databaseStorage);
 		CommitReadAccess commitAccess = new CommitReadAccess(repoStorage);
+		DimensionReadAccess dimensionAccess = new DimensionReadAccess(databaseStorage);
 		KnownCommitWriteAccess knownCommitAccess = new KnownCommitWriteAccess(
 			databaseStorage,
 			taskAccess
@@ -167,21 +170,19 @@ public class ServerMain extends Application<GlobalConfig> {
 		configureCors(environment);
 
 		// Endpoints
-		environment.jersey().register(new AllReposEndpoint(repoAccess, benchmarkAccess, tokenAccess));
-		environment.jersey().register(new CommitEndpoint(commitAccess, repoAccess, benchmarkAccess));
-		environment.jersey()
-			.register(new CompareEndpoint(benchmarkAccess, commitAccess, runComparator));
-		environment.jersey().register(new RunEndpoint(benchmarkAccess, commitAccess, runComparator));
-		environment.jersey().register(new TestTokenEndpoint());
-		environment.jersey().register(new QueueEndpoint(commitAccess, repoAccess, queue, dispatcher));
-		environment.jersey()
-			.register(new RecentRunsEndpoint(benchmarkAccess, commitAccess, significantRunsCollector));
-		environment.jersey()
-			.register(new RepoEndpoint(repoAccess, tokenAccess, benchmarkAccess, listener));
-		environment.jersey().register(new GraphComparisonEndpoint(comparison, benchmarkAccess));
-		environment.jersey()
-			.register(new GraphDetailEndpoint(commitAccess, benchmarkAccess, repoAccess));
-		environment.jersey().register(new DebugEndpoint(dispatcher));
+		Stream.of(
+			new AllReposEndpoint(benchmarkAccess, dimensionAccess, repoAccess, tokenAccess),
+			new CommitEndpoint(commitAccess, repoAccess, benchmarkAccess),
+			new CompareEndpoint(benchmarkAccess, commitAccess, runComparator),
+			new DebugEndpoint(dispatcher),
+			new GraphComparisonEndpoint(comparison, benchmarkAccess),
+			new GraphDetailEndpoint(commitAccess, benchmarkAccess, dimensionAccess, repoAccess),
+			new QueueEndpoint(commitAccess, repoAccess, queue, dispatcher),
+			new RecentRunsEndpoint(benchmarkAccess, commitAccess, significantRunsCollector),
+			new RepoEndpoint(repoAccess, tokenAccess, benchmarkAccess, listener),
+			new RunEndpoint(benchmarkAccess, commitAccess, runComparator),
+			new TestTokenEndpoint()
+		).forEach(endpoint -> environment.jersey().register(endpoint));
 	}
 
 	private void configureMetrics(Environment environment) {

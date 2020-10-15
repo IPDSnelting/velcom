@@ -6,6 +6,7 @@ import de.aaaaaaah.velcom.backend.access.entities.BranchName;
 import de.aaaaaaah.velcom.backend.access.entities.Dimension;
 import de.aaaaaaah.velcom.backend.access.entities.DimensionInfo;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
+import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.DimensionReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.RepoReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.Branch;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.Repo;
@@ -29,16 +30,17 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 public class AllReposEndpoint {
 
-	private final RepoReadAccess repoAccess;
 	private final BenchmarkReadAccess benchmarkAccess;
+	private final DimensionReadAccess dimensionAccess;
+	private final RepoReadAccess repoAccess;
 	private final TokenReadAccess tokenAccess;
 
-	public AllReposEndpoint(RepoReadAccess repoAccess,
-		BenchmarkReadAccess benchmarkAccess,
-		TokenReadAccess tokenAccess) {
+	public AllReposEndpoint(BenchmarkReadAccess benchmarkAccess, DimensionReadAccess dimensionAccess,
+		RepoReadAccess repoAccess, TokenReadAccess tokenAccess) {
 
-		this.repoAccess = repoAccess;
 		this.benchmarkAccess = benchmarkAccess;
+		this.dimensionAccess = dimensionAccess;
+		this.repoAccess = repoAccess;
 		this.tokenAccess = tokenAccess;
 	}
 
@@ -47,7 +49,7 @@ public class AllReposEndpoint {
 	public GetReply get() {
 		Collection<Repo> repos = repoAccess.getAllRepos();
 		List<RepoId> repoIds = repos.stream().map(Repo::getRepoId).collect(Collectors.toList());
-		Map<RepoId, Set<Dimension>> allDimensions = benchmarkAccess.getAvailableDimensions(repoIds);
+		Map<RepoId, Set<Dimension>> allDimensions = dimensionAccess.getAvailableDimensions(repoIds);
 		Map<Dimension, DimensionInfo> dimensionInfos = benchmarkAccess.getDimensionInfos(
 			allDimensions.values().stream()
 				.flatMap(Set::stream)

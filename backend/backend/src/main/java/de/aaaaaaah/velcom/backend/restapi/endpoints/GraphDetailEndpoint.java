@@ -11,8 +11,10 @@ import de.aaaaaaah.velcom.backend.access.entities.Measurement;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementValues;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
+import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.DimensionReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.RepoReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.Branch;
+import de.aaaaaaah.velcom.backend.newaccess.repoaccess.exceptions.NoSuchRepoException;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.utils.EndpointUtils;
 import de.aaaaaaah.velcom.backend.restapi.exception.InvalidQueryParamsException;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimension;
@@ -51,13 +53,15 @@ public class GraphDetailEndpoint {
 
 	private final CommitReadAccess commitAccess;
 	private final BenchmarkReadAccess benchmarkAccess;
+	private final DimensionReadAccess dimensionAccess;
 	private final RepoReadAccess repoAccess;
 
 	public GraphDetailEndpoint(CommitReadAccess commitAccess, BenchmarkReadAccess benchmarkAccess,
-		RepoReadAccess repoAccess) {
+		DimensionReadAccess dimensionAccess, RepoReadAccess repoAccess) {
 
 		this.commitAccess = commitAccess;
 		this.benchmarkAccess = benchmarkAccess;
+		this.dimensionAccess = dimensionAccess;
 		this.repoAccess = repoAccess;
 	}
 
@@ -69,7 +73,7 @@ public class GraphDetailEndpoint {
 		@QueryParam("end_time") @Nullable Long endTimeEpoch,
 		@QueryParam("duration") @Nullable Integer durationInSeconds,
 		@QueryParam("dimensions") @NotNull String dimensionStr
-	) {
+	) throws NoSuchRepoException {
 		// Figure out tracked branches
 		RepoId repoId = new RepoId(repoUuid);
 		repoAccess.guardRepoExists(repoId);

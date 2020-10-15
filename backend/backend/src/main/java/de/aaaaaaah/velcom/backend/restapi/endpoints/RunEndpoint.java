@@ -7,9 +7,10 @@ import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.entities.Dimension;
 import de.aaaaaaah.velcom.backend.access.entities.DimensionInfo;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
-import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.CommitSource;
 import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparator;
 import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparison;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.CommitSource;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.exceptions.NoSuchRunException;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.utils.EndpointUtils;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimensionDifference;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRun;
@@ -67,7 +68,7 @@ public class RunEndpoint {
 		@QueryParam("all_values") @Nullable Boolean allValuesOptional,
 		@QueryParam("hash") @Nullable String hashString,
 		@QueryParam("diff_prev") @Nullable Boolean diffPrevOptional
-	) {
+	) throws NoSuchRunException {
 		boolean allValues = (allValuesOptional != null) && allValuesOptional;
 		boolean diffPrev = (diffPrevOptional != null) && diffPrevOptional;
 

@@ -7,6 +7,7 @@ import de.aaaaaaah.velcom.backend.access.entities.DimensionInfo;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
 import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparator;
 import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparison;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.exceptions.NoSuchRunException;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.utils.EndpointUtils;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimensionDifference;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRun;
@@ -49,7 +50,7 @@ public class CompareEndpoint {
 		@QueryParam("hash1") @Nullable String hash1,
 		@QueryParam("hash2") @Nullable String hash2,
 		@QueryParam("all_values") @Nullable Boolean allValuesOptional
-	) {
+	) throws NoSuchRunException {
 		boolean allValues = (allValuesOptional != null) && allValuesOptional;
 
 		Run run1 = EndpointUtils.getRun(benchmarkAccess, runUuid1, hash1);

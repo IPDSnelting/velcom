@@ -9,6 +9,7 @@ import de.aaaaaaah.velcom.backend.access.entities.DimensionInfo;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
 import de.aaaaaaah.velcom.backend.access.entities.RunId;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.exceptions.NoSuchRunException;
 import de.aaaaaaah.velcom.backend.restapi.exception.InvalidQueryParamsException;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonResult;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRun;
@@ -38,7 +39,9 @@ public class EndpointUtils {
 	 * @param hash the commit's hash, if the run should be obtained through a commit
 	 * @return the run if it can be found
 	 */
-	public static Run getRun(BenchmarkReadAccess benchmarkAccess, UUID id, @Nullable String hash) {
+	public static Run getRun(BenchmarkReadAccess benchmarkAccess, UUID id, @Nullable String hash)
+		throws NoSuchRunException {
+
 		if (hash == null) {
 			RunId runId = new RunId(id);
 			return benchmarkAccess.getRun(runId);

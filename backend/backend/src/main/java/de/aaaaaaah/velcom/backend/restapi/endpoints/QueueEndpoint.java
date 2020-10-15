@@ -10,6 +10,7 @@ import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchTaskException;
 import de.aaaaaaah.velcom.backend.access.policy.QueuePriority;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.RepoReadAccess;
+import de.aaaaaaah.velcom.backend.newaccess.repoaccess.exceptions.NoSuchRepoException;
 import de.aaaaaaah.velcom.backend.restapi.authentication.RepoUser;
 import de.aaaaaaah.velcom.backend.restapi.exception.TaskAlreadyExistsException;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRunner;
@@ -136,8 +137,11 @@ public class QueueEndpoint {
 	@POST
 	@Path("commit/{repoId}/{hash}")
 	@Timed(histogram = true)
-	public PostCommitReply addCommit(@Auth RepoUser user, @PathParam("repoId") UUID repoUuid,
-		@PathParam("hash") String commitHashString) {
+	public PostCommitReply addCommit(
+		@Auth RepoUser user,
+		@PathParam("repoId") UUID repoUuid,
+		@PathParam("hash") String commitHashString
+	) throws NoSuchRepoException {
 		RepoId repoId = new RepoId(repoUuid);
 		CommitHash commitHash = new CommitHash(commitHashString);
 
