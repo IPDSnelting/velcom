@@ -20,6 +20,7 @@
             <measurements-display
               :measurements="measurements"
               :differences="differences"
+              @dimensionClicked="navigateToDetailGraph"
             ></measurements-display>
           </v-card-text>
         </v-card>
@@ -43,7 +44,8 @@ import {
   RunResultSuccess,
   Measurement,
   DimensionDifference,
-  RunWithDifferences
+  RunWithDifferences,
+  Dimension
 } from '@/store/types'
 import { Prop } from 'vue-property-decorator'
 import MeasurementsDisplay from '@/components/rundetail/MeasurementsDisplay.vue'
@@ -101,6 +103,10 @@ export default class RunDetail extends Vue {
       return this.runWithDifferences.differences
     }
     return undefined
+  }
+
+  private navigateToDetailGraph(dimension: Dimension) {
+    this.$emit('navigateToDetailGraph', dimension)
   }
 }
 </script>

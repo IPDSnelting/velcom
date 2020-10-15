@@ -91,7 +91,6 @@ import {
   RunComparison
 } from '@/store/types'
 import RunComparisonTable from '@/components/comparison/RunComparisonTable.vue'
-import CommitDetail from '@/components/rundetail/CommitDetail.vue'
 import CommitOverviewBase from '@/components/overviews/CommitOverviewBase.vue'
 import RunInfo from '@/components/rundetail/RunInfo.vue'
 

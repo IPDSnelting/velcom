@@ -11,7 +11,11 @@
           <v-card-title class="mb-0 pb-0">
             <v-row no-gutters align="center" justify="space-between">
               <v-col class="ma-0 pa-0">
-                <v-btn-toggle v-model="selectedGraphComponent" mandatory>
+                <v-btn-toggle
+                  :value="selectedGraphComponent"
+                  @input="setSelectedGraphComponent"
+                  mandatory
+                >
                   <v-btn
                     v-for="{ component, name } in availableGraphComponents"
                     :key="name"
@@ -241,6 +245,7 @@ import EchartsDetailGraph from '@/components/graphs/EchartsDetailGraph.vue'
 import DytailGraph from '@/components/graphs/NewDytailGraph.vue'
 import { Watch } from 'vue-property-decorator'
 import ShareGraphLinkDialog from '@/views/ShareGraphLinkDialog.vue'
+import GraphPlaceholder from '@/components/graphs/GraphPlaceholder.vue'
 
 @Component({
   components: {
@@ -250,7 +255,8 @@ import ShareGraphLinkDialog from '@/views/ShareGraphLinkDialog.vue'
     'normal-dimension-selection': DimensionSelection,
     'new-echarts-detail': EchartsDetailGraph,
     'dygraph-detail': DytailGraph,
-    'commit-overview': RepoCommitOverview
+    'commit-overview': RepoCommitOverview,
+    'graph-placeholder': GraphPlaceholder
   }
 })
 export default class RepoDetail extends Vue {
@@ -270,20 +276,21 @@ export default class RepoDetail extends Vue {
   private availableGraphComponents = [
     {
       predicate: () => {
-        return vxm.detailGraphModule.visiblePoints < 100_000
+        return vxm.detailGraphModule.visiblePoints < 30_000
       },
       component: EchartsDetailGraph,
       name: 'Fancy'
     },
     {
       predicate: () => {
-        return vxm.detailGraphModule.visiblePoints >= 100_000
+        // matches from first to last. this one is the fallback
+        return true
       },
       component: DytailGraph,
       name: 'Fast'
     }
   ]
-  private selectedGraphComponent: typeof Vue | null = null
+  private selectedGraphComponent: typeof Vue | null = GraphPlaceholder
 
   private get repo(): Repo {
     return vxm.repoModule.repoById(this.id)!
@@ -397,10 +404,18 @@ export default class RepoDetail extends Vue {
       : 'You have to select a date after the first one!'
   }
 
+  private setSelectedGraphComponent(component: typeof Vue) {
+    if (this.selectedGraphComponent === GraphPlaceholder) {
+      return
+    }
+    this.selectedGraphComponent = component
+  }
+
   @Watch('id')
-  private retrieveGraphData(): void {
+  private async retrieveGraphData(): Promise<void> {
     if (this.stopAfterStart()) {
-      vxm.detailGraphModule.fetchDetailGraph()
+      this.selectedGraphComponent = GraphPlaceholder
+      await vxm.detailGraphModule.fetchDetailGraph()
       const correctSeries = this.availableGraphComponents.find(it =>
         it.predicate()
       )

@@ -28,6 +28,7 @@
       :items="items"
       :items-per-page="-1"
       class="measurement-table"
+      @click:row="rowClicked"
     >
       <template #[`item.value`]="{ item, value }">
         <measurement-value
@@ -50,7 +51,7 @@
         v-for="{ slotName, tooltip } in headerFormats"
         v-slot:[slotName]="{ item, value }"
       >
-        <div :key="slotName">
+        <span :key="slotName">
           <measurement-value
             :value="value"
             :tooltip-message="
@@ -58,7 +59,7 @@
             "
             :color="item.changeColor"
           ></measurement-value>
-        </div>
+        </span>
       </template>
     </v-data-table>
   </v-container>
@@ -227,12 +228,12 @@ export default class MeasurementsDisplay extends Vue {
       { text: 'Unit', value: 'unit', align: 'left' },
       { text: 'Value', value: 'value', align: 'right' },
       {
-        text: 'Standard Deviation',
+        text: 'Stddev',
         value: 'standardDeviation',
         align: 'right'
       },
       {
-        text: 'Standard Deviation %',
+        text: 'Stddev %',
         value: 'standardDeviationPercent',
         align: 'right'
       },
@@ -293,9 +294,24 @@ export default class MeasurementsDisplay extends Vue {
     }
     return error.substring(0, MAX_ERROR_LENGTH) + '…'
   }
+
+  private rowClicked(item: Item) {
+    const currentSelection = document.getSelection()
+    if (currentSelection && currentSelection.toString()) {
+      return
+    }
+    const measurement = this.measurements.find(
+      it =>
+        it.dimension.benchmark === item.benchmark &&
+        it.dimension.metric === item.metric
+    )!
+
+    this.$emit('dimensionClicked', measurement.dimension)
+  }
 }
 </script>
 
+<!--suppress CssUnresolvedCustomProperty -->
 <style scoped>
 .error-message {
   color: var(--v-error-base);
@@ -309,12 +325,25 @@ export default class MeasurementsDisplay extends Vue {
 }
 </style>
 
+<!--suppress CssUnresolvedCustomProperty -->
 <style>
-.measurement-table tbody tr:nth-child(even) {
-  background-color: var(--v-rowHighlight-darken1);
+.measurement-table tbody tr:hover {
+  cursor: pointer;
 }
 
-.measurement-table tbody tr:hover {
+/* LIGHT THEME alternating colors */
+.theme--light .measurement-table tbody tr:nth-child(even) {
+  background-color: var(--v-rowHighlight-lighten1);
+}
+.theme--light .measurement-table tbody tr:hover {
+  background-color: var(--v-rowHighlight-darken1) !important;
+}
+
+/* DARK THEME alternating colors */
+.theme--dark .measurement-table tbody tr:nth-child(even) {
+  background-color: var(--v-rowHighlight-darken1);
+}
+.theme--dark .measurement-table tbody tr:hover {
   background-color: var(--v-rowHighlight-lighten1) !important;
 }
 </style>

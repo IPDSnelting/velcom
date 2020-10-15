@@ -12,7 +12,10 @@
     </v-row>
     <v-row v-if="runWithDifferences" no-gutters>
       <v-col>
-        <run-detail :runWithDifferences="runWithDifferences"></run-detail>
+        <run-detail
+          @navigateToDetailGraph="navigateToDetailGraph"
+          :runWithDifferences="runWithDifferences"
+        ></run-detail>
       </v-col>
     </v-row>
     <v-row v-if="finishedLoading && !runWithDifferences">
@@ -56,12 +59,18 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Watch } from 'vue-property-decorator'
 import { vxm } from '@/store'
-import { Commit, CommitTaskSource, RunWithDifferences } from '@/store/types'
+import {
+  Commit,
+  CommitTaskSource,
+  Dimension,
+  RunWithDifferences
+} from '@/store/types'
 import NotFound404 from './NotFound404.vue'
 import RunDetail from '@/components/rundetail/RunDetail.vue'
 import CommitDetail from '@/components/rundetail/CommitDetail.vue'
 import RunTimeline from '@/components/rundetail/RunTimeline.vue'
 import { NotFoundError } from '@/store/modules/commitDetailComparisonStore'
+import { showCommitInDetailGraph } from '@/util/GraphNavigation'
 
 @Component({
   components: {
@@ -83,6 +92,19 @@ export default class RunCommitDetailView extends Vue {
 
   private get secondComponent(): string | undefined {
     return this.$route.params['second']
+  }
+
+  private async navigateToDetailGraph(dimension: Dimension) {
+    if (!this.commit) {
+      return
+    }
+    await showCommitInDetailGraph(
+      dimension,
+      this.commit.repoId,
+      this.commit.hash,
+      this.commit.authorDate,
+      this.$router
+    )
   }
 
   @Watch('firstComponent')
