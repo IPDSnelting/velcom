@@ -57,7 +57,7 @@
               <template #content v-if="getWorker(task)">
                 <v-tooltip top>
                   <template #activator="{ on }">
-                    <span style="flex: 0 0;" class="pt-3">
+                    <span style="flex: 0 0" class="pt-3">
                       <v-chip v-on="on" outlined label>
                         Running on » {{ getWorkerUnsafe(task).name }} « for
                         {{
@@ -68,7 +68,7 @@
                       </v-chip>
                     </span>
                   </template>
-                  <span style="white-space: pre; font-family: monospace;">{{
+                  <span style="white-space: pre; font-family: monospace">{{
                     getWorkerUnsafe(task).info
                   }}</span>
                 </v-tooltip>

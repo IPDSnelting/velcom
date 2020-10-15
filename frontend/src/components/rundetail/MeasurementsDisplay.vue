@@ -187,6 +187,7 @@ class Item {
 export default class MeasurementsDisplay extends Vue {
   @Prop()
   private measurements!: Measurement[]
+
   @Prop()
   private differences?: DimensionDifference[]
 
@@ -205,7 +206,7 @@ export default class MeasurementsDisplay extends Vue {
           if (!item.change) {
             return 'No unambiguous parent commit found'
           }
-          return 'The old value was zero. I can\'t divide by it :/'
+          return "The old value was zero. I can't divide by it :/"
         }
       },
       {
@@ -306,7 +307,7 @@ export default class MeasurementsDisplay extends Vue {
         it.dimension.metric === item.metric
     )!
 
-    this.$emit('dimensionClicked', measurement.dimension)
+    this.$emit('dimension-clicked', measurement.dimension)
   }
 }
 </script>

@@ -99,7 +99,7 @@ export default class RepoSelector extends Vue {
 
   get colorById(): (repoId: string) => string {
     return (repoId: string) => {
-      let repoIndex = vxm.repoModule.repoIndex(repoId)
+      const repoIndex = vxm.repoModule.repoIndex(repoId)
       return vxm.colorModule.colorByIndex(repoIndex)
     }
   }
@@ -137,13 +137,13 @@ export default class RepoSelector extends Vue {
   }
 
   notifySelectionChanged(): void {
-    this.$emit('selectionChanged')
+    this.$emit('selection-changed')
   }
 
   @Watch('allRepos')
   addMissingColors(): void {
     if (this.allColors.length < this.allRepos.length) {
-      let diff = this.allRepos.length - this.allColors.length
+      const diff = this.allRepos.length - this.allColors.length
       vxm.colorModule.addColors(diff)
     }
   }

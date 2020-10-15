@@ -59,6 +59,7 @@ import InlineMinimalRepoNameDisplay from '../InlineMinimalRepoDisplay.vue'
 export default class TarTaskOverview extends Vue {
   @Prop()
   private source!: TarTaskSource
+
   @Prop()
   private id!: RunId | TaskId
 }

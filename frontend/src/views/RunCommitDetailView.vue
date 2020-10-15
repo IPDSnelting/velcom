@@ -13,7 +13,7 @@
     <v-row v-if="runWithDifferences" no-gutters>
       <v-col>
         <run-detail
-          @navigateToDetailGraph="navigateToDetailGraph"
+          @navigate-to-detail-graph="navigateToDetailGraph"
           :runWithDifferences="runWithDifferences"
         ></run-detail>
       </v-col>

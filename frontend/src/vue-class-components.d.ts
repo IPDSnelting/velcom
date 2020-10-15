@@ -1,8 +1,10 @@
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import Vue from 'vue'
 import { Route, RawLocation } from 'vue-router'
 
 declare module 'vue/types/vue' {
   // Augment component instance type
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   interface Vue {
     beforeRouteEnter?(
       to: Route,

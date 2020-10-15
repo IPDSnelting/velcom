@@ -28,7 +28,7 @@
                   <v-col
                     cols="auto"
                     class="ml-3 body-1 pt-2 pt-lg-0"
-                    style="margin-left: auto !important;"
+                    style="margin-left: auto !important"
                   >
                     <inline-repo-display
                       :repoId="commit.repoId"
@@ -46,7 +46,7 @@
               </v-container>
             </v-toolbar>
           </v-card-title>
-          <v-card-text class="body-1" style="color: inherit;">
+          <v-card-text class="body-1" style="color: inherit">
             <v-container fluid class="my-0 py-0">
               <v-row
                 v-for="({ parent, child }, index) in navigationTargets"

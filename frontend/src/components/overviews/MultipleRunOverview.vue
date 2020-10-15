@@ -34,7 +34,7 @@
                     {{ relevantChange.id.metric }}
                     <span
                       class="font-weight-bold pl-3"
-                      style="font-size: 1.1rem;"
+                      style="font-size: 1.1rem"
                       >{{ relevantChange.change }}</span
                     >
                   </v-chip>

@@ -48,6 +48,7 @@ import {
 export default class RunTimeline extends Vue {
   @Prop()
   private runs!: RunDescription[]
+
   @Prop({ default: null })
   private selectedRunId!: RunId | null
 

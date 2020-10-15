@@ -45,6 +45,7 @@ export class ComparisonGraphStore extends VxModule {
   )
     .toISOString()
     .substring(0, 10)
+
   private _defaultStopTime: string = new Date().toISOString().substring(0, 10)
 
   private startTime: string = this._defaultStartTime

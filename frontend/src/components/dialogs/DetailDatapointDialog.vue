@@ -170,7 +170,7 @@ export default class DetailDatapointDialog extends Vue {
   }
 
   private compareCommits() {
-    this.$emit('compareCommits')
+    this.$emit('compare-commits')
     this.$emit('close')
   }
 

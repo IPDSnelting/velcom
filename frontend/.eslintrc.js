@@ -7,7 +7,7 @@ module.exports = {
 
   rules: {
     'no-debugger': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
-    'space-before-function-paren': ['error', 'never'],
+    'space-before-function-paren': 0,
     'no-new': 0,
     '@typescript-eslint/no-explicit-any': 0,
     '@typescript-eslint/no-non-null-assertion': 0,

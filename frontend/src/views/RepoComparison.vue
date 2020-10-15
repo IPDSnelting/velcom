@@ -188,7 +188,7 @@
             </v-col>
             <v-col class="ma-0 pa-0">
               <repo-selector
-                v-on:selectionChanged="retrieveGraphData()"
+                v-on:selection-changed="retrieveGraphData()"
               ></repo-selector>
             </v-col>
           </v-card>

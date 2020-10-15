@@ -182,10 +182,7 @@ export default class ComparisonGraph extends Vue {
 
   // scales and axes
   private xScale(domain: number[]): d3.ScaleTime<number, number> {
-    return d3
-      .scaleUtc()
-      .domain(domain)
-      .range([0, this.innerWidth])
+    return d3.scaleUtc().domain(domain).range([0, this.innerWidth])
   }
 
   private yScale(
@@ -194,24 +191,21 @@ export default class ComparisonGraph extends Vue {
   ): d3.ScaleLinear<number, number> {
     const min: number = !this.beginYAtZero && domain[0] ? domain[0] : 0
     const max: number = domain[1] || 0
-    return d3
-      .scaleLinear()
-      .domain([min, max])
-      .nice()
-      .range([height, 0])
+    return d3.scaleLinear().domain([min, max]).nice().range([height, 0])
   }
 
   private x(domain: number[], datapoint: ComparisonDataPoint): number {
     return datapoint.authorDate
-      ? this.xScale(domain)(datapoint.authorDate.getTime())
+      ? this.xScale(domain)(datapoint.authorDate.getTime())!
       : 0
   }
+
   private y(
     domain: number[],
     datapoint: ComparisonDataPoint,
     height: number
   ): number {
-    return this.yScale(domain, height)(datapoint.value)
+    return this.yScale(domain, height)(datapoint.value)!
   }
 
   private valueFormat: any = d3.format('<.4')
@@ -253,6 +247,7 @@ export default class ComparisonGraph extends Vue {
       .on('brush', this.brushed)
       .on('end', this.brushended)
   }
+
   private brushed() {
     const selection = d3.event.selection
 
@@ -319,18 +314,11 @@ export default class ComparisonGraph extends Vue {
       .attr('x2', 0)
       .attr('y2', this.y(this.yFocusDomain, datapoint, this.focusHeight))
 
-    referenceLine
-      .exit()
-      .transition()
-      .attr('opacity', 0)
-      .remove()
+    referenceLine.exit().transition().attr('opacity', 0).remove()
   }
 
   private removeReference() {
-    d3.select('#referenceLine')
-      .transition()
-      .attr('opacity', 0)
-      .remove()
+    d3.select('#referenceLine').transition().attr('opacity', 0).remove()
     this.removeCrosshair(vxm.comparisonGraphModule.referenceDatapoint!)
     vxm.comparisonGraphModule.referenceCommit = null
     this.closeDialog()
@@ -348,10 +336,7 @@ export default class ComparisonGraph extends Vue {
         .transition()
         .attr(
           'd',
-          d3
-            .symbol()
-            .type(this.crosshairIcon)
-            .size(this.datapointWidth)
+          d3.symbol().type(this.crosshairIcon).size(this.datapointWidth)
         )
         .attr(
           'transform',
@@ -370,13 +355,7 @@ export default class ComparisonGraph extends Vue {
 
   private removeCrosshair(datapoint: ComparisonDataPoint) {
     d3.select('#' + '_' + datapoint.repoId + '_' + datapoint.hash)
-      .attr(
-        'd',
-        d3
-          .symbol()
-          .type(d3.symbolCircle)
-          .size(this.datapointWidth)
-      )
+      .attr('d', d3.symbol().type(d3.symbolCircle).size(this.datapointWidth))
       .attr(
         'transform',
         'translate(' +
@@ -495,12 +474,7 @@ export default class ComparisonGraph extends Vue {
         .attr('stroke-width', 2)
         .attr('fill', 'none')
         .attr('pointer-events', 'none')
-      path
-        .exit()
-        .transition()
-        .attr('opacity', 0)
-        .attr('width', 0)
-        .remove()
+      path.exit().transition().attr('opacity', 0).attr('width', 0).remove()
     } else {
       d3.select('#' + layer + 'Layer')
         .select('#' + layer + 'line_' + repoID)
@@ -543,13 +517,7 @@ export default class ComparisonGraph extends Vue {
       .transition()
       .delay(animation.delay)
       .duration(animation.duration)
-      .attr(
-        'd',
-        d3
-          .symbol()
-          .type(d3.symbolCircle)
-          .size(this.datapointWidth)
-      )
+      .attr('d', d3.symbol().type(d3.symbolCircle).size(this.datapointWidth))
       .attr(
         'transform',
         (d: ComparisonDataPoint) =>
@@ -565,12 +533,7 @@ export default class ComparisonGraph extends Vue {
       .attr('opacity', 1)
       .style('cursor', 'pointer')
 
-    datapoints
-      .exit()
-      .transition()
-      .attr('opacity', 0)
-      .attr('width', 0)
-      .remove()
+    datapoints.exit().transition().attr('opacity', 0).attr('width', 0).remove()
   }
 
   private appendTooltips(keyFn: d3.ValueFn<any, any, string>) {
@@ -703,7 +666,7 @@ export default class ComparisonGraph extends Vue {
 
   // updating
   // eslint-disable-next-line @typescript-eslint/no-empty-function
-  private resizeListener: () => void = function() {}
+  private resizeListener: () => void = function () {}
 
   private resize() {
     const chart = d3.select('#chart').node() as HTMLElement

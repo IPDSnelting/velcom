@@ -34,7 +34,7 @@ const vue = new Vue({
   render: h => h(App)
 })
 
-axios.interceptors.request.use(function(config) {
+axios.interceptors.request.use(config => {
   if (vxm.userModule.loggedIn) {
     config.auth = {
       username: vxm.userModule.role!,
@@ -48,7 +48,7 @@ const loadingElements: Set<number> = new Set()
 
 // Intercept requests and show a loading indicator / errors
 axios.interceptors.request.use(
-  function(config) {
+  config => {
     if (!config.hideLoadingSnackbar && !config.hideFromSnackbar) {
       const prefix = config.snackbarTag || ''
       const randomTag = Math.floor(Math.random() * Number.MAX_VALUE)
@@ -63,7 +63,7 @@ axios.interceptors.request.use(
     }
     return config
   },
-  function(error) {
+  error => {
     loadingElements.delete(error.config.randomTag)
 
     // Always display network errors
@@ -77,7 +77,7 @@ axios.interceptors.request.use(
 
 // Intercept responses to show errors
 axios.interceptors.response.use(
-  function(response) {
+  response => {
     loadingElements.delete(response.config.randomTag!)
 
     const prefix = response.config.snackbarTag || ''
@@ -89,7 +89,7 @@ axios.interceptors.response.use(
 
     return response
   },
-  function(error) {
+  error => {
     loadingElements.delete(error.config.randomTag)
 
     if (!error.config.hideFromSnackbar && !error.config.hideErrorSnackbar) {

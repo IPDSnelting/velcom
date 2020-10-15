@@ -2,9 +2,7 @@
   <v-card>
     <v-card-title>
       <v-toolbar dark color="primary">
-        <slot name="title">
-          Run Information
-        </slot>
+        <slot name="title">Run Information</slot>
       </v-toolbar>
     </v-card-title>
     <v-card-text class="py-0">

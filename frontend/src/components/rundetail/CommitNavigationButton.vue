@@ -40,8 +40,10 @@ import { mdiArrowRight, mdiArrowLeft } from '@mdi/js'
 export default class CommitNavigationButton extends Vue {
   @Prop()
   private commitDescription!: CommitDescription
+
   @Prop({ default: 'PARENT' })
   private type!: 'PARENT' | 'CHILD'
+
   @Prop({ default: true })
   private tracked!: boolean
 

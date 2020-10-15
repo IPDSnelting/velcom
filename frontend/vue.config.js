@@ -4,6 +4,7 @@ module.exports = {
   chainWebpack: config => {
     config.plugin('define').tap(definitions => {
       // get git info from command line
+      // eslint-disable-next-line
       const commitHash = require('child_process')
         .execSync('git rev-parse HEAD')
         .toString()

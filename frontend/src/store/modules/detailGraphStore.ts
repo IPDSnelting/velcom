@@ -40,6 +40,7 @@ export class DetailGraphStore extends VxModule {
     DimensionId,
     number
   > = new CustomKeyEqualsMap([], dimensionIdEqual)
+
   private firstFreeColorIndex: number = 0
 
   referenceDatapoint: DimensionDetailPoint | null = null

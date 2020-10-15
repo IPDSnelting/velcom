@@ -290,6 +290,7 @@ export default class RepoDetail extends Vue {
       name: 'Fast'
     }
   ]
+
   private selectedGraphComponent: typeof Vue | null = GraphPlaceholder
 
   private get repo(): Repo {

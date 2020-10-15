@@ -94,7 +94,7 @@ export default class DytailGraph extends Vue {
       {
         axes: {
           x: {
-            axisLabelFormatter: function(x: number | Date) {
+            axisLabelFormatter: function (x: number | Date) {
               return x instanceof Date || x % 1 === 0 ? x : ''
             }
           }
