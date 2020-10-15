@@ -13,7 +13,7 @@
               <v-col class="ma-0 pa-0">
                 <v-btn-toggle
                   :value="selectedGraphComponent"
-                  @input="setSelectedGraphComponent"
+                  @change="setSelectedGraphComponent"
                   mandatory
                 >
                   <v-btn
@@ -412,6 +412,7 @@ export default class RepoDetail extends Vue {
   }
 
   @Watch('id')
+  @Watch('selectedDimensions')
   private async retrieveGraphData(): Promise<void> {
     if (this.stopAfterStart()) {
       this.selectedGraphComponent = GraphPlaceholder

@@ -105,7 +105,6 @@ export default class MatrixMeasurementIdSelection extends Vue {
     }
 
     vxm.detailGraphModule.selectedDimensions = resultingSelectedDimensions
-    vxm.detailGraphModule.fetchDetailGraph()
   }
 
   private toggleAllForBenchmark(benchmark: string) {
@@ -137,7 +136,6 @@ export default class MatrixMeasurementIdSelection extends Vue {
       )
     }
     vxm.detailGraphModule.selectedDimensions = resultingSelectedDimensions
-    vxm.detailGraphModule.fetchDetailGraph()
   }
 
   private get allMetrics(): string[] {
@@ -183,7 +181,6 @@ export default class MatrixMeasurementIdSelection extends Vue {
         it => it.benchmark !== benchmark || it.metric !== metric
       )
     }
-    vxm.detailGraphModule.fetchDetailGraph()
   }
 }
 </script>
