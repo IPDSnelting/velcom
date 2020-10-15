@@ -31,8 +31,22 @@ import org.jooq.exception.DataAccessException;
 
 /**
  * Access for runs and their measurements, as well as dimensions.
+ *
+ * <p> WARNING: This class is not yet meant to be used! Use
+ * {@link de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess} instead for now.
  */
 public class BenchmarkReadAccess {
+
+	// getDimensionInfos (temporarily)
+	// guardDimensionExists (temporarily)
+	//
+	// getRun (full run)
+	// getRecentRuns (full runs)
+	// getAllRunsForCommit (full runs)
+	// getLatestRunForCommit (full run)
+	//
+	// timeslice comparison stuff (getLatestRunsForCommits, getMeasurementsForRuns)
+	// detail graph stuff (getLatestRunsForCommits, getMeasurementsForRuns)
 
 	protected final DatabaseStorage databaseStorage;
 

@@ -18,14 +18,16 @@ import de.aaaaaaah.velcom.backend.access.entities.MeasurementError;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementValues;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
-import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.RunError;
-import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.RunErrorType;
 import de.aaaaaaah.velcom.backend.access.entities.RunId;
 import de.aaaaaaah.velcom.backend.access.entities.Unit;
 import de.aaaaaaah.velcom.backend.access.entities.benchmark.NewMeasurement;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.CommitSource;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.RunError;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.RunErrorType;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.TarSource;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.exceptions.NoSuchRunException;
+import de.aaaaaaah.velcom.backend.newaccess.repoaccess.RepoReadAccess;
+import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.Repo;
 import de.aaaaaaah.velcom.backend.storage.db.DBReadAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import de.aaaaaaah.velcom.shared.util.Either;
@@ -405,12 +407,12 @@ public class BenchmarkReadAccess {
 	}
 
 	protected void checkCachesForDeletedRepos() {
-		// Get list of repos that currently exist and check if we cache data for repos that
-		// dont exist any more
-		Collection<RepoId> ids = repoAccess.getAllRepoIds();
-
-		repoRunCache.keySet().removeIf(repoId -> !ids.contains(repoId));
-		dimensionCache.keySet().removeIf(repoId -> !ids.contains(repoId));
+		// Don't cache data for repos that don't exist any more
+		Set<RepoId> ids = repoAccess.getAllRepos().stream()
+			.map(Repo::getId)
+			.collect(Collectors.toSet());
+		repoRunCache.keySet().retainAll(ids);
+		dimensionCache.keySet().retainAll(ids);
 
 		synchronized (recentRunCache) {
 			boolean recentRunRepoWasDeleted = recentRunCache.stream()

@@ -14,10 +14,11 @@ import de.aaaaaaah.velcom.backend.access.entities.MeasurementError;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementValues;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
-import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.RunError;
 import de.aaaaaaah.velcom.backend.access.entities.TaskId;
 import de.aaaaaaah.velcom.backend.access.entities.benchmark.NewMeasurement;
 import de.aaaaaaah.velcom.backend.access.entities.benchmark.NewRun;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.RunError;
+import de.aaaaaaah.velcom.backend.newaccess.repoaccess.RepoReadAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DBWriteAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import java.util.ArrayList;
@@ -33,6 +34,7 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 
 	public BenchmarkWriteAccess(DatabaseStorage databaseStorage, RepoReadAccess repoReadAccess,
 		TaskWriteAccess taskAccess) {
+
 		super(databaseStorage, repoReadAccess);
 		this.taskAccess = taskAccess;
 	}

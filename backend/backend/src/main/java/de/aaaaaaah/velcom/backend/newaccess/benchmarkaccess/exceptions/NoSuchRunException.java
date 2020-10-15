@@ -9,6 +9,11 @@ public class NoSuchRunException extends Exception {
 
 	private final RunId invalidId;
 
+	public NoSuchRunException(RunId invalidId) {
+		super("no run with id " + invalidId);
+		this.invalidId = invalidId;
+	}
+
 	public NoSuchRunException(Throwable t, RunId invalidId) {
 		super("no run with id " + invalidId, t);
 		this.invalidId = invalidId;
