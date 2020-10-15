@@ -327,12 +327,23 @@ export default class MeasurementsDisplay extends Vue {
 
 <!--suppress CssUnresolvedCustomProperty -->
 <style>
-.measurement-table tbody tr:nth-child(even) {
-  background-color: var(--v-rowHighlight-darken1);
+.measurement-table tbody tr:hover {
+  cursor: pointer;
 }
 
-.measurement-table tbody tr:hover {
+/* LIGHT THEME alternating colors */
+.theme--light .measurement-table tbody tr:nth-child(even) {
+  background-color: var(--v-rowHighlight-lighten1);
+}
+.theme--light .measurement-table tbody tr:hover {
+  background-color: var(--v-rowHighlight-darken1) !important;
+}
+
+/* DARK THEME alternating colors */
+.theme--dark .measurement-table tbody tr:nth-child(even) {
+  background-color: var(--v-rowHighlight-darken1);
+}
+.theme--dark .measurement-table tbody tr:hover {
   background-color: var(--v-rowHighlight-lighten1) !important;
-  cursor: pointer;
 }
 </style>
