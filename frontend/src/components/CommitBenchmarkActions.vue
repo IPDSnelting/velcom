@@ -39,7 +39,7 @@ import Component from 'vue-class-component'
 import {
   mdiBitbucket,
   mdiFlash,
-  mdiGithubCircle,
+  mdiGithub,
   mdiGitlab,
   mdiHistory,
   mdiOneUp,
@@ -120,7 +120,7 @@ export default class CommitBenchmarkActions extends Vue {
       return undefined
     }
     if (this.repo.remoteURL.includes('github.com')) {
-      return mdiGithubCircle
+      return mdiGithub
     }
     if (this.repo.remoteURL.includes('gitlab.com')) {
       return mdiGitlab

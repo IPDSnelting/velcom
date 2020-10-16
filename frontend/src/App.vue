@@ -4,7 +4,7 @@
       <nav-bar></nav-bar>
       <snackbar ref="global-snackbar"></snackbar>
       <router-view />
-      <theme-selector @useDarkTheme="setDarkTheme"></theme-selector>
+      <theme-selector @use-dark-theme="setDarkTheme"></theme-selector>
     </v-main>
   </v-app>
 </template>

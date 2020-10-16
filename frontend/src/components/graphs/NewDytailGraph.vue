@@ -18,6 +18,7 @@ import { vxm } from '@/store'
 import 'dygraphs/css/dygraph.css'
 import Crosshair from 'dygraphs/src/extras/crosshair.js'
 
+// eslint-disable-next-line no-undef
 type RealOptions = dygraphs.Options & {
   rangeSelectorPlotLineWidth?: number
   rangeSelectorAlpha?: number
@@ -65,7 +66,7 @@ export default class DytailGraph extends Vue {
         ? '0' + d.getMinutes()
         : d.getMinutes()
 
-    let daysShown: number = Math.floor((end - start) / (1000 * 60 * 60 * 24))
+    const daysShown: number = Math.floor((end - start) / (1000 * 60 * 60 * 24))
     if (daysShown < 2) {
       return hourString + ':' + minuteString + '\n' + dateString
     }
@@ -113,8 +114,9 @@ export default class DytailGraph extends Vue {
     )
   }
 
+  // eslint-disable-next-line no-undef
   private tooltipFormatter(legendData: dygraphs.LegendData) {
-    let datapoint: DetailDataPoint | undefined = this.datapoints.find(
+    const datapoint: DetailDataPoint | undefined = this.datapoints.find(
       point => point.authorDate.getTime() === legendData.x
     )
     if (datapoint) {
@@ -154,7 +156,7 @@ export default class DytailGraph extends Vue {
               </table>
             `
     }
-    return 'something went wrong :(\n couldn\'t find commit'
+    return "something went wrong :(\n couldn't find commit"
   }
 
   // Used in the watcher for up()

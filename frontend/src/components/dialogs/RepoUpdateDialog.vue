@@ -108,7 +108,7 @@
                   <v-col
                     cols="4"
                     class="my-1 py-0"
-                    style="word-wrap: anywhere;"
+                    style="word-wrap: anywhere"
                     v-for="branch in props.items"
                     :key="branch.name"
                   >

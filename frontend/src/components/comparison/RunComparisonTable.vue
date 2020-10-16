@@ -1,6 +1,6 @@
 <template>
   <v-data-table :headers="headers" :items="items" multi-sort>
-    <template #[`item.difference`]=" { item, value }">
+    <template #[`item.difference`]="{ item, value }">
       <span :style="{ color: item.changeColor }">{{ value }}</span>
     </template>
 

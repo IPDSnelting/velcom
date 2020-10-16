@@ -8,7 +8,7 @@
           :selectedDatapoint="pointDialogDatapoint"
           :dimension="pointDialogDimension"
           @close="pointDialogOpen = false"
-          @compareCommits="pointDialogExecuteCompare"
+          @compare-commits="pointDialogExecuteCompare"
         ></datapoint-dialog>
         <div id="chart-container">
           <v-chart

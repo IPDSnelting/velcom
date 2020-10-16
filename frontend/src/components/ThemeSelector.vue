@@ -34,7 +34,7 @@ import { vxm } from '@/store'
 @Component
 export default class ThemeSelector extends Vue {
   private toggleDarkTheme() {
-    this.$emit('useDarkTheme', !this.isDarkTheme)
+    this.$emit('use-dark-theme', !this.isDarkTheme)
   }
 
   private get isDarkTheme(): boolean {

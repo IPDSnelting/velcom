@@ -1,6 +1,6 @@
 <template>
   <v-dialog width="800px" v-model="dialogOpen">
-    <template #activator=" { on } ">
+    <template #activator="{ on }">
       <v-btn v-on="on" text color="primary">
         Share graph
         <v-icon right>{{ permanentLinkIcon }}</v-icon>

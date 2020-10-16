@@ -20,7 +20,7 @@
             <measurements-display
               :measurements="measurements"
               :differences="differences"
-              @dimensionClicked="navigateToDetailGraph"
+              @dimension-clicked="navigateToDetailGraph"
             ></measurements-display>
           </v-card-text>
         </v-card>
@@ -106,7 +106,7 @@ export default class RunDetail extends Vue {
   }
 
   private navigateToDetailGraph(dimension: Dimension) {
-    this.$emit('navigateToDetailGraph', dimension)
+    this.$emit('navigate-to-detail-graph', dimension)
   }
 }
 </script>
