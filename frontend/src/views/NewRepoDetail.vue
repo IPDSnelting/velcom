@@ -35,6 +35,7 @@
               :is="selectedGraphComponent"
               :dimensions="selectedDimensions"
               :beginYAtZero="yStartsAtZero"
+              :dayEquidistant="dayEquidistantGraphSelected"
             ></component>
           </v-card-text>
         </v-card>
@@ -69,13 +70,27 @@
                 </v-col>
                 <v-col class="d-flex justify-end">
                   <v-btn
+                    v-if="graphSupportsDayEquidistantDisplay"
+                    color="primary"
+                    outlined
+                    class="mr-4"
+                    @click="
+                      dayEquidistantGraphSelected = !dayEquidistantGraphSelected
+                    "
+                  >
+                    <span v-if="dayEquidistantGraphSelected">
+                      Disable Day-Equistant Graph
+                    </span>
+                    <span v-else>Enable Day-Equistant Graph</span>
+                  </v-btn>
+                  <v-btn
                     @click="yStartsAtZero = !yStartsAtZero"
                     color="primary"
                     outlined
                   >
-                    <span v-if="yStartsAtZero"
-                      >Begin Y-Axis at minimum value</span
-                    >
+                    <span v-if="yStartsAtZero">
+                      Begin Y-Axis at minimum value
+                    </span>
                     <span v-else>Begin Y-Axis at zero</span>
                   </v-btn>
                 </v-col>
@@ -292,6 +307,7 @@ export default class RepoDetail extends Vue {
   ]
 
   private selectedGraphComponent: typeof Vue | null = GraphPlaceholder
+  private dayEquidistantGraphSelected: boolean = false
 
   private get repo(): Repo {
     return vxm.repoModule.repoById(this.id)!
@@ -376,6 +392,10 @@ export default class RepoDetail extends Vue {
 
   private set yStartsAtZero(startsAtZero: boolean) {
     vxm.detailGraphModule.beginYScaleAtZero = startsAtZero
+  }
+
+  private get graphSupportsDayEquidistantDisplay() {
+    return this.selectedGraphComponent === EchartsDetailGraph
   }
 
   private lockDates(date: 'start' | 'end'): void {
