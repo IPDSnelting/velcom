@@ -34,7 +34,7 @@ export default class CommitChip extends Vue {
 
   private copyToClipboard(hash: string) {
     const selection = window.getSelection()
-    if (selection && selection.toString() !== '') {
+    if (selection && selection.toString()) {
       // Do not overwrite user text selection
       return
     }
@@ -47,5 +47,7 @@ export default class CommitChip extends Vue {
 .commit-hash-chip {
   font-family: monospace;
   font-size: 0.8em;
+
+  user-select: text !important;
 }
 </style>
