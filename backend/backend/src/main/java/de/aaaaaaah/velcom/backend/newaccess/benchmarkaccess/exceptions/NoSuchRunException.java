@@ -5,7 +5,7 @@ import de.aaaaaaah.velcom.backend.access.entities.RunId;
 /**
  * This exception is thrown whenever an invalid {@link RunId} is used.
  */
-public class NoSuchRunException extends Exception {
+public class NoSuchRunException extends RuntimeException {
 
 	private final RunId invalidId;
 

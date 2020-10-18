@@ -5,7 +5,7 @@ import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 /**
  * This exception is thrown whenever an invalid {@link RepoId} is used.
  */
-public class NoSuchRepoException extends Exception {
+public class NoSuchRepoException extends RuntimeException {
 
 	private final RepoId invalidId;
 

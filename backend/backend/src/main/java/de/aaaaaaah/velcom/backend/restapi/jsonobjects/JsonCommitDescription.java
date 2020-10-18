@@ -1,6 +1,6 @@
 package de.aaaaaaah.velcom.backend.restapi.jsonobjects;
 
-import de.aaaaaaah.velcom.backend.access.entities.Commit;
+import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.Commit;
 import java.util.UUID;
 
 public class JsonCommitDescription {

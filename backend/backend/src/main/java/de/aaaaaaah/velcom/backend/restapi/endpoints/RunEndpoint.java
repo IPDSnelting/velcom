@@ -1,8 +1,6 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
 import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
-import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
-import de.aaaaaaah.velcom.backend.access.entities.Commit;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.entities.Dimension;
 import de.aaaaaaah.velcom.backend.access.entities.DimensionInfo;
@@ -11,11 +9,12 @@ import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparator;
 import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparison;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.CommitSource;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.exceptions.NoSuchRunException;
+import de.aaaaaaah.velcom.backend.newaccess.committaccess.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.utils.EndpointUtils;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimensionDifference;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRun;
 import io.micrometer.core.annotation.Timed;
-import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -51,14 +50,15 @@ public class RunEndpoint {
 		}
 		CommitSource commitSource = left.get();
 
-		Commit commit = commitAccess.getCommit(commitSource.getRepoId(), commitSource.getHash());
-		ArrayList<CommitHash> parentHashes = new ArrayList<>(commit.getParentHashes());
-		if (parentHashes.size() != 1) {
+		Iterator<CommitHash> parentHashIt = commitAccess
+			.getParentHashes(commitSource.getRepoId(), commitSource.getHash())
+			.iterator();
+		if (parentHashIt.hasNext()) {
+			CommitHash parentHash = parentHashIt.next();
+			return benchmarkAccess.getLatestRun(commitSource.getRepoId(), parentHash);
+		} else {
 			return Optional.empty(); // No unambiguous previous commit
 		}
-
-		CommitHash parentHash = parentHashes.get(0);
-		return benchmarkAccess.getLatestRun(commitSource.getRepoId(), parentHash);
 	}
 
 	@GET

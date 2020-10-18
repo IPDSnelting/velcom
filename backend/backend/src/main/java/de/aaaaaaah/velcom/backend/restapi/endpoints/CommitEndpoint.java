@@ -1,11 +1,11 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
 import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
-import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.access.entities.BranchName;
-import de.aaaaaaah.velcom.backend.access.entities.Commit;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
+import de.aaaaaaah.velcom.backend.newaccess.committaccess.CommitReadAccess;
+import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.FullCommit;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.RepoReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.Branch;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonCommit;
@@ -54,7 +54,7 @@ public class CommitEndpoint {
 		RepoId repoId = new RepoId(repoUuid);
 		CommitHash hash = new CommitHash(hashString);
 
-		Commit commit = commitAccess.getCommit(repoId, hash);
+		FullCommit commit = commitAccess.getFullCommit(repoId, hash);
 
 		List<JsonCommitDescription> parents = commit.getParentHashes().stream()
 			.map(parentHash -> commitAccess.getCommit(repoId, parentHash))

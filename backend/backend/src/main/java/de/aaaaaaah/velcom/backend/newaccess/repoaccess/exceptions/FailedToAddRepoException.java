@@ -10,7 +10,7 @@ import de.aaaaaaah.velcom.shared.util.StringHelper;
 /**
  * This exception is thrown when a repo could not be added into the db.
  */
-public class FailedToAddRepoException extends Exception {
+public class FailedToAddRepoException extends RuntimeException {
 
 	private final String name;
 	private final RemoteUrl remoteUrl;

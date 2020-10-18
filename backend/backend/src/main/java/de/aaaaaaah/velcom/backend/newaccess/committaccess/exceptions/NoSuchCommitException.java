@@ -1,19 +1,20 @@
-package de.aaaaaaah.velcom.backend.access.exceptions;
+package de.aaaaaaah.velcom.backend.newaccess.committaccess.exceptions;
 
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
-import java.util.NoSuchElementException;
 
 /**
  * This exception is thrown whenever an invalid combination of {@link RepoId} and {@link CommitHash}
  * is used.
  */
-public class NoSuchCommitException extends NoSuchElementException {
+public class NoSuchCommitException extends RuntimeException {
 
 	private final RepoId repoId;
 	private final CommitHash commitHash;
 
-	public NoSuchCommitException(RepoId repoId, CommitHash commitHash) {
+	public NoSuchCommitException(Throwable t, RepoId repoId, CommitHash commitHash) {
+		super("no commit in repo " + repoId + " with hash " + commitHash, t);
+
 		this.repoId = repoId;
 		this.commitHash = commitHash;
 	}
@@ -24,10 +25,5 @@ public class NoSuchCommitException extends NoSuchElementException {
 
 	public CommitHash getCommitHash() {
 		return commitHash;
-	}
-
-	@Override
-	public String getMessage() {
-		return "no commit in repo " + repoId + " with hash " + commitHash;
 	}
 }

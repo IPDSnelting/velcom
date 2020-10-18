@@ -7,15 +7,16 @@ import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 
 import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
-import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
-import de.aaaaaaah.velcom.backend.access.entities.Commit;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
-import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.CommitSource;
 import de.aaaaaaah.velcom.backend.data.runcomparison.DimensionDifference;
 import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparator;
 import de.aaaaaaah.velcom.backend.data.runcomparison.SignificanceFactors;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.CommitSource;
+import de.aaaaaaah.velcom.backend.newaccess.committaccess.CommitReadAccess;
+import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.Commit;
+import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.FullCommit;
 import io.micrometer.core.annotation.Timed;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -65,7 +66,7 @@ public class SignificantRunsCollector {
 		// 3. Filter out significant runs
 
 		List<Run> runs = benchmarkAccess.getRecentRuns(skip, SignificantRunsCollector.BATCH_SIZE);
-		Map<RepoId, Collection<Commit>> commitsPerRepo = getCommitsPerRepo(runs);
+		Map<RepoId, List<FullCommit>> commitsPerRepo = getCommitsPerRepo(runs);
 		Map<CommitSource, Collection<Run>> parentRunsPerSource = getParentRunsPerSource(commitsPerRepo);
 
 		return runs.stream()
@@ -73,22 +74,21 @@ public class SignificantRunsCollector {
 			.collect(toList());
 	}
 
-	private Map<RepoId, Collection<Commit>> getCommitsPerRepo(Collection<Run> runs) {
+	private Map<RepoId, List<FullCommit>> getCommitsPerRepo(Collection<Run> runs) {
 		Map<RepoId, Set<CommitHash>> hashesByRepo = runs.stream()
 			.flatMap(run -> run.getSource().getLeft().stream())
 			.collect(groupingBy(CommitSource::getRepoId, mapping(CommitSource::getHash, toSet())));
 
-		Map<RepoId, Collection<Commit>> result = new HashMap<>();
-		hashesByRepo.forEach((repoId, hashes) -> {
-			Collection<Commit> commits = commitAccess.getCommits(repoId, hashes).values();
-			result.put(repoId, commits);
-		});
+		List<Commit> commits = hashesByRepo.entrySet().stream()
+			.flatMap(entry -> commitAccess.getCommits(entry.getKey(), entry.getValue()).stream())
+			.collect(toList());
 
-		return result;
+		return commitAccess.promoteCommits(commits).stream()
+			.collect(groupingBy(Commit::getRepoId, toList()));
 	}
 
 	private Map<CommitSource, Collection<Run>> getParentRunsPerSource(
-		Map<RepoId, Collection<Commit>> commitsPerRepo) {
+		Map<RepoId, List<FullCommit>> commitsPerRepo) {
 
 		Map<RepoId, Map<CommitHash, Run>> parentRuns = new HashMap<>();
 		commitsPerRepo.forEach((repoId, commits) -> {

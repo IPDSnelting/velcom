@@ -3,7 +3,6 @@ package de.aaaaaaah.velcom.backend.data.repocomparison;
 import static java.util.stream.Collectors.toList;
 
 import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
-import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.access.entities.BranchName;
 import de.aaaaaaah.velcom.backend.access.entities.Commit;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
@@ -18,6 +17,7 @@ import de.aaaaaaah.velcom.backend.data.repocomparison.grouping.CommitGrouper;
 import de.aaaaaaah.velcom.backend.data.repocomparison.grouping.GroupByDay;
 import de.aaaaaaah.velcom.backend.data.repocomparison.grouping.GroupByHour;
 import de.aaaaaaah.velcom.backend.data.repocomparison.grouping.GroupByWeek;
+import de.aaaaaaah.velcom.backend.newaccess.committaccess.CommitReadAccess;
 import io.micrometer.core.annotation.Timed;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -59,9 +59,7 @@ public class TimesliceComparison implements RepoComparison {
 	 * @param commitAccess the commit access used to collect commit data
 	 * @param benchmarkAccess the benchmark access used to collect benchmark data
 	 */
-	public TimesliceComparison(CommitReadAccess commitAccess,
-		BenchmarkReadAccess benchmarkAccess) {
-
+	public TimesliceComparison(CommitReadAccess commitAccess, BenchmarkReadAccess benchmarkAccess) {
 		this.commitAccess = commitAccess;
 		this.benchmarkAccess = benchmarkAccess;
 	}

@@ -1,8 +1,8 @@
 package de.aaaaaaah.velcom.backend.listener;
 
-import de.aaaaaaah.velcom.backend.access.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.access.KnownCommitReadAccess;
 import de.aaaaaaah.velcom.backend.access.entities.Commit;
+import de.aaaaaaah.velcom.backend.newaccess.committaccess.CommitReadAccess;
 import java.io.IOException;
 import java.util.Collection;
 
