@@ -10,7 +10,6 @@ import de.aaaaaaah.velcom.backend.access.entities.Dimension;
 import de.aaaaaaah.velcom.backend.access.entities.DimensionInfo;
 import de.aaaaaaah.velcom.backend.access.entities.RemoteUrl;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
-import de.aaaaaaah.velcom.backend.listener.CommitSearchException;
 import de.aaaaaaah.velcom.backend.listener.Listener;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.RepoWriteAccess;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.Branch;
@@ -37,7 +36,9 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -106,16 +107,13 @@ public class RepoEndpoint {
 			.map(AuthToken::new)
 			.ifPresent(token -> tokenAccess.setToken(repo.getRepoId(), token));
 
-		// Run listener on this repo on a separate thread
-		new Thread(() -> {
-			try {
-				listener.updateRepo(repo.getRepoId());
-			} catch (CommitSearchException e) {
-				LOGGER.warn("Failed to run listener for new repo: {}", repo, e);
-			}
-		}, "ListenerThreadFor" + repo.getRepoId().getId().toString()).start();
-
-		return new PostReply(toJsonRepo(repo));
+		if (listener.updateRepo(repo)) {
+			return new PostReply(toJsonRepo(repo));
+		} else {
+			repoAccess.deleteRepo(repo.getId());
+			throw new WebApplicationException("Repo could not be cloned, invalid remote url",
+				Status.BAD_REQUEST);
+		}
 	}
 
 	private static class PostRequest {
@@ -197,7 +195,9 @@ public class RepoEndpoint {
 		RepoId repoId = new RepoId(repoUuid);
 		user.guardRepoAccess(repoId);
 
-		repoAccess.guardRepoExists(repoId);
+		// Guards whether the repo exists
+		Repo repo = repoAccess.getRepo(repoId);
+
 		repoAccess.updateRepo(
 			repoId,
 			request.getName().orElse(null),
@@ -218,10 +218,8 @@ public class RepoEndpoint {
 				.collect(Collectors.toSet());
 			repoAccess.setTrackedBranches(repoId, trackedBranchNames);
 
-			try {
-				listener.updateRepo(repoId);
-			} catch (CommitSearchException e) {
-				LOGGER.warn("Failed to update repo {} successfully", repoId, e);
+			if (!listener.updateRepo(repo)) {
+				LOGGER.warn("Failed to update repo {} successfully", repoId);
 			}
 		});
 	}

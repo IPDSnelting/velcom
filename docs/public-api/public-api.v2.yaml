@@ -412,6 +412,8 @@ paths:
                     $ref: '#/components/schemas/Repo'
                 required:
                   - repo
+        '400':
+          description: The repo could not be cloned from the given remote url
       description: Add a new repo.
       requestBody:
         content:
