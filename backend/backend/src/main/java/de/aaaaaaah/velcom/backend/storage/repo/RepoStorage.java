@@ -11,7 +11,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
@@ -84,12 +84,12 @@ public class RepoStorage {
 	}
 
 	/**
-	 * Collects all locally stored repositories in a collection and returns it.
+	 * Find all locally stored repositories.
 	 *
 	 * @return a collection of paths pointing to all locally stored repositories
 	 * @throws IOException if an I/O error occurs when trying to read the directories
 	 */
-	public Collection<Path> getRepoDirectories() throws IOException {
+	public List<Path> getRepoDirectories() throws IOException {
 		this.lock.readLock().lock();
 
 		try (Stream<Path> fileStream = Files.list(rootDir)) {

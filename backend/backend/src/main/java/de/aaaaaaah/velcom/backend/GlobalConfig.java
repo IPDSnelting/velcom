@@ -67,10 +67,10 @@ public class GlobalConfig extends Configuration {
 	}
 
 	/**
-	 * @return the interval between listener updates (in seconds)
+	 * @return the interval between listener updates
 	 */
-	public long getPollInterval() {
-		return pollInterval;
+	public Duration getPollInterval() {
+		return Duration.ofSeconds(pollInterval);
 	}
 
 	/**
@@ -99,14 +99,6 @@ public class GlobalConfig extends Configuration {
 	 */
 	public String getRunnerToken() {
 		return runnerToken;
-	}
-
-	/**
-	 * @return the duration in seconds after which disconnected runners are given up on (removed and
-	 * 	commit rescheduled)
-	 */
-	public long getDisconnectedRunnerGracePeriodSeconds() {
-		return disconnectedRunnerGracePeriodSeconds;
 	}
 
 	/**
