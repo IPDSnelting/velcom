@@ -79,6 +79,13 @@ public class RepoWriteAccess extends RepoReadAccess {
 		}
 	}
 
+	/**
+	 * Sets which branches of this repo should be tracked.
+	 *
+	 * It may take a while for this change to take effect
+	 * @param repoId
+	 * @param trackedBranches
+	 */
 	public void setTrackedBranches(RepoId repoId, Collection<BranchName> trackedBranches) {
 		Set<String> trackedNames = trackedBranches.stream()
 			.map(BranchName::getName)

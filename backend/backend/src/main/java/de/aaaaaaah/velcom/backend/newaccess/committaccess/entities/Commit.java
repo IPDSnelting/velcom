@@ -43,6 +43,11 @@ public class Commit {
 		return hash.getHash();
 	}
 
+	/**
+	 * A commit is tracked if it is reachable from any tracked branch.
+	 *
+	 * @return whether this commit is tracked
+	 */
 	public boolean isTracked() {
 		return tracked;
 	}
