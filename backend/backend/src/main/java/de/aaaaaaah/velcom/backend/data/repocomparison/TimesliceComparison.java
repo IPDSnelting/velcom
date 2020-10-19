@@ -1,10 +1,10 @@
 package de.aaaaaaah.velcom.backend.data.repocomparison;
 
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 
 import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.access.entities.BranchName;
-import de.aaaaaaah.velcom.backend.access.entities.Commit;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.entities.Dimension;
 import de.aaaaaaah.velcom.backend.access.entities.DimensionInfo;
@@ -18,6 +18,7 @@ import de.aaaaaaah.velcom.backend.data.repocomparison.grouping.GroupByDay;
 import de.aaaaaaah.velcom.backend.data.repocomparison.grouping.GroupByHour;
 import de.aaaaaaah.velcom.backend.data.repocomparison.grouping.GroupByWeek;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.CommitReadAccess;
+import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.Commit;
 import io.micrometer.core.annotation.Timed;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -103,9 +104,10 @@ public class TimesliceComparison implements RepoComparison {
 		Set<BranchName> branches, @Nullable Instant startTime, @Nullable Instant endTime) {
 
 		// 1.) Get commits
-		Map<CommitHash, Commit> commitMap = commitAccess.getCommitsBetween(
-			repoId, branches, startTime, endTime
-		);
+		Map<CommitHash, Commit> commitMap = commitAccess
+			.getCommitsBetween(repoId, branches, startTime, endTime)
+			.stream()
+			.collect(toMap(Commit::getHash, commit -> commit));
 
 		// 2.) Get relevant runs & values
 		Map<CommitHash, Run> latestRuns = benchmarkAccess.getLatestRuns(repoId, commitMap.keySet());

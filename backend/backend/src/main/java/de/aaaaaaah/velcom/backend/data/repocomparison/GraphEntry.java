@@ -1,7 +1,7 @@
 package de.aaaaaaah.velcom.backend.data.repocomparison;
 
-import de.aaaaaaah.velcom.backend.access.entities.Commit;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.Commit;
 import java.time.Instant;
 import java.util.Objects;
 

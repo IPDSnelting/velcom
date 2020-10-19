@@ -2,7 +2,6 @@ package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
 import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.access.entities.BranchName;
-import de.aaaaaaah.velcom.backend.access.entities.Commit;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.entities.Dimension;
 import de.aaaaaaah.velcom.backend.access.entities.DimensionInfo;
@@ -11,6 +10,8 @@ import de.aaaaaaah.velcom.backend.access.entities.MeasurementValues;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.CommitReadAccess;
+import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.Commit;
+import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.FullCommit;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.DimensionReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.RepoReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.Branch;
@@ -97,8 +98,9 @@ public class GraphDetailEndpoint {
 		}
 
 		// Figure out which commits we'll need to show
-		List<Commit> commits = new ArrayList<>(
-			commitAccess.getCommitsBetween(repoId, trackedBranches, startTime, endTime).values());
+		List<FullCommit> commits = new ArrayList<>(commitAccess.promoteCommits(
+			commitAccess.getCommitsBetween(repoId, trackedBranches, startTime, endTime)
+		));
 		commits.sort(Comparator.comparing(Commit::getAuthorDate));
 		Set<CommitHash> hashes = commits.stream().map(Commit::getHash).collect(Collectors.toSet());
 

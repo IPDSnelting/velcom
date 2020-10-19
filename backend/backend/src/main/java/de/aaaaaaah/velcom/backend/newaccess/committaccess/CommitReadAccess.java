@@ -6,6 +6,7 @@ import static java.util.stream.Collectors.toSet;
 import static org.jooq.codegen.db.tables.CommitRelationship.COMMIT_RELATIONSHIP;
 import static org.jooq.codegen.db.tables.KnownCommit.KNOWN_COMMIT;
 
+import de.aaaaaaah.velcom.backend.access.entities.BranchName;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.Commit;
@@ -13,11 +14,13 @@ import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.FullCommit;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.exceptions.NoSuchCommitException;
 import de.aaaaaaah.velcom.backend.storage.db.DBReadAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.jooq.Record1;
@@ -219,5 +222,19 @@ public class CommitReadAccess {
 
 			return result;
 		}
+	}
+
+	public List<Commit> getCommitsBetween(RepoId repoId, Collection<BranchName> startBranches,
+		Instant startTime, Instant stopTime) {
+
+		// TODO: 19.10.20 Remove this dummy function
+		return List.of();
+	}
+
+	public Optional<List<CommitHash>> getChildren(RepoId repoId, CommitHash commitHash,
+		Collection<BranchName> startBranches) {
+
+		// TODO: 19.10.20 Remove this dummy function
+		return Optional.empty();
 	}
 }
