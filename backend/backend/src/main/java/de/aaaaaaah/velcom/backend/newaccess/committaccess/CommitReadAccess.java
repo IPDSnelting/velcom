@@ -86,6 +86,7 @@ public class CommitReadAccess {
 				KNOWN_COMMIT,
 				KNOWN_COMMIT.REPO_ID.eq(repoId.getIdAsString())
 					.and(KNOWN_COMMIT.HASH.eq(commitHash.getHash()))
+					.and(KNOWN_COMMIT.MIGRATED)
 			);
 			return knownCommitRecordToCommit(record);
 		} catch (DataAccessException e) {
@@ -102,6 +103,7 @@ public class CommitReadAccess {
 			return db.selectFrom(KNOWN_COMMIT)
 				.where(KNOWN_COMMIT.REPO_ID.eq(repoId.getIdAsString()))
 				.and(KNOWN_COMMIT.HASH.in(hashes))
+				.and(KNOWN_COMMIT.MIGRATED)
 				.stream()
 				.map(CommitReadAccess::knownCommitRecordToCommit)
 				.collect(Collectors.toList());
@@ -115,6 +117,7 @@ public class CommitReadAccess {
 				KNOWN_COMMIT,
 				KNOWN_COMMIT.REPO_ID.eq(repoId.getIdAsString())
 					.and(KNOWN_COMMIT.HASH.eq(commitHash.getHash()))
+					.and(KNOWN_COMMIT.MIGRATED)
 			);
 
 			Set<CommitHash> parentHashes = db.select(COMMIT_RELATIONSHIP.PARENT_HASH)

@@ -69,7 +69,12 @@ public class RepoReadAccess {
 
 	public List<Branch> getAllBranches(RepoId repoId) {
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			return db.fetch(BRANCH, BRANCH.REPO_ID.eq(repoId.getIdAsString())).stream()
+			return db.fetch(
+				BRANCH,
+				BRANCH.REPO_ID.eq(repoId.getIdAsString())
+					.and(BRANCH.MIGRATED)
+			)
+				.stream()
 				.map(RepoReadAccess::branchRecordToBranch)
 				.collect(Collectors.toList());
 		}
@@ -77,7 +82,12 @@ public class RepoReadAccess {
 
 	public List<Branch> getTrackedBranches(RepoId repoId) {
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			return db.fetch(BRANCH, BRANCH.REPO_ID.eq(repoId.getIdAsString()).and(BRANCH.TRACKED))
+			return db.fetch(
+				BRANCH,
+				BRANCH.REPO_ID.eq(repoId.getIdAsString())
+					.and(BRANCH.TRACKED)
+					.and(BRANCH.MIGRATED)
+			)
 				.stream()
 				.map(RepoReadAccess::branchRecordToBranch)
 				.collect(Collectors.toList());
@@ -86,7 +96,12 @@ public class RepoReadAccess {
 
 	public List<Branch> getUntrackedBranches(RepoId repoId) {
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			return db.fetch(BRANCH, BRANCH.REPO_ID.eq(repoId.getIdAsString()).and(BRANCH.TRACKED.neg()))
+			return db.fetch(
+				BRANCH,
+				BRANCH.REPO_ID.eq(repoId.getIdAsString())
+					.and(BRANCH.TRACKED.neg())
+					.and(BRANCH.MIGRATED)
+			)
 				.stream()
 				.map(RepoReadAccess::branchRecordToBranch)
 				.collect(Collectors.toList());
