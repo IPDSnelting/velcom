@@ -18,6 +18,7 @@ import de.aaaaaaah.velcom.backend.listener.jgitutils.JgitCommit;
 import de.aaaaaaah.velcom.backend.listener.jgitutils.JgitCommitWalk;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.Repo;
 import de.aaaaaaah.velcom.backend.storage.db.DBWriteAccess;
+import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -61,13 +62,18 @@ public class DbUpdater {
 	/**
 	 * Perform the update (see class level javadoc).
 	 */
-	public void update() throws GitAPIException {
+	public void update() throws DbUpdateException {
 		if (anyUnmigratedBranchesOrCommits()) {
-			LOGGER.info("Migrating repo {}", repo);
-			migrateCommits();
-			insertNewCommits();
-			updateBranches(); // See comment below
-			//updateTrackedFlags();
+			try {
+				LOGGER.info("Migrating repo {}", repo);
+
+				insertAllUnknownCommits();
+				migrateCommits();
+				updateBranches(); // See comment below
+				updateTrackedFlags();
+			} catch (GitAPIException | IOException e) {
+				throw new DbUpdateException("Failed to migrate repo " + repo, e);
+			}
 		} else {
 			LOGGER.debug("Updating repo {}", repo);
 			// TODO: 20.10.20 Implement properly
@@ -83,6 +89,32 @@ public class DbUpdater {
 			// TODO: 20.10.20 Only insert last commits if this is a new repo
 			//findNewTasks();
 		}
+	}
+
+	private KnownCommitRecord jgitCommitToKnownCommitRecord(JgitCommit jgitCommit) {
+		KnownCommitRecord record = KNOWN_COMMIT.newRecord();
+		record.setMigrated(true);
+		record.setRepoId(repoIdStr);
+		record.setHash(jgitCommit.getHashAsString());
+		record.setTracked(false);
+		record.setAuthor(jgitCommit.getAuthor());
+		record.setAuthorDate(jgitCommit.getAuthorDate());
+		record.setCommitter(jgitCommit.getCommitter());
+		record.setCommitterDate(jgitCommit.getCommitterDate());
+		record.setMessage(jgitCommit.getMessage());
+		return record;
+	}
+
+	private List<CommitRelationshipRecord> jgitCommitToCommRelRecords(JgitCommit jgitCommit) {
+		return jgitCommit.getParentHashes().stream()
+			.map(parentHash -> {
+				CommitRelationshipRecord record = COMMIT_RELATIONSHIP.newRecord();
+				record.setRepoId(repoIdStr);
+				record.setChildHash(jgitCommit.getHashAsString());
+				record.setParentHash(parentHash.getHash());
+				return record;
+			})
+			.collect(toList());
 	}
 
 	private boolean anyUnmigratedBranchesOrCommits() {
@@ -104,18 +136,51 @@ public class DbUpdater {
 	}
 
 	/**
+	 * Search through all commits in the jgit repo and add all those to the db that don't already
+	 * exist (including parent relationships). Un-migrated commits are left alone.
+	 *
+	 * @throws IOException if jgit does (not sure when that happens)
+	 * @throws GitAPIException if jgit does (not sure when that happens)
+	 */
+	// TODO: 20.10.20 Update comment after migration
+	private void insertAllUnknownCommits() throws IOException, GitAPIException {
+		LOGGER.debug("Inserting all unknown commits");
+
+		// See comment in #insertNewCommits()
+		Set<String> knownCommits = db.selectFrom(KNOWN_COMMIT)
+			.where(KNOWN_COMMIT.REPO_ID.eq(repoIdStr))
+			.fetchSet(KNOWN_COMMIT.HASH);
+
+		List<KnownCommitRecord> recordsToInsert = new ArrayList<>();
+		List<CommitRelationshipRecord> relationshipsToInsert = new ArrayList<>();
+
+		try (JgitCommitWalk walk = new JgitCommitWalk(jgitRepo)) {
+			walk.getAllCommits()
+				.filter(commit -> !knownCommits.contains(commit.getHashAsString()))
+				.forEach(jgitCommit -> {
+					recordsToInsert.add(jgitCommitToKnownCommitRecord(jgitCommit));
+					relationshipsToInsert.addAll(jgitCommitToCommRelRecords(jgitCommit));
+				});
+		}
+
+		// Inserting the commits first so we don't violate any foreign key constraints
+		db.dsl().batchInsert(recordsToInsert).execute();
+		db.dsl().batchInsert(relationshipsToInsert).execute();
+	}
+
+	/**
 	 * Migrate all commits that haven't been migrated yet by looking them up in the jgit repo. After
-	 * this function is called, there should be no more unmigrated commits for this repo. Commits that
-	 * could not be found in the jgit repo are deleted.
+	 * this function is called, there should be no more un-migrated commits for this repo. Commits
+	 * that could not be found in the jgit repo are deleted.
 	 */
 	private void migrateCommits() {
 		LOGGER.debug("Migrating commits");
 
-		try (JgitCommitWalk walk = new JgitCommitWalk(jgitRepo)) {
-			List<KnownCommitRecord> toBeDeleted = new ArrayList<>();
-			List<KnownCommitRecord> toBeUpdated = new ArrayList<>();
-			List<CommitRelationshipRecord> relationships = new ArrayList<>();
+		List<KnownCommitRecord> toBeDeleted = new ArrayList<>();
+		List<KnownCommitRecord> toBeUpdated = new ArrayList<>();
+		List<CommitRelationshipRecord> relationships = new ArrayList<>();
 
+		try (JgitCommitWalk walk = new JgitCommitWalk(jgitRepo)) {
 			db.selectFrom(KNOWN_COMMIT)
 				.where(KNOWN_COMMIT.REPO_ID.eq(repoIdStr))
 				.andNot(KNOWN_COMMIT.MIGRATED)
@@ -149,14 +214,14 @@ public class DbUpdater {
 						toBeDeleted.add(record);
 					}
 				});
-
-			LOGGER.info("Deleting {} commits, updating {} commits, inserting {} relationships",
-				toBeDeleted.size(), toBeUpdated.size(), relationships.size());
-
-			db.dsl().batchDelete(toBeDeleted);
-			db.dsl().batchUpdate(toBeUpdated);
-			db.dsl().batchInsert(relationships);
 		}
+
+		LOGGER.info("Deleting {} commits, updating {} commits, inserting {} relationships",
+			toBeDeleted.size(), toBeUpdated.size(), relationships.size());
+
+		db.dsl().batchDelete(toBeDeleted).execute();
+		db.dsl().batchUpdate(toBeUpdated).execute();
+		db.dsl().batchInsert(relationships).execute();
 	}
 
 	/**
@@ -236,34 +301,15 @@ public class DbUpdater {
 		// And finally some transforming required by jOOQ for its batch inserts
 
 		List<KnownCommitRecord> newCommits = commitsFound.stream()
-			.map(commit -> {
-				KnownCommitRecord record = KNOWN_COMMIT.newRecord();
-				record.setMigrated(true);
-				record.setRepoId(repoIdStr);
-				record.setHash(commit.getHashAsString());
-				record.setTracked(false);
-				record.setAuthor(commit.getAuthor());
-				record.setAuthorDate(commit.getAuthorDate());
-				record.setCommitter(commit.getCommitter());
-				record.setCommitterDate(commit.getCommitterDate());
-				record.setMessage(commit.getMessage());
-				return record;
-			})
+			.map(this::jgitCommitToKnownCommitRecord)
 			.collect(toList());
 
 		List<CommitRelationshipRecord> newRelationships = commitsFound.stream()
-			.flatMap(commit -> commit.getParentHashes().stream()
-				.map(parentHash -> {
-					CommitRelationshipRecord record = COMMIT_RELATIONSHIP.newRecord();
-					record.setRepoId(repoIdStr);
-					record.setChildHash(commit.getHashAsString());
-					record.setParentHash(parentHash.getHash());
-					return record;
-				}))
+			.flatMap(commit -> jgitCommitToCommRelRecords(commit).stream())
 			.collect(toList());
 
-		db.dsl().batchInsert(newCommits);
-		db.dsl().batchInsert(newRelationships);
+		db.dsl().batchInsert(newCommits).execute();
+		db.dsl().batchInsert(newRelationships).execute();
 	}
 
 	/**
@@ -299,8 +345,8 @@ public class DbUpdater {
 			})
 			.collect(toList());
 
-		db.deleteFrom(BRANCH).where(BRANCH.REPO_ID.eq(repoIdStr));
-		db.dsl().batchInsert(branchRecords);
+		db.deleteFrom(BRANCH).where(BRANCH.REPO_ID.eq(repoIdStr)).execute();
+		db.dsl().batchInsert(branchRecords).execute();
 	}
 
 	/**

@@ -8,6 +8,10 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.AnyObjectId;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.PersonIdent;
@@ -35,7 +39,7 @@ public class JgitCommitWalk implements AutoCloseable {
 		}
 	}
 
-	private JgitCommit revCommitToJgitCommit(RevCommit revCommit) {
+	private static JgitCommit revCommitToJgitCommit(RevCommit revCommit) {
 		CommitHash hash = new CommitHash(revCommit.getId().getName());
 
 		Set<CommitHash> parentHashes = List.of(revCommit.getParents()).stream()
@@ -66,6 +70,12 @@ public class JgitCommitWalk implements AutoCloseable {
 		} catch (IOException e) {
 			return Optional.empty();
 		}
+	}
+
+	public Stream<JgitCommit> getAllCommits() throws IOException, GitAPIException {
+		Iterable<RevCommit> logIterable = new Git(repo).log().all().call();
+		return StreamSupport.stream(logIterable.spliterator(), false)
+			.map(JgitCommitWalk::revCommitToJgitCommit);
 	}
 
 	@Override
