@@ -95,6 +95,7 @@ public class Listener {
 		LOGGER.debug("Updating all repos");
 
 		// Update the bench repo
+		LOGGER.debug("Updating bench repo");
 		try {
 			benchRepo.checkForUpdates();
 		} catch (RepoAccessException e) {
@@ -104,6 +105,7 @@ public class Listener {
 		List<Repo> allRepos = repoAccess.getAllRepos();
 
 		// Remove all repos that don't exist any more
+		LOGGER.debug("Deleting old repos");
 		try {
 			deleteOldRepos(allRepos);
 		} catch (IOException e) {
@@ -111,6 +113,7 @@ public class Listener {
 		}
 
 		// Update all existing repos
+		LOGGER.debug("Updating existing repos");
 		for (Repo repo : allRepos) {
 			try {
 				if (!updateRepo(repo)) {
@@ -147,6 +150,7 @@ public class Listener {
 		// Now only the local repos that shouldn't exist remain.
 
 		for (String repoName : localRepos) {
+			LOGGER.info("Deleting old repo {}", repoName);
 			repoStorage.deleteRepository(repoName);
 		}
 	}
@@ -163,6 +167,8 @@ public class Listener {
 	 */
 	@Timed(histogram = true)
 	public synchronized boolean updateRepo(Repo repo) {
+		LOGGER.info("Updating repo {}", repo);
+
 		String repoDirName = repo.getId().getDirectoryName();
 		boolean reclone = false;
 
@@ -196,6 +202,7 @@ public class Listener {
 			// TODO: 19.10.20 Maybe just change remote url instead of recloning the entire repo?
 			// Shouldn't matter too much in any case, as this is expected to happen very rarely.
 			LOGGER.info("Repo {} has wrong remote url, recloning...", repo);
+			LOGGER.debug("real url: {}, target url: {}", e.getRealRemoteUrl(), e.getTargetRemoteUrl());
 			reclone = true;
 
 		} catch (CloneException e) {
