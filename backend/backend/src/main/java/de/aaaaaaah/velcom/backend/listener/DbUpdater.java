@@ -118,7 +118,7 @@ public class DbUpdater {
 
 			db.selectFrom(KNOWN_COMMIT)
 				.where(KNOWN_COMMIT.REPO_ID.eq(repoIdStr))
-				.and(KNOWN_COMMIT.MIGRATED.neg())
+				.andNot(KNOWN_COMMIT.MIGRATED)
 				.forEach(record -> {
 					CommitHash hash = new CommitHash(record.getHash());
 					Optional<JgitCommit> optionalCommit = walk.getCommit(hash);
