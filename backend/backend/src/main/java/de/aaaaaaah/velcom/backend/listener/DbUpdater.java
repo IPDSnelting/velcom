@@ -150,6 +150,9 @@ public class DbUpdater {
 					}
 				});
 
+			LOGGER.info("Deleting {} commits, updating {} commits, inserting {} relationships",
+				toBeDeleted.size(), toBeUpdated.size(), relationships.size());
+
 			db.dsl().batchDelete(toBeDeleted);
 			db.dsl().batchUpdate(toBeUpdated);
 			db.dsl().batchInsert(relationships);
@@ -189,15 +192,22 @@ public class DbUpdater {
 	private void insertNewCommits() throws GitAPIException {
 		LOGGER.debug("Inserting new commits");
 
+		// Breadth-first search through jgit repo.
+		// TODO: 20.10.20 See if bfs could be replaced by simple walk of all jgit commits
+
+		// All commits that should not be added to the queue. Keeping them all in memory should be fine
+		// for pretty much all sizes of repos we're working with.
 		Set<String> knownHashes = new HashSet<>(db.selectFrom(KNOWN_COMMIT)
 			.where(KNOWN_COMMIT.REPO_ID.eq(repoIdStr))
 			.fetchSet(KNOWN_COMMIT.HASH));
 
 		Queue<String> queue = new Git(jgitRepo).branchList().call().stream()
 			.map(ref -> ref.getObjectId().getName())
+			// Careful not to initialize the queue with any unwanted commits
 			.filter(hash -> !knownHashes.contains(hash))
 			.collect(toCollection(ArrayDeque::new));
 
+		// Of course the commits already in the queue should not be added to the queue again
 		knownHashes.addAll(queue);
 
 		List<JgitCommit> commitsFound = new ArrayList<>();
@@ -205,11 +215,16 @@ public class DbUpdater {
 		try (JgitCommitWalk walk = new JgitCommitWalk(jgitRepo)) {
 			while (!queue.isEmpty()) {
 				CommitHash hash = new CommitHash(queue.poll());
+				// If we can't get the commit out of jgit (which shouldn't normally happen), we just treat
+				// it as if it didn't exist
 				walk.getCommit(hash).ifPresent(commit -> {
+					// Since this commit comes from the queue, it should also be part of our results since it
+					// was previously not known.
 					commitsFound.add(commit);
 
 					List<String> interestingParentHashes = commit.getParentHashes().stream()
 						.map(CommitHash::getHash)
+						// Again, careful not to add known commits to the queue
 						.filter(parentHash -> !knownHashes.contains(parentHash))
 						.collect(toList());
 					knownHashes.addAll(interestingParentHashes);
@@ -217,6 +232,8 @@ public class DbUpdater {
 				});
 			}
 		}
+
+		// And finally some transforming required by jOOQ for its batch inserts
 
 		List<KnownCommitRecord> newCommits = commitsFound.stream()
 			.map(commit -> {
