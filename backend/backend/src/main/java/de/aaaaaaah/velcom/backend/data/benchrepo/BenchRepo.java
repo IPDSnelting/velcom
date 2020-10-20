@@ -20,6 +20,13 @@ public class BenchRepo {
 	}
 
 	/**
+	 * @return the name of the bench repo's directory.
+	 */
+	public String getDirName() {
+		return archiveAccess.getBenchRepoDirName();
+	}
+
+	/**
 	 * @return the current commit hash of the benchmark repository.
 	 */
 	public CommitHash getCurrentHash() {
@@ -33,10 +40,10 @@ public class BenchRepo {
 	 * done.</p>
 	 *
 	 * @param outputStream the output stream
-	 * @throws TransferException if an error occurs while the benchmark repo is being written to
-	 * 	the output stream.
-	 * @throws PrepareTransferException if an error occurs before the benchmark repo is being
-	 * 	written to the output stream.
+	 * @throws TransferException if an error occurs while the benchmark repo is being written to the
+	 * 	output stream.
+	 * @throws PrepareTransferException if an error occurs before the benchmark repo is being written
+	 * 	to the output stream.
 	 */
 	public void transfer(OutputStream outputStream)
 		throws TransferException, PrepareTransferException {

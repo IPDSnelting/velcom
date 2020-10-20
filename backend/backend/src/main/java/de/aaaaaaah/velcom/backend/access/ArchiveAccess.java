@@ -112,6 +112,10 @@ public class ArchiveAccess {
 		tarArchives.deleteAll();
 	}
 
+	public String getBenchRepoDirName() {
+		return BENCH_REPO_DIR_NAME;
+	}
+
 	public CommitHash getBenchRepoCommitHash() {
 		return currentBenchRepoHash;
 	}

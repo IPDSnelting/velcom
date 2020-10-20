@@ -21,6 +21,7 @@ import java.time.Duration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 import org.eclipse.jgit.lib.Repository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -130,10 +131,12 @@ public class Listener {
 	 */
 	@Timed(histogram = true)
 	private void deleteOldRepos(List<Repo> allRepos) throws IOException {
-		Set<String> reposThatShouldExist = allRepos.stream()
-			.map(Repo::getId)
-			.map(RepoId::getDirectoryName)
-			.collect(toSet());
+		Set<String> reposThatShouldExist = Stream.concat(
+			Stream.of(benchRepo.getDirName()),
+			allRepos.stream()
+				.map(Repo::getId)
+				.map(RepoId::getDirectoryName)
+		).collect(toSet());
 
 		HashSet<String> localRepos = repoStorage.getRepoDirectories().stream()
 			.map(Path::getFileName)
@@ -169,7 +172,7 @@ public class Listener {
 		// If any of the above checks fail, reclone the repo.
 		try (Repository jgitRepo = repoStorage.acquireRepository(repoDirName)) {
 			// Check if remote url is still correct
-			String targetRemoteUrl = repo.getRemoteUrl().toString();
+			String targetRemoteUrl = repo.getRemoteUrl().getUrl();
 			String realRemoteUrl = jgitRepo.getConfig().getString("remote", "origin", "url");
 			if (!targetRemoteUrl.equals(realRemoteUrl)) {
 				throw new InvalidRemoteUrlException(realRemoteUrl, targetRemoteUrl);
