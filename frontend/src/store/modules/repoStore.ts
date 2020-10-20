@@ -94,6 +94,11 @@ export class RepoStore extends VxModule {
     await this.fetchRepoById(payload.id)
   }
 
+  @action
+  async triggerListenerFor(repoId: RepoId): Promise<void> {
+    await axios.post(`/listener/${repoId}/trigger`)
+  }
+
   @mutation
   setIndexForRepo(repoId: RepoId): void {
     if (!this.repoIndices[repoId]) {

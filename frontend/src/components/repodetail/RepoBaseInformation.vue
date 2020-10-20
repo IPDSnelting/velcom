@@ -56,6 +56,24 @@
           <v-btn v-on="on" color="primary">update</v-btn>
         </template>
       </repo-update>
+      <v-tooltip bottom>
+        <template #activator="{ on }">
+          <v-btn
+            v-on="on"
+            class="mr-5 ml-3"
+            outlined
+            color="primary"
+            text
+            @click="refetchRepo"
+            v-if="isWebsiteAdmin"
+          >
+            Refetch repo
+          </v-btn>
+        </template>
+        Executes a `git fetch` updating the benchmark repo as well as this one.
+        It should find any new commits and pick up changes to the benchmark
+        repo, but might take a few seconds to complete.
+      </v-tooltip>
       <v-btn
         color="error"
         class="mr-5 ml-3"
@@ -104,6 +122,10 @@ export default class RepoBaseInformation extends Vue {
     return vxm.userModule.authorized(this.repo.id)
   }
 
+  private get isWebsiteAdmin() {
+    return vxm.userModule.isAdmin
+  }
+
   private deleteRepository() {
     const confirmed = window.confirm(
       `Do you really want to delete ${this.repo.name} (${this.repo.id})?`
@@ -115,6 +137,18 @@ export default class RepoBaseInformation extends Vue {
       vxm.detailGraphModule.selectedRepoId = ''
       this.$router.replace({ name: 'repo-detail-frame', params: { id: '' } })
     })
+  }
+
+  private async refetchRepo() {
+    if (!this.isWebsiteAdmin) {
+      return
+    }
+    await vxm.repoModule.triggerListenerFor(this.repo.id)
+
+    this.$globalSnackbar.setSuccess(
+      'listener',
+      'Re-fetched repo and updated benchrepo'
+    )
   }
 
   private comparatorTrackStatus(branchA: RepoBranch, branchB: RepoBranch) {
