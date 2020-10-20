@@ -1,6 +1,6 @@
 package de.aaaaaaah.velcom.backend.newaccess.repoaccess.exceptions;
 
-import de.aaaaaaah.velcom.backend.access.entities.RemoteUrl;
+import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RemoteUrl;
 import de.aaaaaaah.velcom.shared.util.StringHelper;
 
 // TODO: 04.10.20 Update the db schema to make repo names unique and update javadoc

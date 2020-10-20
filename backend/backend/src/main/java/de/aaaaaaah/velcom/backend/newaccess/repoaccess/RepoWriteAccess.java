@@ -4,10 +4,10 @@ import static org.jooq.codegen.db.tables.Branch.BRANCH;
 import static org.jooq.codegen.db.tables.Repo.REPO;
 import static org.jooq.impl.DSL.field;
 
-import de.aaaaaaah.velcom.backend.access.entities.BranchName;
-import de.aaaaaaah.velcom.backend.access.entities.RemoteUrl;
-import de.aaaaaaah.velcom.backend.access.entities.RepoId;
+import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.BranchName;
+import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RemoteUrl;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.Repo;
+import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.exceptions.FailedToAddRepoException;
 import de.aaaaaaah.velcom.backend.storage.db.DBWriteAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
@@ -81,8 +81,9 @@ public class RepoWriteAccess extends RepoReadAccess {
 
 	/**
 	 * Sets which branches of this repo should be tracked.
-	 *
+	 * <p>
 	 * It may take a while for this change to take effect
+	 *
 	 * @param repoId
 	 * @param trackedBranches
 	 */

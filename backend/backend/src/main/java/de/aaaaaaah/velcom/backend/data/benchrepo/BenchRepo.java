@@ -1,10 +1,10 @@
 package de.aaaaaaah.velcom.backend.data.benchrepo;
 
 import de.aaaaaaah.velcom.backend.access.ArchiveAccess;
-import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.exceptions.PrepareTransferException;
 import de.aaaaaaah.velcom.backend.access.exceptions.RepoAccessException;
 import de.aaaaaaah.velcom.backend.access.exceptions.TransferException;
+import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
 import java.io.OutputStream;
 import java.util.Objects;
 

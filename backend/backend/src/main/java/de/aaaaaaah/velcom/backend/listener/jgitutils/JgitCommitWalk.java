@@ -3,7 +3,7 @@ package de.aaaaaaah.velcom.backend.listener.jgitutils;
 
 import static java.util.stream.Collectors.toSet;
 
-import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;

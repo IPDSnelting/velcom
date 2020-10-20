@@ -1,6 +1,6 @@
 package de.aaaaaaah.velcom.backend.restapi.authentication;
 
-import de.aaaaaaah.velcom.backend.access.entities.RepoId;
+import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
 import java.security.Principal;
 import java.util.Optional;
 import javax.annotation.Nullable;
@@ -35,8 +35,8 @@ public class RepoUser implements Principal {
 	}
 
 	/**
-	 * Helper function for use in API endpoints to quickly check whether a user is allowed to access
-	 * a repo.
+	 * Helper function for use in API endpoints to quickly check whether a user is allowed to access a
+	 * repo.
 	 *
 	 * @param repoId the repo the user is trying to access
 	 * @throws ClientErrorException if the user is not allowed to access the repo

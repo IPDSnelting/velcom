@@ -280,8 +280,8 @@ public class RepositoryLock extends Repository {
 	}
 
 	/**
-	 * Check validity of a ref name. It must not contain character that has a special meaning in a
-	 * Git object reference expression. Some other dangerous characters are also excluded.
+	 * Check validity of a ref name. It must not contain character that has a special meaning in a Git
+	 * object reference expression. Some other dangerous characters are also excluded.
 	 *
 	 * <p>For portability reasons '\' is excluded</p>
 	 *
@@ -320,8 +320,8 @@ public class RepositoryLock extends Repository {
 	 *
 	 * @param workDir Work dir
 	 * @param file File whose path shall be stripped of its workdir
-	 * @return normalized repository relative path or the empty string if the file is not relative
-	 * 	to the work directory.
+	 * @return normalized repository relative path or the empty string if the file is not relative to
+	 * 	the work directory.
 	 */
 	@NonNull
 	public static String stripWorkDir(File workDir, File file) {

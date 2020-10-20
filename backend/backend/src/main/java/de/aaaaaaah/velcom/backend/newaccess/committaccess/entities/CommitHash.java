@@ -1,4 +1,4 @@
-package de.aaaaaaah.velcom.backend.access.entities;
+package de.aaaaaaah.velcom.backend.newaccess.committaccess.entities;
 
 import java.util.Objects;
 

@@ -1,6 +1,6 @@
 package de.aaaaaaah.velcom.backend.access.exceptions;
 
-import de.aaaaaaah.velcom.backend.access.entities.RepoId;
+import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
 
 /**
  * Thrown when accessing a repository causes an exception.

@@ -1,7 +1,5 @@
 package de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities;
 
-import de.aaaaaaah.velcom.backend.access.entities.RemoteUrl;
-import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import java.util.Objects;
 
 public class Repo {

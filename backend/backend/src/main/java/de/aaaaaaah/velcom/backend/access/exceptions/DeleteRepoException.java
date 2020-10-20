@@ -1,10 +1,9 @@
 package de.aaaaaaah.velcom.backend.access.exceptions;
 
-import de.aaaaaaah.velcom.backend.access.entities.Repo;
-import de.aaaaaaah.velcom.backend.access.entities.RepoId;
+import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
 
 /**
- * Thrown when a {@link Repo} could not be deleted.
+ * Thrown when a repo could not be deleted.
  */
 public class DeleteRepoException extends RuntimeException {
 

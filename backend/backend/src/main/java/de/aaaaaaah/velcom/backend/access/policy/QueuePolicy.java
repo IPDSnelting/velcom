@@ -11,8 +11,8 @@ import java.util.Optional;
 public interface QueuePolicy {
 
 	/**
-	 * Gets the task that is next in line to be benchmarked. The returned task will then be marked
-	 * as "in_process" until the task is completed.
+	 * Gets the task that is next in line to be benchmarked. The returned task will then be marked as
+	 * "in_process" until the task is completed.
 	 *
 	 * <p>Implementations of this method must guarantee thread safety.</p>
 	 *

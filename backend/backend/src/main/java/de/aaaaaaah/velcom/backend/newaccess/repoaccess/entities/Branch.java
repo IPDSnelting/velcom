@@ -1,8 +1,6 @@
 package de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities;
 
-import de.aaaaaaah.velcom.backend.access.entities.BranchName;
-import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
-import de.aaaaaaah.velcom.backend.access.entities.RepoId;
+import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
 import java.util.Objects;
 
 public class Branch {

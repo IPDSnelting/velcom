@@ -1,10 +1,10 @@
-package de.aaaaaaah.velcom.backend.access.entities;
+package de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities;
 
 import java.util.Objects;
 import java.util.UUID;
 
 /**
- * A unique identifier for a {@link Repo}.
+ * A unique identifier for a repo.
  */
 public class RepoId implements Comparable<RepoId> {
 

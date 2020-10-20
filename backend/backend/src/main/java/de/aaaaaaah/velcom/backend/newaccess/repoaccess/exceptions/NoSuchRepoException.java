@@ -1,6 +1,6 @@
 package de.aaaaaaah.velcom.backend.newaccess.repoaccess.exceptions;
 
-import de.aaaaaaah.velcom.backend.access.entities.RepoId;
+import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
 
 /**
  * This exception is thrown whenever an invalid {@link RepoId} is used.

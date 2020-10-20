@@ -1,7 +1,7 @@
 package de.aaaaaaah.velcom.backend.access.exceptions;
 
-import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
-import de.aaaaaaah.velcom.backend.access.entities.RepoId;
+import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
 
 public class CommitAccessException extends RuntimeException {
 

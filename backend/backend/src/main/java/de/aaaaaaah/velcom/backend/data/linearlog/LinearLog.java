@@ -1,9 +1,9 @@
 package de.aaaaaaah.velcom.backend.data.linearlog;
 
-import de.aaaaaaah.velcom.backend.access.entities.BranchName;
 import de.aaaaaaah.velcom.backend.access.entities.Commit;
-import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.Branch;
+import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.BranchName;
+import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.shared.util.Pair;
 import java.util.Collection;
 import java.util.List;
@@ -26,8 +26,8 @@ public interface LinearLog {
 	 *
 	 * @param repo the repo to take the commits from
 	 * @param branches the branches to restrict the commits to
-	 * @return a stream representing a linear log of commits. The stream must be closed manually
-	 * 	once it is no longer used
+	 * @return a stream representing a linear log of commits. The stream must be closed manually once
+	 * 	it is no longer used
 	 * @throws LinearLogException if anything goes wrong (for example, the underlying jgit repo may
 	 * 	close unexpectedly)
 	 */
@@ -41,8 +41,8 @@ public interface LinearLog {
 	 *
 	 * @param repo the repo to take the commits from
 	 * @param branches the branches to restrict the commits to
-	 * @return a stream representing a linear log of commits. The stream must be closed manually
-	 * 	once it is no longer used
+	 * @return a stream representing a linear log of commits. The stream must be closed manually once
+	 * 	it is no longer used
 	 * @throws LinearLogException if anything goes wrong (for example, the underlying jgit repo may
 	 * 	close unexpectedly)
 	 */
@@ -61,9 +61,9 @@ public interface LinearLog {
 	 * Usually, this commit would be one of the specified commit's parents.
 	 *
 	 * @param commit the commit whose predecessor to find
-	 * @return the previous commit, if it could be found, and {@link Optional#empty()} otherwise.
-	 * 	Also returns {@link Optional#empty()} if a {@link LinearLogException} occurred while trying
-	 * 	to find the previous commit
+	 * @return the previous commit, if it could be found, and {@link Optional#empty()} otherwise. Also
+	 * 	returns {@link Optional#empty()} if a {@link LinearLogException} occurred while trying to find
+	 * 	the previous commit
 	 */
 	Optional<Commit> getPreviousCommit(Commit commit);
 

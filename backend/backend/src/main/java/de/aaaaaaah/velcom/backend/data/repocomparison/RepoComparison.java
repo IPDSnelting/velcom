@@ -1,8 +1,8 @@
 package de.aaaaaaah.velcom.backend.data.repocomparison;
 
-import de.aaaaaaah.velcom.backend.access.entities.BranchName;
 import de.aaaaaaah.velcom.backend.access.entities.Dimension;
-import de.aaaaaaah.velcom.backend.access.entities.RepoId;
+import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.BranchName;
+import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Set;
@@ -15,13 +15,12 @@ import javax.annotation.Nullable;
 public interface RepoComparison {
 
 	/**
-	 * Generates a comparison graph using the given measurement to determine how well repositories
-	 * are doing. A startTime and stopTime can be provided to limit the graph to a certain time
-	 * frame.
+	 * Generates a comparison graph using the given measurement to determine how well repositories are
+	 * doing. A startTime and stopTime can be provided to limit the graph to a certain time frame.
 	 *
 	 * @param measurement the measurement to use for comparison
-	 * @param repoBranches the repositories and which of their branches should be considered in
-	 * 	this comparsion
+	 * @param repoBranches the repositories and which of their branches should be considered in this
+	 * 	comparsion
 	 * @param startTime the instant before which commits won't be considered
 	 * @param stopTime the instant after which commits won't be considered
 	 * @return the generated graph

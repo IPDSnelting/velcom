@@ -1,7 +1,6 @@
 package de.aaaaaaah.velcom.backend.newaccess.committaccess.entities;
 
-import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
-import de.aaaaaaah.velcom.backend.access.entities.RepoId;
+import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
 import java.time.Instant;
 import java.util.Set;
 

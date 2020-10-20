@@ -52,15 +52,16 @@ public class DBWriteAccess extends DBReadAccess {
 	public void close() {
 		try {
 			super.close();
-		}
-		finally {
+		} finally {
 			this.closed = true;
 			this.lock.unlock();
 		}
 	}
 
 	private void checkNotClosed() {
-		if (this.closed) { throw new IllegalStateException("write access already closed"); }
+		if (this.closed) {
+			throw new IllegalStateException("write access already closed");
+		}
 	}
 
 	public void transaction(CheckedConsumer<DBWriteAccess, Throwable> handler) {

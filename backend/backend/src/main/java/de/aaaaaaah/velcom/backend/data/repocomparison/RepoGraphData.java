@@ -2,8 +2,8 @@ package de.aaaaaaah.velcom.backend.data.repocomparison;
 
 import static java.util.Objects.requireNonNull;
 
-import de.aaaaaaah.velcom.backend.access.entities.BranchName;
-import de.aaaaaaah.velcom.backend.access.entities.RepoId;
+import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.BranchName;
+import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
 import java.util.List;
 import java.util.Set;
 
@@ -29,7 +29,7 @@ public class RepoGraphData {
 
 	/**
 	 * @return a list containing all entries for this repository sorted by the author date of the
-	 * commits.
+	 * 	commits.
 	 */
 	public List<GraphEntry> getEntries() {
 		return entries;

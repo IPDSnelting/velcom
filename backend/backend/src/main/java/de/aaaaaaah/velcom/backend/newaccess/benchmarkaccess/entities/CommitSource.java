@@ -1,8 +1,8 @@
 package de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities;
 
-import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
-import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.Commit;
+import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
 import java.util.Objects;
 
 /**

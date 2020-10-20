@@ -1,9 +1,9 @@
 package de.aaaaaaah.velcom.backend.access.exceptions;
 
-import de.aaaaaaah.velcom.backend.access.entities.RemoteUrl;
+import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RemoteUrl;
 
 /**
- * Throws when a {@link de.aaaaaaah.velcom.backend.access.entities.Repo} could not be added.
+ * Throws when a repo could not be added.
  */
 public class AddRepoException extends RuntimeException {
 

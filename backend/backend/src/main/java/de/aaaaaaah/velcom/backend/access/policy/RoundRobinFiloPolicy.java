@@ -3,8 +3,8 @@ package de.aaaaaaah.velcom.backend.access.policy;
 import static de.aaaaaaah.velcom.backend.access.TaskReadAccess.taskFromRecord;
 import static org.jooq.codegen.db.Tables.TASK;
 
-import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.entities.Task;
+import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import io.micrometer.core.annotation.Timed;
 import java.util.ArrayList;
