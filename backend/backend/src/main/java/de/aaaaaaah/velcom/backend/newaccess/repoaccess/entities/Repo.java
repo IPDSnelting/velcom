@@ -58,9 +58,9 @@ public class Repo {
 	@Override
 	public String toString() {
 		return "Repo{" +
-			"id=" + id +
+			"id=" + id.getIdAsString() +
 			", name='" + name + '\'' +
-			", remoteUrl=" + remoteUrl +
+			", remoteUrl='" + remoteUrl.getUrl() + '\'' +
 			'}';
 	}
 }

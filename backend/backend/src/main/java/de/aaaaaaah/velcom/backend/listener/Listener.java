@@ -182,21 +182,21 @@ public class Listener {
 			updateDbFromJgitRepo(repo, jgitRepo);
 
 		} catch (NoSuchRepositoryException e) {
-			LOGGER.info("No repo {} found, cloning...", repo.getId(), e);
+			LOGGER.info("No repo {} found, cloning...", repo);
 			reclone = true;
 
 		} catch (RepositoryAcquisitionException e) {
-			LOGGER.info("Failed to acquire repo {} (maybe damaged), recloning...", repo.getId(), e);
+			LOGGER.info("Failed to acquire repo {} (maybe damaged), recloning...", repo, e);
 			reclone = true;
 
 		} catch (InvalidRemoteUrlException e) {
 			// TODO: 19.10.20 Maybe just change remote url instead of recloning the entire repo?
 			// Shouldn't matter too much in any case, as this is expected to happen very rarely.
-			LOGGER.info("Repo {} has wrong remote url, recloning...", repo.getId());
+			LOGGER.info("Repo {} has wrong remote url, recloning...", repo);
 			reclone = true;
 
 		} catch (CloneException e) {
-			LOGGER.info("Failed to fetch repo {} (maybe damaged), recloning...", repo.getId(), e);
+			LOGGER.info("Failed to fetch repo {} (maybe damaged), recloning...", repo, e);
 			reclone = true;
 		}
 
