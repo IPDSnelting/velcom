@@ -435,6 +435,7 @@ public class DbUpdater {
 	 * 	are already in the queue.
 	 */
 	private void useHeadsOfTrackedBranchesAsTasks(List<CommitHash> toBeQueued) {
+		// TODO: 20.10.20 Filter out commits which have already been benchmarked
 		db.selectFrom(BRANCH)
 			.where(BRANCH.REPO_ID.eq(repoIdStr))
 			.and(BRANCH.TRACKED)
