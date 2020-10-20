@@ -164,21 +164,22 @@ public class DbUpdater {
 	private void updateTrackedFlags() {
 		LOGGER.debug("Updating tracked flags");
 
-		Field<String> r_hash = field(name("reachable", "r_hash"), String.class);
+		String query = ""
+			+ "WITH RECURSIVE reachable(r_hash) AS (\n"
+			+ "  SELECT branch.latest_commit_hash\n"
+			+ "  FROM branch\n"
+			+ "  WHERE (branch.repo_id = ? AND branch.tracked)\n"
+			+ "  \n"
+			+ "  UNION\n"
+			+ "  \n"
+			+ "  SELECT commit_relationship.parent_hash\n"
+			+ "  FROM commit_relationship\n"
+			+ "  JOIN reachable ON reachable.r_hash = commit_relationship.child_hash\n"
+			+ ")\n"
+			+ "UPDATE known_commit\n"
+			+ "SET tracked = (known_commit.hash IN reachable)\n";
 
-		db.dsl().withRecursive("reachable", "r_hash")
-			.as(db.select(BRANCH.LATEST_COMMIT_HASH)
-				.from(BRANCH)
-				.where(BRANCH.REPO_ID.eq(repoIdStr))
-				.and(BRANCH.TRACKED)
-				.union(db.select(COMMIT_RELATIONSHIP.PARENT_HASH)
-					.from(COMMIT_RELATIONSHIP)
-					.join(name("reachable")).on(r_hash.eq(COMMIT_RELATIONSHIP.CHILD_HASH))
-				)
-			)
-			.update(KNOWN_COMMIT)
-			.set(KNOWN_COMMIT.TRACKED, field(KNOWN_COMMIT.HASH.in(r_hash)))
-			.execute();
+		db.dsl().execute(query, repoIdStr);
 	}
 
 	/**
