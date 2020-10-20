@@ -109,6 +109,23 @@ export class QueueStore extends VxModule {
   }
 
   /**
+   * Fetches the runner output for a given task. Returns null if the task is not
+   * currently being executed.
+   *
+   * @param taskId the id of the task
+   */
+  @action
+  async fetchRunnerOutput(taskId: string): Promise<string | null> {
+    const response = await axios.get(`/queue/task/${taskId}/progress`)
+
+    if (response.status === 404) {
+      return null
+    }
+
+    return response.data.output
+  }
+
+  /**
    * Sets all open tasks.
    *
    * @param {Task[]} payload the tasks
