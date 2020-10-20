@@ -30,6 +30,10 @@ public class JgitCommit {
 		return hash;
 	}
 
+	public String getHashAsString() {
+		return hash.getHash();
+	}
+
 	public Set<CommitHash> getParentHashes() {
 		return parentHashes;
 	}

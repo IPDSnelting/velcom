@@ -221,8 +221,7 @@ public class Listener {
 	private void updateDbFromJgitRepo(Repo repo, Repository jgitRepo) {
 		databaseStorage.acquireWriteTransaction(db -> {
 			DbUpdater dbUpdater = new DbUpdater(repo, jgitRepo, db);
-			dbUpdater.updateBranches();
-			dbUpdater.updateCommits();
+			dbUpdater.update();
 		});
 	}
 }
