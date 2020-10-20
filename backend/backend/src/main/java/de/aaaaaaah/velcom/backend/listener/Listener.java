@@ -26,6 +26,9 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 import org.eclipse.jgit.lib.Repository;
 import org.slf4j.Logger;
@@ -50,6 +53,8 @@ public class Listener {
 
 	private final Duration pollInterval;
 
+	private final ScheduledExecutorService executor;
+
 	/**
 	 * Constructs a new listener instance.
 	 *
@@ -70,27 +75,14 @@ public class Listener {
 		this.queue = queue;
 
 		this.pollInterval = pollInterval;
-		// TODO: 19.10.20 Use executor again
-	}
 
-	/**
-	 * Start the listener by launching the update thread.
-	 */
-	public void start() {
-		LOGGER.debug("Starting listener");
-
-		new Thread(() -> {
-			try {
-				LOGGER.info("Listener started");
-
-				while (true) {
-					updateAllRepos();
-					Thread.sleep(pollInterval.toMillis());
-				}
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}).start();
+		executor = Executors.newSingleThreadScheduledExecutor();
+		executor.scheduleWithFixedDelay(
+			this::updateAllRepos,
+			0,
+			pollInterval.toSeconds(),
+			TimeUnit.SECONDS
+		);
 	}
 
 	/**
