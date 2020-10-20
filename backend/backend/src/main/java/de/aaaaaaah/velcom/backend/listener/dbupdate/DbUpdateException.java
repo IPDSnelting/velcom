@@ -1,4 +1,4 @@
-package de.aaaaaaah.velcom.backend.listener;
+package de.aaaaaaah.velcom.backend.listener.dbupdate;
 
 public class DbUpdateException extends Exception {
 

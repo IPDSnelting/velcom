@@ -1,4 +1,4 @@
-package de.aaaaaaah.velcom.backend.listener;
+package de.aaaaaaah.velcom.backend.listener.dbupdate;
 
 import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toList;
