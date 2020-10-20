@@ -62,18 +62,45 @@ public class DbUpdater {
 	 * Perform the update (see class level javadoc).
 	 */
 	public void update() throws GitAPIException {
-		migrateCommits(); // TODO: 20.10.20 Remove after migration
-		updateTrackedFlags();
+		if (anyUnmigratedBranchesOrCommits()) {
+			LOGGER.info("Migrating repo {}", repo);
+			migrateCommits();
+			insertNewCommits();
+			updateBranches(); // See comment below
+			//updateTrackedFlags();
+		} else {
+			LOGGER.debug("Updating repo {}", repo);
+			// TODO: 20.10.20 Implement properly
+			// TODO: 20.10.20 Check if this is a new repo (i. e. no known commits)
 
-		// TODO: 20.10.20 Check if this is a new repo (i. e. no known commits)
-		//insertNewCommits();
+			//updateTrackedFlags();
+			//insertNewCommits();
 
-		// Needs to happen after insertNewCommits because of the foreign key from the "branch" table to
-		// the "known_commit" table
-		//updateBranches();
+			// Needs to happen after insertNewCommits because of the foreign key from the "branch" table to
+			// the "known_commit" table
+			//updateBranches();
 
-		// TODO: 20.10.20 Only insert last commits if this is a new repo
-		//findNewTasks();
+			// TODO: 20.10.20 Only insert last commits if this is a new repo
+			//findNewTasks();
+		}
+	}
+
+	private boolean anyUnmigratedBranchesOrCommits() {
+		boolean unmigratedBranches = db.selectFrom(BRANCH)
+			.where(BRANCH.REPO_ID.eq(repoIdStr))
+			.andNot(BRANCH.MIGRATED)
+			.limit(1)
+			.fetchOptional()
+			.isPresent();
+
+		boolean unmigratedCommits = db.selectFrom(KNOWN_COMMIT)
+			.where(KNOWN_COMMIT.REPO_ID.eq(repoIdStr))
+			.andNot(KNOWN_COMMIT.MIGRATED)
+			.limit(1)
+			.fetchOptional()
+			.isPresent();
+
+		return unmigratedBranches || unmigratedCommits;
 	}
 
 	/**
