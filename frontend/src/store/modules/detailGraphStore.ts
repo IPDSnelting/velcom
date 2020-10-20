@@ -54,7 +54,6 @@ export class DetailGraphStore extends VxModule {
   // One week in the past, as elegant as ever
   startTime: Date = new Date(new Date().setDate(new Date().getDate() - 7))
   endTime: Date = new Date()
-  duration: number = 7
 
   beginYScaleAtZero: boolean = false
 
@@ -158,6 +157,7 @@ export class DetailGraphStore extends VxModule {
     // Anchors to the current date
     extractDate('zoomXEnd', new Date(), value => {
       this.zoomXEndValue = value
+      this.endTime = new Date(value)
     })
     // Anchors to the end date (or the current one if not specified)
     extractDate(
@@ -165,6 +165,7 @@ export class DetailGraphStore extends VxModule {
       new Date(this.zoomXEndValue || new Date().getTime()),
       value => {
         this.zoomXStartValue = value
+        this.startTime = new Date(value)
       }
     )
     extractFloat('zoomYStart', value => {
@@ -185,6 +186,14 @@ export class DetailGraphStore extends VxModule {
         )
       })
     }
+  }
+
+  get duration(): number {
+    const timeDiff =
+      vxm.detailGraphModule.endTime.getTime() -
+      vxm.detailGraphModule.startTime.getTime()
+
+    return Math.ceil(timeDiff / (1000 * 3600 * 24))
   }
 
   /**
