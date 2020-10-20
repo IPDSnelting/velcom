@@ -236,18 +236,23 @@ public class DbUpdater {
 			+ "WITH RECURSIVE reachable(r_hash) AS (\n"
 			+ "  SELECT branch.latest_commit_hash\n"
 			+ "  FROM branch\n"
-			+ "  WHERE (branch.repo_id = ? AND branch.tracked)\n"
+			+ "  WHERE branch.repo_id = ?\n"
+			+ "  AND branch.tracked\n"
 			+ "  \n"
 			+ "  UNION\n"
 			+ "  \n"
 			+ "  SELECT commit_relationship.parent_hash\n"
 			+ "  FROM commit_relationship\n"
-			+ "  JOIN reachable ON reachable.r_hash = commit_relationship.child_hash\n"
+			+ "  JOIN reachable\n"
+			+ "    ON reachable.r_hash = commit_relationship.child_hash\n"
 			+ ")\n"
+			+ "\n"
 			+ "UPDATE known_commit\n"
-			+ "SET tracked = (known_commit.hash IN reachable)\n";
+			+ "SET tracked = (known_commit.hash IN reachable)\n"
+			+ "WHERE known_commit.repo_id = ?\n"
+			+ "";
 
-		db.dsl().execute(query, repoIdStr);
+		db.dsl().execute(query, repoIdStr, repoIdStr);
 	}
 
 	/**
