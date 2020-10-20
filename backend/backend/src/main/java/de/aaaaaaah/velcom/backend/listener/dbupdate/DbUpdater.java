@@ -55,8 +55,8 @@ public class DbUpdater {
 	 * Perform the update (see class level javadoc).
 	 *
 	 * @param toBeQueued This is expected to be an empty, mutable list. This function will add the
-	 * 	hashes of all commits that need to be entered into the queue. These may include commits that
-	 * 	are already in the queue.
+	 * 	hashes of all commits that need to be entered into the queue. These might (but should usually
+	 * 	not) include commits that are already in the queue.
 	 */
 	public void update(List<CommitHash> toBeQueued) throws DbUpdateException {
 		if (anyUnmigratedBranchesOrCommits()) {
@@ -271,6 +271,7 @@ public class DbUpdater {
 	 * Crawl the jgit repo (breadth-first) and insert all previously unseen commits into the db (with
 	 * "tracked" set to false).
 	 */
+	// TODO: 20.10.20 Either use or remove this function
 	private void insertNewCommits() throws GitAPIException {
 		LOGGER.debug("Inserting new commits");
 
@@ -431,11 +432,12 @@ public class DbUpdater {
 
 	/**
 	 * @param toBeQueued This is expected to be an empty, mutable list. This function will add the
-	 * 	hashes of all commits that need to be entered into the queue. These may include commits that
-	 * 	are already in the queue.
+	 * 	hashes of all commits that need to be entered into the queue. In theory, these may include
+	 * 	commits that are already in the queue and even commits that have already been benchmarked. In
+	 * 	practice, this function should only be called for new repos, so the queue should not yet
+	 * 	contain any of the repo's commits.
 	 */
 	private void useHeadsOfTrackedBranchesAsTasks(List<CommitHash> toBeQueued) {
-		// TODO: 20.10.20 Filter out commits which have already been benchmarked
 		db.selectFrom(BRANCH)
 			.where(BRANCH.REPO_ID.eq(repoIdStr))
 			.and(BRANCH.TRACKED)
