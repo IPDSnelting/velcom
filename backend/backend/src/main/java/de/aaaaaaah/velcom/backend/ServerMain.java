@@ -154,7 +154,7 @@ public class ServerMain extends Application<GlobalConfig> {
 		);
 
 		// Listener
-		Listener listener = new Listener(databaseStorage, repoStorage, repoAccess, benchRepo,
+		Listener listener = new Listener(databaseStorage, repoStorage, repoAccess, benchRepo, queue,
 			configuration.getPollInterval());
 		listener.start();
 

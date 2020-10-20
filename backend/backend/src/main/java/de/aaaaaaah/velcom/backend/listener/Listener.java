@@ -3,9 +3,12 @@ package de.aaaaaaah.velcom.backend.listener;
 import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toSet;
 
+import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.exceptions.RepoAccessException;
+import de.aaaaaaah.velcom.backend.access.policy.QueuePriority;
 import de.aaaaaaah.velcom.backend.data.benchrepo.BenchRepo;
+import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.RepoWriteAccess;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.Repo;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
@@ -18,6 +21,7 @@ import io.micrometer.core.annotation.Timed;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -33,13 +37,15 @@ import org.slf4j.LoggerFactory;
 public class Listener {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(Listener.class);
-	private static final String AUTHOR = "Listener";
+	private static final String QUEUE_AUTHOR = "Listener";
+	private static final QueuePriority QUEUE_PRIORITY = QueuePriority.LISTENER;
 
 	private final DatabaseStorage databaseStorage;
 	private final RepoStorage repoStorage;
 
 	private final RepoWriteAccess repoAccess;
 	private final BenchRepo benchRepo;
+	private final Queue queue;
 
 	private final Duration pollInterval;
 
@@ -53,13 +59,14 @@ public class Listener {
 	 * @param pollInterval the time the listener waits between updating its repos
 	 */
 	public Listener(DatabaseStorage databaseStorage, RepoStorage repoStorage,
-		RepoWriteAccess repoAccess, BenchRepo benchRepo, Duration pollInterval) {
+		RepoWriteAccess repoAccess, BenchRepo benchRepo, Queue queue, Duration pollInterval) {
 
 		this.databaseStorage = databaseStorage;
 		this.repoStorage = repoStorage;
 
 		this.repoAccess = repoAccess;
 		this.benchRepo = benchRepo;
+		this.queue = queue;
 
 		this.pollInterval = pollInterval;
 		// TODO: 19.10.20 Use executor again
@@ -229,9 +236,13 @@ public class Listener {
 	}
 
 	private void updateDbFromJgitRepo(Repo repo, Repository jgitRepo) {
+		List<CommitHash> toBeQueued = new ArrayList<>();
+
 		databaseStorage.acquireWriteTransaction(db -> {
 			DbUpdater dbUpdater = new DbUpdater(repo, jgitRepo, db);
-			dbUpdater.update();
+			dbUpdater.update(toBeQueued);
 		});
+
+		queue.addCommits(QUEUE_AUTHOR, repo.getId(), toBeQueued, QUEUE_PRIORITY);
 	}
 }

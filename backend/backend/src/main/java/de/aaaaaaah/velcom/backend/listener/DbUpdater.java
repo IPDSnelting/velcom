@@ -6,11 +6,6 @@ import static java.util.stream.Collectors.toSet;
 import static org.jooq.codegen.db.tables.Branch.BRANCH;
 import static org.jooq.codegen.db.tables.CommitRelationship.COMMIT_RELATIONSHIP;
 import static org.jooq.codegen.db.tables.KnownCommit.KNOWN_COMMIT;
-import static org.jooq.codegen.db.tables.Run.RUN;
-import static org.jooq.impl.DSL.field;
-import static org.jooq.impl.DSL.name;
-import static org.jooq.impl.DSL.select;
-import static org.jooq.impl.DSL.selectFrom;
 
 import de.aaaaaaah.velcom.backend.access.entities.BranchName;
 import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
@@ -29,9 +24,6 @@ import java.util.Set;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Repository;
-import org.jooq.CommonTableExpression;
-import org.jooq.Field;
-import org.jooq.Record1;
 import org.jooq.codegen.db.tables.records.BranchRecord;
 import org.jooq.codegen.db.tables.records.CommitRelationshipRecord;
 import org.jooq.codegen.db.tables.records.KnownCommitRecord;
@@ -61,33 +53,45 @@ public class DbUpdater {
 
 	/**
 	 * Perform the update (see class level javadoc).
+	 *
+	 * @param toBeQueued This is expected to be an empty, mutable list. This function will add the
+	 * 	hashes of all commits that need to be entered into the queue. These may include commits that
+	 * 	are already in the queue.
 	 */
-	public void update() throws DbUpdateException {
+	public void update(List<CommitHash> toBeQueued) throws DbUpdateException {
 		if (anyUnmigratedBranchesOrCommits()) {
-			try {
-				LOGGER.info("Migrating repo {}", repo);
+			LOGGER.info("Migrating repo {}", repo);
 
+			try {
 				insertAllUnknownCommits();
 				migrateCommits();
-				updateBranches(); // See comment below
+				updateBranches();
 				updateTrackedFlags();
 			} catch (GitAPIException | IOException e) {
 				throw new DbUpdateException("Failed to migrate repo " + repo, e);
 			}
 		} else {
 			LOGGER.debug("Updating repo {}", repo);
-			// TODO: 20.10.20 Implement properly
-			// TODO: 20.10.20 Check if this is a new repo (i. e. no known commits)
 
-			//updateTrackedFlags();
-			//insertNewCommits();
+			try {
+				// Checking this now since #insertAllUnknownCommits() will change the result
+				boolean anyCommits = anyCommits();
 
-			// Needs to happen after insertNewCommits because of the foreign key from the "branch" table to
-			// the "known_commit" table
-			//updateBranches();
+				insertAllUnknownCommits();
+				updateBranches();
 
-			// TODO: 20.10.20 Only insert last commits if this is a new repo
-			//findNewTasks();
+				if (anyCommits) {
+					LOGGER.debug("Detected non-empty repository");
+					findNewTasks(toBeQueued);
+				} else {
+					LOGGER.debug("Detected empty (i. e. new) repository");
+					useHeadsOfTrackedBranchesAsTasks(toBeQueued);
+				}
+
+				updateTrackedFlags();
+			} catch (GitAPIException | IOException e) {
+				throw new DbUpdateException("Failed to update repo " + repo, e);
+			}
 		}
 	}
 
@@ -133,6 +137,14 @@ public class DbUpdater {
 			.isPresent();
 
 		return unmigratedBranches || unmigratedCommits;
+	}
+
+	private boolean anyCommits() {
+		return db.selectFrom(KNOWN_COMMIT)
+			.where(KNOWN_COMMIT.REPO_ID.eq(repoIdStr))
+			.limit(1)
+			.fetchOptional()
+			.isPresent();
 	}
 
 	/**
@@ -236,7 +248,7 @@ public class DbUpdater {
 			+ "WITH RECURSIVE reachable(r_hash) AS (\n"
 			+ "  SELECT branch.latest_commit_hash\n"
 			+ "  FROM branch\n"
-			+ "  WHERE branch.repo_id = ?\n"
+			+ "  WHERE branch.repo_id = ?\n" // <-- Binding #1
 			+ "  AND branch.tracked\n"
 			+ "  \n"
 			+ "  UNION\n"
@@ -249,7 +261,7 @@ public class DbUpdater {
 			+ "\n"
 			+ "UPDATE known_commit\n"
 			+ "SET tracked = (known_commit.hash IN reachable)\n"
-			+ "WHERE known_commit.repo_id = ?\n"
+			+ "WHERE known_commit.repo_id = ?\n" // <-- Binding #2
 			+ "";
 
 		db.dsl().execute(query, repoIdStr, repoIdStr);
@@ -355,40 +367,80 @@ public class DbUpdater {
 	}
 
 	/**
-	 * Find all commits that should be tracked (via a recursive query), set them to tracked and add
-	 * them to the queue (if they haven't already been benchmarked yet).
+	 * Find all commits that should be tracked (via a recursive query) and add them to the queue (if
+	 * they haven't already been benchmarked yet).
+	 *
+	 * @param toBeQueued This is expected to be an empty, mutable list. This function will add the
+	 * 	hashes of all commits that need to be entered into the queue. These may include commits that
+	 * 	are already in the queue.
 	 */
-	private void findNewTasks() {
+	private void findNewTasks(List<CommitHash> toBeQueued) {
 		LOGGER.debug("Finding new tasks");
 
-		// TODO: 20.10.20 Fix this recursive query
-		Field<String> r_hash = field(name("reachable", "r_hash"), String.class);
-		CommonTableExpression<Record1<String>> reachable = name("reachable").fields("r_hash")
-			.as(select(BRANCH.LATEST_COMMIT_HASH)
-				.from(BRANCH)
-				.where(BRANCH.REPO_ID.eq(repoIdStr))
-				.and(BRANCH.TRACKED)
-				.union(db.select(COMMIT_RELATIONSHIP.PARENT_HASH)
-					.from(COMMIT_RELATIONSHIP)
-					.join("reachable").on(r_hash.eq(COMMIT_RELATIONSHIP.CHILD_HASH))
-				)
-			);
+		String query = ""
+			+ "WITH RECURSIVE\n"
+			+ "\n"
+			+ "untracked(hash) AS (\n"
+			+ "  SELECT branch.latest_commit_hash\n"
+			+ "  FROM branch\n"
+			+ "  JOIN known_commit\n"
+			+ "    ON known_commit.repo_id = branch.repo_id\n"
+			+ "    AND known_commit.hash = branch.latest_commit_hash\n"
+			+ "  WHERE branch.repo_id = ?\n" // <-- Binding #1
+			+ "  AND branch.tracked\n"
+			+ "  AND NOT known_commit.tracked\n"
+			+ "  \n"
+			+ "  UNION\n"
+			+ "  \n"
+			+ "  SELECT known_commit.hash\n"
+			+ "  FROM known_commit\n"
+			+ "  JOIN commit_relationship\n"
+			+ "    ON commit_relationship.parent_hash = known_commit.hash\n"
+			+ "  JOIN untracked\n"
+			+ "    ON untracked.hash = commit_relationship.child_hash\n"
+			+ "  WHERE known_commit.repo_id = ?\n" // <-- Binding #2
+			+ "  AND NOT known_commit.tracked\n"
+			+ "),\n"
+			+ "\n"
+			+ "has_result(hash) AS (\n"
+			+ "  SELECT DISTINCT run.commit_hash\n"
+			+ "  FROM run\n"
+			+ "  WHERE run.repo_id = ?\n" // <-- Binding #3
+			+ "  AND run.commit_hash IS NOT NULL\n"
+			+ "),\n"
+			+ "\n"
+			+ "in_queue(hash) AS (\n"
+			+ "  SELECT DISTINCT task.commit_hash\n"
+			+ "  FROM task\n"
+			+ "  WHERE task.repo_id = ?\n" // <-- Binding #4
+			+ "  AND task.commit_hash IS NOT NULL\n"
+			+ ")\n"
+			+ "\n"
+			+ "SELECT DISTINCT untracked.hash\n"
+			+ "FROM untracked\n"
+			+ "WHERE untracked.hash NOT IN has_result\n"
+			+ "AND untracked.hash NOT IN in_queue\n"
+			+ "";
 
-		CommonTableExpression<Record1<String>> runExists = name("run_exists").fields("run_hash")
-			.as(select(RUN.COMMIT_HASH)
-				.from(RUN)
-				.where(RUN.REPO_ID.eq(repoIdStr))
-				.and(RUN.COMMIT_HASH.isNotNull())
-			);
+		db.dsl().fetchLazy(query, repoIdStr, repoIdStr, repoIdStr, repoIdStr)
+			.stream()
+			.map(record -> (String) record.getValue(0))
+			.map(CommitHash::new)
+			.forEach(toBeQueued::add);
+	}
 
-		db.dsl()
-			.withRecursive(reachable)
-			.with(runExists)
-			.select(
-				KNOWN_COMMIT.HASH,
-				field(KNOWN_COMMIT.HASH.in(selectFrom(runExists)))
-			)
-			.from(KNOWN_COMMIT);
-		// TODO: 20.10.20 Do the things
+	/**
+	 * @param toBeQueued This is expected to be an empty, mutable list. This function will add the
+	 * 	hashes of all commits that need to be entered into the queue. These may include commits that
+	 * 	are already in the queue.
+	 */
+	private void useHeadsOfTrackedBranchesAsTasks(List<CommitHash> toBeQueued) {
+		db.selectFrom(BRANCH)
+			.where(BRANCH.REPO_ID.eq(repoIdStr))
+			.and(BRANCH.TRACKED)
+			.stream()
+			.map(BranchRecord::getLatestCommitHash)
+			.map(CommitHash::new)
+			.forEach(toBeQueued::add);
 	}
 }
