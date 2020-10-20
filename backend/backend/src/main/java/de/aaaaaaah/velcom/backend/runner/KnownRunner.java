@@ -21,6 +21,8 @@ public class KnownRunner {
 	@Nullable
 	private final Task currentTask;
 	@Nullable
+	final String lastOutputLines;
+	@Nullable
 	private final Instant workingSince;
 
 	/**
@@ -33,10 +35,11 @@ public class KnownRunner {
 	 * @param task the task the runner is currently working on
 	 * @param lostConnection true if the connection to the runner is lost
 	 * @param workingSince the time the runner is working on a run now
+	 * @param lastOutputLines the last output lines
 	 */
 	public KnownRunner(String name, String information, @Nullable String versionHash,
 		Status lastStatus, @Nullable Task task, boolean lostConnection,
-		@Nullable Instant workingSince) {
+		@Nullable Instant workingSince, @Nullable String lastOutputLines) {
 		this.name = Objects.requireNonNull(name, "name can not be null!");
 		this.information = Objects.requireNonNull(information, "information can not be null!");
 		this.versionHash = versionHash;
@@ -44,6 +47,7 @@ public class KnownRunner {
 		this.currentTask = task;
 		this.lostConnection = lostConnection;
 		this.workingSince = workingSince;
+		this.lastOutputLines = lastOutputLines;
 	}
 
 	public String getName() {
@@ -71,6 +75,13 @@ public class KnownRunner {
 
 	public boolean hasLostConnection() {
 		return lostConnection;
+	}
+
+	/**
+	 * @return the last output lines
+	 */
+	public Optional<String> getLastOutputLines() {
+		return Optional.ofNullable(lastOutputLines);
 	}
 
 	/**

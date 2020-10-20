@@ -177,7 +177,11 @@ public class Benchmarker {
 			List<String> lines = stdErr.lines().collect(Collectors.toList());
 			Collections.reverse(lines);
 
-			return lines.stream().limit(100).collect(Collectors.joining("\n"));
+			List<String> sublist = lines.subList(Math.max(lines.size() - 100, 0), lines.size());
+
+			Collections.reverse(sublist);
+
+			return String.join("\n", sublist);
 		});
 
 		try {
