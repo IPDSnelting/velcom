@@ -71,7 +71,6 @@ public class JgitCommitWalk implements AutoCloseable {
 	@Override
 	public void close() {
 		walk.close();
-		repo.close();
 	}
 
 }

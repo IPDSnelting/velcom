@@ -179,11 +179,11 @@ public class RepoStorage {
 		try {
 			Path repoDir = getRepoDir(dirName);
 
-			try (Git git = Git.open(repoDir.toFile())) {
-				Repository repository = git.getRepository();
-
+			try (
+				Git git = Git.open(repoDir.toFile());
+				Repository repository = git.getRepository()
+			) {
 				handler.accept(repository);
-
 			} catch (Exception e) {
 				throw new RepositoryAcquisitionException(this, dirName, e);
 			}
