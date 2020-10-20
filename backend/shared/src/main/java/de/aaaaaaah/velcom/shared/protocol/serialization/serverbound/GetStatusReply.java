@@ -25,6 +25,8 @@ public class GetStatusReply implements ServerBound {
 	private final Status status;
 	@Nullable
 	private final UUID runId;
+	@Nullable
+	private final String lastOutputLines;
 
 	@JsonCreator
 	public GetStatusReply(
@@ -33,7 +35,8 @@ public class GetStatusReply implements ServerBound {
 		@Nullable String benchHash,
 		@JsonProperty(required = true) boolean resultAvailable,
 		@JsonProperty(required = true) Status status,
-		@Nullable UUID runId
+		@Nullable UUID runId,
+		@Nullable String lastOutputLines
 	) {
 		this.info = info;
 		this.versionHash = versionHash;
@@ -41,6 +44,7 @@ public class GetStatusReply implements ServerBound {
 		this.resultAvailable = resultAvailable;
 		this.status = status;
 		this.runId = runId;
+		this.lastOutputLines = lastOutputLines;
 	}
 
 	public String getInfo() {
@@ -65,6 +69,10 @@ public class GetStatusReply implements ServerBound {
 
 	public Optional<UUID> getRunId() {
 		return Optional.ofNullable(runId);
+	}
+
+	public Optional<String> getLastOutputLines() {
+		return Optional.ofNullable(lastOutputLines);
 	}
 
 	@Override

@@ -288,6 +288,10 @@ public class TeleBackend {
 		return getBenchmarker().map(Benchmarker::getTaskId);
 	}
 
+	public Optional<String> getLastOutputLines() {
+		return getBenchmarker().map(Benchmarker::getLastOutputLines);
+	}
+
 	private Optional<Benchmarker> getBenchmarker() {
 		synchronized (benchmarkerLock) {
 			return Optional.ofNullable(benchmarker);

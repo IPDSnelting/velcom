@@ -97,7 +97,8 @@ public abstract class RunnerState implements State {
 			teleBackend.getBenchHash().orElse(null),
 			teleBackend.getBenchResult().isPresent(),
 			teleBackend.getStatus(),
-			teleBackend.getCurrentRunId().orElse(null)
+			teleBackend.getCurrentRunId().orElse(null),
+			teleBackend.getLastOutputLines().orElse(null)
 		);
 		LOGGER.debug("Replying with {}", getStatusReply);
 		connection.sendPacket(getStatusReply.asPacket(connection.getSerializer()));
