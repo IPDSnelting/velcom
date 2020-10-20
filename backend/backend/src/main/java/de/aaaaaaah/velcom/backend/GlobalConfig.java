@@ -66,11 +66,19 @@ public class GlobalConfig extends Configuration {
 		return jdbcUrl;
 	}
 
+	public void setJdbcUrl(String jdbcUrl) {
+		this.jdbcUrl = jdbcUrl;
+	}
+
 	/**
 	 * @return the interval between listener updates
 	 */
 	public Duration getPollInterval() {
 		return Duration.ofSeconds(pollInterval);
+	}
+
+	public void setPollInterval(long pollInterval) {
+		this.pollInterval = pollInterval;
 	}
 
 	/**
@@ -80,11 +88,19 @@ public class GlobalConfig extends Configuration {
 		return webAdminToken;
 	}
 
+	public void setWebAdminToken(String webAdminToken) {
+		this.webAdminToken = webAdminToken;
+	}
+
 	/**
 	 * @return the port that the dispatcher is listening on
 	 */
 	public int getRunnerPort() {
 		return runnerPort;
+	}
+
+	public void setRunnerPort(int runnerPort) {
+		this.runnerPort = runnerPort;
 	}
 
 	/**
@@ -94,11 +110,19 @@ public class GlobalConfig extends Configuration {
 		return benchmarkRepoRemoteUrl;
 	}
 
+	public void setBenchmarkRepoRemoteUrl(String benchmarkRepoRemoteUrl) {
+		this.benchmarkRepoRemoteUrl = benchmarkRepoRemoteUrl;
+	}
+
 	/**
 	 * @return the token runners need to provide as authentication
 	 */
 	public String getRunnerToken() {
 		return runnerToken;
+	}
+
+	public void setRunnerToken(String runnerToken) {
+		this.runnerToken = runnerToken;
 	}
 
 	/**
@@ -107,6 +131,10 @@ public class GlobalConfig extends Configuration {
 	 */
 	public Duration getDisconnectedRunnerGracePeriod() {
 		return Duration.ofSeconds(disconnectedRunnerGracePeriodSeconds);
+	}
+
+	public void setDisconnectedRunnerGracePeriodSeconds(long disconnectedRunnerGracePeriodSeconds) {
+		this.disconnectedRunnerGracePeriodSeconds = disconnectedRunnerGracePeriodSeconds;
 	}
 
 	/**
@@ -118,6 +146,10 @@ public class GlobalConfig extends Configuration {
 		return significanceRelativeThreshold;
 	}
 
+	public void setSignificanceRelativeThreshold(double significanceRelativeThreshold) {
+		this.significanceRelativeThreshold = significanceRelativeThreshold;
+	}
+
 	/**
 	 * Explained in more detail in the example config.
 	 *
@@ -125,6 +157,10 @@ public class GlobalConfig extends Configuration {
 	 */
 	public double getSignificanceStddevThreshold() {
 		return significanceStddevThreshold;
+	}
+
+	public void setSignificanceStddevThreshold(double significanceStddevThreshold) {
+		this.significanceStddevThreshold = significanceStddevThreshold;
 	}
 
 	/**
@@ -136,6 +172,10 @@ public class GlobalConfig extends Configuration {
 		return significanceMinStddevAmount;
 	}
 
+	public void setSignificanceMinStddevAmount(int significanceMinStddevAmount) {
+		this.significanceMinStddevAmount = significanceMinStddevAmount;
+	}
+
 	/**
 	 * @return the path to the directory where all local repositories will be placed in
 	 */
@@ -143,12 +183,24 @@ public class GlobalConfig extends Configuration {
 		return repoDir;
 	}
 
+	public void setRepoDir(String repoDir) {
+		this.repoDir = repoDir;
+	}
+
 	public int getHashMemory() {
 		return hashMemory;
 	}
 
+	public void setHashMemory(int hashMemory) {
+		this.hashMemory = hashMemory;
+	}
+
 	public int getHashIterations() {
 		return hashIterations;
+	}
+
+	public void setHashIterations(int hashIterations) {
+		this.hashIterations = hashIterations;
 	}
 
 	/**
@@ -156,6 +208,10 @@ public class GlobalConfig extends Configuration {
 	 */
 	public String getArchivesRootDir() {
 		return archivesRootDir;
+	}
+
+	public void setArchivesRootDir(String archivesRootDir) {
+		this.archivesRootDir = archivesRootDir;
 	}
 
 	@Override
