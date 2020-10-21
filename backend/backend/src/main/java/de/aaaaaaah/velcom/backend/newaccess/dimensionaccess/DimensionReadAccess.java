@@ -8,6 +8,7 @@ import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.storage.db.DBReadAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -20,6 +21,13 @@ public class DimensionReadAccess {
 		this.databaseStorage = databaseStorage;
 	}
 
+	/**
+	 * Find a repo's available dimensions, i. e. the dimensions a repo has at least one measurement
+	 * for.
+	 *
+	 * @param repoId the repo's id
+	 * @return the repo's available dimensions
+	 */
 	public Set<Dimension> getAvailableDimensions(RepoId repoId) {
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
 			return db.selectDistinct(MEASUREMENT.BENCHMARK, MEASUREMENT.METRIC)
@@ -33,13 +41,25 @@ public class DimensionReadAccess {
 		}
 	}
 
+	/**
+	 * Find multiple repos' available dimensions, i. e. the dimensions a repo has at least one
+	 * measurement for.
+	 *
+	 * @param repoIds the ids of the repos to return the available dimensions of
+	 * @return the available dimensions for each input repo, including those that don't have any
+	 * 	available dimensions. In other words, this is guaranteed to contain an entry for every input
+	 * 	repo id.
+	 */
 	public Map<RepoId, Set<Dimension>> getAvailableDimensions(Collection<RepoId> repoIds) {
 		Set<String> repoIdStrings = repoIds.stream()
 			.map(RepoId::getIdAsString)
 			.collect(Collectors.toSet());
 
+		final HashMap<RepoId, Set<Dimension>> availableDimensions;
+
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			return db.selectDistinct(RUN.REPO_ID, MEASUREMENT.BENCHMARK, MEASUREMENT.METRIC)
+			availableDimensions = db
+				.selectDistinct(RUN.REPO_ID, MEASUREMENT.BENCHMARK, MEASUREMENT.METRIC)
 				.from(RUN)
 				.join(MEASUREMENT).on(MEASUREMENT.RUN_ID.eq(RUN.ID))
 				.where(RUN.REPO_ID.in(repoIdStrings))
@@ -47,11 +67,18 @@ public class DimensionReadAccess {
 				.stream()
 				.collect(Collectors.groupingBy(
 					record -> RepoId.fromString(record.value1()),
+					HashMap::new,
 					Collectors.mapping(
 						record -> new Dimension(record.value2(), record.value3()),
 						Collectors.toSet()
 					)
 				));
 		}
+
+		for (RepoId repoId : repoIds) {
+			availableDimensions.putIfAbsent(repoId, Set.of());
+		}
+
+		return availableDimensions;
 	}
 }
