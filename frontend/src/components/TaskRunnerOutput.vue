@@ -1,7 +1,9 @@
 <template>
   <v-card>
     <v-card-title>
-      <v-toolbar dark color="primary">Runner output (StdErr)</v-toolbar>
+      <v-toolbar dark color="primary">
+        Runner output (standard error stream)
+      </v-toolbar>
     </v-card-title>
     <v-card-text>
       <v-alert
@@ -19,7 +21,7 @@
         </span>
       </v-alert>
       <div class="runner-output mx-2">
-        <span
+        <div
           v-for="{ lineNumber, text, classes } in lines"
           :key="lineNumber"
           class="line"
@@ -31,7 +33,7 @@
             >{{ lineNumber }}</span
           >
           {{ text }}
-        </span>
+        </div>
       </div>
       <v-row align="center" justify="center">
         <v-col cols="3">
