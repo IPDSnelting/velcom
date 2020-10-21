@@ -84,6 +84,13 @@ DROP TABLE tracked_branch;
 ALTER TABLE known_commit RENAME TO known_commit_old;
 ALTER TABLE known_commit_old RENAME TO known_commit;
 
+--------------------------------
+-- Sprinkling in some indices --
+--------------------------------
+
+CREATE INDEX idx_commit_relationship_upwards
+  ON commit_relationship(repo_id, child_hash, parent_hash);
+
 -----------------------------------
 -- Ensure foreign keys are valid --
 -----------------------------------

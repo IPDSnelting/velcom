@@ -12,6 +12,7 @@ import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.RepoWriteAccess;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.Repo;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
+import de.aaaaaaah.velcom.backend.storage.db.DBWriteAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import de.aaaaaaah.velcom.backend.storage.repo.GuickCloning;
 import de.aaaaaaah.velcom.backend.storage.repo.GuickCloning.CloneException;
@@ -78,11 +79,19 @@ public class Listener {
 
 		executor = Executors.newSingleThreadScheduledExecutor();
 		executor.scheduleWithFixedDelay(
-			this::updateAllRepos,
+			this::onUpdate,
 			0,
 			pollInterval.toSeconds(),
 			TimeUnit.SECONDS
 		);
+	}
+
+	/**
+	 * This function is called regularly by the executor.
+	 */
+	private void onUpdate() {
+		updateAllRepos();
+		runAnalyze();
 	}
 
 	/**
@@ -122,6 +131,19 @@ public class Listener {
 			} catch (Exception e) {
 				LOGGER.warn("Failed to update repo {}", repo.getId(), e);
 			}
+		}
+	}
+
+	/**
+	 * Run the ANALYZE command. It's relatively quick, so it should be fine to just run it everytime
+	 * the listener runs.
+	 */
+	@Timed(histogram = true)
+	private void runAnalyze() {
+		LOGGER.debug("Running ANALYZE");
+
+		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
+			db.dsl().execute("ANALYZE");
 		}
 	}
 
