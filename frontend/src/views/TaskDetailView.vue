@@ -8,8 +8,8 @@
     <v-row no-gutters v-if="nudgeToRunDetail">
       <v-col>
         <v-snackbar timeout="-1" multi-line :value="true" shaped color="info">
-          This task no longer exists, but it looks like a run exists for it! Do
-          you want to navigate there?
+          This task no longer exists, but it looks like a run exists for it!
+          Click "to the run" on the right to navigate there.
           <template v-slot:action="{ attrs }">
             <v-btn
               color="ping"

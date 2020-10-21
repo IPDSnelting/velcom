@@ -87,6 +87,14 @@ export default class TaskRunnerOutput extends Vue {
         it => it.id === this.taskId
       )
       this.$emit('loading-failed')
+      return
+    }
+
+    const element = this.$el.getElementsByClassName('runner-output')[0]
+    if (element.scrollHeight - element.scrollTop === element.clientHeight) {
+      Vue.nextTick(() => {
+        element.scrollTop = element.scrollHeight
+      })
     }
   }
 
