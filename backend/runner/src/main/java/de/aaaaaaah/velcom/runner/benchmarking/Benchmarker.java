@@ -176,11 +176,9 @@ public class Benchmarker {
 		outputFetcher.set(() -> {
 			String stdErr = work.getCurrentStdErr();
 			List<String> lines = stdErr.lines().collect(Collectors.toList());
-			Collections.reverse(lines);
 
 			List<String> sublist = lines.subList(Math.max(lines.size() - 100, 0), lines.size());
 
-			Collections.reverse(sublist);
 			int indexFirstLine = lines.size() - sublist.size();
 
 			return new LinesWithOffset(indexFirstLine, sublist);
