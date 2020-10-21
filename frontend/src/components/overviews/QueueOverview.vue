@@ -41,6 +41,7 @@
               :commit="task.source.commitDescription"
               :source="task.source"
               :id="task.id"
+              :linkLocation="taskLinkLocation(task)"
             >
               <template #body_top>
                 <v-progress-linear
@@ -109,6 +110,7 @@ import CommitOverviewBase from './CommitOverviewBase.vue'
 import { extractErrorMessage } from '@/util/ErrorUtils'
 import TarTaskOverview from './TarTaskOverview.vue'
 import { formatDurationHuman } from '@/util/TimeUtil'
+import { RawLocation } from 'vue-router'
 
 @Component({
   components: {
@@ -135,6 +137,13 @@ export default class QueueOverview extends Vue {
 
   private get isAdmin() {
     return vxm.userModule.isAdmin
+  }
+
+  private taskLinkLocation(task: Task): RawLocation {
+    return {
+      name: 'task-detail',
+      params: { taskId: task.id }
+    }
   }
 
   private liftToFront(task: Task, event: Event) {
