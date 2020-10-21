@@ -72,16 +72,16 @@ def build_makefile():
 
     guarded_try_metric(
         "backend",
-        "coverage",
-        lambda: get_coverage(),
-        "percent",
-        "MORE_IS_BETTER"
+        "build_time",
+        lambda: execute_program(["make", "-C", str(target_path()), "backend"])
     )
 
     guarded_try_metric(
         "backend",
-        "build_time",
-        lambda: execute_program(["make", "-C", str(target_path()), "backend"])
+        "coverage",
+        lambda: get_coverage(),
+        "percent",
+        "MORE_IS_BETTER"
     )
 
     guarded_try_metric(

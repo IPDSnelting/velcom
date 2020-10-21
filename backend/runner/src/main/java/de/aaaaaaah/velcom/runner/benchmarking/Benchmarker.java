@@ -10,6 +10,7 @@ import de.aaaaaaah.velcom.shared.protocol.serialization.Result;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Result.Benchmark;
 import de.aaaaaaah.velcom.shared.util.Either;
 import de.aaaaaaah.velcom.shared.util.ExceptionHelper;
+import de.aaaaaaah.velcom.shared.util.LinesWithOffset;
 import de.aaaaaaah.velcom.shared.util.execution.ProgramExecutor;
 import de.aaaaaaah.velcom.shared.util.execution.ProgramResult;
 import de.aaaaaaah.velcom.shared.util.execution.StreamsProcessOutput;
@@ -37,7 +38,7 @@ import javax.annotation.Nullable;
 public class Benchmarker {
 
 	private final AtomicReference<BenchResult> result; // nullable inside the reference
-	private final AtomicReference<Supplier<String>> outputFetcher;
+	private final AtomicReference<Supplier<LinesWithOffset>> outputFetcher;
 
 	private final CompletableFuture<Void> finishFuture;
 
@@ -102,10 +103,10 @@ public class Benchmarker {
 	/**
 	 * @return the last few lines of the output (stderr) or an empty String if none yet
 	 */
-	public String getLastOutputLines() {
-		Supplier<String> supplier = outputFetcher.get();
+	public LinesWithOffset getLastOutputLines() {
+		Supplier<LinesWithOffset> supplier = outputFetcher.get();
 		if (supplier == null) {
-			return "";
+			return new LinesWithOffset(0, List.of());
 		}
 		return supplier.get();
 	}
@@ -180,8 +181,9 @@ public class Benchmarker {
 			List<String> sublist = lines.subList(Math.max(lines.size() - 100, 0), lines.size());
 
 			Collections.reverse(sublist);
+			int indexFirstLine = lines.size() - sublist.size();
 
-			return String.join("\n", sublist);
+			return new LinesWithOffset(indexFirstLine, sublist);
 		});
 
 		try {

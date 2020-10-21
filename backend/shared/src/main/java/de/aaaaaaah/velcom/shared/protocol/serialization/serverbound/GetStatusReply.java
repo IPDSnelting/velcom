@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Serializer;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Status;
+import de.aaaaaaah.velcom.shared.util.LinesWithOffset;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -26,7 +27,7 @@ public class GetStatusReply implements ServerBound {
 	@Nullable
 	private final UUID runId;
 	@Nullable
-	private final String lastOutputLines;
+	private final LinesWithOffset lastOutputLines;
 
 	@JsonCreator
 	public GetStatusReply(
@@ -36,7 +37,7 @@ public class GetStatusReply implements ServerBound {
 		@JsonProperty(required = true) boolean resultAvailable,
 		@JsonProperty(required = true) Status status,
 		@Nullable UUID runId,
-		@Nullable String lastOutputLines
+		@Nullable LinesWithOffset lastOutputLines
 	) {
 		this.info = info;
 		this.versionHash = versionHash;
@@ -71,7 +72,7 @@ public class GetStatusReply implements ServerBound {
 		return Optional.ofNullable(runId);
 	}
 
-	public Optional<String> getLastOutputLines() {
+	public Optional<LinesWithOffset> getLastOutputLines() {
 		return Optional.ofNullable(lastOutputLines);
 	}
 

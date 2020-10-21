@@ -18,6 +18,7 @@ import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonSource;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonTask;
 import de.aaaaaaah.velcom.backend.runner.IDispatcher;
 import de.aaaaaaah.velcom.backend.runner.KnownRunner;
+import de.aaaaaaah.velcom.shared.util.LinesWithOffset;
 import de.aaaaaaah.velcom.shared.util.Pair;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.PATCH;
@@ -181,11 +182,15 @@ public class QueueEndpoint {
 			return Response.status(Status.NOT_FOUND).build();
 		}
 
-		Optional<String> lastOutputLines = worker.get().getLastOutputLines();
+		LinesWithOffset lastOutputLines = worker.get().getLastOutputLines()
+			.orElse(new LinesWithOffset(0, List.of()));
 
 		return Response.ok()
-			.entity(new GetTaskOutputReply(lastOutputLines.orElse("")))
-			.build();
+			.entity(
+				new GetTaskOutputReply(
+					lastOutputLines.getLines(), lastOutputLines.getFirstLineOffset()
+				)
+			).build();
 	}
 
 	private static class PostCommitReply {
@@ -222,14 +227,20 @@ public class QueueEndpoint {
 
 	private static class GetTaskOutputReply {
 
-		private final String output;
+		private final List<String> output;
+		private final int indexOfFirstLine;
 
-		private GetTaskOutputReply(String output) {
+		private GetTaskOutputReply(List<String> output, int indexOfFirstLine) {
 			this.output = output;
+			this.indexOfFirstLine = indexOfFirstLine;
 		}
 
-		public String getOutput() {
+		public List<String> getOutput() {
 			return output;
+		}
+
+		public int getIndexOfFirstLine() {
+			return indexOfFirstLine;
 		}
 	}
 }

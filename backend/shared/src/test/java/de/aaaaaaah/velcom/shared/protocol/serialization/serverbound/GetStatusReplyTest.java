@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import de.aaaaaaah.velcom.shared.protocol.serialization.SerializerBasedTest;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Status;
+import de.aaaaaaah.velcom.shared.util.LinesWithOffset;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -32,7 +34,18 @@ class GetStatusReplyTest extends SerializerBasedTest {
 
 	@Test
 	void deserializeWithAllOptionals() {
-		String json = "{\"info\": \"system info goes here\", \"version_hash\": \"bloop\", \"bench_hash\": \"blabla\", \"result_available\": false, \"status\": \"ABORT\", \"run_id\": \"576afdcb-eaf9-46b2-9287-fc3bf8df83df\", \"last_output_lines\": \"this is a line\\nWith a newline\"}";
+		String json = "{"
+			+ "\"info\": \"system info goes here\","
+			+ " \"version_hash\": \"bloop\","
+			+ " \"bench_hash\": \"blabla\","
+			+ " \"result_available\": false,"
+			+ " \"status\": \"ABORT\","
+			+ " \"run_id\": \"576afdcb-eaf9-46b2-9287-fc3bf8df83df\","
+			+ " \"last_output_lines\": {"
+			+ "   \"first_line_offset\": 20,"
+			+ "   \"lines\": [\"this is a line\",\"With a newline\"]"
+			+ " }"
+			+ "}";
 		Optional<GetStatusReply> result = serializer.deserialize(json, GetStatusReply.class);
 
 		UUID uuid = UUID.fromString("576afdcb-eaf9-46b2-9287-fc3bf8df83df");
@@ -45,7 +58,7 @@ class GetStatusReplyTest extends SerializerBasedTest {
 				false,
 				Status.ABORT,
 				uuid,
-				"this is a line\nWith a newline"
+				new LinesWithOffset(20, List.of("this is a line", "With a newline"))
 			),
 			result.get()
 		);
