@@ -18,7 +18,6 @@ import de.aaaaaaah.velcom.shared.util.systeminfo.LinuxSystemInfo;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -177,7 +176,8 @@ public class Benchmarker {
 			String stdErr = work.getCurrentStdErr();
 			List<String> lines = stdErr.lines().collect(Collectors.toList());
 
-			List<String> sublist = lines.subList(Math.max(lines.size() - 100, 0), lines.size());
+			int maxLinesToReturn = 100;
+			List<String> sublist = lines.subList(Math.max(lines.size() - maxLinesToReturn, 0), lines.size());
 
 			int indexFirstLine = lines.size() - sublist.size();
 
