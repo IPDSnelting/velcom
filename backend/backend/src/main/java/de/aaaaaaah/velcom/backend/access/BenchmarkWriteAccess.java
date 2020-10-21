@@ -16,6 +16,7 @@ import de.aaaaaaah.velcom.backend.access.entities.TaskId;
 import de.aaaaaaah.velcom.backend.access.entities.benchmark.NewMeasurement;
 import de.aaaaaaah.velcom.backend.access.entities.benchmark.NewRun;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.RunError;
+import de.aaaaaaah.velcom.backend.newaccess.caches.AvailableDimensionsCache;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.RepoReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
@@ -31,12 +32,14 @@ import org.jooq.codegen.db.tables.records.RunRecord;
 public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 
 	private final TaskWriteAccess taskAccess;
+	private final AvailableDimensionsCache availableDimensionsCache;
 
 	public BenchmarkWriteAccess(DatabaseStorage databaseStorage, RepoReadAccess repoReadAccess,
-		TaskWriteAccess taskAccess) {
+		TaskWriteAccess taskAccess, AvailableDimensionsCache availableDimensionsCache) {
 
 		super(databaseStorage, repoReadAccess);
 		this.taskAccess = taskAccess;
+		this.availableDimensionsCache = availableDimensionsCache;
 	}
 
 	/**
@@ -113,6 +116,10 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 
 			cache.put(commitSource.getHash(), run);
 		});
+
+		// 5.) Update available dimensions cache
+		// TODO: 21.10.20 Add new dimensions to cache more efficiently?
+		newRun.getRepoId().ifPresent(availableDimensionsCache::invalidate);
 	}
 
 	private void insertMeasurement(DBWriteAccess db, NewMeasurement measurement) {

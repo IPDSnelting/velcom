@@ -4,6 +4,7 @@ import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.access.TokenReadAccess;
 import de.aaaaaaah.velcom.backend.access.entities.Dimension;
 import de.aaaaaaah.velcom.backend.access.entities.DimensionInfo;
+import de.aaaaaaah.velcom.backend.newaccess.caches.AvailableDimensionsCache;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.DimensionReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.RepoReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.Branch;
@@ -34,14 +35,17 @@ public class AllReposEndpoint {
 	private final DimensionReadAccess dimensionAccess;
 	private final RepoReadAccess repoAccess;
 	private final TokenReadAccess tokenAccess;
+	private final AvailableDimensionsCache availableDimensionsCache;
 
 	public AllReposEndpoint(BenchmarkReadAccess benchmarkAccess, DimensionReadAccess dimensionAccess,
-		RepoReadAccess repoAccess, TokenReadAccess tokenAccess) {
+		RepoReadAccess repoAccess, TokenReadAccess tokenAccess,
+		AvailableDimensionsCache availableDimensionsCache) {
 
 		this.benchmarkAccess = benchmarkAccess;
 		this.dimensionAccess = dimensionAccess;
 		this.repoAccess = repoAccess;
 		this.tokenAccess = tokenAccess;
+		this.availableDimensionsCache = availableDimensionsCache;
 	}
 
 	@GET
@@ -49,7 +53,8 @@ public class AllReposEndpoint {
 	public GetReply get() {
 		Collection<Repo> repos = repoAccess.getAllRepos();
 		List<RepoId> repoIds = repos.stream().map(Repo::getRepoId).collect(Collectors.toList());
-		Map<RepoId, Set<Dimension>> allDimensions = dimensionAccess.getAvailableDimensions(repoIds);
+		Map<RepoId, Set<Dimension>> allDimensions = availableDimensionsCache
+			.getAvailableDimensions(dimensionAccess, repoIds);
 		Map<Dimension, DimensionInfo> dimensionInfos = benchmarkAccess.getDimensionInfos(
 			allDimensions.values().stream()
 				.flatMap(Set::stream)

@@ -15,6 +15,7 @@ import de.aaaaaaah.velcom.backend.data.repocomparison.TimesliceComparison;
 import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparator;
 import de.aaaaaaah.velcom.backend.data.runcomparison.SignificanceFactors;
 import de.aaaaaaah.velcom.backend.listener.Listener;
+import de.aaaaaaah.velcom.backend.newaccess.caches.AvailableDimensionsCache;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.DimensionReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.RepoWriteAccess;
@@ -115,15 +116,17 @@ public class ServerMain extends Application<GlobalConfig> {
 		RepoStorage repoStorage = new RepoStorage(configuration.getRepoDir());
 		DatabaseStorage databaseStorage = new DatabaseStorage(configuration);
 
+		// Caches
+		AvailableDimensionsCache availableDimensionsCache = new AvailableDimensionsCache();
+
 		// Access layer
 		TaskWriteAccess taskAccess = new TaskWriteAccess(databaseStorage);
 		CommitReadAccess commitAccess = new CommitReadAccess(databaseStorage);
 		DimensionReadAccess dimensionAccess = new DimensionReadAccess(databaseStorage);
 		KnownCommitWriteAccess knownCommitAccess = new KnownCommitWriteAccess(
-			databaseStorage,
-			taskAccess
+			databaseStorage, taskAccess
 		);
-		RepoWriteAccess repoAccess = new RepoWriteAccess(databaseStorage);
+		RepoWriteAccess repoAccess = new RepoWriteAccess(databaseStorage, availableDimensionsCache);
 		TokenWriteAccess tokenAccess = new TokenWriteAccess(
 			databaseStorage,
 			new AuthToken(configuration.getWebAdminToken()),
@@ -136,7 +139,7 @@ public class ServerMain extends Application<GlobalConfig> {
 			repoStorage
 		);
 		BenchmarkWriteAccess benchmarkAccess = new BenchmarkWriteAccess(
-			databaseStorage, repoAccess, taskAccess
+			databaseStorage, repoAccess, taskAccess, availableDimensionsCache
 		);
 
 		// Data layer
@@ -171,7 +174,8 @@ public class ServerMain extends Application<GlobalConfig> {
 
 		// Endpoints
 		Stream.of(
-			new AllReposEndpoint(benchmarkAccess, dimensionAccess, repoAccess, tokenAccess),
+			new AllReposEndpoint(benchmarkAccess, dimensionAccess, repoAccess, tokenAccess,
+				availableDimensionsCache),
 			new CommitEndpoint(commitAccess, repoAccess, benchmarkAccess),
 			new CompareEndpoint(benchmarkAccess, commitAccess, runComparator),
 			new DebugEndpoint(dispatcher),
