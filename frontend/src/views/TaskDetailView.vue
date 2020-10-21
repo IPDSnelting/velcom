@@ -18,7 +18,7 @@
               v-bind="attrs"
               @click="navigateToRespectiveRun"
             >
-              To the run!
+              To the run
             </v-btn>
           </template>
         </v-snackbar>
@@ -40,7 +40,7 @@
     <v-row v-if="show404">
       <page-404
         title="Task not found"
-        subtitle="Maybe try refreshing or add it to the queue!"
+        subtitle="Maybe try refreshing or add it to the queue"
       ></page-404>
     </v-row>
   </v-container>
