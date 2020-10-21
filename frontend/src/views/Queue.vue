@@ -20,7 +20,9 @@
         </v-col>
       </v-row>
       <v-row>
-        <task-runner-output :task-id="someTask"></task-runner-output>
+        <v-col>
+          <task-runner-output :task-id="someTask"></task-runner-output>
+        </v-col>
       </v-row>
       <v-row align="baseline" justify="center">
         <v-col>

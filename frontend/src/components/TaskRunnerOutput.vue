@@ -10,7 +10,7 @@
       </v-alert>
       <div class="runner-output mx-2">
         <span
-          v-for="({ lineNumber, text, classes }) in lines"
+          v-for="{ lineNumber, text, classes } in lines"
           :key="lineNumber"
           class="line"
           :class="classes"
