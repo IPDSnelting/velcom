@@ -123,7 +123,14 @@ export class QueueStore extends VxModule {
   async fetchRunnerOutput(
     taskId: string
   ): Promise<StreamedRunnerOutput | null> {
-    const response = await axios.get(`/queue/task/${taskId}/progress`)
+    let response
+    try {
+      response = await axios.get(`/queue/task/${taskId}/progress`, {
+        hideFromSnackbar: true
+      })
+    } catch (e) {
+      return null
+    }
 
     if (response.status === 404) {
       return null

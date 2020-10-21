@@ -66,7 +66,7 @@ export default class Queue extends Vue {
   }
 
   private get someTask() {
-    return 'e16e1c20-2d25-4a5a-937d-ebfa5e3f33a9'
+    return 'fde53cb7-6e8d-4e23-9f8f-c92c87a88baf'
   }
 
   beforeRouteLeave(

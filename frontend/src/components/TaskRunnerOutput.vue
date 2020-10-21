@@ -10,8 +10,8 @@
       </v-alert>
       <div class="runner-output mx-2">
         <span
-          v-for="({ lineNumber, text, classes }, index) in lines"
-          :key="index"
+          v-for="({ lineNumber, text, classes }) in lines"
+          :key="lineNumber"
           class="line"
           :class="classes"
         >
@@ -57,7 +57,15 @@ export default class TaskRunnerOutput extends Vue {
     if (!this.taskId) {
       return
     }
-    const newOutput = await vxm.queueModule.fetchRunnerOutput(this.taskId)
+
+    let taskId = '0e394e90-e895-4f12-8280-1e47e15c659d'
+    if (vxm.queueModule.workers.length > 0) {
+      taskId =
+        vxm.queueModule.workers[0].workingOn ||
+        '0e394e90-e895-4f12-8280-1e47e15c659d'
+    }
+
+    const newOutput = await vxm.queueModule.fetchRunnerOutput(taskId)
     if (newOutput !== null) {
       this.output = newOutput
     }
@@ -73,21 +81,35 @@ export default class TaskRunnerOutput extends Vue {
     if (!output) {
       return []
     }
+    const levelRegex = [
+      {
+        level: 'warning',
+        regex: this.startsRoughlyWithLevel('warning')
+      },
+      {
+        level: 'error',
+        regex: this.startsRoughlyWithLevel('error')
+      }
+    ]
     return output.outputLines.map((line, index) => ({
       lineNumber: index + output.indexOfFirstLine + 1,
       text: line,
-      classes: [
-        line.toLowerCase().includes('warning') ? 'text--warning' : '',
-        line.toLocaleLowerCase().includes('error') ? 'text--error' : ''
-      ]
+      classes: levelRegex.map(it =>
+        it.regex.exec(line) !== null ? `text--${it.level}` : ''
+      )
     }))
+  }
+
+  private startsRoughlyWithLevel(level: string): RegExp {
+    const regexString = `^\\s*((\\[${level}\\])|${level})`
+    return new RegExp(regexString, 'iu')
   }
 
   private mounted() {
     this.update()
     this.timer = setInterval(() => {
       this.update()
-    }, 2000)
+    }, 5000)
   }
 
   private destroyed() {
