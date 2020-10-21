@@ -10,8 +10,8 @@
         </v-card>
       </v-col>
     </v-row>
-    <v-row no-gutters>
-      <v-col v-if="measurements !== undefined">
+    <v-row no-gutters v-if="measurements !== undefined">
+      <v-col>
         <v-card>
           <v-card-title>
             <v-toolbar dark color="primary">Run Result</v-toolbar>

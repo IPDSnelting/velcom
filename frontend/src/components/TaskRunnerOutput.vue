@@ -4,9 +4,19 @@
       <v-toolbar dark color="primary">Runner output (StdErr)</v-toolbar>
     </v-card-title>
     <v-card-text>
-      <v-alert type="error" class="mx-4" v-if="loadingError">
-        No output received in my last request. Maybe the task finished
-        executing?
+      <v-alert
+        :type="taskInProgress ? 'error' : 'warning'"
+        class="mx-4"
+        v-if="loadingError"
+      >
+        No output received in my last request.
+        <span v-if="!taskInProgress && taskInQueue">
+          It looks like the task is not scheduled on a runner right now?
+        </span>
+        <span v-if="!taskInQueue">
+          It looks like the task is no longer in the queue? Maybe it is
+          finished?
+        </span>
       </v-alert>
       <div class="runner-output mx-2">
         <span
@@ -51,6 +61,11 @@ export default class TaskRunnerOutput extends Vue {
   private timer: number | null = null
   private output: StreamedRunnerOutput | null = null
   private loadingError: boolean = false
+  private taskInQueue: boolean = true
+
+  private get taskInProgress(): boolean {
+    return !!vxm.queueModule.workers.find(it => it.workingOn === this.taskId)
+  }
 
   @Watch('taskId')
   private async update() {
@@ -58,18 +73,19 @@ export default class TaskRunnerOutput extends Vue {
       return
     }
 
-    let taskId = '0e394e90-e895-4f12-8280-1e47e15c659d'
-    if (vxm.queueModule.workers.length > 0) {
-      taskId =
-        vxm.queueModule.workers[0].workingOn ||
-        '0e394e90-e895-4f12-8280-1e47e15c659d'
-    }
-
-    const newOutput = await vxm.queueModule.fetchRunnerOutput(taskId)
+    const newOutput = await vxm.queueModule.fetchRunnerOutput(this.taskId)
     if (newOutput !== null) {
       this.output = newOutput
     }
     this.loadingError = newOutput === null
+
+    if (this.loadingError) {
+      await vxm.queueModule.fetchQueue()
+      this.taskInQueue = !!vxm.queueModule.openTasks.find(
+        it => it.id === this.taskId
+      )
+      this.$emit('loading-failed')
+    }
   }
 
   private get lines(): {

@@ -19,11 +19,6 @@
           </v-card>
         </v-col>
       </v-row>
-      <v-row>
-        <v-col>
-          <task-runner-output :task-id="someTask"></task-runner-output>
-        </v-col>
-      </v-row>
       <v-row align="baseline" justify="center">
         <v-col>
           <v-card>
@@ -53,11 +48,9 @@ import WorkerOverview from '../components/overviews/WorkerOverview.vue'
 import QueueOverview from '../components/overviews/QueueOverview.vue'
 import { vxm } from '@/store'
 import { Route, RawLocation } from 'vue-router'
-import TaskRunnerOutput from '@/components/TaskRunnerOutput.vue'
 
 @Component({
   components: {
-    'task-runner-output': TaskRunnerOutput,
     'worker-overview': WorkerOverview,
     'queue-overview': QueueOverview
   }
