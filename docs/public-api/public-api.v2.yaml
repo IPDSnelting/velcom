@@ -744,6 +744,39 @@ paths:
 
         The `start_time`, `end_time` and `duration` parameters work the same as for the `/graph/detail/{repoid}` endpoint.
         If some of the repos don't exist, they may be omitted from the response.
+  '/queue/task/{taskId}/progress':
+    parameters:
+      - schema:
+          type: string
+        name: taskId
+        in: path
+        required: true
+    get:
+      summary: task runner output
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  index_of_first_line:
+                    type: number
+                    description: 'The absolute index of the first line. If the benchmark script already printed 3 lines, but only the last two are returned, the index of the first line would be 1. The absolute index of any returned line is therefore <relative index> + <index_of_first_line>'
+                  output:
+                    type: array
+                    description: 'The stderr output of the benchmark script, split at the line separator.'
+                    items:
+                      type: string
+                required:
+                  - index_of_first_line
+                  - output
+        '404':
+          description: If the given task is not in the queue or not currently worked on by a runner.
+      operationId: get-queue-task-taskId-progress
+      description: Returns the last 100 lines the benchmark script working on the given task reported on its standard error stream.
 components:
   schemas:
     CommitHash:
