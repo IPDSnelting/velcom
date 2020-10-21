@@ -2,6 +2,8 @@ package de.aaaaaaah.velcom.backend.newaccess.repoaccess;
 
 import static org.jooq.codegen.db.tables.Branch.BRANCH;
 import static org.jooq.codegen.db.tables.Repo.REPO;
+import static org.jooq.impl.DSL.condition;
+import static org.jooq.impl.DSL.not;
 
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.Branch;
@@ -105,6 +107,13 @@ public class RepoReadAccess {
 				.stream()
 				.map(RepoReadAccess::branchRecordToBranch)
 				.collect(Collectors.toList());
+		}
+	}
+
+	// TODO: 21.10.20 Remove after migration
+	public int getUnmigratedBranchCount() {
+		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
+			return db.dsl().fetchCount(BRANCH, not(condition(BRANCH.MIGRATED)));
 		}
 	}
 }

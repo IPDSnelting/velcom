@@ -178,7 +178,7 @@ public class ServerMain extends Application<GlobalConfig> {
 				availableDimensionsCache),
 			new CommitEndpoint(commitAccess, repoAccess, benchmarkAccess),
 			new CompareEndpoint(benchmarkAccess, commitAccess, runComparator),
-			new DebugEndpoint(dispatcher),
+			new DebugEndpoint(commitAccess, repoAccess, dispatcher),
 			new GraphComparisonEndpoint(comparison, benchmarkAccess),
 			new GraphDetailEndpoint(commitAccess, benchmarkAccess, dimensionAccess, repoAccess),
 			new QueueEndpoint(commitAccess, repoAccess, queue, dispatcher),

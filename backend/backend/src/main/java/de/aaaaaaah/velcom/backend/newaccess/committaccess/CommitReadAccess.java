@@ -5,6 +5,8 @@ import static java.util.stream.Collectors.mapping;
 import static java.util.stream.Collectors.toSet;
 import static org.jooq.codegen.db.tables.CommitRelationship.COMMIT_RELATIONSHIP;
 import static org.jooq.codegen.db.tables.KnownCommit.KNOWN_COMMIT;
+import static org.jooq.impl.DSL.condition;
+import static org.jooq.impl.DSL.not;
 
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.Commit;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
@@ -220,6 +222,13 @@ public class CommitReadAccess {
 			}
 
 			return result;
+		}
+	}
+
+	// TODO: 21.10.20 Remove after migration
+	public int getUnmigratedCommitCount() {
+		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
+			return db.dsl().fetchCount(KNOWN_COMMIT, not(condition(KNOWN_COMMIT.MIGRATED)));
 		}
 	}
 
