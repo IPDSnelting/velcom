@@ -4,10 +4,34 @@
       <v-toolbar dark color="primary">Runner output (StdErr)</v-toolbar>
     </v-card-title>
     <v-card-text>
-      <div class="runner-output" v-if="output">
-        {{ output }}
+      <v-alert type="error" class="mx-4" v-if="loadingError">
+        No output received in my last request. Maybe the task finished
+        executing?
+      </v-alert>
+      <div class="runner-output mx-2">
+        <span
+          v-for="({ lineNumber, text, classes }, index) in lines"
+          :key="index"
+          class="line"
+          :class="classes"
+        >
+          <span
+            class="mr-2 font-weight-bold align-end text-right d-inline-block"
+            style="width: 3ch; user-select: none"
+            >{{ lineNumber }}</span
+          >
+          {{ text }}
+        </span>
       </div>
-      <div v-else>Nothing there (yet)?</div>
+      <v-row align="center" justify="center">
+        <v-col cols="3">
+          <v-progress-linear
+            indeterminate
+            :color="loadingError ? 'error' : 'primary'"
+            rounded
+          ></v-progress-linear>
+        </v-col>
+      </v-row>
     </v-card-text>
   </v-card>
 </template>
@@ -26,22 +50,43 @@ export default class TaskRunnerOutput extends Vue {
 
   private timer: number | null = null
   private output: string | null = null
+  private loadingError: boolean = false
 
   @Watch('taskId')
   private async update() {
-    this.output = await vxm.queueModule.fetchRunnerOutput(this.taskId)
+    if (!this.taskId) {
+      return
+    }
+    const newOutput = await vxm.queueModule.fetchRunnerOutput(this.taskId)
+    if (newOutput !== null) {
+      this.output = newOutput
+    }
+    this.loadingError = newOutput === null
+  }
+
+  private get lines(): {
+    lineNumber: number
+    text: string
+    classes: string[]
+  }[] {
+    if (!this.output) {
+      return []
+    }
+    return this.output.split('\n').map((line, index) => ({
+      lineNumber: index,
+      text: line,
+      classes: [
+        line.toLowerCase().includes('warning') ? 'text--warning' : '',
+        line.toLocaleLowerCase().includes('error') ? 'text--error' : ''
+      ]
+    }))
   }
 
   private mounted() {
     this.update()
-    this.timer = setInterval(
-      () => {
-        this.taskId = vxm.queueModule.workers[0].workingOn!
-        this.update()
-      },
-      1000,
-      1000
-    )
+    this.timer = setInterval(() => {
+      this.update()
+    }, 2000)
   }
 
   private destroyed() {
@@ -52,9 +97,28 @@ export default class TaskRunnerOutput extends Vue {
 }
 </script>
 
+<!--suppress CssUnresolvedCustomProperty -->
 <style scoped>
 .runner-output {
   font-family: monospace;
   white-space: pre-line;
+  max-height: 90vh;
+  overflow-y: scroll;
+}
+.runner-output .line {
+  display: block;
+}
+.theme--light .runner-output .line:hover {
+  background-color: var(--v-rowHighlight-lighten1) !important;
+}
+.theme--dark .runner-output .line:hover {
+  background-color: var(--v-rowHighlight-darken1) !important;
+}
+
+.text--warning {
+  color: var(--v-warning-base);
+}
+.text--error {
+  color: var(--v-error-base);
 }
 </style>
