@@ -61,10 +61,12 @@ public class CommitEndpoint {
 
 		List<Commit> childCommits = commitAccess.getCommits(repoId, commit.getChildHashes());
 		List<JsonCommitDescription> trackedChildren = childCommits.stream()
+			.filter(Commit::isReachable)
 			.filter(Commit::isTracked)
 			.map(JsonCommitDescription::fromCommit)
 			.collect(Collectors.toList());
 		List<JsonCommitDescription> untrackedChildren = childCommits.stream()
+			.filter(Commit::isReachable)
 			.filter(it -> !it.isTracked())
 			.map(JsonCommitDescription::fromCommit)
 			.collect(Collectors.toList());

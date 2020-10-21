@@ -58,6 +58,7 @@ public class DbUpdater {
 	 * 	hashes of all commits that need to be entered into the queue. These might (but should usually
 	 * 	not) include commits that are already in the queue.
 	 */
+	// TODO: 21.10.20 Delete unreachable commits
 	public void update(List<CommitHash> toBeQueued) throws DbUpdateException {
 		if (anyUnmigratedBranchesOrCommits()) {
 			LOGGER.info("Migrating repo {}", repo);
@@ -66,6 +67,7 @@ public class DbUpdater {
 				insertAllUnknownCommits();
 				migrateCommits();
 				updateBranches();
+				updateReachableFlags();
 				updateTrackedFlags();
 			} catch (GitAPIException | IOException e) {
 				throw new DbUpdateException("Failed to migrate repo " + repo, e);
@@ -79,6 +81,7 @@ public class DbUpdater {
 
 				insertAllUnknownCommits();
 				updateBranches();
+				updateReachableFlags();
 
 				if (anyCommits) {
 					LOGGER.debug("Detected non-empty repository");
@@ -100,6 +103,7 @@ public class DbUpdater {
 		record.setMigrated(true);
 		record.setRepoId(repoIdStr);
 		record.setHash(jgitCommit.getHashAsString());
+		record.setReachable(false);
 		record.setTracked(false);
 		record.setAuthor(jgitCommit.getAuthor());
 		record.setAuthorDate(jgitCommit.getAuthorDate());
@@ -237,6 +241,35 @@ public class DbUpdater {
 	}
 
 	/**
+	 * Update the "reachable" field for all commits. It is set to true if the commit is reachable from
+	 * any branch, false otherwise. Works similar to {@link #updateTrackedFlags()}.
+	 */
+	private void updateReachableFlags() {
+		LOGGER.debug("Updating reached flags");
+
+		String query = ""
+			+ "WITH RECURSIVE rec(hash) AS (\n"
+			+ "  SELECT branch.latest_commit_hash\n"
+			+ "  FROM branch\n"
+			+ "  WHERE branch.repo_id = ?\n" // <-- Binding #1
+			+ "  \n"
+			+ "  UNION\n"
+			+ "  \n"
+			+ "  SELECT commit_relationship.parent_hash\n"
+			+ "  FROM commit_relationship\n"
+			+ "  JOIN rec\n"
+			+ "    ON rec.hash = commit_relationship.child_hash\n"
+			+ ")\n"
+			+ "\n"
+			+ "UPDATE known_commit\n"
+			+ "SET reachable = (known_commit.hash IN rec)\n"
+			+ "WHERE known_commit.repo_id = ?\n" // <-- Binding #2
+			+ "";
+
+		db.dsl().execute(query, repoIdStr, repoIdStr);
+	}
+
+	/**
 	 * Update the "tracked" field for all commits. It is set to true if the commit is reachable from a
 	 * tracked branch, false otherwise. This is accomplished with a nifty recursive query that
 	 * hopefully works as intended and is not too resource intensive.
@@ -245,7 +278,7 @@ public class DbUpdater {
 		LOGGER.debug("Updating tracked flags");
 
 		String query = ""
-			+ "WITH RECURSIVE reachable(r_hash) AS (\n"
+			+ "WITH RECURSIVE rec(hash) AS (\n"
 			+ "  SELECT branch.latest_commit_hash\n"
 			+ "  FROM branch\n"
 			+ "  WHERE branch.repo_id = ?\n" // <-- Binding #1
@@ -255,12 +288,12 @@ public class DbUpdater {
 			+ "  \n"
 			+ "  SELECT commit_relationship.parent_hash\n"
 			+ "  FROM commit_relationship\n"
-			+ "  JOIN reachable\n"
-			+ "    ON reachable.r_hash = commit_relationship.child_hash\n"
+			+ "  JOIN rec\n"
+			+ "    ON rec.hash = commit_relationship.child_hash\n"
 			+ ")\n"
 			+ "\n"
 			+ "UPDATE known_commit\n"
-			+ "SET tracked = (known_commit.hash IN reachable)\n"
+			+ "SET tracked = (known_commit.hash IN rec)\n"
 			+ "WHERE known_commit.repo_id = ?\n" // <-- Binding #2
 			+ "";
 
@@ -378,6 +411,8 @@ public class DbUpdater {
 	private void findNewTasks(List<CommitHash> toBeQueued) {
 		LOGGER.debug("Finding new tasks");
 
+		// The "untracked" CTE will only ever include reachable commits since we start at branches. This
+		// means we don't have to check the "reachable" flag in the query.
 		String query = ""
 			+ "WITH RECURSIVE\n"
 			+ "\n"
@@ -438,6 +473,7 @@ public class DbUpdater {
 	 * 	contain any of the repo's commits.
 	 */
 	private void useHeadsOfTrackedBranchesAsTasks(List<CommitHash> toBeQueued) {
+		// Similar to #findNewTasks(), this function won't ever find unreachable commits.
 		db.selectFrom(BRANCH)
 			.where(BRANCH.REPO_ID.eq(repoIdStr))
 			.and(BRANCH.TRACKED)

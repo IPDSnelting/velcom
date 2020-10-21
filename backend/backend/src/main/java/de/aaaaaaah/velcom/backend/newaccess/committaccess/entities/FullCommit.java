@@ -9,11 +9,11 @@ public class FullCommit extends Commit {
 	private final Set<CommitHash> parentHashes;
 	private final Set<CommitHash> childHashes;
 
-	public FullCommit(RepoId repoId, CommitHash hash, boolean tracked, String author,
-		Instant authorDate, String committer, Instant committerDate, String message,
+	public FullCommit(RepoId repoId, CommitHash hash, boolean reachable, boolean tracked,
+		String author, Instant authorDate, String committer, Instant committerDate, String message,
 		Set<CommitHash> parentHashes, Set<CommitHash> childHashes) {
 
-		super(repoId, hash, tracked, author, authorDate, committer, committerDate, message);
+		super(repoId, hash, reachable, tracked, author, authorDate, committer, committerDate, message);
 
 		this.parentHashes = parentHashes;
 		this.childHashes = childHashes;

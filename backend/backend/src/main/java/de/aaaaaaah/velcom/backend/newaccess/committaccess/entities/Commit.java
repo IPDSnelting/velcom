@@ -10,6 +10,7 @@ public class Commit {
 
 	private final RepoId repoId;
 	private final CommitHash hash;
+	private final boolean reachable;
 	private final boolean tracked;
 	private final String author;
 	private final Instant authorDate;
@@ -17,11 +18,12 @@ public class Commit {
 	private final Instant committerDate;
 	private final String message;
 
-	public Commit(RepoId repoId, CommitHash hash, boolean tracked, String author, Instant authorDate,
-		String committer, Instant committerDate, String message) {
+	public Commit(RepoId repoId, CommitHash hash, boolean reachable, boolean tracked, String author,
+		Instant authorDate, String committer, Instant committerDate, String message) {
 
 		this.repoId = repoId;
 		this.hash = hash;
+		this.reachable = reachable;
 		this.tracked = tracked;
 		this.author = author;
 		this.authorDate = authorDate;
@@ -40,6 +42,13 @@ public class Commit {
 
 	public String getHashAsString() {
 		return hash.getHash();
+	}
+
+	/**
+	 * @return whether this commit can be reached from any branch.
+	 */
+	public boolean isReachable() {
+		return reachable;
 	}
 
 	/**

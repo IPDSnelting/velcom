@@ -12,6 +12,7 @@ CREATE TABLE known_commit (
   migrated       BOOLEAN  NOT NULL,
   repo_id        CHAR(36) NOT NULL,
   hash           CHAR(40) NOT NULL,
+  reachable      BOOLEAN  NOT NULL,
   tracked        BOOLEAN  NOT NULL,
   author         TEXT,
   author_date    TIMESTAMP,
@@ -54,7 +55,8 @@ SELECT
   FALSE,   -- migrated
   repo_id, -- repo_id
   hash,    -- hash
-  TRUE,    -- tracked
+  FALSE,   -- reachable
+  FALSE,   -- tracked
   NULL,    -- author
   NULL,    -- author_date
   NULL,    -- committer

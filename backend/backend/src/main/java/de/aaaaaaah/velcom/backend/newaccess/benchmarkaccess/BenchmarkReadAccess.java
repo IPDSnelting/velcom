@@ -35,6 +35,7 @@ import org.jooq.exception.DataAccessException;
  * <p> WARNING: This class is not yet meant to be used! Use
  * {@link de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess} instead for now.
  */
+// TODO: 21.10.20 Use or remove this class
 public class BenchmarkReadAccess {
 
 	// getDimensionInfos (temporarily)

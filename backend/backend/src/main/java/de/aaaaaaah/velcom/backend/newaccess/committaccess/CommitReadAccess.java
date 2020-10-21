@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import org.jooq.Record1;
 import org.jooq.codegen.db.tables.records.CommitRelationshipRecord;
 import org.jooq.codegen.db.tables.records.KnownCommitRecord;
@@ -41,6 +42,7 @@ public class CommitReadAccess {
 		return new Commit(
 			RepoId.fromString(record.getRepoId()),
 			new CommitHash(record.getHash()),
+			record.getReachable(),
 			record.getTracked(),
 			record.getAuthor(),
 			record.getAuthorDate(),
@@ -56,6 +58,7 @@ public class CommitReadAccess {
 		return new FullCommit(
 			RepoId.fromString(record.getRepoId()),
 			new CommitHash(record.getHash()),
+			record.getReachable(),
 			record.getTracked(),
 			record.getAuthor(),
 			record.getAuthorDate(),
@@ -73,6 +76,7 @@ public class CommitReadAccess {
 		return new FullCommit(
 			commit.getRepoId(),
 			commit.getHash(),
+			commit.isReachable(),
 			commit.isTracked(),
 			commit.getAuthor(),
 			commit.getAuthorDate(),
@@ -233,7 +237,7 @@ public class CommitReadAccess {
 	}
 
 	public List<Commit> getCommitsBetween(RepoId repoId, Collection<BranchName> startBranches,
-		Instant startTime, Instant stopTime) {
+		@Nullable Instant startTime, @Nullable Instant stopTime) {
 
 		// TODO: 19.10.20 Remove this dummy function
 		return List.of();
