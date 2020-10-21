@@ -258,7 +258,11 @@ public class Listener {
 			dbUpdater.update(toBeQueued);
 		});
 
-		LOGGER.info("Adding " + toBeQueued.size() + " new commits to queue");
+		if (toBeQueued.isEmpty()) {
+			LOGGER.debug("Adding no new commits to queue");
+		} else {
+			LOGGER.info("Adding " + toBeQueued.size() + " new commits to queue");
+		}
 		queue.addCommits(QUEUE_AUTHOR, repo.getId(), toBeQueued, QUEUE_PRIORITY);
 	}
 }

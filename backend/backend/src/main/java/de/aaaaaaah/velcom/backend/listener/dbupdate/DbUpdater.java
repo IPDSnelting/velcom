@@ -73,8 +73,6 @@ public class DbUpdater {
 				throw new DbUpdateException("Failed to migrate repo " + repo, e);
 			}
 		} else {
-			LOGGER.debug("Updating repo {}", repo);
-
 			try {
 				// Checking this now since #insertAllUnknownCommits() will change the result
 				boolean anyCommits = anyCommits();
@@ -245,7 +243,7 @@ public class DbUpdater {
 	 * any branch, false otherwise. Works similar to {@link #updateTrackedFlags()}.
 	 */
 	private void updateReachableFlags() {
-		LOGGER.debug("Updating reached flags");
+		LOGGER.debug("Updating reachable flags");
 
 		String query = ""
 			+ "WITH RECURSIVE rec(hash) AS (\n"
