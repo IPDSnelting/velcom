@@ -5,7 +5,8 @@ import {
   TarTaskSource,
   CommitTaskSource,
   CommitDescription,
-  Worker
+  Worker,
+  StreamedRunnerOutput
 } from '@/store/types'
 
 export function workerFromJson(json: any): Worker {
@@ -42,5 +43,12 @@ export function commitDescriptionFromJson(json: any): CommitDescription {
     json.author,
     new Date(json.author_date * 1000),
     json.summary
+  )
+}
+
+export function streamedRunnerOutputFromJson(json: any): StreamedRunnerOutput {
+  return new StreamedRunnerOutput(
+    json.output.split('\n'),
+    json.index_of_first_line
   )
 }

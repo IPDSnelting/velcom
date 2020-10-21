@@ -17,7 +17,7 @@
         >
           <span
             class="mr-2 font-weight-bold align-end text-right d-inline-block"
-            style="width: 3ch; user-select: none"
+            style="min-width: 4ch; user-select: none"
             >{{ lineNumber }}</span
           >
           {{ text }}
@@ -40,7 +40,7 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
-import { TaskId } from '@/store/types'
+import { StreamedRunnerOutput, TaskId } from '@/store/types'
 import { vxm } from '@/store'
 
 @Component
@@ -49,7 +49,7 @@ export default class TaskRunnerOutput extends Vue {
   private taskId!: TaskId
 
   private timer: number | null = null
-  private output: string | null = null
+  private output: StreamedRunnerOutput | null = null
   private loadingError: boolean = false
 
   @Watch('taskId')
@@ -69,11 +69,12 @@ export default class TaskRunnerOutput extends Vue {
     text: string
     classes: string[]
   }[] {
-    if (!this.output) {
+    const output = this.output
+    if (!output) {
       return []
     }
-    return this.output.split('\n').map((line, index) => ({
-      lineNumber: index,
+    return output.outputLines.map((line, index) => ({
+      lineNumber: index + output.indexOfFirstLine + 1,
       text: line,
       classes: [
         line.toLowerCase().includes('warning') ? 'text--warning' : '',

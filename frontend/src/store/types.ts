@@ -486,3 +486,16 @@ export class ComparisonDataPoint {
     this.repoId = repoId
   }
 }
+
+export class StreamedRunnerOutput {
+  readonly outputLines: string[]
+  /**
+   * The line number of the first line. Starts with 0.
+   */
+  readonly indexOfFirstLine: number
+
+  constructor(outputLines: string[], lineOffset: number) {
+    this.outputLines = outputLines
+    this.indexOfFirstLine = lineOffset
+  }
+}
