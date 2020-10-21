@@ -146,9 +146,6 @@ export default class TaskRunnerOutput extends Vue {
   max-height: 90vh;
   overflow-y: scroll;
 }
-.runner-output .line {
-  display: block;
-}
 .theme--light .runner-output .line:hover {
   background-color: var(--v-rowHighlight-lighten1) !important;
 }
