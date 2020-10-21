@@ -48,7 +48,7 @@ export function commitDescriptionFromJson(json: any): CommitDescription {
 
 export function streamedRunnerOutputFromJson(json: any): StreamedRunnerOutput {
   return new StreamedRunnerOutput(
-    json.output.split('\n'),
+    json.output,
     json.index_of_first_line
   )
 }
