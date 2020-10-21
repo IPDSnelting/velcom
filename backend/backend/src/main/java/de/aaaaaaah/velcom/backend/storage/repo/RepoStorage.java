@@ -179,10 +179,11 @@ public class RepoStorage {
 		try {
 			Path repoDir = getRepoDir(dirName);
 
-			try (
-				Git git = Git.open(repoDir.toFile());
-				Repository repository = git.getRepository()
-			) {
+			try (Git git = Git.open(repoDir.toFile())) {
+				// Since the Git object was created via a static factory method and had to create its own
+				// Repository, it will also close that Repository itself, meaning we don't have to close it
+				// explicitly.
+				Repository repository = git.getRepository();
 				handler.accept(repository);
 			} catch (Exception e) {
 				throw new RepositoryAcquisitionException(this, dirName, e);
