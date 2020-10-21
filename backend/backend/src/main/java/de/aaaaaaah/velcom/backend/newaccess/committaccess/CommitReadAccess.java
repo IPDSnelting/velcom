@@ -20,7 +20,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.jooq.Record1;
@@ -229,12 +228,5 @@ public class CommitReadAccess {
 
 		// TODO: 19.10.20 Remove this dummy function
 		return List.of();
-	}
-
-	public Optional<List<CommitHash>> getChildren(RepoId repoId, CommitHash commitHash,
-		Collection<BranchName> startBranches) {
-
-		// TODO: 19.10.20 Remove this dummy function
-		return Optional.empty();
 	}
 }

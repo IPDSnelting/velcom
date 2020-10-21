@@ -2,11 +2,10 @@ package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
 import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.CommitReadAccess;
+import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.Commit;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.FullCommit;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.RepoReadAccess;
-import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.Branch;
-import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.BranchName;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonCommit;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonCommitDescription;
@@ -14,9 +13,7 @@ import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRunDescription;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRunDescription.JsonSuccess;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonSource;
 import io.micrometer.core.annotation.Timed;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.ws.rs.GET;
@@ -56,37 +53,19 @@ public class CommitEndpoint {
 
 		FullCommit commit = commitAccess.getFullCommit(repoId, hash);
 
-		List<JsonCommitDescription> parents = commit.getParentHashes().stream()
-			.map(parentHash -> commitAccess.getCommit(repoId, parentHash))
+		List<JsonCommitDescription> parents = commitAccess
+			.getCommits(repoId, commit.getParentHashes())
+			.stream()
 			.map(JsonCommitDescription::fromCommit)
 			.collect(Collectors.toList());
 
-		List<Branch> allBranches = repoAccess.getAllBranches(repoId);
-		Set<BranchName> allNames = allBranches.stream()
-			.map(Branch::getName)
-			.collect(Collectors.toSet());
-		Set<BranchName> trackedNames = allBranches.stream()
-			.filter(Branch::isTracked)
-			.map(Branch::getName)
-			.collect(Collectors.toSet());
-
-		// If the commit can't be reached from any tracked branch, none of its children can either. so
-		// an empty list of tracked child hashes is appropriate.
-		Set<CommitHash> trackedChildHashes = new HashSet<>(
-			commitAccess.getChildren(repoId, hash, trackedNames).orElse(List.of()));
-		// If the commit can't be reached from any branch, none of its children can either, so an empty
-		// list of (untracked) child hashes is appropriate. Otherwise, commits like GitHub's auto
-		// generated merge commits would be visible as children.
-		Set<CommitHash> untrackedChildHashes = new HashSet<>(
-			commitAccess.getChildren(repoId, hash, allNames).orElse(List.of()));
-		untrackedChildHashes.removeAll(trackedChildHashes);
-
-		List<JsonCommitDescription> trackedChildren = trackedChildHashes.stream()
-			.map(childHash -> commitAccess.getCommit(repoId, childHash))
+		List<Commit> childCommits = commitAccess.getCommits(repoId, commit.getChildHashes());
+		List<JsonCommitDescription> trackedChildren = childCommits.stream()
+			.filter(Commit::isTracked)
 			.map(JsonCommitDescription::fromCommit)
 			.collect(Collectors.toList());
-		List<JsonCommitDescription> untrackedChildren = untrackedChildHashes.stream()
-			.map(childHash -> commitAccess.getCommit(repoId, childHash))
+		List<JsonCommitDescription> untrackedChildren = childCommits.stream()
+			.filter(it -> !it.isTracked())
 			.map(JsonCommitDescription::fromCommit)
 			.collect(Collectors.toList());
 
