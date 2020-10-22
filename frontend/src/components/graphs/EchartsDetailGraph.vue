@@ -246,7 +246,14 @@ export default class EchartsDetailGraph extends Vue {
   private tooltipFormatter(
     params: EChartOption.Tooltip.Format | EChartOption.Tooltip.Format[]
   ) {
-    const values = Array.isArray(params) ? params : [params]
+    const values = Array.isArray(params) ? params.slice() : [params]
+    // Sort them so the order corresponds to the order of the lines
+    values.sort((a, b) => {
+      const first = a.data as EchartsDataPoint
+      const second = b.data as EchartsDataPoint
+
+      return second.dataValue - first.dataValue
+    })
 
     const dimensionRows = values.map(val => {
       const dimension = this.dimensions[val.seriesIndex || 0]
