@@ -69,7 +69,7 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { Prop } from 'vue-property-decorator'
+import { Prop, Watch } from 'vue-property-decorator'
 import {
   Measurement,
   MeasurementError,
@@ -80,6 +80,7 @@ import {
 } from '@/store/types'
 import MeasurementValueDisplay from '@/components/rundetail/MeasurementValueDisplay.vue'
 import { safeConvertAnsi } from '@/util/TextUtils'
+import { vxm } from '@/store'
 
 const numberFormat: Intl.NumberFormat = new Intl.NumberFormat(
   new Intl.NumberFormat().resolvedOptions().locale,
@@ -299,8 +300,22 @@ export default class MeasurementsDisplay extends Vue {
   }
 
   private displayErrorDetail(item: Item) {
+    if (!item.error) {
+      return ''
+    }
     this.detailErrorDialogMessage = safeConvertAnsi(item.error)
     this.showDetailErrorDialog = true
+  }
+
+  // noinspection JSUnusedLocalSymbols (Used by the watcher below)
+  private get darkThemeSelected() {
+    return vxm.userModule.darkThemeSelected
+  }
+
+  @Watch('darkThemeSelected')
+  private onDarkThemeSelectionChanged() {
+    // The ANSI conversion needs to be redone
+    this.$forceUpdate()
   }
 
   private rowClicked(item: Item) {

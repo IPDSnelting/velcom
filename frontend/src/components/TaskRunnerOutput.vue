@@ -112,6 +112,17 @@ export default class TaskRunnerOutput extends Vue {
     }))
   }
 
+  // noinspection JSUnusedLocalSymbols (Used by the watcher below)
+  private get darkThemeSelected() {
+    return vxm.userModule.darkThemeSelected
+  }
+
+  @Watch('darkThemeSelected')
+  private onDarkThemeSelectionChanged() {
+    // The ANSI conversion needs to be redone
+    this.$forceUpdate()
+  }
+
   private mounted() {
     this.update()
     this.timer = setInterval(() => {

@@ -47,10 +47,11 @@ import {
   RunWithDifferences,
   Dimension
 } from '@/store/types'
-import { Prop } from 'vue-property-decorator'
+import { Prop, Watch } from 'vue-property-decorator'
 import MeasurementsDisplay from '@/components/rundetail/MeasurementsDisplay.vue'
 import RunInfo from '@/components/rundetail/RunInfo.vue'
 import { safeConvertAnsi } from '@/util/TextUtils'
+import { vxm } from '@/store'
 
 @Component({
   components: {
@@ -108,6 +109,17 @@ export default class RunDetail extends Vue {
 
   private navigateToDetailGraph(dimension: Dimension) {
     this.$emit('navigate-to-detail-graph', dimension)
+  }
+
+  // noinspection JSUnusedLocalSymbols (Used by the watcher below)
+  private get darkThemeSelected() {
+    return vxm.userModule.darkThemeSelected
+  }
+
+  @Watch('darkThemeSelected')
+  private onDarkThemeSelectionChanged() {
+    // The ANSI conversion needs to be redone
+    this.$forceUpdate()
   }
 }
 </script>
