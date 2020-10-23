@@ -120,7 +120,11 @@ export default class DytailGraph extends Vue {
       point => point.authorDate.getTime() === legendData.x
     )
     if (datapoint) {
-      const dimensionRows = legendData.series.map(val => {
+      const data = legendData.series.slice()
+      // Sort them so the order corresponds to the order of the lines
+      data.sort((a, b) => b.y - a.y)
+
+      const dimensionRows = data.map(val => {
         const dimension = val.labelHTML
         const color = val.color
 
