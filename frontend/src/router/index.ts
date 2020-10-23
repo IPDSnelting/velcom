@@ -16,6 +16,7 @@ import {
   mdiCircleSlice6
 } from '@mdi/js'
 import { vxm } from '@/store'
+import TaskDetailView from '@/views/TaskDetailView.vue'
 
 Vue.use(VueRouter)
 
@@ -27,6 +28,7 @@ export type RouteName =
   | 'queue'
   | 'run-comparison'
   | 'run-detail'
+  | 'task-detail'
   | 'about'
   | '404'
 
@@ -113,6 +115,15 @@ const routes: RouteInfo[] = [
     meta: {
       navigable: false,
       label: 'Detail'
+    }
+  },
+  {
+    path: '/task-detail/:taskId',
+    name: 'task-detail',
+    component: TaskDetailView,
+    meta: {
+      navigable: false,
+      label: 'Task-Detail'
     }
   },
   {

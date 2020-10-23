@@ -8,7 +8,6 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
@@ -50,14 +49,17 @@ public class ProgramExecutor {
 	 * @param command the command to execute
 	 * @return a future representing the result
 	 */
-	public Future<ProgramResult> execute(String... command) {
+	public StreamsProcessOutput<ProgramResult> execute(String... command) {
+		StringOutputStream stdOutStream = new StringOutputStream();
+		StringOutputStream stdErrStream = new StringOutputStream();
+
 		FutureTask<ProgramResult> futureTask = new FutureTask<>(() -> {
 			Instant startTime = Instant.now();
 
 			Process process = new ProcessBuilder(command).start();
 
-			CompletableFuture<String> stdOut = readOutput(process::getInputStream);
-			CompletableFuture<String> stdErr = readOutput(process::getErrorStream);
+			CompletableFuture<String> stdOut = readOutput(stdOutStream, process::getInputStream);
+			CompletableFuture<String> stdErr = readOutput(stdErrStream, process::getErrorStream);
 
 			try {
 				int exitCode = process.waitFor();
@@ -89,21 +91,21 @@ public class ProgramExecutor {
 			}
 		});
 
-		return new WaitingFutureTask<>(futureTask);
+		return new WaitingFutureTask<>(futureTask, stdOutStream, stdErrStream);
 	}
 
-	private CompletableFuture<String> readOutput(UncheckedSupplier<InputStream> input) {
-		StringOutputStream outputStream = new StringOutputStream();
+	private CompletableFuture<String> readOutput(StringOutputStream output,
+		UncheckedSupplier<InputStream> input) {
 		return CompletableFuture
 			.supplyAsync(asUnchecked(() -> {
 					try (InputStream inputStream = input.get()) {
-						inputStream.transferTo(outputStream);
+						inputStream.transferTo(output);
 					}
-					return outputStream.getString();
+					return output.getString();
 				}),
 				EXECUTOR
 			)
-			.exceptionally(throwable -> outputStream.getString());
+			.exceptionally(throwable -> output.getString());
 	}
 
 	private <T> Supplier<T> asUnchecked(UncheckedSupplier<T> supplier) {

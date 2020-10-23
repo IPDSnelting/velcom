@@ -10,8 +10,10 @@ import de.aaaaaaah.velcom.shared.protocol.serialization.Result;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Result.Benchmark;
 import de.aaaaaaah.velcom.shared.util.Either;
 import de.aaaaaaah.velcom.shared.util.ExceptionHelper;
+import de.aaaaaaah.velcom.shared.util.LinesWithOffset;
 import de.aaaaaaah.velcom.shared.util.execution.ProgramExecutor;
 import de.aaaaaaah.velcom.shared.util.execution.ProgramResult;
+import de.aaaaaaah.velcom.shared.util.execution.StreamsProcessOutput;
 import de.aaaaaaah.velcom.shared.util.systeminfo.LinuxSystemInfo;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -23,8 +25,9 @@ import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -34,6 +37,7 @@ import javax.annotation.Nullable;
 public class Benchmarker {
 
 	private final AtomicReference<BenchResult> result; // nullable inside the reference
+	private final AtomicReference<Supplier<LinesWithOffset>> outputFetcher; // nullable inside the reference
 
 	private final CompletableFuture<Void> finishFuture;
 
@@ -69,7 +73,8 @@ public class Benchmarker {
 		@Nullable String benchRepoHash, Path benchRepoPath, Instant startTime, String runnerName,
 		LinuxSystemInfo systemInfo) {
 
-		result = new AtomicReference<>();
+		this.result = new AtomicReference<>();
+		this.outputFetcher = new AtomicReference<>();
 
 		this.finishFuture = finishFuture;
 
@@ -92,6 +97,17 @@ public class Benchmarker {
 	 */
 	public UUID getTaskId() {
 		return taskId;
+	}
+
+	/**
+	 * @return the last few lines of the output (stderr) or an empty String if none yet
+	 */
+	public LinesWithOffset getLastOutputLines() {
+		Supplier<LinesWithOffset> supplier = outputFetcher.get();
+		if (supplier == null) {
+			return new LinesWithOffset(0, List.of());
+		}
+		return supplier.get();
 	}
 
 	/**
@@ -154,7 +170,19 @@ public class Benchmarker {
 			return;
 		}
 
-		Future<ProgramResult> work = startBenchExecution(generalInfo, benchScriptPath);
+		StreamsProcessOutput<ProgramResult> work = startBenchExecution(generalInfo, benchScriptPath);
+
+		outputFetcher.set(() -> {
+			String stdErr = work.getCurrentStdErr();
+			List<String> lines = stdErr.lines().collect(Collectors.toList());
+
+			int maxLinesToReturn = 100;
+			List<String> sublist = lines.subList(Math.max(lines.size() - maxLinesToReturn, 0), lines.size());
+
+			int indexFirstLine = lines.size() - sublist.size();
+
+			return new LinesWithOffset(indexFirstLine, sublist);
+		});
 
 		try {
 			// Ensure we do not wait if the benchmark was cancelled before this thread was ready
@@ -188,7 +216,8 @@ public class Benchmarker {
 		finishFuture.complete(null);
 	}
 
-	private Future<ProgramResult> startBenchExecution(NamedRows generalInfo, Path benchScriptPath) {
+	private StreamsProcessOutput<ProgramResult> startBenchExecution(NamedRows generalInfo,
+		Path benchScriptPath) {
 		Instant startTime = Instant.now();
 
 		String[] calledCommand = {

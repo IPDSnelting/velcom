@@ -5,10 +5,15 @@ import {
   RepoId,
   CommitHash,
   TaskId,
-  CommitDescription
+  CommitDescription,
+  StreamedRunnerOutput
 } from '@/store/types'
 import axios from 'axios'
-import { taskFromJson, workerFromJson } from '@/util/QueueJsonHelper'
+import {
+  streamedRunnerOutputFromJson,
+  taskFromJson,
+  workerFromJson
+} from '@/util/QueueJsonHelper'
 
 const VxModule = createModule({
   namespaced: 'queueModule',
@@ -106,6 +111,32 @@ export class QueueStore extends VxModule {
     if (!payload.suppressRefetch) {
       await this.fetchQueue()
     }
+  }
+
+  /**
+   * Fetches the runner output for a given task. Returns null if the task is not
+   * currently being executed.
+   *
+   * @param taskId the id of the task
+   */
+  @action
+  async fetchRunnerOutput(
+    taskId: string
+  ): Promise<StreamedRunnerOutput | null> {
+    let response
+    try {
+      response = await axios.get(`/queue/task/${taskId}/progress`, {
+        hideFromSnackbar: true
+      })
+    } catch (e) {
+      return null
+    }
+
+    if (response.status === 404) {
+      return null
+    }
+
+    return streamedRunnerOutputFromJson(response.data)
   }
 
   /**

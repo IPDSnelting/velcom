@@ -60,6 +60,10 @@ export default class Queue extends Vue {
     return vxm.queueModule.workers
   }
 
+  private get someTask() {
+    return 'fde53cb7-6e8d-4e23-9f8f-c92c87a88baf'
+  }
+
   beforeRouteLeave(
     to: Route,
     from: Route,

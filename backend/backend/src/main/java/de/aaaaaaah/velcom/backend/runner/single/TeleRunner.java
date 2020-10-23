@@ -165,7 +165,8 @@ public class TeleRunner {
 			reply.getStatus(),
 			myCurrentTask.get(),
 			!hasConnection(),
-			workingSince.get()
+			workingSince.get(),
+			reply.getLastOutputLines().orElse(null)
 		);
 	}
 

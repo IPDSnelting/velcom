@@ -1,5 +1,6 @@
 package de.aaaaaaah.velcom.shared.util.execution;
 
+import de.aaaaaaah.velcom.shared.util.StringOutputStream;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -12,13 +13,18 @@ import java.util.concurrent.TimeoutException;
  *
  * @param <T> the type of the task
  */
-class WaitingFutureTask<T> implements Future<T> {
+class WaitingFutureTask<T> implements Future<T>, StreamsProcessOutput<T> {
 
 	private final Thread worker;
 	private final FutureTask<T> underlying;
+	private final StringOutputStream stdErr;
+	private final StringOutputStream stdOut;
 
-	public WaitingFutureTask(FutureTask<T> task) {
+	public WaitingFutureTask(FutureTask<T> task, StringOutputStream stdOut,
+		StringOutputStream stdErr) {
 		this.underlying = task;
+		this.stdOut = stdOut;
+		this.stdErr = stdErr;
 		this.worker = new Thread(underlying, "MyFutureTask worker");
 		this.worker.start();
 	}
@@ -54,5 +60,15 @@ class WaitingFutureTask<T> implements Future<T> {
 			throw new CancellationException("Execution cancelled, thread died");
 		}
 		return underlying.get(timeout, unit);
+	}
+
+	@Override
+	public String getCurrentStdOut() {
+		return stdOut.getString();
+	}
+
+	@Override
+	public String getCurrentStdErr() {
+		return stdErr.getString();
 	}
 }

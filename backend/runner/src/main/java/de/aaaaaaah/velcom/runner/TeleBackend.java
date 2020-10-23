@@ -11,6 +11,7 @@ import de.aaaaaaah.velcom.shared.protocol.serialization.Status;
 import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.RequestRunReply;
 import de.aaaaaaah.velcom.shared.protocol.serialization.serverbound.RequestRun;
 import de.aaaaaaah.velcom.shared.util.FileHelper;
+import de.aaaaaaah.velcom.shared.util.LinesWithOffset;
 import de.aaaaaaah.velcom.shared.util.compression.TarHelper;
 import de.aaaaaaah.velcom.shared.util.systeminfo.LinuxSystemInfo;
 import java.io.IOException;
@@ -286,6 +287,10 @@ public class TeleBackend {
 
 	public Optional<UUID> getCurrentRunId() {
 		return getBenchmarker().map(Benchmarker::getTaskId);
+	}
+
+	public Optional<LinesWithOffset> getLastOutputLines() {
+		return getBenchmarker().map(Benchmarker::getLastOutputLines);
 	}
 
 	private Optional<Benchmarker> getBenchmarker() {

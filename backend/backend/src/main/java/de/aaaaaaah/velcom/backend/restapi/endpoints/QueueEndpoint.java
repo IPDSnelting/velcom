@@ -17,6 +17,8 @@ import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRunner;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonSource;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonTask;
 import de.aaaaaaah.velcom.backend.runner.IDispatcher;
+import de.aaaaaaah.velcom.backend.runner.KnownRunner;
+import de.aaaaaaah.velcom.shared.util.LinesWithOffset;
 import de.aaaaaaah.velcom.shared.util.Pair;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.PATCH;
@@ -25,6 +27,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.ws.rs.DELETE;
@@ -33,8 +36,10 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 
 @Path("/queue")
 @Produces(MediaType.APPLICATION_JSON)
@@ -165,6 +170,25 @@ public class QueueEndpoint {
 		return new PostCommitReply(JsonTask.fromTask(task, commitReadAccess));
 	}
 
+	@Path("task/{taskId}/progress")
+	@GET
+	@Timed(histogram = true)
+	public GetTaskOutputReply getRunnerOutput(@PathParam("taskId") UUID taskId) {
+		Optional<KnownRunner> worker = dispatcher.getKnownRunners().stream()
+			.filter(it -> it.getCurrentTask().isPresent())
+			.filter(it -> it.getCurrentTask().get().getId().getId().equals(taskId))
+			.findAny();
+
+		if (worker.isEmpty()) {
+			throw new WebApplicationException(Status.NOT_FOUND);
+		}
+
+		LinesWithOffset lastOutputLines = worker.get().getLastOutputLines()
+			.orElse(new LinesWithOffset(0, List.of()));
+
+		return new GetTaskOutputReply(lastOutputLines.getLines(), lastOutputLines.getFirstLineOffset());
+	}
+
 	private static class PostCommitReply {
 
 		private final JsonTask task;
@@ -194,6 +218,25 @@ public class QueueEndpoint {
 
 		public List<JsonRunner> getRunners() {
 			return runners;
+		}
+	}
+
+	private static class GetTaskOutputReply {
+
+		private final List<String> output;
+		private final int indexOfFirstLine;
+
+		private GetTaskOutputReply(List<String> output, int indexOfFirstLine) {
+			this.output = output;
+			this.indexOfFirstLine = indexOfFirstLine;
+		}
+
+		public List<String> getOutput() {
+			return output;
+		}
+
+		public int getIndexOfFirstLine() {
+			return indexOfFirstLine;
 		}
 	}
 }
