@@ -1,6 +1,7 @@
 package de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities;
 
 import java.util.Objects;
+import java.util.UUID;
 
 public class Repo {
 
@@ -18,22 +19,24 @@ public class Repo {
 		return id;
 	}
 
+	public UUID getIdAsUuid() {
+		return id.getId();
+	}
+
+	public String getIdAsString() {
+		return id.getIdAsString();
+	}
+
 	public String getName() {
 		return name;
 	}
 
-	/**
-	 * An alias for {@link #getId()} so initial diffs don't get too large...
-	 *
-	 * @return the repo's id
-	 */
-	// TODO: 04.10.20 Remove this function
-	public RepoId getRepoId() {
-		return id;
-	}
-
 	public RemoteUrl getRemoteUrl() {
 		return remoteUrl;
+	}
+
+	public String getRemoteUrlAsString() {
+		return remoteUrl.getUrl();
 	}
 
 	@Override

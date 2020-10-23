@@ -48,7 +48,7 @@ public class DbUpdater {
 		this.jgitRepo = jgitRepo;
 		this.db = db;
 
-		repoIdStr = repo.getId().getIdAsString();
+		repoIdStr = repo.getIdAsString();
 	}
 
 	/**

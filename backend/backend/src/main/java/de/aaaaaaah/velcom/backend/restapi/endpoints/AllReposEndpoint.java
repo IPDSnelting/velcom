@@ -52,7 +52,7 @@ public class AllReposEndpoint {
 	@Timed(histogram = true)
 	public GetReply get() {
 		Collection<Repo> repos = repoAccess.getAllRepos();
-		List<RepoId> repoIds = repos.stream().map(Repo::getRepoId).collect(Collectors.toList());
+		List<RepoId> repoIds = repos.stream().map(Repo::getId).collect(Collectors.toList());
 		Map<RepoId, Set<Dimension>> allDimensions = availableDimensionsCache
 			.getAvailableDimensions(dimensionAccess, repoIds);
 		Map<Dimension, DimensionInfo> dimensionInfos = benchmarkAccess.getDimensionInfos(
@@ -63,7 +63,7 @@ public class AllReposEndpoint {
 
 		List<JsonRepo> jsonRepos = repos.stream()
 			.map(repo -> {
-				RepoId repoId = repo.getRepoId();
+				RepoId repoId = repo.getId();
 
 				List<Branch> allBranches = repoAccess.getAllBranches(repoId);
 				List<String> trackedNames = allBranches.stream()

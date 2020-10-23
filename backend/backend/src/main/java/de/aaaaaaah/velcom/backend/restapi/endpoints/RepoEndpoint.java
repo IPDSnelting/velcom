@@ -64,7 +64,7 @@ public class RepoEndpoint {
 	}
 
 	private JsonRepo toJsonRepo(Repo repo) {
-		List<Branch> allBranches = repoAccess.getAllBranches(repo.getRepoId());
+		List<Branch> allBranches = repoAccess.getAllBranches(repo.getId());
 		List<String> trackedNames = allBranches.stream()
 			.filter(Branch::isTracked)
 			.map(Branch::getName)
@@ -76,19 +76,19 @@ public class RepoEndpoint {
 			.map(BranchName::getName)
 			.collect(Collectors.toList());
 
-		Set<Dimension> dimensions = benchmarkAccess.getAvailableDimensions(repo.getRepoId());
+		Set<Dimension> dimensions = benchmarkAccess.getAvailableDimensions(repo.getId());
 		Map<Dimension, DimensionInfo> dimensionInfos = benchmarkAccess.getDimensionInfos(dimensions);
 		List<JsonDimension> jsonDimensions = dimensionInfos.values().stream()
 			.map(JsonDimension::fromDimensionInfo)
 			.collect(Collectors.toList());
 
 		return new JsonRepo(
-			repo.getRepoId().getId(),
+			repo.getIdAsUuid(),
 			repo.getName(),
-			repo.getRemoteUrl().getUrl(),
+			repo.getRemoteUrlAsString(),
 			untrackedNames,
 			trackedNames,
-			tokenAccess.hasToken(repo.getRepoId()),
+			tokenAccess.hasToken(repo.getId()),
 			jsonDimensions
 		);
 	}
@@ -105,7 +105,7 @@ public class RepoEndpoint {
 
 		request.getToken()
 			.map(AuthToken::new)
-			.ifPresent(token -> tokenAccess.setToken(repo.getRepoId(), token));
+			.ifPresent(token -> tokenAccess.setToken(repo.getId(), token));
 
 		if (listener.updateRepo(repo)) {
 			return new PostReply(toJsonRepo(repo));
