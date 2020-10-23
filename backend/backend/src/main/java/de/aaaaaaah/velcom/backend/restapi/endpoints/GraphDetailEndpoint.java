@@ -12,8 +12,6 @@ import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.FullCommit;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.DimensionReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.RepoReadAccess;
-import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.Branch;
-import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.BranchName;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.exceptions.NoSuchRepoException;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.utils.EndpointUtils;
@@ -78,9 +76,6 @@ public class GraphDetailEndpoint {
 		// Figure out tracked branches
 		RepoId repoId = new RepoId(repoUuid);
 		repoAccess.guardRepoExists(repoId);
-		List<BranchName> trackedBranches = repoAccess.getTrackedBranches(repoId).stream()
-			.map(Branch::getName)
-			.collect(Collectors.toList());
 
 		// Figure out which dimensions there actually are, and in which order we'll return them
 		Set<Dimension> potentialDimensions = EndpointUtils.parseDimensions(dimensionStr);
@@ -99,7 +94,7 @@ public class GraphDetailEndpoint {
 
 		// Figure out which commits we'll need to show
 		List<FullCommit> commits = new ArrayList<>(commitAccess.promoteCommits(
-			commitAccess.getCommitsBetween(repoId, trackedBranches, startTime, endTime)
+			commitAccess.getTrackedCommitsBetween(repoId, startTime, endTime)
 		));
 		commits.sort(Comparator.comparing(Commit::getAuthorDate));
 		Set<CommitHash> hashes = commits.stream().map(Commit::getHash).collect(Collectors.toSet());

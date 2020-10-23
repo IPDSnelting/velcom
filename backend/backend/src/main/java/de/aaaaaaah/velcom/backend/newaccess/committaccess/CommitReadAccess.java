@@ -26,6 +26,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.jooq.Record1;
+import org.jooq.SelectConditionStep;
 import org.jooq.codegen.db.tables.records.CommitRelationshipRecord;
 import org.jooq.codegen.db.tables.records.KnownCommitRecord;
 import org.jooq.exception.DataAccessException;
@@ -233,6 +234,26 @@ public class CommitReadAccess {
 	public int getUnmigratedCommitCount() {
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
 			return db.dsl().fetchCount(KNOWN_COMMIT, not(condition(KNOWN_COMMIT.MIGRATED)));
+		}
+	}
+
+	public List<Commit> getTrackedCommitsBetween(RepoId repoId, @Nullable Instant startTime,
+		@Nullable Instant stopTime) {
+
+		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
+			SelectConditionStep<KnownCommitRecord> query = db.selectFrom(KNOWN_COMMIT)
+				.where(KNOWN_COMMIT.REPO_ID.eq(repoId.getIdAsString()));
+
+			if (startTime != null) {
+				query = query.and(KNOWN_COMMIT.AUTHOR_DATE.ge(startTime));
+			}
+			if (stopTime != null) {
+				query = query.and(KNOWN_COMMIT.AUTHOR_DATE.le(stopTime));
+			}
+
+			return query.stream()
+				.map(CommitReadAccess::knownCommitRecordToCommit)
+				.collect(Collectors.toList());
 		}
 	}
 
