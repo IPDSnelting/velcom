@@ -6,7 +6,8 @@ build: backend/target/backend.jar
 
 backend/target/backend.jar: $(shell find -name '*.java' -o -name '*.sql' -o -name pom.xml)
 	@echo 'Building backend'
-	mvn package site jacoco:report-aggregate
+	# We want colors!
+	MAVEN_OPTS="-Djansi.passthrough=true -Djansi.force=true" mvn -Dstyle.color=always package site jacoco:report-aggregate
 
 clean: clean-backend-data
 	mvn clean
