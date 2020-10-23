@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import de.aaaaaaah.velcom.backend.access.ArchiveAccess;
 import de.aaaaaaah.velcom.backend.access.BenchmarkWriteAccess;
-import de.aaaaaaah.velcom.backend.access.KnownCommitWriteAccess;
 import de.aaaaaaah.velcom.backend.access.TaskWriteAccess;
 import de.aaaaaaah.velcom.backend.access.TokenWriteAccess;
 import de.aaaaaaah.velcom.backend.access.entities.AuthToken;
@@ -123,9 +122,6 @@ public class ServerMain extends Application<GlobalConfig> {
 		TaskWriteAccess taskAccess = new TaskWriteAccess(databaseStorage);
 		CommitReadAccess commitAccess = new CommitReadAccess(databaseStorage);
 		DimensionReadAccess dimensionAccess = new DimensionReadAccess(databaseStorage);
-		KnownCommitWriteAccess knownCommitAccess = new KnownCommitWriteAccess(
-			databaseStorage, taskAccess
-		);
 		RepoWriteAccess repoAccess = new RepoWriteAccess(databaseStorage, availableDimensionsCache);
 		TokenWriteAccess tokenAccess = new TokenWriteAccess(
 			databaseStorage,
