@@ -29,6 +29,46 @@
             </v-card-title>
             <v-card-text>
               <v-container fluid class="ma-0 pa-0">
+                <v-row justify="end" no-gutters>
+                  <v-col cols="auto">
+                    <v-tooltip bottom>
+                      <template #activator="{ on }">
+                        <v-btn
+                          v-on="on"
+                          class="mr-5 ml-3"
+                          outlined
+                          color="primary"
+                          text
+                          @click="refetchRepos"
+                          v-if="isWebsiteAdmin"
+                        >
+                          Refetch all repos
+                        </v-btn>
+                      </template>
+                      Executes a `git fetch` updating the benchmark repo as well
+                      all other repos. It should find any new commits and pick
+                      up changes to the benchmark repo, but might take a few
+                      seconds to complete.
+                    </v-tooltip>
+                  </v-col>
+                  <v-col cols="auto">
+                    <v-tooltip left>
+                      <template #activator="{ on }">
+                        <v-btn
+                          v-on="on"
+                          color="warning"
+                          text
+                          outlined
+                          @click="cancelAllFetched()"
+                        >
+                          Cancel all Tasks
+                        </v-btn>
+                      </template>
+                      Cancels
+                      <strong>all</strong> tasks you can see in the queue.
+                    </v-tooltip>
+                  </v-col>
+                </v-row>
                 <v-row align="center">
                   <queue-overview></queue-overview>
                 </v-row>
@@ -48,6 +88,7 @@ import WorkerOverview from '../components/overviews/WorkerOverview.vue'
 import QueueOverview from '../components/overviews/QueueOverview.vue'
 import { vxm } from '@/store'
 import { Route, RawLocation } from 'vue-router'
+import { extractErrorMessage } from '@/util/ErrorUtils'
 
 @Component({
   components: {
@@ -60,8 +101,53 @@ export default class Queue extends Vue {
     return vxm.queueModule.workers
   }
 
-  private get someTask() {
-    return 'fde53cb7-6e8d-4e23-9f8f-c92c87a88baf'
+  private get isWebsiteAdmin() {
+    return vxm.userModule.isAdmin
+  }
+
+  private cancelAllFetched() {
+    if (!window.confirm('Do you really want to empty the queue?')) {
+      return
+    }
+
+    this.$globalSnackbar.setLoading('cancel-queue', 2)
+    Promise.all(
+      vxm.queueModule.openTasks.map(it => {
+        return vxm.queueModule.dispatchDeleteOpenTask({
+          id: it.id,
+          suppressRefetch: true
+        })
+      })
+    )
+      .then(() => {
+        this.$globalSnackbar.setSuccess(
+          'cancel-queue',
+          'Cancelled all open tasks!',
+          2
+        )
+      })
+      .catch(error => {
+        this.$globalSnackbar.setError(
+          'cancel-queue',
+          extractErrorMessage(error),
+          2
+        )
+      })
+      .finally(() => {
+        vxm.queueModule.fetchQueue()
+      })
+  }
+
+  private async refetchRepos() {
+    if (!this.isWebsiteAdmin) {
+      return
+    }
+    await vxm.repoModule.triggerListenerFetch()
+
+    this.$globalSnackbar.setSuccess(
+      'listener',
+      'Re-fetched repo and updated benchrepo'
+    )
   }
 
   beforeRouteLeave(

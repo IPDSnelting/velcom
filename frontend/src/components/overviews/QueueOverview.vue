@@ -7,27 +7,6 @@
       :footer-props="{ itemsPerPageOptions: itemsPerPageOptions }"
       no-data-text="No commits are currently enqueued."
     >
-      <template #header v-if="isAdmin">
-        <v-row>
-          <v-spacer></v-spacer>
-          <v-col cols="auto">
-            <v-tooltip left>
-              <template #activator="{ on }">
-                <v-btn
-                  v-on="on"
-                  color="warning"
-                  text
-                  outlined
-                  @click="cancelAllFetched()"
-                  >Cancel all</v-btn
-                >
-              </template>
-              Cancels
-              <strong>all</strong> tasks you can see in the queue.
-            </v-tooltip>
-          </v-col>
-        </v-row>
-      </template>
       <template v-slot:default="{ items, pagination: { itemsPerPage, page } }">
         <v-row>
           <v-col
@@ -107,7 +86,6 @@ import { vxm } from '@/store'
 import { Task, Worker } from '@/store/types'
 import { mdiDelete, mdiRocket } from '@mdi/js'
 import CommitOverviewBase from './CommitOverviewBase.vue'
-import { extractErrorMessage } from '@/util/ErrorUtils'
 import TarTaskOverview from './TarTaskOverview.vue'
 import { formatDurationHuman } from '@/util/TimeUtil'
 import { RawLocation } from 'vue-router'
@@ -249,39 +227,6 @@ export default class QueueOverview extends Vue {
       return ''
     }
     return formatDurationHuman(worker.workingSince, new Date())
-  }
-
-  private cancelAllFetched() {
-    if (!window.confirm('Do you really want to empty the queue?')) {
-      return
-    }
-
-    this.$globalSnackbar.setLoading('cancel-queue', 2)
-    Promise.all(
-      vxm.queueModule.openTasks.map(it => {
-        return vxm.queueModule.dispatchDeleteOpenTask({
-          id: it.id,
-          suppressRefetch: true
-        })
-      })
-    )
-      .then(() => {
-        this.$globalSnackbar.setSuccess(
-          'cancel-queue',
-          'Cancelled all open tasks!',
-          2
-        )
-      })
-      .catch(error => {
-        this.$globalSnackbar.setError(
-          'cancel-queue',
-          extractErrorMessage(error),
-          2
-        )
-      })
-      .finally(() => {
-        vxm.queueModule.fetchQueue()
-      })
   }
 
   private updateWorkerTimes() {

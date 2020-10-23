@@ -95,8 +95,8 @@ export class RepoStore extends VxModule {
   }
 
   @action
-  async triggerListenerFor(repoId: RepoId): Promise<void> {
-    await axios.post(`/listener/${repoId}/trigger`)
+  async triggerListenerFetch(): Promise<void> {
+    await axios.post(`/listener/fetch-all`)
   }
 
   @mutation
