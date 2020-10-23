@@ -17,6 +17,7 @@ import de.aaaaaaah.velcom.backend.data.repocomparison.grouping.GroupByWeek;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.Commit;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.BranchName;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
 import io.micrometer.core.annotation.Timed;
 import java.time.Instant;
@@ -67,7 +68,7 @@ public class TimesliceComparison implements RepoComparison {
 	@Override
 	@Timed(histogram = true)
 	public RepoComparisonGraph generateGraph(Dimension dimension,
-		Map<RepoId, Set<CommitHash>> startCommits, @Nullable Instant startTime,
+		Map<RepoId, Set<BranchName>> repoBranches, @Nullable Instant startTime,
 		@Nullable Instant endTime) {
 
 		final DimensionInfo dimensionInfo = benchmarkAccess.getDimensionInfo(dimension);
@@ -76,10 +77,10 @@ public class TimesliceComparison implements RepoComparison {
 		Instant actualStartTime = startTime;
 		Instant actualEndTime = endTime;
 
-		for (RepoId repoId : startCommits.keySet()) {
-			Set<CommitHash> commitHashes = startCommits.get(repoId);
+		for (RepoId repoId : repoBranches.keySet()) {
+			Set<BranchName> branchNames = repoBranches.get(repoId);
 
-			RepoDataResult result = collectData(repoId, dimensionInfo, commitHashes, startTime, endTime)
+			RepoDataResult result = collectData(repoId, dimensionInfo, branchNames, startTime, endTime)
 				.orElse(null);
 
 			if (result != null) {
@@ -100,11 +101,11 @@ public class TimesliceComparison implements RepoComparison {
 	}
 
 	private Optional<RepoDataResult> collectData(RepoId repoId, DimensionInfo dimensionInfo,
-		Set<CommitHash> startCommits, @Nullable Instant startTime, @Nullable Instant endTime) {
+		Set<BranchName> branchNames, @Nullable Instant startTime, @Nullable Instant endTime) {
 
 		// 1.) Get commits
 		Map<CommitHash, Commit> commitMap = commitAccess
-			.getCommitsBetween(repoId, startCommits, startTime, endTime)
+			.getCommitsBetween(repoId, branchNames, startTime, endTime)
 			.stream()
 			.collect(toMap(Commit::getHash, commit -> commit));
 

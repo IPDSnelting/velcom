@@ -1,7 +1,7 @@
 package de.aaaaaaah.velcom.backend.data.repocomparison;
 
 import de.aaaaaaah.velcom.backend.access.entities.Dimension;
-import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.BranchName;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
 import java.time.Instant;
 import java.util.Map;
@@ -20,13 +20,13 @@ public interface RepoComparison {
 	 *
 	 * @param measurement the measurement to use for comparison
 	 * @param repoBranches the repositories and which of their branches should be considered in this
-	 * 	comparsion
+	 * 	comparison
 	 * @param startTime the instant before which commits won't be considered
 	 * @param stopTime the instant after which commits won't be considered
 	 * @return the generated graph
 	 */
 	RepoComparisonGraph generateGraph(Dimension measurement,
-		Map<RepoId, Set<CommitHash>> repoBranches,
+		Map<RepoId, Set<BranchName>> repoBranches,
 		@Nullable Instant startTime, @Nullable Instant stopTime);
 
 }

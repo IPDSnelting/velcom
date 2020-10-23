@@ -18,6 +18,7 @@ import de.aaaaaaah.velcom.backend.access.entities.Unit;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.Commit;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.BranchName;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.shared.util.Either;
 import java.time.Instant;
@@ -39,8 +40,8 @@ class TimesliceComparisonTest {
 	private Dimension dimension;
 	private DimensionInfo dimensionInfo;
 	private RepoId repoId;
-	private Set<CommitHash> startCommitHashes;
-	private Map<RepoId, Set<CommitHash>> repoStartCommitHashes;
+	private Set<BranchName> startBranches;
+	private Map<RepoId, Set<BranchName>> repoBranches;
 
 	private CommitHash c1Hash;
 	private CommitHash c2Hash;
@@ -90,10 +91,10 @@ class TimesliceComparisonTest {
 		dimensionInfo = new DimensionInfo(dimension, new Unit("testunit"),
 			Interpretation.MORE_IS_BETTER);
 		repoId = new RepoId(UUID.randomUUID());
-		startCommitHashes = Set.of(c1Hash);
+		startBranches = Set.of(BranchName.fromName("main"), BranchName.fromName("stable"));
 
-		repoStartCommitHashes = new HashMap<>();
-		repoStartCommitHashes.put(repoId, startCommitHashes);
+		repoBranches = new HashMap<>();
+		repoBranches.put(repoId, startBranches);
 
 		m1 = new Measurement(mock(RunId.class), dimension,
 			new MeasurementValues(List.of(1d, 2d, 3d)));
@@ -142,11 +143,11 @@ class TimesliceComparisonTest {
 		when(c3.getAuthorDate()).thenReturn(Instant.ofEpochSecond(c3Time));
 		when(c4.getAuthorDate()).thenReturn(Instant.ofEpochSecond(c4Time));
 
-		when(commitReadAccess.getCommitsBetween(repoId, startCommitHashes, startInstant, stopInstant))
+		when(commitReadAccess.getCommitsBetween(repoId, startBranches, startInstant, stopInstant))
 			.thenReturn(commitList);
 
 		RepoComparisonGraph graph = comparison
-			.generateGraph(dimension, repoStartCommitHashes, startInstant, stopInstant);
+			.generateGraph(dimension, repoBranches, startInstant, stopInstant);
 
 		assertEquals(dimension, graph.getDimensionInfo().getDimension());
 		assertEquals(1, graph.getData().size()); // Only one repo
@@ -177,10 +178,10 @@ class TimesliceComparisonTest {
 		when(c3.getAuthorDate()).thenReturn(Instant.ofEpochSecond(c3Time));
 		when(c4.getAuthorDate()).thenReturn(Instant.ofEpochSecond(c4Time));
 
-		when(commitReadAccess.getCommitsBetween(repoId, startCommitHashes, startInstant, stopInstant))
+		when(commitReadAccess.getCommitsBetween(repoId, startBranches, startInstant, stopInstant))
 			.thenReturn(commitList);
 
-		RepoComparisonGraph graph = comparison.generateGraph(dimension, repoStartCommitHashes,
+		RepoComparisonGraph graph = comparison.generateGraph(dimension, repoBranches,
 			startInstant, stopInstant);
 
 		assertEquals(dimension, graph.getDimensionInfo().getDimension());
@@ -212,10 +213,10 @@ class TimesliceComparisonTest {
 		when(c3.getAuthorDate()).thenReturn(Instant.ofEpochSecond(c3Time));
 		when(c4.getAuthorDate()).thenReturn(Instant.ofEpochSecond(c4Time));
 
-		when(commitReadAccess.getCommitsBetween(repoId, startCommitHashes, startInstant, stopInstant))
+		when(commitReadAccess.getCommitsBetween(repoId, startBranches, startInstant, stopInstant))
 			.thenReturn(commitList);
 
-		RepoComparisonGraph graph = comparison.generateGraph(dimension, repoStartCommitHashes,
+		RepoComparisonGraph graph = comparison.generateGraph(dimension, repoBranches,
 			startInstant, stopInstant);
 
 		assertEquals(dimension, graph.getDimensionInfo().getDimension());

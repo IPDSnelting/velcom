@@ -13,6 +13,7 @@ import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.Commit;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.FullCommit;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.exceptions.NoSuchCommitException;
+import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.BranchName;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.storage.db.DBReadAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
@@ -257,8 +258,7 @@ public class CommitReadAccess {
 		}
 	}
 
-	// TODO: 23.10.20 Use branch names instead of commit hashes
-	public List<Commit> getCommitsBetween(RepoId repoId, Collection<CommitHash> startHashes,
+	public List<Commit> getCommitsBetween(RepoId repoId, Collection<BranchName> branchNames,
 		@Nullable Instant startTime, @Nullable Instant stopTime) {
 
 		// Kinda ugly but it works and is also relatively fast, so I'm fine with it.
@@ -269,32 +269,36 @@ public class CommitReadAccess {
 		// executes it. This is, of course, pretty ugly but I can't get jOOQ to generate correct
 		// recursive queries in the sqlite dialect.
 
-		List<String> startHashStrings = startHashes.stream()
-			.map(CommitHash::getHash)
+		List<String> branchNamesStr = branchNames.stream()
+			.map(BranchName::getName)
 			.collect(toList());
 
-		String valuesStr = startHashStrings.stream()
-			.map(s -> "(?)")
+		String branchNamesBindings = branchNames.stream()
+			.map(s -> "?")
 			.collect(Collectors.joining(", "));
 
 		String queryStr = ""
 			+ "WITH RECURSIVE rec(hash) AS (\n"
-			+ "\tVALUES " + valuesStr + "\n" // <-- Binding #1 (multiple values)
-			+ "\t\n"
-			+ "\tUNION\n"
-			+ "\t\n"
-			+ "\tSELECT commit_relationship.parent_hash\n"
-			+ "\tFROM commit_relationship\n"
-			+ "\tJOIN rec\n"
-			+ "\t\tON rec.hash = commit_relationship.child_hash\n"
-			+ "\tWHERE commit_relationship.repo_id = ?\n" // <-- Binding #2
+			+ "  SELECT branch.latest_commit_hash"
+			+ "  FROM branch"
+			+ "  WHERE branch.repo_id = ?" // Binding #1
+			+ "  AND branch.name IN (" + branchNamesBindings + ")\n" // <-- Binding #2 (multiple values)
+			+ "  \n"
+			+ "  UNION\n"
+			+ "  \n"
+			+ "  SELECT commit_relationship.parent_hash\n"
+			+ "  FROM commit_relationship\n"
+			+ "  JOIN rec\n"
+			+ "    ON rec.hash = commit_relationship.child_hash\n"
+			+ "  WHERE commit_relationship.repo_id = ?\n" // <-- Binding #3
 			+ ")\n"
 			+ "\n"
 			+ "SELECT rec.hash\n"
 			+ "FROM rec\n"
 			+ "";
 		List<Object> bindings = new ArrayList<>();
-		bindings.addAll(startHashStrings);
+		bindings.add(repoId.getIdAsString());
+		bindings.addAll(branchNamesStr);
 		bindings.add(repoId.getIdAsString());
 
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
