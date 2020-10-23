@@ -2,6 +2,7 @@ package de.aaaaaaah.velcom.backend.newaccess.committaccess;
 
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.mapping;
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static org.jooq.codegen.db.tables.CommitRelationship.COMMIT_RELATIONSHIP;
 import static org.jooq.codegen.db.tables.KnownCommit.KNOWN_COMMIT;
@@ -12,7 +13,6 @@ import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.Commit;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.FullCommit;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.exceptions.NoSuchCommitException;
-import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.BranchName;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.storage.db.DBReadAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
@@ -115,7 +115,7 @@ public class CommitReadAccess {
 				.and(KNOWN_COMMIT.MIGRATED)
 				.stream()
 				.map(CommitReadAccess::knownCommitRecordToCommit)
-				.collect(Collectors.toList());
+				.collect(toList());
 		}
 	}
 
@@ -253,14 +253,76 @@ public class CommitReadAccess {
 
 			return query.stream()
 				.map(CommitReadAccess::knownCommitRecordToCommit)
-				.collect(Collectors.toList());
+				.collect(toList());
 		}
 	}
 
-	public List<Commit> getCommitsBetween(RepoId repoId, Collection<BranchName> startBranches,
+	// TODO: 23.10.20 Use branch names instead of commit hashes
+	public List<Commit> getCommitsBetween(RepoId repoId, Collection<CommitHash> startHashes,
 		@Nullable Instant startTime, @Nullable Instant stopTime) {
 
-		// TODO: 19.10.20 Remove this dummy function
-		return List.of();
+		// Kinda ugly but it works and is also relatively fast, so I'm fine with it.
+
+		// Part 1: Recursive query
+		//
+		// This generates a recursive query with variable number of bindings as a string and then
+		// executes it. This is, of course, pretty ugly but I can't get jOOQ to generate correct
+		// recursive queries in the sqlite dialect.
+
+		List<String> startHashStrings = startHashes.stream()
+			.map(CommitHash::getHash)
+			.collect(toList());
+
+		String valuesStr = startHashStrings.stream()
+			.map(s -> "(?)")
+			.collect(Collectors.joining(", "));
+
+		String queryStr = ""
+			+ "WITH RECURSIVE rec(hash) AS (\n"
+			+ "\tVALUES " + valuesStr + "\n" // <-- Binding #1 (multiple values)
+			+ "\t\n"
+			+ "\tUNION\n"
+			+ "\t\n"
+			+ "\tSELECT commit_relationship.parent_hash\n"
+			+ "\tFROM commit_relationship\n"
+			+ "\tJOIN rec\n"
+			+ "\t\tON rec.hash = commit_relationship.child_hash\n"
+			+ "\tWHERE commit_relationship.repo_id = ?\n" // <-- Binding #2
+			+ ")\n"
+			+ "\n"
+			+ "SELECT rec.hash\n"
+			+ "FROM rec\n"
+			+ "";
+		List<Object> bindings = new ArrayList<>();
+		bindings.addAll(startHashStrings);
+		bindings.add(repoId.getIdAsString());
+
+		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
+			Set<String> reachableHashes = db.dsl().fetch(queryStr, bindings.toArray()).stream()
+				.map(record -> record.get(0, String.class))
+				.collect(toSet());
+
+			// Part 2: Fetching commits
+			//
+			// This part fetches the reachable commits we're after based on the hashes returned from the
+			// previous query with a normal jOOQ query. This filtering isn't included in the above
+			// recursive query because when we tried to do that, jdbc/jOOQ failed to correctly parse the
+			// timestamps for the author/committer dates for some reason.
+
+			SelectConditionStep<KnownCommitRecord> query = db.selectFrom(KNOWN_COMMIT)
+				.where(KNOWN_COMMIT.REPO_ID.eq(repoId.getIdAsString()))
+				.and(KNOWN_COMMIT.HASH.in(reachableHashes));
+
+			if (startTime != null) {
+				query = query.and(KNOWN_COMMIT.AUTHOR_DATE.ge(startTime));
+			}
+			if (stopTime != null) {
+				query = query.and(KNOWN_COMMIT.AUTHOR_DATE.le(stopTime));
+			}
+
+			return query.stream()
+				.map(CommitReadAccess::knownCommitRecordToCommit)
+				.collect(toList());
+		}
 	}
 }

@@ -179,7 +179,7 @@ public class ServerMain extends Application<GlobalConfig> {
 			new CommitEndpoint(commitAccess, repoAccess, benchmarkAccess),
 			new CompareEndpoint(benchmarkAccess, commitAccess, runComparator),
 			new DebugEndpoint(commitAccess, repoAccess, dispatcher),
-			new GraphComparisonEndpoint(comparison, benchmarkAccess),
+			new GraphComparisonEndpoint(benchmarkAccess, repoAccess, comparison),
 			new GraphDetailEndpoint(commitAccess, benchmarkAccess, dimensionAccess, repoAccess),
 			new QueueEndpoint(commitAccess, repoAccess, queue, dispatcher),
 			new RecentRunsEndpoint(benchmarkAccess, commitAccess, significantRunsCollector),

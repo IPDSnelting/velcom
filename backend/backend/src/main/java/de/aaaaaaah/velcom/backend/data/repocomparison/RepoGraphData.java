@@ -2,29 +2,21 @@ package de.aaaaaaah.velcom.backend.data.repocomparison;
 
 import static java.util.Objects.requireNonNull;
 
-import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.BranchName;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
 import java.util.List;
-import java.util.Set;
 
 public class RepoGraphData {
 
 	private final RepoId repoId;
-	private final Set<BranchName> includedBranches;
 	private final List<GraphEntry> entries;
 
-	public RepoGraphData(RepoId repoId, Set<BranchName> includedBranches, List<GraphEntry> entries) {
+	public RepoGraphData(RepoId repoId, List<GraphEntry> entries) {
 		this.repoId = requireNonNull(repoId);
-		this.includedBranches = requireNonNull(includedBranches);
 		this.entries = requireNonNull(entries);
 	}
 
 	public RepoId getRepoId() {
 		return repoId;
-	}
-
-	public Set<BranchName> getIncludedBranches() {
-		return includedBranches;
 	}
 
 	/**
@@ -39,7 +31,6 @@ public class RepoGraphData {
 	public String toString() {
 		return "RepoGraphData{" +
 			"repoId=" + repoId +
-			", includedBranches=" + includedBranches +
 			'}';
 	}
 

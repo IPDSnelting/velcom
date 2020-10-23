@@ -6,7 +6,9 @@ import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.access.entities.Dimension;
 import de.aaaaaaah.velcom.backend.data.repocomparison.RepoComparison;
 import de.aaaaaaah.velcom.backend.data.repocomparison.RepoComparisonGraph;
-import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.BranchName;
+import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.newaccess.repoaccess.RepoReadAccess;
+import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.Branch;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.utils.EndpointUtils;
 import de.aaaaaaah.velcom.backend.restapi.exception.InvalidQueryParamsException;
@@ -17,8 +19,10 @@ import io.micrometer.core.annotation.Timed;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.GET;
@@ -34,12 +38,16 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 public class GraphComparisonEndpoint {
 
-	private final RepoComparison comparison;
 	private final BenchmarkReadAccess benchmarkAccess;
+	private final RepoReadAccess repoAccess;
+	private final RepoComparison comparison;
 
-	public GraphComparisonEndpoint(RepoComparison comparison, BenchmarkReadAccess benchmarkAccess) {
-		this.comparison = comparison;
+	public GraphComparisonEndpoint(BenchmarkReadAccess benchmarkAccess, RepoReadAccess repoAccess,
+		RepoComparison comparison) {
+
 		this.benchmarkAccess = benchmarkAccess;
+		this.repoAccess = repoAccess;
+		this.comparison = comparison;
 	}
 
 	@GET
@@ -72,7 +80,16 @@ public class GraphComparisonEndpoint {
 			throw new InvalidQueryParamsException("start time must be earlier than end time");
 		}
 
-		final Map<RepoId, Set<BranchName>> repos = EndpointUtils.parseRepos(reposStr);
+		final Map<RepoId, Set<CommitHash>> repos = EndpointUtils.parseRepos(reposStr)
+			.entrySet()
+			.stream()
+			.collect(Collectors.toMap(
+				Entry::getKey,
+				entry -> repoAccess.getAllBranches(entry.getKey()).stream()
+					.filter(branch -> entry.getValue().contains(branch.getName()))
+					.map(Branch::getLatestCommitHash)
+					.collect(Collectors.toSet())
+			));
 		RepoComparisonGraph result = comparison.generateGraph(dimension, repos, startTime, endTime);
 		JsonDimension jsonDimension = JsonDimension.fromDimensionInfo(result.getDimensionInfo());
 
