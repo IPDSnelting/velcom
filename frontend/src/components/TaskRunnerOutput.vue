@@ -53,8 +53,7 @@ import Component from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import { StreamedRunnerOutput, TaskId } from '@/store/types'
 import { vxm } from '@/store'
-import Convert from 'ansi-to-html'
-import { escapeHtml } from '@/util/TextUtils'
+import { safeConvertAnsi } from '@/util/TextUtils'
 
 @Component
 export default class TaskRunnerOutput extends Vue {
@@ -107,10 +106,9 @@ export default class TaskRunnerOutput extends Vue {
     if (!output) {
       return []
     }
-    const convert = new Convert()
     return output.outputLines.map((line, index) => ({
       lineNumber: index + output.indexOfFirstLine + 1,
-      text: convert.toHtml(escapeHtml(line))
+      text: safeConvertAnsi(line)
     }))
   }
 

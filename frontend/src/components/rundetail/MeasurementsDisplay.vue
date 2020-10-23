@@ -6,7 +6,10 @@
           <v-toolbar-title>Full error message</v-toolbar-title>
         </v-toolbar>
         <v-card-text>
-          <div class="ma-4 error-message">{{ detailErrorDialogMessage }}</div>
+          <div
+            class="ma-4 error-message"
+            v-html="detailErrorDialogMessage"
+          ></div>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
@@ -40,10 +43,7 @@
           class="error-message error-message-tooltip"
           text
           outlined
-          @click.stop="
-            showDetailErrorDialog = true
-            detailErrorDialogMessage = item.error
-          "
+          @click.stop="displayErrorDetail(item)"
         >
           {{ formatErrorShorthand(item.error) }}
         </v-btn>
@@ -79,6 +79,7 @@ import {
   Dimension
 } from '@/store/types'
 import MeasurementValueDisplay from '@/components/rundetail/MeasurementValueDisplay.vue'
+import { safeConvertAnsi } from '@/util/TextUtils'
 
 const numberFormat: Intl.NumberFormat = new Intl.NumberFormat(
   new Intl.NumberFormat().resolvedOptions().locale,
@@ -297,6 +298,11 @@ export default class MeasurementsDisplay extends Vue {
     return error.substring(0, MAX_ERROR_LENGTH) + '…'
   }
 
+  private displayErrorDetail(item: Item) {
+    this.detailErrorDialogMessage = safeConvertAnsi(item.error)
+    this.showDetailErrorDialog = true
+  }
+
   private rowClicked(item: Item) {
     const currentSelection = document.getSelection()
     if (currentSelection && currentSelection.toString()) {
@@ -316,7 +322,6 @@ export default class MeasurementsDisplay extends Vue {
 <!--suppress CssUnresolvedCustomProperty -->
 <style scoped>
 .error-message {
-  color: var(--v-error-base);
   font-family: monospace;
   white-space: pre-line;
   overflow: hidden;
@@ -324,6 +329,7 @@ export default class MeasurementsDisplay extends Vue {
 
 .error-message-tooltip {
   cursor: pointer;
+  color: var(--v-error-base);
 }
 </style>
 
