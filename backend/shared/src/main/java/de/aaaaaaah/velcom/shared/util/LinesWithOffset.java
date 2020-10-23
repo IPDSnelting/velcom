@@ -13,7 +13,7 @@ public class LinesWithOffset {
 
 	/**
 	 * If there are three lines and the last two are included in this object, the firstLineOffset will
-	 * be 1 (totalLength - includedLength).
+	 * be one (totalLength - includedLength).
 	 *
 	 * @param firstLineOffset the offset of the first line. 0 based.
 	 * @param lines the lines

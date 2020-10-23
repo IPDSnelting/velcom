@@ -37,7 +37,7 @@ import javax.annotation.Nullable;
 public class Benchmarker {
 
 	private final AtomicReference<BenchResult> result; // nullable inside the reference
-	private final AtomicReference<Supplier<LinesWithOffset>> outputFetcher;
+	private final AtomicReference<Supplier<LinesWithOffset>> outputFetcher; // nullable inside the reference
 
 	private final CompletableFuture<Void> finishFuture;
 

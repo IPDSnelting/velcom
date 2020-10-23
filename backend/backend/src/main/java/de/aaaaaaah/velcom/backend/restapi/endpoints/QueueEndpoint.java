@@ -36,6 +36,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -172,25 +173,20 @@ public class QueueEndpoint {
 	@Path("task/{taskId}/progress")
 	@GET
 	@Timed(histogram = true)
-	public Response getRunnerOutput(@PathParam("taskId") UUID taskId) {
+	public GetTaskOutputReply getRunnerOutput(@PathParam("taskId") UUID taskId) {
 		Optional<KnownRunner> worker = dispatcher.getKnownRunners().stream()
 			.filter(it -> it.getCurrentTask().isPresent())
 			.filter(it -> it.getCurrentTask().get().getId().getId().equals(taskId))
 			.findAny();
 
 		if (worker.isEmpty()) {
-			return Response.status(Status.NOT_FOUND).build();
+			throw new WebApplicationException(Status.NOT_FOUND);
 		}
 
 		LinesWithOffset lastOutputLines = worker.get().getLastOutputLines()
 			.orElse(new LinesWithOffset(0, List.of()));
 
-		return Response.ok()
-			.entity(
-				new GetTaskOutputReply(
-					lastOutputLines.getLines(), lastOutputLines.getFirstLineOffset()
-				)
-			).build();
+		return new GetTaskOutputReply(lastOutputLines.getLines(), lastOutputLines.getFirstLineOffset());
 	}
 
 	private static class PostCommitReply {
