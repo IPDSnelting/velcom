@@ -40,12 +40,13 @@
           class="error-message error-message-tooltip"
           text
           outlined
-          @click="
+          @click.stop="
             showDetailErrorDialog = true
             detailErrorDialogMessage = item.error
           "
-          >{{ formatErrorShorthand(item.error) }}</v-btn
         >
+          {{ formatErrorShorthand(item.error) }}
+        </v-btn>
       </template>
       <template
         v-for="{ slotName, tooltip } in headerFormats"
