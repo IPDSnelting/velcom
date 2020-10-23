@@ -1,6 +1,5 @@
 package de.aaaaaaah.velcom.backend.listener.dbupdate;
 
-import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static org.jooq.codegen.db.tables.Branch.BRANCH;
@@ -14,12 +13,9 @@ import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.BranchName;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.Repo;
 import de.aaaaaaah.velcom.backend.storage.db.DBWriteAccess;
 import java.io.IOException;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Queue;
 import java.util.Set;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -296,69 +292,6 @@ public class DbUpdater {
 			+ "";
 
 		db.dsl().execute(query, repoIdStr, repoIdStr);
-	}
-
-	/**
-	 * Crawl the jgit repo (breadth-first) and insert all previously unseen commits into the db (with
-	 * "tracked" set to false).
-	 */
-	// TODO: 20.10.20 Either use or remove this function
-	private void insertNewCommits() throws GitAPIException {
-		LOGGER.debug("Inserting new commits");
-
-		// Breadth-first search through jgit repo.
-		// TODO: 20.10.20 See if bfs could be replaced by simple walk of all jgit commits
-
-		// All commits that should not be added to the queue. Keeping them all in memory should be fine
-		// for pretty much all sizes of repos we're working with.
-		Set<String> knownHashes = new HashSet<>(db.selectFrom(KNOWN_COMMIT)
-			.where(KNOWN_COMMIT.REPO_ID.eq(repoIdStr))
-			.fetchSet(KNOWN_COMMIT.HASH));
-
-		Queue<String> queue = new Git(jgitRepo).branchList().call().stream()
-			.map(ref -> ref.getObjectId().getName())
-			// Careful not to initialize the queue with any unwanted commits
-			.filter(hash -> !knownHashes.contains(hash))
-			.collect(toCollection(ArrayDeque::new));
-
-		// Of course the commits already in the queue should not be added to the queue again
-		knownHashes.addAll(queue);
-
-		List<JgitCommit> commitsFound = new ArrayList<>();
-
-		try (JgitCommitWalk walk = new JgitCommitWalk(jgitRepo)) {
-			while (!queue.isEmpty()) {
-				CommitHash hash = new CommitHash(queue.poll());
-				// If we can't get the commit out of jgit (which shouldn't normally happen), we just treat
-				// it as if it didn't exist
-				walk.getCommit(hash).ifPresent(commit -> {
-					// Since this commit comes from the queue, it should also be part of our results since it
-					// was previously not known.
-					commitsFound.add(commit);
-
-					List<String> interestingParentHashes = commit.getParentHashes().stream()
-						.map(CommitHash::getHash)
-						// Again, careful not to add known commits to the queue
-						.filter(parentHash -> !knownHashes.contains(parentHash))
-						.collect(toList());
-					knownHashes.addAll(interestingParentHashes);
-					queue.addAll(interestingParentHashes);
-				});
-			}
-		}
-
-		// And finally some transforming required by jOOQ for its batch inserts
-
-		List<KnownCommitRecord> newCommits = commitsFound.stream()
-			.map(this::jgitCommitToKnownCommitRecord)
-			.collect(toList());
-
-		List<CommitRelationshipRecord> newRelationships = commitsFound.stream()
-			.flatMap(commit -> jgitCommitToCommRelRecords(commit).stream())
-			.collect(toList());
-
-		db.dsl().batchInsert(newCommits).execute();
-		db.dsl().batchInsert(newRelationships).execute();
 	}
 
 	/**
