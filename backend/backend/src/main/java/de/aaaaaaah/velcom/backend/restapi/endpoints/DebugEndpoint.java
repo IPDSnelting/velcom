@@ -1,7 +1,5 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
-import de.aaaaaaah.velcom.backend.newaccess.committaccess.CommitReadAccess;
-import de.aaaaaaah.velcom.backend.newaccess.repoaccess.RepoReadAccess;
 import de.aaaaaaah.velcom.backend.runner.Dispatcher;
 import de.aaaaaaah.velcom.shared.GitProperties;
 import java.util.List;
@@ -19,17 +17,9 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 public class DebugEndpoint {
 
-	private final CommitReadAccess commitAccess;
-	private final RepoReadAccess repoAccess;
-
 	private final Dispatcher dispatcher;
 
-	public DebugEndpoint(CommitReadAccess commitAccess, RepoReadAccess repoAccess,
-		Dispatcher dispatcher) {
-
-		this.commitAccess = commitAccess;
-		this.repoAccess = repoAccess;
-
+	public DebugEndpoint(Dispatcher dispatcher) {
 		this.dispatcher = dispatcher;
 	}
 
@@ -39,17 +29,11 @@ public class DebugEndpoint {
 			.map(r -> new RunnerInfo(r.getName(), r.getVersionHash().orElse(null)))
 			.collect(Collectors.toList());
 
-		int unmigratedBranches = repoAccess.getUnmigratedBranchCount();
-		int unmigratedCommits = commitAccess.getUnmigratedCommitCount();
-		boolean safeToMigrate = unmigratedBranches == 0 && unmigratedCommits == 0;
-
 		return new GetReply(
-			safeToMigrate,
+			true,
 			GitProperties.getBuildTime(),
 			GitProperties.getHash(),
-			runnerHashes,
-			unmigratedBranches,
-			unmigratedCommits
+			runnerHashes
 		);
 	}
 
@@ -59,18 +43,14 @@ public class DebugEndpoint {
 		private final String buildTime;
 		private final String backendHash;
 		private final List<RunnerInfo> runnerHashes;
-		private final int unmigratedBranches;
-		private final int unmigratedCommits;
 
 		public GetReply(boolean safeToUpdate, String buildTime, String backendHash,
-			List<RunnerInfo> runnerHashes, int unmigratedBranches, int unmigratedCommits) {
+			List<RunnerInfo> runnerHashes) {
 
 			this.safeToUpdate = safeToUpdate;
 			this.buildTime = buildTime;
 			this.backendHash = backendHash;
 			this.runnerHashes = runnerHashes;
-			this.unmigratedBranches = unmigratedBranches;
-			this.unmigratedCommits = unmigratedCommits;
 		}
 
 		public boolean isSafeToUpdate() {
@@ -87,14 +67,6 @@ public class DebugEndpoint {
 
 		public List<RunnerInfo> getRunnerHashes() {
 			return runnerHashes;
-		}
-
-		public int getUnmigratedBranches() {
-			return unmigratedBranches;
-		}
-
-		public int getUnmigratedCommits() {
-			return unmigratedCommits;
 		}
 	}
 

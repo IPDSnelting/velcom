@@ -6,8 +6,6 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static org.jooq.codegen.db.tables.CommitRelationship.COMMIT_RELATIONSHIP;
 import static org.jooq.codegen.db.tables.KnownCommit.KNOWN_COMMIT;
-import static org.jooq.impl.DSL.condition;
-import static org.jooq.impl.DSL.not;
 
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.Commit;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
@@ -96,7 +94,6 @@ public class CommitReadAccess {
 				KNOWN_COMMIT,
 				KNOWN_COMMIT.REPO_ID.eq(repoId.getIdAsString())
 					.and(KNOWN_COMMIT.HASH.eq(commitHash.getHash()))
-					.and(KNOWN_COMMIT.MIGRATED)
 			);
 			return knownCommitRecordToCommit(record);
 		} catch (DataAccessException e) {
@@ -113,7 +110,6 @@ public class CommitReadAccess {
 			return db.selectFrom(KNOWN_COMMIT)
 				.where(KNOWN_COMMIT.REPO_ID.eq(repoId.getIdAsString()))
 				.and(KNOWN_COMMIT.HASH.in(hashes))
-				.and(KNOWN_COMMIT.MIGRATED)
 				.stream()
 				.map(CommitReadAccess::knownCommitRecordToCommit)
 				.collect(toList());
@@ -127,7 +123,6 @@ public class CommitReadAccess {
 				KNOWN_COMMIT,
 				KNOWN_COMMIT.REPO_ID.eq(repoId.getIdAsString())
 					.and(KNOWN_COMMIT.HASH.eq(commitHash.getHash()))
-					.and(KNOWN_COMMIT.MIGRATED)
 			);
 
 			Set<CommitHash> parentHashes = db.select(COMMIT_RELATIONSHIP.PARENT_HASH)
@@ -228,13 +223,6 @@ public class CommitReadAccess {
 			}
 
 			return result;
-		}
-	}
-
-	// TODO: 21.10.20 Remove after migration
-	public int getUnmigratedCommitCount() {
-		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			return db.dsl().fetchCount(KNOWN_COMMIT, not(condition(KNOWN_COMMIT.MIGRATED)));
 		}
 	}
 

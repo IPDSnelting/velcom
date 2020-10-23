@@ -15,7 +15,6 @@ import de.aaaaaaah.velcom.backend.storage.db.DBWriteAccess;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -56,45 +55,30 @@ public class DbUpdater {
 	 */
 	// TODO: 21.10.20 Delete unreachable commits
 	public void update(List<CommitHash> toBeQueued) throws DbUpdateException {
-		if (anyUnmigratedBranchesOrCommits()) {
-			LOGGER.info("Migrating repo {}", repo);
+		try {
+			// Checking this now since #insertAllUnknownCommits() will change the result
+			boolean anyCommits = anyCommits();
 
-			try {
-				insertAllUnknownCommits();
-				migrateCommits();
-				updateBranches();
-				updateReachableFlags();
-				updateTrackedFlags();
-			} catch (GitAPIException | IOException e) {
-				throw new DbUpdateException("Failed to migrate repo " + repo, e);
+			insertAllUnknownCommits();
+			updateBranches();
+			updateReachableFlags();
+
+			if (anyCommits) {
+				LOGGER.debug("Detected non-empty repository");
+				findNewTasks(toBeQueued);
+			} else {
+				LOGGER.debug("Detected empty (i. e. new) repository");
+				useHeadsOfTrackedBranchesAsTasks(toBeQueued);
 			}
-		} else {
-			try {
-				// Checking this now since #insertAllUnknownCommits() will change the result
-				boolean anyCommits = anyCommits();
 
-				insertAllUnknownCommits();
-				updateBranches();
-				updateReachableFlags();
-
-				if (anyCommits) {
-					LOGGER.debug("Detected non-empty repository");
-					findNewTasks(toBeQueued);
-				} else {
-					LOGGER.debug("Detected empty (i. e. new) repository");
-					useHeadsOfTrackedBranchesAsTasks(toBeQueued);
-				}
-
-				updateTrackedFlags();
-			} catch (GitAPIException | IOException e) {
-				throw new DbUpdateException("Failed to update repo " + repo, e);
-			}
+			updateTrackedFlags();
+		} catch (GitAPIException | IOException e) {
+			throw new DbUpdateException("Failed to update repo " + repo, e);
 		}
 	}
 
 	private KnownCommitRecord jgitCommitToKnownCommitRecord(JgitCommit jgitCommit) {
 		KnownCommitRecord record = KNOWN_COMMIT.newRecord();
-		record.setMigrated(true);
 		record.setRepoId(repoIdStr);
 		record.setHash(jgitCommit.getHashAsString());
 		record.setReachable(false);
@@ -119,24 +103,6 @@ public class DbUpdater {
 			.collect(toList());
 	}
 
-	private boolean anyUnmigratedBranchesOrCommits() {
-		boolean unmigratedBranches = db.selectFrom(BRANCH)
-			.where(BRANCH.REPO_ID.eq(repoIdStr))
-			.andNot(BRANCH.MIGRATED)
-			.limit(1)
-			.fetchOptional()
-			.isPresent();
-
-		boolean unmigratedCommits = db.selectFrom(KNOWN_COMMIT)
-			.where(KNOWN_COMMIT.REPO_ID.eq(repoIdStr))
-			.andNot(KNOWN_COMMIT.MIGRATED)
-			.limit(1)
-			.fetchOptional()
-			.isPresent();
-
-		return unmigratedBranches || unmigratedCommits;
-	}
-
 	private boolean anyCommits() {
 		return db.selectFrom(KNOWN_COMMIT)
 			.where(KNOWN_COMMIT.REPO_ID.eq(repoIdStr))
@@ -147,12 +113,11 @@ public class DbUpdater {
 
 	/**
 	 * Search through all commits in the jgit repo and add all those to the db that don't already
-	 * exist (including parent relationships). Un-migrated commits are left alone.
+	 * exist (including parent relationships).
 	 *
 	 * @throws IOException if jgit does (not sure when that happens)
 	 * @throws GitAPIException if jgit does (not sure when that happens)
 	 */
-	// TODO: 20.10.20 Update comment after migration
 	private void insertAllUnknownCommits() throws IOException, GitAPIException {
 		LOGGER.debug("Inserting all unknown commits");
 
@@ -176,62 +141,6 @@ public class DbUpdater {
 		// Inserting the commits first so we don't violate any foreign key constraints
 		db.dsl().batchInsert(recordsToInsert).execute();
 		db.dsl().batchInsert(relationshipsToInsert).execute();
-	}
-
-	/**
-	 * Migrate all commits that haven't been migrated yet by looking them up in the jgit repo. After
-	 * this function is called, there should be no more un-migrated commits for this repo. Commits
-	 * that could not be found in the jgit repo are deleted.
-	 */
-	private void migrateCommits() {
-		LOGGER.debug("Migrating commits");
-
-		List<KnownCommitRecord> toBeDeleted = new ArrayList<>();
-		List<KnownCommitRecord> toBeUpdated = new ArrayList<>();
-		List<CommitRelationshipRecord> relationships = new ArrayList<>();
-
-		try (JgitCommitWalk walk = new JgitCommitWalk(jgitRepo)) {
-			db.selectFrom(KNOWN_COMMIT)
-				.where(KNOWN_COMMIT.REPO_ID.eq(repoIdStr))
-				.andNot(KNOWN_COMMIT.MIGRATED)
-				.forEach(record -> {
-					CommitHash hash = new CommitHash(record.getHash());
-					Optional<JgitCommit> optionalCommit = walk.getCommit(hash);
-
-					if (optionalCommit.isPresent()) {
-						JgitCommit commit = optionalCommit.get();
-
-						// Update the main record
-						record.setMigrated(true);
-						record.setAuthor(commit.getAuthor());
-						record.setAuthorDate(commit.getAuthorDate());
-						record.setCommitter(commit.getCommitter());
-						record.setCommitterDate(commit.getCommitterDate());
-						record.setMessage(commit.getMessage());
-						toBeUpdated.add(record);
-
-						// Add all parent relationships
-						commit.getParentHashes().stream()
-							.map(parentHash -> {
-								CommitRelationshipRecord relRecord = COMMIT_RELATIONSHIP.newRecord();
-								relRecord.setRepoId(repoIdStr);
-								relRecord.setChildHash(hash.getHash());
-								relRecord.setParentHash(parentHash.getHash());
-								return relRecord;
-							})
-							.forEach(relationships::add);
-					} else {
-						toBeDeleted.add(record);
-					}
-				});
-		}
-
-		LOGGER.info("Deleting {} commits, updating {} commits, inserting {} relationships",
-			toBeDeleted.size(), toBeUpdated.size(), relationships.size());
-
-		db.dsl().batchDelete(toBeDeleted).execute();
-		db.dsl().batchUpdate(toBeUpdated).execute();
-		db.dsl().batchInsert(relationships).execute();
 	}
 
 	/**
@@ -296,12 +205,9 @@ public class DbUpdater {
 
 	/**
 	 * Update the "branch" table with the repo's current branches.
-	 * <p>
-	 * This function should also work fine on un-migrated branches.
 	 *
 	 * @throws GitAPIException if jgit fails somehow
 	 */
-	// TODO: 19.10.20 Update this comment after migration
 	private void updateBranches() throws GitAPIException {
 		LOGGER.debug("Updating branches");
 
@@ -318,7 +224,6 @@ public class DbUpdater {
 				String latestCommitHash = ref.getObjectId().getName();
 
 				BranchRecord record = BRANCH.newRecord();
-				record.setMigrated(true);
 				record.setRepoId(repoIdStr);
 				record.setName(name.getName());
 				record.setLatestCommitHash(latestCommitHash);
