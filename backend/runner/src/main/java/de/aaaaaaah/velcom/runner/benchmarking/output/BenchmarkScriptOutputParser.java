@@ -86,10 +86,6 @@ public class BenchmarkScriptOutputParser {
 			metrics.add(parseMetric(field.getKey(), field.getValue()));
 		}
 
-		if (metrics.isEmpty()) {
-			throw new OutputParseException("Benchmark '" + name + "' has no metric: " + node);
-		}
-
 		return new Benchmark(name, metrics);
 	}
 

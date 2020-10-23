@@ -42,7 +42,6 @@ class BenchmarkScriptOutputParserTest {
 
 	@ParameterizedTest
 	@CsvSource(value = {
-		"{\"benchmark\": {} }",
 		"{\"benchmark\": [] }",
 		"{\"benchmark\": 20 }",
 		"{\"benchmark\": false }",
@@ -86,7 +85,6 @@ class BenchmarkScriptOutputParserTest {
 		"{ \"test\": { \"metric\": { \"error\": [] } } }",
 		"{ \"error\": 20 }",
 		"{ \"error\": false }",
-		"{ \"error\": {} }",
 		"{ \"error\": [] }",
 	}, delimiter = '|')
 	void parseInvalidErrorMessage(String data) {
