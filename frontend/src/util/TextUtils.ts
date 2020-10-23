@@ -1,27 +1,29 @@
 import Convert from 'ansi-to-html'
 import { vxm } from '@/store'
 
+// base16-bright : http://chriskempson.com/projects/base16/
 const darkThemeConvert = new Convert({
   colors: {
-    0: '#1B2B34',
-    1: '#EC5f67',
-    2: '#99C794',
-    3: '#FAC863',
-    4: '#6699CC',
-    5: '#C594C5',
-    6: '#5FB3B3',
-    7: '#C0C5CE',
-    8: '#65737E',
-    9: '#EC5f67',
-    10: '#99C794',
-    11: '#FAC863',
-    12: '#6699CC',
-    13: '#C594C5',
-    14: '#5FB3B3',
-    15: '#D8DEE9'
+    0: '#000000',
+    1: '#fb0120',
+    2: '#a1c659',
+    3: '#fda331',
+    4: '#6fb3d2',
+    5: '#d381c3',
+    6: '#76c7b7',
+    7: '#e0e0e0',
+    8: '#b0b0b0',
+    9: '#fb0120',
+    10: '#a1c659',
+    11: '#fda331',
+    12: '#6fb3d2',
+    13: '#d381c3',
+    14: '#76c7b7',
+    15: '#ffffff'
   }
 })
 
+// base16-one-light: http://chriskempson.com/projects/base16/
 const lightThemeConvert = new Convert({
   colors: {
     0: '#fafafa',
