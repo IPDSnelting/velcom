@@ -291,7 +291,11 @@ export default class RepoDetail extends Vue {
   private availableGraphComponents = [
     {
       predicate: () => {
-        return vxm.detailGraphModule.visiblePoints < 30_000
+        // Do not care about zooming, only use echarts when he have only a handful of data points
+        const points =
+          vxm.detailGraphModule.detailGraph.length *
+          vxm.detailGraphModule.selectedDimensions.length
+        return points < 30_000
       },
       component: EchartsDetailGraph,
       name: 'Fancy'
