@@ -8,7 +8,7 @@
         <v-card-text>
           <div
             class="ma-4 error-message"
-            v-html="detailErrorDialogMessage"
+            v-html="safeDetailErrorDialogMessage"
           ></div>
         </v-card-text>
         <v-card-actions>
@@ -195,7 +195,7 @@ export default class MeasurementsDisplay extends Vue {
   private differences?: DimensionDifference[]
 
   private showDetailErrorDialog: boolean = false
-  private detailErrorDialogMessage: string = ''
+  private safeDetailErrorDialogMessage: string = ''
 
   private get headerFormats() {
     return [
@@ -303,7 +303,7 @@ export default class MeasurementsDisplay extends Vue {
     if (!item.error) {
       return ''
     }
-    this.detailErrorDialogMessage = safeConvertAnsi(item.error)
+    this.safeDetailErrorDialogMessage = safeConvertAnsi(item.error)
     this.showDetailErrorDialog = true
   }
 
