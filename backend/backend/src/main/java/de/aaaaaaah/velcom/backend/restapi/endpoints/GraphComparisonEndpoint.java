@@ -64,7 +64,7 @@ public class GraphComparisonEndpoint {
 
 		Dimension dimension = dimensionSet.iterator().next();
 
-		if (!benchmarkAccess.doesDimensionExist(dimension)) {
+		if (!benchmarkAccess.dimensionExists(dimension)) {
 			throw new NoSuchDimensionException(dimension);
 		}
 

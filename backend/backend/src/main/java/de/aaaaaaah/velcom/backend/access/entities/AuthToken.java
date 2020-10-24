@@ -2,6 +2,9 @@ package de.aaaaaaah.velcom.backend.access.entities;
 
 import java.util.Objects;
 
+/**
+ * A token used for authentication as repo admin or global admin.
+ */
 public class AuthToken {
 
 	private final String token;

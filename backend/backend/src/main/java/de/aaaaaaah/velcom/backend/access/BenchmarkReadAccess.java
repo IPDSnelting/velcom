@@ -504,7 +504,11 @@ public class BenchmarkReadAccess {
 		}
 	}
 
-	public boolean doesDimensionExist(Dimension dimension) {
+	/**
+	 * @param dimension a dimension
+	 * @return whether the dimension exists
+	 */
+	public boolean dimensionExists(Dimension dimension) {
 		return dimensions.containsKey(dimension);
 	}
 

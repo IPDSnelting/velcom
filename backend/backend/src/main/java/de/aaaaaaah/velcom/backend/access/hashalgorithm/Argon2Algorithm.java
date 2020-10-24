@@ -4,6 +4,9 @@ import de.aaaaaaah.velcom.backend.access.entities.AuthToken;
 import de.mkammerer.argon2.Argon2;
 import de.mkammerer.argon2.Argon2Factory;
 
+/**
+ * Uses the argon library to provide a password hashing algorithm.
+ */
 public class Argon2Algorithm implements HashAlgorithm {
 
 	public static final Argon2 argon = Argon2Factory.create(Argon2Factory.Argon2Types.ARGON2id);

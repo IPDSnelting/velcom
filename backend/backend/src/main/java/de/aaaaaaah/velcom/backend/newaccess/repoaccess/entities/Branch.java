@@ -3,6 +3,9 @@ package de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
 import java.util.Objects;
 
+/**
+ * A branch of a git repo.
+ */
 public class Branch {
 
 	private final RepoId repoId;

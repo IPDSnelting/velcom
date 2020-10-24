@@ -5,6 +5,9 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.ext.ExceptionMapper;
 
+/**
+ * An {@link ExceptionMapper} that transforms {@link ArgumentParseException}s to BAD_REQUEST.
+ */
 public class ArgumentParseExceptionMapper implements ExceptionMapper<ArgumentParseException> {
 
 	@Override

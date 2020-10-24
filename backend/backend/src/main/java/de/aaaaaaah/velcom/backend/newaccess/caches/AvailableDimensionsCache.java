@@ -39,6 +39,11 @@ public class AvailableDimensionsCache {
 		);
 	}
 
+	/**
+	 * Invalidate a specific repo's entry.
+	 *
+	 * @param repoId the id of the repo whose dimensions to remove from the cache
+	 */
 	public void invalidate(RepoId repoId) {
 		cache.invalidate(repoId);
 	}

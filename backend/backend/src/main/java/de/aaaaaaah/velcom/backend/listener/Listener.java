@@ -63,6 +63,7 @@ public class Listener {
 	 * @param repoStorage used to manipulate locally cloned repos
 	 * @param repoAccess used to read repo data
 	 * @param benchRepo used to keep the bench repo up-to-date
+	 * @param queue used to add new commits to the queue
 	 * @param pollInterval the time the listener waits between updating its repos
 	 */
 	public Listener(DatabaseStorage databaseStorage, RepoStorage repoStorage,
@@ -179,9 +180,9 @@ public class Listener {
 
 	/**
 	 * Pull a repo (or clone it if it doesn't exist yet), read its contents and update the database.
-	 * <p>
-	 * This function is threadsafe and can be called at any time, for example from the API when a new
-	 * repo is being added.
+	 *
+	 * <p> This function is threadsafe and can be called at any time, for example from the API when a
+	 * new repo is being added.
 	 *
 	 * @param repo the repository to update
 	 * @return Returns true if the repo was fetched or cloned successfully. Returns false if the

@@ -111,6 +111,14 @@ public class BenchmarkReadAccess {
 		}
 	}
 
+	/**
+	 * Works like {@link #getRun(RunId)} in that a {@link NoSuchRunException} is thrown if no run with
+	 * the specified id exists. This method is meant for the cases where a run must exist but more
+	 * detail is not needed.
+	 *
+	 * @param runId the id of the run that must exist
+	 * @throws NoSuchRunException if no run with that id exists
+	 */
 	public void guardRunExists(RunId runId) throws NoSuchRunException {
 		getRun(runId);
 	}

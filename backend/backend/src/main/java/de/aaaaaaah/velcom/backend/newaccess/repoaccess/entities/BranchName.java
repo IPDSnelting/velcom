@@ -13,10 +13,22 @@ public class BranchName implements Comparable<BranchName> {
 		this.name = name;
 	}
 
+	/**
+	 * Create a new {@link BranchName} from a string of the format {@code "refs/heads/[ranchname]"}.
+	 *
+	 * @param name a string of the format {@code "refs/heads/[ranchname]"}
+	 * @return the new {@link BranchName}
+	 */
 	public static BranchName fromFullName(String name) {
 		return new BranchName(name);
 	}
 
+	/**
+	 * Create a new {@link BranchName} from a string containing just the name of the branch.
+	 *
+	 * @param name a string containing just the name of the branch (i. e. {@code "master"})
+	 * @return the new {@link BranchName}
+	 */
 	public static BranchName fromName(String name) {
 		return new BranchName("refs/heads/" + name);
 	}
