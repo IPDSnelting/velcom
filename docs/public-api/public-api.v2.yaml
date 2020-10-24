@@ -779,6 +779,16 @@ paths:
           description: If the given task is not in the queue or not currently worked on by a runner.
       operationId: get-queue-task-taskId-progress
       description: Returns the last 100 lines the benchmark script working on the given task reported on its standard error stream.
+  /listener/fetch-all:
+    post:
+      summary: ''
+      operationId: post-listener-fetch-all
+      responses:
+        '200':
+          description: OK
+      description: 'Check all repos (including the benchmark repo) for new commits and perform necessary internal updates. After fetching is complete, the runners will automatically use the newest version of the benchmark repo.'
+      security:
+        - admin_credentials: []
 components:
   schemas:
     CommitHash:
