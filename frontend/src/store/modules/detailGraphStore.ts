@@ -269,14 +269,14 @@ export class DetailGraphStore extends VxModule {
             'includeYZoom',
             orUndefined(this.zoomYEndValue)
           ),
-          zoomXStart: respectOptions(
-            'includeXZoom',
-            orUndefined(this.zoomXStartValue)
-          ),
-          zoomXEnd: respectOptions(
-            'includeXZoom',
-            orUndefined(this.zoomXEndValue)
-          ),
+          zoomXStart:
+            options && options.includeXZoom
+              ? orUndefined(this.zoomXStartValue)
+              : orUndefined(this.startTime.getTime()),
+          zoomXEnd:
+            options && options.includeXZoom
+              ? orUndefined(this.zoomXEndValue)
+              : orUndefined(this.endTime.getTime()),
           dimensions: respectOptions('includeDimensions', this.dimensionString)
         }
       })
