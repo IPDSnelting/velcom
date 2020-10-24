@@ -27,6 +27,7 @@ import de.aaaaaaah.velcom.backend.restapi.endpoints.CompareEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.DebugEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.GraphComparisonEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.GraphDetailEndpoint;
+import de.aaaaaaah.velcom.backend.restapi.endpoints.ListenerEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.QueueEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.RecentRunsEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.RepoEndpoint;
@@ -177,6 +178,7 @@ public class ServerMain extends Application<GlobalConfig> {
 			new DebugEndpoint(dispatcher),
 			new GraphComparisonEndpoint(benchmarkAccess, repoAccess, comparison),
 			new GraphDetailEndpoint(commitAccess, benchmarkAccess, dimensionAccess, repoAccess),
+			new ListenerEndpoint(listener),
 			new QueueEndpoint(commitAccess, repoAccess, queue, dispatcher),
 			new RecentRunsEndpoint(benchmarkAccess, commitAccess, significantRunsCollector),
 			new RepoEndpoint(repoAccess, tokenAccess, benchmarkAccess, listener),

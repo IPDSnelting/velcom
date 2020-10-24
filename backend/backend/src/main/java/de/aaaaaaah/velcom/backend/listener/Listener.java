@@ -95,12 +95,12 @@ public class Listener {
 	}
 
 	/**
-	 * Update the bench repo and all repos that are in the db. Remove all local clones of repos that
-	 * are no longer in the db and (re-)clone all repos that are not cloned or whose clones are
-	 * broken.
+	 * Re-fetch and update the bench repo and all repos that are in the db. Remove all local clones of
+	 * repos that are no longer in the db and (re-)clone all repos that are not cloned or whose clones
+	 * are broken.
 	 */
 	@Timed(histogram = true)
-	private void updateAllRepos() {
+	public synchronized void updateAllRepos() {
 		LOGGER.debug("Updating all repos");
 
 		// Update the bench repo
