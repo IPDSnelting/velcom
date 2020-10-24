@@ -91,6 +91,9 @@ ALTER TABLE known_commit_old RENAME TO known_commit;
 CREATE INDEX idx_commit_relationship_upwards
   ON commit_relationship(repo_id, child_hash, parent_hash);
 
+CREATE INDEX idx_run_rid_hash
+  ON run(repo_id, commit_hash);
+
 -----------------------------------
 -- Ensure foreign keys are valid --
 -----------------------------------
