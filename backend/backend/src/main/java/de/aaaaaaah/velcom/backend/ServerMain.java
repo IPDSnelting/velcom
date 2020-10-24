@@ -34,7 +34,6 @@ import de.aaaaaaah.velcom.backend.restapi.endpoints.RepoEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.RunEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.TestTokenEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.exception.ArgumentParseExceptionMapper;
-import de.aaaaaaah.velcom.backend.restapi.exception.CommitAccessExceptionMapper;
 import de.aaaaaaah.velcom.backend.restapi.exception.InvalidQueryParamsExceptionMapper;
 import de.aaaaaaah.velcom.backend.restapi.exception.NoSuchCommitExceptionMapper;
 import de.aaaaaaah.velcom.backend.restapi.exception.NoSuchDimensionExceptionMapper;
@@ -258,7 +257,6 @@ public class ServerMain extends Application<GlobalConfig> {
 			.setSerializationInclusion(Include.NON_NULL);
 
 		// Exceptions
-		environment.jersey().register(new CommitAccessExceptionMapper());
 		environment.jersey().register(new InvalidQueryParamsExceptionMapper());
 		environment.jersey().register(new NoSuchCommitExceptionMapper());
 		environment.jersey().register(new NoSuchDimensionExceptionMapper());
