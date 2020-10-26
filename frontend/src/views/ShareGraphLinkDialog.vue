@@ -91,11 +91,9 @@ export default class ShareGraphLinkDialog extends Vue {
   private get selectableOptions() {
     return [
       {
-        label: 'Include X-axis zoom',
-        selectable:
-          vxm.detailGraphModule.zoomXStartValue !== null ||
-          vxm.detailGraphModule.zoomXEndValue !== null,
-        unselectableMessage: "You haven't zoomed the X axis",
+        label: 'Use X-axis zoom instead of start/end date',
+        selectable: true,
+        unselectableMessage: 'That you see this is a bug. Please report it :)',
         key: 'includeXZoom'
       },
       {

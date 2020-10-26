@@ -224,13 +224,16 @@
                   </v-menu>
                 </v-col>
                 <v-col>
-                  <v-text-field
-                    @blur="saveDuration"
-                    v-model="duration"
-                    :disabled="dateLocked === 'neither'"
-                    label="number of days to fetch:"
-                    class="mr-5"
-                  ></v-text-field>
+                  <v-form>
+                    <v-text-field
+                      @blur="saveDuration"
+                      :value="duration"
+                      :disabled="dateLocked === 'neither'"
+                      label="number of days to fetch:"
+                      class="mr-5"
+                      :rules="[ruleIsNumber]"
+                    ></v-text-field>
+                  </v-form>
                 </v-col>
               </v-row>
             </v-container>
@@ -332,31 +335,30 @@ export default class RepoDetail extends Vue {
   private saveStartDateMenu(date: string) {
     ;(this.$refs.startDateMenu as any).save(date)
     vxm.detailGraphModule.startTime = new Date(date)
-    vxm.detailGraphModule.duration = this.computeDuration()
     this.retrieveGraphData()
   }
 
   private saveStopDateMenu(date: string) {
     ;(this.$refs.stopDateMenu as any).save(date)
     vxm.detailGraphModule.endTime = new Date(date)
-    vxm.detailGraphModule.duration = this.computeDuration()
     this.retrieveGraphData()
   }
 
-  private saveDuration() {
+  private saveDuration(event: Event) {
+    const target = event.target as HTMLInputElement
+    const duration: number = parseInt(target.value)
+
+    if (isNaN(duration)) {
+      return
+    }
+
     if (this.dateLocked === 'start') {
-      console.log(vxm.detailGraphModule.startTime.getDate())
       vxm.detailGraphModule.endTime = new Date(
-        new Date().setDate(
-          vxm.detailGraphModule.startTime.getDate() + this.duration
-        )
+        new Date().setDate(vxm.detailGraphModule.startTime.getDate() + duration)
       )
-      console.log(vxm.detailGraphModule.startTime.getDate() + this.duration)
     } else {
       vxm.detailGraphModule.startTime = new Date(
-        new Date().setDate(
-          vxm.detailGraphModule.endTime.getDate() - this.duration
-        )
+        new Date().setDate(vxm.detailGraphModule.endTime.getDate() - duration)
       )
     }
     this.retrieveGraphData()
@@ -386,10 +388,6 @@ export default class RepoDetail extends Vue {
     return vxm.detailGraphModule.duration
   }
 
-  private set duration(duration: number) {
-    vxm.detailGraphModule.duration = Number(duration) // the number is a lie :(
-  }
-
   private get yStartsAtZero(): boolean {
     return vxm.detailGraphModule.beginYScaleAtZero
   }
@@ -410,16 +408,6 @@ export default class RepoDetail extends Vue {
     } else {
       this.dateLocked = this.dateLocked === 'start' ? 'end' : 'start'
     }
-  }
-
-  private computeDuration(): number {
-    const timeDiff =
-      vxm.detailGraphModule.endTime.getTime() -
-      vxm.detailGraphModule.startTime.getTime()
-
-    return (vxm.detailGraphModule.duration = Math.ceil(
-      timeDiff / (1000 * 3600 * 24)
-    ))
   }
 
   private stopAfterStart(): boolean | string {
@@ -449,6 +437,10 @@ export default class RepoDetail extends Vue {
         this.selectedGraphComponent = correctSeries.component
       }
     }
+  }
+
+  private ruleIsNumber(input: string): string | boolean {
+    return isNaN(parseInt(input)) ? 'Please enter a number' : true
   }
 
   mounted(): void {
