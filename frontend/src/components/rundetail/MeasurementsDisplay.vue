@@ -6,7 +6,10 @@
           <v-toolbar-title>Full error message</v-toolbar-title>
         </v-toolbar>
         <v-card-text>
-          <div class="ma-4 error-message">{{ detailErrorDialogMessage }}</div>
+          <div
+            class="ma-4 error-message"
+            v-html="safeDetailErrorDialogMessage"
+          ></div>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
@@ -40,10 +43,7 @@
           class="error-message error-message-tooltip"
           text
           outlined
-          @click.stop="
-            showDetailErrorDialog = true
-            detailErrorDialogMessage = item.error
-          "
+          @click.stop="displayErrorDetail(item)"
         >
           {{ formatErrorShorthand(item.error) }}
         </v-btn>
@@ -69,7 +69,7 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { Prop } from 'vue-property-decorator'
+import { Prop, Watch } from 'vue-property-decorator'
 import {
   Measurement,
   MeasurementError,
@@ -79,6 +79,8 @@ import {
   Dimension
 } from '@/store/types'
 import MeasurementValueDisplay from '@/components/rundetail/MeasurementValueDisplay.vue'
+import { safeConvertAnsi } from '@/util/TextUtils'
+import { vxm } from '@/store'
 
 const numberFormat: Intl.NumberFormat = new Intl.NumberFormat(
   new Intl.NumberFormat().resolvedOptions().locale,
@@ -193,7 +195,7 @@ export default class MeasurementsDisplay extends Vue {
   private differences?: DimensionDifference[]
 
   private showDetailErrorDialog: boolean = false
-  private detailErrorDialogMessage: string = ''
+  private safeDetailErrorDialogMessage: string = ''
 
   private get headerFormats() {
     return [
@@ -297,6 +299,25 @@ export default class MeasurementsDisplay extends Vue {
     return error.substring(0, MAX_ERROR_LENGTH) + '…'
   }
 
+  private displayErrorDetail(item: Item) {
+    if (!item.error) {
+      return ''
+    }
+    this.safeDetailErrorDialogMessage = safeConvertAnsi(item.error)
+    this.showDetailErrorDialog = true
+  }
+
+  // noinspection JSUnusedLocalSymbols (Used by the watcher below)
+  private get darkThemeSelected() {
+    return vxm.userModule.darkThemeSelected
+  }
+
+  @Watch('darkThemeSelected')
+  private onDarkThemeSelectionChanged() {
+    // The ANSI conversion needs to be redone
+    this.$forceUpdate()
+  }
+
   private rowClicked(item: Item) {
     const currentSelection = document.getSelection()
     if (currentSelection && currentSelection.toString()) {
@@ -316,7 +337,6 @@ export default class MeasurementsDisplay extends Vue {
 <!--suppress CssUnresolvedCustomProperty -->
 <style scoped>
 .error-message {
-  color: var(--v-error-base);
   font-family: monospace;
   white-space: pre-line;
   overflow: hidden;
@@ -324,6 +344,7 @@ export default class MeasurementsDisplay extends Vue {
 
 .error-message-tooltip {
   cursor: pointer;
+  color: var(--v-error-base);
 }
 </style>
 

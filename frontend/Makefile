@@ -5,11 +5,11 @@ mode?=production
 all: build
 
 node_modules: package.json yarn.lock
-	yarnpkg install
+	yarnpkg --color=always install
 	touch node_modules
 
 dist: $(shell find src -name "*.vue" -o -name "*.ts") node_modules .env.production
-	yarnpkg build --mode="$(mode)"
+	yarnpkg --color=always build --mode="$(mode)"
 	touch dist
 
 build: dist

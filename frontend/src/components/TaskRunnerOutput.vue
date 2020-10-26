@@ -22,17 +22,16 @@
       </v-alert>
       <div class="runner-output mx-2">
         <div
-          v-for="{ lineNumber, text, classes } in lines"
+          v-for="{ lineNumber, text } in lines"
           :key="lineNumber"
           class="line"
-          :class="classes"
         >
           <span
             class="mr-2 font-weight-bold align-end text-right d-inline-block"
             style="min-width: 4ch; user-select: none"
             >{{ lineNumber }}</span
           >
-          {{ text }}
+          <span v-html="text"></span>
         </div>
       </div>
       <v-row align="center" justify="center">
@@ -54,6 +53,7 @@ import Component from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import { StreamedRunnerOutput, TaskId } from '@/store/types'
 import { vxm } from '@/store'
+import { safeConvertAnsi } from '@/util/TextUtils'
 
 @Component
 export default class TaskRunnerOutput extends Vue {
@@ -101,34 +101,26 @@ export default class TaskRunnerOutput extends Vue {
   private get lines(): {
     lineNumber: number
     text: string
-    classes: string[]
   }[] {
     const output = this.output
     if (!output) {
       return []
     }
-    const levelRegex = [
-      {
-        level: 'warning',
-        regex: this.startsRoughlyWithLevel('warning')
-      },
-      {
-        level: 'error',
-        regex: this.startsRoughlyWithLevel('error')
-      }
-    ]
     return output.outputLines.map((line, index) => ({
       lineNumber: index + output.indexOfFirstLine + 1,
-      text: line,
-      classes: levelRegex.map(it =>
-        it.regex.exec(line) !== null ? `text--${it.level}` : ''
-      )
+      text: safeConvertAnsi(line)
     }))
   }
 
-  private startsRoughlyWithLevel(level: string): RegExp {
-    const regexString = `^\\s*((\\[${level}\\])|${level})`
-    return new RegExp(regexString, 'iu')
+  // noinspection JSUnusedLocalSymbols (Used by the watcher below)
+  private get darkThemeSelected() {
+    return vxm.userModule.darkThemeSelected
+  }
+
+  @Watch('darkThemeSelected')
+  private onDarkThemeSelectionChanged() {
+    // The ANSI conversion needs to be redone
+    this.$forceUpdate()
   }
 
   private mounted() {
@@ -154,17 +146,12 @@ export default class TaskRunnerOutput extends Vue {
   max-height: 90vh;
   overflow-y: scroll;
 }
+/*noinspection CssUnusedSymbol*/
 .theme--light .runner-output .line:hover {
   background-color: var(--v-rowHighlight-lighten1) !important;
 }
+/*noinspection CssUnusedSymbol*/
 .theme--dark .runner-output .line:hover {
   background-color: var(--v-rowHighlight-darken1) !important;
-}
-
-.text--warning {
-  color: var(--v-warning-base);
-}
-.text--error {
-  color: var(--v-error-base);
 }
 </style>

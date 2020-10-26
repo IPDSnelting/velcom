@@ -6,7 +6,7 @@
           <v-card-title>
             <v-toolbar dark :color="runColor">{{ errorType }} Error</v-toolbar>
           </v-card-title>
-          <v-card-text class="mx-2 error-text">{{ error }}</v-card-text>
+          <v-card-text class="mx-2 error-text" v-html="error"></v-card-text>
         </v-card>
       </v-col>
     </v-row>
@@ -47,9 +47,11 @@ import {
   RunWithDifferences,
   Dimension
 } from '@/store/types'
-import { Prop } from 'vue-property-decorator'
+import { Prop, Watch } from 'vue-property-decorator'
 import MeasurementsDisplay from '@/components/rundetail/MeasurementsDisplay.vue'
 import RunInfo from '@/components/rundetail/RunInfo.vue'
+import { safeConvertAnsi } from '@/util/TextUtils'
+import { vxm } from '@/store'
 
 @Component({
   components: {
@@ -78,7 +80,7 @@ export default class RunDetail extends Vue {
     if (this.errorType === undefined) {
       return undefined
     }
-    return (this.run.result as RunResultVelcomError).error
+    return safeConvertAnsi((this.run.result as RunResultVelcomError).error)
   }
 
   private get errorType(): string | undefined {
@@ -107,6 +109,17 @@ export default class RunDetail extends Vue {
 
   private navigateToDetailGraph(dimension: Dimension) {
     this.$emit('navigate-to-detail-graph', dimension)
+  }
+
+  // noinspection JSUnusedLocalSymbols (Used by the watcher below)
+  private get darkThemeSelected() {
+    return vxm.userModule.darkThemeSelected
+  }
+
+  @Watch('darkThemeSelected')
+  private onDarkThemeSelectionChanged() {
+    // The ANSI conversion needs to be redone
+    this.$forceUpdate()
   }
 }
 </script>
