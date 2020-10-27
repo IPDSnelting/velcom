@@ -9,6 +9,7 @@
         <template #activator="{ on }">
           <img
             v-on="on"
+            @click="refreshHome"
             width="45px"
             height="45px"
             src="@/assets/mini-logo.png"
@@ -142,6 +143,10 @@ export default class NavigationBar extends Vue {
 
   logout(): void {
     vxm.userModule.logOut()
+  }
+
+  private refreshHome() {
+    router.push({ path: 'home' })
   }
 
   // ============== ICONS ==============
