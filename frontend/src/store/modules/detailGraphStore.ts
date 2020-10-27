@@ -247,6 +247,7 @@ export class DetailGraphStore extends VxModule {
   get permanentLink(): (options?: PermanentLinkOptions) => string {
     return options => {
       const orUndefined = (it: any) => (it ? '' + it : undefined)
+      const orElse = (it: any, subst: any) => (it ? '' + it : '' + subst)
       function respectOptions<T>(
         name: keyof PermanentLinkOptions,
         value: T
@@ -271,11 +272,11 @@ export class DetailGraphStore extends VxModule {
           ),
           zoomXStart:
             options && options.includeXZoom
-              ? orUndefined(this.zoomXStartValue)
+              ? orElse(this.zoomXStartValue, this.startTime.getTime())
               : orUndefined(this.startTime.getTime()),
           zoomXEnd:
             options && options.includeXZoom
-              ? orUndefined(this.zoomXEndValue)
+              ? orElse(this.zoomXEndValue, this.endTime.getTime())
               : orUndefined(this.endTime.getTime()),
           dimensions: respectOptions('includeDimensions', this.dimensionString)
         }
