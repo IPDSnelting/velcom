@@ -51,6 +51,7 @@ import { vxm } from '@/store'
 import DetailDatapointDialog from '@/components/dialogs/DetailDatapointDialog.vue'
 import { DimensionDetailPoint } from '@/store/modules/detailGraphStore'
 import { formatDate } from '@/util/TimeUtil'
+import { escapeHtml } from '@/util/TextUtils'
 
 type ValidEchartsSeries = EChartOption.SeriesLine | EChartOption.SeriesGraph
 type SeriesGenerationFunction = (id: DimensionId) => ValidEchartsSeries
@@ -259,12 +260,14 @@ export default class EchartsDetailGraph extends Vue {
       const dimension = this.dimensions[val.seriesIndex || 0]
       const color = this.dimensionColor(dimension)
       const datapoint = val.data as EchartsDataPoint
+      const safeBenchmark = escapeHtml(dimension.benchmark)
+      const safeMetric = escapeHtml(dimension.metric)
 
       return `
                 <tr>
                   <td>
                     <span class="color-preview" style="background-color: ${color}"></span>
-                    ${dimension.benchmark} - ${dimension.metric}
+                    ${safeBenchmark} - ${safeMetric}
                   </td>
                   <td>${this.numberFormat.format(datapoint.dataValue)}</td>
                 </tr>
@@ -273,20 +276,21 @@ export default class EchartsDetailGraph extends Vue {
 
     const samplePoint = values[0].data as EchartsDataPoint
 
+    const authorDate = formatDate(samplePoint.time)
     return `
                 <table class="echarts-tooltip-table">
                   <tr>
                     <td>Hash</td>
-                    <td>${samplePoint.name}</td>
+                    <td>${escapeHtml(samplePoint.name)}</td>
                   </tr>
                   </tr>
                     <td>Message</td>
-                    <td>${samplePoint.summary}</td>
+                    <td>${escapeHtml(samplePoint.summary)}</td>
                   </tr>
                   <tr>
                     <td>Author</td>
                     <td>
-                      ${samplePoint.author} at ${formatDate(samplePoint.time)}
+                      ${escapeHtml(samplePoint.author)} at ${authorDate}
                     </td>
                   </tr>
                   ${dimensionRows.join('\n')}
