@@ -33,10 +33,10 @@
       class="measurement-table"
       @click:row="rowClicked"
     >
-      <template #[`item.value`]="{ item, value }">
+      <template #[`item.value`]="{ item }">
         <measurement-value
           v-if="item.error === undefined"
-          :value="value"
+          :value="item.valueFormatted"
         ></measurement-value>
         <v-btn
           v-else
@@ -49,12 +49,12 @@
         </v-btn>
       </template>
       <template
-        v-for="{ slotName, tooltip } in headerFormats"
-        v-slot:[slotName]="{ item, value }"
+        v-for="{ slotName, displayField, tooltip } in headerFormats"
+        v-slot:[slotName]="{ item }"
       >
         <span :key="slotName">
           <measurement-value
-            :value="value"
+            :value="item[displayField]"
             :tooltip-message="
               typeof tooltip === 'string' ? tooltip : tooltip(item)
             "
@@ -91,11 +91,11 @@ class Item {
   readonly benchmark: string
   readonly metric: string
   readonly unit: string
-  readonly value?: string
-  readonly standardDeviation?: string
-  readonly standardDeviationPercent?: string
-  readonly change?: string
-  readonly changePercent?: string
+  readonly value?: number
+  readonly standardDeviation?: number
+  readonly standardDeviationPercent?: number
+  readonly change?: number
+  readonly changePercent?: number
   readonly changeColor: string
   readonly error?: string
 
@@ -113,16 +113,36 @@ class Item {
     this.benchmark = benchmark
     this.metric = metric
     this.unit = unit
-    this.value = this.formatNumber(value)
-    this.standardDeviation = this.formatNumber(standardDeviation)
+    this.value = value
+    this.standardDeviation = standardDeviation
     this.standardDeviationPercent = this.computeStandardDeviationPercent(
       value,
-      standardDeviation
+      changePercent
     )
-    this.change = this.formatNumber(change)
-    this.changePercent = this.formatPercent(changePercent)
+    this.change = change
+    this.changePercent = changePercent
     this.error = error
     this.changeColor = this.computeChangeColor(interpretation, change)
+  }
+
+  get valueFormatted() {
+    return this.formatNumber(this.value)
+  }
+
+  get standardDeviationFormatted() {
+    return this.formatNumber(this.standardDeviation)
+  }
+
+  get standardDeviationPercentFormatted() {
+    return this.formatPercent(this.standardDeviationPercent)
+  }
+
+  get changeFormatted() {
+    return this.formatNumber(this.change)
+  }
+
+  get changePercentFormatted() {
+    return this.formatPercent(this.changePercent)
   }
 
   private formatNumber(number?: number): string | undefined {
@@ -145,15 +165,15 @@ class Item {
   private computeStandardDeviationPercent(
     value?: number,
     standardDeviation?: number
-  ): string | undefined {
+  ): number | undefined {
     if (value === undefined || standardDeviation === undefined) {
-      return this.formatPercent(undefined)
+      return undefined
     }
     // divide by zero :(
     if (value === 0) {
-      return this.formatPercent(undefined)
+      return undefined
     }
-    return this.formatPercent(standardDeviation / value)
+    return standardDeviation / value
   }
 
   private computeChangeColor(
@@ -201,10 +221,12 @@ export default class MeasurementsDisplay extends Vue {
     return [
       {
         slotName: 'item.change',
+        displayField: 'changeFormatted',
         tooltip: 'No unambiguous parent commit found'
       },
       {
         slotName: 'item.changePercent',
+        displayField: 'changePercentFormatted',
         tooltip: (item: Item) => {
           if (!item.change) {
             return 'No unambiguous parent commit found'
@@ -214,11 +236,13 @@ export default class MeasurementsDisplay extends Vue {
       },
       {
         slotName: 'item.standardDeviation',
+        displayField: 'standardDeviationFormatted',
         tooltip:
           'Not applicable as the benchmark script did not report enough values'
       },
       {
         slotName: 'item.standardDeviationPercent',
+        displayField: 'standardDeviationPercentFormatted',
         tooltip:
           'Not applicable as the benchmark script did not report enough values'
       }
