@@ -352,13 +352,15 @@ export default class RepoDetail extends Vue {
       return
     }
 
+    const durationAsMillis = duration * 1000 * 60 * 60 * 24 // ms * minutes * hours * days
+
     if (this.dateLocked === 'start') {
       vxm.detailGraphModule.endTime = new Date(
-        new Date().setDate(vxm.detailGraphModule.startTime.getDate() + duration)
+        vxm.detailGraphModule.startTime.getTime() + durationAsMillis
       )
     } else {
       vxm.detailGraphModule.startTime = new Date(
-        new Date().setDate(vxm.detailGraphModule.endTime.getDate() - duration)
+        vxm.detailGraphModule.endTime.getTime() - durationAsMillis
       )
     }
     this.retrieveGraphData()
