@@ -32,6 +32,29 @@ public class Commit {
 		this.message = message;
 	}
 
+	/**
+	 * Returns a placeholder commit to be used in situations where you absolutely need a {@link
+	 * Commit} but don't have any available.
+	 *
+	 * @param repoId the commit's repo id
+	 * @param hash the commit's hash
+	 * @return a placeholder commit with the specified repo id and hash and placeholder values in all
+	 * 	other fields.
+	 */
+	public static Commit placeholder(RepoId repoId, CommitHash hash) {
+		return new Commit(
+			repoId,
+			hash,
+			false,
+			false,
+			"N/A",
+			Instant.EPOCH,
+			"N/A",
+			Instant.EPOCH,
+			"N/A"
+		);
+	}
+
 	public RepoId getRepoId() {
 		return repoId;
 	}

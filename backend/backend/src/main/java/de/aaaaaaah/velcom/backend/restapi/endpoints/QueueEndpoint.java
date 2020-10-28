@@ -91,7 +91,12 @@ public class QueueEndpoint {
 		List<JsonTask> jsonTasks = tasks.stream()
 			.map(task -> {
 				JsonSource source = task.getSource()
-					.mapLeft(it -> commitPerHashPerRepo.get(it.getRepoId()).get(it.getHash()))
+					.mapLeft(it -> {
+						RepoId repoId = it.getRepoId();
+						CommitHash hash = it.getHash();
+						return commitPerHashPerRepo.get(repoId)
+							.getOrDefault(hash, Commit.placeholder(repoId, hash));
+					})
 					.consume(JsonSource::fromCommit, JsonSource::fromTarSource);
 				return JsonTask.fromTask(task, source);
 			})
