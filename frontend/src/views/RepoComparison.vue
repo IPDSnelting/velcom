@@ -177,8 +177,8 @@
                   <commit-chip
                     class="mr-2"
                     :to="{
-                      name: 'commit-detail',
-                      params: { repoID: referenceRepoID, hash: referenceHash }
+                      name: 'run-detail',
+                      params: { first: referenceRepoID, second: referenceHash }
                     }"
                     :commitHash="referenceHash"
                     :copyOnClick="false"
@@ -354,7 +354,7 @@ export default class RepoComparison extends Vue {
 
   private get referenceRepoID(): string {
     return vxm.comparisonGraphModule.referenceDatapoint !== undefined
-      ? vxm.comparisonGraphModule.referenceDatapoint.hash
+      ? vxm.comparisonGraphModule.referenceDatapoint.repoId
       : ''
   }
 

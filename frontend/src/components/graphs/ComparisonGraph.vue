@@ -544,8 +544,8 @@ export default class ComparisonGraph extends Vue {
       .on('mouseleave', this.mouseleave)
       .on('click', (d: ComparisonDataPoint) => {
         this.$router.push({
-          name: 'commit-detail',
-          params: { repoID: d.repoId, hash: d.hash }
+          name: 'run-detail',
+          params: { first: d.repoId, second: d.hash }
         })
       })
       .on('contextmenu', (d: ComparisonDataPoint) => {
@@ -556,8 +556,8 @@ export default class ComparisonGraph extends Vue {
         if (d3.event.which === 2) {
           d3.event.preventDefault()
           const routeData = this.$router.resolve({
-            name: 'commit-detail',
-            params: { repoID: d.repoId, hash: d.hash }
+            name: 'run-detail',
+            params: { first: d.repoId, second: d.hash }
           })
           window.open(routeData.href, '_blank')
         }
