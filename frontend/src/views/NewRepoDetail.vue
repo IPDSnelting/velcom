@@ -32,6 +32,8 @@
           </v-card-title>
           <v-card-text>
             <component
+              ref="graphComponent"
+              :placeholderHeight="graphPlaceholderHeight"
               :is="selectedGraphComponent"
               :dimensions="selectedDimensions"
               :beginYAtZero="yStartsAtZero"
@@ -286,6 +288,7 @@ export default class RepoDetail extends Vue {
 
   private today = new Date().toISOString().substr(0, 10)
 
+  private graphPlaceholderHeight: number = 100
   private useMatrixSelector: boolean = false
 
   private startDateMenuOpen: boolean = false
@@ -431,6 +434,11 @@ export default class RepoDetail extends Vue {
   private async retrieveGraphData(): Promise<void> {
     if (this.stopAfterStart()) {
       this.selectedGraphComponent = GraphPlaceholder
+
+      const height = (this.$refs.graphComponent as Vue).$el.clientHeight
+      console.log('Set to', height)
+      this.graphPlaceholderHeight = height
+
       await vxm.detailGraphModule.fetchDetailGraph()
       const correctSeries = this.availableGraphComponents.find(it =>
         it.predicate()
