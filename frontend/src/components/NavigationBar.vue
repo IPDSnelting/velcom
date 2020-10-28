@@ -8,6 +8,7 @@
       <v-tooltip bottom color="rgba(0,0,0,0)" class="logoTooltip">
         <template #activator="{ on }">
           <img
+            id="logo"
             v-on="on"
             @click="$emit('navigate', 'home')"
             width="45px"
@@ -19,7 +20,9 @@
         </template>
         <img src="@/assets/mini-logo.png" alt="logo" class="mx-4" id="logo" />
       </v-tooltip>
-      <v-toolbar-title>{{ title }}</v-toolbar-title>
+      <v-toolbar-title id="title" @click="$emit('navigate', 'home')"
+        >{{ title }}
+      </v-toolbar-title>
 
       <v-spacer></v-spacer>
 
@@ -156,5 +159,13 @@ export default class NavigationBar extends Vue {
 /*noinspection CssUnusedSymbol*/
 .v-tooltip__content {
   opacity: 1 !important;
+}
+
+#logo {
+  cursor: pointer;
+}
+
+#title {
+  cursor: pointer;
 }
 </style>
