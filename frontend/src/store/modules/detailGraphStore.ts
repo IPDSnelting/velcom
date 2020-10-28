@@ -282,7 +282,7 @@ export class DetailGraphStore extends VxModule {
         }
       })
 
-      return decodeURIComponent(location.origin + route.href)
+      return location.origin + route.href
     }
   }
 

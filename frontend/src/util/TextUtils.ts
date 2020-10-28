@@ -50,7 +50,7 @@ const lightThemeConvert = new Convert({
  *
  * @param input the input string to escape
  */
-function escapeHtml(input: string): string {
+export function escapeHtml(input: string): string {
   const p = document.createElement('p')
   p.appendChild(document.createTextNode(input))
   return p.innerHTML

@@ -17,6 +17,7 @@ import { DetailDataPoint, Dimension, DimensionId } from '@/store/types'
 import { vxm } from '@/store'
 import 'dygraphs/css/dygraph.css'
 import Crosshair from 'dygraphs/src/extras/crosshair.js'
+import { escapeHtml } from '@/util/TextUtils'
 
 // eslint-disable-next-line no-undef
 type RealOptions = dygraphs.Options & {
@@ -125,14 +126,14 @@ export default class DytailGraph extends Vue {
       data.sort((a, b) => b.y - a.y)
 
       const dimensionRows = data.map(val => {
-        const dimension = val.labelHTML
+        const safeDimension = escapeHtml(val.labelHTML)
         const color = val.color
 
         return `
                 <tr>
                   <td>
                     <span class="color-preview" style="background-color: ${color}"></span>
-                    ${dimension}
+                    ${safeDimension}
                   </td>
                   <td>${this.numberFormat.format(val.y)}</td>
                 </tr>
@@ -142,16 +143,18 @@ export default class DytailGraph extends Vue {
       return `<table class="dygraphs-tooltip-table">
                   <tr>
                     <td>Hash</td>
-                    <td>${datapoint ? datapoint.hash : 'xxx'}</td>
+                    <td>${datapoint ? escapeHtml(datapoint.hash) : 'xxx'}</td>
                   </tr>
                   </tr>
                     <td>Message</td>
-                    <td>${datapoint ? datapoint.summary : 'xxx'}</td>
+                    <td>${
+                      datapoint ? escapeHtml(datapoint.summary) : 'xxx'
+                    }</td>
                   </tr>
                   <tr>
                     <td>Author</td>
                     <td>
-                      ${datapoint ? datapoint.author : 'xxx'} at ${
+                      ${datapoint ? escapeHtml(datapoint.author) : 'xxx'} at ${
         datapoint ? datapoint.authorDate.toLocaleString() : 'xxx'
       }
                     </td>
@@ -198,7 +201,9 @@ export default class DytailGraph extends Vue {
       file: data,
       labels: [
         'x',
-        ...this.dimensions.map(it => it.benchmark + ' - ' + it.metric)
+        ...this.dimensions.map(it =>
+          escapeHtml(it.benchmark + ' - ' + it.metric)
+        )
       ],
       colors: this.dimensionsColors(),
       dateWindow: [
