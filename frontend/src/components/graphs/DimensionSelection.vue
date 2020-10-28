@@ -5,8 +5,13 @@
         <v-text-field label="Search" v-model="search"></v-text-field>
       </v-col>
       <v-col cols="auto mr-4 mb-2">
-        <v-btn text color="primary" @click="changed([])"
-          >Deselect all metrics
+        <v-btn
+          text
+          color="primary"
+          @click="changed([])"
+          :disabled="selectedDimensions.length === 0"
+        >
+          Deselect all metrics
         </v-btn>
       </v-col>
     </v-row>
