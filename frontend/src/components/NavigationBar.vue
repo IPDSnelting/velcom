@@ -9,7 +9,7 @@
         <template #activator="{ on }">
           <img
             v-on="on"
-            @click="refreshHome"
+            @click="$emit('navigate', 'home')"
             width="45px"
             height="45px"
             src="@/assets/mini-logo.png"
@@ -29,7 +29,7 @@
         v-for="item in validRoutes"
         :key="item.routeName"
         text
-        :to="{ name: item.routeName }"
+        @click="$emit('navigate', item.routeName)"
       >
         {{ item.label }}
         <v-icon right dark :size="iconFontSize">{{ item.icon }}</v-icon>
@@ -115,6 +115,7 @@ class NavigationItem {
 export default class NavigationBar extends Vue {
   private iconFontSize = 22
   private title = 'VelCom'
+  private homeKey: number = 0
 
   private drawerShown = false
 
@@ -143,10 +144,6 @@ export default class NavigationBar extends Vue {
 
   logout(): void {
     vxm.userModule.logOut()
-  }
-
-  private refreshHome() {
-    router.push({ path: 'home' })
   }
 
   // ============== ICONS ==============
