@@ -1,7 +1,7 @@
 <template>
   <v-app>
     <v-main>
-      <nav-bar v-on:navigate="navigate"></nav-bar>
+      <nav-bar v-on:refresh="refresh"></nav-bar>
       <snackbar ref="global-snackbar"></snackbar>
       <router-view :key="routerViewKey" />
       <theme-selector @use-dark-theme="setDarkTheme"></theme-selector>
@@ -31,11 +31,9 @@ export default class App extends Vue {
   private clickHandler: any = this.checkClick
   private routerViewKey: number = 0
 
-  private navigate(routeName: string) {
+  private refresh(routeName: string) {
     if (this.$route.name === routeName) {
       this.routerViewKey++
-    } else {
-      router.push({ name: routeName })
     }
   }
 
