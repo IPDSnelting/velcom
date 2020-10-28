@@ -1,7 +1,16 @@
 <template>
   <v-data-table :headers="headers" :items="items" multi-sort>
     <template #[`item.difference`]="{ item, value }">
-      <span :style="{ color: item.changeColor }">{{ value }}</span>
+      <span :style="{ color: item.changeColor }">{{
+        item.formatNumber(value)
+      }}</span>
+    </template>
+
+    <template
+      v-for="slotName in ['item.valueFirst', 'item.valueSecond']"
+      v-slot:[slotName]="{ item, value }"
+    >
+      <span :key="slotName">{{ item.formatNumber(value) }}</span>
     </template>
 
     <template #[`header.difference`]="{}">
@@ -32,9 +41,9 @@ class TableItem {
   readonly benchmark: string
   readonly metric: string
   readonly unit: string
-  readonly valueFirst: string
-  readonly difference: string
-  readonly valueSecond: string
+  readonly valueFirst?: number
+  readonly difference?: number
+  readonly valueSecond?: number
   readonly changeColor: string
 
   constructor(
@@ -49,13 +58,13 @@ class TableItem {
     this.benchmark = benchmark
     this.metric = metric
     this.unit = unit
-    this.valueFirst = this.formatNumber(valueFirst)
-    this.difference = this.formatNumber(difference)
-    this.valueSecond = this.formatNumber(valueSecond)
+    this.valueFirst = valueFirst
+    this.difference = difference
+    this.valueSecond = valueSecond
     this.changeColor = this.computeChangeColor(interpretation, difference)
   }
 
-  private formatNumber(number?: number): string {
+  formatNumber(number?: number): string {
     if (number === undefined) {
       return '-'
     }
