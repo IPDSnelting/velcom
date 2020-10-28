@@ -79,9 +79,9 @@
                     "
                   >
                     <span v-if="dayEquidistantGraphSelected">
-                      Disable Day-Equistant Graph
+                      Disable Day-Equidistant Graph
                     </span>
-                    <span v-else>Enable Day-Equistant Graph</span>
+                    <span v-else>Enable Day-Equidistant Graph</span>
                   </v-btn>
                   <v-btn
                     @click="yStartsAtZero = !yStartsAtZero"
