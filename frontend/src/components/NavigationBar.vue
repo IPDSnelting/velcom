@@ -115,7 +115,6 @@ class NavigationItem {
 export default class NavigationBar extends Vue {
   private iconFontSize = 22
   private title = 'VelCom'
-  private homeKey: number = 0
 
   private drawerShown = false
 

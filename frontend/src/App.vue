@@ -37,7 +37,6 @@ export default class App extends Vue {
     } else {
       router.push({ name: routeName })
     }
-    this.routerViewKey++
   }
 
   private checkClick(event: Event) {
