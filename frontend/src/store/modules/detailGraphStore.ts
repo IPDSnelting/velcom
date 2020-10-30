@@ -56,6 +56,7 @@ export class DetailGraphStore extends VxModule {
   endTime: Date = new Date()
 
   beginYScaleAtZero: boolean = false
+  dayEquidistantGraph: boolean = false
 
   /**
    * Fetches the data necessary to display the data points
@@ -175,6 +176,10 @@ export class DetailGraphStore extends VxModule {
       this.zoomYEndValue = value
     })
 
+    if (link.query.dayEquidistant === 'true') {
+      this.dayEquidistantGraph = true
+    }
+
     if (link.query.dimensions && typeof link.query.dimensions === 'string') {
       const dimensionString = link.query.dimensions
       const parts = dimensionString.split('::')
@@ -278,7 +283,8 @@ export class DetailGraphStore extends VxModule {
             options && options.includeXZoom
               ? orElse(this.zoomXEndValue, this.endTime.getTime())
               : orUndefined(this.endTime.getTime()),
-          dimensions: respectOptions('includeDimensions', this.dimensionString)
+          dimensions: respectOptions('includeDimensions', this.dimensionString),
+          dayEquidistant: this.dayEquidistantGraph ? 'true' : undefined
         }
       })
 

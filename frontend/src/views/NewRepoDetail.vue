@@ -317,7 +317,6 @@ export default class RepoDetail extends Vue {
   ]
 
   private selectedGraphComponent: typeof Vue | null = GraphPlaceholder
-  private dayEquidistantGraphSelected: boolean = false
 
   private get repo(): Repo {
     return vxm.repoModule.repoById(this.id)!
@@ -403,6 +402,14 @@ export default class RepoDetail extends Vue {
 
   private get graphSupportsDayEquidistantDisplay() {
     return this.selectedGraphComponent === EchartsDetailGraph
+  }
+
+  private get dayEquidistantGraphSelected() {
+    return vxm.detailGraphModule.dayEquidistantGraph
+  }
+
+  private set dayEquidistantGraphSelected(selected: boolean) {
+    vxm.detailGraphModule.dayEquidistantGraph = selected
   }
 
   private lockDates(date: 'start' | 'end'): void {
