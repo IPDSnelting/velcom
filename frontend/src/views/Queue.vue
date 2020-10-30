@@ -30,7 +30,7 @@
             <v-card-text>
               <v-container fluid class="ma-0 pa-0">
                 <v-row justify="end" no-gutters>
-                  <v-col cols="auto">
+                  <v-col cols="auto" class="mb-5" v-if="isWebsiteAdmin">
                     <v-tooltip bottom>
                       <template #activator="{ on }">
                         <v-btn
@@ -40,7 +40,6 @@
                           color="primary"
                           text
                           @click="refetchRepos"
-                          v-if="isWebsiteAdmin"
                         >
                           Refetch all repos
                         </v-btn>
@@ -51,7 +50,7 @@
                       seconds to complete.
                     </v-tooltip>
                   </v-col>
-                  <v-col cols="auto">
+                  <v-col cols="auto" class="mb-5" v-if="isWebsiteAdmin">
                     <v-tooltip left>
                       <template #activator="{ on }">
                         <v-btn
