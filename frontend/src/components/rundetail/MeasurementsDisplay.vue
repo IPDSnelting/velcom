@@ -374,6 +374,14 @@ export default class MeasurementsDisplay extends Vue {
 
 <!--suppress CssUnresolvedCustomProperty -->
 <style>
+.error-message-tooltip > span {
+  display: inline-block;
+  width: 25ch;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .measurement-table tbody tr:hover {
   cursor: pointer;
 }
