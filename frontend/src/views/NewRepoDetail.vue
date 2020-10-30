@@ -442,9 +442,10 @@ export default class RepoDetail extends Vue {
     if (this.stopAfterStart()) {
       this.selectedGraphComponent = GraphPlaceholder
 
-      const height = (this.$refs.graphComponent as Vue).$el.clientHeight
-      console.log('Set to', height)
-      this.graphPlaceholderHeight = height
+      if (this.$refs.graphComponent) {
+        this.graphPlaceholderHeight = (this.$refs
+          .graphComponent as Vue).$el.clientHeight
+      }
 
       await vxm.detailGraphModule.fetchDetailGraph()
       const correctSeries = this.availableGraphComponents.find(it =>
