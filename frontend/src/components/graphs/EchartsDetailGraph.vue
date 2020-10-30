@@ -541,10 +541,17 @@ export default class EchartsDetailGraph extends Vue {
       }
     }
     if (this.commitToCompare !== null) {
-      markLineData.push({
-        xAxis: this.commitToCompare.dataPoint.authorDate,
-        name: 'Comparing…'
-      })
+      // Day equidistant points might move the point and its author date
+      const displayedPoint = this.echartsDataPoints
+        .get(this.referenceDatapoint!.dimension)!
+        .find(it => it.name === this.commitToCompare!.dataPoint.hash)
+
+      if (displayedPoint) {
+        markLineData.push({
+          xAxis: displayedPoint.time,
+          name: 'Comparing…'
+        })
+      }
     }
     const hasReferenceLine = markLineData.length > 0
 
@@ -585,10 +592,13 @@ export default class EchartsDetailGraph extends Vue {
 
     if (this.showReferenceMarkers) {
       const point = this.referenceDatapoint!.dataPoint
+      const displayedPoint = this.echartsDataPoints
+        .get(this.referenceDatapoint!.dimension)!
+        .find(it => it.name === point.hash)
 
       markPointData.push({
         coord: [
-          point.authorDate,
+          displayedPoint!.time,
           point.values.get(this.referenceDatapoint!.dimension)
         ],
         label: {
