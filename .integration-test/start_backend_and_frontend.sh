@@ -3,6 +3,12 @@
 # This is a simple script to start two programs (backend and frontend) and
 # relay signals to both.
 
+echo "Building frontend"
+make build-frontend
+
+echo "Building backend"
+make build-backend
+
 echo "Starting backend"
 make run-backend &
 # Save its PID so we can relay kill signals
@@ -21,8 +27,10 @@ if [ $# -eq 0 ] || [ "$1" == "development" ]; then
     # Wait for the subprocesses (= spawned by &) to finish
     wait
 else
-    (cd ../frontend && yarn cypress run -s cypress/integration/{home,navBar,queue,run-detail}/*)
-    EXIT_CODE=$!
+    cd ../frontend
+    yarn cypress run -s cypress/integration/{home,navBar,queue,run-detail}/*
+    EXIT_CODE=$?
     kill $FRONTEND_PID && kill $BACKEND_PID
+
     exit $EXIT_CODE
 fi
