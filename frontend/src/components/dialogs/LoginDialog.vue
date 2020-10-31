@@ -28,6 +28,7 @@
               :repos="allRepos"
               :rules="[nonEmptyID]"
               v-model="repoID"
+              data-cy="repo-input"
             ></repo-selection>
             <v-text-field
               type="password"
