@@ -16,7 +16,8 @@ CREATE TABLE IF NOT EXISTS repo_token
 
     FOREIGN KEY (repo_id) REFERENCES "repo" (id) ON DELETE CASCADE
 );
-INSERT INTO repo_token VALUES('44bb5c8d-b20d-4bef-bdad-c92767dfa489','$argon2id$v=19$m=5120,t=57,p=4$mfIA9ljfzjmJCDPWu4DDmw$LoYCmiiy+r1PTqDTdOCE3u/a99UAiCqcl3Q/eGQQe1U',1);
+-- 123456
+INSERT INTO repo_token VALUES('44bb5c8d-b20d-4bef-bdad-c92767dfa489','$argon2id$v=19$m=5120,t=50,p=8$r9rjUS7WmT4TXV2AUEr8Fg$zNSJhtquJbfa47OXoB04yxbmT9j2Mn7cl88bmasV7mk',1);
 CREATE TABLE IF NOT EXISTS "run" (
   id          CHAR(36)  NOT NULL PRIMARY KEY,
   author      TEXT      NOT NULL,
