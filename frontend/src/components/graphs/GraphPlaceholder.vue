@@ -1,7 +1,7 @@
 <template>
   <v-skeleton-loader
     class="graph-placeholder-loader mt-5"
-    height="500"
+    :height="placeholderHeight"
     loading
     type="image"
   ></v-skeleton-loader>
@@ -10,9 +10,13 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
+import { Prop } from 'vue-property-decorator'
 
 @Component
-export default class GraphPlaceholder extends Vue {}
+export default class GraphPlaceholder extends Vue {
+  @Prop({ default: 500 })
+  private placeholderHeight!: number
+}
 </script>
 
 <style>

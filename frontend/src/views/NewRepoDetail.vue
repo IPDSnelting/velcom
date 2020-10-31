@@ -32,6 +32,8 @@
           </v-card-title>
           <v-card-text>
             <component
+              ref="graphComponent"
+              :placeholderHeight="graphPlaceholderHeight"
               :is="selectedGraphComponent"
               :dimensions="selectedDimensions"
               :beginYAtZero="yStartsAtZero"
@@ -79,9 +81,9 @@
                     "
                   >
                     <span v-if="dayEquidistantGraphSelected">
-                      Disable Day-Equistant Graph
+                      Disable Day-Equidistant Graph
                     </span>
-                    <span v-else>Enable Day-Equistant Graph</span>
+                    <span v-else>Enable Day-Equidistant Graph</span>
                   </v-btn>
                   <v-btn
                     @click="yStartsAtZero = !yStartsAtZero"
@@ -286,6 +288,7 @@ export default class RepoDetail extends Vue {
 
   private today = new Date().toISOString().substr(0, 10)
 
+  private graphPlaceholderHeight: number = 100
   private useMatrixSelector: boolean = false
 
   private startDateMenuOpen: boolean = false
@@ -314,7 +317,6 @@ export default class RepoDetail extends Vue {
   ]
 
   private selectedGraphComponent: typeof Vue | null = GraphPlaceholder
-  private dayEquidistantGraphSelected: boolean = false
 
   private get repo(): Repo {
     return vxm.repoModule.repoById(this.id)!
@@ -352,13 +354,15 @@ export default class RepoDetail extends Vue {
       return
     }
 
+    const durationAsMillis = duration * 1000 * 60 * 60 * 24 // ms * minutes * hours * days
+
     if (this.dateLocked === 'start') {
       vxm.detailGraphModule.endTime = new Date(
-        new Date().setDate(vxm.detailGraphModule.startTime.getDate() + duration)
+        vxm.detailGraphModule.startTime.getTime() + durationAsMillis
       )
     } else {
       vxm.detailGraphModule.startTime = new Date(
-        new Date().setDate(vxm.detailGraphModule.endTime.getDate() - duration)
+        vxm.detailGraphModule.endTime.getTime() - durationAsMillis
       )
     }
     this.retrieveGraphData()
@@ -400,6 +404,14 @@ export default class RepoDetail extends Vue {
     return this.selectedGraphComponent === EchartsDetailGraph
   }
 
+  private get dayEquidistantGraphSelected() {
+    return vxm.detailGraphModule.dayEquidistantGraph
+  }
+
+  private set dayEquidistantGraphSelected(selected: boolean) {
+    vxm.detailGraphModule.dayEquidistantGraph = selected
+  }
+
   private lockDates(date: 'start' | 'end'): void {
     if (this.dateLocked === 'neither') {
       this.dateLocked = date
@@ -429,6 +441,12 @@ export default class RepoDetail extends Vue {
   private async retrieveGraphData(): Promise<void> {
     if (this.stopAfterStart()) {
       this.selectedGraphComponent = GraphPlaceholder
+
+      if (this.$refs.graphComponent) {
+        this.graphPlaceholderHeight = (this.$refs
+          .graphComponent as Vue).$el.clientHeight
+      }
+
       await vxm.detailGraphModule.fetchDetailGraph()
       const correctSeries = this.availableGraphComponents.find(it =>
         it.predicate()
