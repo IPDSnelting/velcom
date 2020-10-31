@@ -17,5 +17,12 @@ FRONTEND_PID="$!"
 # The shell does not pass on exit signals, so we do it manually
 trap "kill $FRONTEND_PID && kill $BACKEND_PID" exit INT TERM
 
-# Wait for the subprocesses (= spawned by &) to finish
-wait
+if [ $# -eq 0 ] || [ "$1" == "development" ]; then
+    # Wait for the subprocesses (= spawned by &) to finish
+    wait
+else
+    (cd ../frontend && yarn cypress run -s cypress/integration/{home,navBar,queue,run-detail}/*)
+    EXIT_CODE=$!
+    kill $FRONTEND_PID && kill $BACKEND_PID
+    exit $EXIT_CODE
+fi

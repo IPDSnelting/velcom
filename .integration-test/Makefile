@@ -9,7 +9,7 @@ run-backend: data backend.jar
 	java  -jar backend.jar server ../backend/backend/src/main/resources/example_config.yml
 
 run-frontend:
-	(cd ../frontend && yarn serve --mode=development)
+	cd ../frontend && yarn serve --mode=development
 
 run:
 	bash start_backend_and_frontend.sh
