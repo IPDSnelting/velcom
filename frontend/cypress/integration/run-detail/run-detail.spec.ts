@@ -4,23 +4,10 @@ context('Run Detail', () => {
   beforeEach(() => {
     cy.server()
 
-    cy.route({
-      method: 'GET',
-      url:
-        '/api/commit/44bb5c8d-b20d-4bef-bdad-c92767dfa489/147413df6d64ab54ceafbd5b0a38a1d72cefed5d',
-      response: 'fixture:run-detail-commit-info.json'
-    }).as('commit-info')
-    cy.route({
-      method: 'GET',
-      url:
-        '/api/run/fd9e7bf9-e8e7-4866-b5a4-87f4735c942f?all_values=true&diff_prev=true',
-      response: 'fixture:run-detail-run-info.json'
-    }).as('run-info')
-
     cy.viewport(1000, 660)
 
     cy.visit(
-      'run-detail/44bb5c8d-b20d-4bef-bdad-c92767dfa489/147413df6d64ab54ceafbd5b0a38a1d72cefed5d'
+      'run-detail/44bb5c8d-b20d-4bef-bdad-c92767dfa489/deec6c90541a9064849af7011fa9d7c6f40a3de1'
     )
   })
 
@@ -31,36 +18,36 @@ context('Run Detail', () => {
   it('contains commit message', () => {
     // summary
     cy.contains(
-      'Merge pull request #89 from IPDSnelting/fix-units-sometimes-missing'
+      'Merge pull request #154 from IPDSnelting/navigate-and-refresh'
     ).should('exist')
 
     // detail message
-    cy.contains(
-      'Fix units and interpretations missing for a metric after semi-failed run'
-    ).should('exist')
+    cy.contains('Navigate and refresh').should('exist')
   })
 
   it('contains author', () => {
-    cy.contains('Garmelon <joscha@plugh.de>').should('exist')
+    cy.contains('oudemia <52839122+oudemia@users.noreply.github.com>').should(
+      'exist'
+    )
   })
 
   it('contains parents and children', () => {
     // Parents
-    cy.contains('[runner] Fix bench output parser tests').should('exist')
+    cy.contains('[backend] Add some doc comments').should('exist')
     cy.contains(
-      'Merge pull request #85 from IPDSnelting/minor-frontend-improvements'
+      '[frontend] use router links rather than router.push for navigation'
     ).should('exist')
 
     // Child
-    cy.contains(
-      'Merge pull request #92 from IPDSnelting/significant-runs'
-    ).should('exist')
+    cy.contains('Merge pull request #156 from IPDSnelting/small-bugs-1').should(
+      'exist'
+    )
   })
 
   it('contains commit hash and repo id', () => {
-    cy.contains('147413df6d64ab54ceafbd5b0a38a1d72cefed5d').should('exist')
+    cy.contains('deec6c90541a9064849af7011fa9d7c6f40a3de1').should('exist')
 
-    cy.contains('147413df6d64ab54ceafbd5b0a38a1d72cefed5d')
+    cy.contains('deec6c90541a9064849af7011fa9d7c6f40a3de1')
       .parentsUntil('.v-card')
       .first()
       .contains('VelCom')
@@ -74,27 +61,17 @@ context('Run Detail', () => {
   it('contains valid run information', () => {
     cy.get('[data-cy="run-information"]').as('run-info')
 
+    cy.get('@run-info').contains('I-Al-VPS - Runner').should('exist')
     cy.get('@run-info')
-      .contains('I-Al-VPS - Runner')
-      .should('exist')
-    cy.get('@run-info')
-      .contains('7797 MiB total, 4239 MiB available')
+      .contains('7797 MiB total, 4280 MiB available')
       .should('exist')
     cy.get('@run-info')
       .contains('Intel Xeon Processor (Skylake, IBRS) (2 threads)')
       .should('exist')
 
-    cy.get('@run-info')
-      .contains('1 minutes and 31 seconds')
-      .should('exist')
-    cy.get('@run-info')
-      .contains('2020-09-24 23:19')
-      .should('exist')
-    cy.get('@run-info')
-      .contains('2020-09-24 23:17')
-      .should('exist')
-    cy.get('@run-info')
-      .contains('commit by Listener')
-      .should('exist')
+    cy.get('@run-info').contains('4 minutes and 12 seconds').should('exist')
+    cy.get('@run-info').contains('2020-10-31 15:46').should('exist')
+    cy.get('@run-info').contains('2020-10-31 15:51').should('exist')
+    cy.get('@run-info').contains('commit by Listener').should('exist')
   })
 })

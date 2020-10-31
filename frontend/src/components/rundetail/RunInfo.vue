@@ -1,5 +1,5 @@
 <template>
-  <v-card>
+  <v-card data-cy="run-information">
     <v-card-title>
       <v-toolbar dark color="toolbarColor">
         <slot name="title">Run Information</slot>
