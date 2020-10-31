@@ -117,7 +117,7 @@ class Item {
     this.standardDeviation = standardDeviation
     this.standardDeviationPercent = this.computeStandardDeviationPercent(
       value,
-      changePercent
+      standardDeviation
     )
     this.change = change
     this.changePercent = changePercent
