@@ -8,7 +8,7 @@ context('Queue', () => {
   })
 
   it('requests correct endpoints', () => {
-    cy.route('/api/queue').as('queue')
+    cy.route('/queue').as('queue')
 
     cy.visit('queue')
 
@@ -18,7 +18,7 @@ context('Queue', () => {
   it('displays queue empty message', () => {
     cy.route({
       method: 'GET',
-      url: '/api/queue',
+      url: '/queue',
       response: '{"tasks":[],"runners":[]}'
     }).as('queue')
 
@@ -32,7 +32,7 @@ context('Queue', () => {
   it('displays runner', () => {
     cy.route({
       method: 'GET',
-      url: '/api/queue',
+      url: '/queue',
       response:
         '{"tasks":[],"runners":[{"name":"I-Al-VPS - Runner","info":"System: Linux amd64 4.9.0-13-amd64\\n' +
         'CPU:    Intel Xeon Processor (Skylake, IBRS) (2 threads)\\nMemory: 7797 MiB total, 4233 MiB available\\n"}]}'
@@ -50,7 +50,7 @@ context('Queue', () => {
   })
 
   it('refreshes queue every 10 seconds', () => {
-    cy.route('/api/queue').as('queue')
+    cy.route('/queue').as('queue')
 
     cy.visit('queue')
 
@@ -64,7 +64,7 @@ context('Queue', () => {
   it('displays commit in queue', () => {
     cy.route({
       method: 'GET',
-      url: '/api/queue',
+      url: '/queue',
       response: 'fixture:queue-with-one-commit.json'
     }).as('queue')
 
@@ -86,10 +86,10 @@ context('Queue', () => {
       .should('exist')
   })
 
-  it.only('refreshes running time every second', () => {
+  it('refreshes running time every second', () => {
     cy.route({
       method: 'GET',
-      url: '/api/queue',
+      url: '/queue',
       response: 'fixture:queue-with-one-commit.json'
     }).as('queue')
 
