@@ -1,9 +1,9 @@
 <template>
   <v-app>
     <v-main>
-      <nav-bar></nav-bar>
+      <nav-bar v-on:refresh="refresh"></nav-bar>
       <snackbar ref="global-snackbar"></snackbar>
-      <router-view />
+      <router-view :key="routerViewKey" />
       <theme-selector @use-dark-theme="setDarkTheme"></theme-selector>
     </v-main>
   </v-app>
@@ -18,6 +18,7 @@ import { vxm } from './store'
 import { Watch } from 'vue-property-decorator'
 import ThemeSelector from './components/ThemeSelector.vue'
 import { storeToLocalStorage } from './store/persistence'
+import router from '@/router'
 
 @Component({
   components: {
@@ -28,6 +29,13 @@ import { storeToLocalStorage } from './store/persistence'
 })
 export default class App extends Vue {
   private clickHandler: any = this.checkClick
+  private routerViewKey: number = 0
+
+  private refresh(routeName: string) {
+    if (this.$route.name === routeName) {
+      this.routerViewKey++
+    }
+  }
 
   private checkClick(event: Event) {
     if (!event.srcElement) {

@@ -7,18 +7,29 @@
       ></v-app-bar-nav-icon>
       <v-tooltip bottom color="rgba(0,0,0,0)" class="logoTooltip">
         <template #activator="{ on }">
-          <img
-            v-on="on"
-            width="45px"
-            height="45px"
-            src="@/assets/mini-logo.png"
-            alt="logo"
-            class="mx-4"
-          />
+          <router-link
+            class="concealed-link"
+            :to="{ name: 'home' }"
+            @click="$emit('refresh', 'home')"
+          >
+            <img
+              id="logo"
+              v-on="on"
+              width="45px"
+              height="45px"
+              src="@/assets/mini-logo.png"
+              alt="logo"
+              class="mx-4"
+            />
+          </router-link>
         </template>
         <img src="@/assets/mini-logo.png" alt="logo" class="mx-4" id="logo" />
       </v-tooltip>
-      <v-toolbar-title>{{ title }}</v-toolbar-title>
+      <router-link class="concealed-link" :to="{ name: 'home' }">
+        <v-toolbar-title id="title" @click="$emit('refresh', 'home')"
+          >{{ title }}
+        </v-toolbar-title></router-link
+      >
 
       <v-spacer></v-spacer>
 
@@ -29,6 +40,7 @@
         :key="item.routeName"
         text
         :to="{ name: item.routeName }"
+        @click="$emit('refresh', item.routeName)"
       >
         {{ item.label }}
         <v-icon right dark :size="iconFontSize">{{ item.icon }}</v-icon>
@@ -155,5 +167,13 @@ export default class NavigationBar extends Vue {
 /*noinspection CssUnusedSymbol*/
 .v-tooltip__content {
   opacity: 1 !important;
+}
+
+#logo {
+  cursor: pointer;
+}
+
+#title {
+  cursor: pointer;
 }
 </style>
