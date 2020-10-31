@@ -10,7 +10,7 @@ BACKEND_PID="$!"
 
 
 echo "Starting frontend"
-(cd ../frontend && yarn serve --mode=development) &
+make run-frontend &
 # Save its PID so we can relay kill signals
 FRONTEND_PID="$!"
 
