@@ -231,7 +231,8 @@ public class CommitReadAccess {
 
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
 			SelectConditionStep<KnownCommitRecord> query = db.selectFrom(KNOWN_COMMIT)
-				.where(KNOWN_COMMIT.REPO_ID.eq(repoId.getIdAsString()));
+				.where(KNOWN_COMMIT.REPO_ID.eq(repoId.getIdAsString()))
+				.and(KNOWN_COMMIT.TRACKED);
 
 			if (startTime != null) {
 				query = query.and(KNOWN_COMMIT.AUTHOR_DATE.ge(startTime));
