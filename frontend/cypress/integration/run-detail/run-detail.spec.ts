@@ -1,5 +1,39 @@
 /// <reference types="cypress" />
 
+function assertSorted(
+  array: string[],
+  mode: 'ascending' | 'descending',
+  sortFunction: (a: string, b: string) => number
+) {
+  const sorted = array.slice()
+  sorted.sort((a, b) =>
+    mode === 'ascending' ? sortFunction(a, b) : -sortFunction(a, b)
+  )
+  assert.deepEqual(array, sorted, 'Expected array to be sorted')
+}
+
+function sortText(a: string, b: string) {
+  return a.localeCompare(b)
+}
+
+function sortNumber(a: string, b: string) {
+  const first = parseFloat(a.replace(',', '.'))
+  const second = parseFloat(b.replace(',', '.'))
+
+  if (a.trim() !== 'N/A') {
+    assert.isNotNaN(first)
+  }
+  if (b.trim() !== 'N/A') {
+    assert.isNotNaN(second)
+  }
+
+  return first - second
+}
+
+function sortPercent(a: string, b: string) {
+  return sortNumber(a, b)
+}
+
 context('Run Detail', () => {
   beforeEach(() => {
     cy.server()
@@ -73,5 +107,46 @@ context('Run Detail', () => {
     cy.get('@run-info').contains('2020-10-31 15:46').should('exist')
     cy.get('@run-info').contains('2020-10-31 15:51').should('exist')
     cy.get('@run-info').contains('commit by Listener').should('exist')
+  })
+
+  it('sorts by value', () => {
+    cy.get('.measurement-table').as('measurement-table')
+
+    const sortableColumns = [
+      { name: 'Benchmark', index: 1, sortFunction: sortText },
+      { name: 'Metric', index: 2, sortFunction: sortText },
+      { name: 'Unit', index: 3, sortFunction: sortText },
+      { name: 'Value', index: 4, sortFunction: sortNumber },
+      { name: 'Stddev', index: 5, sortFunction: sortNumber },
+      { name: 'Stddev %', index: 6, sortFunction: sortPercent },
+      { name: 'Change', index: 7, sortFunction: sortNumber },
+      { name: 'Change %', index: 8, sortFunction: sortPercent }
+    ]
+
+    sortableColumns.forEach(({ name, index, sortFunction }) => {
+      cy.get(
+        `[aria-label="${name}: Not sorted. Activate to sort ascending."]`
+      ).as('sortButton')
+
+      const isSorted = (mode: 'ascending' | 'descending') => {
+        cy.get('@measurement-table').within(() => {
+          cy.get('tr').within(() => {
+            cy.get(`td:nth-child(${index})`).should(a => {
+              const values = a.toArray().map(it => it.textContent!)
+
+              assertSorted(values, mode, sortFunction)
+            })
+          })
+        })
+      }
+
+      cy.get('@sortButton').click()
+      isSorted('ascending')
+
+      cy.get('@sortButton').click()
+      isSorted('descending')
+
+      cy.get('@sortButton').click()
+    })
   })
 })
