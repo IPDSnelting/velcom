@@ -381,7 +381,7 @@ public class BenchmarkReadAccess {
 						error
 					);
 				} else {
-					List<Measurement> measurements = runToMeasurementMap.get(runId);
+					List<Measurement> measurements = runToMeasurementMap.getOrDefault(runId, List.of());
 
 					return new Run(
 						runId,
