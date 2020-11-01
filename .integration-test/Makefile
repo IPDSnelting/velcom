@@ -24,6 +24,7 @@ run-prod:
 
 clean:
 	rm -rf data
+	rm -rf .mypy_cache
 	rm -f backend.jar
 
 .PHONY: clean run
