@@ -226,6 +226,14 @@ public class CommitReadAccess {
 		}
 	}
 
+	/**
+	 * Gets all tracked commits whose committer date is between the given start and end time.
+	 *
+	 * @param repoId the id of the repo
+	 * @param startTime the start committer time
+	 * @param stopTime the stop committer time
+	 * @return all tracked commits whose committer date is between the given stanrd and end time
+	 */
 	public List<Commit> getTrackedCommitsBetween(RepoId repoId, @Nullable Instant startTime,
 		@Nullable Instant stopTime) {
 
@@ -235,10 +243,10 @@ public class CommitReadAccess {
 				.and(KNOWN_COMMIT.TRACKED);
 
 			if (startTime != null) {
-				query = query.and(KNOWN_COMMIT.AUTHOR_DATE.ge(startTime));
+				query = query.and(KNOWN_COMMIT.COMMITTER_DATE.ge(startTime));
 			}
 			if (stopTime != null) {
-				query = query.and(KNOWN_COMMIT.AUTHOR_DATE.le(stopTime));
+				query = query.and(KNOWN_COMMIT.COMMITTER_DATE.le(stopTime));
 			}
 
 			return query.stream()
