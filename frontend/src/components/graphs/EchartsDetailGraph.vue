@@ -149,7 +149,7 @@ export default class EchartsDetailGraph extends Vue {
   private get minDateValue(): number {
     const min = Math.min.apply(
       Math,
-      this.detailDataPoints.map(it => it.authorDate.getTime())
+      this.detailDataPoints.map(it => it.committerDate.getTime())
     )
     return min || 0
   }
@@ -157,7 +157,7 @@ export default class EchartsDetailGraph extends Vue {
   private get maxDateValue(): number {
     const max = Math.max.apply(
       Math,
-      this.detailDataPoints.map(it => it.authorDate.getTime())
+      this.detailDataPoints.map(it => it.committerDate.getTime())
     )
     return max || 0
   }
@@ -336,7 +336,7 @@ export default class EchartsDetailGraph extends Vue {
       this.detailDataPoints,
       key =>
         // round to day
-        Math.floor(key.authorDate.getTime() / millisInDay) * millisInDay
+        Math.floor(key.committerDate.getTime() / millisInDay) * millisInDay
     )
 
     return Array.from(dayGroups.entries()).flatMap(([day, points]) => {
@@ -403,7 +403,7 @@ export default class EchartsDetailGraph extends Vue {
       }
 
       return new EchartsDataPoint(
-        point.authorDate,
+        point.committerDate,
         pointValue,
         symbol,
         point.hash,

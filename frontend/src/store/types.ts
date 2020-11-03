@@ -427,7 +427,7 @@ export class DetailDataPoint {
   readonly hash: CommitHash
   readonly parents: CommitHash[]
   readonly author: string
-  readonly authorDate: Date
+  readonly committerDate: Date
   readonly summary: string
   // TODO: Figure out if the map wastes too much memory
   readonly values: Map<DimensionId, DetailDataPointValue>
@@ -436,14 +436,14 @@ export class DetailDataPoint {
     hash: CommitHash,
     parents: CommitHash[],
     author: string,
-    authorDate: Date,
+    committerDate: Date,
     summary: string,
     values: CustomKeyEqualsMap<DimensionId, DetailDataPointValue>
   ) {
     this.hash = hash
     this.parents = parents
     this.author = author
-    this.authorDate = authorDate
+    this.committerDate = committerDate
     this.summary = summary
     this.values = values
   }
