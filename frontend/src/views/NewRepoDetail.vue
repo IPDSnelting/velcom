@@ -295,7 +295,7 @@ export default class RepoDetail extends Vue {
   /**
    * The value of the "duration" input field. Not applied until saveDuration is called.
    */
-  private temporaryDuration: number = 0
+  private temporaryDuration: string = '' + this.duration
 
   private startDateMenuOpen: boolean = false
   private stopDateMenuOpen: boolean = false
@@ -353,7 +353,7 @@ export default class RepoDetail extends Vue {
   }
 
   private saveDuration() {
-    const duration = this.temporaryDuration
+    const duration = parseInt(this.temporaryDuration)
 
     if (isNaN(duration)) {
       return
