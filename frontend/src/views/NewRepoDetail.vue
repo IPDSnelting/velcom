@@ -226,9 +226,10 @@
                   </v-menu>
                 </v-col>
                 <v-col>
-                  <v-form>
+                  <v-form @submit.prevent="saveDuration">
                     <v-text-field
                       @blur="saveDuration"
+                      @input="temporaryDuration = $event"
                       :value="duration"
                       :disabled="dateLocked === 'neither'"
                       label="number of days to fetch:"
@@ -291,6 +292,11 @@ export default class RepoDetail extends Vue {
   private graphPlaceholderHeight: number = 100
   private useMatrixSelector: boolean = false
 
+  /**
+   * The value of the "duration" input field. Not applied until saveDuration is called.
+   */
+  private temporaryDuration: number = 0
+
   private startDateMenuOpen: boolean = false
   private stopDateMenuOpen: boolean = false
   private dateLocked: 'start' | 'end' | 'neither' = 'end'
@@ -346,11 +352,15 @@ export default class RepoDetail extends Vue {
     this.retrieveGraphData()
   }
 
-  private saveDuration(event: Event) {
-    const target = event.target as HTMLInputElement
-    const duration: number = parseInt(target.value)
+  private saveDuration() {
+    const duration = this.temporaryDuration
 
     if (isNaN(duration)) {
+      return
+    }
+
+    if (this.duration === duration) {
+      // Do not fetch everything again
       return
     }
 
