@@ -135,7 +135,8 @@ export function detailGraphStoreToJson(store: DetailGraphStore): string {
     firstFreeColorIndex: (store as any).firstFreeColorIndex,
     colorIndexMap: Array.from((store as any).colorIndexMap.entries()),
     commitToCompare: serializeDimensionDetailPoint(store.commitToCompare),
-    beginYScaleAtZero: store.beginYScaleAtZero
+    beginYScaleAtZero: store.beginYScaleAtZero,
+    dayEquidistantGraph: store.dayEquidistantGraph
   })
 }
 // </editor-fold>
