@@ -136,7 +136,8 @@ public class GraphDetailEndpoint {
 
 	/**
 	 * @param commits the commits to sort
-	 * @param hashes a map from hash to commit <em>for all commits in the commits list</em>
+	 * @param hashes a map from hash to commit <em>for <strong>exactly</strong> the commits in the
+	 * 	commits list</em>
 	 * @return a mutable list containing a topological ordering of the input commits
 	 */
 	private List<FullCommit> topologicalSort(List<FullCommit> commits,

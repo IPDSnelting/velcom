@@ -227,12 +227,14 @@ public class CommitReadAccess {
 	}
 
 	/**
-	 * Gets all tracked commits whose committer date is between the given start and end time.
+	 * Gets all tracked commits whose <em>committer</em> date is between the given start and end
+	 * time.
 	 *
 	 * @param repoId the id of the repo
 	 * @param startTime the start committer time
 	 * @param stopTime the stop committer time
-	 * @return all tracked commits whose committer date is between the given stanrd and end time
+	 * @return all tracked commits whose committer date is between the given start and end time in no
+	 * 	particular order
 	 */
 	public List<Commit> getTrackedCommitsBetween(RepoId repoId, @Nullable Instant startTime,
 		@Nullable Instant stopTime) {
@@ -255,6 +257,17 @@ public class CommitReadAccess {
 		}
 	}
 
+	/**
+	 * Gets all commits - tracked and untracked - whose <em>author</em> date is between the given
+	 * start and end time.
+	 *
+	 * @param repoId the id of the repo
+	 * @param branchNames the names of all branches to search for commits
+	 * @param startTime the start author time
+	 * @param stopTime the stop author time
+	 * @return all commits whose author date is between the given start and end time in no particular
+	 * 	order
+	 */
 	public List<Commit> getCommitsBetween(RepoId repoId, Collection<BranchName> branchNames,
 		@Nullable Instant startTime, @Nullable Instant stopTime) {
 
