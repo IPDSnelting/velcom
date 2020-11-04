@@ -1,7 +1,7 @@
 <template>
   <v-card>
     <v-card-title>
-      <v-toolbar color="primary darken-1" dark>
+      <v-toolbar color="toolbarColor" dark>
         {{ repo.name }}
         <span class="ml-5 subtitle-1">{{ repo.id }}</span>
         <v-spacer></v-spacer>

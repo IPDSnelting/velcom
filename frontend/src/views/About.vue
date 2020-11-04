@@ -5,7 +5,7 @@
         <v-col>
           <v-card>
             <v-card-title>
-              <v-toolbar color="primary darken-1" dark>
+              <v-toolbar color="toolbarColor" dark>
                 About VelCom
                 <v-spacer></v-spacer>
                 <span class="text-sm-body-1">Version: {{ gitHash }}</span>
@@ -74,7 +74,7 @@
         <v-col>
           <v-card>
             <v-card-title>
-              <v-toolbar color="primary darken-1" dark>Impressum</v-toolbar>
+              <v-toolbar color="toolbarColor" dark>Impressum</v-toolbar>
             </v-card-title>
             <v-card-text>
               <v-container fluid>
