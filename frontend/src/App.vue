@@ -107,11 +107,11 @@ export default class App extends Vue {
 }
 
 .theme--light.v-application a.concealed-link {
-  color: rgba(0, 0, 0, 0.87) !important;
+  color: inherit !important;
 }
 
 .v-application .theme--dark a.concealed-link {
-  color: #ffffff !important;
+  color: inherit !important;
 }
 
 .concealed-link {

@@ -5,9 +5,9 @@
         <v-col>
           <v-card>
             <v-card-title>
-              <v-toolbar color="primary darken-1" dark
-                >Recent Significant Runs</v-toolbar
-              >
+              <v-toolbar color="toolbarColor" dark>
+                Recent Significant Runs
+              </v-toolbar>
             </v-card-title>
             <v-card-text>
               <v-container fluid>
@@ -33,7 +33,7 @@
         <v-col>
           <v-card>
             <v-card-title>
-              <v-toolbar color="primary darken-1" dark>Recent Runs</v-toolbar>
+              <v-toolbar color="toolbarColor" dark>Recent Runs</v-toolbar>
             </v-card-title>
             <v-card-text>
               <v-container fluid>

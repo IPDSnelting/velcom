@@ -1,7 +1,7 @@
 <template>
   <v-card>
     <v-card-title>
-      <v-toolbar color="primary darken-1" dark
+      <v-toolbar color="toolbarColor" dark
         >Search and Compare
         <v-spacer></v-spacer>
         <v-btn icon @click="showList = !showList">

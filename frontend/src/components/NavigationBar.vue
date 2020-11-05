@@ -1,6 +1,6 @@
 <template>
   <nav>
-    <v-toolbar dark color="primary darken-1">
+    <v-toolbar dark color="toolbarColor">
       <v-app-bar-nav-icon
         class="hidden-md-and-up"
         @click="drawerShown = !drawerShown"
@@ -67,7 +67,7 @@
       app
       temporary
     >
-      <v-toolbar dark color="primary darken-1">
+      <v-toolbar dark color="toolbarColor">
         <v-list>
           <v-list-item>
             <v-list-item-title class="title">Navigation</v-list-item-title>
