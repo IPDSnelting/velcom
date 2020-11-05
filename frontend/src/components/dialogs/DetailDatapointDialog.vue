@@ -132,7 +132,7 @@ export default class DetailDatapointDialog extends Vue {
       vxm.detailGraphModule.selectedRepoId,
       this.selectedDatapoint.hash,
       this.selectedDatapoint.author,
-      this.selectedDatapoint.authorDate,
+      this.selectedDatapoint.committerDate,
       this.selectedDatapoint.summary
     )
   }

@@ -95,7 +95,7 @@ export default class DytailGraph extends Vue {
   private get minDateValue(): number {
     const min = Math.min.apply(
       Math,
-      this.datapoints.map(it => it.authorDate.getTime())
+      this.datapoints.map(it => it.committerDate.getTime())
     )
     return min || 0
   }
@@ -103,7 +103,7 @@ export default class DytailGraph extends Vue {
   private get maxDateValue(): number {
     const max = Math.max.apply(
       Math,
-      this.datapoints.map(it => it.authorDate.getTime())
+      this.datapoints.map(it => it.committerDate.getTime())
     )
     return max || 0
   }
@@ -118,7 +118,7 @@ export default class DytailGraph extends Vue {
   // eslint-disable-next-line no-undef
   private tooltipFormatter(legendData: dygraphs.LegendData) {
     const datapoint: DetailDataPoint | undefined = this.datapoints.find(
-      point => point.authorDate.getTime() === legendData.x
+      point => point.committerDate.getTime() === legendData.x
     )
     if (datapoint) {
       const data = legendData.series.slice()
@@ -155,7 +155,7 @@ export default class DytailGraph extends Vue {
                     <td>Author</td>
                     <td>
                       ${datapoint ? escapeHtml(datapoint.author) : 'xxx'} at ${
-        datapoint ? datapoint.authorDate.toLocaleString() : 'xxx'
+        datapoint ? datapoint.committerDate.toLocaleString() : 'xxx'
       }
                     </td>
                   </tr>
@@ -181,7 +181,7 @@ export default class DytailGraph extends Vue {
 
     // One array entry per datapoint. That array contains all values: [x, dim1, dim2, ...]
     for (let i = 0; i < this.datapoints.length; i++) {
-      data[i] = [this.datapoints[i].authorDate.getTime()]
+      data[i] = [this.datapoints[i].committerDate.getTime()]
     }
 
     for (const dimension of this.dimensions) {

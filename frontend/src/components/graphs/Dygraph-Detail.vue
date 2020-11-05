@@ -56,7 +56,7 @@ export default class DytailGraph extends Vue {
 
     // One array entry per datapoint. That array contains all values: [x, dim1, dim2, ...]
     for (let i = 0; i < this.datapoints.length; i++) {
-      data[i] = [this.datapoints[i].authorDate.getTime()]
+      data[i] = [this.datapoints[i].committerDate.getTime()]
     }
 
     for (const dimension of this.dimensions) {

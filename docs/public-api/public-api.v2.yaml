@@ -518,7 +518,7 @@ paths:
                             $ref: '#/components/schemas/CommitHash'
                         author:
                           type: string
-                        author_date:
+                        committer_date:
                           $ref: '#/components/schemas/Time'
                         summary:
                           type: string
@@ -539,7 +539,7 @@ paths:
                         - hash
                         - parents
                         - author
-                        - author_date
+                        - committer_date
                         - summary
                         - values
                 required:

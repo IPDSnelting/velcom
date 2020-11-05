@@ -187,7 +187,7 @@ export default class RepoCommitOverview extends Vue {
           this.repo,
           datapoint.hash,
           datapoint.author,
-          datapoint.authorDate,
+          datapoint.committerDate,
           datapoint.summary
         )
       }

@@ -78,7 +78,7 @@ function hydrateDetailPoint(it: DetailDataPoint) {
     it.hash,
     it.parents,
     it.author,
-    new Date(it.authorDate),
+    new Date(it.committerDate),
     it.summary,
     new CustomKeyEqualsMap(
       it.values,
@@ -135,7 +135,8 @@ export function detailGraphStoreToJson(store: DetailGraphStore): string {
     firstFreeColorIndex: (store as any).firstFreeColorIndex,
     colorIndexMap: Array.from((store as any).colorIndexMap.entries()),
     commitToCompare: serializeDimensionDetailPoint(store.commitToCompare),
-    beginYScaleAtZero: store.beginYScaleAtZero
+    beginYScaleAtZero: store.beginYScaleAtZero,
+    dayEquidistantGraph: store.dayEquidistantGraph
   })
 }
 // </editor-fold>

@@ -316,8 +316,8 @@ export class DetailGraphStore extends VxModule {
     let visibleDataPoints = 0
     for (const point of this._detailGraph) {
       if (
-        (startValue === null || point.authorDate.getTime() >= startValue) &&
-        (endValue === null || point.authorDate.getTime() <= endValue)
+        (startValue === null || point.committerDate.getTime() >= startValue) &&
+        (endValue === null || point.committerDate.getTime() <= endValue)
       ) {
         visibleDataPoints += this._selectedDimensions.length
       }

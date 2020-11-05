@@ -30,7 +30,12 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { DetailDataPoint, Dimension, DimensionId } from '@/store/types'
+import {
+  DetailDataPoint,
+  Dimension,
+  DimensionId,
+  dimensionIdEqual
+} from '@/store/types'
 import { EChartOption } from 'echarts'
 import { Prop, Watch } from 'vue-property-decorator'
 import EChartsComp from 'vue-echarts'
@@ -52,6 +57,7 @@ import DetailDatapointDialog from '@/components/dialogs/DetailDatapointDialog.vu
 import { DimensionDetailPoint } from '@/store/modules/detailGraphStore'
 import { formatDate } from '@/util/TimeUtil'
 import { escapeHtml } from '@/util/TextUtils'
+import { CustomKeyEqualsMap } from '@/util/CustomKeyEqualsMap'
 
 type ValidEchartsSeries = EChartOption.SeriesLine | EChartOption.SeriesGraph
 type SeriesGenerationFunction = (id: DimensionId) => ValidEchartsSeries
@@ -149,7 +155,7 @@ export default class EchartsDetailGraph extends Vue {
   private get minDateValue(): number {
     const min = Math.min.apply(
       Math,
-      this.detailDataPoints.map(it => it.authorDate.getTime())
+      this.detailDataPoints.map(it => it.committerDate.getTime())
     )
     return min || 0
   }
@@ -157,7 +163,7 @@ export default class EchartsDetailGraph extends Vue {
   private get maxDateValue(): number {
     const max = Math.max.apply(
       Math,
-      this.detailDataPoints.map(it => it.authorDate.getTime())
+      this.detailDataPoints.map(it => it.committerDate.getTime())
     )
     return max || 0
   }
@@ -336,7 +342,7 @@ export default class EchartsDetailGraph extends Vue {
       this.detailDataPoints,
       key =>
         // round to day
-        Math.floor(key.authorDate.getTime() / millisInDay) * millisInDay
+        Math.floor(key.committerDate.getTime() / millisInDay) * millisInDay
     )
 
     return Array.from(dayGroups.entries()).flatMap(([day, points]) => {
@@ -403,7 +409,7 @@ export default class EchartsDetailGraph extends Vue {
       }
 
       return new EchartsDataPoint(
-        point.authorDate,
+        point.committerDate,
         pointValue,
         symbol,
         point.hash,
@@ -416,7 +422,10 @@ export default class EchartsDetailGraph extends Vue {
   }
 
   private get echartsDataPoints(): Map<DimensionId, EchartsDataPoint[]> {
-    const map: Map<DimensionId, EchartsDataPoint[]> = new Map()
+    const map: Map<DimensionId, EchartsDataPoint[]> = new CustomKeyEqualsMap(
+      [],
+      dimensionIdEqual
+    )
 
     this.dimensions.forEach(dimension => {
       if (this.dayEquidistant) {
@@ -526,6 +535,15 @@ export default class EchartsDetailGraph extends Vue {
     return this.dimensions.find(it => it.equals(dimensions))
   }
 
+  private get showCommitToCompareMarker() {
+    if (!this.commitToCompare) {
+      return false
+    }
+    const dimensions = this.commitToCompare.dimension
+
+    return this.dimensions.find(it => it.equals(dimensions))
+  }
+
   @Watch('referenceDatapoint')
   @Watch('commitToCompare')
   private updateReferenceDatapoint() {
@@ -540,10 +558,10 @@ export default class EchartsDetailGraph extends Vue {
         markLineData.push({ yAxis: referenceValue, name: 'Reference' })
       }
     }
-    if (this.commitToCompare !== null) {
+    if (this.showCommitToCompareMarker) {
       // Day equidistant points might move the point and its author date
       const displayedPoint = this.echartsDataPoints
-        .get(this.referenceDatapoint!.dimension)!
+        .get(this.commitToCompare!.dimension)!
         .find(it => it.name === this.commitToCompare!.dataPoint.hash)
 
       if (displayedPoint) {
