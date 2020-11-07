@@ -72,7 +72,6 @@
                 </v-col>
                 <v-col class="d-flex justify-end">
                   <v-btn
-                    v-if="graphSupportsDayEquidistantDisplay"
                     color="primary"
                     outlined
                     class="mr-4"
@@ -408,10 +407,6 @@ export default class RepoDetail extends Vue {
 
   private set yStartsAtZero(startsAtZero: boolean) {
     vxm.detailGraphModule.beginYScaleAtZero = startsAtZero
-  }
-
-  private get graphSupportsDayEquidistantDisplay() {
-    return true // this.selectedGraphComponent === EchartsDetailGraph
   }
 
   private get dayEquidistantGraphSelected() {
