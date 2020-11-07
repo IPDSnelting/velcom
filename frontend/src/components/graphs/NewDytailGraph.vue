@@ -33,6 +33,9 @@ export default class DytailGraph extends Vue {
   @Prop({ default: true })
   private beginYAtZero!: boolean
 
+  @Prop({ default: true })
+  private dayEquidistant!: boolean
+
   private graph!: Dygraph
 
   private height: number = 500
@@ -176,10 +179,12 @@ export default class DytailGraph extends Vue {
   @Watch('dimensions')
   @Watch('beginYAtZero')
   @Watch('darkTheme')
+  @Watch('dayEquidistant')
   private up() {
     const data: number[][] = []
 
-    // One array entry per datapoint. That array contains all values: [x, dim1, dim2, ...]
+    // One array entry = #dimensions data points per commit
+    // one array entry has the form [x-val, dim1, dim2, ...]
     for (let i = 0; i < this.datapoints.length; i++) {
       data[i] = [this.datapoints[i].committerDate.getTime()]
     }

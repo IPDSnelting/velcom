@@ -411,7 +411,7 @@ export default class RepoDetail extends Vue {
   }
 
   private get graphSupportsDayEquidistantDisplay() {
-    return this.selectedGraphComponent === EchartsDetailGraph
+    return true // this.selectedGraphComponent === EchartsDetailGraph
   }
 
   private get dayEquidistantGraphSelected() {

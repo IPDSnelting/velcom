@@ -430,7 +430,7 @@ export class DetailDataPoint {
   readonly committerDate: Date
   readonly summary: string
   // TODO: Figure out if the map wastes too much memory
-  readonly values: Map<DimensionId, DetailDataPointValue>
+  readonly values: CustomKeyEqualsMap<DimensionId, DetailDataPointValue>
 
   constructor(
     hash: CommitHash,

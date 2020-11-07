@@ -14,6 +14,7 @@ import { vxm } from '@/store'
 import router from '@/router'
 import { Route } from 'vue-router'
 import { dateFromRelative } from '@/util/TimeUtil'
+import { spaceDayEquidistant } from '@/util/DayEquidistantUtil'
 
 const VxModule = createModule({
   namespaced: 'detailGraphModule',
@@ -194,9 +195,7 @@ export class DetailGraphStore extends VxModule {
   }
 
   get duration(): number {
-    const timeDiff =
-      vxm.detailGraphModule.endTime.getTime() -
-      vxm.detailGraphModule.startTime.getTime()
+    const timeDiff = this.endTime.getTime() - this.startTime.getTime()
 
     return Math.ceil(timeDiff / (1000 * 3600 * 24))
   }
@@ -300,7 +299,9 @@ export class DetailGraphStore extends VxModule {
    * @memberof detailGraphStore
    */
   get detailGraph(): DetailDataPoint[] {
-    return this._detailGraph
+    return this.dayEquidistantGraph
+      ? spaceDayEquidistant(this._detailGraph)
+      : this._detailGraph
   }
 
   /**
