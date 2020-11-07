@@ -1,4 +1,4 @@
-package de.aaaaaaah.velcom.backend.newaccess.shared;
+package de.aaaaaaah.velcom.backend.newaccess.caches;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;

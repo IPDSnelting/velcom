@@ -13,11 +13,11 @@ import de.aaaaaaah.velcom.backend.data.repocomparison.TimesliceComparison;
 import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparator;
 import de.aaaaaaah.velcom.backend.data.runcomparison.SignificanceFactors;
 import de.aaaaaaah.velcom.backend.listener.Listener;
+import de.aaaaaaah.velcom.backend.newaccess.caches.AvailableDimensionsCache;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.DimensionReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.RepoWriteAccess;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RemoteUrl;
-import de.aaaaaaah.velcom.backend.newaccess.shared.AvailableDimensionsCache;
 import de.aaaaaaah.velcom.backend.newaccess.taskaccess.TaskWriteAccess;
 import de.aaaaaaah.velcom.backend.restapi.authentication.RepoAuthenticator;
 import de.aaaaaaah.velcom.backend.restapi.authentication.RepoUser;
@@ -115,7 +115,7 @@ public class ServerMain extends Application<GlobalConfig> {
 		RepoStorage repoStorage = new RepoStorage(configuration.getRepoDir());
 		DatabaseStorage databaseStorage = new DatabaseStorage(configuration);
 
-		// Shared on access layer
+		// Caches
 		AvailableDimensionsCache availableDimensionsCache = new AvailableDimensionsCache();
 
 		// Access layer

@@ -4,7 +4,7 @@ import static org.jooq.codegen.db.tables.Branch.BRANCH;
 import static org.jooq.codegen.db.tables.Repo.REPO;
 import static org.jooq.impl.DSL.field;
 
-import de.aaaaaaah.velcom.backend.newaccess.shared.AvailableDimensionsCache;
+import de.aaaaaaah.velcom.backend.newaccess.caches.AvailableDimensionsCache;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.BranchName;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RemoteUrl;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.Repo;
