@@ -261,10 +261,11 @@ export default class DytailGraph extends Vue {
               dygraph: Dygraph,
               vals: number[]
             ) {
-              return Dygraph.getDateAxis(
+              // now shut up, eslint
+              return (Dygraph as any).getDateAxis(
                 min,
                 max,
-                Dygraph.Granularity.DAILY,
+                (Dygraph as any).Granularity.DAILY, // please, just shut up
                 opts,
                 dygraph
               )
