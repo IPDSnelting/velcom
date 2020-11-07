@@ -44,7 +44,7 @@ public class TaskReadAccess {
 	 */
 	public Task getTask(TaskId taskId) throws NoSuchTaskException {
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			TaskRecord record = db.fetchOne(TASK, TASK.ID.eq(taskId.getIdAsString()));
+			TaskRecord record = db.fetchSingle(TASK, TASK.ID.eq(taskId.getIdAsString()));
 			return taskRecordToTask(record);
 		} catch (DataAccessException e) {
 			throw new NoSuchTaskException(e, taskId);
