@@ -3,6 +3,7 @@ package de.aaaaaaah.velcom.backend.access;
 import static java.util.stream.Collectors.toList;
 import static org.jooq.codegen.db.Tables.MEASUREMENT;
 import static org.jooq.codegen.db.Tables.MEASUREMENT_VALUE;
+import static org.jooq.codegen.db.Tables.TASK;
 import static org.jooq.codegen.db.tables.Run.RUN;
 import static org.jooq.impl.DSL.exists;
 
@@ -15,10 +16,11 @@ import de.aaaaaaah.velcom.backend.access.entities.Run;
 import de.aaaaaaah.velcom.backend.access.entities.benchmark.NewMeasurement;
 import de.aaaaaaah.velcom.backend.access.entities.benchmark.NewRun;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.RunError;
-import de.aaaaaaah.velcom.backend.newaccess.caches.AvailableDimensionsCache;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.RepoReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
+import de.aaaaaaah.velcom.backend.newaccess.shared.AvailableDimensionsCache;
+import de.aaaaaaah.velcom.backend.newaccess.shared.TaskCallbacks;
 import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.TaskId;
 import de.aaaaaaah.velcom.backend.storage.db.DBWriteAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
@@ -31,15 +33,15 @@ import org.jooq.codegen.db.tables.records.RunRecord;
 
 public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 
-	private final TaskWriteAccess taskAccess;
 	private final AvailableDimensionsCache availableDimensionsCache;
+	private final TaskCallbacks taskCallbacks;
 
 	public BenchmarkWriteAccess(DatabaseStorage databaseStorage, RepoReadAccess repoReadAccess,
-		TaskWriteAccess taskAccess, AvailableDimensionsCache availableDimensionsCache) {
+		AvailableDimensionsCache availableDimensionsCache, TaskCallbacks taskCallbacks) {
 
 		super(databaseStorage, repoReadAccess);
-		this.taskAccess = taskAccess;
 		this.availableDimensionsCache = availableDimensionsCache;
+		this.taskCallbacks = taskCallbacks;
 	}
 
 	/**
@@ -49,16 +51,18 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 	 */
 	public void insertRun(NewRun newRun) {
 		Run run = newRun.toRun();
+		TaskId taskId = newRun.getId().toTaskId();
 
 		// Insert run into database and delete associated task
 		databaseStorage.acquireWriteTransaction(db -> {
 			// 0.) Delete associated task
-			TaskId taskId = new TaskId(newRun.getId().getId());
-			taskAccess.deleteTasks(List.of(taskId), db);
+			db.deleteFrom(TASK)
+				.where(TASK.ID.eq(taskId.getIdAsString()))
+				.execute();
 
 			// 1.) Insert run
 			RunRecord runRecord = db.newRecord(RUN);
-			runRecord.setId(newRun.getId().getId().toString());
+			runRecord.setId(newRun.getIdAsString());
 			runRecord.setAuthor(newRun.getAuthor());
 			runRecord.setRunnerName(newRun.getRunnerName());
 			runRecord.setRunnerInfo(newRun.getRunnerInfo());
@@ -90,6 +94,8 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 				}
 			}
 		});
+
+		taskCallbacks.callDeleteHandlers(taskId);
 
 		// 2.) Invalidate dimension cache for repo
 		newRun.getSource().getLeft().ifPresent(source -> dimensionCache.remove(source.getRepoId()));

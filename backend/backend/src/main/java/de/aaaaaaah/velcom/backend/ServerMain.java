@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import de.aaaaaaah.velcom.backend.access.ArchiveAccess;
 import de.aaaaaaah.velcom.backend.access.BenchmarkWriteAccess;
-import de.aaaaaaah.velcom.backend.access.TaskWriteAccess;
 import de.aaaaaaah.velcom.backend.access.TokenWriteAccess;
 import de.aaaaaaah.velcom.backend.access.entities.AuthToken;
 import de.aaaaaaah.velcom.backend.data.benchrepo.BenchRepo;
@@ -14,11 +13,13 @@ import de.aaaaaaah.velcom.backend.data.repocomparison.TimesliceComparison;
 import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparator;
 import de.aaaaaaah.velcom.backend.data.runcomparison.SignificanceFactors;
 import de.aaaaaaah.velcom.backend.listener.Listener;
-import de.aaaaaaah.velcom.backend.newaccess.caches.AvailableDimensionsCache;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.DimensionReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.RepoWriteAccess;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RemoteUrl;
+import de.aaaaaaah.velcom.backend.newaccess.shared.AvailableDimensionsCache;
+import de.aaaaaaah.velcom.backend.newaccess.shared.TaskCallbacks;
+import de.aaaaaaah.velcom.backend.newaccess.taskaccess.TaskWriteAccess;
 import de.aaaaaaah.velcom.backend.restapi.authentication.RepoAuthenticator;
 import de.aaaaaaah.velcom.backend.restapi.authentication.RepoUser;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.AllReposEndpoint;
@@ -115,11 +116,12 @@ public class ServerMain extends Application<GlobalConfig> {
 		RepoStorage repoStorage = new RepoStorage(configuration.getRepoDir());
 		DatabaseStorage databaseStorage = new DatabaseStorage(configuration);
 
-		// Caches
+		// Shared on access layer
 		AvailableDimensionsCache availableDimensionsCache = new AvailableDimensionsCache();
+		TaskCallbacks taskCallbacks = new TaskCallbacks();
 
 		// Access layer
-		TaskWriteAccess taskAccess = new TaskWriteAccess(databaseStorage);
+		TaskWriteAccess taskAccess = new TaskWriteAccess(databaseStorage, taskCallbacks);
 		CommitReadAccess commitAccess = new CommitReadAccess(databaseStorage);
 		DimensionReadAccess dimensionAccess = new DimensionReadAccess(databaseStorage);
 		RepoWriteAccess repoAccess = new RepoWriteAccess(databaseStorage, availableDimensionsCache);
@@ -135,11 +137,11 @@ public class ServerMain extends Application<GlobalConfig> {
 			repoStorage
 		);
 		BenchmarkWriteAccess benchmarkAccess = new BenchmarkWriteAccess(
-			databaseStorage, repoAccess, taskAccess, availableDimensionsCache
+			databaseStorage, repoAccess, availableDimensionsCache, taskCallbacks
 		);
 
 		// Data layer
-		Queue queue = new Queue(taskAccess, archiveAccess, benchmarkAccess);
+		Queue queue = new Queue(taskAccess, archiveAccess, benchmarkAccess, taskCallbacks);
 		BenchRepo benchRepo = new BenchRepo(archiveAccess);
 		SignificanceFactors significanceFactors = new SignificanceFactors(
 			configuration.getSignificanceRelativeThreshold(),

@@ -2,9 +2,12 @@ package de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities;
 
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.CommitSource;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.TarSource;
+import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.shared.util.Either;
 import java.time.Instant;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 public class Task {
@@ -28,6 +31,16 @@ public class Task {
 		this.updateTime = updateTime;
 		this.source = source;
 		this.inProcess = inProcess;
+	}
+
+	public Task(String author, TaskPriority priority, Either<CommitSource, TarSource> source) {
+		this.id = new TaskId();
+		this.author = author;
+		this.priority = priority;
+		this.insertTime = Instant.now();
+		this.updateTime = this.insertTime;
+		this.source = source;
+		this.inProcess = false;
 	}
 
 	public TaskId getId() {
@@ -60,6 +73,18 @@ public class Task {
 
 	public Either<CommitSource, TarSource> getSource() {
 		return source;
+	}
+
+	public Optional<RepoId> getRepoId() {
+		return source.consume(it -> Optional.of(it.getRepoId()), TarSource::getRepoId);
+	}
+
+	public Optional<CommitHash> getCommitHash() {
+		return source.consume(it -> Optional.of(it.getHash()), it -> Optional.empty());
+	}
+
+	public Optional<String> getTarDescription() {
+		return source.consume(it -> Optional.empty(), it -> Optional.of(it.getDescription()));
 	}
 
 	public boolean isInProcess() {

@@ -4,7 +4,6 @@ import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toSet;
 
 import de.aaaaaaah.velcom.backend.access.exceptions.RepoAccessException;
-import de.aaaaaaah.velcom.backend.access.policy.QueuePriority;
 import de.aaaaaaah.velcom.backend.data.benchrepo.BenchRepo;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.listener.dbupdate.DbUpdater;
@@ -12,6 +11,7 @@ import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.RepoWriteAccess;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.Repo;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
+import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.TaskPriority;
 import de.aaaaaaah.velcom.backend.storage.db.DBWriteAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import de.aaaaaaah.velcom.backend.storage.repo.GuickCloning;
@@ -43,7 +43,7 @@ public class Listener {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(Listener.class);
 	private static final String QUEUE_AUTHOR = "Listener";
-	private static final QueuePriority QUEUE_PRIORITY = QueuePriority.LISTENER;
+	private static final TaskPriority TASK_PRIORITY = TaskPriority.LISTENER;
 
 	private final DatabaseStorage databaseStorage;
 	private final RepoStorage repoStorage;
@@ -264,6 +264,6 @@ public class Listener {
 		} else {
 			LOGGER.info("Adding " + toBeQueued.size() + " new commits to queue");
 		}
-		queue.addCommits(QUEUE_AUTHOR, repo.getId(), toBeQueued, QUEUE_PRIORITY);
+		queue.addCommits(QUEUE_AUTHOR, repo.getId(), toBeQueued, TASK_PRIORITY);
 	}
 }

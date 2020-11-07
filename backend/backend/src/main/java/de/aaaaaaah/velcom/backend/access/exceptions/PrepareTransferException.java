@@ -1,6 +1,7 @@
 package de.aaaaaaah.velcom.backend.access.exceptions;
 
-import de.aaaaaaah.velcom.backend.access.entities.Task;
+
+import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.Task;
 
 /**
  * An exception that occurs when the preparation of a task transfer has failed.

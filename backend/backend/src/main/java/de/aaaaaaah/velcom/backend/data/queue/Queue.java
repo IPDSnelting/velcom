@@ -4,22 +4,25 @@ import static java.util.stream.Collectors.toList;
 
 import de.aaaaaaah.velcom.backend.access.ArchiveAccess;
 import de.aaaaaaah.velcom.backend.access.BenchmarkWriteAccess;
-import de.aaaaaaah.velcom.backend.access.TaskWriteAccess;
-import de.aaaaaaah.velcom.backend.access.entities.Task;
 import de.aaaaaaah.velcom.backend.access.entities.benchmark.NewRun;
 import de.aaaaaaah.velcom.backend.access.exceptions.PrepareTransferException;
 import de.aaaaaaah.velcom.backend.access.exceptions.TransferException;
-import de.aaaaaaah.velcom.backend.access.policy.QueuePriority;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.CommitSource;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
+import de.aaaaaaah.velcom.backend.newaccess.shared.TaskCallbacks;
+import de.aaaaaaah.velcom.backend.newaccess.taskaccess.TaskWriteAccess;
+import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.Task;
 import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.TaskId;
+import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.TaskPriority;
 import de.aaaaaaah.velcom.backend.newaccess.taskaccess.exceptions.NoSuchTaskException;
+import de.aaaaaaah.velcom.shared.util.Either;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 /**
@@ -39,15 +42,21 @@ public class Queue {
 	private final TaskWriteAccess taskAccess;
 	private final ArchiveAccess archiveAccess;
 	private final BenchmarkWriteAccess benchAccess;
+	private final TaskCallbacks taskCallbacks;
 
 	private final Collection<Consumer<TaskId>> abortHandlers = new ArrayList<>();
 
+	private final AtomicReference<Optional<RepoId>> currentRepoId;
+
 	public Queue(TaskWriteAccess taskAccess, ArchiveAccess archiveAccess,
-		BenchmarkWriteAccess benchAccess) {
+		BenchmarkWriteAccess benchAccess, TaskCallbacks taskCallbacks) {
 
 		this.taskAccess = taskAccess;
 		this.archiveAccess = archiveAccess;
 		this.benchAccess = benchAccess;
+		this.taskCallbacks = taskCallbacks;
+
+		currentRepoId = new AtomicReference<>(Optional.empty());
 	}
 
 	/**
@@ -67,7 +76,7 @@ public class Queue {
 	 * @param handler the handler
 	 */
 	public void onTaskInsert(Consumer<Task> handler) {
-		this.taskAccess.onTaskInsert(handler);
+		taskCallbacks.addInsertHandler(handler);
 	}
 
 	/**
@@ -76,7 +85,7 @@ public class Queue {
 	 * @param handler the handler
 	 */
 	public void onTaskDelete(Consumer<TaskId> handler) {
-		this.taskAccess.onTaskDelete(handler);
+		taskCallbacks.addDeleteHandler(handler);
 	}
 
 	/**
@@ -87,7 +96,7 @@ public class Queue {
 	 * @throws NoSuchTaskException if no task with the given id exists
 	 */
 	public Task getTaskById(TaskId taskId) throws NoSuchTaskException {
-		return this.taskAccess.getById(taskId);
+		return taskAccess.getTask(taskId);
 	}
 
 	/**
@@ -97,7 +106,16 @@ public class Queue {
 	 * @return the next task in this queue to be processed
 	 */
 	public Optional<Task> fetchNextTask() {
-		return taskAccess.fetchNextTask();
+		return taskAccess.startTask(tasks -> {
+			Policy policy = new Policy(tasks, currentRepoId.get().orElse(null));
+			Optional<Task> nextTask = policy.step();
+
+			if (nextTask.isPresent()) {
+				currentRepoId.set(policy.getCurrentRepoId());
+			}
+
+			return nextTask;
+		});
 	}
 
 	/**
@@ -105,7 +123,9 @@ public class Queue {
 	 * 	processing.
 	 */
 	public List<Task> getTasksSorted() {
-		return taskAccess.getTasksSorted();
+		List<Task> allTasks = taskAccess.getAllTasks();
+		Policy policy = new Policy(allTasks, currentRepoId.get().orElse(null));
+		return policy.stepAll();
 	}
 
 	/**
@@ -118,14 +138,15 @@ public class Queue {
 	 * @return a collection of all tasks that were actually inserted because respective their commits
 	 * 	were not already in the queue beforehand
 	 */
+	// TODO: 07.11.20 Mention how the order of the commits is preserved
 	public Collection<Task> addCommits(String author, RepoId repoId, List<CommitHash> hashes,
-		QueuePriority priority) {
+		TaskPriority priority) {
 
 		List<Task> tasks = hashes.stream()
-			.map(hash -> new Task(author, priority, new CommitSource(repoId, hash)))
+			.map(hash -> new Task(author, priority, Either.ofLeft(new CommitSource(repoId, hash))))
 			.collect(toList());
 
-		return taskAccess.insertTasks(tasks);
+		return taskAccess.insertOrIgnoreTasks(tasks);
 	}
 
 	/**
@@ -134,7 +155,7 @@ public class Queue {
 	 * @param taskId the id of the task
 	 * @param newPriority the new priority
 	 */
-	public void prioritizeTask(TaskId taskId, QueuePriority newPriority) {
+	public void prioritizeTask(TaskId taskId, TaskPriority newPriority) {
 		taskAccess.setTaskPriority(taskId, newPriority);
 	}
 
@@ -153,7 +174,7 @@ public class Queue {
 	public void transferTask(TaskId taskId, OutputStream output)
 		throws NoSuchTaskException, TransferException, PrepareTransferException {
 
-		Task task = taskAccess.getById(taskId);
+		Task task = taskAccess.getTask(taskId);
 		archiveAccess.transferTask(task, output);
 	}
 
@@ -185,15 +206,6 @@ public class Queue {
 	 */
 	public void deleteTasks(Collection<TaskId> taskIds) {
 		taskAccess.deleteTasks(taskIds);
-	}
-
-	/**
-	 * Deletes all tasks that are associated with the given repository.
-	 *
-	 * @param repoId the id of the repo
-	 */
-	public void deleteAllTasksOfRepo(RepoId repoId) {
-		taskAccess.deleteAllTasksOfRepo(repoId);
 	}
 
 	/**

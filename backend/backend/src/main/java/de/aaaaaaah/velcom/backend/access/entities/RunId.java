@@ -1,5 +1,6 @@
 package de.aaaaaaah.velcom.backend.access.entities;
 
+import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.TaskId;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -31,6 +32,10 @@ public class RunId {
 
 	public String getIdAsString() {
 		return id.toString();
+	}
+
+	public TaskId toTaskId() {
+		return new TaskId(id);
 	}
 
 	@Override

@@ -12,6 +12,7 @@ import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -59,6 +60,14 @@ public class NewRun {
 
 	public RunId getId() {
 		return id;
+	}
+
+	public UUID getIdAsUuid() {
+		return id.getId();
+	}
+
+	public String getIdAsString() {
+		return id.getIdAsString();
 	}
 
 	public String getAuthor() {
