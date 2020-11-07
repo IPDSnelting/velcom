@@ -20,7 +20,6 @@ import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.RepoReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.newaccess.shared.AvailableDimensionsCache;
-import de.aaaaaaah.velcom.backend.newaccess.shared.TaskCallbacks;
 import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.TaskId;
 import de.aaaaaaah.velcom.backend.storage.db.DBWriteAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
@@ -34,14 +33,12 @@ import org.jooq.codegen.db.tables.records.RunRecord;
 public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 
 	private final AvailableDimensionsCache availableDimensionsCache;
-	private final TaskCallbacks taskCallbacks;
 
 	public BenchmarkWriteAccess(DatabaseStorage databaseStorage, RepoReadAccess repoReadAccess,
-		AvailableDimensionsCache availableDimensionsCache, TaskCallbacks taskCallbacks) {
+		AvailableDimensionsCache availableDimensionsCache) {
 
 		super(databaseStorage, repoReadAccess);
 		this.availableDimensionsCache = availableDimensionsCache;
-		this.taskCallbacks = taskCallbacks;
 	}
 
 	/**
@@ -94,8 +91,6 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 				}
 			}
 		});
-
-		taskCallbacks.callDeleteHandlers(taskId);
 
 		// 2.) Invalidate dimension cache for repo
 		newRun.getSource().getLeft().ifPresent(source -> dimensionCache.remove(source.getRepoId()));

@@ -10,7 +10,6 @@ import de.aaaaaaah.velcom.backend.access.exceptions.TransferException;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.CommitSource;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
-import de.aaaaaaah.velcom.backend.newaccess.shared.TaskCallbacks;
 import de.aaaaaaah.velcom.backend.newaccess.taskaccess.TaskWriteAccess;
 import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.Task;
 import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.TaskId;
@@ -18,74 +17,34 @@ import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.TaskPriority;
 import de.aaaaaaah.velcom.backend.newaccess.taskaccess.exceptions.NoSuchTaskException;
 import de.aaaaaaah.velcom.shared.util.Either;
 import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
 
 /**
  * The queue manages tasks that are passed to it from various sources and sorts these tasks to bring
  * them into an order in which they will be fetched for execution by the dispatcher. This class is
  * thread safe.
  *
- * <p>The order in which the tasks are sorted depends on the underlying {@link
- * de.aaaaaaah.velcom.backend.access.policy.QueuePolicy QueuePolicy} used in the access layer and is
- * not known to the queue itself.</p>
- *
- * <p>Initially upon construction, all tasks that are residing in the queue will have their
- * status manually set to "not in process".</p>
+ * <p> The order in which the tasks are sorted is determined by the queue's policy.
  */
 public class Queue {
 
 	private final TaskWriteAccess taskAccess;
 	private final ArchiveAccess archiveAccess;
 	private final BenchmarkWriteAccess benchAccess;
-	private final TaskCallbacks taskCallbacks;
-
-	private final Collection<Consumer<TaskId>> abortHandlers = new ArrayList<>();
 
 	private final AtomicReference<Optional<RepoId>> currentRepoId;
 
 	public Queue(TaskWriteAccess taskAccess, ArchiveAccess archiveAccess,
-		BenchmarkWriteAccess benchAccess, TaskCallbacks taskCallbacks) {
+		BenchmarkWriteAccess benchAccess) {
 
 		this.taskAccess = taskAccess;
 		this.archiveAccess = archiveAccess;
 		this.benchAccess = benchAccess;
-		this.taskCallbacks = taskCallbacks;
 
 		currentRepoId = new AtomicReference<>(Optional.empty());
-	}
-
-	/**
-	 * Adds a handler to this queue that is called when a task process is aborted, which means that
-	 * the task was given to a runner but the processing of the task has been subsequently cancelled.
-	 * The task still remains in the queue.
-	 *
-	 * @param handler the handler
-	 */
-	public void onTaskProcessAbort(Consumer<TaskId> handler) {
-		this.abortHandlers.add(handler);
-	}
-
-	/**
-	 * Adds a handler to this queue that is called when a new task is inserted into the queue.
-	 *
-	 * @param handler the handler
-	 */
-	public void onTaskInsert(Consumer<Task> handler) {
-		taskCallbacks.addInsertHandler(handler);
-	}
-
-	/**
-	 * Adds a new handler to this queue which is called when a task is deleted from this queue.
-	 *
-	 * @param handler the handler
-	 */
-	public void onTaskDelete(Consumer<TaskId> handler) {
-		taskCallbacks.addDeleteHandler(handler);
 	}
 
 	/**
@@ -101,7 +60,7 @@ public class Queue {
 
 	/**
 	 * Gets the task that is next in line to be benchmarked. The returned task will then be marked as
-	 * "in_process" until the task is completed via {@link Queue#completeTask(NewRun)}.
+	 * "in_process" until the task is completed via {@link #completeTask(NewRun)}.
 	 *
 	 * @return the next task in this queue to be processed
 	 */
@@ -186,7 +145,6 @@ public class Queue {
 	 */
 	public void abortTaskProcess(TaskId taskId) {
 		taskAccess.setTaskStatus(taskId, false);
-		abortHandlers.forEach(handler -> handler.accept(taskId));
 	}
 
 	/**

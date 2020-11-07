@@ -5,7 +5,6 @@ import static org.jooq.impl.DSL.not;
 
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
-import de.aaaaaaah.velcom.backend.newaccess.shared.TaskCallbacks;
 import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.Task;
 import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.TaskId;
 import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.TaskPriority;
@@ -22,11 +21,8 @@ import org.jooq.codegen.db.tables.records.TaskRecord;
 
 public class TaskWriteAccess extends TaskReadAccess {
 
-	private final TaskCallbacks taskCallbacks;
-
-	public TaskWriteAccess(DatabaseStorage databaseStorage, TaskCallbacks taskCallbacks) {
+	public TaskWriteAccess(DatabaseStorage databaseStorage) {
 		super(databaseStorage);
-		this.taskCallbacks = taskCallbacks;
 	}
 
 	private static TaskRecord taskToTaskRecord(Task task) {
@@ -67,8 +63,6 @@ public class TaskWriteAccess extends TaskReadAccess {
 			return tasksToInsert;
 		});
 
-		insertedTasks.forEach(taskCallbacks::callInsertHandlers);
-
 		return insertedTasks;
 	}
 
@@ -108,8 +102,6 @@ public class TaskWriteAccess extends TaskReadAccess {
 				.where(TASK.ID.in(taskIds))
 				.execute();
 		}
-
-		tasks.forEach(taskCallbacks::callDeleteHandlers);
 	}
 
 	public void deleteAllTasks() {
@@ -124,8 +116,6 @@ public class TaskWriteAccess extends TaskReadAccess {
 
 			db.deleteFrom(TASK).execute();
 		}
-
-		taskIds.forEach(taskCallbacks::callDeleteHandlers);
 	}
 
 	public void setTaskPriority(TaskId taskId, TaskPriority newPriority) {

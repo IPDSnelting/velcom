@@ -39,6 +39,7 @@ public class Dispatcher implements IDispatcher {
 		this.teleRunners = new ArrayList<>();
 		this.workToRunnerMap = new HashMap<>();
 
+		// TODO: 07.11.20 Fix this
 		this.queue.onTaskDelete(this::abort);
 
 		ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(

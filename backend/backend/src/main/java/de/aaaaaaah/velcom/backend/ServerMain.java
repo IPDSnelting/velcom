@@ -18,7 +18,6 @@ import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.DimensionReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.RepoWriteAccess;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RemoteUrl;
 import de.aaaaaaah.velcom.backend.newaccess.shared.AvailableDimensionsCache;
-import de.aaaaaaah.velcom.backend.newaccess.shared.TaskCallbacks;
 import de.aaaaaaah.velcom.backend.newaccess.taskaccess.TaskWriteAccess;
 import de.aaaaaaah.velcom.backend.restapi.authentication.RepoAuthenticator;
 import de.aaaaaaah.velcom.backend.restapi.authentication.RepoUser;
@@ -118,10 +117,9 @@ public class ServerMain extends Application<GlobalConfig> {
 
 		// Shared on access layer
 		AvailableDimensionsCache availableDimensionsCache = new AvailableDimensionsCache();
-		TaskCallbacks taskCallbacks = new TaskCallbacks();
 
 		// Access layer
-		TaskWriteAccess taskAccess = new TaskWriteAccess(databaseStorage, taskCallbacks);
+		TaskWriteAccess taskAccess = new TaskWriteAccess(databaseStorage);
 		CommitReadAccess commitAccess = new CommitReadAccess(databaseStorage);
 		DimensionReadAccess dimensionAccess = new DimensionReadAccess(databaseStorage);
 		RepoWriteAccess repoAccess = new RepoWriteAccess(databaseStorage, availableDimensionsCache);
@@ -137,11 +135,11 @@ public class ServerMain extends Application<GlobalConfig> {
 			repoStorage
 		);
 		BenchmarkWriteAccess benchmarkAccess = new BenchmarkWriteAccess(
-			databaseStorage, repoAccess, availableDimensionsCache, taskCallbacks
+			databaseStorage, repoAccess, availableDimensionsCache
 		);
 
 		// Data layer
-		Queue queue = new Queue(taskAccess, archiveAccess, benchmarkAccess, taskCallbacks);
+		Queue queue = new Queue(taskAccess, archiveAccess, benchmarkAccess);
 		BenchRepo benchRepo = new BenchRepo(archiveAccess);
 		SignificanceFactors significanceFactors = new SignificanceFactors(
 			configuration.getSignificanceRelativeThreshold(),
