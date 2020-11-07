@@ -137,4 +137,12 @@ public class TaskWriteAccess extends TaskReadAccess {
 				.execute();
 		}
 	}
+
+	public void resetAllTaskStatuses() {
+		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
+			db.update(TASK)
+				.set(TASK.IN_PROCESS, false)
+				.execute();
+		}
+	}
 }

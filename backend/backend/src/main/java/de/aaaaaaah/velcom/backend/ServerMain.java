@@ -138,6 +138,8 @@ public class ServerMain extends Application<GlobalConfig> {
 			databaseStorage, repoAccess, availableDimensionsCache
 		);
 
+		taskAccess.resetAllTaskStatuses();
+
 		// Data layer
 		Queue queue = new Queue(taskAccess, archiveAccess, benchmarkAccess);
 		BenchRepo benchRepo = new BenchRepo(archiveAccess);
