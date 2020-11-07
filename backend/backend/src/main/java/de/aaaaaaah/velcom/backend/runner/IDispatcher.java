@@ -1,6 +1,6 @@
 package de.aaaaaaah.velcom.backend.runner;
 
-import de.aaaaaaah.velcom.backend.access.entities.TaskId;
+import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.TaskId;
 import java.util.List;
 
 /**

@@ -4,7 +4,9 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import de.aaaaaaah.velcom.backend.GlobalConfig;
 import de.aaaaaaah.velcom.backend.util.CheckedConsumer;
+import de.aaaaaaah.velcom.backend.util.CheckedFunction;
 import io.micrometer.core.instrument.Metrics;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import org.flywaydb.core.Flyway;
@@ -99,9 +101,12 @@ public class DatabaseStorage {
 	/**
 	 * Acquires a transaction that can only read from the database.
 	 *
-	 * @param handler the handler that is executed within the context of the transaction
+	 * @param handler the handler that is executed within the context of the transaction. The handler
+	 * 	will be called once and its return value returned from the transaction.
 	 */
-	public void acquireReadTransaction(CheckedConsumer<DBReadAccess, Throwable> handler) {
+	public <T> T acquireReadTransaction(CheckedFunction<DBReadAccess, T, Throwable> handler) {
+		AtomicReference<T> result = new AtomicReference<>();
+
 		try (final DBReadAccess db = acquireReadAccess()) {
 			db.dsl().transaction(cfg -> {
 				try (DBReadAccess inTransactionDB = new DBReadAccess(cfg.dsl())) {
@@ -109,21 +114,54 @@ public class DatabaseStorage {
 				}
 			});
 		}
+
+		return result.get();
+	}
+
+	/**
+	 * Acquires a transaction that can only read from the database.
+	 *
+	 * @param handler the handler that is executed within the context of the transaction. It has no
+	 * 	return value.
+	 */
+	public void acquireReadTransaction(CheckedConsumer<DBReadAccess, Throwable> handler) {
+		acquireWriteTransaction(db -> {
+			handler.accept(db);
+			return null;
+		});
 	}
 
 	/**
 	 * Acquires a transaction that can read and write to the database.
 	 *
-	 * @param handler the handler that is executed within the context of the transaction
+	 * @param handler the handler that is executed within the context of the transaction. The handler
+	 * 	will be called once and its return value returned from the transaction.
 	 */
-	public void acquireWriteTransaction(CheckedConsumer<DBWriteAccess, Throwable> handler) {
+	public <T> T acquireWriteTransaction(CheckedFunction<DBWriteAccess, T, Throwable> handler) {
+		AtomicReference<T> result = new AtomicReference<>();
+
 		try (final DBWriteAccess db = acquireWriteAccess()) {
 			db.dsl().transaction(cfg -> {
 				try (DBWriteAccess inTransactionDB = new DBWriteAccess(cfg.dsl(), this.writeLock)) {
-					handler.accept(inTransactionDB);
+					result.set(handler.accept(inTransactionDB));
 				}
 			});
 		}
+
+		return result.get();
+	}
+
+	/**
+	 * Acquires a transaction that can read and write to the database.
+	 *
+	 * @param handler the handler that is executed within the context of the transaction. It has no
+	 * 	return value.
+	 */
+	public void acquireWriteTransaction(CheckedConsumer<DBWriteAccess, Throwable> handler) {
+		acquireWriteTransaction(db -> {
+			handler.accept(db);
+			return null;
+		});
 	}
 
 	/**

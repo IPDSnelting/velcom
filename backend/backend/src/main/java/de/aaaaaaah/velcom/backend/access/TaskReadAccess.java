@@ -3,8 +3,6 @@ package de.aaaaaaah.velcom.backend.access;
 import static org.jooq.codegen.db.Tables.TASK;
 
 import de.aaaaaaah.velcom.backend.access.entities.Task;
-import de.aaaaaaah.velcom.backend.access.entities.TaskId;
-import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchTaskException;
 import de.aaaaaaah.velcom.backend.access.policy.QueuePolicy;
 import de.aaaaaaah.velcom.backend.access.policy.QueuePriority;
 import de.aaaaaaah.velcom.backend.access.policy.RoundRobinFiloPolicy;
@@ -12,6 +10,8 @@ import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.CommitSourc
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.TarSource;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
+import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.TaskId;
+import de.aaaaaaah.velcom.backend.newaccess.taskaccess.exceptions.NoSuchTaskException;
 import de.aaaaaaah.velcom.backend.storage.db.DBReadAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import java.util.List;

@@ -42,7 +42,7 @@ public class RunId {
 			return false;
 		}
 		RunId runId = (RunId) o;
-		return id.equals(runId.id);
+		return Objects.equals(id, runId.id);
 	}
 
 	@Override
