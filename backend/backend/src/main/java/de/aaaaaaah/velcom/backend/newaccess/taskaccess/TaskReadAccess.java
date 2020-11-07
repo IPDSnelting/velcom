@@ -11,6 +11,7 @@ import de.aaaaaaah.velcom.backend.newaccess.taskaccess.exceptions.NoSuchTaskExce
 import de.aaaaaaah.velcom.backend.storage.db.DBReadAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import org.jooq.codegen.db.tables.records.TaskRecord;
 import org.jooq.exception.DataAccessException;
@@ -48,6 +49,19 @@ public class TaskReadAccess {
 			return taskRecordToTask(record);
 		} catch (DataAccessException e) {
 			throw new NoSuchTaskException(e, taskId);
+		}
+	}
+
+	/**
+	 * A good way to check whether a task exists and to check its status if it exists.
+	 *
+	 * @param taskId the id of the task to check for
+	 * @return the tasks status if the task exists, empty otherwise
+	 */
+	public Optional<Boolean> getTaskStatus(TaskId taskId) {
+		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
+			Boolean inProcess = db.selectFrom(TASK).fetchOne(TASK.IN_PROCESS);
+			return Optional.ofNullable(inProcess);
 		}
 	}
 
