@@ -262,7 +262,7 @@ import MatrixDimensionSelection from '../components/graphs/MatrixDimensionSelect
 import RepoCommitOverview from '@/components/repodetail/RepoCommitOverview.vue'
 import { Dimension, Repo } from '@/store/types'
 import EchartsDetailGraph from '@/components/graphs/EchartsDetailGraph.vue'
-import DytailGraph from '@/components/graphs/NewDytailGraph.vue'
+import DytailGraph from '@/components/graphs/DytailGraph.vue'
 import { Watch } from 'vue-property-decorator'
 import ShareGraphLinkDialog from '@/views/ShareGraphLinkDialog.vue'
 import GraphPlaceholder from '@/components/graphs/GraphPlaceholder.vue'
