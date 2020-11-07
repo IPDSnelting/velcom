@@ -123,7 +123,7 @@ public class Queue {
 	 * 	processing.
 	 */
 	public List<Task> getTasksSorted() {
-		List<Task> allTasks = taskAccess.getAllTasks();
+		List<Task> allTasks = taskAccess.getAllUnstartedTasks();
 		Policy policy = new Policy(allTasks, currentRepoId.get().orElse(null));
 		return policy.stepAll();
 	}

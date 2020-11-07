@@ -1,6 +1,7 @@
 package de.aaaaaaah.velcom.backend.newaccess.taskaccess;
 
 import static org.jooq.codegen.db.tables.Task.TASK;
+import static org.jooq.impl.DSL.not;
 
 import de.aaaaaaah.velcom.backend.newaccess.AccessUtils;
 import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.Task;
@@ -50,9 +51,26 @@ public class TaskReadAccess {
 		}
 	}
 
+	/**
+	 * @return all tasks in no particular order
+	 */
 	public List<Task> getAllTasks() {
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
 			return db.selectFrom(TASK)
+				.stream()
+				.map(TaskReadAccess::taskRecordToTask)
+				.collect(Collectors.toList());
+		}
+	}
+
+	/**
+	 * @return all tasks that haven't been started yet (i. e. {@link Task#isInProcess()} returns
+	 *  {@code false}) in no particular order
+	 */
+	public List<Task> getAllUnstartedTasks() {
+		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
+			return db.selectFrom(TASK)
+				.where(not(TASK.IN_PROCESS))
 				.stream()
 				.map(TaskReadAccess::taskRecordToTask)
 				.collect(Collectors.toList());

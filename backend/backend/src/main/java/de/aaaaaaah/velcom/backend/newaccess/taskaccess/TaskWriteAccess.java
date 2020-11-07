@@ -1,6 +1,7 @@
 package de.aaaaaaah.velcom.backend.newaccess.taskaccess;
 
 import static org.jooq.codegen.db.tables.Task.TASK;
+import static org.jooq.impl.DSL.not;
 
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
@@ -71,9 +72,18 @@ public class TaskWriteAccess extends TaskReadAccess {
 		return insertedTasks;
 	}
 
+	/**
+	 * Atomically select a task to start and start it via a custom selector function.
+	 *
+	 * @param selector The selector is passed a list of all tasks that haven't been started yet. The
+	 * 	list is in no particular order. If it returns a task, that task will be started and also
+	 * 	returned.
+	 * @return the task returned by the selector, if it returned one
+	 */
 	public Optional<Task> startTask(Function<List<Task>, Optional<Task>> selector) {
 		return databaseStorage.acquireWriteTransaction(db -> {
 			List<Task> allTasks = db.selectFrom(TASK)
+				.where(not(TASK.IN_PROCESS))
 				.stream()
 				.map(TaskReadAccess::taskRecordToTask)
 				.collect(Collectors.toList());
