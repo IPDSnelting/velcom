@@ -18,6 +18,7 @@ import { vxm } from '@/store'
 import 'dygraphs/css/dygraph.css'
 import Crosshair from 'dygraphs/src/extras/crosshair.js'
 import { escapeHtml } from '@/util/TextUtils'
+import { formatDate } from '@/util/TimeUtil'
 
 // eslint-disable-next-line no-undef
 type RealOptions = dygraphs.Options & {
@@ -121,7 +122,7 @@ export default class DytailGraph extends Vue {
   // eslint-disable-next-line no-undef
   private tooltipFormatter(legendData: dygraphs.LegendData) {
     const datapoint: DetailDataPoint | undefined = this.datapoints.find(
-      point => point.committerDate.getTime() === legendData.x
+      point => point.positionDate.getTime() === legendData.x
     )
     if (datapoint) {
       const data = legendData.series.slice()
@@ -158,7 +159,7 @@ export default class DytailGraph extends Vue {
                     <td>Author</td>
                     <td>
                       ${datapoint ? escapeHtml(datapoint.author) : 'xxx'} at ${
-        datapoint ? datapoint.committerDate.toLocaleString() : 'xxx'
+        datapoint ? formatDate(datapoint.committerDate) : 'xxx'
       }
                     </td>
                   </tr>
@@ -186,7 +187,7 @@ export default class DytailGraph extends Vue {
     // One array entry = #dimensions data points per commit
     // one array entry has the form [x-val, dim1, dim2, ...]
     for (let i = 0; i < this.datapoints.length; i++) {
-      data[i] = [this.datapoints[i].committerDate.getTime()]
+      data[i] = [this.datapoints[i].positionDate.getTime()]
     }
 
     for (const dimension of this.dimensions) {

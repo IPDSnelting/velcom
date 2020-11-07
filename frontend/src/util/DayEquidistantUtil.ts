@@ -35,6 +35,7 @@ export function spaceDayEquidistant(
         point.hash,
         point.parents,
         point.author,
+        point.committerDate,
         new Date(day + spacingBetweenElementsMillis * index),
         point.summary,
         point.values

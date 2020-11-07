@@ -428,6 +428,7 @@ export class DetailDataPoint {
   readonly parents: CommitHash[]
   readonly author: string
   readonly committerDate: Date
+  readonly positionDate: Date // to alter position in day equidistant graphs
   readonly summary: string
   // TODO: Figure out if the map wastes too much memory
   readonly values: CustomKeyEqualsMap<DimensionId, DetailDataPointValue>
@@ -437,6 +438,7 @@ export class DetailDataPoint {
     parents: CommitHash[],
     author: string,
     committerDate: Date,
+    positionDate: Date,
     summary: string,
     values: CustomKeyEqualsMap<DimensionId, DetailDataPointValue>
   ) {
@@ -444,6 +446,7 @@ export class DetailDataPoint {
     this.parents = parents
     this.author = author
     this.committerDate = committerDate
+    this.positionDate = positionDate
     this.summary = summary
     this.values = values
   }

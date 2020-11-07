@@ -79,6 +79,7 @@ function hydrateDetailPoint(it: DetailDataPoint) {
     it.parents,
     it.author,
     new Date(it.committerDate),
+    new Date(it.committerDate),
     it.summary,
     new CustomKeyEqualsMap(
       it.values,
