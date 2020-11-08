@@ -23,7 +23,6 @@ import io.micrometer.core.annotation.Timed;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -252,11 +251,9 @@ public class Listener {
 	}
 
 	private void updateDbFromJgitRepo(Repo repo, Repository jgitRepo) {
-		List<CommitHash> toBeQueued = new ArrayList<>();
-
-		databaseStorage.acquireWriteTransaction(db -> {
+		List<CommitHash> toBeQueued = databaseStorage.acquireWriteTransaction(db -> {
 			DbUpdater dbUpdater = new DbUpdater(repo, jgitRepo, db);
-			dbUpdater.update(toBeQueued);
+			return dbUpdater.update();
 		});
 
 		if (toBeQueued.isEmpty()) {
