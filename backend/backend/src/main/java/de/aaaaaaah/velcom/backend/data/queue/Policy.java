@@ -18,6 +18,13 @@ import java.util.Queue;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
+/**
+ * Tasks are separated into three categories based on their priorities (see {@link TaskPriority}).
+ * Manual tasks should be executed in FILO order. This ensures that a task rises to the top of the
+ * queue whenever it is manually prioritized. Tar tasks should be executed in FIFO oder. Listener
+ * tasks should be executed in round robin order based on their source repos. For each repo, the
+ * commits should be executed in FILO order to ensure that newer commits come first.
+ */
 class Policy {
 
 	private final Queue<Task> manualTasks;
