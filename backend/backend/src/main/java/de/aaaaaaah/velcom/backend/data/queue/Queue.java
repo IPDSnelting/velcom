@@ -141,13 +141,13 @@ public class Queue {
 	}
 
 	/**
-	 * A good way to check whether a task exists and to check its status if it exists.
+	 * A good way to check whether a task exists and is in progress.
 	 *
 	 * @param taskId the id of the task to check for
-	 * @return whether the task is in progress if it exists, empty if it doesn't exist
+	 * @return true if the task exists and is in progress, false otherwise
 	 */
-	public Optional<Boolean> isTaskInProgress(TaskId taskId) {
-		return taskAccess.isTaskInProgress(taskId);
+	public boolean isTaskInProgress(TaskId taskId) {
+		return taskAccess.isTaskInProgress(taskId).orElse(false);
 	}
 
 	/**
