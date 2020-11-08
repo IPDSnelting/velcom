@@ -50,9 +50,9 @@ public class DbUpdater {
 	 * Perform the update (see class level javadoc).
 	 *
 	 * @return the hashes of all commits that need to be entered into the queue, sorted by committer
-	 * 	date in ascending order (except when this is the repo's first update, in which case the order
-	 * 	is not defined). These might (but should usually not) include commits that are already in the
-	 * 	queue.
+	 * 	date (or author date in case of ties) in ascending order (except when this is the repo's first
+	 * 	update, in which case the order is not defined). These might (but should usually not) include
+	 * 	commits that are already in the queue.
 	 */
 	// TODO: 21.10.20 Delete unreachable commits
 	public List<CommitHash> update() throws DbUpdateException {
@@ -245,7 +245,8 @@ public class DbUpdater {
 	 * they haven't already been benchmarked yet).
 	 *
 	 * @return the hashes of all commits that need to be entered into the queue, sorted by committer
-	 * 	date in ascending order. These may include commits that are already in the queue.
+	 * 	date (or author date in case of ties) in ascending order. These may include commits that are
+	 * 	already in the queue.
 	 */
 	private List<CommitHash> findNewTasks() {
 		LOGGER.debug("Finding new tasks");
@@ -296,6 +297,7 @@ public class DbUpdater {
 			+ "WHERE untracked.hash NOT IN has_result\n"
 			+ "AND untracked.hash NOT IN in_queue\n"
 			+ "ORDER BY known_commit.committer_date ASC\n"
+			+ "ORDER BY known_commit.author_date ASC\n"
 			+ "";
 
 		return db.dsl().fetchLazy(query, repoIdStr, repoIdStr, repoIdStr, repoIdStr)
