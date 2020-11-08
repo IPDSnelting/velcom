@@ -294,10 +294,11 @@ public class DbUpdater {
 			+ "\n"
 			+ "SELECT DISTINCT untracked.hash\n"
 			+ "FROM untracked\n"
+			+ "JOIN known_commit\n"
+			+ "  ON known_commit.hash = untracked.hash\n"
 			+ "WHERE untracked.hash NOT IN has_result\n"
 			+ "AND untracked.hash NOT IN in_queue\n"
-			+ "ORDER BY known_commit.committer_date ASC\n"
-			+ "ORDER BY known_commit.author_date ASC\n"
+			+ "ORDER BY known_commit.committer_date ASC, known_commit.author_date ASC\n"
 			+ "";
 
 		return db.dsl().fetchLazy(query, repoIdStr, repoIdStr, repoIdStr, repoIdStr)
