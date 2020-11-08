@@ -9,6 +9,7 @@ import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.Task;
 import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.TaskPriority;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,17 +27,21 @@ class Policy {
 	private final Queue<RepoId> repos;
 
 	public Policy(List<Task> tasks, @Nullable RepoId currentRepoId) {
-		// Tasks ordered from old to new
+		// Tasks ordered from newest to oldest (FILO)
 		List<Task> tasksInOrder = new ArrayList<>(tasks);
 		tasksInOrder.sort(comparing(Task::getUpdateTime));
+		Collections.reverse(tasksInOrder);
 
 		manualTasks = tasksInOrder.stream()
 			.filter(task -> task.getPriority().equals(TaskPriority.MANUAL))
 			.collect(toCollection(ArrayDeque::new));
 
-		tarTasks = tasksInOrder.stream()
+		// Tar tasks need to be reversed since they need a FIFO order, not FILO
+		ArrayList<Task> tarTasksTmp = tasksInOrder.stream()
 			.filter(task -> task.getPriority().equals(TaskPriority.TAR))
-			.collect(toCollection(ArrayDeque::new));
+			.collect(toCollection(ArrayList::new));
+		Collections.reverse(tarTasksTmp);
+		tarTasks = new ArrayDeque<>(tarTasksTmp);
 
 		listenerTasksPerRepo = tasksInOrder.stream()
 			.filter(task -> task.getPriority().equals(TaskPriority.LISTENER))
