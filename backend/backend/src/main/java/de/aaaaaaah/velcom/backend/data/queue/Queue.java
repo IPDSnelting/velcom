@@ -7,7 +7,6 @@ import de.aaaaaaah.velcom.backend.access.BenchmarkWriteAccess;
 import de.aaaaaaah.velcom.backend.access.entities.benchmark.NewRun;
 import de.aaaaaaah.velcom.backend.access.exceptions.PrepareTransferException;
 import de.aaaaaaah.velcom.backend.access.exceptions.TransferException;
-import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.CommitSource;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.newaccess.taskaccess.TaskWriteAccess;
@@ -15,19 +14,24 @@ import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.Task;
 import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.TaskId;
 import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.TaskPriority;
 import de.aaaaaaah.velcom.backend.newaccess.taskaccess.exceptions.NoSuchTaskException;
-import de.aaaaaaah.velcom.shared.util.Either;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 /**
- * The queue manages tasks that are passed to it from various sources and sorts these tasks to bring
- * them into an order in which they will be fetched for execution by the dispatcher. This class is
- * thread safe.
- *
- * <p> The order in which the tasks are sorted is determined by the queue's policy.
+ * The queue keeps track of all current tasks and their priority and status. It knows which tasks
+ * are currently in progress and the order in which the remaining tasks should be worked on, based
+ * on their priority and other info.
+ * <p>
+ * Tasks are separated into three categories based on their priorities (see {@link TaskPriority}).
+ * Manual tasks should be executed in FILO order. This ensures that a task rises to the top of the
+ * queue whenever it is manually prioritized. Tar tasks should be executed in FIFO oder. Listener
+ * tasks should be executed in round robin order based on their source repos. For each repo, the
+ * commits should be executed in FILO order to ensure that newer commits come first.
  */
 public class Queue {
 
@@ -48,23 +52,46 @@ public class Queue {
 	}
 
 	/**
-	 * Gets the task associated with the given task id.
+	 * Gets the task with the specified id.
 	 *
 	 * @param taskId the id of the task
 	 * @return the task
-	 * @throws NoSuchTaskException if no task with the given id exists
+	 * @throws NoSuchTaskException if no task with the specified id exists
 	 */
-	public Task getTaskById(TaskId taskId) throws NoSuchTaskException {
+	public Task getTask(TaskId taskId) throws NoSuchTaskException {
 		return taskAccess.getTask(taskId);
 	}
 
 	/**
-	 * Gets the task that is next in line to be benchmarked. The returned task will then be marked as
-	 * "in_process" until the task is completed via {@link #completeTask(NewRun)}.
-	 *
-	 * @return the next task in this queue to be processed
+	 * @return all tasks currently in the queue. First come the tasks which are currently in progress,
+	 * 	in no particular order. Then come the tasks which are currently not in progress, in the order
+	 * 	they would be returned by successive calls to {@link #startNextTask()}.
 	 */
-	public Optional<Task> fetchNextTask() {
+	public List<Task> getAllTasksInOrder() {
+		List<Task> allTasks = taskAccess.getAllTasks();
+
+		List<Task> result = allTasks.stream()
+			.filter(Task::isInProgress)
+			.collect(Collectors.toCollection(ArrayList::new));
+
+		List<Task> tasksNotInProgress = allTasks.stream()
+			.filter(task -> !task.isInProgress())
+			.collect(toList());
+
+		Policy policy = new Policy(tasksNotInProgress, currentRepoId.get().orElse(null));
+		result.addAll(policy.stepAll());
+
+		return result;
+	}
+
+	/**
+	 * Find and start the task that is next in line. The returned task will be marked as "in progress"
+	 * until it is completed via {@link #completeTask(NewRun)} or aborted via {@link
+	 * #abortTask(TaskId)}.
+	 *
+	 * @return the task that was started
+	 */
+	public Optional<Task> startNextTask() {
 		return taskAccess.startTask(tasks -> {
 			Policy policy = new Policy(tasks, currentRepoId.get().orElse(null));
 			Optional<Task> nextTask = policy.step();
@@ -78,48 +105,83 @@ public class Queue {
 	}
 
 	/**
-	 * @return a list of all tasks that currently reside in the queue, sorted by their order of
-	 * 	processing.
+	 * Convert the task with the same id as the {@link NewRun} into a full run. This removes the task
+	 * from the queue and adds the newly created run into the database.
+	 *
+	 * @param result the result associated with the task
 	 */
-	public List<Task> getTasksSorted() {
-		List<Task> allTasks = taskAccess.getAllUnstartedTasks();
-		Policy policy = new Policy(allTasks, currentRepoId.get().orElse(null));
-		return policy.stepAll();
+	public void completeTask(NewRun result) {
+		benchAccess.insertRun(result);
+	}
+
+	/**
+	 * Cancel the processing of the task with the given task id. This merely marks the task as "not in
+	 * progress" and will not delete the task from the queue.
+	 *
+	 * @param taskId the id of the task
+	 */
+	public void abortTask(TaskId taskId) {
+		taskAccess.setTaskStatus(taskId, false);
+	}
+
+	/**
+	 * Delete multiple from the queue by their id.
+	 *
+	 * @param taskIds the ids of the tasks
+	 */
+	public void deleteTasks(Collection<TaskId> taskIds) {
+		taskAccess.deleteTasks(taskIds);
+	}
+
+	/**
+	 * Delete all tasks from this queue.
+	 */
+	public void deleteAllTasks() {
+		taskAccess.deleteAllTasks();
 	}
 
 	/**
 	 * A good way to check whether a task exists and to check its status if it exists.
 	 *
 	 * @param taskId the id of the task to check for
-	 * @return the tasks status if the task exists, empty otherwise
+	 * @return whether the task is in progress if it exists, empty if it doesn't exist
 	 */
-	public Optional<Boolean> getTaskStatus(TaskId taskId) {
-		return taskAccess.getTaskStatus(taskId);
+	public Optional<Boolean> isTaskInProgress(TaskId taskId) {
+		return taskAccess.isTaskInProgress(taskId);
 	}
 
 	/**
-	 * Adds the specified commits as tasks into the queue.
+	 * Add a commit to the queue if no task for this commit already exists.
 	 *
-	 * @param author the author of this addition
-	 * @param repoId the id of the repository that the given commits belong to
-	 * @param hashes the commit hashes
-	 * @param priority the priority that will be given to the commit tasks
-	 * @return a collection of all tasks that were actually inserted because respective their commits
-	 * 	were not already in the queue beforehand
+	 * @param author the new task's author
+	 * @param repoId the id of the repo the commit belongs to
+	 * @param hash the commit hash
+	 * @param priority the new task's priority
+	 * @return the new task or empty if there already was a task for this commit in the queue
 	 */
-	// TODO: 07.11.20 Mention how the order of the commits is preserved
-	public Collection<Task> addCommits(String author, RepoId repoId, List<CommitHash> hashes,
+	public Optional<Task> addCommit(String author, RepoId repoId, CommitHash hash,
 		TaskPriority priority) {
 
-		List<Task> tasks = hashes.stream()
-			.map(hash -> new Task(author, priority, Either.ofLeft(new CommitSource(repoId, hash))))
-			.collect(toList());
-
-		return taskAccess.insertOrIgnoreTasks(tasks);
+		return taskAccess.insertCommit(author, repoId, hash, priority);
 	}
 
 	/**
-	 * Changes the priority of the task that matches the given task id.
+	 * Add multiple commits to the queue in order. Does not add commits where a corresponding task
+	 * already exists in the queue.
+	 *
+	 * @param author the new tasks' author
+	 * @param repoId the id of the repo the commits belong to
+	 * @param hashes the commit hashes
+	 * @param priority the new tasks' priority
+	 */
+	public void addCommits(String author, RepoId repoId, List<CommitHash> hashes,
+		TaskPriority priority) {
+
+		taskAccess.insertCommits(author, repoId, hashes, priority);
+	}
+
+	/**
+	 * Changes the priority of the task with the specified task id.
 	 *
 	 * @param taskId the id of the task
 	 * @param newPriority the new priority
@@ -131,8 +193,8 @@ public class Queue {
 	/**
 	 * Transfers a task to the supplied {@link OutputStream}.
 	 *
-	 * <p>Note that the provided output stream will be closed after the transfer operation is
-	 * done.</p>
+	 * <p> Note that the provided output stream will be closed after the transfer operation is
+	 * done.
 	 *
 	 * @param taskId the id of the task to be transferred
 	 * @param output the output to transfer the task to
@@ -145,42 +207,6 @@ public class Queue {
 
 		Task task = taskAccess.getTask(taskId);
 		archiveAccess.transferTask(task, output);
-	}
-
-	/**
-	 * Cancels the processing of the task with the given task id. This merely marks the task as "not
-	 * in process" anymore and will not delete the task from the queue.
-	 *
-	 * @param taskId the id of the task
-	 */
-	public void abortTaskProcess(TaskId taskId) {
-		taskAccess.setTaskStatus(taskId, false);
-	}
-
-	/**
-	 * Marks the task associated with the given run as complete which means that the task will be
-	 * deleted from the queue.
-	 *
-	 * @param result the result associated with the task
-	 */
-	public void completeTask(NewRun result) {
-		benchAccess.insertRun(result);
-	}
-
-	/**
-	 * Deletes the tasks that are associated with the given task ids from this queue.
-	 *
-	 * @param taskIds the ids of the tasks
-	 */
-	public void deleteTasks(Collection<TaskId> taskIds) {
-		taskAccess.deleteTasks(taskIds);
-	}
-
-	/**
-	 * Deletes all tasks from this queue.
-	 */
-	public void deleteAllTasks() {
-		taskAccess.deleteAllTasks();
 	}
 
 }

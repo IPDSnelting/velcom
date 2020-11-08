@@ -129,7 +129,7 @@ public class Dispatcher implements IDispatcher {
 				return Optional.empty();
 			}
 		}
-		Optional<Task> nextTask = queue.fetchNextTask();
+		Optional<Task> nextTask = queue.startNextTask();
 		if (nextTask.isEmpty()) {
 			return Optional.empty();
 		}

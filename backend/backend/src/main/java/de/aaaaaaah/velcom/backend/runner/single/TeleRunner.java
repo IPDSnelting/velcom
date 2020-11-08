@@ -120,7 +120,7 @@ public class TeleRunner {
 
 		if (reply.getRunId().isPresent()) {
 			TaskId taskId = new TaskId(reply.getRunId().get());
-			Optional<Boolean> taskStatus = dispatcher.getQueue().getTaskStatus(taskId);
+			Optional<Boolean> taskStatus = dispatcher.getQueue().isTaskInProgress(taskId);
 			// Task is no longer in the queue (=> empty) or no longer in progress (=> status false)
 			if (taskStatus.isEmpty() || !taskStatus.get()) {
 				abort();
@@ -226,7 +226,7 @@ public class TeleRunner {
 			// Somehow we have no task but a result, retry that commit. This should not happen, but if it
 			// does err on the side of caution. Retry that task if possible, better to benchmark twice
 			// than never
-			dispatcher.getQueue().abortTaskProcess(new TaskId(resultReply.getRunId()));
+			dispatcher.getQueue().abortTask(new TaskId(resultReply.getRunId()));
 			return;
 		}
 
@@ -373,7 +373,7 @@ public class TeleRunner {
 			LOGGER.info(
 				"Failed to transfer repo to runner " + getRunnerName() + ": Sending failed", e
 			);
-			dispatcher.getQueue().abortTaskProcess(task.getId());
+			dispatcher.getQueue().abortTask(task.getId());
 			connection.close(StatusCode.TRANSFER_FAILED);
 		}
 	}

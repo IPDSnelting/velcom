@@ -3,6 +3,7 @@ package de.aaaaaaah.velcom.backend.newaccess.taskaccess;
 import static org.jooq.codegen.db.tables.Task.TASK;
 import static org.jooq.impl.DSL.not;
 
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.CommitSource;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.Task;
@@ -10,6 +11,7 @@ import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.TaskId;
 import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.TaskPriority;
 import de.aaaaaaah.velcom.backend.storage.db.DBWriteAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
+import de.aaaaaaah.velcom.shared.util.Either;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
@@ -35,35 +37,70 @@ public class TaskWriteAccess extends TaskReadAccess {
 		record.setRepoId(task.getRepoId().map(RepoId::getIdAsString).orElse(null));
 		record.setCommitHash(task.getCommitHash().map(CommitHash::getHash).orElse(null));
 		record.setDescription(task.getTarDescription().orElse(null));
-		record.setInProcess(task.isInProcess());
+		record.setInProcess(task.isInProgress());
 		return record;
 	}
 
 	/**
-	 * Insert all tasks into the db that aren't already in the db.
+	 * Insert a single commit if no corresponding task already exists and return the newly created
+	 * task.
 	 *
-	 * @param tasks the tasks to insert
-	 * @return the tasks which were actually inserted
+	 * @param author the new task's author
+	 * @param repoId the commit's repo id
+	 * @param hash the commit's hash
+	 * @param priority the new task's priority
+	 * @return the newly created task if no task corresponding to this commit already existed
 	 */
-	public List<Task> insertOrIgnoreTasks(Collection<Task> tasks) {
-		List<Task> insertedTasks = databaseStorage.acquireWriteTransaction(db -> {
-			Set<String> taskIdsInQueue = db.selectFrom(TASK)
-				.fetchSet(TASK.ID);
+	public Optional<Task> insertCommit(String author, RepoId repoId, CommitHash hash,
+		TaskPriority priority) {
 
-			List<Task> tasksToInsert = tasks.stream()
-				.filter(task -> !taskIdsInQueue.contains(task.getIdAsString()))
-				.collect(Collectors.toList());
+		return databaseStorage.acquireWriteTransaction(db -> {
+			boolean taskAlreadyExists = db.selectFrom(TASK)
+				.where(TASK.REPO_ID.eq(repoId.getIdAsString()))
+				.and(TASK.COMMIT_HASH.eq(hash.getHash()))
+				.fetchAny() != null;
 
-			List<TaskRecord> taskRecordsToInsert = tasksToInsert.stream()
+			if (taskAlreadyExists) {
+				return Optional.empty();
+			}
+
+			Task task = new Task(author, priority, Either.ofLeft(new CommitSource(repoId, hash)));
+			db.dsl().batchInsert(taskToTaskRecord(task)).execute();
+			return Optional.of(task);
+		});
+	}
+
+
+	/**
+	 * Insert all commits for which no corresponding task exists yet.
+	 *
+	 * @param author the new task's author
+	 * @param repoId the commit's repo id
+	 * @param hashes the commit hashes
+	 * @param priority the new task's priority
+	 */
+	public void insertCommits(String author, RepoId repoId, Collection<CommitHash> hashes,
+		TaskPriority priority) {
+
+		Set<String> hashesAsStrings = hashes.stream()
+			.map(CommitHash::getHash)
+			.collect(Collectors.toSet());
+
+		databaseStorage.acquireWriteTransaction(db -> {
+			Set<String> hashesAlreadyInQueue = db.selectFrom(TASK)
+				.where(TASK.REPO_ID.eq(repoId.getIdAsString()))
+				.and(TASK.COMMIT_HASH.in(hashesAsStrings))
+				.fetchSet(TASK.COMMIT_HASH);
+
+			List<TaskRecord> tasksToInsert = hashes.stream()
+				.filter(hash -> !hashesAlreadyInQueue.contains(hash.getHash()))
+				.map(hash -> new CommitSource(repoId, hash))
+				.map(source -> new Task(author, priority, Either.ofLeft(source)))
 				.map(TaskWriteAccess::taskToTaskRecord)
 				.collect(Collectors.toList());
 
-			db.dsl().batchInsert(taskRecordsToInsert).execute();
-
-			return tasksToInsert;
+			db.dsl().batchInsert(tasksToInsert).execute();
 		});
-
-		return insertedTasks;
 	}
 
 	/**
@@ -75,6 +112,7 @@ public class TaskWriteAccess extends TaskReadAccess {
 	 * @return the task returned by the selector, if it returned one
 	 */
 	public Optional<Task> startTask(Function<List<Task>, Optional<Task>> selector) {
+		// TODO: 08.11.20 Return a non-outdated Task
 		return databaseStorage.acquireWriteTransaction(db -> {
 			List<Task> allTasks = db.selectFrom(TASK)
 				.where(not(TASK.IN_PROCESS))

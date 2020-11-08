@@ -17,7 +17,7 @@ import java.util.Queue;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
-public class Policy {
+class Policy {
 
 	private final Queue<Task> manualTasks;
 	private final Queue<Task> tarTasks;

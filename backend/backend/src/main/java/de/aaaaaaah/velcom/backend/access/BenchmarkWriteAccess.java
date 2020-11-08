@@ -42,7 +42,8 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 	}
 
 	/**
-	 * Inserts the specified run into the database.
+	 * Inserts the specified run into the database. Also deletes the task with the same id from the
+	 * task table in the same transaction.
 	 *
 	 * @param newRun the run to insert
 	 */

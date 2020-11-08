@@ -19,10 +19,11 @@ public class Task {
 	private final Instant insertTime;
 	private final Instant updateTime;
 	private final Either<CommitSource, TarSource> source;
-	private final boolean inProcess; // TODO: 07.11.20 Rename to "inProgress"?
+	private final boolean inProgress;
+	// TODO: 07.11.20 Rename "in_process" to "in_progress" in db
 
 	public Task(TaskId id, String author, TaskPriority priority, Instant insertTime,
-		Instant updateTime, Either<CommitSource, TarSource> source, boolean inProcess) {
+		Instant updateTime, Either<CommitSource, TarSource> source, boolean inProgress) {
 
 		this.id = id;
 		this.author = author;
@@ -30,7 +31,7 @@ public class Task {
 		this.insertTime = insertTime;
 		this.updateTime = updateTime;
 		this.source = source;
-		this.inProcess = inProcess;
+		this.inProgress = inProgress;
 	}
 
 	public Task(String author, TaskPriority priority, Either<CommitSource, TarSource> source) {
@@ -40,7 +41,7 @@ public class Task {
 		this.insertTime = Instant.now();
 		this.updateTime = this.insertTime;
 		this.source = source;
-		this.inProcess = false;
+		this.inProgress = false;
 	}
 
 	public TaskId getId() {
@@ -87,8 +88,8 @@ public class Task {
 		return source.consume(it -> Optional.empty(), it -> Optional.of(it.getDescription()));
 	}
 
-	public boolean isInProcess() {
-		return inProcess;
+	public boolean isInProgress() {
+		return inProgress;
 	}
 
 	@Override
@@ -117,7 +118,7 @@ public class Task {
 			", insertTime=" + insertTime +
 			", updateTime=" + updateTime +
 			", source=" + source +
-			", inProcess=" + inProcess +
+			", inProgress=" + inProgress +
 			'}';
 	}
 }
