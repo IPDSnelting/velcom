@@ -117,6 +117,16 @@ public class TeleRunner {
 			dispatcher.addRunner(this);
 		}
 		runnerInformation.set(reply);
+
+		if (reply.getRunId().isPresent()) {
+			TaskId taskId = new TaskId(reply.getRunId().get());
+			Optional<Boolean> taskStatus = dispatcher.getQueue().getTaskStatus(taskId);
+			// Task is no longer in the queue (=> empty) or no longer in progress (=> status false)
+			if (taskStatus.isEmpty() || !taskStatus.get()) {
+				abort();
+			}
+		}
+
 	}
 
 	/**
@@ -182,7 +192,7 @@ public class TeleRunner {
 	 * </ul>
 	 * These limitations might be lifted in the future.
 	 */
-	public void abort() {
+	private void abort() {
 		myCurrentTask.set(null);
 		workingSince.set(null);
 

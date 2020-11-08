@@ -3,15 +3,12 @@ package de.aaaaaaah.velcom.backend.runner;
 import de.aaaaaaah.velcom.backend.access.entities.benchmark.NewRun;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.Task;
-import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.TaskId;
 import de.aaaaaaah.velcom.backend.runner.single.TeleRunner;
 import de.aaaaaaah.velcom.shared.util.execution.DaemonThreadFactory;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -28,7 +25,6 @@ public class Dispatcher implements IDispatcher {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(Dispatcher.class);
 
-	private final Map<TaskId, TeleRunner> workToRunnerMap;
 	private final List<TeleRunner> teleRunners;
 	private final Queue queue;
 	private final Duration disconnectedRunnerGracePeriod;
@@ -37,10 +33,6 @@ public class Dispatcher implements IDispatcher {
 		this.queue = queue;
 		this.disconnectedRunnerGracePeriod = disconnectedRunnerGracePeriod;
 		this.teleRunners = new ArrayList<>();
-		this.workToRunnerMap = new HashMap<>();
-
-		// TODO: 07.11.20 Fix this
-		this.queue.onTaskDelete(this::abort);
 
 		ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(
 			new DaemonThreadFactory()
@@ -82,22 +74,6 @@ public class Dispatcher implements IDispatcher {
 			}
 
 			teleRunners.removeAll(runnersToRemove);
-		}
-	}
-
-	@Override
-	public boolean abort(TaskId runId) {
-		synchronized (workToRunnerMap) {
-			TeleRunner runner = workToRunnerMap.remove(runId);
-
-			if (runner == null) {
-				return false;
-			}
-
-			// TODO: 09.07.20 Should this be done on a new thread?
-			runner.abort();
-
-			return true;
 		}
 	}
 
@@ -156,10 +132,6 @@ public class Dispatcher implements IDispatcher {
 		Optional<Task> nextTask = queue.fetchNextTask();
 		if (nextTask.isEmpty()) {
 			return Optional.empty();
-		}
-
-		synchronized (workToRunnerMap) {
-			workToRunnerMap.put(nextTask.get().getId(), runner);
 		}
 
 		return nextTask;

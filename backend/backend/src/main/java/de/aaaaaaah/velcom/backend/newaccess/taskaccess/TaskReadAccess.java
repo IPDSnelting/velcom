@@ -60,7 +60,9 @@ public class TaskReadAccess {
 	 */
 	public Optional<Boolean> getTaskStatus(TaskId taskId) {
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			Boolean inProcess = db.selectFrom(TASK).fetchOne(TASK.IN_PROCESS);
+			Boolean inProcess = db.selectFrom(TASK)
+				.where(TASK.ID.eq(taskId.getIdAsString()))
+				.fetchOne(TASK.IN_PROCESS);
 			return Optional.ofNullable(inProcess);
 		}
 	}

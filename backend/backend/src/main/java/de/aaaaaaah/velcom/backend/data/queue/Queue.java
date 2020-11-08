@@ -88,6 +88,16 @@ public class Queue {
 	}
 
 	/**
+	 * A good way to check whether a task exists and to check its status if it exists.
+	 *
+	 * @param taskId the id of the task to check for
+	 * @return the tasks status if the task exists, empty otherwise
+	 */
+	public Optional<Boolean> getTaskStatus(TaskId taskId) {
+		return taskAccess.getTaskStatus(taskId);
+	}
+
+	/**
 	 * Adds the specified commits as tasks into the queue.
 	 *
 	 * @param author the author of this addition
