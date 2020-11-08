@@ -56,7 +56,7 @@ public class RepoReadAccess {
 
 	public Repo getRepo(RepoId repoId) throws NoSuchRepoException {
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			RepoRecord repoRecord = db.fetchOne(REPO, REPO.ID.eq(repoId.getIdAsString()));
+			RepoRecord repoRecord = db.fetchSingle(REPO, REPO.ID.eq(repoId.getIdAsString()));
 			return repoRecordToRepo(repoRecord);
 		} catch (DataAccessException e) {
 			throw new NoSuchRepoException(e, repoId);

@@ -3,15 +3,15 @@ package de.aaaaaaah.velcom.backend.runner.single;
 import de.aaaaaaah.velcom.backend.access.entities.Dimension;
 import de.aaaaaaah.velcom.backend.access.entities.Interpretation;
 import de.aaaaaaah.velcom.backend.access.entities.RunBuilder;
-import de.aaaaaaah.velcom.backend.access.entities.Task;
-import de.aaaaaaah.velcom.backend.access.entities.TaskId;
 import de.aaaaaaah.velcom.backend.access.entities.Unit;
 import de.aaaaaaah.velcom.backend.access.entities.benchmark.NewRun;
-import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchTaskException;
 import de.aaaaaaah.velcom.backend.access.exceptions.PrepareTransferException;
 import de.aaaaaaah.velcom.backend.access.exceptions.TransferException;
 import de.aaaaaaah.velcom.backend.data.benchrepo.BenchRepo;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.RunErrorType;
+import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.Task;
+import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.TaskId;
+import de.aaaaaaah.velcom.backend.newaccess.taskaccess.exceptions.NoSuchTaskException;
 import de.aaaaaaah.velcom.backend.runner.Dispatcher;
 import de.aaaaaaah.velcom.backend.runner.KnownRunner;
 import de.aaaaaaah.velcom.backend.runner.single.state.AwaitAbortRunReply;
@@ -117,6 +117,16 @@ public class TeleRunner {
 			dispatcher.addRunner(this);
 		}
 		runnerInformation.set(reply);
+
+		if (reply.getRunId().isPresent()) {
+			TaskId taskId = new TaskId(reply.getRunId().get());
+			boolean taskInProgress = dispatcher.getQueue().isTaskInProgress(taskId);
+			// Task is no longer in the queue or no longer in progress
+			if (!taskInProgress) {
+				abort();
+			}
+		}
+
 	}
 
 	/**
@@ -182,7 +192,7 @@ public class TeleRunner {
 	 * </ul>
 	 * These limitations might be lifted in the future.
 	 */
-	public void abort() {
+	private void abort() {
 		myCurrentTask.set(null);
 		workingSince.set(null);
 
@@ -216,7 +226,7 @@ public class TeleRunner {
 			// Somehow we have no task but a result, retry that commit. This should not happen, but if it
 			// does err on the side of caution. Retry that task if possible, better to benchmark twice
 			// than never
-			dispatcher.getQueue().abortTaskProcess(new TaskId(resultReply.getRunId()));
+			dispatcher.getQueue().abortTask(new TaskId(resultReply.getRunId()));
 			return;
 		}
 
@@ -363,7 +373,7 @@ public class TeleRunner {
 			LOGGER.info(
 				"Failed to transfer repo to runner " + getRunnerName() + ": Sending failed", e
 			);
-			dispatcher.getQueue().abortTaskProcess(task.getId());
+			dispatcher.getQueue().abortTask(task.getId());
 			connection.close(StatusCode.TRANSFER_FAILED);
 		}
 	}

@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import de.aaaaaaah.velcom.backend.access.ArchiveAccess;
 import de.aaaaaaah.velcom.backend.access.BenchmarkWriteAccess;
-import de.aaaaaaah.velcom.backend.access.TaskWriteAccess;
 import de.aaaaaaah.velcom.backend.access.TokenWriteAccess;
 import de.aaaaaaah.velcom.backend.access.entities.AuthToken;
 import de.aaaaaaah.velcom.backend.data.benchrepo.BenchRepo;
@@ -19,6 +18,7 @@ import de.aaaaaaah.velcom.backend.newaccess.committaccess.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.DimensionReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.RepoWriteAccess;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RemoteUrl;
+import de.aaaaaaah.velcom.backend.newaccess.taskaccess.TaskWriteAccess;
 import de.aaaaaaah.velcom.backend.restapi.authentication.RepoAuthenticator;
 import de.aaaaaaah.velcom.backend.restapi.authentication.RepoUser;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.AllReposEndpoint;
@@ -135,8 +135,10 @@ public class ServerMain extends Application<GlobalConfig> {
 			repoStorage
 		);
 		BenchmarkWriteAccess benchmarkAccess = new BenchmarkWriteAccess(
-			databaseStorage, repoAccess, taskAccess, availableDimensionsCache
+			databaseStorage, repoAccess, availableDimensionsCache
 		);
+
+		taskAccess.resetAllTaskStatuses();
 
 		// Data layer
 		Queue queue = new Queue(taskAccess, archiveAccess, benchmarkAccess);

@@ -90,7 +90,7 @@ public class CommitReadAccess {
 
 	public Commit getCommit(RepoId repoId, CommitHash commitHash) throws NoSuchCommitException {
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			KnownCommitRecord record = db.fetchOne(
+			KnownCommitRecord record = db.fetchSingle(
 				KNOWN_COMMIT,
 				KNOWN_COMMIT.REPO_ID.eq(repoId.getIdAsString())
 					.and(KNOWN_COMMIT.HASH.eq(commitHash.getHash()))
@@ -118,8 +118,9 @@ public class CommitReadAccess {
 
 	public FullCommit getFullCommit(RepoId repoId, CommitHash commitHash)
 		throws NoSuchCommitException {
+
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			KnownCommitRecord record = db.fetchOne(
+			KnownCommitRecord record = db.fetchSingle(
 				KNOWN_COMMIT,
 				KNOWN_COMMIT.REPO_ID.eq(repoId.getIdAsString())
 					.and(KNOWN_COMMIT.HASH.eq(commitHash.getHash()))

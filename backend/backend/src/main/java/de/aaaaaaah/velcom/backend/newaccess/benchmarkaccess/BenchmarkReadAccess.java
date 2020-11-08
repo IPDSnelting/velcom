@@ -6,17 +6,15 @@ import static org.jooq.impl.DSL.max;
 import de.aaaaaaah.velcom.backend.access.entities.Dimension;
 import de.aaaaaaah.velcom.backend.access.entities.DimensionInfo;
 import de.aaaaaaah.velcom.backend.access.entities.RunId;
-import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.CommitSource;
+import de.aaaaaaah.velcom.backend.newaccess.AccessUtils;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.Run;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.RunError;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.RunErrorType;
-import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.TarSource;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.exceptions.NoSuchRunException;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.storage.db.DBReadAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
-import de.aaaaaaah.velcom.shared.util.Either;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -60,24 +58,6 @@ public class BenchmarkReadAccess {
 		dimensions = new ConcurrentHashMap<>();
 	}
 
-	private static Either<CommitSource, TarSource> readSource(@Nullable String repoId,
-		@Nullable String commitHash, @Nullable String tarDesc) {
-
-		if (commitHash != null) { // Must be commit source
-			return Either.ofLeft(new CommitSource(
-				RepoId.fromString(repoId),
-				new CommitHash(commitHash)
-			));
-		} else if (repoId != null) { // Must be tar source with repo id
-			return Either.ofRight(new TarSource(
-				tarDesc,
-				RepoId.fromString(repoId)
-			));
-		} else { // Must be tar source without repo id
-			return Either.ofRight(new TarSource(tarDesc));
-		}
-	}
-
 	private static Optional<RunError> readError(@Nullable String errorType, @Nullable String error) {
 		if (errorType == null) {
 			return Optional.empty();
@@ -97,7 +77,7 @@ public class BenchmarkReadAccess {
 			record.getRunnerInfo(),
 			record.getStartTime(),
 			record.getStopTime(),
-			readSource(record.getRepoId(), record.getCommitHash(), record.getTarDesc()),
+			AccessUtils.readSource(record.getRepoId(), record.getCommitHash(), record.getTarDesc()),
 			readError(record.getErrorType(), record.getError()).orElse(null)
 		);
 	}
@@ -211,7 +191,7 @@ public class BenchmarkReadAccess {
 							record.value4(), // runner_info
 							record.value5(), // start_time
 							record.value6(), // stop_time
-							readSource(record.value7(), record.value8(), record.value9()),
+							AccessUtils.readSource(record.value7(), record.value8(), record.value9()),
 							readError(record.value10(), record.value11()).orElse(null)
 						);
 					}

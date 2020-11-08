@@ -49,12 +49,13 @@ public class DbUpdater {
 	/**
 	 * Perform the update (see class level javadoc).
 	 *
-	 * @param toBeQueued This is expected to be an empty, mutable list. This function will add the
-	 * 	hashes of all commits that need to be entered into the queue. These might (but should usually
-	 * 	not) include commits that are already in the queue.
+	 * @return the hashes of all commits that need to be entered into the queue, sorted by committer
+	 * 	date (or author date in case of ties) in ascending order (except when this is the repo's first
+	 * 	update, in which case the order is not defined). These might (but should usually not) include
+	 * 	commits that are already in the queue.
 	 */
 	// TODO: 21.10.20 Delete unreachable commits
-	public void update(List<CommitHash> toBeQueued) throws DbUpdateException {
+	public List<CommitHash> update() throws DbUpdateException {
 		try {
 			// Checking this now since #insertAllUnknownCommits() will change the result
 			boolean anyCommits = anyCommits();
@@ -63,15 +64,18 @@ public class DbUpdater {
 			updateBranches();
 			updateReachableFlags();
 
+			List<CommitHash> toBeQueued;
 			if (anyCommits) {
 				LOGGER.debug("Detected non-empty repository");
-				findNewTasks(toBeQueued);
+				toBeQueued = findNewTasks();
 			} else {
 				LOGGER.debug("Detected empty (i. e. new) repository");
-				useHeadsOfTrackedBranchesAsTasks(toBeQueued);
+				toBeQueued = useHeadsOfTrackedBranchesAsTasks();
 			}
 
 			updateTrackedFlags();
+
+			return toBeQueued;
 		} catch (GitAPIException | IOException e) {
 			throw new DbUpdateException("Failed to update repo " + repo, e);
 		}
@@ -240,11 +244,11 @@ public class DbUpdater {
 	 * Find all commits that should be tracked (via a recursive query) and add them to the queue (if
 	 * they haven't already been benchmarked yet).
 	 *
-	 * @param toBeQueued This is expected to be an empty, mutable list. This function will add the
-	 * 	hashes of all commits that need to be entered into the queue. These may include commits that
-	 * 	are already in the queue.
+	 * @return the hashes of all commits that need to be entered into the queue, sorted by committer
+	 * 	date (or author date in case of ties) in ascending order. These may include commits that are
+	 * 	already in the queue.
 	 */
-	private void findNewTasks(List<CommitHash> toBeQueued) {
+	private List<CommitHash> findNewTasks() {
 		LOGGER.debug("Finding new tasks");
 
 		// The "untracked" CTE will only ever include reachable commits since we start at branches. This
@@ -292,30 +296,31 @@ public class DbUpdater {
 			+ "FROM untracked\n"
 			+ "WHERE untracked.hash NOT IN has_result\n"
 			+ "AND untracked.hash NOT IN in_queue\n"
+			+ "ORDER BY known_commit.committer_date ASC\n"
+			+ "ORDER BY known_commit.author_date ASC\n"
 			+ "";
 
-		db.dsl().fetchLazy(query, repoIdStr, repoIdStr, repoIdStr, repoIdStr)
+		return db.dsl().fetchLazy(query, repoIdStr, repoIdStr, repoIdStr, repoIdStr)
 			.stream()
 			.map(record -> (String) record.getValue(0))
 			.map(CommitHash::new)
-			.forEach(toBeQueued::add);
+			.collect(toList());
 	}
 
 	/**
-	 * @param toBeQueued This is expected to be an empty, mutable list. This function will add the
-	 * 	hashes of all commits that need to be entered into the queue. In theory, these may include
-	 * 	commits that are already in the queue and even commits that have already been benchmarked. In
-	 * 	practice, this function should only be called for new repos, so the queue should not yet
-	 * 	contain any of the repo's commits.
+	 * @return the hashes of all commits that need to be entered into the queue, in no particular
+	 * 	order. In theory, these may include commits that are already in the queue and even commits
+	 * 	that have already been benchmarked. In practice, this function should only be called for new
+	 * 	repos, so the queue should not yet contain any of the repo's commits.
 	 */
-	private void useHeadsOfTrackedBranchesAsTasks(List<CommitHash> toBeQueued) {
+	private List<CommitHash> useHeadsOfTrackedBranchesAsTasks() {
 		// Similar to #findNewTasks(), this function won't ever find unreachable commits.
-		db.selectFrom(BRANCH)
+		return db.selectFrom(BRANCH)
 			.where(BRANCH.REPO_ID.eq(repoIdStr))
 			.and(BRANCH.TRACKED)
 			.stream()
 			.map(BranchRecord::getLatestCommitHash)
 			.map(CommitHash::new)
-			.forEach(toBeQueued::add);
+			.collect(toList());
 	}
 }

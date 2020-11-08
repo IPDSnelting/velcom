@@ -1,6 +1,6 @@
 package de.aaaaaaah.velcom.backend.restapi.exception;
 
-import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchTaskException;
+import de.aaaaaaah.velcom.backend.newaccess.taskaccess.exceptions.NoSuchTaskException;
 import java.util.UUID;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;

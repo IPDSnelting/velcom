@@ -1,6 +1,6 @@
 package de.aaaaaaah.velcom.backend.runner;
 
-import de.aaaaaaah.velcom.backend.access.entities.Task;
+import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.Task;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Status;
 import de.aaaaaaah.velcom.shared.util.LinesWithOffset;
 import java.time.Instant;

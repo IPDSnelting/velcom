@@ -72,6 +72,10 @@ public class DBReadAccess implements Closeable {
 		return ctx.fetchOne(table, condition);
 	}
 
+	public <R extends Record> R fetchSingle(Table<R> table, Condition condition) {
+		return ctx.fetchSingle(table, condition);
+	}
+
 	// SELECT
 
 	public SelectSelectStep<Record1<Integer>> selectOne() {

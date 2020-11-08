@@ -2,10 +2,6 @@ package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
 import static java.util.stream.Collectors.toMap;
 
-import de.aaaaaaah.velcom.backend.access.entities.Task;
-import de.aaaaaaah.velcom.backend.access.entities.TaskId;
-import de.aaaaaaah.velcom.backend.access.exceptions.NoSuchTaskException;
-import de.aaaaaaah.velcom.backend.access.policy.QueuePriority;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.Commit;
@@ -13,6 +9,10 @@ import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.RepoReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.exceptions.NoSuchRepoException;
+import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.Task;
+import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.TaskId;
+import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.TaskPriority;
+import de.aaaaaaah.velcom.backend.newaccess.taskaccess.exceptions.NoSuchTaskException;
 import de.aaaaaaah.velcom.backend.restapi.authentication.RepoUser;
 import de.aaaaaaah.velcom.backend.restapi.exception.TaskAlreadyExistsException;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRunner;
@@ -25,7 +25,6 @@ import de.aaaaaaah.velcom.shared.util.Pair;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.PATCH;
 import io.micrometer.core.annotation.Timed;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -66,7 +65,7 @@ public class QueueEndpoint {
 	@GET
 	@Timed(histogram = true)
 	public GetQueueReply getQueue() {
-		List<Task> tasks = queue.getTasksSorted();
+		List<Task> tasks = queue.getAllTasksInOrder();
 
 		Map<RepoId, List<CommitHash>> hashPerRepo = tasks.stream()
 			// do
@@ -115,7 +114,7 @@ public class QueueEndpoint {
 	@Timed(histogram = true)
 	public Response deleteTask(@Auth RepoUser user, @PathParam("taskId") UUID taskId)
 		throws NoSuchTaskException {
-		Task task = queue.getTaskById(new TaskId(taskId));
+		Task task = queue.getTask(new TaskId(taskId));
 		if (task.getRepoId().isEmpty()) {
 			user.guardAdminAccess();
 		} else {
@@ -135,9 +134,9 @@ public class QueueEndpoint {
 		user.guardAdminAccess();
 
 		// Throws an exception if the task does not exist! This is needed.
-		Task task = queue.getTaskById(new TaskId(taskId));
+		Task task = queue.getTask(new TaskId(taskId));
 
-		queue.prioritizeTask(task.getId(), QueuePriority.MANUAL);
+		queue.prioritizeTask(task.getId(), TaskPriority.MANUAL);
 
 		return Response.ok().build();
 	}
@@ -168,16 +167,14 @@ public class QueueEndpoint {
 		String author = user.isAdmin() ? "Admin" : "Repo-Admin";
 
 		// TODO: Really don't tell them the id of the existing task?
-		final Collection<Task> insertedTasks = queue
-			.addCommits(author, repoId, List.of(commitHash), QueuePriority.MANUAL);
+		final Optional<Task> insertedTask = queue
+			.addCommit(author, repoId, commitHash, TaskPriority.MANUAL);
 
-		if (insertedTasks.isEmpty()) {
+		if (insertedTask.isEmpty()) {
 			throw new TaskAlreadyExistsException(commitHash, repoId);
 		}
 
-		Task task = insertedTasks.iterator().next();
-
-		return new PostCommitReply(JsonTask.fromTask(task, commitReadAccess));
+		return new PostCommitReply(JsonTask.fromTask(insertedTask.get(), commitReadAccess));
 	}
 
 	@Path("task/{taskId}/progress")

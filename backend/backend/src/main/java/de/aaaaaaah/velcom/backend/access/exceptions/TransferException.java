@@ -1,6 +1,6 @@
 package de.aaaaaaah.velcom.backend.access.exceptions;
 
-import de.aaaaaaah.velcom.backend.access.entities.Task;
+import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.Task;
 
 public class TransferException extends Exception {
 
