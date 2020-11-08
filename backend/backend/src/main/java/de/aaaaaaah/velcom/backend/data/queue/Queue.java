@@ -100,7 +100,7 @@ public class Queue {
 				currentRepoId.set(policy.getCurrentRepoId());
 			}
 
-			return nextTask;
+			return nextTask.map(Task::getId);
 		});
 	}
 

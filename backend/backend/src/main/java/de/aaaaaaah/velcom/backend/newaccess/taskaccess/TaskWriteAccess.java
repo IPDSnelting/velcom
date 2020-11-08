@@ -106,13 +106,13 @@ public class TaskWriteAccess extends TaskReadAccess {
 	/**
 	 * Atomically select a task to start and start it via a custom selector function.
 	 *
-	 * @param selector The selector is passed a list of all tasks that haven't been started yet. The
-	 * 	list is in no particular order. If it returns a task, that task will be started and also
-	 * 	returned.
-	 * @return the task returned by the selector, if it returned one
+	 * @param selector The selector is passed a list of all tasks with status "not in progress". The
+	 * 	list is in no particular order. If the selector returns a task, that task will be started and
+	 * 	an updated version of it returned. The task returned by the selector <em>must be one of the
+	 * 	input tasks</em>!
+	 * @return the task chosen by the selector, if it returned one
 	 */
-	public Optional<Task> startTask(Function<List<Task>, Optional<Task>> selector) {
-		// TODO: 08.11.20 Return a non-outdated Task
+	public Optional<Task> startTask(Function<List<Task>, Optional<TaskId>> selector) {
 		return databaseStorage.acquireWriteTransaction(db -> {
 			List<Task> allTasks = db.selectFrom(TASK)
 				.where(not(TASK.IN_PROCESS))
@@ -120,13 +120,32 @@ public class TaskWriteAccess extends TaskReadAccess {
 				.map(TaskReadAccess::taskRecordToTask)
 				.collect(Collectors.toList());
 
-			Optional<Task> taskToRemove = selector.apply(allTasks);
+			Set<TaskId> allTaskIds = allTasks.stream()
+				.map(Task::getId)
+				.collect(Collectors.toSet());
 
-			taskToRemove.ifPresent(task -> db.update(TASK)
+			Optional<TaskId> taskToStart = selector.apply(allTasks);
+
+			if (taskToStart.isEmpty()) {
+				return Optional.empty();
+			} else if (!allTaskIds.contains(taskToStart.get())) {
+				// The selector has returned an invalid task, which we'll just ignore.
+				// TODO: 08.11.20 Be more aggressive, throw an exception?
+				return Optional.empty();
+			}
+
+			// The selector has returned a valid task
+
+			String taskIdAsString = taskToStart.get().getIdAsString();
+			db.update(TASK)
 				.set(TASK.IN_PROCESS, true)
-				.where(TASK.ID.eq(task.getIdAsString())));
+				.where(TASK.ID.eq(taskIdAsString))
+				.execute();
 
-			return taskToRemove;
+			TaskRecord record = db.selectFrom(TASK)
+				.where(TASK.ID.eq(taskIdAsString))
+				.fetchOne();
+			return Optional.of(taskRecordToTask(record));
 		});
 	}
 
