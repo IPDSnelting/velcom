@@ -49,8 +49,10 @@ public class DbUpdater {
 	/**
 	 * Perform the update (see class level javadoc).
 	 *
-	 * @return the hashes of all commits that need to be entered into the queue. These might (but
-	 * 	should usually not) include commits that are already in the queue.
+	 * @return the hashes of all commits that need to be entered into the queue, sorted by committer
+	 * 	date in ascending order (except when this is the repo's first update, in which case the order
+	 * 	is not defined). These might (but should usually not) include commits that are already in the
+	 * 	queue.
 	 */
 	// TODO: 21.10.20 Delete unreachable commits
 	public List<CommitHash> update() throws DbUpdateException {
@@ -242,8 +244,8 @@ public class DbUpdater {
 	 * Find all commits that should be tracked (via a recursive query) and add them to the queue (if
 	 * they haven't already been benchmarked yet).
 	 *
-	 * @return the hashes of all commits that need to be entered into the queue. These may include
-	 * 	commits that are already in the queue.
+	 * @return the hashes of all commits that need to be entered into the queue, sorted by committer
+	 * 	date in ascending order. These may include commits that are already in the queue.
 	 */
 	private List<CommitHash> findNewTasks() {
 		LOGGER.debug("Finding new tasks");
@@ -293,6 +295,7 @@ public class DbUpdater {
 			+ "FROM untracked\n"
 			+ "WHERE untracked.hash NOT IN has_result\n"
 			+ "AND untracked.hash NOT IN in_queue\n"
+			+ "ORDER BY known_commit.committer_date ASC\n"
 			+ "";
 
 		return db.dsl().fetchLazy(query, repoIdStr, repoIdStr, repoIdStr, repoIdStr)
@@ -303,10 +306,10 @@ public class DbUpdater {
 	}
 
 	/**
-	 * @return the hashes of all commits that need to be entered into the queue. In theory, these may
-	 * 	include commits that are already in the queue and even commits that have already been
-	 * 	benchmarked. In practice, this function should only be called for new repos, so the queue
-	 * 	should not yet contain any of the repo's commits.
+	 * @return the hashes of all commits that need to be entered into the queue, in no particular
+	 * 	order. In theory, these may include commits that are already in the queue and even commits
+	 * 	that have already been benchmarked. In practice, this function should only be called for new
+	 * 	repos, so the queue should not yet contain any of the repo's commits.
 	 */
 	private List<CommitHash> useHeadsOfTrackedBranchesAsTasks() {
 		// Similar to #findNewTasks(), this function won't ever find unreachable commits.

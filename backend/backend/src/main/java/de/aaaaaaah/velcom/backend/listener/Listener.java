@@ -260,7 +260,9 @@ public class Listener {
 			LOGGER.debug("Adding no new commits to queue");
 		} else {
 			LOGGER.info("Adding " + toBeQueued.size() + " new commits to queue");
+			// The commits are ordered from old to new, which means that the new commits will be
+			// benchmarked first.
+			queue.addCommits(QUEUE_AUTHOR, repo.getId(), toBeQueued, TASK_PRIORITY);
 		}
-		queue.addCommits(QUEUE_AUTHOR, repo.getId(), toBeQueued, TASK_PRIORITY);
 	}
 }
