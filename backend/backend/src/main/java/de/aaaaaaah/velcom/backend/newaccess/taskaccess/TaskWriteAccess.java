@@ -130,6 +130,11 @@ public class TaskWriteAccess extends TaskReadAccess {
 		});
 	}
 
+	/**
+	 * Delete the tasks with the specified ids.
+	 *
+	 * @param tasks the ids of the tasks to delete
+	 */
 	public void deleteTasks(Collection<TaskId> tasks) {
 		Set<String> taskIds = tasks.stream()
 			.map(TaskId::getIdAsString)
@@ -142,20 +147,22 @@ public class TaskWriteAccess extends TaskReadAccess {
 		}
 	}
 
+	/**
+	 * Delete all tasks.
+	 */
 	public void deleteAllTasks() {
-		Set<TaskId> taskIds;
-
 		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
-			taskIds = db.selectFrom(TASK)
-				.fetch(TASK.ID)
-				.stream()
-				.map(TaskId::fromString)
-				.collect(Collectors.toSet());
-
 			db.deleteFrom(TASK).execute();
 		}
 	}
 
+	/**
+	 * Set the priority of the task with the specified id, if such a task exists. Also changes the
+	 * task's update time.
+	 *
+	 * @param taskId the task's id
+	 * @param newPriority the task's new priority
+	 */
 	public void setTaskPriority(TaskId taskId, TaskPriority newPriority) {
 		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
 			db.update(TASK)
@@ -166,16 +173,25 @@ public class TaskWriteAccess extends TaskReadAccess {
 		}
 	}
 
-	public void setTaskStatus(TaskId taskId, boolean inProcess) {
+	/**
+	 * Sets the status of the task with the specified id, if such a task exists. Does not changes the
+	 * task's update time.
+	 *
+	 * @param taskId the task's id
+	 * @param inProcess the task's new status
+	 */
+	public void setTaskInProgress(TaskId taskId, boolean inProcess) {
 		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
 			db.update(TASK)
 				.set(TASK.IN_PROCESS, inProcess)
-				.set(TASK.UPDATE_TIME, Instant.now())
 				.where(TASK.ID.eq(taskId.getIdAsString()))
 				.execute();
 		}
 	}
 
+	/**
+	 * Reset all tasks to the "not in progress" status.
+	 */
 	public void resetAllTaskStatuses() {
 		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
 			db.update(TASK)

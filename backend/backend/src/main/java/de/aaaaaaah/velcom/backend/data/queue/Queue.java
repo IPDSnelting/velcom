@@ -121,7 +121,7 @@ public class Queue {
 	 * @param taskId the id of the task
 	 */
 	public void abortTask(TaskId taskId) {
-		taskAccess.setTaskStatus(taskId, false);
+		taskAccess.setTaskInProgress(taskId, false);
 	}
 
 	/**
