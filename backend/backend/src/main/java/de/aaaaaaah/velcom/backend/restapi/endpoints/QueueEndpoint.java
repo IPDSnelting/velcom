@@ -110,6 +110,29 @@ public class QueueEndpoint {
 	}
 
 	@DELETE
+	@Timed(histogram = true)
+	public Response emptyQueue(@Auth RepoUser user) throws NoSuchTaskException {
+		if (user.getRepoId().isEmpty()) {
+			user.guardAdminAccess();
+			queue.deleteAllTasks();
+			return Response.ok().build();
+		}
+
+		RepoId repoId = user.getRepoId().get();
+
+		List<TaskId> tasksToDelete = queue.getAllTasksInOrder()
+			.stream()
+			// Exclude tasks without a repo or with another id
+			.filter(it -> it.getRepoId().map(repoId::equals).orElse(false))
+			.map(Task::getId)
+			.collect(Collectors.toList());
+
+		queue.deleteTasks(tasksToDelete);
+
+		return Response.ok().build();
+	}
+
+	@DELETE
 	@Path("{taskId}")
 	@Timed(histogram = true)
 	public Response deleteTask(@Auth RepoUser user, @PathParam("taskId") UUID taskId)
