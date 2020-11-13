@@ -33,8 +33,8 @@ paths:
       summary: prioritize task
       operationId: patch-queue-taskid
       responses:
-        '200':
-          description: OK
+        '204':
+          description: No Content
         '404':
           description: Not Found
       description: Prioritize a task such that it moves to (or near) the top of the queue.
@@ -89,14 +89,15 @@ paths:
       summary: empty queue
       operationId: delete-queue
       responses:
-        '200':
-          description: OK
+        '204':
+          description: No Content
       security:
         - admin_credentials: []
       description: |-
-        Deletes *all tasks* in the Queue the user has access to. If a Repo-Admin executes this, only tasks in their repo will be cancelled.
+        Deletes *all tasks* in the Queue the user has access to.
 
-        If the website admin executes this, *all* tasks in the queue will be cancelled and the queue will be empty afterwards.
+        If a repo admin executes this, only tasks in *their repo* will be cancelled.
+        If the website admin executes this, *all* tasks in the queue will be cancelled.
   /queue/upload/tar:
     post:
       summary: benchmark tar file
