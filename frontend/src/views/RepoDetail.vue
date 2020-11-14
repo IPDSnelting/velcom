@@ -72,7 +72,6 @@
                 </v-col>
                 <v-col class="d-flex justify-end">
                   <v-btn
-                    v-if="graphSupportsDayEquidistantDisplay"
                     color="primary"
                     outlined
                     class="mr-4"
@@ -263,7 +262,7 @@ import MatrixDimensionSelection from '../components/graphs/MatrixDimensionSelect
 import RepoCommitOverview from '@/components/repodetail/RepoCommitOverview.vue'
 import { Dimension, Repo } from '@/store/types'
 import EchartsDetailGraph from '@/components/graphs/EchartsDetailGraph.vue'
-import DytailGraph from '@/components/graphs/NewDytailGraph.vue'
+import DytailGraph from '@/components/graphs/DytailGraph.vue'
 import { Watch } from 'vue-property-decorator'
 import ShareGraphLinkDialog from '@/views/ShareGraphLinkDialog.vue'
 import GraphPlaceholder from '@/components/graphs/GraphPlaceholder.vue'
@@ -408,10 +407,6 @@ export default class RepoDetail extends Vue {
 
   private set yStartsAtZero(startsAtZero: boolean) {
     vxm.detailGraphModule.beginYScaleAtZero = startsAtZero
-  }
-
-  private get graphSupportsDayEquidistantDisplay() {
-    return this.selectedGraphComponent === EchartsDetailGraph
   }
 
   private get dayEquidistantGraphSelected() {

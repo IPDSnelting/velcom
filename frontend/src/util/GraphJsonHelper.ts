@@ -28,11 +28,14 @@ export function detailDataPointFromJson(
   for (let i = 0; i < dimensions.length; i++) {
     map.set(dimensions[i], detailDataPointValueFromJson(json.values[i]))
   }
+
+  const committerDate = new Date(json.committer_date * 1000)
   return new DetailDataPoint(
     json.hash,
     json.parents,
     json.author,
-    new Date(json.committer_date * 1000),
+    committerDate,
+    committerDate,
     json.summary,
     map
   )

@@ -65,6 +65,7 @@ type SeriesGenerationFunction = (id: DimensionId) => ValidEchartsSeries
 class EchartsDataPoint {
   // convenience methods for accessing the value
   readonly time: Date
+  readonly committerDate: Date
   readonly dataValue: number
 
   // Used to display the symbol
@@ -95,6 +96,7 @@ class EchartsDataPoint {
 
   constructor(
     time: Date,
+    committerDate: Date,
     dataValue: number,
     symbol: string,
     name: string,
@@ -104,6 +106,7 @@ class EchartsDataPoint {
     author: string
   ) {
     this.time = time
+    this.committerDate = committerDate
     this.dataValue = dataValue
     this.symbol = symbol
     this.value = [this.time, this.dataValue]
@@ -155,7 +158,7 @@ export default class EchartsDetailGraph extends Vue {
   private get minDateValue(): number {
     const min = Math.min.apply(
       Math,
-      this.detailDataPoints.map(it => it.committerDate.getTime())
+      this.detailDataPoints.map(it => it.positionDate.getTime())
     )
     return min || 0
   }
@@ -163,7 +166,7 @@ export default class EchartsDetailGraph extends Vue {
   private get maxDateValue(): number {
     const max = Math.max.apply(
       Math,
-      this.detailDataPoints.map(it => it.committerDate.getTime())
+      this.detailDataPoints.map(it => it.positionDate.getTime())
     )
     return max || 0
   }
@@ -282,7 +285,7 @@ export default class EchartsDetailGraph extends Vue {
 
     const samplePoint = values[0].data as EchartsDataPoint
 
-    const authorDate = formatDate(samplePoint.time)
+    const committerDate = formatDate(samplePoint.committerDate)
     return `
                 <table class="echarts-tooltip-table">
                   <tr>
@@ -296,7 +299,7 @@ export default class EchartsDetailGraph extends Vue {
                   <tr>
                     <td>Author</td>
                     <td>
-                      ${escapeHtml(samplePoint.author)} at ${authorDate}
+                      ${escapeHtml(samplePoint.author)} at ${committerDate}
                     </td>
                   </tr>
                   ${dimensionRows.join('\n')}
@@ -308,21 +311,6 @@ export default class EchartsDetailGraph extends Vue {
 
   // <!--<editor-fold desc="SERIES GENERATION">-->
 
-  // https://stackoverflow.com/questions/14446511/most-efficient-method-to-groupby-on-an-array-of-objects
-  private groupBy<K, V>(list: K[], keyGetter: (key: K) => V) {
-    const map = new Map()
-    list.forEach(item => {
-      const key = keyGetter(item)
-      const collection = map.get(key)
-      if (!collection) {
-        map.set(key, [item])
-      } else {
-        collection.push(item)
-      }
-    })
-    return map
-  }
-
   // <!--<editor-fold desc="SERIES GENERATION">-->
   private findFirstSuccessful = (dimension: DimensionId) => {
     const point = this.detailDataPoints.find(it => it.successful(dimension))
@@ -333,58 +321,7 @@ export default class EchartsDetailGraph extends Vue {
     return 0
   }
 
-  private buildDayEquidistantPointsForSingle(dimension: DimensionId) {
-    let lastSuccessfulValue: number = this.findFirstSuccessful(dimension)
-
-    const millisInDay = 1000 * 60 * 60 * 24
-
-    const dayGroups: Map<number, DetailDataPoint[]> = this.groupBy(
-      this.detailDataPoints,
-      key =>
-        // round to day
-        Math.floor(key.committerDate.getTime() / millisInDay) * millisInDay
-    )
-
-    return Array.from(dayGroups.entries()).flatMap(([day, points]) => {
-      const spacingBetweenElementsMillis = millisInDay / points.length
-
-      return points.map((point, index) => {
-        let symbol = 'circle'
-        let color = this.dimensionColor(dimension)
-        let borderColor = color
-
-        let pointValue = point.values.get(dimension)
-        if (typeof pointValue !== 'number') {
-          pointValue = lastSuccessfulValue
-        }
-        lastSuccessfulValue = pointValue
-
-        if (point.failed(dimension)) {
-          // grey circle
-          symbol = this.crossIcon
-          color = this.graphFailedOrUnbenchmarkedColor
-          borderColor = color
-        } else if (point.unbenchmarked(dimension)) {
-          // empty circle with outline
-          color = this.graphBackgroundColor
-          borderColor = this.graphFailedOrUnbenchmarkedColor
-        }
-
-        return new EchartsDataPoint(
-          new Date(day + spacingBetweenElementsMillis * index),
-          pointValue,
-          symbol,
-          point.hash,
-          color,
-          borderColor,
-          point.summary,
-          point.author
-        )
-      })
-    })
-  }
-
-  private buildNormalPointsForSingle(dimension: DimensionId) {
+  private buildPointsForSingleDimension(dimension: DimensionId) {
     let lastSuccessfulValue: number = this.findFirstSuccessful(dimension)
     return this.detailDataPoints.map(point => {
       let symbol = 'circle'
@@ -409,6 +346,7 @@ export default class EchartsDetailGraph extends Vue {
       }
 
       return new EchartsDataPoint(
+        point.positionDate,
         point.committerDate,
         pointValue,
         symbol,
@@ -428,11 +366,7 @@ export default class EchartsDetailGraph extends Vue {
     )
 
     this.dimensions.forEach(dimension => {
-      if (this.dayEquidistant) {
-        map.set(dimension, this.buildDayEquidistantPointsForSingle(dimension))
-      } else {
-        map.set(dimension, this.buildNormalPointsForSingle(dimension))
-      }
+      map.set(dimension, this.buildPointsForSingleDimension(dimension))
     })
 
     return map
