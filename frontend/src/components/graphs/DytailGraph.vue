@@ -261,9 +261,10 @@ export default class DytailGraph extends Vue {
       return
     }
 
+    canvasContext.strokeStyle = color
+
     if (datapoint.failed(dimension)) {
       // gray cross icon
-      color = this.graphFailedOrUnbenchmarkedColor
       canvasContext.beginPath()
       canvasContext.strokeStyle = this.graphFailedOrUnbenchmarkedColor
       canvasContext.lineWidth = 4
@@ -467,6 +468,7 @@ export default class DytailGraph extends Vue {
 </script>
 
 <style>
+/*noinspection CssUnusedSymbol*/
 .dygraph-legend {
   position: absolute;
   width: auto;
@@ -477,7 +479,7 @@ export default class DytailGraph extends Vue {
     top 0.4s cubic-bezier(0.23, 1, 0.32, 1) 0s;
   transition-duration: 1s;
   background-color: rgba(50, 50, 50, 0.7);
-  border-width: 0px;
+  border-width: 0;
   border-color: rgb(51, 51, 51);
   border-radius: 4px;
   color: rgb(255, 255, 255);
@@ -512,18 +514,22 @@ export default class DytailGraph extends Vue {
   display: inline-block;
 }
 
+/*noinspection CssUnusedSymbol*/
 .dygraph-rangesel-fgcanvas {
   margin-top: 15px;
 }
 
+/*noinspection CssUnusedSymbol*/
 .dygraph-rangesel-bgcanvas {
   margin-top: 15px;
 }
 
+/*noinspection CssUnusedSymbol*/
 .dygraph-rangesel-zoomhandle {
   margin-top: 15px;
 }
 
+/*noinspection CssUnusedSymbol*/
 .dygraph-axis-label {
   color: currentColor;
 }
