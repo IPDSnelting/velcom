@@ -50,7 +50,7 @@
                       seconds to complete.
                     </v-tooltip>
                   </v-col>
-                  <v-col cols="auto" class="mb-5" v-if="isWebsiteAdmin">
+                  <v-col cols="auto" class="mb-5" v-if="isLoggedIn">
                     <v-tooltip left>
                       <template #activator="{ on }">
                         <v-btn
@@ -58,9 +58,9 @@
                           color="warning"
                           text
                           outlined
-                          @click="cancelAllFetched()"
+                          @click="cancelAllTasks()"
                         >
-                          Cancel all Tasks
+                          {{ cancelAllText }}
                         </v-btn>
                       </template>
                       Cancels
@@ -87,7 +87,6 @@ import WorkerOverview from '../components/overviews/WorkerOverview.vue'
 import QueueOverview from '../components/overviews/QueueOverview.vue'
 import { vxm } from '@/store'
 import { Route, RawLocation } from 'vue-router'
-import { extractErrorMessage } from '@/util/ErrorUtils'
 
 @Component({
   components: {
@@ -100,41 +99,34 @@ export default class Queue extends Vue {
     return vxm.queueModule.workers
   }
 
+  private get isLoggedIn() {
+    return vxm.userModule.loggedIn
+  }
+
   private get isWebsiteAdmin() {
     return vxm.userModule.isAdmin
   }
 
-  private cancelAllFetched() {
-    if (!window.confirm('Do you really want to empty the queue?')) {
+  private get cancelAllText() {
+    if (this.isWebsiteAdmin) {
+      return 'Cancel all tasks'
+    }
+    const loggedInRepoId = vxm.userModule.role
+    const loggedInRepo = vxm.repoModule.allRepos.find(
+      it => it.id === loggedInRepoId
+    )
+    const loggedInRepoName = loggedInRepo ? loggedInRepo.name : 'N/A'
+
+    return `Cancel all tasks for <${loggedInRepoName}>`
+  }
+
+  private async cancelAllTasks() {
+    if (!window.confirm(`Do you really want to ${this.cancelAllText}?`)) {
       return
     }
 
-    this.$globalSnackbar.setLoading('cancel-queue', 2)
-    Promise.all(
-      vxm.queueModule.openTasks.map(it => {
-        return vxm.queueModule.dispatchDeleteOpenTask({
-          id: it.id,
-          suppressRefetch: true
-        })
-      })
-    )
-      .then(() => {
-        this.$globalSnackbar.setSuccess(
-          'cancel-queue',
-          'Cancelled all open tasks!',
-          2
-        )
-      })
-      .catch(error => {
-        this.$globalSnackbar.setError(
-          'cancel-queue',
-          extractErrorMessage(error),
-          2
-        )
-      })
-      .finally(() => {
-        vxm.queueModule.fetchQueue()
-      })
+    await vxm.queueModule.dispatchDeleteAllOpenTasks()
+    this.$globalSnackbar.setSuccess('cancel-queue', 'Cancelled Queue')
   }
 
   private async refetchRepos() {

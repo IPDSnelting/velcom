@@ -27,14 +27,14 @@ paths:
           description: Not Found
       operationId: delete-queue-taskid
       security:
-        - admin_credentials: []
+        - repo_admin_credentials: []
       description: 'Delete a task from the queue. If the task is currently being benchmarked, this also tries to abort the task.'
     patch:
       summary: prioritize task
       operationId: patch-queue-taskid
       responses:
-        '200':
-          description: OK
+        '204':
+          description: No Content
         '404':
           description: Not Found
       description: Prioritize a task such that it moves to (or near) the top of the queue.
@@ -84,7 +84,20 @@ paths:
                   - tasks
                   - runners
       operationId: get-queue
-      description: "Query the queue's current status"
+      description: Query the queue's current status
+    delete:
+      summary: empty queue
+      operationId: delete-queue
+      responses:
+        '204':
+          description: No Content
+      security:
+        - admin_credentials: []
+      description: |-
+        Deletes *all tasks* in the Queue the user has access to.
+
+        If a repo admin executes this, only tasks in *their repo* will be cancelled.
+        If the website admin executes this, *all* tasks in the queue will be cancelled.
   /queue/upload/tar:
     post:
       summary: benchmark tar file

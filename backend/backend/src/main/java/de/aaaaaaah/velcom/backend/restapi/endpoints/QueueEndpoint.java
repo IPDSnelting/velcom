@@ -39,7 +39,6 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 @Path("/queue")
@@ -110,9 +109,30 @@ public class QueueEndpoint {
 	}
 
 	@DELETE
+	@Timed(histogram = true)
+	public void emptyQueue(@Auth RepoUser user) throws NoSuchTaskException {
+		if (user.getRepoId().isEmpty()) {
+			user.guardAdminAccess();
+			queue.deleteAllTasks();
+			return;
+		}
+
+		RepoId repoId = user.getRepoId().get();
+
+		List<TaskId> tasksToDelete = queue.getAllTasksInOrder()
+			.stream()
+			// Exclude tasks without a repo or with another id
+			.filter(it -> it.getRepoId().map(repoId::equals).orElse(false))
+			.map(Task::getId)
+			.collect(Collectors.toList());
+
+		queue.deleteTasks(tasksToDelete);
+	}
+
+	@DELETE
 	@Path("{taskId}")
 	@Timed(histogram = true)
-	public Response deleteTask(@Auth RepoUser user, @PathParam("taskId") UUID taskId)
+	public void deleteTask(@Auth RepoUser user, @PathParam("taskId") UUID taskId)
 		throws NoSuchTaskException {
 		Task task = queue.getTask(new TaskId(taskId));
 		if (task.getRepoId().isEmpty()) {
@@ -122,14 +142,12 @@ public class QueueEndpoint {
 		}
 
 		queue.deleteTasks(List.of(new TaskId(taskId)));
-
-		return Response.ok().build();
 	}
 
 	@PATCH
 	@Path("{taskId}")
 	@Timed(histogram = true)
-	public Response patchTask(@Auth RepoUser user, @PathParam("taskId") UUID taskId)
+	public void patchTask(@Auth RepoUser user, @PathParam("taskId") UUID taskId)
 		throws NoSuchTaskException {
 		user.guardAdminAccess();
 
@@ -137,8 +155,6 @@ public class QueueEndpoint {
 		Task task = queue.getTask(new TaskId(taskId));
 
 		queue.prioritizeTask(task.getId(), TaskPriority.MANUAL);
-
-		return Response.ok().build();
 	}
 
 	@POST

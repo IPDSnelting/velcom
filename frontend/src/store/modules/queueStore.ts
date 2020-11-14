@@ -114,6 +114,17 @@ export class QueueStore extends VxModule {
   }
 
   /**
+   * Cancels all tasks currently in the queue the user has access to.
+   *
+   * @returns {Promise<void>} a promise completing with an optional error
+   */
+  @action
+  async dispatchDeleteAllOpenTasks(): Promise<void> {
+    await axios.delete(`/queue/`)
+    await this.fetchQueue()
+  }
+
+  /**
    * Fetches the runner output for a given task. Returns null if the task is not
    * currently being executed.
    *
