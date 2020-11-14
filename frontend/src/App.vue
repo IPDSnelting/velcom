@@ -18,7 +18,6 @@ import { vxm } from './store'
 import { Watch } from 'vue-property-decorator'
 import ThemeSelector from './components/ThemeSelector.vue'
 import { storeToLocalStorage } from './store/persistence'
-import router from '@/router'
 
 @Component({
   components: {
