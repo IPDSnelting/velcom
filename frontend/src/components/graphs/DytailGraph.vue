@@ -2,6 +2,13 @@
   <v-container fluid>
     <v-row align="center" justify="center">
       <v-col>
+        <datapoint-dialog
+          v-if="pointDialogDatapoint"
+          :dialogOpen="pointDialogOpen"
+          :selectedDatapoint="pointDialogDatapoint"
+          :dimension="pointDialogDimension"
+          @close="pointDialogOpen = false"
+        ></datapoint-dialog>
         <div id="chart" :style="{ height: '500px' }"></div>
       </v-col>
     </v-row>
@@ -19,6 +26,7 @@ import 'dygraphs/css/dygraph.css'
 import Crosshair from 'dygraphs/src/extras/crosshair.js'
 import { escapeHtml } from '@/util/TextUtils'
 import { formatDate } from '@/util/TimeUtil'
+import DetailDatapointDialog from '@/components/dialogs/DetailDatapointDialog.vue'
 
 // eslint-disable-next-line no-undef
 type RealOptions = dygraphs.Options & {
@@ -26,7 +34,11 @@ type RealOptions = dygraphs.Options & {
   rangeSelectorAlpha?: number
 }
 
-@Component({})
+@Component({
+  components: {
+    'datapoint-dialog': DetailDatapointDialog
+  }
+})
 export default class DytailGraph extends Vue {
   @Prop()
   private dimensions!: Dimension[]
@@ -40,6 +52,9 @@ export default class DytailGraph extends Vue {
   private graph!: Dygraph
 
   private height: number = 500
+  private pointDialogDatapoint: DetailDataPoint | null = null
+  private pointDialogDimension: Dimension | null = null
+  private pointDialogOpen: boolean = false
 
   private get datapoints(): DetailDataPoint[] {
     return vxm.detailGraphModule.detailGraph
@@ -273,15 +288,13 @@ export default class DytailGraph extends Vue {
             axisLineColor: 'currentColor'
           }
         },
-        clickCallback: (e, xval, points) => {
-          console.log(xval, points)
-        },
         ylabel: this.yLabel,
+        labels: ['', ''], // will be replaced in update
         legend: 'follow',
         labelsSeparateLines: true,
         connectSeparatedPoints: true,
         drawPoints: false,
-        animatedZooms: true,
+        animatedZooms: false, // does not work with slider
         panEdgeFraction: 0.00001,
         zoomCallback: this.dygraphsZoomed,
         legendFormatter: this.tooltipFormatter,
