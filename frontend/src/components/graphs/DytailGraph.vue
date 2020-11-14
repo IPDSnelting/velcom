@@ -205,12 +205,7 @@ export default class DytailGraph extends Vue {
 
     this.graph.updateOptions({
       file: data,
-      labels: [
-        'x',
-        ...this.dimensions.map(it =>
-          escapeHtml(it.benchmark + ' - ' + it.metric)
-        )
-      ],
+      labels: ['x', ...this.dimensions.map(it => escapeHtml(it.toString()))],
       colors: this.dimensionsColors(),
       dateWindow: [
         vxm.detailGraphModule.zoomXStartValue || this.minDateValue,
@@ -224,6 +219,8 @@ export default class DytailGraph extends Vue {
       rangeSelectorPlotLineWidth: this.selectorLineWidth,
       rangeSelectorAlpha: this.selectorAlpha
     } as RealOptions)
+
+    this.drawMarkers()
   }
 
   mounted(): void {
@@ -276,6 +273,9 @@ export default class DytailGraph extends Vue {
             axisLineColor: 'currentColor'
           }
         },
+        clickCallback: (e, xval, points) => {
+          console.log(xval, points)
+        },
         ylabel: this.yLabel,
         legend: 'follow',
         labelsSeparateLines: true,
@@ -324,6 +324,24 @@ export default class DytailGraph extends Vue {
       vxm.detailGraphModule.zoomYStartValue = null
       vxm.detailGraphModule.zoomYEndValue = null
     }
+  }
+
+  private drawMarkers() {
+    const annotations = []
+    if (vxm.detailGraphModule.referenceDatapoint) {
+      const { dimension, dataPoint } = vxm.detailGraphModule.referenceDatapoint
+      annotations.push({
+        series: dimension.toString(),
+        x: dataPoint.committerDate.getTime(),
+        shortText: 'R',
+        text: 'Reference datapoint',
+        width: 20,
+        height: 20,
+        tickHeight: 20
+      })
+    }
+
+    this.graph.setAnnotations(annotations)
   }
 }
 </script>
