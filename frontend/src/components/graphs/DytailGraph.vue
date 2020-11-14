@@ -413,7 +413,7 @@ export default class DytailGraph extends Vue {
         rangeSelectorForegroundLineWidth: 0.5,
         rangeSelectorPlotFillColor: '',
         rangeSelectorPlotStrokeColor: 'grey',
-        drawHighlightPointCallback: this.drawHighlightPointCallback,
+        drawHighlightPointCallback: this.drawHighlightPointCallback as any,
         highlightCircleSize: 5,
         rangeSelectorBackgroundStrokeColor: 'currentColor',
         // and, to keep the ability to brush and zoom:
