@@ -2,6 +2,13 @@
   <v-container fluid>
     <v-row align="center" justify="center">
       <v-col>
+        <datapoint-dialog
+          v-if="pointDialogDatapoint"
+          :dialogOpen="pointDialogOpen"
+          :selectedDatapoint="pointDialogDatapoint"
+          :dimension="pointDialogDimension"
+          @close="pointDialogOpen = false"
+        ></datapoint-dialog>
         <div id="chart" :style="{ height: '500px' }"></div>
       </v-col>
     </v-row>
@@ -19,6 +26,7 @@ import 'dygraphs/css/dygraph.css'
 import Crosshair from 'dygraphs/src/extras/crosshair.js'
 import { escapeHtml } from '@/util/TextUtils'
 import { formatDate } from '@/util/TimeUtil'
+import DetailDatapointDialog from '@/components/dialogs/DetailDatapointDialog.vue'
 
 // eslint-disable-next-line no-undef
 type RealOptions = dygraphs.Options & {
@@ -26,7 +34,11 @@ type RealOptions = dygraphs.Options & {
   rangeSelectorAlpha?: number
 }
 
-@Component({})
+@Component({
+  components: {
+    'datapoint-dialog': DetailDatapointDialog
+  }
+})
 export default class DytailGraph extends Vue {
   @Prop()
   private dimensions!: Dimension[]
@@ -40,6 +52,9 @@ export default class DytailGraph extends Vue {
   private graph!: Dygraph
 
   private height: number = 500
+  private pointDialogDatapoint: DetailDataPoint | null = null
+  private pointDialogDimension: Dimension | null = null
+  private pointDialogOpen: boolean = false
 
   private get datapoints(): DetailDataPoint[] {
     return vxm.detailGraphModule.detailGraph
@@ -88,6 +103,10 @@ export default class DytailGraph extends Vue {
     return this.dimensions.map(this.dimensionColor)
   }
 
+  private get graphFailedOrUnbenchmarkedColor() {
+    return this.$vuetify.theme.currentTheme.graphFailedOrUnbenchmarked as string
+  }
+
   private get selectorAlpha(): number {
     return vxm.userModule.darkThemeSelected ? 0.2 : 0.7
   }
@@ -121,9 +140,7 @@ export default class DytailGraph extends Vue {
 
   // eslint-disable-next-line no-undef
   private tooltipFormatter(legendData: dygraphs.LegendData) {
-    const datapoint: DetailDataPoint | undefined = this.datapoints.find(
-      point => point.positionDate.getTime() === legendData.x
-    )
+    const datapoint = this.datapointByPositionDate(legendData.x)
     if (datapoint) {
       const data = legendData.series.slice()
       // Sort them so the order corresponds to the order of the lines
@@ -176,6 +193,108 @@ export default class DytailGraph extends Vue {
     return vxm.userModule.darkThemeSelected
   }
 
+  private datapointByPositionDate(
+    authorDate: number
+  ): DetailDataPoint | undefined {
+    return this.datapoints.find(
+      point => point.positionDate.getTime() === authorDate
+    )
+  }
+
+  private pointClickCallback(e: MouseEvent, graphPoint: any) {
+    const datapoint: DetailDataPoint | undefined = graphPoint.xval
+      ? this.datapointByPositionDate(graphPoint.xval)
+      : undefined
+
+    if (!datapoint) {
+      return
+    }
+
+    // Datapoint dialog on right click
+    if (e.button === 2) {
+      this.pointDialogDatapoint = datapoint
+      this.pointDialogDimension = this.dimensions.find(
+        it => it.toString() === graphPoint.name
+      )!
+      this.pointDialogOpen = true
+
+      return
+    }
+
+    // New tab on control
+    if (e.ctrlKey) {
+      const routeData = this.$router.resolve({
+        name: 'run-detail',
+        params: {
+          first: vxm.detailGraphModule.selectedRepoId,
+          second: datapoint.hash
+        }
+      })
+      window.open(routeData.href, '_blank')
+    } else {
+      // open it in place on a normal left click
+      this.$router.push({
+        name: 'run-detail',
+        params: {
+          first: vxm.detailGraphModule.selectedRepoId,
+          second: datapoint.hash
+        }
+      })
+    }
+  }
+
+  private drawHighlightPointCallback(
+    g: Dygraph,
+    seriesName: string,
+    canvasContext: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+    color: string,
+    pointSize: number,
+    idx: number
+  ) {
+    const datapoint: DetailDataPoint = this.datapoints[idx]
+    const dimension: DimensionId | undefined = this.dimensions.find(
+      it => it.benchmark + ' - ' + it.metric === seriesName
+    )
+    if (!dimension) {
+      return
+    }
+
+    canvasContext.strokeStyle = color
+
+    if (datapoint.failed(dimension)) {
+      // gray cross icon
+      canvasContext.beginPath()
+      canvasContext.strokeStyle = this.graphFailedOrUnbenchmarkedColor
+      canvasContext.lineWidth = 4
+      canvasContext.moveTo(cx - pointSize, cy - pointSize)
+      canvasContext.lineTo(cx + pointSize, cy + pointSize)
+      canvasContext.stroke()
+
+      canvasContext.moveTo(cx + pointSize, cy - pointSize)
+      canvasContext.lineTo(cx - pointSize, cy + pointSize)
+      canvasContext.stroke()
+      canvasContext.closePath()
+    } else if (datapoint.unbenchmarked(dimension)) {
+      // grey empty circle
+      canvasContext.beginPath()
+      canvasContext.lineWidth = 2
+      canvasContext.strokeStyle = this.graphFailedOrUnbenchmarkedColor
+      canvasContext.arc(cx, cy, pointSize, 0, 360)
+      canvasContext.stroke()
+      canvasContext.closePath()
+    } else {
+      // filled in circle in dimension color
+      canvasContext.beginPath()
+      canvasContext.lineWidth = 2
+      canvasContext.arc(cx, cy, pointSize, 0, 360)
+      canvasContext.stroke()
+      canvasContext.fill()
+      canvasContext.closePath()
+    }
+  }
+
   @Watch('datapoints')
   @Watch('dimensions')
   @Watch('beginYAtZero')
@@ -205,12 +324,7 @@ export default class DytailGraph extends Vue {
 
     this.graph.updateOptions({
       file: data,
-      labels: [
-        'x',
-        ...this.dimensions.map(it =>
-          escapeHtml(it.benchmark + ' - ' + it.metric)
-        )
-      ],
+      labels: ['x', ...this.dimensions.map(it => escapeHtml(it.toString()))],
       colors: this.dimensionsColors(),
       dateWindow: [
         vxm.detailGraphModule.zoomXStartValue || this.minDateValue,
@@ -224,6 +338,8 @@ export default class DytailGraph extends Vue {
       rangeSelectorPlotLineWidth: this.selectorLineWidth,
       rangeSelectorAlpha: this.selectorAlpha
     } as RealOptions)
+
+    this.drawMarkers()
   }
 
   mounted(): void {
@@ -254,14 +370,7 @@ export default class DytailGraph extends Vue {
                 ? this.xAxisFormatter(new Date(x), [start, end])
                 : ''
             },
-            ticker: function (
-              min,
-              max,
-              pixels,
-              opts,
-              dygraph: Dygraph,
-              vals: number[]
-            ) {
+            ticker: function (min, max, pixels, opts, dygraph: Dygraph) {
               // now shut up, eslint
               return (Dygraph as any).getDateAxis(
                 min,
@@ -277,11 +386,14 @@ export default class DytailGraph extends Vue {
           }
         },
         ylabel: this.yLabel,
+        pointClickCallback: this.pointClickCallback,
+        labels: ['', ''], // will be replaced in update
         legend: 'follow',
         labelsSeparateLines: true,
         connectSeparatedPoints: true,
         drawPoints: false,
-        animatedZooms: true,
+        animatedZooms: false, // does not work with slider
+        pointSize: 3,
         panEdgeFraction: 0.00001,
         zoomCallback: this.dygraphsZoomed,
         legendFormatter: this.tooltipFormatter,
@@ -294,6 +406,8 @@ export default class DytailGraph extends Vue {
         rangeSelectorForegroundLineWidth: 0.5,
         rangeSelectorPlotFillColor: '',
         rangeSelectorPlotStrokeColor: 'grey',
+        drawHighlightPointCallback: this.drawHighlightPointCallback as any,
+        highlightCircleSize: 5,
         rangeSelectorBackgroundStrokeColor: 'currentColor',
         // and, to keep the ability to brush and zoom:
         interactionModel: Dygraph.defaultInteractionModel
@@ -325,10 +439,29 @@ export default class DytailGraph extends Vue {
       vxm.detailGraphModule.zoomYEndValue = null
     }
   }
+
+  private drawMarkers() {
+    const annotations = []
+    if (vxm.detailGraphModule.referenceDatapoint) {
+      const { dimension, dataPoint } = vxm.detailGraphModule.referenceDatapoint
+      annotations.push({
+        series: dimension.toString(),
+        x: dataPoint.committerDate.getTime(),
+        shortText: 'R',
+        text: 'Reference datapoint',
+        width: 20,
+        height: 20,
+        tickHeight: 20
+      })
+    }
+
+    this.graph.setAnnotations(annotations)
+  }
 }
 </script>
 
 <style>
+/*noinspection CssUnusedSymbol*/
 .dygraph-legend {
   position: absolute;
   width: auto;
@@ -339,7 +472,7 @@ export default class DytailGraph extends Vue {
     top 0.4s cubic-bezier(0.23, 1, 0.32, 1) 0s;
   transition-duration: 1s;
   background-color: rgba(50, 50, 50, 0.7);
-  border-width: 0px;
+  border-width: 0;
   border-color: rgb(51, 51, 51);
   border-radius: 4px;
   color: rgb(255, 255, 255);
@@ -374,18 +507,22 @@ export default class DytailGraph extends Vue {
   display: inline-block;
 }
 
+/*noinspection CssUnusedSymbol*/
 .dygraph-rangesel-fgcanvas {
   margin-top: 15px;
 }
 
+/*noinspection CssUnusedSymbol*/
 .dygraph-rangesel-bgcanvas {
   margin-top: 15px;
 }
 
+/*noinspection CssUnusedSymbol*/
 .dygraph-rangesel-zoomhandle {
   margin-top: 15px;
 }
 
+/*noinspection CssUnusedSymbol*/
 .dygraph-axis-label {
   color: currentColor;
 }

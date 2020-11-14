@@ -14,7 +14,7 @@
     "axios": "^0.20.0",
     "core-js": "^3.4.4",
     "d3": "^5.15.0",
-    "dygraphs": "git://github.com/I-Al-Istannen/dygraphs.git#56a58aeabe2ecd2a6b5cfa689ed8f21c206194f4",
+    "dygraphs": "git://github.com/I-Al-Istannen/dygraphs.git#1e0170e98b5e8501d0ab12d897e14b1b322bd169",
     "echarts": "^4.9.0",
     "vue": "^2.6.12",
     "vue-class-component": "^7.2.6",

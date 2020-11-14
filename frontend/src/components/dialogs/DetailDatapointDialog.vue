@@ -170,8 +170,23 @@ export default class DetailDatapointDialog extends Vue {
   }
 
   private compareCommits() {
-    this.$emit('compare-commits')
+    this.pointDialogExecuteCompare()
     this.$emit('close')
+  }
+
+  private pointDialogExecuteCompare() {
+    if (!vxm.detailGraphModule.commitToCompare || !this.selectedDatapoint) {
+      return
+    }
+    const repoId = vxm.detailGraphModule.selectedRepoId
+    const hashFrom = vxm.detailGraphModule.commitToCompare.dataPoint.hash
+    const hashTo = this.selectedDatapoint.hash
+
+    this.$router.push({
+      name: 'run-comparison',
+      params: { first: repoId, second: repoId },
+      query: { hash1: hashFrom, hash2: hashTo }
+    })
   }
 
   private onClose() {
