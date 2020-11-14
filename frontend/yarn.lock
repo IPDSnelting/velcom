@@ -3833,9 +3833,9 @@ duplexify@^3.4.2, duplexify@^3.6.0:
     readable-stream "^2.0.0"
     stream-shift "^1.0.0"
 
-"dygraphs@git://github.com/I-Al-Istannen/dygraphs.git#56a58aeabe2ecd2a6b5cfa689ed8f21c206194f4":
+"dygraphs@git://github.com/I-Al-Istannen/dygraphs.git#1e0170e98b5e8501d0ab12d897e14b1b322bd169":
   version "2.1.0"
-  resolved "git://github.com/I-Al-Istannen/dygraphs.git#56a58aeabe2ecd2a6b5cfa689ed8f21c206194f4"
+  resolved "git://github.com/I-Al-Istannen/dygraphs.git#1e0170e98b5e8501d0ab12d897e14b1b322bd169"
 
 easy-stack@^1.0.0:
   version "1.0.0"
