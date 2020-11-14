@@ -8,7 +8,6 @@
           :selectedDatapoint="pointDialogDatapoint"
           :dimension="pointDialogDimension"
           @close="pointDialogOpen = false"
-          @compare-commits="pointDialogExecuteCompare"
         ></datapoint-dialog>
         <div id="chart-container">
           <v-chart
@@ -572,23 +571,6 @@ export default class EchartsDetailGraph extends Vue {
     } else {
       series.forEach(it => Vue.set(it, 'markPoint', markPointJson))
     }
-  }
-  // <!--</editor-fold>-->
-
-  // <!--<editor-fold desc="DETAIL DIALOG EVENT HANDLER">-->
-  private pointDialogExecuteCompare() {
-    if (!vxm.detailGraphModule.commitToCompare || !this.pointDialogDatapoint) {
-      return
-    }
-    const repoId = vxm.detailGraphModule.selectedRepoId
-    const hashFrom = vxm.detailGraphModule.commitToCompare.dataPoint.hash
-    const hashTo = this.pointDialogDatapoint.hash
-
-    this.$router.push({
-      name: 'run-comparison',
-      params: { first: repoId, second: repoId },
-      query: { hash1: hashFrom, hash2: hashTo }
-    })
   }
   // <!--</editor-fold>-->
 
