@@ -2,6 +2,13 @@
   <v-container fluid>
     <v-row align="center" justify="center">
       <v-col>
+        <datapoint-dialog
+          v-if="pointDialogDatapoint"
+          :dialogOpen="pointDialogOpen"
+          :selectedDatapoint="pointDialogDatapoint"
+          :dimension="pointDialogDimension"
+          @close="pointDialogOpen = false"
+        ></datapoint-dialog>
         <div id="chart" :style="{ height: '500px' }"></div>
       </v-col>
     </v-row>
@@ -18,6 +25,7 @@ import { vxm } from '@/store'
 import 'dygraphs/css/dygraph.css'
 import Crosshair from 'dygraphs/src/extras/crosshair.js'
 import { escapeHtml } from '@/util/TextUtils'
+import DetailDatapointDialog from '@/components/dialogs/DetailDatapointDialog.vue'
 
 // eslint-disable-next-line no-undef
 type RealOptions = dygraphs.Options & {
@@ -25,7 +33,11 @@ type RealOptions = dygraphs.Options & {
   rangeSelectorAlpha?: number
 }
 
-@Component({})
+@Component({
+  components: {
+    'datapoint-dialog': DetailDatapointDialog
+  }
+})
 export default class DytailGraph extends Vue {
   @Prop()
   private dimensions!: Dimension[]
@@ -36,6 +48,9 @@ export default class DytailGraph extends Vue {
   private graph!: Dygraph
 
   private height: number = 500
+  private pointDialogDatapoint: DetailDataPoint | null = null
+  private pointDialogDimension: Dimension | null = null
+  private pointDialogOpen: boolean = false
 
   private get datapoints(): DetailDataPoint[] {
     return vxm.detailGraphModule.detailGraph
@@ -250,15 +265,28 @@ export default class DytailGraph extends Vue {
             axisLineColor: 'currentColor'
           }
         },
-        clickCallback: (e, xval, points) => {
-          console.log(xval, points)
+        pointClickCallback: (e, point) => {
+          const dataPoint = this.datapoints.find(
+            it => it.committerDate.getTime() === point.xval
+          )
+
+          if (!dataPoint) {
+            return
+          }
+
+          this.pointDialogDatapoint = dataPoint
+          this.pointDialogDimension = this.dimensions.find(
+            it => it.toString() === point.name
+          )!
+          this.pointDialogOpen = true
         },
+        labels: ['', ''], // will be replaced in update
         ylabel: this.yLabel,
         legend: 'follow',
         labelsSeparateLines: true,
         connectSeparatedPoints: true,
         drawPoints: false,
-        animatedZooms: true,
+        animatedZooms: false, // does not work with slider
         panEdgeFraction: 0.00001,
         zoomCallback: this.dygraphsZoomed,
         legendFormatter: this.tooltipFormatter,
