@@ -5,32 +5,32 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 
 /**
- * Thrown when something goes wrong during the transfer of a tar file.
+ * Thrown when something goes wrong while preparing for the transfer of a tar file.
  */
-public class TarTransferException extends Exception {
+public class TarRetrieveException extends Exception {
 
 	@Nullable
 	private final Task task;
 
 	private static String makeMessage(@Nullable Task task) {
 		if (task == null) {
-			return "Failed to transfer tar file";
+			return "Failed to retrieve tar file";
 		} else {
-			return "Failed to transfer tar file for task " + task;
+			return "Failed to retrieve tar file for task " + task;
 		}
 	}
 
-	public TarTransferException(Throwable t, @Nullable Task task) {
+	public TarRetrieveException(Throwable t, @Nullable Task task) {
 		super(makeMessage(task), t);
 		this.task = task;
 	}
 
-	public TarTransferException(@Nullable Task task) {
+	public TarRetrieveException(@Nullable Task task) {
 		super(makeMessage(task));
 		this.task = task;
 	}
 
-	public TarTransferException() {
+	public TarRetrieveException() {
 		this(null);
 	}
 

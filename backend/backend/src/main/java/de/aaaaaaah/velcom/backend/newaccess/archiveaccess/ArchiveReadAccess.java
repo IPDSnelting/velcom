@@ -1,5 +1,6 @@
 package de.aaaaaaah.velcom.backend.newaccess.archiveaccess;
 
+import de.aaaaaaah.velcom.backend.newaccess.archiveaccess.exceptions.TarRetrieveException;
 import de.aaaaaaah.velcom.backend.newaccess.archiveaccess.exceptions.TarTransferException;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.CommitSource;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
@@ -57,9 +58,11 @@ public class ArchiveReadAccess {
 	 *
 	 * @param task the task whose tar file to transfer
 	 * @param outputStream the tar file is transferred to this stream
-	 * @throws TarTransferException if the tar file could not be retrieved or transferred
+	 * @throws TarRetrieveException if the tar file could not be retrieved
+	 * @throws TarTransferException if the tar file could not be transferred
 	 */
-	public void transferTask(Task task, OutputStream outputStream) throws TarTransferException {
+	public void transferTask(Task task, OutputStream outputStream)
+		throws TarRetrieveException, TarTransferException {
 		if (task.getSource().getLeft().isPresent()) {
 			CommitSource commitSource = task.getSource().getLeft().get();
 			transferCommitTask(task, commitSource, outputStream);
@@ -75,7 +78,7 @@ public class ArchiveReadAccess {
 	}
 
 	private void transferCommitTask(Task task, CommitSource commitSource, OutputStream outputStream)
-		throws TarTransferException {
+		throws TarRetrieveException, TarTransferException {
 
 		transferCommit(
 			task,
@@ -86,14 +89,22 @@ public class ArchiveReadAccess {
 	}
 
 	private void transferCommit(@Nullable Task task, String repoDirName, CommitHash commitHash,
-		OutputStream outputStream) throws TarTransferException {
+		OutputStream outputStream) throws TarRetrieveException, TarTransferException {
 
 		Path archivePath = getArchivePath(repoDirName, commitHash);
+
 		try {
-			TransferUtils.cloneRepo(repoStorage, repoDirName, archivePath, commitHash);
-			TransferUtils.tarRepo(archivePath, outputStream);
-		} catch (CloneException | IOException | RepositoryAcquisitionException e) {
-			throw new TarTransferException(e, task);
+			try {
+				TransferUtils.cloneRepo(repoStorage, repoDirName, archivePath, commitHash);
+			} catch (RepositoryAcquisitionException | CloneException | IOException e) {
+				throw new TarRetrieveException(e, task);
+			}
+
+			try {
+				TransferUtils.tarRepo(archivePath, outputStream);
+			} catch (IOException e) {
+				throw new TarTransferException(e, task);
+			}
 		} finally {
 			try {
 				FileHelper.deleteDirectoryOrFile(archivePath);
@@ -138,14 +149,17 @@ public class ArchiveReadAccess {
 	 * Transfer the bench repo's current state as a tar file to the output stream.
 	 *
 	 * @param outputStream the tar file is transferred to this stream
-	 * @throws TarTransferException if the tar file could not be retrieved or transferred
+	 * @throws TarRetrieveException if the tar file could not be retrieved
+	 * @throws TarTransferException if the tar file could not be transferred
 	 */
-	public void transferBenchRepo(OutputStream outputStream) throws TarTransferException {
+	public void transferBenchRepo(OutputStream outputStream)
+		throws TarRetrieveException, TarTransferException {
+
 		Optional<CommitHash> hash = getBenchRepoCommitHash();
 		if (hash.isPresent()) {
 			transferCommit(null, BENCH_REPO_DIR_NAME, hash.get(), outputStream);
 		} else {
-			throw new TarTransferException();
+			throw new TarRetrieveException();
 		}
 	}
 }

@@ -5,6 +5,7 @@ import static java.util.stream.Collectors.toList;
 import de.aaaaaaah.velcom.backend.access.BenchmarkWriteAccess;
 import de.aaaaaaah.velcom.backend.access.entities.benchmark.NewRun;
 import de.aaaaaaah.velcom.backend.newaccess.archiveaccess.ArchiveReadAccess;
+import de.aaaaaaah.velcom.backend.newaccess.archiveaccess.exceptions.TarRetrieveException;
 import de.aaaaaaah.velcom.backend.newaccess.archiveaccess.exceptions.TarTransferException;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
@@ -186,16 +187,16 @@ public class Queue {
 	/**
 	 * Transfers a task to the supplied {@link OutputStream}.
 	 *
-	 * <p> Note that the provided output stream will be closed after the transfer operation is
-	 * done.
+	 * <p> Note that the provided output stream will be closed after the transfer operation is done.
 	 *
 	 * @param taskId the id of the task to be transferred
 	 * @param output the output to transfer the task to
 	 * @throws NoSuchTaskException if no task with the given id exists
-	 * @throws TarTransferException if the tar file could not be retrieved or transferred
+	 * @throws TarRetrieveException if the tar file could not be retrieved
+	 * @throws TarTransferException if the tar file could not be transferred
 	 */
 	public void transferTask(TaskId taskId, OutputStream output)
-		throws NoSuchTaskException, TarTransferException {
+		throws NoSuchTaskException, TarRetrieveException, TarTransferException {
 
 		Task task = taskAccess.getTask(taskId);
 		archiveAccess.transferTask(task, output);
