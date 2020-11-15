@@ -123,7 +123,7 @@ public class ServerMain extends Application<GlobalConfig> {
 		AvailableDimensionsCache availableDimensionsCache = new AvailableDimensionsCache();
 
 		// Access layer
-		TaskWriteAccess taskAccess = new TaskWriteAccess(databaseStorage);
+		TaskWriteAccess taskAccess = new TaskWriteAccess(databaseStorage, tarFileStorage);
 		CommitReadAccess commitAccess = new CommitReadAccess(databaseStorage);
 		DimensionReadAccess dimensionAccess = new DimensionReadAccess(databaseStorage);
 		RepoWriteAccess repoAccess = new RepoWriteAccess(databaseStorage, availableDimensionsCache);
@@ -143,6 +143,7 @@ public class ServerMain extends Application<GlobalConfig> {
 		);
 
 		taskAccess.resetAllTaskStatuses();
+		taskAccess.cleanUpTarFiles();
 
 		// Data layer
 		Queue queue = new Queue(taskAccess, archiveAccess, benchmarkAccess);

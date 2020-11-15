@@ -67,7 +67,7 @@ public class TarFileStorage {
 	 * @param identifier the identifier (must be a valid file name)
 	 * @throws IOException if some file operation went wrong
 	 */
-	public void deleteTarFile(String identifier) throws IOException {
+	public void removeTarFile(String identifier) throws IOException {
 		FileHelper.deleteDirectoryOrFile(getPathOfIdentifier(identifier));
 	}
 
@@ -90,7 +90,7 @@ public class TarFileStorage {
 	 * Remove all files with unknown identifiers.
 	 *
 	 * @param knownIdentifiers a set of all known identifiers
-	 * @throws IOException if something went wrong while listing or removing the files
+	 * @throws IOException if some file operation went wrong
 	 */
 	public void removeUnknownFiles(Set<String> knownIdentifiers) throws IOException {
 		LOGGER.debug("Removing files with unknown identifiers");
@@ -103,6 +103,22 @@ public class TarFileStorage {
 				LOGGER.info("Removing unknown file {}", child);
 				FileHelper.deleteDirectoryOrFile(child);
 			}
+		}
+	}
+
+	/**
+	 * Remove all currently stored tar files.
+	 *
+	 * @throws IOException if some file operation went wrong
+	 */
+	public void removeAllFiles() throws IOException {
+		LOGGER.debug("Removing all files");
+
+		List<Path> children = Files.list(rootDir).collect(Collectors.toList());
+		for (Path child : children) {
+			String identifier = getIdentifierOfPath(child);
+			LOGGER.info("Removing file {}", child);
+			FileHelper.deleteDirectoryOrFile(child);
 		}
 	}
 }

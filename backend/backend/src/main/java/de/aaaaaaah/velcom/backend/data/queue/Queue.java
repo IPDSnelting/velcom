@@ -156,7 +156,7 @@ public class Queue {
 	public Optional<Task> addCommit(String author, RepoId repoId, CommitHash hash,
 		TaskPriority priority) {
 
-		return taskAccess.insertCommit(author, repoId, hash, priority);
+		return taskAccess.insertCommit(author, priority, repoId, hash);
 	}
 
 	/**
@@ -171,7 +171,7 @@ public class Queue {
 	public void addCommits(String author, RepoId repoId, List<CommitHash> hashes,
 		TaskPriority priority) {
 
-		taskAccess.insertCommits(author, repoId, hashes, priority);
+		taskAccess.insertCommits(author, priority, repoId, hashes);
 	}
 
 	/**

@@ -4,14 +4,19 @@ import static org.jooq.codegen.db.tables.Task.TASK;
 import static org.jooq.impl.DSL.not;
 
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.CommitSource;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.TarSource;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.Task;
 import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.TaskId;
 import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.TaskPriority;
+import de.aaaaaaah.velcom.backend.storage.db.DBReadAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DBWriteAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
+import de.aaaaaaah.velcom.backend.storage.tar.TarFileStorage;
 import de.aaaaaaah.velcom.shared.util.Either;
+import java.io.IOException;
+import java.io.InputStream;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
@@ -19,12 +24,17 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import org.jooq.codegen.db.tables.records.TaskRecord;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TaskWriteAccess extends TaskReadAccess {
 
-	public TaskWriteAccess(DatabaseStorage databaseStorage) {
-		super(databaseStorage);
+	private final static Logger LOGGER = LoggerFactory.getLogger(TaskReadAccess.class);
+
+	public TaskWriteAccess(DatabaseStorage databaseStorage, TarFileStorage tarFileStorage) {
+		super(databaseStorage, tarFileStorage);
 	}
 
 	private static TaskRecord taskToTaskRecord(Task task) {
@@ -46,13 +56,13 @@ public class TaskWriteAccess extends TaskReadAccess {
 	 * task.
 	 *
 	 * @param author the new task's author
+	 * @param priority the new task's priority
 	 * @param repoId the commit's repo id
 	 * @param hash the commit's hash
-	 * @param priority the new task's priority
 	 * @return the newly created task if no task corresponding to this commit already existed
 	 */
-	public Optional<Task> insertCommit(String author, RepoId repoId, CommitHash hash,
-		TaskPriority priority) {
+	public Optional<Task> insertCommit(String author, TaskPriority priority, RepoId repoId,
+		CommitHash hash) {
 
 		return databaseStorage.acquireWriteTransaction(db -> {
 			boolean taskAlreadyExists = db.selectFrom(TASK)
@@ -75,12 +85,12 @@ public class TaskWriteAccess extends TaskReadAccess {
 	 * Insert all commits for which no corresponding task exists yet.
 	 *
 	 * @param author the new task's author
+	 * @param priority the new task's priority
 	 * @param repoId the commit's repo id
 	 * @param hashes the commit hashes
-	 * @param priority the new task's priority
 	 */
-	public void insertCommits(String author, RepoId repoId, Collection<CommitHash> hashes,
-		TaskPriority priority) {
+	public void insertCommits(String author, TaskPriority priority, RepoId repoId,
+		Collection<CommitHash> hashes) {
 
 		Set<String> hashesAsStrings = hashes.stream()
 			.map(CommitHash::getHash)
@@ -101,6 +111,35 @@ public class TaskWriteAccess extends TaskReadAccess {
 
 			db.dsl().batchInsert(tasksToInsert).execute();
 		});
+	}
+
+	/**
+	 * Insert a tar file as a new task.
+	 *
+	 * @param author the new task's author
+	 * @param priority the new task's priority
+	 * @param description the tar file's description
+	 * @param repoId the associated repo id, if any
+	 * @param inputStream the tar file contents
+	 */
+	public void insertTar(String author, TaskPriority priority, String description,
+		@Nullable RepoId repoId, InputStream inputStream) {
+
+		TarSource source = new TarSource(description, repoId);
+		Task task = new Task(author, priority, Either.ofRight(source));
+
+		try {
+			tarFileStorage.storeTarFile(task.getIdAsString(), inputStream);
+		} catch (IOException ignore) {
+			return; // Task already exists
+		}
+
+		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
+			TaskRecord record = taskToTaskRecord(task);
+			// I think this shouldn't throw an exception if it couldn't insert the task and just silently
+			// fail (failure signalled via return value), but I'm not entirely sure.
+			db.dsl().batchInsert(record).execute();
+		}
 	}
 
 	/**
@@ -164,6 +203,15 @@ public class TaskWriteAccess extends TaskReadAccess {
 				.where(TASK.ID.in(taskIds))
 				.execute();
 		}
+
+		for (TaskId task : tasks) {
+			try {
+				tarFileStorage.removeTarFile(task.getIdAsString());
+			} catch (IOException ignore) {
+				LOGGER.warn("Failed to remove tar file for {}", task);
+				// Not too bad since it will be cleaned up sooner or later anyways.
+			}
+		}
 	}
 
 	/**
@@ -172,6 +220,13 @@ public class TaskWriteAccess extends TaskReadAccess {
 	public void deleteAllTasks() {
 		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
 			db.deleteFrom(TASK).execute();
+		}
+
+		try {
+			tarFileStorage.removeAllFiles();
+		} catch (IOException ignore) {
+			LOGGER.warn("Failed to remove all tar files");
+			// Not too bad since they will be cleaned up sooner or later anyways.
 		}
 	}
 
@@ -217,5 +272,23 @@ public class TaskWriteAccess extends TaskReadAccess {
 				.set(TASK.IN_PROCESS, false)
 				.execute();
 		}
+	}
+
+	/**
+	 * Remove all tar files that don't belong to a tar currently in the queue.
+	 *
+	 * @throws IOException if something went wrong while deleting the tar files
+	 */
+	public void cleanUpTarFiles() throws IOException {
+		Set<String> tarTaskIds;
+		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
+			tarTaskIds = db.selectFrom(TASK)
+				.where(TASK.COMMIT_HASH.isNull())
+				.stream()
+				.map(TaskRecord::getId)
+				.collect(Collectors.toSet());
+		}
+
+		tarFileStorage.removeUnknownFiles(tarTaskIds);
 	}
 }
