@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   title: public api
   version: '2.0'
-  description: "Velcom's public api. This api is also used by the frontend."
+  description: Velcom's public api. This api is also used by the frontend.
   contact:
     name: velcom
     url: 'https://github.com/IPDSnelting/velcom'
@@ -69,7 +69,7 @@ paths:
                       properties:
                         name:
                           type: string
-                          description: "The runner's unique name"
+                          description: The runner's unique name
                         info:
                           type: string
                           description: Additional information sent by the runner
@@ -561,7 +561,7 @@ paths:
         '400':
           description: 'The `start_time`, `end_time`, `duration` and/or `dimensions` parameters are invalid'
         '404':
-          description: "Repo doesn't exist"
+          description: Repo doesn't exist
       operationId: get-graph-detail-repoid
       description: |-
         The `dimensions` query parameter consists of multiple sections separated by double colons (`::`).
@@ -703,7 +703,7 @@ paths:
         '400':
           description: 'The `start_time`, `end_time`, `duration` and/or `dimension` parameters are invalid'
         '404':
-          description: "The dimension doesn't exist"
+          description: The dimension doesn't exist
       operationId: get-graph-comparison
       parameters:
         - schema:
@@ -818,7 +818,7 @@ components:
     RunId:
       type: string
       title: RunId
-      description: "A run's id (also used for tasks)"
+      description: A run's id (also used for tasks)
       format: uuid
     Time:
       type: integer
@@ -951,10 +951,10 @@ components:
           $ref: '#/components/schemas/RunId'
         author:
           type: string
-          description: "Who (or what) this run's task was created by"
+          description: Who (or what) this run's task was created by
         runner_name:
           type: string
-          description: "The runner's unique name"
+          description: The runner's unique name
         runner_info:
           type: string
           description: Additional information sent by the runner (at the time the run was executed)
@@ -1072,14 +1072,14 @@ components:
           $ref: '#/components/schemas/RemoteUrl'
         untracked_branches:
           type: array
-          description: "All of the repo's untracked branches"
+          description: All of the repo's untracked branches
           uniqueItems: true
           items:
             type: string
             minLength: 1
         tracked_branches:
           type: array
-          description: "All of the repo's tracked branches"
+          description: All of the repo's tracked branches
           uniqueItems: true
           items:
             type: string
@@ -1111,13 +1111,13 @@ components:
       properties:
         benchmark:
           type: string
-          pattern: "^\\w+$"
+          pattern: ^\w+$
           minLength: 1
           example: parser
         metric:
           type: string
           minLength: 1
-          pattern: "^\\w+$"
+          pattern: ^\w+$
           example: time
         unit:
           type: string
