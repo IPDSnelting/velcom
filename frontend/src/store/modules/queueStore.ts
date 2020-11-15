@@ -1,12 +1,12 @@
-import { createModule, mutation, action } from 'vuex-class-component'
+import { action, createModule, mutation } from 'vuex-class-component'
 import {
-  Worker,
-  Task,
-  RepoId,
-  CommitHash,
-  TaskId,
   CommitDescription,
-  StreamedRunnerOutput
+  CommitHash,
+  RepoId,
+  StreamedRunnerOutput,
+  Task,
+  TaskId,
+  Worker
 } from '@/store/types'
 import axios from 'axios'
 import {
@@ -19,6 +19,12 @@ const VxModule = createModule({
   namespaced: 'queueModule',
   strict: false
 })
+
+export type TaskInfo = {
+  task: Task
+  position: number
+  runningSince: Date | null
+}
 
 export class QueueStore extends VxModule {
   private _openTasks: Task[] = []
@@ -122,6 +128,32 @@ export class QueueStore extends VxModule {
   async dispatchDeleteAllOpenTasks(): Promise<void> {
     await axios.delete(`/queue/`)
     await this.fetchQueue()
+  }
+
+  /**
+   * Returns up-to-date information about a given task.
+   *
+   * @return the task and its queue position (zero indexed)
+   */
+  @action
+  async fetchTaskInfo(taskId: TaskId): Promise<TaskInfo | null> {
+    let response
+    try {
+      response = await axios.get(`/queue/task/${taskId}`)
+
+      return {
+        task: taskFromJson(response.data.task),
+        position: response.data.position,
+        runningSince: response.data.running_since
+          ? new Date(response.data.running_since * 1000)
+          : null
+      }
+    } catch (e) {
+      if (e.response.status === 404) {
+        return null
+      }
+      throw e
+    }
   }
 
   /**

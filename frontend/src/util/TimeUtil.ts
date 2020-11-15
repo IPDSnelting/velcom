@@ -28,6 +28,23 @@ export function formatDurationHuman(start: Date, end: Date): string {
   return result
 }
 
+/**
+ * Formats a duration into short string.
+ *
+ * @export
+ * @param {Date} start the start date
+ * @param {Date} end the end date
+ */
+export function formatDurationShort(start: Date, end: Date): string {
+  const [hours, minutes, seconds] = durationToParts(start, end)
+
+  const hoursString = leftZeroPad(2, hours)
+  const minutesString = leftZeroPad(2, minutes)
+  const secondsString = leftZeroPad(2, seconds)
+
+  return `${hoursString}:${minutesString}:${secondsString}`
+}
+
 function durationToParts(start: Date, end: Date): [number, number, number] {
   const differenceMillis = Math.abs(end.getTime() - start.getTime())
   let remainingDifferenceSeconds = differenceMillis / 1000
