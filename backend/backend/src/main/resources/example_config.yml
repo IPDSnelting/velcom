@@ -12,9 +12,6 @@ server:
         filterFactories:
           - type: metrics-endpoint
 
-# The JDBC (Java database connectivity) url used to connect to the database
-jdbcUrl: "jdbc:sqlite:file:data/data.db"
-
 # The interval between listener updates. (in seconds)
 pollInterval: 120
 
@@ -46,17 +43,9 @@ significanceRelativeThreshold: 0.05 # An increase or decrease by 5%
 significanceStddevThreshold: 2
 significanceMinStddevAmount: 25
 
-# The path to the directory where all local repositories will be placed in.
-# Can either be relative to the working directory or absolute.
-repoDir: "data/repos"
-
 # The hashing algorithm's memory usage in KiB
 hashMemory: 5120
 
 # How many iterations the hashing algorithm should make. See the readme for more details on how to
 # set this value.
 hashIterations: 50
-
-# the path to the directory where archives are placed in
-# Can either be relative to the working directory or absolute.
-archivesRootDir: "data/archives/"

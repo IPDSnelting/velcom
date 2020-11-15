@@ -13,9 +13,6 @@ import org.hibernate.validator.constraints.NotEmpty;
  */
 public class GlobalConfig extends Configuration {
 
-	@NotEmpty
-	private String jdbcUrl;
-
 	@NotNull
 	private long pollInterval;
 
@@ -41,9 +38,6 @@ public class GlobalConfig extends Configuration {
 	@Min(2)
 	private int significanceMinStddevAmount;
 
-	@NotEmpty
-	private String repoDir;
-
 	@NotNull
 	@Min(1)
 	private int hashMemory;
@@ -52,22 +46,8 @@ public class GlobalConfig extends Configuration {
 	@Min(1)
 	private int hashIterations;
 
-	@NotEmpty
-	private String archivesRootDir;
-
 	public GlobalConfig() {
 		RunnerAwareServerFactory.getInstance().setConfig(this);
-	}
-
-	/**
-	 * @return the JDBC (Java database connectivity) url used to connect to the database
-	 */
-	public String getJdbcUrl() {
-		return jdbcUrl;
-	}
-
-	public void setJdbcUrl(String jdbcUrl) {
-		this.jdbcUrl = jdbcUrl;
 	}
 
 	/**
@@ -176,17 +156,6 @@ public class GlobalConfig extends Configuration {
 		this.significanceMinStddevAmount = significanceMinStddevAmount;
 	}
 
-	/**
-	 * @return the path to the directory where all local repositories will be placed in
-	 */
-	public String getRepoDir() {
-		return repoDir;
-	}
-
-	public void setRepoDir(String repoDir) {
-		this.repoDir = repoDir;
-	}
-
 	public int getHashMemory() {
 		return hashMemory;
 	}
@@ -201,17 +170,6 @@ public class GlobalConfig extends Configuration {
 
 	public void setHashIterations(int hashIterations) {
 		this.hashIterations = hashIterations;
-	}
-
-	/**
-	 * @return the path to the directory where archives are placed in
-	 */
-	public String getArchivesRootDir() {
-		return archivesRootDir;
-	}
-
-	public void setArchivesRootDir(String archivesRootDir) {
-		this.archivesRootDir = archivesRootDir;
 	}
 
 	@Override

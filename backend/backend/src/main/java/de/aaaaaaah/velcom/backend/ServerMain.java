@@ -42,6 +42,7 @@ import de.aaaaaaah.velcom.backend.restapi.exception.NoSuchRunExceptionMapper;
 import de.aaaaaaah.velcom.backend.restapi.exception.NoSuchTaskExceptionMapper;
 import de.aaaaaaah.velcom.backend.restapi.exception.TaskAlreadyExistsExceptionMapper;
 import de.aaaaaaah.velcom.backend.runner.Dispatcher;
+import de.aaaaaaah.velcom.backend.storage.ManagedDirs;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import de.aaaaaaah.velcom.backend.storage.repo.RepoStorage;
 import de.aaaaaaah.velcom.shared.GitProperties;
@@ -68,7 +69,6 @@ import io.micrometer.core.instrument.config.MeterFilterReply;
 import io.micrometer.prometheus.PrometheusConfig;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.stream.Stream;
 import javax.servlet.DispatcherType;
@@ -112,8 +112,10 @@ public class ServerMain extends Application<GlobalConfig> {
 		configureMetrics(environment);
 
 		// Storage layer
-		RepoStorage repoStorage = new RepoStorage(configuration.getRepoDir());
-		DatabaseStorage databaseStorage = new DatabaseStorage(configuration);
+		ManagedDirs managedDirs = new ManagedDirs();
+		managedDirs.createAndCleanDirs();
+		RepoStorage repoStorage = new RepoStorage(managedDirs.getReposDir());
+		DatabaseStorage databaseStorage = new DatabaseStorage(managedDirs.getJdbcUrl());
 
 		// Caches
 		AvailableDimensionsCache availableDimensionsCache = new AvailableDimensionsCache();
@@ -130,7 +132,7 @@ public class ServerMain extends Application<GlobalConfig> {
 			configuration.getHashIterations()
 		);
 		ArchiveAccess archiveAccess = new ArchiveAccess(
-			Path.of(configuration.getArchivesRootDir()),
+			managedDirs.getArchivesDir(),
 			new RemoteUrl(configuration.getBenchmarkRepoRemoteUrl()),
 			repoStorage
 		);
