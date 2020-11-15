@@ -10,7 +10,6 @@ import de.aaaaaaah.velcom.shared.util.FileHelper;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -27,7 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A repo storage is able to store git repositories on the file system.
+ * A repo storage can clone and store git repositories and allows inspecting them via jgit.
  */
 public class RepoStorage {
 
@@ -37,27 +36,10 @@ public class RepoStorage {
 	private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
 	/**
-	 * Initializes a new repo storage with {@code "data/repos"} as root directory.
-	 *
-	 * @see #RepoStorage(Path)
-	 */
-	public RepoStorage() throws IOException {
-		this(Paths.get("data/repos"));
-	}
-
-	/**
-	 * Initializes a new repo storage.
-	 *
-	 * @param rootDirStr the directory where all repositories will be stored in
-	 */
-	public RepoStorage(String rootDirStr) throws IOException {
-		this(Paths.get(rootDirStr));
-	}
-
-	/**
-	 * Initializes a new repo storage.
+	 * Initialize a new repo storage.
 	 *
 	 * @param rootDir the directory where all repositories will be stored in
+	 * @throws IOException if the directory could not be created
 	 */
 	public RepoStorage(Path rootDir) throws IOException {
 		this.rootDir = rootDir;

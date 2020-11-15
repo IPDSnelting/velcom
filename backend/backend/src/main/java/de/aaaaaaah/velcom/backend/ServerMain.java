@@ -45,6 +45,7 @@ import de.aaaaaaah.velcom.backend.runner.Dispatcher;
 import de.aaaaaaah.velcom.backend.storage.ManagedDirs;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import de.aaaaaaah.velcom.backend.storage.repo.RepoStorage;
+import de.aaaaaaah.velcom.backend.storage.tar.TarFileStorage;
 import de.aaaaaaah.velcom.shared.GitProperties;
 import io.dropwizard.Application;
 import io.dropwizard.auth.AuthDynamicFeature;
@@ -114,8 +115,9 @@ public class ServerMain extends Application<GlobalConfig> {
 		// Storage layer
 		ManagedDirs managedDirs = new ManagedDirs();
 		managedDirs.createAndCleanDirs();
-		RepoStorage repoStorage = new RepoStorage(managedDirs.getReposDir());
 		DatabaseStorage databaseStorage = new DatabaseStorage(managedDirs.getJdbcUrl());
+		RepoStorage repoStorage = new RepoStorage(managedDirs.getReposDir());
+		TarFileStorage tarFileStorage = new TarFileStorage(managedDirs.getTarsDir());
 
 		// Caches
 		AvailableDimensionsCache availableDimensionsCache = new AvailableDimensionsCache();

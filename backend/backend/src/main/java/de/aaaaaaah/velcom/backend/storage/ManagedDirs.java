@@ -109,12 +109,16 @@ public class ManagedDirs {
 		}
 	}
 
-	public Path getReposDir() {
-		return getCacheDir().resolve("repos/");
-	}
-
 	public String getJdbcUrl() {
 		return "jdbc:sqlite:file:" + getDataDir().resolve("data.db").toAbsolutePath();
+	}
+
+	public Path getTarsDir() {
+		return getDataDir().resolve("tars/");
+	}
+
+	public Path getReposDir() {
+		return getCacheDir().resolve("repos/");
 	}
 
 	public Path getArchivesDir() {
