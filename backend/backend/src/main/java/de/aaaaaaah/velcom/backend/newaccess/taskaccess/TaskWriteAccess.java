@@ -121,8 +121,9 @@ public class TaskWriteAccess extends TaskReadAccess {
 	 * @param description the tar file's description
 	 * @param repoId the associated repo id, if any
 	 * @param inputStream the tar file contents
+	 * @return the newly created task (if a task was created)
 	 */
-	public void insertTar(String author, TaskPriority priority, String description,
+	public Optional<Task> insertTar(String author, TaskPriority priority, String description,
 		@Nullable RepoId repoId, InputStream inputStream) {
 
 		TarSource source = new TarSource(description, repoId);
@@ -131,7 +132,7 @@ public class TaskWriteAccess extends TaskReadAccess {
 		try {
 			tarFileStorage.storeTarFile(task.getIdAsString(), inputStream);
 		} catch (IOException ignore) {
-			return; // Task already exists
+			return Optional.empty(); // We can't store tar files for some reason?
 		}
 
 		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
@@ -140,6 +141,8 @@ public class TaskWriteAccess extends TaskReadAccess {
 			// fail (failure signalled via return value), but I'm not entirely sure.
 			db.dsl().batchInsert(record).execute();
 		}
+
+		return Optional.of(task);
 	}
 
 	/**
