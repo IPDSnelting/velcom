@@ -62,7 +62,7 @@ public class ArchiveReadAccess {
 
 	private Path getArchivePath(String repoDirName, CommitHash commitHash) {
 		String hashAsString = commitHash.getHash();
-		String randomPart = Integer.toString(random.nextInt());
+		String randomPart = Integer.toString(random.nextInt(1000000));
 		return rootDir.resolve(repoDirName + "_" + hashAsString + "_" + randomPart);
 	}
 
