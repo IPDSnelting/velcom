@@ -6,7 +6,7 @@ import de.aaaaaaah.velcom.backend.access.entities.RunBuilder;
 import de.aaaaaaah.velcom.backend.access.entities.Unit;
 import de.aaaaaaah.velcom.backend.access.entities.benchmark.NewRun;
 import de.aaaaaaah.velcom.backend.data.benchrepo.BenchRepo;
-import de.aaaaaaah.velcom.backend.newaccess.archiveaccess.exceptions.TarRetrieveException;
+import de.aaaaaaah.velcom.backend.newaccess.archiveaccess.exceptions.TarTransferException;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.RunErrorType;
 import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.Task;
 import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.TaskId;
@@ -365,7 +365,7 @@ public class TeleRunner {
 	private void handleBinaryTransfer(Task task, TransferConsumer consumer) {
 		try (OutputStream outputStream = connection.createBinaryOutputStream()) {
 			consumer.accept(outputStream);
-		} catch (TarRetrieveException e) {
+		} catch (TarTransferException e) {
 			LOGGER.info(
 				"Failed to transfer repo to runner " + getRunnerName() + ": Archiving failed", e
 			);
@@ -380,7 +380,7 @@ public class TeleRunner {
 		}
 	}
 
-	private NewRun prepareTransferFailed(Task task, Instant start, TarRetrieveException exception) {
+	private NewRun prepareTransferFailed(Task task, Instant start, TarTransferException exception) {
 		return RunBuilder.failed(
 			task,
 			getRunnerName(),
@@ -395,7 +395,7 @@ public class TeleRunner {
 	private interface TransferConsumer {
 
 		void accept(OutputStream outputStream)
-			throws TarRetrieveException, IOException, NoSuchTaskException;
+			throws TarTransferException, IOException, NoSuchTaskException;
 	}
 
 }

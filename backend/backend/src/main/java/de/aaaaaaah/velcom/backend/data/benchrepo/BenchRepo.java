@@ -1,7 +1,7 @@
 package de.aaaaaaah.velcom.backend.data.benchrepo;
 
 import de.aaaaaaah.velcom.backend.newaccess.archiveaccess.ArchiveReadAccess;
-import de.aaaaaaah.velcom.backend.newaccess.archiveaccess.exceptions.TarRetrieveException;
+import de.aaaaaaah.velcom.backend.newaccess.archiveaccess.exceptions.TarTransferException;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
 import java.io.OutputStream;
 import java.util.Objects;
@@ -45,9 +45,9 @@ public class BenchRepo {
 	 * <p> Note that the provided output stream will be closed after the transfer operation is done.
 	 *
 	 * @param outputStream the output stream
-	 * @throws TarRetrieveException if the tar file could not be retrieved
+	 * @throws TarTransferException if the tar file could not be retrieved
 	 */
-	public void transfer(OutputStream outputStream) throws TarRetrieveException {
+	public void transfer(OutputStream outputStream) throws TarTransferException {
 		archiveAccess.transferBenchRepo(Objects.requireNonNull(outputStream));
 	}
 }

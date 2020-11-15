@@ -4,7 +4,10 @@ import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.Task;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
-public class TarRetrieveException extends RuntimeException {
+/**
+ * Thrown when a tar file could not be retrieved and transferred.
+ */
+public class TarTransferException extends RuntimeException {
 
 	@Nullable
 	private final Task task;
@@ -17,17 +20,17 @@ public class TarRetrieveException extends RuntimeException {
 		}
 	}
 
-	public TarRetrieveException(Throwable t, @Nullable Task task) {
+	public TarTransferException(Throwable t, @Nullable Task task) {
 		super(makeMessage(task), t);
 		this.task = task;
 	}
 
-	public TarRetrieveException(@Nullable Task task) {
+	public TarTransferException(@Nullable Task task) {
 		super(makeMessage(task));
 		this.task = task;
 	}
 
-	public TarRetrieveException() {
+	public TarTransferException() {
 		this(null);
 	}
 
