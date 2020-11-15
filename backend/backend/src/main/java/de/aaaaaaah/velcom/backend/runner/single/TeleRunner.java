@@ -9,6 +9,7 @@ import de.aaaaaaah.velcom.backend.data.benchrepo.BenchRepo;
 import de.aaaaaaah.velcom.backend.newaccess.archiveaccess.exceptions.TarRetrieveException;
 import de.aaaaaaah.velcom.backend.newaccess.archiveaccess.exceptions.TarTransferException;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.RunErrorType;
+import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.Task;
 import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.TaskId;
 import de.aaaaaaah.velcom.backend.newaccess.taskaccess.exceptions.NoSuchTaskException;
@@ -319,6 +320,17 @@ public class TeleRunner {
 
 	private void prepareAndSendWork() {
 		LOGGER.debug("Runner {} asks for work", getRunnerName());
+
+		Optional<String> benchRepoHash = benchRepo.getCurrentHash().map(CommitHash::getHash);
+
+		if (benchRepoHash.isEmpty()) {
+			LOGGER.info(
+				"Benchmark repo has no hash (yet?), dispatching temporarily stopped for {}.",
+				getRunnerName()
+			);
+			return;
+		}
+
 		Optional<Task> workOptional = Optional.ofNullable(myCurrentTask.get())
 			.or(() -> dispatcher.getWork(this));
 
@@ -333,10 +345,8 @@ public class TeleRunner {
 		myCurrentTask.set(task);
 		workingSince.set(Instant.now());
 
-		// TODO: 15.11.20 Use something better than "get"?
-		String benchRepoHash = benchRepo.getCurrentHash().get().getHash();
 		boolean benchRepoUpToDate = runnerInformation.get().getBenchHash()
-			.map(it -> it.equals(benchRepoHash))
+			.map(it -> it.equals(benchRepoHash.get()))
 			.orElse(false);
 
 		LOGGER.info("Sending {} to runner {}", task.getId().getId(), getRunnerName());
@@ -344,14 +354,12 @@ public class TeleRunner {
 		connection.send(
 			new RequestRunReply(
 				!benchRepoUpToDate,
-				benchRepoUpToDate ? null : benchRepoHash,
+				benchRepoUpToDate ? null : benchRepoHash.get(),
 				true,
 				task.getId().getId()
 			)
 				.asPacket(serializer)
 		);
-
-		// TODO: 15.11.20 Handle transfer exceptions?
 
 		if (!benchRepoUpToDate) {
 			handleBinaryTransfer(task, benchRepo::transfer);
@@ -371,7 +379,7 @@ public class TeleRunner {
 				"Failed to transfer repo to runner " + getRunnerName() + ": Archiving failed", e
 			);
 			// This task is corrupted, we can not benchmark it.
-			dispatcher.completeTask(prepareTransferFailed(task, Instant.now(), e));
+			dispatcher.completeTask(tarRetrieveFailed(task, Instant.now(), e));
 		} catch (TarTransferException | IOException | NoSuchTaskException e) {
 			LOGGER.info(
 				"Failed to transfer repo to runner " + getRunnerName() + ": Sending failed", e
@@ -381,7 +389,7 @@ public class TeleRunner {
 		}
 	}
 
-	private NewRun prepareTransferFailed(Task task, Instant start, TarRetrieveException exception) {
+	private NewRun tarRetrieveFailed(Task task, Instant start, TarRetrieveException exception) {
 		return RunBuilder.failed(
 			task,
 			getRunnerName(),
