@@ -26,7 +26,7 @@ public class RepoId implements Comparable<RepoId> {
 	}
 
 	public String getDirectoryName() {
-		return getId().toString();
+		return getIdAsString();
 	}
 
 	public UUID getId() {

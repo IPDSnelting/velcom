@@ -92,7 +92,7 @@ public class TransferUtils {
 	 * Creates a tar of the repository at the specified {@code repoDir} and simultaneously writes that
 	 * tar into the given output stream.
 	 *
-	 * <p>Note that this method closes the provided output stream after it has finished.</p>
+	 * <p> Note that this method closes the provided output stream after it has finished.
 	 *
 	 * @param repoDir the path to the repository
 	 * @param out where the tar should be written to
