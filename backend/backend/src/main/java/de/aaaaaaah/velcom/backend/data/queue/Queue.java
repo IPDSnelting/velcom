@@ -14,6 +14,7 @@ import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.Task;
 import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.TaskId;
 import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.TaskPriority;
 import de.aaaaaaah.velcom.backend.newaccess.taskaccess.exceptions.NoSuchTaskException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -21,6 +22,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 
 /**
  * The queue keeps track of all current tasks and their priority and status. It knows which tasks
@@ -172,6 +174,22 @@ public class Queue {
 		TaskPriority priority) {
 
 		taskAccess.insertCommits(author, priority, repoId, hashes);
+	}
+
+	/**
+	 * Add a tar file to the queue.
+	 *
+	 * @param author the new task's author
+	 * @param priority the new task's priority
+	 * @param repoId the id of the repo the tar file should to (or null)
+	 * @param description the tar file's description
+	 * @param inputStream the tar file's contents
+	 * @return the new task or empty if no task was created
+	 */
+	public Optional<Task> addTar(String author, TaskPriority priority, @Nullable RepoId repoId,
+		String description, InputStream inputStream) {
+
+		return taskAccess.insertTar(author, priority, description, repoId, inputStream);
 	}
 
 	/**

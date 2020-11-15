@@ -50,6 +50,7 @@ import io.dropwizard.Application;
 import io.dropwizard.auth.AuthDynamicFeature;
 import io.dropwizard.auth.AuthValueFactoryProvider;
 import io.dropwizard.auth.basic.BasicCredentialAuthFilter;
+import io.dropwizard.forms.MultiPartBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import io.micrometer.core.instrument.Gauge;
@@ -105,6 +106,7 @@ public class ServerMain extends Application<GlobalConfig> {
 	@Override
 	public void initialize(Bootstrap<GlobalConfig> bootstrap) {
 		bootstrap.addCommand(new HashPerformanceTestCommand());
+		bootstrap.addBundle(new MultiPartBundle());
 	}
 
 	@Override
