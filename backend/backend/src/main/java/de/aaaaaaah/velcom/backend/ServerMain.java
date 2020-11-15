@@ -2,7 +2,6 @@ package de.aaaaaaah.velcom.backend;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
-import de.aaaaaaah.velcom.backend.access.ArchiveAccess;
 import de.aaaaaaah.velcom.backend.access.BenchmarkWriteAccess;
 import de.aaaaaaah.velcom.backend.access.TokenWriteAccess;
 import de.aaaaaaah.velcom.backend.access.entities.AuthToken;
@@ -13,11 +12,11 @@ import de.aaaaaaah.velcom.backend.data.repocomparison.TimesliceComparison;
 import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparator;
 import de.aaaaaaah.velcom.backend.data.runcomparison.SignificanceFactors;
 import de.aaaaaaah.velcom.backend.listener.Listener;
+import de.aaaaaaah.velcom.backend.newaccess.archiveaccess.ArchiveReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.caches.AvailableDimensionsCache;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.DimensionReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.RepoWriteAccess;
-import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RemoteUrl;
 import de.aaaaaaah.velcom.backend.newaccess.taskaccess.TaskWriteAccess;
 import de.aaaaaaah.velcom.backend.restapi.authentication.RepoAuthenticator;
 import de.aaaaaaah.velcom.backend.restapi.authentication.RepoUser;
@@ -133,10 +132,11 @@ public class ServerMain extends Application<GlobalConfig> {
 			configuration.getHashMemory(),
 			configuration.getHashIterations()
 		);
-		ArchiveAccess archiveAccess = new ArchiveAccess(
+		ArchiveReadAccess archiveAccess = new ArchiveReadAccess(
 			managedDirs.getArchivesDir(),
-			new RemoteUrl(configuration.getBenchmarkRepoRemoteUrl()),
-			repoStorage
+			repoStorage,
+			tarFileStorage,
+			configuration.getBenchmarkRepoRemoteUrl()
 		);
 		BenchmarkWriteAccess benchmarkAccess = new BenchmarkWriteAccess(
 			databaseStorage, repoAccess, availableDimensionsCache

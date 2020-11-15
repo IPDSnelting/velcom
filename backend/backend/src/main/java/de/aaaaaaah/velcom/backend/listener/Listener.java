@@ -3,7 +3,6 @@ package de.aaaaaaah.velcom.backend.listener;
 import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toSet;
 
-import de.aaaaaaah.velcom.backend.access.exceptions.RepoAccessException;
 import de.aaaaaaah.velcom.backend.data.benchrepo.BenchRepo;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.listener.dbupdate.DbUpdater;
@@ -29,6 +28,7 @@ import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 import org.eclipse.jgit.lib.Repository;
 import org.slf4j.Logger;
@@ -106,8 +106,19 @@ public class Listener {
 		// Update the bench repo
 		LOGGER.debug("Updating bench repo");
 		try {
-			benchRepo.checkForUpdates();
-		} catch (RepoAccessException e) {
+			boolean success = updateRepoVia(
+				"benchrepo",
+				benchRepo.getDirName(),
+				benchRepo.getRemoteUrl(),
+				repository -> {
+					// No need to do anything here
+				}
+			);
+
+			if (!success) {
+				LOGGER.warn("Failed to fetch updates from benchmark repo");
+			}
+		} catch (Exception e) {
 			LOGGER.warn("Failed to fetch updates from benchmark repo", e);
 		}
 
@@ -188,10 +199,21 @@ public class Listener {
 	 * 	remote could not be reached or fetched/cloned from.
 	 */
 	@Timed(histogram = true)
-	public synchronized boolean updateRepo(Repo repo) {
-		LOGGER.info("Updating repo {}", repo);
+	public boolean updateRepo(Repo repo) {
+		return updateRepoVia(
+			repo.getName() + " (" + repo.getIdAsString() + ")",
+			repo.getId().getDirectoryName(),
+			repo.getRemoteUrlAsString(),
+			jgitRepo -> updateDbFromJgitRepo(repo, jgitRepo)
+		);
+	}
 
-		String repoDirName = repo.getId().getDirectoryName();
+	// Abstracts away updating a repo so the same updating logic can be applied to the bench repo.
+	private synchronized boolean updateRepoVia(String repoName, String repoDirName,
+		String targetRemoteUrl, Consumer<Repository> consumer) {
+
+		LOGGER.info("Updating repo {}", repoName);
+
 		boolean reclone = false;
 
 		// Check whether the repo still exists
@@ -200,7 +222,6 @@ public class Listener {
 		// If any of the above checks fail, reclone the repo.
 		try (Repository jgitRepo = repoStorage.acquireRepository(repoDirName)) {
 			// Check if remote url is still correct
-			String targetRemoteUrl = repo.getRemoteUrl().getUrl();
 			String realRemoteUrl = jgitRepo.getConfig().getString("remote", "origin", "url");
 			if (!targetRemoteUrl.equals(realRemoteUrl)) {
 				throw new InvalidRemoteUrlException(realRemoteUrl, targetRemoteUrl);
@@ -210,25 +231,25 @@ public class Listener {
 			GuickCloning.getInstance().updateBareRepo(jgitRepo.getDirectory().toPath());
 
 			// And finally, the reason why we're here
-			updateDbFromJgitRepo(repo, jgitRepo);
+			consumer.accept(jgitRepo);
 
 		} catch (NoSuchRepositoryException e) {
-			LOGGER.info("No repo {} found, cloning...", repo);
+			LOGGER.info("No repo {} found, cloning...", repoName);
 			reclone = true;
 
 		} catch (RepositoryAcquisitionException e) {
-			LOGGER.info("Failed to acquire repo {} (maybe damaged), recloning...", repo, e);
+			LOGGER.info("Failed to acquire repo {} (maybe damaged), recloning...", repoName, e);
 			reclone = true;
 
 		} catch (InvalidRemoteUrlException e) {
 			// TODO: 19.10.20 Maybe just change remote url instead of recloning the entire repo?
 			// Shouldn't matter too much in any case, as this is expected to happen very rarely.
-			LOGGER.info("Repo {} has wrong remote url, recloning...", repo);
+			LOGGER.info("Repo {} has wrong remote url, recloning...", repoName);
 			LOGGER.debug("real url: {}, target url: {}", e.getRealRemoteUrl(), e.getTargetRemoteUrl());
 			reclone = true;
 
 		} catch (CloneException e) {
-			LOGGER.info("Failed to fetch repo {} (maybe damaged), recloning...", repo, e);
+			LOGGER.info("Failed to fetch repo {} (maybe damaged), recloning...", repoName, e);
 			reclone = true;
 		}
 
@@ -236,13 +257,12 @@ public class Listener {
 			// Delete the repo, clone it again and try to update the db from the newly cloned repo.
 			try {
 				repoStorage.deleteRepository(repoDirName);
-				repoStorage.addRepository(repoDirName, repo.getRemoteUrl().getUrl());
-				repoStorage.acquireRepository(repoDirName,
-					jgitRepo -> updateDbFromJgitRepo(repo, jgitRepo));
+				repoStorage.addRepository(repoDirName, targetRemoteUrl);
+				repoStorage.acquireRepository(repoDirName, consumer::accept);
 
 			} catch (Exception e) {
 				LOGGER.warn("Recloning repo {} has failed, possibly because remote url is invalid",
-					repo.getId(), e);
+					repoName, e);
 				return false;
 			}
 		}
