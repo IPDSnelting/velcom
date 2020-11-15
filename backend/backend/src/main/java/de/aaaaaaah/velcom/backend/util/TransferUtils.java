@@ -131,22 +131,6 @@ public class TransferUtils {
 		}
 	}
 
-	/**
-	 * Transfers an existing tar file which is located at the specified {@code tarPath} into the
-	 * provided output stream.
-	 *
-	 * <p>Note that this method closes the provided output stream after it has finished.</p>
-	 *
-	 * @param tarPath where the tar file is located
-	 * @param out the output stream
-	 * @throws IOException if an io error occured
-	 */
-	public static void transferTar(Path tarPath, OutputStream out) throws IOException {
-		try (out; InputStream in = Files.newInputStream(tarPath)) {
-			in.transferTo(out);
-		}
-	}
-
 	private static Consumer<Path> handleError(CheckedConsumer<Path, Exception> checkedConsumer) {
 		return path -> {
 			try {

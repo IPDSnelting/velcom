@@ -51,6 +51,14 @@ public class ArchiveReadAccess {
 		Files.createDirectories(rootDir);
 	}
 
+	/**
+	 * Transfer the tar file for a task to an {@link OutputStream}. Creates the tar file if
+	 * necessary.
+	 *
+	 * @param task the task whose tar file to transfer
+	 * @param outputStream the tar file is transferred to this stream
+	 * @throws TarTransferException if the tar file could not be retrieved or transferred
+	 */
 	public void transferTask(Task task, OutputStream outputStream) throws TarTransferException {
 		if (task.getSource().getLeft().isPresent()) {
 			CommitSource commitSource = task.getSource().getLeft().get();
@@ -113,6 +121,9 @@ public class ArchiveReadAccess {
 		return benchRepoUrl;
 	}
 
+	/**
+	 * @return the bench repo's current hash or {@link Optional#empty()} if it could not be retrieved
+	 */
 	public Optional<CommitHash> getBenchRepoCommitHash() {
 		try (Repository repository = repoStorage.acquireRepository(BENCH_REPO_DIR_NAME)) {
 			return Optional.ofNullable(repository.resolve(Constants.HEAD))
@@ -123,6 +134,12 @@ public class ArchiveReadAccess {
 		}
 	}
 
+	/**
+	 * Transfer the bench repo's current state as a tar file to the output stream.
+	 *
+	 * @param outputStream the tar file is transferred to this stream
+	 * @throws TarTransferException if the tar file could not be retrieved or transferred
+	 */
 	public void transferBenchRepo(OutputStream outputStream) throws TarTransferException {
 		Optional<CommitHash> hash = getBenchRepoCommitHash();
 		if (hash.isPresent()) {
