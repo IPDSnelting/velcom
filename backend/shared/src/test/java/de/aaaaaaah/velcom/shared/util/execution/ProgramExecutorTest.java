@@ -177,7 +177,19 @@ class ProgramExecutorTest {
 		assertThat(processOutput.getCurrentStdOut()).isEqualTo("Hello world\n");
 		assertThat(processOutput.getCurrentStdErr()).isEqualTo("Hello world error\n");
 
-		Thread.sleep(2000);
+		// If the build server is slow, this can take a few seconds. Give it 6 and bail out early if
+		// it is faster
+		for (int i = 0; i < 12; i++) {
+			Thread.sleep(500);
+
+			if (!processOutput.getCurrentStdOut().contains("after")) {
+				continue;
+			}
+			if (!processOutput.getCurrentStdErr().contains("after")) {
+				continue;
+			}
+			break;
+		}
 
 		assertThat(processOutput.getCurrentStdOut()).isEqualTo("Hello world\n after!");
 		assertThat(processOutput.getCurrentStdErr()).isEqualTo("Hello world error\n after error!");
