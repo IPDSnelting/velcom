@@ -26,14 +26,14 @@ public class TokenReadAccess {
 
 	protected final String adminTokenHash;
 
-	public TokenReadAccess(DatabaseStorage databaseStorage, AuthToken adminToken, int hashMemory,
-		int hashIterations) {
+	public TokenReadAccess(DatabaseStorage databaseStorage, AuthToken adminToken, int hashIterations,
+		int hashMemory, int hashParallelism) {
 
 		hashAlgorithms = new HashMap<>();
 
 		// Argon2
 		currentHashAlgorithmId = 1;
-		currentHashAlgorithm = new Argon2Algorithm(hashMemory, hashIterations);
+		currentHashAlgorithm = new Argon2Algorithm(hashIterations,hashMemory,hashParallelism);
 		hashAlgorithms.put(currentHashAlgorithmId, currentHashAlgorithm);
 
 		this.databaseStorage = databaseStorage;

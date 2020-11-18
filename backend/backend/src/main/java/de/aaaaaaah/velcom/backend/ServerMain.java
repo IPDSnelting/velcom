@@ -105,7 +105,7 @@ public class ServerMain extends Application<GlobalConfig> {
 
 	@Override
 	public void initialize(Bootstrap<GlobalConfig> bootstrap) {
-		bootstrap.addCommand(new HashPerformanceTestCommand());
+		bootstrap.addCommand(new FindHashIterationsCommand());
 		bootstrap.addBundle(new MultiPartBundle());
 	}
 
@@ -136,8 +136,9 @@ public class ServerMain extends Application<GlobalConfig> {
 		TokenWriteAccess tokenAccess = new TokenWriteAccess(
 			databaseStorage,
 			new AuthToken(configuration.getWebAdminToken()),
+			configuration.getHashIterations(),
 			configuration.getHashMemory(),
-			configuration.getHashIterations()
+			configuration.getHashParallelism()
 		);
 		ArchiveReadAccess archiveAccess = new ArchiveReadAccess(
 			managedDirs.getArchivesDir(),

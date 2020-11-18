@@ -89,8 +89,8 @@ benchmarkRepoRemoteUrl: "https://github.com/IPDSnelting/velcom-unibench.git"
 ## See https://raw.githubusercontent.com/P-H-C/phc-winner-argon2/master/argon2-specs.pdf for
 ## recommended parameters (h = hashParallelism, m = hashMemory).
 ##
-## The amount of iterations can be determined by the "hashPerformance" command:
-## $ java -jar backend.jar hashPerformance
+## The amount of iterations can be determined by the "findHashIterations" command:
+## $ java -jar backend.jar findHashIterations
 ##
 hashIterations: 50
 hashMemory: 5120 # KiB
