@@ -10,18 +10,18 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import de.aaaaaaah.velcom.backend.access.entities.CommitHash;
-import de.aaaaaaah.velcom.backend.access.entities.RepoId;
-import de.aaaaaaah.velcom.backend.access.entities.RunError;
-import de.aaaaaaah.velcom.backend.access.entities.RunErrorType;
 import de.aaaaaaah.velcom.backend.access.entities.RunId;
-import de.aaaaaaah.velcom.backend.access.entities.Task;
-import de.aaaaaaah.velcom.backend.access.entities.TaskId;
 import de.aaaaaaah.velcom.backend.access.entities.benchmark.NewRun;
-import de.aaaaaaah.velcom.backend.access.entities.sources.CommitSource;
-import de.aaaaaaah.velcom.backend.access.policy.QueuePriority;
 import de.aaaaaaah.velcom.backend.data.benchrepo.BenchRepo;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.CommitSource;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.RunError;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.RunErrorType;
+import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
+import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.Task;
+import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.TaskId;
+import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.TaskPriority;
 import de.aaaaaaah.velcom.backend.runner.Dispatcher;
 import de.aaaaaaah.velcom.backend.runner.KnownRunner;
 import de.aaaaaaah.velcom.backend.runner.single.state.AwaitSendWorkEnd;
@@ -36,6 +36,7 @@ import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.ClientBoundP
 import de.aaaaaaah.velcom.shared.protocol.serialization.serverbound.GetResultReply;
 import de.aaaaaaah.velcom.shared.protocol.serialization.serverbound.GetStatusReply;
 import de.aaaaaaah.velcom.shared.protocol.statemachine.StateMachine;
+import de.aaaaaaah.velcom.shared.util.Either;
 import java.lang.reflect.Field;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -127,21 +128,21 @@ class TeleRunnerTest {
 	@Test
 	void updatesRunnerInformation() {
 		GetStatusReply first = new GetStatusReply(
-			"hey", "there", "my", false, Status.IDLE, null
+			"hey", "there", "my", false, Status.IDLE, null, null
 		);
 		runner.setRunnerInformation(first);
 
 		assertThat(runner.getRunnerInformation()).isEqualTo(new KnownRunner(
-			runner.getRunnerName(), "hey", "there", Status.IDLE, null, true, null
+			runner.getRunnerName(), "hey", "there", Status.IDLE, null, true, null, null
 		));
 
 		GetStatusReply second = new GetStatusReply(
-			"hey2", "there2", "my2", false, Status.IDLE, null
+			"hey2", "there2", "my2", false, Status.IDLE, null, null
 		);
 		runner.setRunnerInformation(second);
 
 		assertThat(runner.getRunnerInformation()).isEqualTo(new KnownRunner(
-			runner.getRunnerName(), "hey2", "there2", Status.IDLE, null, true, null
+			runner.getRunnerName(), "hey2", "there2", Status.IDLE, null, true, null, null
 		));
 	}
 
@@ -154,7 +155,7 @@ class TeleRunnerTest {
 		);
 		runner.handleResults(resultReply);
 
-		verify(queue).abortTaskProcess(new TaskId(resultReply.getRunId()));
+		verify(queue).abortTask(new TaskId(resultReply.getRunId()));
 	}
 
 	@Test
@@ -204,7 +205,7 @@ class TeleRunnerTest {
 
 		setConnection(connection);
 		runner.setRunnerInformation(new GetStatusReply(
-			"Hello", "my version", "currentHash", false, Status.IDLE, null
+			"Hello", "my version", "currentHash", false, Status.IDLE, null, null
 		));
 		when(benchRepo.getCurrentHash()).thenReturn(new CommitHash("otherHash"));
 
@@ -223,7 +224,7 @@ class TeleRunnerTest {
 		setTask(task);
 
 		runner.setRunnerInformation(new GetStatusReply(
-			"hey", "there", null, false, Status.IDLE, null
+			"hey", "there", null, false, Status.IDLE, null, null
 		));
 		runner.handleResults(resultReply);
 
@@ -235,11 +236,12 @@ class TeleRunnerTest {
 
 	private Task buildTask(UUID runId) {
 		return new Task(
-			new TaskId(runId), "Peter", QueuePriority.LISTENER,
+			new TaskId(runId), "Peter", TaskPriority.LISTENER,
 			Instant.now(), Instant.now(),
-			new CommitSource(
+			Either.ofLeft(new CommitSource(
 				new RepoId(UUID.randomUUID()), new CommitHash("hello")
-			)
+			)),
+			false
 		);
 	}
 

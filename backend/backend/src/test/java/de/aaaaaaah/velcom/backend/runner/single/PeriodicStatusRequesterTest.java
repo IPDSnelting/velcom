@@ -9,8 +9,8 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import de.aaaaaaah.velcom.backend.access.entities.Task;
-import de.aaaaaaah.velcom.backend.access.entities.TaskId;
+import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.Task;
+import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.TaskId;
 import de.aaaaaaah.velcom.backend.runner.single.state.AwaitClearResultReply;
 import de.aaaaaaah.velcom.backend.runner.single.state.AwaitGetResultReply;
 import de.aaaaaaah.velcom.backend.runner.single.state.AwaitGetStatusReply;
@@ -23,6 +23,7 @@ import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.ClientBoundP
 import de.aaaaaaah.velcom.shared.protocol.serialization.serverbound.GetResultReply;
 import de.aaaaaaah.velcom.shared.protocol.serialization.serverbound.GetStatusReply;
 import de.aaaaaaah.velcom.shared.protocol.statemachine.StateMachine;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
@@ -52,7 +53,8 @@ class PeriodicStatusRequesterTest {
 		this.statusRequester = new PeriodicStatusRequester(
 			teleRunner,
 			runnerConnection,
-			stateMachine
+			stateMachine,
+			Duration.ofSeconds(0)
 		);
 	}
 
@@ -86,7 +88,7 @@ class PeriodicStatusRequesterTest {
 		verify(stateMachine, timeout(1000)).switchFromRestingState(captor.capture());
 
 		captor.getValue().getReplyFuture().complete(new GetStatusReply(
-			"info", "version", "version", true, Status.IDLE, null
+			"info", "version", "version", true, Status.IDLE, null, null
 		));
 
 		verify(runnerConnection, timeout(5000))
@@ -172,7 +174,7 @@ class PeriodicStatusRequesterTest {
 		verify(stateMachine, timeout(1000)).switchFromRestingState(captorStatus.capture());
 
 		captorStatus.getValue().getReplyFuture().complete(new GetStatusReply(
-			"info", "version", "version", true, Status.IDLE, null
+			"info", "version", "version", true, Status.IDLE, null, null
 		));
 
 		verify(runnerConnection, timeout(5000))
@@ -192,7 +194,7 @@ class PeriodicStatusRequesterTest {
 		verify(stateMachine, timeout(1000)).switchFromRestingState(captorStatus.capture());
 
 		captorStatus.getValue().getReplyFuture().complete(new GetStatusReply(
-			"info", "version", "version", true, Status.IDLE, null
+			"info", "version", "version", true, Status.IDLE, null, null
 		));
 
 		verify(runnerConnection, timeout(5000))

@@ -6,16 +6,14 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import de.aaaaaaah.velcom.backend.access.entities.Task;
-import de.aaaaaaah.velcom.backend.access.entities.TaskId;
 import de.aaaaaaah.velcom.backend.access.entities.benchmark.NewRun;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
+import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.Task;
 import de.aaaaaaah.velcom.backend.runner.single.TeleRunner;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Status;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
-import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -30,7 +28,7 @@ class DispatcherTest {
 	@BeforeEach
 	void setUp() {
 		queue = mock(Queue.class);
-		when(queue.fetchNextTask()).thenReturn(Optional.of(mock(Task.class)));
+		when(queue.startNextTask()).thenReturn(Optional.of(mock(Task.class)));
 
 		runnerGracePeriod = Duration.ofSeconds(1);
 		dispatcher = new Dispatcher(queue, runnerGracePeriod);
@@ -41,6 +39,7 @@ class DispatcherTest {
 			Status.IDLE,
 			null,
 			false,
+			null,
 			null
 		);
 	}
@@ -64,7 +63,7 @@ class DispatcherTest {
 
 	@Test
 	void doesNotReturnWorkForUnregisteredRunner() {
-		assertThat(queue.fetchNextTask()).isPresent();
+		assertThat(queue.startNextTask()).isPresent();
 		assertThat(dispatcher.getWork(getRunner())).isEmpty();
 	}
 
@@ -73,7 +72,7 @@ class DispatcherTest {
 		TeleRunner runner = getRunner();
 		dispatcher.addRunner(runner);
 
-		assertThat(queue.fetchNextTask()).isPresent();
+		assertThat(queue.startNextTask()).isPresent();
 		assertThat(dispatcher.getWork(runner)).isPresent();
 	}
 
@@ -131,34 +130,6 @@ class DispatcherTest {
 		dispatcher.completeTask(newRun);
 
 		verify(queue).completeTask(newRun);
-	}
-
-	@Test
-	void abortCausesRunnerToAbort() {
-		TeleRunner runnerOne = getRunner();
-		TeleRunner runnerTwo = getRunner();
-		KnownRunner runnerTwoInfo = new KnownRunner(
-			"runner2", "info", null, Status.IDLE, null, false, null
-		);
-
-		Task task = mock(Task.class);
-		when(task.getId()).thenReturn(new TaskId(UUID.randomUUID()));
-		when(queue.fetchNextTask()).thenReturn(Optional.of(task));
-		when(runnerTwo.getRunnerName()).thenReturn("runner2");
-		when(runnerTwo.getRunnerInformation()).thenReturn(runnerTwoInfo);
-
-		dispatcher.addRunner(runnerOne);
-		dispatcher.addRunner(runnerTwo);
-
-		// Register the runner for it
-		assertThat(dispatcher.getWork(runnerOne)).isPresent();
-		// Abort it
-		assertThat(dispatcher.abort(task.getId())).isTrue();
-		// Was aborted
-		verify(runnerOne).abort();
-
-		// Can't abort again
-		assertThat(dispatcher.abort(task.getId())).isFalse();
 	}
 
 	private TeleRunner getRunner() {

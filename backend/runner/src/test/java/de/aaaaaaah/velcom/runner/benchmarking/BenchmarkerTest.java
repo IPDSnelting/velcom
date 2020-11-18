@@ -1,6 +1,7 @@
 package de.aaaaaaah.velcom.runner.benchmarking;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.InstanceOfAssertFactories.STRING;
 
 import de.aaaaaaah.velcom.shared.protocol.serialization.Result;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Result.Benchmark;
@@ -295,8 +296,8 @@ class BenchmarkerTest {
 
 		assertThat(result).isPresent();
 		assertThat(result.get().isSuccess()).isFalse();
-		assertThat(result.get().getError()).isNotNull().contains("interrupt");
-		assertThat(result.get().getResult()).isNull();
+		assertThat(result.get().getResult().getLeft()).get().asInstanceOf(STRING).contains("interrupt");
+		assertThat(result.get().getResult().getRight()).isEmpty();
 	}
 
 	private void doWithResult(Consumer<BenchResult> resultConsumer)

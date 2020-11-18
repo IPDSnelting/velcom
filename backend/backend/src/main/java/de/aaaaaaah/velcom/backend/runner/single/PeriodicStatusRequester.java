@@ -11,6 +11,7 @@ import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.GetStatus;
 import de.aaaaaaah.velcom.shared.protocol.serialization.serverbound.GetResultReply;
 import de.aaaaaaah.velcom.shared.protocol.serialization.serverbound.GetStatusReply;
 import de.aaaaaaah.velcom.shared.protocol.statemachine.StateMachine;
+import java.time.Duration;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -29,12 +30,19 @@ public class PeriodicStatusRequester {
 	private final RunnerConnection connection;
 	private final StateMachine<TeleRunnerState> stateMachine;
 	private volatile boolean cancelled;
+	private final Duration sleepBetweenIteration;
 
 	public PeriodicStatusRequester(TeleRunner teleRunner, RunnerConnection connection,
 		StateMachine<TeleRunnerState> stateMachine) {
+		this(teleRunner, connection, stateMachine, Duration.ofSeconds(5));
+	}
+
+	public PeriodicStatusRequester(TeleRunner teleRunner, RunnerConnection connection,
+		StateMachine<TeleRunnerState> stateMachine, Duration sleepBetweenIteration) {
 		this.teleRunner = teleRunner;
 		this.connection = connection;
 		this.stateMachine = stateMachine;
+		this.sleepBetweenIteration = sleepBetweenIteration;
 
 		this.worker = new Thread(this::run, "PeriodicStatusRequester");
 		this.worker.setDaemon(true);
@@ -55,7 +63,7 @@ public class PeriodicStatusRequester {
 				LOGGER.error("Error communicating with runner or handling results", e);
 				try {
 					clearResults();
-				} catch (InterruptedException | ExecutionException e2) {
+				} catch (Exception e2) {
 					LOGGER.error("Error telling runner to clear results", e2);
 					connection.close(StatusCode.INTERNAL_ERROR);
 				}
@@ -63,10 +71,8 @@ public class PeriodicStatusRequester {
 		}
 	}
 
-	private void iteration() {
+	private void iteration() throws ExecutionException {
 		try {
-			Thread.sleep(5000);
-
 			GetStatusReply statusReply = requestStatus();
 			teleRunner.setRunnerInformation(statusReply);
 
@@ -100,7 +106,9 @@ public class PeriodicStatusRequester {
 			teleRunner.handleResults(requestResults);
 
 			clearResults();
-		} catch (InterruptedException | ExecutionException | CancellationException ignored) {
+
+			Thread.sleep(sleepBetweenIteration.toSeconds());
+		} catch (InterruptedException | CancellationException ignored) {
 		}
 	}
 
