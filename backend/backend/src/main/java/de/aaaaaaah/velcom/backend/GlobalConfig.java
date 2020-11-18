@@ -7,57 +7,115 @@ import java.time.Duration;
 import javax.annotation.Nullable;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
-import org.hibernate.validator.constraints.NotEmpty;
+import javax.validation.constraints.NotEmpty;
 
 /**
  * The main configuration file for the server.
  */
 public class GlobalConfig extends Configuration {
 
-	@Nullable
-	private Path dataDir;
-	@Nullable
-	private Path cacheDir;
-	@Nullable
-	private Path tmpDir;
-
-	@NotNull
-	private long pollInterval;
+	/////////////
+	// General //
+	/////////////
 
 	@NotEmpty
 	private String webAdminToken;
-
-	@Min(1)
-	@Max(65535)
-	@NotNull
-	private int runnerPort;
-
 	@NotEmpty
 	private String benchmarkRepoRemoteUrl;
+	private long pollInterval = 120;
+
+	/////////////////
+	// Directories //
+	/////////////////
+
+	private Path dataDir = Path.of("data");
+	private Path cacheDir = Path.of("cache");
+	private Path tmpDir = Path.of("tmp");
+
+	/////////////
+	// Hashing //
+	/////////////
+
+	@Min(1)
+	private int hashIterations;
+	@Min(1)
+	private int hashMemory;
+	@Min(1)
+	private int hashParallelism;
+
+	////////////
+	// Runner //
+	////////////
 
 	@NotEmpty
 	private String runnerToken;
-
 	@Min(1)
-	private long disconnectedRunnerGracePeriodSeconds;
+	@Max(65535)
+	private int runnerPort = 3546;
+	@Min(1)
+	private long disconnectedRunnerGracePeriodSeconds = 600;
 
-	private double significanceRelativeThreshold;
-	private double significanceStddevThreshold;
+	/////////////////////////
+	// Significant commits //
+	/////////////////////////
+
+	private double significanceRelativeThreshold = 0.05;
+	private double significanceStddevThreshold = 2;
 	@Min(2)
-	private int significanceMinStddevAmount;
-
-	@NotNull
-	@Min(1)
-	private int hashMemory;
-
-	@NotNull
-	@Min(1)
-	private int hashIterations;
+	private int significanceMinStddevAmount = 25;
 
 	public GlobalConfig() {
 		RunnerAwareServerFactory.getInstance().setConfig(this);
 	}
+
+	@Override
+	public ServerFactory getServerFactory() {
+		if (RunnerAwareServerFactory.getInstance().lacksFactory()) {
+			RunnerAwareServerFactory.getInstance().setServerFactory(super.getServerFactory());
+		}
+		return RunnerAwareServerFactory.getInstance();
+	}
+
+	/////////////
+	// General //
+	/////////////
+
+	/**
+	 * @return the token used to authorize as a web administrator
+	 */
+	public String getWebAdminToken() {
+		return webAdminToken;
+	}
+
+	public void setWebAdminToken(String webAdminToken) {
+		this.webAdminToken = webAdminToken;
+	}
+
+	/**
+	 * @return the remote url where the benchmark repo remote url can be cloned from
+	 */
+	public String getBenchmarkRepoRemoteUrl() {
+		return benchmarkRepoRemoteUrl;
+	}
+
+	public void setBenchmarkRepoRemoteUrl(String benchmarkRepoRemoteUrl) {
+		this.benchmarkRepoRemoteUrl = benchmarkRepoRemoteUrl;
+	}
+
+	/**
+	 * @return the interval between listener updates
+	 */
+	public Duration getPollInterval() {
+		return Duration.ofSeconds(pollInterval);
+	}
+
+	public void setPollInterval(long pollInterval) {
+		this.pollInterval = pollInterval;
+	}
+
+	/////////////////
+	// Directories //
+	/////////////////
 
 	@Nullable
 	public Path getDataDir() {
@@ -86,26 +144,47 @@ public class GlobalConfig extends Configuration {
 		this.tmpDir = tmpDir;
 	}
 
+	/////////////
+	// Hashing //
+	/////////////
+
+	public int getHashIterations() {
+		return hashIterations;
+	}
+
+	public void setHashIterations(int hashIterations) {
+		this.hashIterations = hashIterations;
+	}
+
+	public int getHashMemory() {
+		return hashMemory;
+	}
+
+	public void setHashMemory(int hashMemory) {
+		this.hashMemory = hashMemory;
+	}
+
+	public int getHashParallelism() {
+		return hashParallelism;
+	}
+
+	public void setHashParallelism(int hashParallelism) {
+		this.hashParallelism = hashParallelism;
+	}
+
+	////////////
+	// Runner //
+	////////////
+
 	/**
-	 * @return the interval between listener updates
+	 * @return the token runners need to provide as authentication
 	 */
-	public Duration getPollInterval() {
-		return Duration.ofSeconds(pollInterval);
+	public String getRunnerToken() {
+		return runnerToken;
 	}
 
-	public void setPollInterval(long pollInterval) {
-		this.pollInterval = pollInterval;
-	}
-
-	/**
-	 * @return the token used to authorize as a web administrator
-	 */
-	public String getWebAdminToken() {
-		return webAdminToken;
-	}
-
-	public void setWebAdminToken(String webAdminToken) {
-		this.webAdminToken = webAdminToken;
+	public void setRunnerToken(String runnerToken) {
+		this.runnerToken = runnerToken;
 	}
 
 	/**
@@ -120,28 +199,6 @@ public class GlobalConfig extends Configuration {
 	}
 
 	/**
-	 * @return the remote url where the benchmark repo remote url can be cloned from
-	 */
-	public String getBenchmarkRepoRemoteUrl() {
-		return benchmarkRepoRemoteUrl;
-	}
-
-	public void setBenchmarkRepoRemoteUrl(String benchmarkRepoRemoteUrl) {
-		this.benchmarkRepoRemoteUrl = benchmarkRepoRemoteUrl;
-	}
-
-	/**
-	 * @return the token runners need to provide as authentication
-	 */
-	public String getRunnerToken() {
-		return runnerToken;
-	}
-
-	public void setRunnerToken(String runnerToken) {
-		this.runnerToken = runnerToken;
-	}
-
-	/**
 	 * @return the duration after which disconnected runners are given up on (removed and commit
 	 * 	rescheduled)
 	 */
@@ -152,6 +209,10 @@ public class GlobalConfig extends Configuration {
 	public void setDisconnectedRunnerGracePeriodSeconds(long disconnectedRunnerGracePeriodSeconds) {
 		this.disconnectedRunnerGracePeriodSeconds = disconnectedRunnerGracePeriodSeconds;
 	}
+
+	/////////////////////////
+	// Significant commits //
+	/////////////////////////
 
 	/**
 	 * Explained in more detail in the example config.
@@ -190,29 +251,5 @@ public class GlobalConfig extends Configuration {
 
 	public void setSignificanceMinStddevAmount(int significanceMinStddevAmount) {
 		this.significanceMinStddevAmount = significanceMinStddevAmount;
-	}
-
-	public int getHashMemory() {
-		return hashMemory;
-	}
-
-	public void setHashMemory(int hashMemory) {
-		this.hashMemory = hashMemory;
-	}
-
-	public int getHashIterations() {
-		return hashIterations;
-	}
-
-	public void setHashIterations(int hashIterations) {
-		this.hashIterations = hashIterations;
-	}
-
-	@Override
-	public ServerFactory getServerFactory() {
-		if (RunnerAwareServerFactory.getInstance().lacksFactory()) {
-			RunnerAwareServerFactory.getInstance().setServerFactory(super.getServerFactory());
-		}
-		return RunnerAwareServerFactory.getInstance();
 	}
 }

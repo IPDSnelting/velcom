@@ -1,4 +1,18 @@
-# Dropwizard magic so the REST API port can be configured
+##
+## In this file, commented-out options are set to their default values in the comment. Options which
+## are not commented out don't have default values.
+##
+## When setting up your own instance, please change or review all options which don't have a default
+## value.
+##
+
+################
+## Dropwizard ##
+################
+
+##
+## Dropwizard magic so the REST API port can be configured
+##
 server:
   applicationConnectors:
     - type: http
@@ -12,6 +26,44 @@ server:
         filterFactories:
           - type: metrics-endpoint
 
+##
+## Example log level configuration
+##
+## This example sets the global log level to WARN and VelCom's log level to INFO.
+## Valid log levels are: DEBUG, INFO, WARN, ERROR
+##
+#logging:
+#  level: WARN
+#  loggers:
+#    "de.aaaaaaah.velcom": INFO
+
+
+#############
+## General ##
+#############
+
+##
+## The token by which the web administrator can authenticate
+##
+webAdminToken: "12345"
+
+##
+## The URL the benchmark repo should be cloned from
+##
+benchmarkRepoRemoteUrl: "https://github.com/IPDSnelting/velcom-unibench.git"
+
+##
+## The period in which the tracked repos and bench repo is checked for updates. When new commits are
+## found, they are added to the queue.
+##
+#pollInterval: 120 # seconds
+
+
+#################
+## Directories ##
+#################
+
+##
 ## VelCom organizes its files into three different directories:
 ##
 ## - data/  : Essential files
@@ -22,45 +74,64 @@ server:
 ## recreate the other two directories.
 ##
 ## WARNING: Files in these directories should not be changed or deleted while VelCom is running!
-
+##
 #dataDir: "data/"
 #cacheDir: "cache/"
 #tmpDir: "tmp/"
 
-# The interval between listener updates. (in seconds)
-pollInterval: 120
 
-# The token for the web administrator
-webAdminToken: "12345"
+#############
+## Hashing ##
+#############
 
-# The port that the dispatcher should be listening on
-runnerPort: 3546
+##
+## VelCom uses argon2-jvm (https://github.com/phxql/argon2-jvm) for storing authentication tokens.
+## See https://raw.githubusercontent.com/P-H-C/phc-winner-argon2/master/argon2-specs.pdf for
+## recommended parameters (h = hashParallelism, m = hashMemory).
+##
+## The amount of iterations can be determined by the "hashPerformance" command:
+## $ java -jar backend.jar hashPerformance
+##
+hashIterations: 50
+hashMemory: 5120 # KiB
+hashParallelism: 1 # Amount of threads
 
-# The remote url where the benchmark repo remote url can be cloned from
-benchmarkRepoRemoteUrl: "https://github.com/IPDSnelting/velcom-unibench.git"
 
-# The token runners need to provide in order to connect successfully.
-# Will be transmitted in plain text over an HTTPS connection.
+############
+## Runner ##
+############
+
+##
+## The token runners need to provide in order to connect successfully.
+## Will be transmitted in plain text over an HTTPS connection.
+##
 runnerToken: "Correct-Horse_Battery Staple"
 
-# The duration in seconds after which disconnected runners are given up on (removed and commit
-# rescheduled)
-disconnectedRunnerGracePeriodSeconds: 600
+##
+## The port that the dispatcher should be listening on
+##
+#runnerPort: 3546
 
-# A commit becomes significant if the following rules hold for at least one of its measurements and
-# the corresponding measurement in the run of any parent commit:
-#
-# Rule 1: |(newValue - oldValue) / oldValue| >= significanceRelativeThreshold
-# Rule 2: |newValue - oldValue| >= significanceStddevThreshold * stddev(newValues)
-#
-# If the amount of new values is below significanceMinStddevAmount, rule 2 doesn't apply.
-significanceRelativeThreshold: 0.05 # An increase or decrease by 5%
-significanceStddevThreshold: 2
-significanceMinStddevAmount: 25
+##
+## The duration in seconds after which disconnected runners are given up on (removed and commit
+## rescheduled)
+##
+#disconnectedRunnerGracePeriodSeconds: 600
 
-# The hashing algorithm's memory usage in KiB
-hashMemory: 5120
 
-# How many iterations the hashing algorithm should make. See the readme for more details on how to
-# set this value.
-hashIterations: 50
+#########################
+## Significant Commits ##
+#########################
+
+##
+## A commit becomes significant if the following rules hold for at least one of its measurements and
+## the corresponding measurement in the run of any parent commit:
+##
+## Rule 1: |(newValue - oldValue) / oldValue| >= significanceRelativeThreshold
+## Rule 2: |newValue - oldValue| >= significanceStddevThreshold * stddev(newValues)
+##
+## If the amount of new values is below significanceMinStddevAmount, rule 2 doesn't apply.
+##
+#significanceRelativeThreshold: 0.05 # An increase or decrease by 5%
+#significanceStddevThreshold: 2
+#significanceMinStddevAmount: 25
