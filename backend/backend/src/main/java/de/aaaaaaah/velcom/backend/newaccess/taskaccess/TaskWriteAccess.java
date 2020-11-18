@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
 
 public class TaskWriteAccess extends TaskReadAccess {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(TaskReadAccess.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(TaskWriteAccess.class);
 
 	public TaskWriteAccess(DatabaseStorage databaseStorage, TarFileStorage tarFileStorage) {
 		super(databaseStorage, tarFileStorage);

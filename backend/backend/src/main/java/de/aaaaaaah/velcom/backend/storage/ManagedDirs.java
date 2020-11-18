@@ -1,6 +1,5 @@
 package de.aaaaaaah.velcom.backend.storage;
 
-import de.aaaaaaah.velcom.backend.storage.repo.RepoStorage;
 import de.aaaaaaah.velcom.shared.util.FileHelper;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -29,7 +28,7 @@ import org.slf4j.LoggerFactory;
  */
 public class ManagedDirs {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(RepoStorage.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(ManagedDirs.class);
 
 	private final Path dataDir;
 	private final Path cacheDir;
