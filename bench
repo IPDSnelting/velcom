@@ -22,10 +22,13 @@ def execute_program(args: List[str]) -> float:
 
 def get_coverage() -> str:
     path = target_path() / "backend/aggregator/target/site/jacoco-aggregate/index.html"
-    coverageRegex = r"Total[^%]+?(\d+)%"
-    with open(path) as file:
-        coverage = re.search(coverageRegex, file.read()).group(1)
-        return int(coverage)
+    coverage_regex = r'<td>Total</td><td class="bar">([\d,]+) of ([\d,]+)</td>'
+    with open(path) as f:
+        match = re.search(coverage_regex, f.read())
+        missed = int(match.group(1).replace(",", ""))
+        total = int(match.group(2).replace(",", ""))
+        coverage = (total - missed) / total
+        return coverage * 100  # percent
 
 
 def can_use_makefile() -> bool:
