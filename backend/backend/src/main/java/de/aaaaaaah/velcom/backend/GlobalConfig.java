@@ -2,7 +2,9 @@ package de.aaaaaaah.velcom.backend;
 
 import io.dropwizard.Configuration;
 import io.dropwizard.server.ServerFactory;
+import java.nio.file.Path;
 import java.time.Duration;
+import javax.annotation.Nullable;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
@@ -12,6 +14,13 @@ import org.hibernate.validator.constraints.NotEmpty;
  * The main configuration file for the server.
  */
 public class GlobalConfig extends Configuration {
+
+	@Nullable
+	private Path dataDir;
+	@Nullable
+	private Path cacheDir;
+	@Nullable
+	private Path tmpDir;
 
 	@NotNull
 	private long pollInterval;
@@ -48,6 +57,33 @@ public class GlobalConfig extends Configuration {
 
 	public GlobalConfig() {
 		RunnerAwareServerFactory.getInstance().setConfig(this);
+	}
+
+	@Nullable
+	public Path getDataDir() {
+		return dataDir;
+	}
+
+	public void setDataDir(@Nullable Path dataDir) {
+		this.dataDir = dataDir;
+	}
+
+	@Nullable
+	public Path getCacheDir() {
+		return cacheDir;
+	}
+
+	public void setCacheDir(@Nullable Path cacheDir) {
+		this.cacheDir = cacheDir;
+	}
+
+	@Nullable
+	public Path getTmpDir() {
+		return tmpDir;
+	}
+
+	public void setTmpDir(@Nullable Path tmpDir) {
+		this.tmpDir = tmpDir;
 	}
 
 	/**

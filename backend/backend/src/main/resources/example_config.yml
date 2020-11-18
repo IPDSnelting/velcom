@@ -12,6 +12,21 @@ server:
         filterFactories:
           - type: metrics-endpoint
 
+## VelCom organizes its files into three different directories:
+##
+## - data/  : Essential files
+## - cache/ : Non-essential files that persist between restarts
+## - tmp/   : Short-lived temporary files
+##
+## Backups only need to include the config file and the data/ dir. With those files, VelCom can
+## recreate the other two directories.
+##
+## WARNING: Files in these directories should not be changed or deleted while VelCom is running!
+
+#dataDir: "data/"
+#cacheDir: "cache/"
+#tmpDir: "tmp/"
+
 # The interval between listener updates. (in seconds)
 pollInterval: 120
 

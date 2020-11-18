@@ -114,8 +114,13 @@ public class ServerMain extends Application<GlobalConfig> {
 		configureMetrics(environment);
 
 		// Storage layer
-		ManagedDirs managedDirs = new ManagedDirs();
+		ManagedDirs managedDirs = new ManagedDirs(
+			configuration.getDataDir(),
+			configuration.getCacheDir(),
+			configuration.getTmpDir()
+		);
 		managedDirs.createAndCleanDirs();
+
 		DatabaseStorage databaseStorage = new DatabaseStorage(managedDirs.getJdbcUrl());
 		RepoStorage repoStorage = new RepoStorage(managedDirs.getReposDir());
 		TarFileStorage tarFileStorage = new TarFileStorage(managedDirs.getTarsDir());

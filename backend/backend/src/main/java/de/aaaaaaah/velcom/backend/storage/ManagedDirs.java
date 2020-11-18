@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,26 +31,32 @@ public class ManagedDirs {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(RepoStorage.class);
 
-	private final Path rootDir;
+	private final Path dataDir;
+	private final Path cacheDir;
+	private final Path tmpDir;
 
-	public ManagedDirs(Path rootDir) {
-		this.rootDir = rootDir;
-	}
+	public ManagedDirs(@Nullable Path dataDir, @Nullable Path cacheDir, @Nullable Path tmpDir) {
+		if (dataDir != null) {
+			this.dataDir = dataDir;
+		} else {
+			this.dataDir = Path.of("data/");
+		}
 
-	public ManagedDirs() {
-		this(Path.of(""));
-	}
+		if (cacheDir != null) {
+			this.cacheDir = cacheDir;
+		} else {
+			this.cacheDir = Path.of("cache/");
+		}
 
-	private Path getDataDir() {
-		return rootDir.resolve("data/");
-	}
+		if (tmpDir != null) {
+			this.tmpDir = tmpDir;
+		} else {
+			this.tmpDir = Path.of("tmp/");
+		}
 
-	private Path getCacheDir() {
-		return rootDir.resolve("cache/");
-	}
-
-	private Path getTmpDir() {
-		return rootDir.resolve("tmp/");
+		LOGGER.info("Data dir:  " + this.dataDir.toAbsolutePath());
+		LOGGER.info("Cache dir: " + this.cacheDir.toAbsolutePath());
+		LOGGER.info("Tmp dir:   " + this.tmpDir.toAbsolutePath());
 	}
 
 	/**
@@ -62,21 +69,21 @@ public class ManagedDirs {
 	public void createAndCleanDirs() throws IOException {
 		// Clean up data dir
 		onlyKeepAllowed(
-			getDataDir(),
+			dataDir,
 			Set.of("tars"),
 			Set.of("data.db", "data.db-shm", "data.db-wal")
 		);
 
 		// Clean up cache dir
 		onlyKeepAllowed(
-			getCacheDir(),
+			cacheDir,
 			Set.of("repos"),
 			Set.of()
 		);
 
 		// Clean up tmp dir
 		onlyKeepAllowed(
-			getTmpDir(),
+			tmpDir,
 			Set.of(),
 			Set.of()
 		);
@@ -110,18 +117,18 @@ public class ManagedDirs {
 	}
 
 	public String getJdbcUrl() {
-		return "jdbc:sqlite:file:" + getDataDir().resolve("data.db").toAbsolutePath();
+		return "jdbc:sqlite:file:" + dataDir.resolve("data.db").toAbsolutePath();
 	}
 
 	public Path getTarsDir() {
-		return getDataDir().resolve("tars/");
+		return dataDir.resolve("tars/");
 	}
 
 	public Path getReposDir() {
-		return getCacheDir().resolve("repos/");
+		return cacheDir.resolve("repos/");
 	}
 
 	public Path getArchivesDir() {
-		return getTmpDir().resolve("archives/");
+		return tmpDir.resolve("archives/");
 	}
 }
