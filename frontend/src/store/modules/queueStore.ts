@@ -151,6 +151,29 @@ export class QueueStore extends VxModule {
   }
 
   /**
+   * Uploads a tar and returns the task id assigned to it.
+   */
+  @action
+  async uploadTar(payload: {
+    file: File
+    description: string
+    repoId: string | null
+  }): Promise<Task> {
+    const bodyFormData = new FormData()
+    // bodyFormData.append('file', payload.file, payload.file.name)
+    bodyFormData.append('description', payload.description)
+    if (payload.repoId) {
+      bodyFormData.append('repo_id', payload.repoId)
+    }
+
+    const response = await axios.post('/queue/upload/tar', bodyFormData, {
+      snackbarTag: 'upload-tar',
+      showSuccessSnackbar: true
+    })
+    return taskFromJson(response.data.task)
+  }
+
+  /**
    * Sets all open tasks.
    *
    * @param {Task[]} payload the tasks
