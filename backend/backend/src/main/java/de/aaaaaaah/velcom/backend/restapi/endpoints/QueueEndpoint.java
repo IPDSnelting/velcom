@@ -32,11 +32,10 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
-import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -205,8 +204,8 @@ public class QueueEndpoint {
 	@Timed(histogram = true)
 	public UploadTarReply uploadTar(
 		@Auth RepoUser user,
-		@FormParam("description") @NotNull String description,
-		@FormParam("repo_id") @Nullable UUID repoUuid,
+		@Nonnull @FormDataParam("description") String description,
+		@Nullable @FormDataParam("repo_id") UUID repoUuid,
 		@FormDataParam("file") InputStream inputStream
 	) {
 		user.guardAdminAccess();
