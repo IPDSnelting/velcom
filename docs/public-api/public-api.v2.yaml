@@ -114,29 +114,31 @@ paths:
                     $ref: '#/components/schemas/Task'
                 required:
                   - task
-      requestBody:
-        content:
-          application/x-tar:
-            schema: {}
-        description: The tar file to benchmark
       security:
         - admin_credentials: []
-      parameters:
-        - schema:
-            type: string
-          in: query
-          name: description
-          description: Describes the tar file
-          required: true
-        - schema:
-            type: string
-            format: uuid
-          in: query
-          name: repo_id
-          description: The task can optionally be attached to a repo
+      parameters: []
       description: This endpoint allows users to upload a tar file that the server should benchmark. The tar file is added to the queue with a relatively high priority.
       tags:
         - queue
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                description:
+                  type: string
+                repo_id:
+                  type: string
+                  format: uuid
+                  description: The task can optionally be attached to a repo
+                file:
+                  type: string
+                  format: binary
+                  description: 'Only `.tar` files, no `.tar.gz` or other formats supported'
+              required:
+                - description
+                - file
     parameters: []
   '/commit/{repoid}/{hash}':
     parameters:

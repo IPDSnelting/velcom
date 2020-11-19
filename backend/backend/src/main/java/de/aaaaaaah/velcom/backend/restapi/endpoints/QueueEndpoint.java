@@ -36,12 +36,12 @@ import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status;
@@ -205,8 +205,8 @@ public class QueueEndpoint {
 	@Timed(histogram = true)
 	public UploadTarReply uploadTar(
 		@Auth RepoUser user,
-		@QueryParam("description") @NotNull String description,
-		@QueryParam("repo_id") @Nullable UUID repoUuid,
+		@FormParam("description") @NotNull String description,
+		@FormParam("repo_id") @Nullable UUID repoUuid,
 		@FormDataParam("file") InputStream inputStream
 	) {
 		user.guardAdminAccess();
