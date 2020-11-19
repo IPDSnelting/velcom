@@ -160,7 +160,7 @@ export class QueueStore extends VxModule {
     repoId: string | null
   }): Promise<Task> {
     const bodyFormData = new FormData()
-    // bodyFormData.append('file', payload.file, payload.file.name)
+    bodyFormData.append('file', payload.file, payload.file.name)
     bodyFormData.append('description', payload.description)
     if (payload.repoId) {
       bodyFormData.append('repo_id', payload.repoId)
