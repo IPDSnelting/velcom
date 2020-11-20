@@ -40,9 +40,7 @@ public class RepoWriteAccess extends RepoReadAccess {
 		RepoRecord record = new RepoRecord(id.toString(), name, remoteUrl.getUrl());
 
 		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
-			db.insertInto(REPO)
-				.values(record)
-				.execute();
+			db.dsl().batchInsert(record).execute();
 		} catch (DataAccessException e) {
 			throw new FailedToAddRepoException(e, name, remoteUrl);
 		}
