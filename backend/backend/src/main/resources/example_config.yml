@@ -3,7 +3,7 @@
 ## are not commented out don't have default values.
 ##
 ## When setting up your own instance, please change or review all options which don't have a default
-## value.
+## value. Please also read all WARNINGs in this file. https://xkcd.com/293/
 ##
 
 ################
@@ -72,6 +72,8 @@ benchmarkRepoRemoteUrl: "https://github.com/IPDSnelting/velcom-unibench.git"
 ##
 ## Backups only need to include the config file and the data/ dir. With those files, VelCom can
 ## recreate the other two directories.
+##
+## WARNING: These directories belong to VelCom. VelCom will delete any files it doesn't recognize!
 ##
 ## WARNING: Files in these directories should not be changed or deleted while VelCom is running!
 ##
