@@ -208,9 +208,20 @@ public class Listener {
 		);
 	}
 
-	// Abstracts away updating a repo so the same updating logic can be applied to the bench repo.
+	/**
+	 * Abstracts away updating a repo so the same updating logic can be applied to the bench repo.
+	 *
+	 * @param repoName name of the repo, used only for logging
+	 * @param repoDirName name of the repo's directory. This is not just a {@link RepoId} because
+	 * 	this function should also work for the bench repo.
+	 * @param targetRemoteUrl the remote url the repo should have. The repo is recloned if its actual
+	 * 	remote url doesn't match this target remote url.
+	 * @param jgitRepoAction this function will be called on the jgit {@link Repository} if cloning
+	 * 	or recloning was successful
+	 * @return true if the repo was successfully updated, false otherwise
+	 */
 	private synchronized boolean updateRepoVia(String repoName, String repoDirName,
-		String targetRemoteUrl, Consumer<Repository> consumer) {
+		String targetRemoteUrl, Consumer<Repository> jgitRepoAction) {
 
 		LOGGER.info("Updating repo {}", repoName);
 
@@ -231,7 +242,7 @@ public class Listener {
 			GuickCloning.getInstance().updateBareRepo(jgitRepo.getDirectory().toPath());
 
 			// And finally, the reason why we're here
-			consumer.accept(jgitRepo);
+			jgitRepoAction.accept(jgitRepo);
 
 		} catch (NoSuchRepositoryException e) {
 			LOGGER.info("No repo {} found, cloning...", repoName);
@@ -258,7 +269,7 @@ public class Listener {
 			try {
 				repoStorage.deleteRepository(repoDirName);
 				repoStorage.addRepository(repoDirName, targetRemoteUrl);
-				repoStorage.acquireRepository(repoDirName, consumer::accept);
+				repoStorage.acquireRepository(repoDirName, jgitRepoAction::accept);
 
 			} catch (Exception e) {
 				LOGGER.warn("Recloning repo {} has failed, possibly because remote url is invalid",
