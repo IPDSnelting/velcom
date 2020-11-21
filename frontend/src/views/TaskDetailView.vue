@@ -29,6 +29,19 @@
         <commit-detail :commit="commit"></commit-detail>
       </v-col>
     </v-row>
+    <v-row v-if="tarSource" justify="center">
+      <v-col cols="auto">
+        <v-card outlined>
+          <v-card-title> Tar '{{ tarSource.description }}' </v-card-title>
+          <v-card-subtitle v-if="tarSource.repoId">
+            Attached to
+            <inline-minimal-repo-display
+              :repo-id="tarSource.repoId"
+            ></inline-minimal-repo-display>
+          </v-card-subtitle>
+        </v-card>
+      </v-col>
+    </v-row>
     <v-row v-if="task" no-gutters>
       <v-col>
         <task-runner-output
@@ -50,14 +63,22 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import NotFound404 from '@/views/NotFound404.vue'
-import { Commit, CommitTaskSource, Task, TaskSource } from '@/store/types'
+import {
+  Commit,
+  CommitTaskSource,
+  TarTaskSource,
+  Task,
+  TaskSource
+} from '@/store/types'
 import { Watch } from 'vue-property-decorator'
 import { vxm } from '@/store'
 import CommitDetail from '@/components/rundetail/CommitDetail.vue'
 import TaskRunnerOutput from '@/components/TaskRunnerOutput.vue'
+import InlineMinimalRepoDisplay from '@/components/InlineMinimalRepoDisplay.vue'
 
 @Component({
   components: {
+    InlineMinimalRepoDisplay,
     'task-runner-output': TaskRunnerOutput,
     'page-404': NotFound404,
     'commit-detail': CommitDetail
@@ -72,6 +93,16 @@ export default class TaskDetailView extends Vue {
 
   private get taskId() {
     return this.$route.params.taskId
+  }
+
+  private get tarSource() {
+    if (!this.task) {
+      return null
+    }
+    if (this.task.source instanceof TarTaskSource) {
+      return this.task.source
+    }
+    return null
   }
 
   @Watch('taskId')
