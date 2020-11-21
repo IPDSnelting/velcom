@@ -132,6 +132,7 @@ public class TaskWriteAccess extends TaskReadAccess {
 		try {
 			tarFileStorage.storeTarFile(task.getIdAsString(), inputStream);
 		} catch (IOException ignore) {
+			LOGGER.warn("Failed to store tar file for {}, task was not created", task);
 			return Optional.empty(); // We can't store tar files for some reason?
 		}
 
