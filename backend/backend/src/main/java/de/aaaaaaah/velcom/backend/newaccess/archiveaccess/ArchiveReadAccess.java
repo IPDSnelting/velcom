@@ -16,7 +16,7 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
-import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 import org.eclipse.jgit.lib.AnyObjectId;
 import org.eclipse.jgit.lib.Constants;
@@ -37,7 +37,7 @@ public class ArchiveReadAccess {
 	private final TarFileStorage tarFileStorage;
 	private final String benchRepoUrl;
 
-	private final Random random;
+	private AtomicInteger nextArchivePathNr;
 
 	public ArchiveReadAccess(Path rootDir, RepoStorage repoStorage, TarFileStorage tarFileStorage,
 		String benchRepoUrl) throws IOException {
@@ -47,7 +47,7 @@ public class ArchiveReadAccess {
 		this.tarFileStorage = tarFileStorage;
 		this.benchRepoUrl = benchRepoUrl;
 
-		random = new Random();
+		nextArchivePathNr = new AtomicInteger(0);
 
 		Files.createDirectories(rootDir);
 	}
@@ -71,10 +71,19 @@ public class ArchiveReadAccess {
 		}
 	}
 
+	/**
+	 * Returns a new unique directory name to clone a repo into. Guaranteed to return a different name
+	 * every call. Is only based on the repo dir name and commit hash so the directory names are more
+	 * human-readable for debugging purposes.
+	 *
+	 * @param repoDirName the name of the repo's directory
+	 * @param commitHash the commit hash that will be checked out here
+	 * @return a new unique name that should be safe to use as a directory name
+	 */
 	private Path getArchivePath(String repoDirName, CommitHash commitHash) {
 		String hashAsString = commitHash.getHash();
-		String randomPart = Integer.toString(random.nextInt(1000000));
-		return rootDir.resolve(repoDirName + "_" + hashAsString + "_" + randomPart);
+		String numberPart = Integer.toString(nextArchivePathNr.getAndIncrement());
+		return rootDir.resolve(repoDirName + "_" + hashAsString + "_" + numberPart);
 	}
 
 	private void transferCommitTask(Task task, CommitSource commitSource, OutputStream outputStream)
