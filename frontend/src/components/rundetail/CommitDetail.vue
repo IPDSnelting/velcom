@@ -4,7 +4,7 @@
       <v-col>
         <v-card>
           <v-card-title>
-            <v-toolbar dark color="primary" class="wrapping-toolbar">
+            <v-toolbar dark color="toolbarColor" class="wrapping-toolbar">
               <v-container fluid>
                 <v-row
                   no-gutters

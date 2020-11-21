@@ -2,7 +2,7 @@
   <v-dialog width="800" :value="open" @input="$emit('input', $event)">
     <v-card>
       <v-card-title>
-        <v-toolbar dark color="primary">Upload TAR file</v-toolbar>
+        <v-toolbar dark color="toolbarColor">Upload TAR file</v-toolbar>
       </v-card-title>
       <v-card-text>
         <v-form v-model="vueFormValid" @submit="uploadTar">

@@ -22,7 +22,7 @@
       <v-col>
         <v-card>
           <v-card-title>
-            <v-toolbar color="primary" dark>
+            <v-toolbar color="toolbarColor" dark>
               Benchmark Status: Not much's going on here
             </v-toolbar>
           </v-card-title>

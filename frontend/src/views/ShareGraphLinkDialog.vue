@@ -8,7 +8,7 @@
     </template>
     <v-card>
       <v-card-title>
-        <v-toolbar color="primary" dark>
+        <v-toolbar color="toolbarColor" dark>
           Share a permanent link to this graph
         </v-toolbar>
       </v-card-title>
