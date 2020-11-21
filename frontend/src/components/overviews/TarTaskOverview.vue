@@ -12,12 +12,12 @@
                   v-if="source.repoId"
                   :repoId="source.repoId"
                 ></repo-display>
-                <span class="mx-2">—</span>
+                <span class="mx-2" v-if="source.repoId">—</span>
                 <router-link
                   class="concealed-link"
                   :to="{ name: 'run-detail', params: { first: id } }"
                 >
-                  <span class="commit-message">{{ source.description }}</span>
+                  <span class="tar-message">{{ source.description }}</span>
                 </router-link>
               </v-list-item-title>
               <v-list-item-content v-if="$scopedSlots['content']" class="py-0">
@@ -66,7 +66,7 @@ export default class TarTaskOverview extends Vue {
 </script>
 
 <style scoped>
-.commit-message {
+.tar-message {
   font-style: italic;
 }
 .flex-shrink-too {
