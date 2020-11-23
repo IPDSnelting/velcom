@@ -4,7 +4,7 @@
       <v-col>
         <v-card>
           <v-card-title>
-            <v-toolbar dark color="primary">Run Comparison</v-toolbar>
+            <v-toolbar dark color="toolbarColor">Run Comparison</v-toolbar>
           </v-card-title>
           <v-card-text>
             <comparison-table

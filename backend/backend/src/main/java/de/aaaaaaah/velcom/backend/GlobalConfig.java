@@ -2,84 +2,83 @@ package de.aaaaaaah.velcom.backend;
 
 import io.dropwizard.Configuration;
 import io.dropwizard.server.ServerFactory;
+import java.nio.file.Path;
 import java.time.Duration;
+import javax.annotation.Nullable;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
-import org.hibernate.validator.constraints.NotEmpty;
+import javax.validation.constraints.NotEmpty;
 
 /**
  * The main configuration file for the server.
  */
 public class GlobalConfig extends Configuration {
 
-	@NotEmpty
-	private String jdbcUrl;
-
-	@NotNull
-	private long pollInterval;
+	/////////////
+	// General //
+	/////////////
 
 	@NotEmpty
 	private String webAdminToken;
-
-	@Min(1)
-	@Max(65535)
-	@NotNull
-	private int runnerPort;
-
 	@NotEmpty
 	private String benchmarkRepoRemoteUrl;
+	private long pollInterval = 120;
+
+	/////////////////
+	// Directories //
+	/////////////////
+
+	private Path dataDir = Path.of("data");
+	private Path cacheDir = Path.of("cache");
+	private Path tmpDir = Path.of("tmp");
+
+	/////////////
+	// Hashing //
+	/////////////
+
+	@Min(1)
+	private int hashIterations;
+	@Min(1)
+	private int hashMemory;
+	@Min(1)
+	private int hashParallelism;
+
+	////////////
+	// Runner //
+	////////////
 
 	@NotEmpty
 	private String runnerToken;
-
 	@Min(1)
-	private long disconnectedRunnerGracePeriodSeconds;
+	@Max(65535)
+	private int runnerPort = 3546;
+	@Min(1)
+	private long disconnectedRunnerGracePeriodSeconds = 600;
 
-	private double significanceRelativeThreshold;
-	private double significanceStddevThreshold;
+	/////////////////////////
+	// Significant commits //
+	/////////////////////////
+
+	private double significanceRelativeThreshold = 0.05;
+	private double significanceStddevThreshold = 2;
 	@Min(2)
-	private int significanceMinStddevAmount;
-
-	@NotEmpty
-	private String repoDir;
-
-	@NotNull
-	@Min(1)
-	private int hashMemory;
-
-	@NotNull
-	@Min(1)
-	private int hashIterations;
-
-	@NotEmpty
-	private String archivesRootDir;
+	private int significanceMinStddevAmount = 25;
 
 	public GlobalConfig() {
 		RunnerAwareServerFactory.getInstance().setConfig(this);
 	}
 
-	/**
-	 * @return the JDBC (Java database connectivity) url used to connect to the database
-	 */
-	public String getJdbcUrl() {
-		return jdbcUrl;
+	@Override
+	public ServerFactory getServerFactory() {
+		if (RunnerAwareServerFactory.getInstance().lacksFactory()) {
+			RunnerAwareServerFactory.getInstance().setServerFactory(super.getServerFactory());
+		}
+		return RunnerAwareServerFactory.getInstance();
 	}
 
-	public void setJdbcUrl(String jdbcUrl) {
-		this.jdbcUrl = jdbcUrl;
-	}
-
-	/**
-	 * @return the interval between listener updates
-	 */
-	public Duration getPollInterval() {
-		return Duration.ofSeconds(pollInterval);
-	}
-
-	public void setPollInterval(long pollInterval) {
-		this.pollInterval = pollInterval;
-	}
+	/////////////
+	// General //
+	/////////////
 
 	/**
 	 * @return the token used to authorize as a web administrator
@@ -90,17 +89,6 @@ public class GlobalConfig extends Configuration {
 
 	public void setWebAdminToken(String webAdminToken) {
 		this.webAdminToken = webAdminToken;
-	}
-
-	/**
-	 * @return the port that the dispatcher is listening on
-	 */
-	public int getRunnerPort() {
-		return runnerPort;
-	}
-
-	public void setRunnerPort(int runnerPort) {
-		this.runnerPort = runnerPort;
 	}
 
 	/**
@@ -115,6 +103,80 @@ public class GlobalConfig extends Configuration {
 	}
 
 	/**
+	 * @return the interval between listener updates
+	 */
+	public Duration getPollInterval() {
+		return Duration.ofSeconds(pollInterval);
+	}
+
+	public void setPollInterval(long pollInterval) {
+		this.pollInterval = pollInterval;
+	}
+
+	/////////////////
+	// Directories //
+	/////////////////
+
+	@Nullable
+	public Path getDataDir() {
+		return dataDir;
+	}
+
+	public void setDataDir(@Nullable Path dataDir) {
+		this.dataDir = dataDir;
+	}
+
+	@Nullable
+	public Path getCacheDir() {
+		return cacheDir;
+	}
+
+	public void setCacheDir(@Nullable Path cacheDir) {
+		this.cacheDir = cacheDir;
+	}
+
+	@Nullable
+	public Path getTmpDir() {
+		return tmpDir;
+	}
+
+	public void setTmpDir(@Nullable Path tmpDir) {
+		this.tmpDir = tmpDir;
+	}
+
+	/////////////
+	// Hashing //
+	/////////////
+
+	public int getHashIterations() {
+		return hashIterations;
+	}
+
+	public void setHashIterations(int hashIterations) {
+		this.hashIterations = hashIterations;
+	}
+
+	public int getHashMemory() {
+		return hashMemory;
+	}
+
+	public void setHashMemory(int hashMemory) {
+		this.hashMemory = hashMemory;
+	}
+
+	public int getHashParallelism() {
+		return hashParallelism;
+	}
+
+	public void setHashParallelism(int hashParallelism) {
+		this.hashParallelism = hashParallelism;
+	}
+
+	////////////
+	// Runner //
+	////////////
+
+	/**
 	 * @return the token runners need to provide as authentication
 	 */
 	public String getRunnerToken() {
@@ -123,6 +185,17 @@ public class GlobalConfig extends Configuration {
 
 	public void setRunnerToken(String runnerToken) {
 		this.runnerToken = runnerToken;
+	}
+
+	/**
+	 * @return the port that the dispatcher is listening on
+	 */
+	public int getRunnerPort() {
+		return runnerPort;
+	}
+
+	public void setRunnerPort(int runnerPort) {
+		this.runnerPort = runnerPort;
 	}
 
 	/**
@@ -136,6 +209,10 @@ public class GlobalConfig extends Configuration {
 	public void setDisconnectedRunnerGracePeriodSeconds(long disconnectedRunnerGracePeriodSeconds) {
 		this.disconnectedRunnerGracePeriodSeconds = disconnectedRunnerGracePeriodSeconds;
 	}
+
+	/////////////////////////
+	// Significant commits //
+	/////////////////////////
 
 	/**
 	 * Explained in more detail in the example config.
@@ -174,51 +251,5 @@ public class GlobalConfig extends Configuration {
 
 	public void setSignificanceMinStddevAmount(int significanceMinStddevAmount) {
 		this.significanceMinStddevAmount = significanceMinStddevAmount;
-	}
-
-	/**
-	 * @return the path to the directory where all local repositories will be placed in
-	 */
-	public String getRepoDir() {
-		return repoDir;
-	}
-
-	public void setRepoDir(String repoDir) {
-		this.repoDir = repoDir;
-	}
-
-	public int getHashMemory() {
-		return hashMemory;
-	}
-
-	public void setHashMemory(int hashMemory) {
-		this.hashMemory = hashMemory;
-	}
-
-	public int getHashIterations() {
-		return hashIterations;
-	}
-
-	public void setHashIterations(int hashIterations) {
-		this.hashIterations = hashIterations;
-	}
-
-	/**
-	 * @return the path to the directory where archives are placed in
-	 */
-	public String getArchivesRootDir() {
-		return archivesRootDir;
-	}
-
-	public void setArchivesRootDir(String archivesRootDir) {
-		this.archivesRootDir = archivesRootDir;
-	}
-
-	@Override
-	public ServerFactory getServerFactory() {
-		if (RunnerAwareServerFactory.getInstance().lacksFactory()) {
-			RunnerAwareServerFactory.getInstance().setServerFactory(super.getServerFactory());
-		}
-		return RunnerAwareServerFactory.getInstance();
 	}
 }

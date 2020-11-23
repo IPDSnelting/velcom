@@ -9,6 +9,7 @@ import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.TaskPriority;
 import de.aaaaaaah.velcom.backend.newaccess.taskaccess.exceptions.NoSuchTaskException;
 import de.aaaaaaah.velcom.backend.storage.db.DBReadAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
+import de.aaaaaaah.velcom.backend.storage.tar.TarFileStorage;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -18,9 +19,11 @@ import org.jooq.exception.DataAccessException;
 public class TaskReadAccess {
 
 	protected final DatabaseStorage databaseStorage;
+	protected final TarFileStorage tarFileStorage;
 
-	public TaskReadAccess(DatabaseStorage databaseStorage) {
+	public TaskReadAccess(DatabaseStorage databaseStorage, TarFileStorage tarFileStorage) {
 		this.databaseStorage = databaseStorage;
+		this.tarFileStorage = tarFileStorage;
 	}
 
 	protected static Task taskRecordToTask(TaskRecord record) {

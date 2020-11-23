@@ -8,6 +8,8 @@
     item-text="name"
     item-value="id"
     label="Repository name"
+    :hide-details="rules.length === 0"
+    class="mt-0 pt-0"
   >
     <template v-slot:item="data">
       <v-list-item-avatar>

@@ -2,7 +2,7 @@
   <v-container fluid style="max-width: 1185px">
     <v-dialog v-model="showDetailErrorDialog">
       <v-card>
-        <v-toolbar dark color="primary">
+        <v-toolbar dark color="toolbarColor">
           <v-toolbar-title>Full error message</v-toolbar-title>
         </v-toolbar>
         <v-card-text>

@@ -2,7 +2,6 @@ package de.aaaaaaah.velcom.backend;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
-import de.aaaaaaah.velcom.backend.access.ArchiveAccess;
 import de.aaaaaaah.velcom.backend.access.BenchmarkWriteAccess;
 import de.aaaaaaah.velcom.backend.access.TokenWriteAccess;
 import de.aaaaaaah.velcom.backend.access.entities.AuthToken;
@@ -13,11 +12,11 @@ import de.aaaaaaah.velcom.backend.data.repocomparison.TimesliceComparison;
 import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparator;
 import de.aaaaaaah.velcom.backend.data.runcomparison.SignificanceFactors;
 import de.aaaaaaah.velcom.backend.listener.Listener;
+import de.aaaaaaah.velcom.backend.newaccess.archiveaccess.ArchiveReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.caches.AvailableDimensionsCache;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.DimensionReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.RepoWriteAccess;
-import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RemoteUrl;
 import de.aaaaaaah.velcom.backend.newaccess.taskaccess.TaskWriteAccess;
 import de.aaaaaaah.velcom.backend.restapi.authentication.RepoAuthenticator;
 import de.aaaaaaah.velcom.backend.restapi.authentication.RepoUser;
@@ -42,13 +41,16 @@ import de.aaaaaaah.velcom.backend.restapi.exception.NoSuchRunExceptionMapper;
 import de.aaaaaaah.velcom.backend.restapi.exception.NoSuchTaskExceptionMapper;
 import de.aaaaaaah.velcom.backend.restapi.exception.TaskAlreadyExistsExceptionMapper;
 import de.aaaaaaah.velcom.backend.runner.Dispatcher;
+import de.aaaaaaah.velcom.backend.storage.ManagedDirs;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import de.aaaaaaah.velcom.backend.storage.repo.RepoStorage;
+import de.aaaaaaah.velcom.backend.storage.tar.TarFileStorage;
 import de.aaaaaaah.velcom.shared.GitProperties;
 import io.dropwizard.Application;
 import io.dropwizard.auth.AuthDynamicFeature;
 import io.dropwizard.auth.AuthValueFactoryProvider;
 import io.dropwizard.auth.basic.BasicCredentialAuthFilter;
+import io.dropwizard.forms.MultiPartBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import io.micrometer.core.instrument.Gauge;
@@ -68,7 +70,6 @@ import io.micrometer.core.instrument.config.MeterFilterReply;
 import io.micrometer.prometheus.PrometheusConfig;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.stream.Stream;
 import javax.servlet.DispatcherType;
@@ -104,7 +105,8 @@ public class ServerMain extends Application<GlobalConfig> {
 
 	@Override
 	public void initialize(Bootstrap<GlobalConfig> bootstrap) {
-		bootstrap.addCommand(new HashPerformanceTestCommand());
+		bootstrap.addCommand(new FindHashIterationsCommand());
+		bootstrap.addBundle(new MultiPartBundle());
 	}
 
 	@Override
@@ -112,33 +114,44 @@ public class ServerMain extends Application<GlobalConfig> {
 		configureMetrics(environment);
 
 		// Storage layer
-		RepoStorage repoStorage = new RepoStorage(configuration.getRepoDir());
-		DatabaseStorage databaseStorage = new DatabaseStorage(configuration);
+		ManagedDirs managedDirs = new ManagedDirs(
+			configuration.getDataDir(),
+			configuration.getCacheDir(),
+			configuration.getTmpDir()
+		);
+		managedDirs.createAndCleanDirs();
+
+		DatabaseStorage databaseStorage = new DatabaseStorage(managedDirs.getJdbcUrl());
+		RepoStorage repoStorage = new RepoStorage(managedDirs.getReposDir());
+		TarFileStorage tarFileStorage = new TarFileStorage(managedDirs.getTarsDir());
 
 		// Caches
 		AvailableDimensionsCache availableDimensionsCache = new AvailableDimensionsCache();
 
 		// Access layer
-		TaskWriteAccess taskAccess = new TaskWriteAccess(databaseStorage);
+		TaskWriteAccess taskAccess = new TaskWriteAccess(databaseStorage, tarFileStorage);
 		CommitReadAccess commitAccess = new CommitReadAccess(databaseStorage);
 		DimensionReadAccess dimensionAccess = new DimensionReadAccess(databaseStorage);
 		RepoWriteAccess repoAccess = new RepoWriteAccess(databaseStorage, availableDimensionsCache);
 		TokenWriteAccess tokenAccess = new TokenWriteAccess(
 			databaseStorage,
 			new AuthToken(configuration.getWebAdminToken()),
+			configuration.getHashIterations(),
 			configuration.getHashMemory(),
-			configuration.getHashIterations()
+			configuration.getHashParallelism()
 		);
-		ArchiveAccess archiveAccess = new ArchiveAccess(
-			Path.of(configuration.getArchivesRootDir()),
-			new RemoteUrl(configuration.getBenchmarkRepoRemoteUrl()),
-			repoStorage
+		ArchiveReadAccess archiveAccess = new ArchiveReadAccess(
+			managedDirs.getArchivesDir(),
+			repoStorage,
+			tarFileStorage,
+			configuration.getBenchmarkRepoRemoteUrl()
 		);
 		BenchmarkWriteAccess benchmarkAccess = new BenchmarkWriteAccess(
 			databaseStorage, repoAccess, availableDimensionsCache
 		);
 
 		taskAccess.resetAllTaskStatuses();
+		taskAccess.cleanUpTarFiles();
 
 		// Data layer
 		Queue queue = new Queue(taskAccess, archiveAccess, benchmarkAccess);

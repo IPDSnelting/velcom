@@ -11,11 +11,12 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 class Argon2AlgorithmTest {
 
-	private static final int MEMORY_IN_KIB = 5120;
 	private static final int ITERATIONS = 50;
+	private static final int MEMORY = 5120; // in KiB
+	private static final int PARALLELISM = 1;
 	private static final AuthToken TOKEN = new AuthToken("*****");
 
-	private final Argon2Algorithm algo = new Argon2Algorithm(MEMORY_IN_KIB, ITERATIONS);
+	private final Argon2Algorithm algo = new Argon2Algorithm(ITERATIONS, MEMORY, PARALLELISM);
 
 	@Test
 	void testGenerateAndMatches() {

@@ -14,7 +14,7 @@
       <v-col>
         <v-card>
           <v-card-title>
-            <v-toolbar dark color="primary">Run Result</v-toolbar>
+            <v-toolbar dark color="toolbarColor">Run Result</v-toolbar>
           </v-card-title>
           <v-card-text class="mx-2">
             <measurements-display

@@ -2,7 +2,6 @@ package de.aaaaaaah.velcom.backend.storage.db;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-import de.aaaaaaah.velcom.backend.GlobalConfig;
 import de.aaaaaaah.velcom.backend.util.CheckedConsumer;
 import de.aaaaaaah.velcom.backend.util.CheckedFunction;
 import io.micrometer.core.instrument.Metrics;
@@ -24,18 +23,6 @@ public class DatabaseStorage {
 
 	private final DSLContext context;
 	private final Lock writeLock = new ReentrantLock();
-
-	/**
-	 * Initializes the database storage.
-	 *
-	 * <p>
-	 * Also performs database migrations, if necessary.
-	 *
-	 * @param config the config used to get the connection information for the database from
-	 */
-	public DatabaseStorage(GlobalConfig config) {
-		this(config.getJdbcUrl());
-	}
 
 	/**
 	 * Initializes the database storage.

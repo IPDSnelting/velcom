@@ -31,6 +31,19 @@
               <v-container fluid class="ma-0 pa-0">
                 <v-row justify="end" no-gutters>
                   <v-col cols="auto" class="mb-5" v-if="isWebsiteAdmin">
+                    <upload-tar-dialog
+                      v-model="uploadTarDialogOpen"
+                    ></upload-tar-dialog>
+                    <v-btn
+                      color="primary"
+                      text
+                      outlined
+                      @click="uploadTarDialogOpen = true"
+                      >Upload Tar</v-btn
+                    >
+                  </v-col>
+                  <v-spacer></v-spacer>
+                  <v-col cols="auto" class="mb-5" v-if="isWebsiteAdmin">
                     <v-tooltip bottom>
                       <template #activator="{ on }">
                         <v-btn
@@ -87,14 +100,18 @@ import WorkerOverview from '../components/overviews/WorkerOverview.vue'
 import QueueOverview from '../components/overviews/QueueOverview.vue'
 import { vxm } from '@/store'
 import { Route, RawLocation } from 'vue-router'
+import UploadTarDialog from '@/components/dialogs/UploadTarDialog.vue'
 
 @Component({
   components: {
+    UploadTarDialog,
     'worker-overview': WorkerOverview,
     'queue-overview': QueueOverview
   }
 })
 export default class Queue extends Vue {
+  private uploadTarDialogOpen: boolean = false
+
   private get workers() {
     return vxm.queueModule.workers
   }

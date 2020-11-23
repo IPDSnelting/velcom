@@ -25,12 +25,16 @@ import de.aaaaaaah.velcom.shared.util.Pair;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.PATCH;
 import io.micrometer.core.annotation.Timed;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -40,6 +44,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status;
+import org.glassfish.jersey.media.multipart.FormDataParam;
 
 @Path("/queue")
 @Produces(MediaType.APPLICATION_JSON)
@@ -193,6 +198,35 @@ public class QueueEndpoint {
 		return new PostCommitReply(JsonTask.fromTask(insertedTask.get(), commitReadAccess));
 	}
 
+	@POST
+	@Path("upload/tar")
+	@Consumes(MediaType.MULTIPART_FORM_DATA)
+	@Timed(histogram = true)
+	public UploadTarReply uploadTar(
+		@Auth RepoUser user,
+		@Nonnull @FormDataParam("description") String description,
+		@Nullable @FormDataParam("repo_id") UUID repoUuid,
+		@FormDataParam("file") InputStream inputStream
+	) {
+		user.guardAdminAccess();
+
+		Optional<RepoId> repoId = Optional.ofNullable(repoUuid).map(RepoId::new);
+
+		Optional<Task> task = queue.addTar(
+			"Admin",
+			TaskPriority.MANUAL,
+			repoId.orElse(null),
+			description,
+			inputStream
+		);
+
+		if (task.isEmpty()) {
+			throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
+		}
+
+		return new UploadTarReply(JsonTask.fromTask(task.get(), commitReadAccess));
+	}
+
 	@Path("task/{taskId}/progress")
 	@GET
 	@Timed(histogram = true)
@@ -217,6 +251,19 @@ public class QueueEndpoint {
 		private final JsonTask task;
 
 		private PostCommitReply(JsonTask task) {
+			this.task = task;
+		}
+
+		public JsonTask getTask() {
+			return task;
+		}
+	}
+
+	private static class UploadTarReply {
+
+		private final JsonTask task;
+
+		private UploadTarReply(JsonTask task) {
 			this.task = task;
 		}
 

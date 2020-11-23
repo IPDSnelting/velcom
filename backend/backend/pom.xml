@@ -29,7 +29,7 @@
     <micrometer.version>1.5.5</micrometer.version>
     <prometheus.version>0.9.0</prometheus.version>
     <sqlite.version>3.32.3.1</sqlite.version>
-    
+
     <maven-antrun-plugin.version>3.0.0</maven-antrun-plugin.version>
     <maven-dependency-plugin.version>3.1.2</maven-dependency-plugin.version>
   </properties>
@@ -229,6 +229,11 @@
     <dependency>
       <groupId>io.dropwizard</groupId>
       <artifactId>dropwizard-auth</artifactId>
+      <version>${dropwizard.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.dropwizard</groupId>
+      <artifactId>dropwizard-forms</artifactId>
       <version>${dropwizard.version}</version>
     </dependency>
 

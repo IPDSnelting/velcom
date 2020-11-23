@@ -8,10 +8,10 @@ import javax.annotation.Nullable;
 
 public class TokenWriteAccess extends TokenReadAccess {
 
-	public TokenWriteAccess(DatabaseStorage databaseStorage, AuthToken adminToken, int hashMemory,
-		int hashIterations) {
+	public TokenWriteAccess(DatabaseStorage databaseStorage, AuthToken adminToken, int hashIterations,
+		int hashMemory, int hashParallelism) {
 
-		super(databaseStorage, adminToken, hashMemory, hashIterations);
+		super(databaseStorage, adminToken, hashIterations, hashMemory, hashParallelism);
 	}
 
 	/**

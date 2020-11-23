@@ -12,12 +12,9 @@
                   v-if="source.repoId"
                   :repoId="source.repoId"
                 ></repo-display>
-                <span class="mx-2">—</span>
-                <router-link
-                  class="concealed-link"
-                  :to="{ name: 'run-detail', params: { first: id } }"
-                >
-                  <span class="commit-message">{{ source.description }}</span>
+                <span class="mx-2" v-if="source.repoId">—</span>
+                <router-link class="concealed-link" :to="linkLocation">
+                  <span class="tar-message">{{ source.description }}</span>
                 </router-link>
               </v-list-item-title>
               <v-list-item-content v-if="$scopedSlots['content']" class="py-0">
@@ -49,6 +46,7 @@ import { Prop } from 'vue-property-decorator'
 import { TarTaskSource, RunId, TaskId } from '@/store/types'
 import CommitChip from '../CommitChip.vue'
 import InlineMinimalRepoNameDisplay from '../InlineMinimalRepoDisplay.vue'
+import { RawLocation } from 'vue-router'
 
 @Component({
   components: {
@@ -62,11 +60,14 @@ export default class TarTaskOverview extends Vue {
 
   @Prop()
   private id!: RunId | TaskId
+
+  @Prop()
+  private linkLocation!: RawLocation
 }
 </script>
 
 <style scoped>
-.commit-message {
+.tar-message {
   font-style: italic;
 }
 .flex-shrink-too {

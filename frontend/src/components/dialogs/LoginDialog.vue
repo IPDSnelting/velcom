@@ -6,7 +6,7 @@
       </template>
 
       <v-card>
-        <v-toolbar dark color="primary">
+        <v-toolbar dark color="toolbarColor">
           <v-toolbar-title>Login</v-toolbar-title>
         </v-toolbar>
         <v-card-text>

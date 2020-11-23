@@ -1,7 +1,7 @@
 <template>
   <v-card>
     <v-card-title>
-      <v-toolbar dark color="primary">
+      <v-toolbar dark color="toolbarColor">
         Runner output (standard error stream)
       </v-toolbar>
     </v-card-title>

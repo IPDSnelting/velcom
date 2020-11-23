@@ -2,11 +2,11 @@ package de.aaaaaaah.velcom.backend.data.queue;
 
 import static java.util.stream.Collectors.toList;
 
-import de.aaaaaaah.velcom.backend.access.ArchiveAccess;
 import de.aaaaaaah.velcom.backend.access.BenchmarkWriteAccess;
 import de.aaaaaaah.velcom.backend.access.entities.benchmark.NewRun;
-import de.aaaaaaah.velcom.backend.access.exceptions.PrepareTransferException;
-import de.aaaaaaah.velcom.backend.access.exceptions.TransferException;
+import de.aaaaaaah.velcom.backend.newaccess.archiveaccess.ArchiveReadAccess;
+import de.aaaaaaah.velcom.backend.newaccess.archiveaccess.exceptions.TarRetrieveException;
+import de.aaaaaaah.velcom.backend.newaccess.archiveaccess.exceptions.TarTransferException;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.newaccess.taskaccess.TaskWriteAccess;
@@ -14,6 +14,7 @@ import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.Task;
 import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.TaskId;
 import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.TaskPriority;
 import de.aaaaaaah.velcom.backend.newaccess.taskaccess.exceptions.NoSuchTaskException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -21,6 +22,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 
 /**
  * The queue keeps track of all current tasks and their priority and status. It knows which tasks
@@ -30,12 +32,12 @@ import java.util.stream.Collectors;
 public class Queue {
 
 	private final TaskWriteAccess taskAccess;
-	private final ArchiveAccess archiveAccess;
+	private final ArchiveReadAccess archiveAccess;
 	private final BenchmarkWriteAccess benchAccess;
 
 	private final AtomicReference<Optional<RepoId>> currentRepoId;
 
-	public Queue(TaskWriteAccess taskAccess, ArchiveAccess archiveAccess,
+	public Queue(TaskWriteAccess taskAccess, ArchiveReadAccess archiveAccess,
 		BenchmarkWriteAccess benchAccess) {
 
 		this.taskAccess = taskAccess;
@@ -156,7 +158,7 @@ public class Queue {
 	public Optional<Task> addCommit(String author, RepoId repoId, CommitHash hash,
 		TaskPriority priority) {
 
-		return taskAccess.insertCommit(author, repoId, hash, priority);
+		return taskAccess.insertCommit(author, priority, repoId, hash);
 	}
 
 	/**
@@ -171,7 +173,23 @@ public class Queue {
 	public void addCommits(String author, RepoId repoId, List<CommitHash> hashes,
 		TaskPriority priority) {
 
-		taskAccess.insertCommits(author, repoId, hashes, priority);
+		taskAccess.insertCommits(author, priority, repoId, hashes);
+	}
+
+	/**
+	 * Add a tar file to the queue.
+	 *
+	 * @param author the new task's author
+	 * @param priority the new task's priority
+	 * @param repoId the id of the repo the tar file should to (or null)
+	 * @param description the tar file's description
+	 * @param inputStream the tar file's contents
+	 * @return the new task or empty if no task was created
+	 */
+	public Optional<Task> addTar(String author, TaskPriority priority, @Nullable RepoId repoId,
+		String description, InputStream inputStream) {
+
+		return taskAccess.insertTar(author, priority, description, repoId, inputStream);
 	}
 
 	/**
@@ -187,17 +205,16 @@ public class Queue {
 	/**
 	 * Transfers a task to the supplied {@link OutputStream}.
 	 *
-	 * <p> Note that the provided output stream will be closed after the transfer operation is
-	 * done.
+	 * <p> Note that the provided output stream will be closed after the transfer operation is done.
 	 *
 	 * @param taskId the id of the task to be transferred
 	 * @param output the output to transfer the task to
 	 * @throws NoSuchTaskException if no task with the given id exists
-	 * @throws TransferException if the transfer process itself failed
-	 * @throws PrepareTransferException if the preparation to transfer failed
+	 * @throws TarRetrieveException if the tar file could not be retrieved
+	 * @throws TarTransferException if the tar file could not be transferred
 	 */
 	public void transferTask(TaskId taskId, OutputStream output)
-		throws NoSuchTaskException, TransferException, PrepareTransferException {
+		throws NoSuchTaskException, TarRetrieveException, TarTransferException {
 
 		Task task = taskAccess.getTask(taskId);
 		archiveAccess.transferTask(task, output);

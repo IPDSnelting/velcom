@@ -92,7 +92,7 @@ public class TransferUtils {
 	 * Creates a tar of the repository at the specified {@code repoDir} and simultaneously writes that
 	 * tar into the given output stream.
 	 *
-	 * <p>Note that this method closes the provided output stream after it has finished.</p>
+	 * <p> Note that this method closes the provided output stream after it has finished.
 	 *
 	 * @param repoDir the path to the repository
 	 * @param out where the tar should be written to
@@ -128,22 +128,6 @@ public class TransferUtils {
 		} finally {
 			long end = System.currentTimeMillis();
 			LOGGER.info("Tar operation took {} ms... ({})", end - start, repoDir);
-		}
-	}
-
-	/**
-	 * Transfers an existing tar file which is located at the specified {@code tarPath} into the
-	 * provided output stream.
-	 *
-	 * <p>Note that this method closes the provided output stream after it has finished.</p>
-	 *
-	 * @param tarPath where the tar file is located
-	 * @param out the output stream
-	 * @throws IOException if an io error occured
-	 */
-	public static void transferTar(Path tarPath, OutputStream out) throws IOException {
-		try (out; InputStream in = Files.newInputStream(tarPath)) {
-			in.transferTo(out);
 		}
 	}
 
