@@ -52,6 +52,13 @@ export class DetailGraphStore extends VxModule {
   zoomYStartValue: number | null = null
   zoomYEndValue: number | null = null
 
+  // different timespan buffer sizes
+  private minToBuffer: number = 14
+  private maxToBuffer: number = 365
+  private minBuffer: number = 8 // ~ a week, 4 days on each side
+  private maxBuffer: number = 182 // ~ half a year
+  private bufferRatio: number = 0.5
+
   // One week in the past, as elegant as ever
   startTime: Date = new Date(new Date().setDate(new Date().getDate() - 7))
   endTime: Date = new Date()
@@ -68,11 +75,12 @@ export class DetailGraphStore extends VxModule {
    */
   @action
   async fetchDetailGraph(): Promise<DetailDataPoint[]> {
+    const dayInMillis: number = 60 * 60 * 24
     const effectiveStartTime: number = Math.floor(
-      this.startTime.getTime() / 1000
+      this.bufferedTimespan.bufferedStartTime.getTime() / 1000
     )
     const effectiveEndTime: number = Math.floor(
-      this.endTime.getTime() / 1000 + 60 * 60 * 24
+      this.bufferedTimespan.bufferedEndTime.getTime() / 1000 + dayInMillis
     )
 
     // If we have selected no dimensions, we don't event need to make a request
@@ -289,6 +297,25 @@ export class DetailGraphStore extends VxModule {
 
       return location.origin + route.href
     }
+  }
+
+  get bufferedTimespan(): { bufferedStartTime: Date; bufferedEndTime: Date } {
+    let buffer: number = 0
+    if (this.duration <= this.maxToBuffer) {
+      buffer = this.minBuffer
+    } else if (this.duration >= this.maxToBuffer) {
+      buffer = this.maxBuffer
+    } else {
+      buffer = this.duration * this.bufferRatio
+    }
+    const bufferMillis = buffer * 1000 * 60 * 60 * 24 // ms * minutes * hours * days
+
+    const bufferedStartTime = new Date(
+      this.startTime.getTime() - bufferMillis / 2
+    )
+    const bufferedEndTime = new Date(this.endTime.getTime() + bufferMillis / 2)
+
+    return { bufferedStartTime, bufferedEndTime }
   }
 
   /**
