@@ -34,6 +34,20 @@ type RealOptions = dygraphs.Options & {
   rangeSelectorAlpha?: number
 }
 
+const doubleClickZoomOutPlugin = {
+  activate: function (g: Dygraph) {
+    const initialDateWindow = g.getOption('dateWindow')
+    return {
+      dblclick: (e: Event) => {
+        ;(e as any).dygraph.updateOptions({
+          dateWindow: initialDateWindow // don't show buffer
+        })
+        e.preventDefault()
+      }
+    }
+  }
+}
+
 @Component({
   components: {
     'datapoint-dialog': DetailDatapointDialog
@@ -129,6 +143,17 @@ export default class DytailGraph extends Vue {
       this.datapoints.map(it => it.committerDate.getTime())
     )
     return max || 0
+  }
+
+  private get initialLowerBound(): number {
+    return Math.max(
+      vxm.detailGraphModule.startTime.getTime(),
+      this.minDateValue
+    )
+  }
+
+  private get initialUpperBound(): number {
+    return Math.min(vxm.detailGraphModule.endTime.getTime(), this.maxDateValue)
   }
 
   private get numberFormat(): Intl.NumberFormat {
@@ -327,8 +352,8 @@ export default class DytailGraph extends Vue {
       labels: ['x', ...this.dimensions.map(it => escapeHtml(it.toString()))],
       colors: this.dimensionsColors(),
       dateWindow: [
-        vxm.detailGraphModule.zoomXStartValue || this.minDateValue,
-        vxm.detailGraphModule.zoomXEndValue || this.maxDateValue
+        vxm.detailGraphModule.zoomXStartValue || this.initialLowerBound,
+        vxm.detailGraphModule.zoomXEndValue || this.initialUpperBound
       ],
       valueRange: [
         vxm.detailGraphModule.zoomYStartValue,
@@ -394,11 +419,15 @@ export default class DytailGraph extends Vue {
         drawPoints: false,
         animatedZooms: false, // does not work with slider
         pointSize: 3,
-        panEdgeFraction: 0.00001,
+        panEdgeFraction: 0.5,
         zoomCallback: this.dygraphsZoomed,
+        dateWindow: [this.initialLowerBound, this.initialUpperBound],
         legendFormatter: this.tooltipFormatter,
         crosshairColor: 'currentColor',
-        plugins: [new Crosshair({ direction: 'vertical' })],
+        plugins: [
+          new Crosshair({ direction: 'vertical' }),
+          doubleClickZoomOutPlugin
+        ],
         showRangeSelector: true,
         rangeSelectorHeight: 30,
         rangeSelectorPlotLineWidth: this.selectorLineWidth,
@@ -429,6 +458,8 @@ export default class DytailGraph extends Vue {
       vxm.detailGraphModule.zoomXStartValue = null
       vxm.detailGraphModule.zoomXEndValue = null
     }
+
+    this.graph.xAxisExtremes()
 
     if (this.graph.isZoomed('y')) {
       const [yZoomStart, yZoomEnd] = yRanges[0]
