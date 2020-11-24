@@ -10,6 +10,7 @@
           @close="pointDialogOpen = false"
         ></datapoint-dialog>
         <div id="chart" :style="{ height: '500px' }"></div>
+        <div id="ranger" :style="{ height: '500px', height: '30px' }"></div>
       </v-col>
     </v-row>
   </v-container>
@@ -24,6 +25,7 @@ import { DetailDataPoint, Dimension, DimensionId } from '@/store/types'
 import { vxm } from '@/store'
 import 'dygraphs/css/dygraph.css'
 import Crosshair from 'dygraphs/src/extras/crosshair.js'
+import { synchronize } from '@/util/dygraphSynchronizer.js'
 import { escapeHtml } from '@/util/TextUtils'
 import { formatDate } from '@/util/TimeUtil'
 import DetailDatapointDialog from '@/components/dialogs/DetailDatapointDialog.vue'
@@ -64,6 +66,8 @@ export default class DytailGraph extends Vue {
   private dayEquidistant!: boolean
 
   private graph!: Dygraph
+  private ranger!: Dygraph
+  private synchronizer!: any
 
   private height: number = 500
   private pointDialogDatapoint: DetailDataPoint | null = null
@@ -364,12 +368,25 @@ export default class DytailGraph extends Vue {
       rangeSelectorAlpha: this.selectorAlpha
     } as RealOptions)
 
+    this.ranger.updateOptions({
+      file: data.filter(
+        (datapoint: number[]) =>
+          datapoint[0] <= this.initialUpperBound &&
+          datapoint[0] >= this.initialLowerBound
+      ),
+      labels: ['x', ...this.dimensions.map(it => escapeHtml(it.toString()))],
+      includeZero: this.beginYAtZero,
+      rangeSelectorPlotLineWidth: this.selectorLineWidth,
+      rangeSelectorAlpha: this.selectorAlpha
+    } as RealOptions)
+
     this.drawMarkers()
   }
 
   mounted(): void {
     // empty string because div is not expected to be NULL
     const chartDiv = document.getElementById('chart') || ''
+    const rangerDiv = document.getElementById('ranger') || ''
 
     this.graph = new Dygraph(
       // containing div
@@ -428,6 +445,25 @@ export default class DytailGraph extends Vue {
           new Crosshair({ direction: 'vertical' }),
           doubleClickZoomOutPlugin
         ],
+        drawHighlightPointCallback: this.drawHighlightPointCallback as any,
+        highlightCircleSize: 5,
+        // and, to keep the ability to brush and zoom:
+        interactionModel: Dygraph.defaultInteractionModel
+      } as RealOptions
+    )
+
+    this.ranger = new Dygraph(
+      // containing div
+      rangerDiv,
+      [[1, 1]],
+      {
+        xAxisHeight: 30,
+        axes: {
+          x: {
+            drawAxis: false
+          }
+        },
+        panEdgeFraction: null,
         showRangeSelector: true,
         rangeSelectorHeight: 30,
         rangeSelectorPlotLineWidth: this.selectorLineWidth,
@@ -435,13 +471,13 @@ export default class DytailGraph extends Vue {
         rangeSelectorForegroundLineWidth: 0.5,
         rangeSelectorPlotFillColor: '',
         rangeSelectorPlotStrokeColor: 'grey',
-        drawHighlightPointCallback: this.drawHighlightPointCallback as any,
-        highlightCircleSize: 5,
         rangeSelectorBackgroundStrokeColor: 'currentColor',
-        // and, to keep the ability to brush and zoom:
-        interactionModel: Dygraph.defaultInteractionModel
+        showLabelsOnHighlight: false,
+        legend: 'never'
       } as RealOptions
     )
+
+    synchronize([this.graph, this.ranger], { range: false })
 
     this.up()
   }
