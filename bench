@@ -20,15 +20,25 @@ def execute_program(args: List[str]) -> float:
     return end - start
 
 
-def get_coverage() -> str:
+def get_coverage() -> float:
     path = target_path() / "backend/aggregator/target/site/jacoco-aggregate/index.html"
     coverage_regex = r'<td>Total</td><td class="bar">([\d,]+) of ([\d,]+)</td>'
     with open(path) as f:
         match = re.search(coverage_regex, f.read())
+        if not match:
+            raise Exception("Couldn't find coverage")
         missed = int(match.group(1).replace(",", ""))
         total = int(match.group(2).replace(",", ""))
         coverage = (total - missed) / total
         return coverage * 100  # percent
+
+
+def get_checkstyle_violations() -> int:
+    violations: int = 0
+    for path in target_path().glob("backend/*/target/checkstyle-result.xml"):
+        with open(path, "r") as f:
+            violations += len([line for line in f.readlines() if "<error " in line])
+    return violations
 
 
 def can_use_makefile() -> bool:
@@ -85,6 +95,14 @@ def build_makefile():
         lambda: get_coverage(),
         "percent",
         "MORE_IS_BETTER"
+    )
+
+    guarded_try_metric(
+        "backend",
+        "checkstyle_violations",
+        lambda: get_checkstyle_violations(),
+        unit="",
+        resultInterpretation="LESS_IS_BETTER"
     )
 
     guarded_try_metric(
