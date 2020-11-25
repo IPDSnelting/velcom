@@ -1,4 +1,4 @@
-package de.aaaaaaah.velcom.backend.access.entities;
+package de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities;
 
 import de.aaaaaaah.velcom.shared.protocol.serialization.Result;
 import java.util.List;

@@ -1,5 +1,7 @@
-package de.aaaaaaah.velcom.backend.access.entities;
+package de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities;
 
+import de.aaaaaaah.velcom.backend.access.entities.Measurement;
+import de.aaaaaaah.velcom.backend.access.entities.Run;
 import java.util.Comparator;
 import java.util.Objects;
 

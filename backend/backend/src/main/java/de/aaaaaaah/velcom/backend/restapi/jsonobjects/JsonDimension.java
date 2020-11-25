@@ -1,7 +1,7 @@
 package de.aaaaaaah.velcom.backend.restapi.jsonobjects;
 
-import de.aaaaaaah.velcom.backend.access.entities.DimensionInfo;
-import de.aaaaaaah.velcom.backend.access.entities.Interpretation;
+import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.DimensionInfo;
+import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Interpretation;
 
 public class JsonDimension {
 

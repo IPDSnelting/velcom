@@ -1,5 +1,7 @@
 package de.aaaaaaah.velcom.backend.access.entities;
 
+import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Interpretation;
+import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Unit;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
