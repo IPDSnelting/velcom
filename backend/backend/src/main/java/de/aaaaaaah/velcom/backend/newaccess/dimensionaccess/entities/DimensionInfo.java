@@ -1,6 +1,5 @@
 package de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities;
 
-import de.aaaaaaah.velcom.backend.access.entities.Measurement;
 import java.util.Objects;
 
 public class DimensionInfo {
@@ -8,11 +7,15 @@ public class DimensionInfo {
 	private final Dimension dimension;
 	private final Unit unit;
 	private final Interpretation interpretation;
+	private final boolean significant;
 
-	public DimensionInfo(Dimension dimension, Unit unit, Interpretation interpretation) {
+	public DimensionInfo(Dimension dimension, Unit unit, Interpretation interpretation,
+		boolean significant) {
+
 		this.dimension = Objects.requireNonNull(dimension);
 		this.unit = Objects.requireNonNull(unit);
 		this.interpretation = Objects.requireNonNull(interpretation);
+		this.significant = significant;
 	}
 
 	/**
@@ -21,17 +24,7 @@ public class DimensionInfo {
 	 * @param dimension the dimension
 	 */
 	public DimensionInfo(Dimension dimension) {
-		this(dimension, Unit.DEFAULT, Interpretation.DEFAULT);
-	}
-
-	public static DimensionInfo fromMeasurement(Measurement measurement, Unit unit,
-		Interpretation interpretation) {
-
-		return new DimensionInfo(
-			measurement.getDimension(),
-			unit,
-			interpretation
-		);
+		this(dimension, Unit.DEFAULT, Interpretation.DEFAULT, true);
 	}
 
 	public Dimension getDimension() {
@@ -44,6 +37,10 @@ public class DimensionInfo {
 
 	public Interpretation getInterpretation() {
 		return interpretation;
+	}
+
+	public boolean isSignificant() {
+		return significant;
 	}
 
 	@Override

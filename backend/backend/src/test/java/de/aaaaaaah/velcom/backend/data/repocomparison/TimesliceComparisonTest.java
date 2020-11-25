@@ -7,17 +7,17 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
-import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Dimension;
-import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.DimensionInfo;
-import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Interpretation;
 import de.aaaaaaah.velcom.backend.access.entities.Measurement;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementValues;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
 import de.aaaaaaah.velcom.backend.access.entities.RunId;
-import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Unit;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.Commit;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Dimension;
+import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.DimensionInfo;
+import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Interpretation;
+import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Unit;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.BranchName;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.shared.util.Either;
@@ -89,7 +89,7 @@ class TimesliceComparisonTest {
 
 		dimension = new Dimension("benchmark", "metric");
 		dimensionInfo = new DimensionInfo(dimension, new Unit("testunit"),
-			Interpretation.MORE_IS_BETTER);
+			Interpretation.MORE_IS_BETTER, true);
 		repoId = new RepoId(UUID.randomUUID());
 		startBranches = Set.of(BranchName.fromName("main"), BranchName.fromName("stable"));
 

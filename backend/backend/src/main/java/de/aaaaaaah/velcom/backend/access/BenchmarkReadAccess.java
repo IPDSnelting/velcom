@@ -454,7 +454,8 @@ public class BenchmarkReadAccess {
 					DimensionInfo newInfo = new DimensionInfo(
 						info.getDimension(),
 						new Unit(record.value3()),
-						info.getInterpretation()
+						info.getInterpretation(),
+						info.isSignificant()
 					);
 					dimensions.put(dimension, newInfo);
 				});
@@ -472,7 +473,8 @@ public class BenchmarkReadAccess {
 					DimensionInfo newInfo = new DimensionInfo(
 						info.getDimension(),
 						info.getUnit(),
-						Interpretation.fromTextualRepresentation(record.value3())
+						Interpretation.fromTextualRepresentation(record.value3()),
+						info.isSignificant()
 					);
 					dimensions.put(dimension, newInfo);
 				});
@@ -488,16 +490,19 @@ public class BenchmarkReadAccess {
 		if (measurement.getUnit().isPresent() || measurement.getInterpretation().isPresent()) {
 			dimensions.compute(measurement.getDimension(), (dimension, info) -> {
 				if (info == null) {
+					DimensionInfo defaultInfo = new DimensionInfo(dimension);
 					return new DimensionInfo(
 						dimension,
-						measurement.getUnit().orElse(Unit.DEFAULT),
-						measurement.getInterpretation().orElse(Interpretation.DEFAULT)
+						measurement.getUnit().orElse(defaultInfo.getUnit()),
+						measurement.getInterpretation().orElse(defaultInfo.getInterpretation()),
+						defaultInfo.isSignificant()
 					);
 				} else {
 					return new DimensionInfo(
 						dimension,
 						measurement.getUnit().orElse(info.getUnit()),
-						measurement.getInterpretation().orElse(info.getInterpretation())
+						measurement.getInterpretation().orElse(info.getInterpretation()),
+						info.isSignificant()
 					);
 				}
 			});

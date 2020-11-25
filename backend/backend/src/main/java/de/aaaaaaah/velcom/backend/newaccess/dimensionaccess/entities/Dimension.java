@@ -1,12 +1,11 @@
 package de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities;
 
-import de.aaaaaaah.velcom.backend.access.entities.Measurement;
-import de.aaaaaaah.velcom.backend.access.entities.Run;
 import java.util.Comparator;
 import java.util.Objects;
 
 /**
- * A "dumb" class that identifies a {@link Measurement} in a {@link Run}.
+ * A dimension consists of a benchmark and a metric and can uniquely identify a measurement in a
+ * run.
  */
 public class Dimension implements Comparable<Dimension> {
 
