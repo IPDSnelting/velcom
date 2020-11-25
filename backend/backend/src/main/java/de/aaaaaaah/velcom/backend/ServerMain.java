@@ -150,6 +150,7 @@ public class ServerMain extends Application<GlobalConfig> {
 			databaseStorage, repoAccess, availableDimensionsCache
 		);
 
+		dimensionAccess.migrate(); // TODO: 25.11.20 Remove after migration
 		taskAccess.resetAllTaskStatuses();
 		taskAccess.cleanUpTarFiles();
 

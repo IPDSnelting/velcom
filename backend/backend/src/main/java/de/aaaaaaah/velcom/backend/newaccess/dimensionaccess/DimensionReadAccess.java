@@ -1,17 +1,26 @@
 package de.aaaaaaah.velcom.backend.newaccess.dimensionaccess;
 
+import static org.jooq.codegen.db.tables.Dimension.DIMENSION;
 import static org.jooq.codegen.db.tables.Measurement.MEASUREMENT;
 import static org.jooq.codegen.db.tables.Run.RUN;
 
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Dimension;
+import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.DimensionInfo;
+import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Interpretation;
+import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Unit;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.storage.db.DBReadAccess;
+import de.aaaaaaah.velcom.backend.storage.db.DBWriteAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.jooq.codegen.db.Tables;
+import org.jooq.codegen.db.tables.records.DimensionRecord;
 
 public class DimensionReadAccess {
 
@@ -19,6 +28,29 @@ public class DimensionReadAccess {
 
 	public DimensionReadAccess(DatabaseStorage databaseStorage) {
 		this.databaseStorage = databaseStorage;
+	}
+
+	private static Dimension dimRecordToDim(DimensionRecord record) {
+		return new Dimension(record.getBenchmark(), record.getMetric());
+	}
+
+	private static DimensionInfo dimRecordToDimInfo(DimensionRecord record) {
+		return new DimensionInfo(
+			dimRecordToDim(record),
+			new Unit(record.getUnit()),
+			Interpretation.fromTextualRepresentation(record.getInterpretation()),
+			record.getSignificant()
+		);
+	}
+
+	private static DimensionRecord dimInfoToDimRecord(DimensionInfo info) {
+		return new DimensionRecord(
+			info.getDimension().getBenchmark(),
+			info.getDimension().getMetric(),
+			info.getUnit().getName(),
+			info.getInterpretation().getTextualRepresentation(),
+			info.isSignificant()
+		);
 	}
 
 	/**
@@ -80,5 +112,96 @@ public class DimensionReadAccess {
 		}
 
 		return availableDimensions;
+	}
+
+	///////////////
+	// Migration //
+	///////////////
+
+	// TODO: 25.11.20 Remove after migration
+	public void migrate() {
+		if (!needToMigrate()) {
+			return;
+		}
+
+		insertAllDimensions(findAllCurrentDimensions());
+	}
+
+	// TODO: 25.11.20 Remove after migration
+	private boolean needToMigrate() {
+		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
+			return db.selectFrom(DIMENSION)
+				.fetchOptional()
+				.isEmpty();
+		}
+	}
+
+	// TODO: 25.11.20 Remove after migration
+	private Set<DimensionInfo> findAllCurrentDimensions() {
+		Map<Dimension, DimensionInfo> dimensions = new HashMap<>();
+
+		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
+
+			// Figure out which dimensions exist at all
+			db.selectDistinct(Tables.MEASUREMENT.BENCHMARK, Tables.MEASUREMENT.METRIC)
+				.from(Tables.MEASUREMENT)
+				.forEach(record -> {
+					Dimension dimension = new Dimension(record.component1(), record.component2());
+					dimensions.put(dimension, new DimensionInfo(dimension));
+				});
+
+			// Figure out the latest units
+			db.selectDistinct(Tables.MEASUREMENT.BENCHMARK, Tables.MEASUREMENT.METRIC,
+				Tables.MEASUREMENT.UNIT)
+				.from(RUN)
+				.join(Tables.MEASUREMENT).on(Tables.MEASUREMENT.RUN_ID.eq(RUN.ID))
+				.where(Tables.MEASUREMENT.UNIT.isNotNull())
+				.groupBy(Tables.MEASUREMENT.BENCHMARK, Tables.MEASUREMENT.METRIC)
+				.orderBy(RUN.STOP_TIME.desc())
+				.forEach(record -> {
+					Dimension dimension = new Dimension(record.value1(), record.value2());
+					DimensionInfo info = dimensions.get(dimension);
+					DimensionInfo newInfo = new DimensionInfo(
+						info.getDimension(),
+						new Unit(record.value3()),
+						info.getInterpretation(),
+						info.isSignificant()
+					);
+					dimensions.put(dimension, newInfo);
+				});
+
+			// Figure out the latest interpretations
+			db.selectDistinct(Tables.MEASUREMENT.BENCHMARK, Tables.MEASUREMENT.METRIC,
+				Tables.MEASUREMENT.INTERPRETATION)
+				.from(RUN)
+				.join(Tables.MEASUREMENT).on(Tables.MEASUREMENT.RUN_ID.eq(RUN.ID))
+				.where(Tables.MEASUREMENT.INTERPRETATION.isNotNull())
+				.groupBy(Tables.MEASUREMENT.BENCHMARK, Tables.MEASUREMENT.METRIC)
+				.orderBy(RUN.STOP_TIME.desc())
+				.forEach(record -> {
+					Dimension dimension = new Dimension(record.value1(), record.value2());
+					DimensionInfo info = dimensions.get(dimension);
+					DimensionInfo newInfo = new DimensionInfo(
+						info.getDimension(),
+						info.getUnit(),
+						Interpretation.fromTextualRepresentation(record.value3()),
+						info.isSignificant()
+					);
+					dimensions.put(dimension, newInfo);
+				});
+		}
+
+		return new HashSet<>(dimensions.values());
+	}
+
+	// TODO: 25.11.20 Remove after migration
+	private void insertAllDimensions(Set<DimensionInfo> dimensions) {
+		List<DimensionRecord> dimRecords = dimensions.stream()
+			.map(DimensionReadAccess::dimInfoToDimRecord)
+			.collect(Collectors.toList());
+
+		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
+			db.dsl().batchInsert(dimRecords).execute();
+		}
 	}
 }
