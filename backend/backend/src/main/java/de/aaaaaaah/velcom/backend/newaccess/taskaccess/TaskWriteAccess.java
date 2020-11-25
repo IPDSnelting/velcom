@@ -38,17 +38,17 @@ public class TaskWriteAccess extends TaskReadAccess {
 	}
 
 	private static TaskRecord taskToTaskRecord(Task task) {
-		TaskRecord record = new TaskRecord();
-		record.setId(task.getIdAsString());
-		record.setAuthor(task.getAuthor());
-		record.setPriority(task.getPriority().asInt());
-		record.setInsertTime(task.getInsertTime());
-		record.setUpdateTime(task.getUpdateTime());
-		record.setRepoId(task.getRepoId().map(RepoId::getIdAsString).orElse(null));
-		record.setCommitHash(task.getCommitHash().map(CommitHash::getHash).orElse(null));
-		record.setDescription(task.getTarDescription().orElse(null));
-		record.setInProcess(task.isInProgress());
-		return record;
+		return new TaskRecord(
+			task.getIdAsString(),
+			task.getAuthor(),
+			task.getPriority().asInt(),
+			task.getInsertTime(),
+			task.getUpdateTime(),
+			task.getRepoId().map(RepoId::getIdAsString).orElse(null),
+			task.getCommitHash().map(CommitHash::getHash).orElse(null),
+			task.getTarDescription().orElse(null),
+			task.isInProgress()
+		);
 	}
 
 	/**

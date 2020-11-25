@@ -82,17 +82,17 @@ public class DbUpdater {
 	}
 
 	private KnownCommitRecord jgitCommitToKnownCommitRecord(JgitCommit jgitCommit) {
-		KnownCommitRecord record = KNOWN_COMMIT.newRecord();
-		record.setRepoId(repoIdStr);
-		record.setHash(jgitCommit.getHashAsString());
-		record.setReachable(false);
-		record.setTracked(false);
-		record.setAuthor(jgitCommit.getAuthor());
-		record.setAuthorDate(jgitCommit.getAuthorDate());
-		record.setCommitter(jgitCommit.getCommitter());
-		record.setCommitterDate(jgitCommit.getCommitterDate());
-		record.setMessage(jgitCommit.getMessage());
-		return record;
+		return new KnownCommitRecord(
+			repoIdStr,
+			jgitCommit.getHashAsString(),
+			false,
+			false,
+			jgitCommit.getAuthor(),
+			jgitCommit.getAuthorDate(),
+			jgitCommit.getCommitter(),
+			jgitCommit.getCommitterDate(),
+			jgitCommit.getMessage()
+		);
 	}
 
 	private List<CommitRelationshipRecord> jgitCommitToCommRelRecords(JgitCommit jgitCommit) {
