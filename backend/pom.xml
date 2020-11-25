@@ -39,6 +39,7 @@
     <maven-site-plugin.version>3.9.0</maven-site-plugin.version>
     <maven-surefire-plugin.version>3.0.0-M4</maven-surefire-plugin.version>
     <versions-maven-plugin.version>2.8.1</versions-maven-plugin.version>
+    <maven-checkstyle-plugin.version>3.1.1</maven-checkstyle-plugin.version>
   </properties>
 
 
@@ -262,6 +263,22 @@
             <reports>
               <!-- select non-aggregate reports -->
               <report>report</report>
+            </reports>
+          </reportSet>
+        </reportSets>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+        <version>${maven-checkstyle-plugin.version}</version>
+        <configuration>
+          <configLocation>checkstyle.xml</configLocation>
+          <enableSeveritySummary>true</enableSeveritySummary>
+        </configuration>
+        <reportSets>
+          <reportSet>
+            <reports>
+              <report>checkstyle</report>
             </reports>
           </reportSet>
         </reportSets>
