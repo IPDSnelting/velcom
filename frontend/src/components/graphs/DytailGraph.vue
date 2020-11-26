@@ -25,9 +25,10 @@ import { DetailDataPoint, Dimension, DimensionId } from '@/store/types'
 import { vxm } from '@/store'
 import 'dygraphs/css/dygraph.css'
 import Crosshair from 'dygraphs/src/extras/crosshair.js'
-import { synchronize } from '@/util/dygraphSynchronizer.js'
+import synchronize from '@/util/DygraphSynchronizer.js'
 import { escapeHtml } from '@/util/TextUtils'
 import { formatDate } from '@/util/TimeUtil'
+import { debounce, defaultWaitTime } from '@/util/Debouncer.ts'
 import DetailDatapointDialog from '@/components/dialogs/DetailDatapointDialog.vue'
 
 // eslint-disable-next-line no-undef
@@ -438,6 +439,7 @@ export default class DytailGraph extends Vue {
         pointSize: 3,
         panEdgeFraction: 0.5,
         zoomCallback: this.dygraphsZoomed,
+        drawCallback: this.dygraphsDrawn,
         dateWindow: [this.initialLowerBound, this.initialUpperBound],
         legendFormatter: this.tooltipFormatter,
         crosshairColor: 'currentColor',
@@ -463,7 +465,7 @@ export default class DytailGraph extends Vue {
             drawAxis: false
           }
         },
-        panEdgeFraction: null,
+        panEdgeFraction: undefined,
         showRangeSelector: true,
         rangeSelectorHeight: 30,
         rangeSelectorPlotLineWidth: this.selectorLineWidth,
@@ -478,8 +480,26 @@ export default class DytailGraph extends Vue {
     )
 
     synchronize([this.graph, this.ranger], { range: false })
-
     this.up()
+  }
+
+  private dygraphsDrawn(dygraph: Dygraph, isInitial: boolean) {
+    if (vxm.detailGraphModule.endTime.getTime() <= dygraph.xAxisRange()[1]) {
+      debounce(this.extendTimeframe, defaultWaitTime)(dygraph, 'end')
+    } else if (
+      vxm.detailGraphModule.startTime.getTime() >= dygraph.xAxisRange()[0]
+    ) {
+      debounce(this.extendTimeframe, defaultWaitTime)(dygraph, 'start')
+    }
+  }
+
+  private extendTimeframe(dygraph: Dygraph, boundary: 'start' | 'end') {
+    if (boundary === 'end') {
+      vxm.detailGraphModule.endTime = new Date(dygraph.xAxisRange()[1])
+    } else {
+      vxm.detailGraphModule.startTime = new Date(dygraph.xAxisRange()[0])
+    }
+    vxm.detailGraphModule.fetchDetailGraph()
   }
 
   private dygraphsZoomed(
@@ -494,8 +514,6 @@ export default class DytailGraph extends Vue {
       vxm.detailGraphModule.zoomXStartValue = null
       vxm.detailGraphModule.zoomXEndValue = null
     }
-
-    this.graph.xAxisExtremes()
 
     if (this.graph.isZoomed('y')) {
       const [yZoomStart, yZoomEnd] = yRanges[0]
