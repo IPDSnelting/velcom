@@ -25,7 +25,6 @@ import { DetailDataPoint, Dimension, DimensionId } from '@/store/types'
 import { vxm } from '@/store'
 import 'dygraphs/css/dygraph.css'
 import Crosshair from 'dygraphs/src/extras/crosshair.js'
-import synchronize from '@/util/DygraphSynchronizer.js'
 import { escapeHtml } from '@/util/TextUtils'
 import { formatDate } from '@/util/TimeUtil'
 import { debounce, defaultWaitTime } from '@/util/Debouncer.ts'
@@ -35,20 +34,6 @@ import DetailDatapointDialog from '@/components/dialogs/DetailDatapointDialog.vu
 type RealOptions = dygraphs.Options & {
   rangeSelectorPlotLineWidth?: number
   rangeSelectorAlpha?: number
-}
-
-const doubleClickZoomOutPlugin = {
-  activate: function (g: Dygraph) {
-    const initialDateWindow = g.getOption('dateWindow')
-    return {
-      dblclick: (e: Event) => {
-        ;(e as any).dygraph.updateOptions({
-          dateWindow: initialDateWindow // don't show buffer
-        })
-        e.preventDefault()
-      }
-    }
-  }
 }
 
 @Component({
@@ -67,8 +52,6 @@ export default class DytailGraph extends Vue {
   private dayEquidistant!: boolean
 
   private graph!: Dygraph
-  private ranger!: Dygraph
-  private synchronizer!: any
 
   private height: number = 500
   private pointDialogDatapoint: DetailDataPoint | null = null
@@ -331,6 +314,12 @@ export default class DytailGraph extends Vue {
   @Watch('darkTheme')
   @Watch('dayEquidistant')
   private up() {
+    const date = new Date(this.initialLowerBound)
+    console.log('up!!!   ' + date)
+    console.log(
+      vxm.detailGraphModule.zoomXStartValue,
+      vxm.detailGraphModule.zoomXEndValue
+    )
     const data: number[][] = []
 
     // One array entry = #dimensions data points per commit
@@ -369,25 +358,13 @@ export default class DytailGraph extends Vue {
       rangeSelectorAlpha: this.selectorAlpha
     } as RealOptions)
 
-    this.ranger.updateOptions({
-      file: data.filter(
-        (datapoint: number[]) =>
-          datapoint[0] <= this.initialUpperBound &&
-          datapoint[0] >= this.initialLowerBound
-      ),
-      labels: ['x', ...this.dimensions.map(it => escapeHtml(it.toString()))],
-      includeZero: this.beginYAtZero,
-      rangeSelectorPlotLineWidth: this.selectorLineWidth,
-      rangeSelectorAlpha: this.selectorAlpha
-    } as RealOptions)
-
+    console.log('\ndatewindow\n' + this.graph.getOption('dateWindow'))
     this.drawMarkers()
   }
 
   mounted(): void {
     // empty string because div is not expected to be NULL
     const chartDiv = document.getElementById('chart') || ''
-    const rangerDiv = document.getElementById('ranger') || ''
 
     this.graph = new Dygraph(
       // containing div
@@ -439,33 +416,9 @@ export default class DytailGraph extends Vue {
         pointSize: 3,
         panEdgeFraction: 0.5,
         zoomCallback: this.dygraphsZoomed,
-        drawCallback: this.dygraphsDrawn,
         dateWindow: [this.initialLowerBound, this.initialUpperBound],
         legendFormatter: this.tooltipFormatter,
         crosshairColor: 'currentColor',
-        plugins: [
-          new Crosshair({ direction: 'vertical' }),
-          doubleClickZoomOutPlugin
-        ],
-        drawHighlightPointCallback: this.drawHighlightPointCallback as any,
-        highlightCircleSize: 5,
-        // and, to keep the ability to brush and zoom:
-        interactionModel: Dygraph.defaultInteractionModel
-      } as RealOptions
-    )
-
-    this.ranger = new Dygraph(
-      // containing div
-      rangerDiv,
-      [[1, 1]],
-      {
-        xAxisHeight: 30,
-        axes: {
-          x: {
-            drawAxis: false
-          }
-        },
-        panEdgeFraction: undefined,
         showRangeSelector: true,
         rangeSelectorHeight: 30,
         rangeSelectorPlotLineWidth: this.selectorLineWidth,
@@ -474,22 +427,49 @@ export default class DytailGraph extends Vue {
         rangeSelectorPlotFillColor: '',
         rangeSelectorPlotStrokeColor: 'grey',
         rangeSelectorBackgroundStrokeColor: 'currentColor',
-        showLabelsOnHighlight: false,
-        legend: 'never'
+        plugins: [
+          new Crosshair({ direction: 'vertical' }),
+          this.doubleClickZoomOutPlugin
+        ],
+        drawHighlightPointCallback: this.drawHighlightPointCallback as any,
+        highlightCircleSize: 5,
+        // and, to keep the ability to brush and zoom:
+        interactionModel: this.myInteractions
       } as RealOptions
     )
 
-    synchronize([this.graph, this.ranger], { range: false })
     this.up()
   }
 
-  private dygraphsDrawn(dygraph: Dygraph, isInitial: boolean) {
-    if (vxm.detailGraphModule.endTime.getTime() <= dygraph.xAxisRange()[1]) {
-      debounce(this.extendTimeframe, defaultWaitTime)(dygraph, 'end')
+  private doubleClickZoomOutPlugin = {
+    activate: (g: Dygraph) => {
+      return {
+        dblclick: (e: Event) => {
+          ;(e as any).dygraph.updateOptions({
+            dateWindow: [this.initialLowerBound, this.initialUpperBound] // don't show buffer
+          })
+          e.preventDefault()
+        }
+      }
+    }
+  }
+
+  private myInteractions = Object.assign({}, Dygraph.defaultInteractionModel, {
+    mouseup: (event: MouseEvent, g: any, context: any) => {
+      if (context.isPanning) {
+        ;(Dygraph as any).endPan(event, g, context)
+        this.dygraphsDrawn()
+      }
+    }
+  })
+
+  private dygraphsDrawn() {
+    if (vxm.detailGraphModule.endTime.getTime() < this.graph.xAxisRange()[1]) {
+      debounce(this.extendTimeframe, defaultWaitTime)(this.graph, 'end')
     } else if (
-      vxm.detailGraphModule.startTime.getTime() >= dygraph.xAxisRange()[0]
+      vxm.detailGraphModule.startTime.getTime() > this.graph.xAxisRange()[0]
     ) {
-      debounce(this.extendTimeframe, defaultWaitTime)(dygraph, 'start')
+      debounce(this.extendTimeframe, defaultWaitTime)(this.graph, 'start')
     }
   }
 
@@ -497,6 +477,7 @@ export default class DytailGraph extends Vue {
     if (boundary === 'end') {
       vxm.detailGraphModule.endTime = new Date(dygraph.xAxisRange()[1])
     } else {
+      vxm.detailGraphModule.zoomXStartValue = dygraph.xAxisRange()[0]
       vxm.detailGraphModule.startTime = new Date(dygraph.xAxisRange()[0])
     }
     vxm.detailGraphModule.fetchDetailGraph()
