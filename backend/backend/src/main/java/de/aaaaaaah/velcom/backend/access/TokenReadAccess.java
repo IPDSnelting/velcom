@@ -10,6 +10,7 @@ import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.storage.db.DBReadAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DBWriteAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
+import de.mkammerer.argon2.Argon2Factory.Argon2Types;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -31,9 +32,14 @@ public class TokenReadAccess {
 
 		hashAlgorithms = new HashMap<>();
 
+		// Legacy Argon 2. Is not used for hashing, so we can use a large iteration count
+		hashAlgorithms.put(1, new Argon2Algorithm(Argon2Types.ARGON2id, Integer.MAX_VALUE, 200, 1));
+
 		// Argon2
-		currentHashAlgorithmId = 1;
-		currentHashAlgorithm = new Argon2Algorithm(hashIterations,hashMemory,hashParallelism);
+		currentHashAlgorithmId = 2;
+		currentHashAlgorithm = new Argon2Algorithm(
+			Argon2Types.ARGON2i, hashIterations, hashMemory, hashParallelism
+		);
 		hashAlgorithms.put(currentHashAlgorithmId, currentHashAlgorithm);
 
 		this.databaseStorage = databaseStorage;

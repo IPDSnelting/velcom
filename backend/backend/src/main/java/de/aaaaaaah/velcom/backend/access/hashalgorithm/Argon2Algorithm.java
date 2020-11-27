@@ -10,13 +10,14 @@ import de.mkammerer.argon2.Argon2Factory.Argon2Types;
  */
 public class Argon2Algorithm implements HashAlgorithm {
 
-	public static final Argon2 argon = Argon2Factory.create(Argon2Types.ARGON2i);
+	private final Argon2 argon;
 
 	private final int iterations;
 	private final int memory; // in KiB
 	private final int parallelism;
 
-	public Argon2Algorithm(int iterations, int memory, int parallelism) {
+	public Argon2Algorithm(Argon2Types type, int iterations, int memory, int parallelism) {
+		this.argon = Argon2Factory.create(type);
 		this.iterations = iterations;
 		this.memory = memory;
 		this.parallelism = parallelism;
