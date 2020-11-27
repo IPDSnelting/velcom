@@ -6,6 +6,7 @@ import de.aaaaaaah.velcom.backend.access.entities.RunId;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.exceptions.NoSuchRunException;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.DimensionReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Dimension;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.DimensionInfo;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.BranchName;
@@ -56,19 +57,19 @@ public class EndpointUtils {
 	/**
 	 * Create a {@link JsonRun} from a {@link Run} and a few other variables.
 	 *
-	 * @param benchmarkAccess a {@link BenchmarkReadAccess}
+	 * @param dimensionAccess a {@link DimensionReadAccess}
 	 * @param commitAccess a {@link CommitReadAccess}
 	 * @param run the run
 	 * @param allValues whether the full lists of values should also be included for each
 	 * 	measurement
 	 * @return the created {@link JsonRun}
 	 */
-	public static JsonRun fromRun(BenchmarkReadAccess benchmarkAccess, CommitReadAccess commitAccess,
+	public static JsonRun fromRun(DimensionReadAccess dimensionAccess, CommitReadAccess commitAccess,
 		Run run, boolean allValues) {
 
 		JsonSource source = JsonSource.fromSource(run.getSource(), commitAccess);
-		Map<Dimension, DimensionInfo> dimensionInfos = benchmarkAccess
-			.getDimensionInfos(run.getAllDimensionsUsed());
+		Map<Dimension, DimensionInfo> dimensionInfos = dimensionAccess
+			.getDimensionInfoMap(run.getAllDimensionsUsed());
 
 		if (run.getResult().isLeft()) {
 			return new JsonRun(

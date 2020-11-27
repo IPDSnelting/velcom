@@ -509,26 +509,6 @@ public class BenchmarkReadAccess {
 		}
 	}
 
-	/**
-	 * @param dimension a dimension
-	 * @return whether the dimension exists
-	 */
-	public boolean dimensionExists(Dimension dimension) {
-		return dimensions.containsKey(dimension);
-	}
-
-	public DimensionInfo getDimensionInfo(Dimension dimension) {
-		return dimensions.getOrDefault(dimension, new DimensionInfo(dimension));
-	}
-
-	public Map<Dimension, DimensionInfo> getDimensionInfos(Collection<Dimension> dimensions) {
-		HashMap<Dimension, DimensionInfo> infoMap = new HashMap<>();
-		for (Dimension dimension : dimensions) {
-			infoMap.put(dimension, getDimensionInfo(dimension));
-		}
-		return infoMap;
-	}
-
 	protected static Cache<CommitHash, Run> buildRunCache(RepoId repoId) {
 		final Cache<CommitHash, Run> cache = Caffeine.newBuilder()
 			.recordStats()

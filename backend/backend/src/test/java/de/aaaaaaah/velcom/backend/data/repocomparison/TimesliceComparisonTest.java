@@ -14,6 +14,7 @@ import de.aaaaaaah.velcom.backend.access.entities.RunId;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.Commit;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.DimensionReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Dimension;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.DimensionInfo;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Interpretation;
@@ -33,8 +34,9 @@ import org.junit.jupiter.api.Test;
 
 class TimesliceComparisonTest {
 
-	private CommitReadAccess commitReadAccess;
 	private BenchmarkReadAccess benchmarkReadAccess;
+	private CommitReadAccess commitReadAccess;
+	private DimensionReadAccess dimensionAccess;
 	private RepoComparison comparison;
 
 	private Dimension dimension;
@@ -65,9 +67,10 @@ class TimesliceComparisonTest {
 
 	@BeforeEach
 	void setup() {
-		commitReadAccess = mock(CommitReadAccess.class);
 		benchmarkReadAccess = mock(BenchmarkReadAccess.class);
-		comparison = new TimesliceComparison(commitReadAccess, benchmarkReadAccess);
+		commitReadAccess = mock(CommitReadAccess.class);
+		dimensionAccess = mock(DimensionReadAccess.class);
+		comparison = new TimesliceComparison(benchmarkReadAccess, commitReadAccess, dimensionAccess);
 
 		c1Hash = new CommitHash("hash1");
 		c2Hash = new CommitHash("hash2");
@@ -119,7 +122,7 @@ class TimesliceComparisonTest {
 		runMap.put(c4Hash, r4);
 
 		when(benchmarkReadAccess.getLatestRuns(eq(repoId), anyCollection())).thenReturn(runMap);
-		when(benchmarkReadAccess.getDimensionInfo(dimension)).thenReturn(dimensionInfo);
+		when(dimensionAccess.getDimensionInfo(dimension)).thenReturn(dimensionInfo);
 	}
 
 	@Test

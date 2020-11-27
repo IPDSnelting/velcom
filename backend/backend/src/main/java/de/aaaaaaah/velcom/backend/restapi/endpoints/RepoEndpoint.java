@@ -6,8 +6,8 @@ import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.access.TokenWriteAccess;
 import de.aaaaaaah.velcom.backend.access.entities.AuthToken;
 import de.aaaaaaah.velcom.backend.listener.Listener;
+import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.DimensionReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Dimension;
-import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.DimensionInfo;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.RepoWriteAccess;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.Branch;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.BranchName;
@@ -23,7 +23,6 @@ import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.PATCH;
 import io.micrometer.core.annotation.Timed;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -49,17 +48,19 @@ public class RepoEndpoint {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(RepoEndpoint.class);
 
+	private final BenchmarkReadAccess benchmarkAccess;
+	private final DimensionReadAccess dimensionAccess;
 	private final RepoWriteAccess repoAccess;
 	private final TokenWriteAccess tokenAccess;
-	private final BenchmarkReadAccess benchmarkAccess;
 	private final Listener listener;
 
-	public RepoEndpoint(RepoWriteAccess repoAccess, TokenWriteAccess tokenAccess,
-		BenchmarkReadAccess benchmarkAccess, Listener listener) {
+	public RepoEndpoint(BenchmarkReadAccess benchmarkAccess, DimensionReadAccess dimensionAccess,
+		RepoWriteAccess repoAccess, TokenWriteAccess tokenAccess, Listener listener) {
 
+		this.benchmarkAccess = benchmarkAccess;
+		this.dimensionAccess = dimensionAccess;
 		this.repoAccess = repoAccess;
 		this.tokenAccess = tokenAccess;
-		this.benchmarkAccess = benchmarkAccess;
 		this.listener = listener;
 	}
 
@@ -77,8 +78,7 @@ public class RepoEndpoint {
 			.collect(Collectors.toList());
 
 		Set<Dimension> dimensions = benchmarkAccess.getAvailableDimensions(repo.getId());
-		Map<Dimension, DimensionInfo> dimensionInfos = benchmarkAccess.getDimensionInfos(dimensions);
-		List<JsonDimension> jsonDimensions = dimensionInfos.values().stream()
+		List<JsonDimension> jsonDimensions = dimensionAccess.getDimensionInfos(dimensions).stream()
 			.map(JsonDimension::fromDimensionInfo)
 			.collect(Collectors.toList());
 

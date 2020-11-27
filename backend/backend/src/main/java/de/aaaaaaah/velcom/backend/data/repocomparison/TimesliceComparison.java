@@ -14,6 +14,7 @@ import de.aaaaaaah.velcom.backend.data.repocomparison.grouping.GroupByWeek;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.Commit;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.DimensionReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Dimension;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.DimensionInfo;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Interpretation;
@@ -51,18 +52,23 @@ public class TimesliceComparison implements RepoComparison {
 	private static final CommitGrouper<Long> DAILY_GROUPER = new GroupByDay();
 	private static final CommitGrouper<Long> WEEKLY_GROUPER = new GroupByWeek();
 
-	private final CommitReadAccess commitAccess;
 	private final BenchmarkReadAccess benchmarkAccess;
+	private final CommitReadAccess commitAccess;
+	private final DimensionReadAccess dimensionAccess;
 
 	/**
 	 * Constructs a new time slice comparison.
 	 *
-	 * @param commitAccess the commit access used to collect commit data
 	 * @param benchmarkAccess the benchmark access used to collect benchmark data
+	 * @param commitAccess the commit access used to collect commit data
+	 * @param dimensionAccess the dimension access
 	 */
-	public TimesliceComparison(CommitReadAccess commitAccess, BenchmarkReadAccess benchmarkAccess) {
-		this.commitAccess = commitAccess;
+	public TimesliceComparison(BenchmarkReadAccess benchmarkAccess, CommitReadAccess commitAccess,
+		DimensionReadAccess dimensionAccess) {
+
 		this.benchmarkAccess = benchmarkAccess;
+		this.commitAccess = commitAccess;
+		this.dimensionAccess = dimensionAccess;
 	}
 
 	@Override
@@ -71,7 +77,7 @@ public class TimesliceComparison implements RepoComparison {
 		Map<RepoId, Set<BranchName>> repoBranches, @Nullable Instant startTime,
 		@Nullable Instant endTime) {
 
-		final DimensionInfo dimensionInfo = benchmarkAccess.getDimensionInfo(dimension);
+		final DimensionInfo dimensionInfo = dimensionAccess.getDimensionInfo(dimension);
 
 		List<RepoGraphData> dataList = new ArrayList<>();
 		Instant actualStartTime = startTime;

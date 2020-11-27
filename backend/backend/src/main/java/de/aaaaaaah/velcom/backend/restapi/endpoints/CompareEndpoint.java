@@ -6,6 +6,7 @@ import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparator;
 import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparison;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.exceptions.NoSuchRunException;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.CommitReadAccess;
+import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.DimensionReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Dimension;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.DimensionInfo;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.utils.EndpointUtils;
@@ -32,13 +33,15 @@ public class CompareEndpoint {
 
 	private final BenchmarkReadAccess benchmarkAccess;
 	private final CommitReadAccess commitAccess;
+	private final DimensionReadAccess dimensionAccess;
 	private final RunComparator comparer;
 
 	public CompareEndpoint(BenchmarkReadAccess benchmarkAccess, CommitReadAccess commitAccess,
-		RunComparator comparer) {
+		DimensionReadAccess dimensionAccess, RunComparator comparer) {
 
 		this.benchmarkAccess = benchmarkAccess;
 		this.commitAccess = commitAccess;
+		this.dimensionAccess = dimensionAccess;
 		this.comparer = comparer;
 	}
 
@@ -58,15 +61,15 @@ public class CompareEndpoint {
 
 		RunComparison comparison = comparer.compare(run1, run2);
 
-		Map<Dimension, DimensionInfo> infos = benchmarkAccess
-			.getDimensionInfos(comparison.getDimensions());
+		Map<Dimension, DimensionInfo> infos = dimensionAccess
+			.getDimensionInfoMap(comparison.getDimensions());
 
 		List<JsonDimensionDifference> differences = JsonDimensionDifference
 			.fromRunComparison(comparison, infos);
 
 		return new GetReply(
-			EndpointUtils.fromRun(benchmarkAccess, commitAccess, run1, allValues),
-			EndpointUtils.fromRun(benchmarkAccess, commitAccess, run2, allValues),
+			EndpointUtils.fromRun(dimensionAccess, commitAccess, run1, allValues),
+			EndpointUtils.fromRun(dimensionAccess, commitAccess, run2, allValues),
 			differences
 		);
 	}

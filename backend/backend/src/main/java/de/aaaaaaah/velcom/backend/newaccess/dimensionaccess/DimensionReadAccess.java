@@ -1,5 +1,7 @@
 package de.aaaaaaah.velcom.backend.newaccess.dimensionaccess;
 
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 import static org.jooq.codegen.db.tables.Dimension.DIMENSION;
 import static org.jooq.codegen.db.tables.Measurement.MEASUREMENT;
 import static org.jooq.codegen.db.tables.Run.RUN;
@@ -8,6 +10,7 @@ import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Dimension;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.DimensionInfo;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Interpretation;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Unit;
+import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.exceptions.NoSuchDimensionException;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.storage.db.DBReadAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DBWriteAccess;
@@ -21,6 +24,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.jooq.codegen.db.Tables;
 import org.jooq.codegen.db.tables.records.DimensionRecord;
+import org.jooq.exception.DataAccessException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,6 +60,39 @@ public class DimensionReadAccess {
 			info.isSignificant()
 		);
 	}
+
+	public DimensionInfo getDimensionInfo(Dimension dimension) throws NoSuchDimensionException {
+		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
+			DimensionRecord record = db.selectFrom(DIMENSION)
+				.where(DIMENSION.BENCHMARK.eq(dimension.getBenchmark()))
+				.and(DIMENSION.METRIC.eq(dimension.getMetric()))
+				.fetchSingle();
+
+			return dimRecordToDimInfo(record);
+		} catch (DataAccessException e) {
+			throw new NoSuchDimensionException(e, dimension);
+		}
+	}
+
+	public void guardDimensionExists(Dimension dimension) throws NoSuchDimensionException {
+		getDimensionInfo(dimension);
+	}
+
+	public List<DimensionInfo> getDimensionInfos(Set<Dimension> dimensions) {
+		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
+			return db.selectFrom(DIMENSION)
+				.stream() // This is efficient enough, we don't have that many dimensions
+				.map(DimensionReadAccess::dimRecordToDimInfo)
+				.filter(info -> dimensions.contains(info.getDimension()))
+				.collect(toList());
+		}
+	}
+
+	public Map<Dimension, DimensionInfo> getDimensionInfoMap(Set<Dimension> dimensions) {
+		return getDimensionInfos(dimensions).stream()
+			.collect(toMap(DimensionInfo::getDimension, it -> it));
+	}
+
 
 	/**
 	 * Find a repo's available dimensions, i. e. the dimensions a repo has at least one measurement
@@ -204,7 +241,7 @@ public class DimensionReadAccess {
 	private void insertAllDimensions(Set<DimensionInfo> dimensions) {
 		List<DimensionRecord> dimRecords = dimensions.stream()
 			.map(DimensionReadAccess::dimInfoToDimRecord)
-			.collect(Collectors.toList());
+			.collect(toList());
 
 		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
 			db.dsl().batchInsert(dimRecords).execute();

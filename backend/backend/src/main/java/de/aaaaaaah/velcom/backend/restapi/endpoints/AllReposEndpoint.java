@@ -55,7 +55,7 @@ public class AllReposEndpoint {
 		List<RepoId> repoIds = repos.stream().map(Repo::getId).collect(Collectors.toList());
 		Map<RepoId, Set<Dimension>> allDimensions = availableDimensionsCache
 			.getAvailableDimensions(dimensionAccess, repoIds);
-		Map<Dimension, DimensionInfo> dimensionInfos = benchmarkAccess.getDimensionInfos(
+		Map<Dimension, DimensionInfo> dimensionInfos = dimensionAccess.getDimensionInfoMap(
 			allDimensions.values().stream()
 				.flatMap(Set::stream)
 				.collect(Collectors.toSet())

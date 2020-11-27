@@ -2,11 +2,10 @@ package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
 import static java.util.stream.Collectors.toList;
 
-import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.data.repocomparison.RepoComparison;
 import de.aaaaaaah.velcom.backend.data.repocomparison.RepoComparisonGraph;
+import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.DimensionReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Dimension;
-import de.aaaaaaah.velcom.backend.newaccess.repoaccess.RepoReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.BranchName;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.utils.EndpointUtils;
@@ -34,15 +33,11 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 public class GraphComparisonEndpoint {
 
-	private final BenchmarkReadAccess benchmarkAccess;
-	private final RepoReadAccess repoAccess;
+	private final DimensionReadAccess dimensionAccess;
 	private final RepoComparison comparison;
 
-	public GraphComparisonEndpoint(BenchmarkReadAccess benchmarkAccess, RepoReadAccess repoAccess,
-		RepoComparison comparison) {
-
-		this.benchmarkAccess = benchmarkAccess;
-		this.repoAccess = repoAccess;
+	public GraphComparisonEndpoint(DimensionReadAccess dimensionAccess, RepoComparison comparison) {
+		this.dimensionAccess = dimensionAccess;
 		this.comparison = comparison;
 	}
 
@@ -62,11 +57,7 @@ public class GraphComparisonEndpoint {
 		}
 
 		Dimension dimension = dimensionSet.iterator().next();
-
-		if (!benchmarkAccess.dimensionExists(dimension)) {
-			// TODO: 27.11.20 Fix this again
-			//throw new NoSuchDimensionException(dimension);
-		}
+		dimensionAccess.guardDimensionExists(dimension);
 
 		// Figure out the start and end time
 		Pair<Instant, Instant> startAndEndTime = EndpointUtils

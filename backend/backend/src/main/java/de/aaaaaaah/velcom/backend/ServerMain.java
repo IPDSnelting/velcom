@@ -163,7 +163,9 @@ public class ServerMain extends Application<GlobalConfig> {
 			configuration.getSignificanceMinStddevAmount()
 		);
 		RunComparator runComparator = new RunComparator(significanceFactors);
-		TimesliceComparison comparison = new TimesliceComparison(commitAccess, benchmarkAccess);
+		TimesliceComparison comparison = new TimesliceComparison(
+			benchmarkAccess, commitAccess, dimensionAccess
+		);
 		SignificantRunsCollector significantRunsCollector = new SignificantRunsCollector(
 			significanceFactors, benchmarkAccess, commitAccess, runComparator
 		);
@@ -189,15 +191,16 @@ public class ServerMain extends Application<GlobalConfig> {
 			new AllReposEndpoint(benchmarkAccess, dimensionAccess, repoAccess, tokenAccess,
 				availableDimensionsCache),
 			new CommitEndpoint(commitAccess, repoAccess, benchmarkAccess),
-			new CompareEndpoint(benchmarkAccess, commitAccess, runComparator),
+			new CompareEndpoint(benchmarkAccess, commitAccess, dimensionAccess, runComparator),
 			new DebugEndpoint(dispatcher),
-			new GraphComparisonEndpoint(benchmarkAccess, repoAccess, comparison),
+			new GraphComparisonEndpoint(dimensionAccess, comparison),
 			new GraphDetailEndpoint(commitAccess, benchmarkAccess, dimensionAccess, repoAccess),
 			new ListenerEndpoint(listener),
 			new QueueEndpoint(commitAccess, repoAccess, queue, dispatcher),
-			new RecentRunsEndpoint(benchmarkAccess, commitAccess, significantRunsCollector),
-			new RepoEndpoint(repoAccess, tokenAccess, benchmarkAccess, listener),
-			new RunEndpoint(benchmarkAccess, commitAccess, runComparator),
+			new RecentRunsEndpoint(benchmarkAccess, commitAccess, dimensionAccess,
+				significantRunsCollector),
+			new RepoEndpoint(benchmarkAccess, dimensionAccess, repoAccess, tokenAccess, listener),
+			new RunEndpoint(benchmarkAccess, commitAccess, dimensionAccess, runComparator),
 			new TestTokenEndpoint()
 		).forEach(endpoint -> environment.jersey().register(endpoint));
 	}

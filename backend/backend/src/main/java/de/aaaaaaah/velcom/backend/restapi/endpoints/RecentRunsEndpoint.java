@@ -5,6 +5,7 @@ import de.aaaaaaah.velcom.backend.access.entities.Run;
 import de.aaaaaaah.velcom.backend.data.recentruns.SignificantRunsCollector;
 import de.aaaaaaah.velcom.backend.data.runcomparison.DimensionDifference;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.CommitReadAccess;
+import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.DimensionReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Dimension;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.DimensionInfo;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimensionDifference;
@@ -14,6 +15,7 @@ import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonSource;
 import io.micrometer.core.annotation.Timed;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.ws.rs.GET;
@@ -35,13 +37,15 @@ public class RecentRunsEndpoint {
 
 	private final BenchmarkReadAccess benchmarkAccess;
 	private final CommitReadAccess commitAccess;
+	private final DimensionReadAccess dimensionAccess;
 	private final SignificantRunsCollector significantRunsCollector;
 
-	public RecentRunsEndpoint(BenchmarkReadAccess benchmarkAccess,
-		CommitReadAccess commitAccess,
-		SignificantRunsCollector significantRunsCollector) {
+	public RecentRunsEndpoint(BenchmarkReadAccess benchmarkAccess, CommitReadAccess commitAccess,
+		DimensionReadAccess dimensionAccess, SignificantRunsCollector significantRunsCollector) {
+
 		this.benchmarkAccess = benchmarkAccess;
 		this.commitAccess = commitAccess;
+		this.dimensionAccess = dimensionAccess;
 		this.significantRunsCollector = significantRunsCollector;
 	}
 
@@ -74,11 +78,11 @@ public class RecentRunsEndpoint {
 		@Nullable
 		List<JsonDimensionDifference> jsonDiffs = null;
 		if (differences != null) {
-			List<Dimension> dimensions = differences.stream()
+			Set<Dimension> dimensions = differences.stream()
 				.map(DimensionDifference::getDimension)
-				.collect(Collectors.toList());
+				.collect(Collectors.toSet());
 
-			Map<Dimension, DimensionInfo> dimInfos = benchmarkAccess.getDimensionInfos(dimensions);
+			Map<Dimension, DimensionInfo> dimInfos = dimensionAccess.getDimensionInfoMap(dimensions);
 
 			jsonDiffs = differences.stream()
 				.map(diff -> JsonDimensionDifference.fromDimensionDifference(diff, dimInfos))

@@ -8,6 +8,7 @@ import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.CommitSourc
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.exceptions.NoSuchRunException;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.DimensionReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Dimension;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.DimensionInfo;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.utils.EndpointUtils;
@@ -33,13 +34,15 @@ public class RunEndpoint {
 
 	private final BenchmarkReadAccess benchmarkAccess;
 	private final CommitReadAccess commitAccess;
+	private final DimensionReadAccess dimensionAccess;
 	private final RunComparator comparer;
 
 	public RunEndpoint(BenchmarkReadAccess benchmarkAccess, CommitReadAccess commitAccess,
-		RunComparator comparer) {
+		DimensionReadAccess dimensionAccess, RunComparator comparer) {
 
 		this.benchmarkAccess = benchmarkAccess;
 		this.commitAccess = commitAccess;
+		this.dimensionAccess = dimensionAccess;
 		this.comparer = comparer;
 	}
 
@@ -80,8 +83,8 @@ public class RunEndpoint {
 			differences = getPrevRun(run)
 				.map(prevRun -> {
 					RunComparison comparison = comparer.compare(prevRun, run);
-					Map<Dimension, DimensionInfo> infos = benchmarkAccess
-						.getDimensionInfos(comparison.getDimensions());
+					Map<Dimension, DimensionInfo> infos = dimensionAccess
+						.getDimensionInfoMap(comparison.getDimensions());
 					return JsonDimensionDifference.fromRunComparison(comparison, infos);
 				});
 		} else {
@@ -89,7 +92,7 @@ public class RunEndpoint {
 		}
 
 		return new GetReply(
-			EndpointUtils.fromRun(benchmarkAccess, commitAccess, run, allValues),
+			EndpointUtils.fromRun(dimensionAccess, commitAccess, run, allValues),
 			differences.orElse(null)
 		);
 	}
