@@ -23,7 +23,7 @@ run-prod:
 	bash start_backend_and_frontend.sh prod
 
 clean:
-	rm -rf data
+	rm -rf data cache tmp
 	rm -rf .mypy_cache
 	rm -f backend.jar
 
