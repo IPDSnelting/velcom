@@ -275,6 +275,10 @@
         <configuration>
           <configLocation>checkstyle.xml</configLocation>
           <enableSeveritySummary>true</enableSeveritySummary>
+          <!--Exclude generated sources from e.g. JOOQ -->
+          <sourceDirectories>
+            <sourceDirectory>${project.build.sourceDirectory}</sourceDirectory>
+          </sourceDirectories>
         </configuration>
         <reportSets>
           <reportSet>
