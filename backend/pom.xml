@@ -146,6 +146,7 @@
           </executions>
           <configuration>
             <excludes>
+              <exclude>org/jooq/codegen/**/*.class</exclude>
             </excludes>
           </configuration>
         </plugin>
