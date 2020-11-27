@@ -39,7 +39,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -50,6 +49,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import org.jooq.codegen.db.tables.records.MeasurementRecord;
 import org.jooq.codegen.db.tables.records.RunRecord;
+
+// TODO: 27.11.20 Get rid of dimension caches
+// TODO: 27.11.20 Insert or update dimensions before run (use transaction)
 
 /**
  * Provides read access to benchmark related entities such as runs and measurements.
@@ -229,73 +231,6 @@ public class BenchmarkReadAccess {
 		}
 
 		return resultMap;
-	}
-
-	/**
-	 * Gets all available dimensions for the specified repositories.
-	 *
-	 * @param repoIds the ids of the repositories
-	 * @return a map with each repo id as a key mapping to the set of available dimensions for the
-	 * 	given repository
-	 */
-	public Map<RepoId, Set<Dimension>> getAvailableDimensions(List<RepoId> repoIds) {
-		Set<String> repoIdsAsStrings = repoIds.stream()
-			.map(repoId -> repoId.getId().toString())
-			.collect(Collectors.toCollection(HashSet::new));
-
-		Map<RepoId, Set<Dimension>> resultMap = new HashMap<>();
-
-		// 1.) Check cache
-		checkCachesForDeletedRepos();
-
-		for (RepoId repoId : repoIds) {
-			Set<Dimension> dimensions = dimensionCache.get(repoId);
-
-			if (dimensions != null) {
-				resultMap.put(repoId, Collections.unmodifiableSet(dimensions));
-				repoIdsAsStrings.remove(repoId.getId().toString());
-			} else {
-				resultMap.put(repoId, new HashSet<>()); // prepare for database query
-			}
-		}
-
-		// 2.) Check database
-		if (!repoIdsAsStrings.isEmpty()) {
-			try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-				// SQLite guarantees that we get the correct row (correct interp and unit)
-				// in each group. (See https://sqlite.org/lang_select.html#bareagg)
-				db.selectDistinct(RUN.REPO_ID, MEASUREMENT.BENCHMARK, MEASUREMENT.METRIC)
-					.from(MEASUREMENT)
-					.join(RUN).on(RUN.ID.eq(MEASUREMENT.RUN_ID))
-					.where(RUN.COMMIT_HASH.isNotNull()) // Ignore uploaded-tar runs associated
-					.and(RUN.REPO_ID.in(repoIdsAsStrings))
-					.forEach(record -> {
-						RepoId repoId = new RepoId(UUID.fromString(record.value1()));
-						Dimension dimension = new Dimension(record.value2(), record.value3());
-						resultMap.get(repoId).add(dimension);
-					});
-			}
-
-			// 3.) Update cache with data collected from database
-			for (String repoIdStr : repoIdsAsStrings) { // <- all repos in this list are not in cache
-				RepoId repoId = new RepoId(UUID.fromString(repoIdStr));
-				// Create copy so that no mutation can occur from outside
-				Set<Dimension> dimensionSet = new HashSet<>(resultMap.get(repoId));
-				dimensionCache.put(repoId, dimensionSet);
-			}
-		}
-
-		return resultMap;
-	}
-
-	/**
-	 * Gets all available dimensions for the specified repository.
-	 *
-	 * @param repoId the id of the repository
-	 * @return all of the repository's available dimensions
-	 */
-	public Set<Dimension> getAvailableDimensions(RepoId repoId) {
-		return getAvailableDimensions(List.of(repoId)).get(repoId);
 	}
 
 	@Timed(histogram = true)

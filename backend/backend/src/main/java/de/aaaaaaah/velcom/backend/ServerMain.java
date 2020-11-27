@@ -199,7 +199,8 @@ public class ServerMain extends Application<GlobalConfig> {
 			new QueueEndpoint(commitAccess, repoAccess, queue, dispatcher),
 			new RecentRunsEndpoint(benchmarkAccess, commitAccess, dimensionAccess,
 				significantRunsCollector),
-			new RepoEndpoint(benchmarkAccess, dimensionAccess, repoAccess, tokenAccess, listener),
+			new RepoEndpoint(dimensionAccess, repoAccess, tokenAccess, availableDimensionsCache,
+				listener),
 			new RunEndpoint(benchmarkAccess, commitAccess, dimensionAccess, runComparator),
 			new TestTokenEndpoint()
 		).forEach(endpoint -> environment.jersey().register(endpoint));

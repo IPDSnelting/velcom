@@ -2,10 +2,10 @@ package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.access.TokenWriteAccess;
 import de.aaaaaaah.velcom.backend.access.entities.AuthToken;
 import de.aaaaaaah.velcom.backend.listener.Listener;
+import de.aaaaaaah.velcom.backend.newaccess.caches.AvailableDimensionsCache;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.DimensionReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Dimension;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.RepoWriteAccess;
@@ -48,19 +48,20 @@ public class RepoEndpoint {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(RepoEndpoint.class);
 
-	private final BenchmarkReadAccess benchmarkAccess;
 	private final DimensionReadAccess dimensionAccess;
 	private final RepoWriteAccess repoAccess;
 	private final TokenWriteAccess tokenAccess;
+	private final AvailableDimensionsCache availableDimensionsCache;
 	private final Listener listener;
 
-	public RepoEndpoint(BenchmarkReadAccess benchmarkAccess, DimensionReadAccess dimensionAccess,
-		RepoWriteAccess repoAccess, TokenWriteAccess tokenAccess, Listener listener) {
+	public RepoEndpoint(DimensionReadAccess dimensionAccess, RepoWriteAccess repoAccess,
+		TokenWriteAccess tokenAccess, AvailableDimensionsCache availableDimensionsCache,
+		Listener listener) {
 
-		this.benchmarkAccess = benchmarkAccess;
 		this.dimensionAccess = dimensionAccess;
 		this.repoAccess = repoAccess;
 		this.tokenAccess = tokenAccess;
+		this.availableDimensionsCache = availableDimensionsCache;
 		this.listener = listener;
 	}
 
@@ -77,7 +78,8 @@ public class RepoEndpoint {
 			.map(BranchName::getName)
 			.collect(Collectors.toList());
 
-		Set<Dimension> dimensions = benchmarkAccess.getAvailableDimensions(repo.getId());
+		Set<Dimension> dimensions = availableDimensionsCache
+			.getAvailableDimensionsFor(dimensionAccess, repo.getId());
 		List<JsonDimension> jsonDimensions = dimensionAccess.getDimensionInfos(dimensions).stream()
 			.map(JsonDimension::fromDimensionInfo)
 			.collect(Collectors.toList());

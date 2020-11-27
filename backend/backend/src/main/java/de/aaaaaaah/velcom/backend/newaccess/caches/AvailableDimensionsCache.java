@@ -39,6 +39,12 @@ public class AvailableDimensionsCache {
 		);
 	}
 
+	public Set<Dimension> getAvailableDimensionsFor(DimensionReadAccess dimensionReadAccess,
+		RepoId repoId) {
+
+		return cache.get(repoId, dimensionReadAccess::getAvailableDimensions);
+	}
+
 	/**
 	 * Invalidate a specific repo's entry.
 	 *
