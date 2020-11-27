@@ -66,7 +66,6 @@ public class BenchmarkReadAccess {
 	protected final Map<RepoId, Cache<CommitHash, Run>> repoRunCache = new ConcurrentHashMap<>();
 	protected final List<Run> recentRunCache = new ArrayList<>();
 	protected final Comparator<Run> recentRunCacheOrder = comparing(Run::getStartTime).reversed();
-	protected final Map<RepoId, Set<Dimension>> dimensionCache = new ConcurrentHashMap<>();
 
 	protected final Map<Dimension, DimensionInfo> dimensions = new ConcurrentHashMap<>();
 
@@ -347,7 +346,6 @@ public class BenchmarkReadAccess {
 			.map(Repo::getId)
 			.collect(Collectors.toSet());
 		repoRunCache.keySet().retainAll(ids);
-		dimensionCache.keySet().retainAll(ids);
 
 		synchronized (recentRunCache) {
 			boolean recentRunRepoWasDeleted = recentRunCache.stream()

@@ -93,9 +93,6 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 			}
 		});
 
-		// 2.) Invalidate dimension cache for repo
-		newRun.getSource().getLeft().ifPresent(source -> dimensionCache.remove(source.getRepoId()));
-
 		// 3.) Insert run into cache
 		synchronized (recentRunCache) {
 			recentRunCache.add(run);
@@ -187,9 +184,6 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 				.execute();
 		}
 
-		// Invalidate measurement cache
-		dimensionCache.remove(repoId);
-
 		// Repopulate recent run cache
 		synchronized (recentRunCache) {
 			recentRunCache.clear();
@@ -235,9 +229,6 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
 			db.deleteFrom(RUN).where(RUN.REPO_ID.eq(repoId.getId().toString()));
 		}
-
-		// Invalidate measurement cache
-		dimensionCache.remove(repoId);
 
 		// Invalidate recent run cache and reload it from database
 		this.reloadRecentRunCache();
