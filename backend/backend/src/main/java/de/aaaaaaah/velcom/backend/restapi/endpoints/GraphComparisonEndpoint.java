@@ -11,7 +11,6 @@ import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.BranchName;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.utils.EndpointUtils;
 import de.aaaaaaah.velcom.backend.restapi.exception.InvalidQueryParamsException;
-import de.aaaaaaah.velcom.backend.restapi.exception.NoSuchDimensionException;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimension;
 import de.aaaaaaah.velcom.shared.util.Pair;
 import io.micrometer.core.annotation.Timed;
@@ -65,7 +64,8 @@ public class GraphComparisonEndpoint {
 		Dimension dimension = dimensionSet.iterator().next();
 
 		if (!benchmarkAccess.dimensionExists(dimension)) {
-			throw new NoSuchDimensionException(dimension);
+			// TODO: 27.11.20 Fix this again
+			//throw new NoSuchDimensionException(dimension);
 		}
 
 		// Figure out the start and end time

@@ -1,5 +1,6 @@
 package de.aaaaaaah.velcom.backend.restapi.exception;
 
+import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.exceptions.NoSuchDimensionException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.ext.ExceptionMapper;
@@ -15,8 +16,8 @@ public class NoSuchDimensionExceptionMapper implements ExceptionMapper<NoSuchDim
 			.status(Status.NOT_FOUND)
 			.entity(new Info(
 				"could not find dimension",
-				exception.getDimension().getBenchmark(),
-				exception.getDimension().getMetric()
+				exception.getInvalidDimension().getBenchmark(),
+				exception.getInvalidDimension().getMetric()
 			))
 			.build();
 	}
