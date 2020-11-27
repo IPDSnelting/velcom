@@ -6,11 +6,11 @@ import static org.jooq.impl.DSL.selectFrom;
 import de.aaaaaaah.velcom.backend.access.entities.AuthToken;
 import de.aaaaaaah.velcom.backend.access.hashalgorithm.Argon2Algorithm;
 import de.aaaaaaah.velcom.backend.access.hashalgorithm.HashAlgorithm;
+import de.aaaaaaah.velcom.backend.access.hashalgorithm.V1Argon2Algorithm;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.storage.db.DBReadAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DBWriteAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
-import de.mkammerer.argon2.Argon2Factory.Argon2Types;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -32,14 +32,12 @@ public class TokenReadAccess {
 
 		hashAlgorithms = new HashMap<>();
 
-		// Legacy Argon 2. Is not used for hashing, so we can use a large iteration count
-		hashAlgorithms.put(1, new Argon2Algorithm(Argon2Types.ARGON2id, Integer.MAX_VALUE, 200, 1));
+		// Legacy Argon 2. Is not used for hashing, only to verify and migrate old hashes.
+		hashAlgorithms.put(1, new V1Argon2Algorithm());
 
-		// Argon2
+		// Argon 2
 		currentHashAlgorithmId = 2;
-		currentHashAlgorithm = new Argon2Algorithm(
-			Argon2Types.ARGON2i, hashIterations, hashMemory, hashParallelism
-		);
+		currentHashAlgorithm = new Argon2Algorithm(hashIterations, hashMemory, hashParallelism);
 		hashAlgorithms.put(currentHashAlgorithmId, currentHashAlgorithm);
 
 		this.databaseStorage = databaseStorage;

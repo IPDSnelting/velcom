@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import de.aaaaaaah.velcom.backend.access.entities.AuthToken;
-import de.mkammerer.argon2.Argon2Factory.Argon2Types;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -17,9 +16,7 @@ class Argon2AlgorithmTest {
 	private static final int PARALLELISM = 1;
 	private static final AuthToken TOKEN = new AuthToken("*****");
 
-	private final Argon2Algorithm algo = new Argon2Algorithm(
-		Argon2Types.ARGON2i, ITERATIONS, MEMORY, PARALLELISM
-	);
+	private final Argon2Algorithm algo = new Argon2Algorithm(ITERATIONS, MEMORY, PARALLELISM);
 
 	@Test
 	void testGenerateAndMatches() {
