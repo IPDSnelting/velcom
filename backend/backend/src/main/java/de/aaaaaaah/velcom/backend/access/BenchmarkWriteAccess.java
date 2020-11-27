@@ -155,8 +155,6 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 
 			valuesInsertStep.execute();
 		}
-
-		updateDimensions(measurement);
 	}
 
 	/**

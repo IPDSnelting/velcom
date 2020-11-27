@@ -14,7 +14,6 @@ import de.aaaaaaah.velcom.backend.access.entities.MeasurementError;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementValues;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
 import de.aaaaaaah.velcom.backend.access.entities.RunId;
-import de.aaaaaaah.velcom.backend.access.entities.benchmark.NewMeasurement;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.CommitSource;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.RunError;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.RunErrorType;
@@ -22,9 +21,6 @@ import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.TarSource;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.exceptions.NoSuchRunException;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Dimension;
-import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.DimensionInfo;
-import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Interpretation;
-import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Unit;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.RepoReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.Repo;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
@@ -50,7 +46,6 @@ import java.util.stream.Collectors;
 import org.jooq.codegen.db.tables.records.MeasurementRecord;
 import org.jooq.codegen.db.tables.records.RunRecord;
 
-// TODO: 27.11.20 Get rid of dimension caches
 // TODO: 27.11.20 Insert or update dimensions before run (use transaction)
 
 /**
@@ -67,13 +62,9 @@ public class BenchmarkReadAccess {
 	protected final List<Run> recentRunCache = new ArrayList<>();
 	protected final Comparator<Run> recentRunCacheOrder = comparing(Run::getStartTime).reversed();
 
-	protected final Map<Dimension, DimensionInfo> dimensions = new ConcurrentHashMap<>();
-
 	public BenchmarkReadAccess(DatabaseStorage databaseStorage, RepoReadAccess repoAccess) {
 		this.databaseStorage = Objects.requireNonNull(databaseStorage);
 		this.repoAccess = Objects.requireNonNull(repoAccess);
-
-		loadDimensions();
 
 		// Populate recent run cache
 		reloadRecentRunCache();
@@ -360,88 +351,6 @@ public class BenchmarkReadAccess {
 		}
 	}
 
-	/**
-	 * Load all dimensions and their infos from the db.
-	 */
-	private void loadDimensions() {
-		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-
-			// Figure out which dimensions exist at all
-			db.selectDistinct(MEASUREMENT.BENCHMARK, MEASUREMENT.METRIC)
-				.from(MEASUREMENT)
-				.forEach(record -> {
-					Dimension dimension = new Dimension(record.component1(), record.component2());
-					dimensions.put(dimension, new DimensionInfo(dimension));
-				});
-
-			// Figure out the latest units
-			db.selectDistinct(MEASUREMENT.BENCHMARK, MEASUREMENT.METRIC, MEASUREMENT.UNIT)
-				.from(RUN)
-				.join(MEASUREMENT).on(MEASUREMENT.RUN_ID.eq(RUN.ID))
-				.where(MEASUREMENT.UNIT.isNotNull())
-				.groupBy(MEASUREMENT.BENCHMARK, MEASUREMENT.METRIC)
-				.orderBy(RUN.STOP_TIME.desc())
-				.forEach(record -> {
-					Dimension dimension = new Dimension(record.value1(), record.value2());
-					DimensionInfo info = dimensions.get(dimension);
-					DimensionInfo newInfo = new DimensionInfo(
-						info.getDimension(),
-						new Unit(record.value3()),
-						info.getInterpretation(),
-						info.isSignificant()
-					);
-					dimensions.put(dimension, newInfo);
-				});
-
-			// Figure out the latest interpretations
-			db.selectDistinct(MEASUREMENT.BENCHMARK, MEASUREMENT.METRIC, MEASUREMENT.INTERPRETATION)
-				.from(RUN)
-				.join(MEASUREMENT).on(MEASUREMENT.RUN_ID.eq(RUN.ID))
-				.where(MEASUREMENT.INTERPRETATION.isNotNull())
-				.groupBy(MEASUREMENT.BENCHMARK, MEASUREMENT.METRIC)
-				.orderBy(RUN.STOP_TIME.desc())
-				.forEach(record -> {
-					Dimension dimension = new Dimension(record.value1(), record.value2());
-					DimensionInfo info = dimensions.get(dimension);
-					DimensionInfo newInfo = new DimensionInfo(
-						info.getDimension(),
-						info.getUnit(),
-						Interpretation.fromTextualRepresentation(record.value3()),
-						info.isSignificant()
-					);
-					dimensions.put(dimension, newInfo);
-				});
-		}
-	}
-
-	/**
-	 * Update the measurement's dimension's info if necessary.
-	 *
-	 * @param measurement the measurement whose unit and interpretation to use for the update
-	 */
-	protected void updateDimensions(NewMeasurement measurement) {
-		if (measurement.getUnit().isPresent() || measurement.getInterpretation().isPresent()) {
-			dimensions.compute(measurement.getDimension(), (dimension, info) -> {
-				if (info == null) {
-					DimensionInfo defaultInfo = new DimensionInfo(dimension);
-					return new DimensionInfo(
-						dimension,
-						measurement.getUnit().orElse(defaultInfo.getUnit()),
-						measurement.getInterpretation().orElse(defaultInfo.getInterpretation()),
-						defaultInfo.isSignificant()
-					);
-				} else {
-					return new DimensionInfo(
-						dimension,
-						measurement.getUnit().orElse(info.getUnit()),
-						measurement.getInterpretation().orElse(info.getInterpretation()),
-						info.isSignificant()
-					);
-				}
-			});
-		}
-	}
-
 	protected static Cache<CommitHash, Run> buildRunCache(RepoId repoId) {
 		final Cache<CommitHash, Run> cache = Caffeine.newBuilder()
 			.recordStats()
@@ -458,5 +367,4 @@ public class BenchmarkReadAccess {
 
 		return cache;
 	}
-
 }
