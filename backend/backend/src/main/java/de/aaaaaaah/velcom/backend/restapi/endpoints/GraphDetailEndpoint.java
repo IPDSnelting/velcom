@@ -86,8 +86,11 @@ public class GraphDetailEndpoint {
 
 		// Figure out which dimensions there actually are, and in which order we'll return them
 		Set<Dimension> potentialDimensions = EndpointUtils.parseDimensions(dimensionStr);
-		List<DimensionInfo> existingDimensions = dimensionAccess.getDimensionInfos(potentialDimensions);
-		existingDimensions.sort(Comparator.comparing(DimensionInfo::getDimension));
+		Set<DimensionInfo> allDimensions = dimensionAccess.getAllDimensions();
+		List<DimensionInfo> existingDimensions = allDimensions.stream()
+			.filter(info -> potentialDimensions.contains(info.getDimension()))
+			.sorted(Comparator.comparing(DimensionInfo::getDimension))
+			.collect(Collectors.toList());
 
 		// Figure out the start and end time
 		Pair<Instant, Instant> startAndEndTime = EndpointUtils

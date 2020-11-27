@@ -2,6 +2,7 @@ package de.aaaaaaah.velcom.backend.newaccess.dimensionaccess;
 
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.toSet;
 import static org.jooq.codegen.db.tables.Dimension.DIMENSION;
 import static org.jooq.codegen.db.tables.Measurement.MEASUREMENT;
 import static org.jooq.codegen.db.tables.Run.RUN;
@@ -61,36 +62,89 @@ public class DimensionReadAccess {
 		);
 	}
 
-	public DimensionInfo getDimensionInfo(Dimension dimension) throws NoSuchDimensionException {
+	/**
+	 * Check if a dimension exists.
+	 *
+	 * @param dimension the dimension whose existence to check
+	 * @throws NoSuchDimensionException if the dimension doesn't exist
+	 */
+	public void guardDimensionExists(Dimension dimension) throws NoSuchDimensionException {
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			DimensionRecord record = db.selectFrom(DIMENSION)
+			db.selectFrom(DIMENSION)
 				.where(DIMENSION.BENCHMARK.eq(dimension.getBenchmark()))
 				.and(DIMENSION.METRIC.eq(dimension.getMetric()))
 				.fetchSingle();
-
-			return dimRecordToDimInfo(record);
 		} catch (DataAccessException e) {
 			throw new NoSuchDimensionException(e, dimension);
 		}
 	}
 
-	public void guardDimensionExists(Dimension dimension) throws NoSuchDimensionException {
-		getDimensionInfo(dimension);
-	}
-
-	public List<DimensionInfo> getDimensionInfos(Set<Dimension> dimensions) {
+	/**
+	 * Get a dimension's info. Always returns a {@link DimensionInfo}, even if the dimension does not
+	 * exist (in which case it uses the default values).
+	 *
+	 * @param dimension the dimension whose info to get
+	 * @return that dimension's info (or the default info if the dimension doesn't exist)
+	 */
+	public DimensionInfo getDimensionInfo(Dimension dimension) {
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
 			return db.selectFrom(DIMENSION)
-				.stream() // This is efficient enough, we don't have that many dimensions
+				.where(DIMENSION.BENCHMARK.eq(dimension.getBenchmark()))
+				.and(DIMENSION.METRIC.eq(dimension.getMetric()))
+				.fetchOptional()
 				.map(DimensionReadAccess::dimRecordToDimInfo)
-				.filter(info -> dimensions.contains(info.getDimension()))
-				.collect(toList());
+				.orElse(new DimensionInfo(dimension));
 		}
 	}
 
+	/**
+	 * Get {@link DimensionInfo}s for multiple dimensions at the same time. Similar to {@link
+	 * #getDimensionInfo(Dimension)}, this function will return a {@link DimensionInfo} for every
+	 * dimension even if it doesn't exist.
+	 *
+	 * @param dimensions the dimensions whose infos to get
+	 * @return an info for every input dimension. This set should always be the same size as the input
+	 * 	set.
+	 */
+	public Set<DimensionInfo> getDimensionInfos(Set<Dimension> dimensions) {
+		final Set<DimensionInfo> infos;
+
+		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
+			infos = db.selectFrom(DIMENSION)
+				.stream() // This is efficient enough, we don't have that many dimensions
+				.map(DimensionReadAccess::dimRecordToDimInfo)
+				.filter(info -> dimensions.contains(info.getDimension()))
+				.collect(Collectors.toCollection(HashSet::new));
+		}
+
+		dimensions.forEach(dimension -> infos.add(new DimensionInfo(dimension)));
+
+		return infos;
+	}
+
+	/**
+	 * Get {@link DimensionInfo}s for multiple dimensions at the same time. Works the same as {@link
+	 * #getDimensionInfos(Set)} but sorts the dimensions into a map for convenience.
+	 *
+	 * @param dimensions the dimensions whose infos to get
+	 * @return an info for every input dimension. This map should always be the same size as the input
+	 * 	set.
+	 */
 	public Map<Dimension, DimensionInfo> getDimensionInfoMap(Set<Dimension> dimensions) {
 		return getDimensionInfos(dimensions).stream()
 			.collect(toMap(DimensionInfo::getDimension, it -> it));
+	}
+
+	/**
+	 * @return all currently known dimensions
+	 */
+	public Set<DimensionInfo> getAllDimensions() {
+		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
+			return db.selectFrom(DIMENSION)
+				.stream()
+				.map(DimensionReadAccess::dimRecordToDimInfo)
+				.collect(toSet());
+		}
 	}
 
 
@@ -110,7 +164,7 @@ public class DimensionReadAccess {
 				.and(RUN.COMMIT_HASH.isNotNull())
 				.stream()
 				.map(record -> new Dimension(record.value1(), record.value2()))
-				.collect(Collectors.toSet());
+				.collect(toSet());
 		}
 	}
 
@@ -126,7 +180,7 @@ public class DimensionReadAccess {
 	public Map<RepoId, Set<Dimension>> getAvailableDimensions(Collection<RepoId> repoIds) {
 		Set<String> repoIdStrings = repoIds.stream()
 			.map(RepoId::getIdAsString)
-			.collect(Collectors.toSet());
+			.collect(toSet());
 
 		final HashMap<RepoId, Set<Dimension>> availableDimensions;
 
@@ -143,7 +197,7 @@ public class DimensionReadAccess {
 					HashMap::new,
 					Collectors.mapping(
 						record -> new Dimension(record.value2(), record.value3()),
-						Collectors.toSet()
+						toSet()
 					)
 				));
 		}
