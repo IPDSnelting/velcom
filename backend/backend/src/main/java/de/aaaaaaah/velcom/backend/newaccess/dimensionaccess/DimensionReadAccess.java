@@ -21,8 +21,12 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.jooq.codegen.db.Tables;
 import org.jooq.codegen.db.tables.records.DimensionRecord;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DimensionReadAccess {
+
+	private final Logger LOGGER = LoggerFactory.getLogger(DimensionReadAccess.class);
 
 	protected final DatabaseStorage databaseStorage;
 
@@ -121,9 +125,11 @@ public class DimensionReadAccess {
 	// TODO: 25.11.20 Remove after migration
 	public void migrate() {
 		if (!needToMigrate()) {
+			LOGGER.debug("No need to migrate dimensions");
 			return;
 		}
 
+		LOGGER.info("Migrating dimensions");
 		insertAllDimensions(findAllCurrentDimensions());
 	}
 
