@@ -199,6 +199,34 @@ public class QueueEndpoint {
 		return new PostCommitReply(JsonTask.fromTask(insertedTask.get(), commitReadAccess));
 	}
 
+
+	@POST
+	@Path("commit/{repoId}/{hash}/one-up")
+	@Timed(histogram = true)
+	public PostOneUpReply PostOneUpReply(
+		@Auth RepoUser user,
+		@PathParam("repoId") UUID repoUuid,
+		@PathParam("hash") String commitHashString
+	) throws NoSuchRepoException {
+		RepoId repoId = new RepoId(repoUuid);
+		user.guardRepoAccess(repoId);
+
+		Commit rootCommit = commitReadAccess.getCommit(repoId, new CommitHash(commitHashString));
+		List<CommitHash> hashes = commitReadAccess.getDescendantCommits(rootCommit);
+
+		String author = user.isAdmin() ? "Admin" : "Repo-Admin";
+		queue.addCommits(author, repoId, hashes, TaskPriority.MANUAL);
+
+		List<JsonTask> tasks = queue.getAllTasksInOrder().stream()
+			.filter(it -> it.getRepoId().map(repoId::equals).orElse(false))
+			.filter(it -> it.getCommitHash().isPresent())
+			.filter(it -> hashes.contains(it.getCommitHash().get()))
+			.map(task -> JsonTask.fromTask(task, commitReadAccess))
+			.collect(Collectors.toList());
+
+		return new PostOneUpReply(tasks);
+	}
+
 	@POST
 	@Path("upload/tar")
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
@@ -278,6 +306,19 @@ public class QueueEndpoint {
 			.orElse(new LinesWithOffset(0, List.of()));
 
 		return new GetTaskOutputReply(lastOutputLines.getLines(), lastOutputLines.getFirstLineOffset());
+	}
+
+	private static class PostOneUpReply {
+
+		private final List<JsonTask> tasks;
+
+		public PostOneUpReply(List<JsonTask> tasks) {
+			this.tasks = tasks;
+		}
+
+		public List<JsonTask> getTasks() {
+			return tasks;
+		}
 	}
 
 	private static class PostCommitReply {
