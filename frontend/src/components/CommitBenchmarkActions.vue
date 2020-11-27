@@ -3,17 +3,17 @@
     <v-tooltip top v-if="isAdmin">
       <template #activator="{ on }">
         <v-btn v-on="on" icon @click="benchmark">
-          <v-icon class="rocket">{{
-            hasExistingBenchmark ? rebenchmarkIcon : benchmarkIcon
-          }}</v-icon>
+          <v-icon class="rocket">
+            {{ hasExistingBenchmark ? rebenchmarkIcon : benchmarkIcon }}
+          </v-icon>
         </v-btn>
       </template>
-      <span v-if="hasExistingBenchmark"
-        >Re-runs all benchmarks for this commit</span
-      >
+      <span v-if="hasExistingBenchmark">
+        Re-runs all benchmarks for this commit
+      </span>
       <span v-else>Runs all benchmarks for this commit</span>
     </v-tooltip>
-    <v-tooltip top v-if="isAdmin && oneUpImplemented">
+    <v-tooltip top v-if="isAdmin">
       <template #activator="{ on }">
         <v-btn icon v-on="on" @click="benchmarkUpwards">
           <v-icon>{{ benchmarkUpwardsIcon }}</v-icon>
@@ -61,11 +61,6 @@ export default class CommitBenchmarkActions extends Vue {
     return vxm.userModule.isAdmin
   }
 
-  // FIXME: Implement One-Up in backend and then re-enable it
-  private get oneUpImplemented() {
-    return false
-  }
-
   private benchmark() {
     vxm.queueModule.startManualTask({
       repoId: this.commitDescription.repoId,
@@ -73,8 +68,11 @@ export default class CommitBenchmarkActions extends Vue {
     })
   }
 
-  private benchmarkUpwards() {
-    vxm.queueModule.dispatchQueueUpwardsOf(this.commitDescription)
+  private async benchmarkUpwards() {
+    const taskCount = await vxm.queueModule.dispatchQueueUpwardsOf(
+      this.commitDescription
+    )
+    this.$globalSnackbar.setSuccess('one-up', `One upped ${taskCount} commits!`)
   }
 
   private get repo(): Repo | undefined {
