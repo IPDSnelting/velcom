@@ -836,6 +836,36 @@ paths:
           description: Not Found
       operationId: get-queue-task-taskId
       description: Return the task and its position in the queue.
+  '/queue/commit/{repoid}/{hash}/one-up':
+    parameters:
+      - schema:
+          type: string
+        name: repoid
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: hash
+        in: path
+        required: true
+    post:
+      summary: One-up benchmark
+      operationId: post-queue-commit-repoid-hash-one-up
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tasks:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Task'
+      description: Benchmarks the given commit and all tracked descendants.
+      security:
+        - repo_admin_credentials: []
 components:
   schemas:
     CommitHash:
