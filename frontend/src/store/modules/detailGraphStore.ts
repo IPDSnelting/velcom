@@ -326,9 +326,15 @@ export class DetailGraphStore extends VxModule {
    * @memberof detailGraphStore
    */
   get detailGraph(): DetailDataPoint[] {
+    const unbufferedGraph = this._detailGraph.filter(
+      (datapoint: DetailDataPoint) =>
+        datapoint.committerDate >= this.startTime &&
+        datapoint.committerDate <= this.endTime
+    )
+
     return this.dayEquidistantGraph
-      ? spaceDayEquidistant(this._detailGraph)
-      : this._detailGraph
+      ? spaceDayEquidistant(unbufferedGraph)
+      : unbufferedGraph
   }
 
   /**
