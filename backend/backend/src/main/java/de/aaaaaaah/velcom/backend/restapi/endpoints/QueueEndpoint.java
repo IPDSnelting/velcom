@@ -136,9 +136,9 @@ public class QueueEndpoint {
 	}
 
 	@DELETE
-	@Path("{taskId}")
+	@Path("{taskid}")
 	@Timed(histogram = true)
-	public void deleteTask(@Auth RepoUser user, @PathParam("taskId") UUID taskId)
+	public void deleteTask(@Auth RepoUser user, @PathParam("taskid") UUID taskId)
 		throws NoSuchTaskException {
 		Task task = queue.getTask(new TaskId(taskId));
 		if (task.getRepoId().isEmpty()) {
@@ -151,9 +151,9 @@ public class QueueEndpoint {
 	}
 
 	@PATCH
-	@Path("{taskId}")
+	@Path("{taskid}")
 	@Timed(histogram = true)
-	public void patchTask(@Auth RepoUser user, @PathParam("taskId") UUID taskId)
+	public void patchTask(@Auth RepoUser user, @PathParam("taskid") UUID taskId)
 		throws NoSuchTaskException {
 		user.guardAdminAccess();
 
@@ -164,11 +164,11 @@ public class QueueEndpoint {
 	}
 
 	@POST
-	@Path("commit/{repoId}/{hash}")
+	@Path("commit/{repoid}/{hash}")
 	@Timed(histogram = true)
 	public PostCommitReply addCommit(
 		@Auth RepoUser user,
-		@PathParam("repoId") UUID repoUuid,
+		@PathParam("repoid") UUID repoUuid,
 		@PathParam("hash") String commitHashString
 	) throws NoSuchRepoException {
 		RepoId repoId = new RepoId(repoUuid);
@@ -201,11 +201,11 @@ public class QueueEndpoint {
 
 
 	@POST
-	@Path("commit/{repoId}/{hash}/one-up")
+	@Path("commit/{repoid}/{hash}/one-up")
 	@Timed(histogram = true)
 	public PostOneUpReply PostOneUpReply(
 		@Auth RepoUser user,
-		@PathParam("repoId") UUID repoUuid,
+		@PathParam("repoid") UUID repoUuid,
 		@PathParam("hash") String commitHashString
 	) throws NoSuchRepoException {
 		RepoId repoId = new RepoId(repoUuid);
@@ -256,10 +256,10 @@ public class QueueEndpoint {
 		return new UploadTarReply(JsonTask.fromTask(task.get(), commitReadAccess));
 	}
 
-	@Path("task/{taskId}")
+	@Path("task/{taskid}")
 	@GET
 	@Timed(histogram = true)
-	public GetTaskInfoReply getTask(@PathParam("taskId") UUID taskId) {
+	public GetTaskInfoReply getTask(@PathParam("taskid") UUID taskId) {
 		int indexOfTask = 0;
 		Optional<Task> foundTask = Optional.empty();
 		for (Task task : queue.getAllTasksInOrder()) {
@@ -289,10 +289,10 @@ public class QueueEndpoint {
 		);
 	}
 
-	@Path("task/{taskId}/progress")
+	@Path("task/{taskid}/progress")
 	@GET
 	@Timed(histogram = true)
-	public GetTaskOutputReply getRunnerOutput(@PathParam("taskId") UUID taskId) {
+	public GetTaskOutputReply getRunnerOutput(@PathParam("taskid") UUID taskId) {
 		Optional<KnownRunner> worker = dispatcher.getKnownRunners().stream()
 			.filter(it -> it.getCurrentTask().isPresent())
 			.filter(it -> it.getCurrentTask().get().getId().getId().equals(taskId))
