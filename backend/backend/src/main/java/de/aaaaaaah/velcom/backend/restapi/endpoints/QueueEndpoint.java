@@ -184,8 +184,7 @@ public class QueueEndpoint {
 		user.guardRepoAccess(repoId);
 
 		repoReadAccess.guardRepoExists(repoId);
-		// Ensure the commit exists, 404s otherwise
-		Commit commit = commitReadAccess.getCommit(repoId, commitHash);
+		commitReadAccess.guardCommitExists(repoId, commitHash);
 		// If at any point between these checks and inserting the task the repo is deleted, JOOQ will
 		// throw a DataAccessException (I believe) and this endpoint will return a 500. But the chance
 		// of that happening is low enough that putting in the effort to perform the checks in an atomic

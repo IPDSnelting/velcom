@@ -13,6 +13,7 @@ import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.FullCommit;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.exceptions.NoSuchCommitException;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.BranchName;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
+import de.aaaaaaah.velcom.backend.restapi.exception.NoSuchDimensionException;
 import de.aaaaaaah.velcom.backend.storage.db.DBReadAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import java.time.Instant;
@@ -99,6 +100,12 @@ public class CommitReadAccess {
 		} catch (DataAccessException e) {
 			throw new NoSuchCommitException(e, repoId, commitHash);
 		}
+	}
+
+	public void guardCommitExists(RepoId repoId, CommitHash commitHash)
+		throws NoSuchDimensionException {
+
+		getCommit(repoId, commitHash);
 	}
 
 	public List<Commit> getCommits(RepoId repoId, Collection<CommitHash> commitHashes) {
