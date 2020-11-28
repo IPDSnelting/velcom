@@ -213,9 +213,11 @@ public class QueueEndpoint {
 		@PathParam("hash") String commitHashString
 	) throws NoSuchRepoException {
 		RepoId repoId = new RepoId(repoUuid);
-		user.guardRepoAccess(repoId);
-
 		CommitHash rootHash = new CommitHash(commitHashString);
+
+		user.guardRepoAccess(repoId);
+		commitReadAccess.guardCommitExists(repoId, rootHash);
+
 		List<CommitHash> hashes = commitReadAccess.getDescendantCommits(repoId, rootHash);
 
 		String author = getAuthor(user.isAdmin());
