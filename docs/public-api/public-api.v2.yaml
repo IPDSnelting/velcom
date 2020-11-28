@@ -863,6 +863,8 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/Task'
+        '404':
+          description: Commit Not Found
       description: Benchmarks the given commit and all tracked descendants.
       security:
         - repo_admin_credentials: []
