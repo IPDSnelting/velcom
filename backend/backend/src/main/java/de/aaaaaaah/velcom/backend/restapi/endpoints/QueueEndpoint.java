@@ -51,7 +51,8 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 @Produces(MediaType.APPLICATION_JSON)
 public class QueueEndpoint {
 
-	// TODO: 12.09.20 Add one-up endpoint (also update the API spec)
+	private static final String AUTHOR_NAME_ADMIN = "Admin";
+	private static final String AUTHOR_NAME_REPO_ADMIN = "Repo-Admin";
 
 	private final CommitReadAccess commitReadAccess;
 	private final RepoReadAccess repoReadAccess;
@@ -65,6 +66,12 @@ public class QueueEndpoint {
 		this.repoReadAccess = repoReadAccess;
 		this.queue = queue;
 		this.dispatcher = dispatcher;
+	}
+
+	private static String getAuthor(boolean isAdmin) {
+		// There's no need to include the repo name or ID since that info is already included in the
+		// task's source.
+		return isAdmin ? AUTHOR_NAME_ADMIN : AUTHOR_NAME_REPO_ADMIN;
 	}
 
 	@GET
@@ -184,9 +191,7 @@ public class QueueEndpoint {
 		// of that happening is low enough that putting in the effort to perform the checks in an atomic
 		// way is not worth it.
 
-		// There's no need to include the repo name or ID since that info is already included in the
-		// task's source.
-		String author = user.isAdmin() ? "Admin" : "Repo-Admin";
+		String author = getAuthor(user.isAdmin());
 
 		// TODO: Really don't tell them the id of the existing task?
 		final Optional<Task> insertedTask = queue
@@ -214,7 +219,7 @@ public class QueueEndpoint {
 		CommitHash rootHash = new CommitHash(commitHashString);
 		List<CommitHash> hashes = commitReadAccess.getDescendantCommits(repoId, rootHash);
 
-		String author = user.isAdmin() ? "Admin" : "Repo-Admin";
+		String author = getAuthor(user.isAdmin());
 		queue.addCommits(author, repoId, hashes, TaskPriority.MANUAL);
 
 		List<JsonTask> tasks = queue.getAllTasksInOrder().stream()
@@ -242,7 +247,7 @@ public class QueueEndpoint {
 		Optional<RepoId> repoId = Optional.ofNullable(repoUuid).map(RepoId::new);
 
 		Optional<Task> task = queue.addTar(
-			"Admin",
+			AUTHOR_NAME_ADMIN,
 			TaskPriority.MANUAL,
 			repoId.orElse(null),
 			description,
