@@ -1,8 +1,12 @@
 package de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities;
 
 import java.util.Objects;
+import java.util.Optional;
+import javax.annotation.Nullable;
 
 public class DimensionInfo {
+
+	private static final boolean DEFAULT_SIGNIFICANCE = true;
 
 	private final Dimension dimension;
 	private final Unit unit;
@@ -18,13 +22,24 @@ public class DimensionInfo {
 		this.significant = significant;
 	}
 
+	public DimensionInfo(Dimension dimension, @Nullable Unit unit,
+		@Nullable Interpretation interpretation) {
+
+		this(
+			dimension,
+			Optional.ofNullable(unit).orElse(Unit.DEFAULT),
+			Optional.ofNullable(interpretation).orElse(Interpretation.DEFAULT),
+			DEFAULT_SIGNIFICANCE
+		);
+	}
+
 	/**
 	 * Create a {@link DimensionInfo} with default unit and interpretation.
 	 *
 	 * @param dimension the dimension
 	 */
 	public DimensionInfo(Dimension dimension) {
-		this(dimension, Unit.DEFAULT, Interpretation.DEFAULT, true);
+		this(dimension, Unit.DEFAULT, Interpretation.DEFAULT, DEFAULT_SIGNIFICANCE);
 	}
 
 	public Dimension getDimension() {

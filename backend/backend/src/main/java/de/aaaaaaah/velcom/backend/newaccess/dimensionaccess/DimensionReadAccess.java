@@ -52,7 +52,7 @@ public class DimensionReadAccess {
 		);
 	}
 
-	private static DimensionRecord dimInfoToDimRecord(DimensionInfo info) {
+	public static DimensionRecord dimInfoToDimRecord(DimensionInfo info) {
 		return new DimensionRecord(
 			info.getDimension().getBenchmark(),
 			info.getDimension().getMetric(),

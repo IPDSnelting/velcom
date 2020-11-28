@@ -1,8 +1,9 @@
 package de.aaaaaaah.velcom.backend.access;
 
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
+import static org.jooq.codegen.db.Tables.DIMENSION;
 import static org.jooq.codegen.db.Tables.MEASUREMENT;
-import static org.jooq.codegen.db.Tables.MEASUREMENT_VALUE;
 import static org.jooq.codegen.db.Tables.TASK;
 import static org.jooq.codegen.db.tables.Run.RUN;
 import static org.jooq.impl.DSL.exists;
@@ -10,14 +11,20 @@ import static org.jooq.impl.DSL.exists;
 import com.github.benmanes.caffeine.cache.Cache;
 import de.aaaaaaah.velcom.backend.access.entities.Measurement;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementError;
-import de.aaaaaaah.velcom.backend.access.entities.MeasurementValues;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
 import de.aaaaaaah.velcom.backend.access.entities.benchmark.NewMeasurement;
 import de.aaaaaaah.velcom.backend.access.entities.benchmark.NewRun;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.CommitSource;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.RunError;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.RunErrorType;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.TarSource;
 import de.aaaaaaah.velcom.backend.newaccess.caches.AvailableDimensionsCache;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.DimensionReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Dimension;
+import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.DimensionInfo;
+import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Interpretation;
+import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Unit;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.RepoReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.TaskId;
@@ -26,8 +33,11 @@ import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import org.jooq.codegen.db.tables.records.DimensionRecord;
 import org.jooq.codegen.db.tables.records.MeasurementRecord;
+import org.jooq.codegen.db.tables.records.MeasurementValueRecord;
 import org.jooq.codegen.db.tables.records.RunRecord;
 
 public class BenchmarkWriteAccess extends BenchmarkReadAccess {
@@ -49,51 +59,16 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 	 */
 	public void insertRun(NewRun newRun) {
 		Run run = newRun.toRun();
-		TaskId taskId = newRun.getId().toTaskId();
 
-		// Insert run into database and delete associated task
+		// 1. Insert run into database and delete associated task
 		databaseStorage.acquireWriteTransaction(db -> {
-			// 0.) Delete associated task
-			db.deleteFrom(TASK)
-				.where(TASK.ID.eq(taskId.getIdAsString()))
-				.execute();
-
-			// 1.) Insert run
-			RunRecord runRecord = db.newRecord(RUN);
-			runRecord.setId(newRun.getIdAsString());
-			runRecord.setAuthor(newRun.getAuthor());
-			runRecord.setRunnerName(newRun.getRunnerName());
-			runRecord.setRunnerInfo(newRun.getRunnerInfo());
-			runRecord.setStartTime(newRun.getStartTime());
-			runRecord.setStopTime(newRun.getStopTime());
-			runRecord.setRepoId(
-				newRun.getRepoId().map(RepoId::getId)
-					.map(UUID::toString)
-					.orElse(null)
-			);
-
-			if (newRun.getSource().isLeft()) {
-				runRecord.setCommitHash(newRun.getSource().getLeft().get().getHash().getHash());
-			} else {
-				runRecord.setTarDesc(newRun.getSource().getRight().get().getDescription());
-			}
-
-			if (newRun.getResult().isLeft()) {
-				RunError error = newRun.getResult().getLeft().orElseThrow();
-				runRecord.setError(error.getMessage());
-				runRecord.setErrorType(error.getType().getTextualRepresentation());
-				runRecord.insert();
-			} else {
-				runRecord.insert();
-
-				Collection<NewMeasurement> measurements = newRun.getResult().getRight().orElseThrow();
-				for (NewMeasurement measurement : measurements) {
-					insertMeasurement(db, measurement);
-				}
-			}
+			deleteTask(db, newRun.getId().toTaskId());
+			updateDimensions(db, newRun);
+			insertNewRun(db, newRun);
+			insertNewMeasurements(db, newRun);
 		});
 
-		// 3.) Insert run into cache
+		// 2. Insert run into cache
 		synchronized (recentRunCache) {
 			recentRunCache.add(run);
 
@@ -106,7 +81,7 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 			}
 		}
 
-		// 4.) If run has a commit source, insert into repoCache
+		// 3. If run has a commit source, insert into repoCache
 		newRun.getSource().getLeft().ifPresent(commitSource -> {
 			Cache<CommitHash, Run> cache = repoRunCache.computeIfAbsent(
 				commitSource.getRepoId(),
@@ -116,45 +91,121 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 			cache.put(commitSource.getHash(), run);
 		});
 
-		// 5.) Update available dimensions cache
+		// 4. Update available dimensions cache
 		// TODO: 21.10.20 Add new dimensions to cache more efficiently?
 		newRun.getRepoId().ifPresent(availableDimensionsCache::invalidate);
 	}
 
-	private void insertMeasurement(DBWriteAccess db, NewMeasurement measurement) {
-		String measurementId = UUID.randomUUID().toString();
+	private void deleteTask(DBWriteAccess db, TaskId taskId) {
+		db.deleteFrom(TASK)
+			.where(TASK.ID.eq(taskId.getIdAsString()))
+			.execute();
+	}
 
-		MeasurementRecord measurementRecord = db.newRecord(MEASUREMENT);
-		measurementRecord.setId(measurementId);
-		measurementRecord.setRunId(measurement.getRunId().getId().toString());
-		measurementRecord.setBenchmark(measurement.getDimension().getBenchmark());
-		measurementRecord.setMetric(measurement.getDimension().getMetric());
-		measurement.getUnit().ifPresent(unit -> measurementRecord.setUnit(unit.getName()));
-		measurement.getInterpretation().ifPresent(interpretation -> measurementRecord
-			.setInterpretation(interpretation.getTextualRepresentation()));
-
-		if (measurement.getContent().isLeft()) {
-			MeasurementError error = measurement.getContent().getLeft().orElseThrow();
-
-			measurementRecord.setError(error.getErrorMessage());
-			measurementRecord.insert();
-		} else {
-			MeasurementValues values = measurement.getContent().getRight().orElseThrow();
-			measurementRecord.insert();
-
-			// Insert values into database
-			var valuesInsertStep = db.insertInto(MEASUREMENT_VALUE)
-				.columns(
-					MEASUREMENT_VALUE.MEASUREMENT_ID,
-					MEASUREMENT_VALUE.VALUE
-				);
-
-			values.getValues().forEach(value -> valuesInsertStep.values(
-				measurementId, value
+	private void updateDimensions(DBWriteAccess db, NewRun run) {
+		Map<Dimension, DimensionRecord> dimensions = db.selectFrom(DIMENSION)
+			.stream()
+			.collect(toMap(
+				record -> new Dimension(record.getBenchmark(), record.getMetric()),
+				it -> it
 			));
 
-			valuesInsertStep.execute();
-		}
+		run.getResult()
+			.getRight()
+			.orElse(List.of())
+			.forEach(measurement -> {
+				DimensionRecord record = dimensions.get(measurement.getDimension());
+
+				if (record == null) {
+					DimensionInfo info = new DimensionInfo(
+						measurement.getDimension(),
+						measurement.getUnit().orElse(null),
+						measurement.getInterpretation().orElse(null)
+					);
+
+					dimensions.put(info.getDimension(), DimensionReadAccess.dimInfoToDimRecord(info));
+				} else {
+					measurement.getUnit()
+						.map(Unit::getName)
+						.filter(it -> record.getUnit().equals(it))
+						.ifPresent(record::setUnit);
+
+					measurement.getInterpretation()
+						.map(Interpretation::getTextualRepresentation)
+						.filter(it -> record.getInterpretation().equals(it))
+						.ifPresent(record::setInterpretation);
+				}
+			});
+
+		// Inserts newly generated dimensions and updates modified dimensions
+		db.dsl().batchStore(dimensions.values()).execute();
+	}
+
+	private void insertNewRun(DBWriteAccess db, NewRun run) {
+		RunRecord runRecord = new RunRecord(
+			run.getIdAsString(),
+			run.getAuthor(),
+			run.getRunnerName(),
+			run.getRunnerInfo(),
+			run.getStartTime(),
+			run.getStopTime(),
+			run.getRepoId()
+				.map(RepoId::getIdAsString)
+				.orElse(null),
+			run.getSource().getLeft()
+				.map(CommitSource::getHash)
+				.map(CommitHash::getHash)
+				.orElse(null),
+			run.getSource().getRight()
+				.map(TarSource::getDescription)
+				.orElse(null),
+			run.getResult().getLeft()
+				.map(RunError::getType)
+				.map(RunErrorType::getTextualRepresentation)
+				.orElse(null),
+			run.getResult().getLeft()
+				.map(RunError::getMessage)
+				.orElse(null)
+		);
+
+		db.dsl().batchInsert(runRecord).execute();
+	}
+
+	private void insertNewMeasurements(DBWriteAccess db, NewRun run) {
+		run.getResult()
+			.getRight()
+			.orElse(List.of())
+			.forEach(measurement -> insertNewMeasurement(db, measurement));
+	}
+
+	private void insertNewMeasurement(DBWriteAccess db, NewMeasurement measurement) {
+		String measurementId = UUID.randomUUID().toString();
+
+		MeasurementRecord measurementRecord = new MeasurementRecord(
+			measurementId,
+			measurement.getRunId().getIdAsString(),
+			measurement.getDimension().getBenchmark(),
+			measurement.getDimension().getMetric(),
+			measurement.getUnit()
+				.map(Unit::getName)
+				.orElse(null),
+			measurement.getInterpretation()
+				.map(Interpretation::getTextualRepresentation)
+				.orElse(null),
+			measurement.getContent()
+				.getLeft()
+				.map(MeasurementError::getErrorMessage)
+				.orElse(null)
+		);
+
+		db.dsl().batchInsert(measurementRecord).execute();
+
+		List<MeasurementValueRecord> records = measurement.getContent().getRight().stream()
+			.flatMap(values -> values.getValues().stream()
+				.map(value -> new MeasurementValueRecord(measurementId, value))
+			).collect(toList());
+
+		db.dsl().batchInsert(records).execute();
 	}
 
 	/**
