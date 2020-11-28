@@ -211,8 +211,8 @@ public class QueueEndpoint {
 		RepoId repoId = new RepoId(repoUuid);
 		user.guardRepoAccess(repoId);
 
-		Commit rootCommit = commitReadAccess.getCommit(repoId, new CommitHash(commitHashString));
-		List<CommitHash> hashes = commitReadAccess.getDescendantCommits(rootCommit);
+		CommitHash rootHash = new CommitHash(commitHashString);
+		List<CommitHash> hashes = commitReadAccess.getDescendantCommits(repoId, rootHash);
 
 		String author = user.isAdmin() ? "Admin" : "Repo-Admin";
 		queue.addCommits(author, repoId, hashes, TaskPriority.MANUAL);

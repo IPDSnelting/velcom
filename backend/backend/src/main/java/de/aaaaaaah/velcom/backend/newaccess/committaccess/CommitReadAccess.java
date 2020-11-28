@@ -259,10 +259,11 @@ public class CommitReadAccess {
 	}
 
 	/**
-	 * @param root the root commit
+	 * @param repoId the id of the root commit's repo
+	 * @param rootHash the hash of the root commit
 	 * @return all tracked commits descending from the given root.
 	 */
-	public List<CommitHash> getDescendantCommits(Commit root) {
+	public List<CommitHash> getDescendantCommits(RepoId repoId, CommitHash rootHash) {
 		String query = "WITH RECURSIVE rec(hash) AS (\n"
 			+ "  VALUES (?)\n"                                    // <-- Binding #1 - Root hash
 			+ "  \n"
@@ -283,7 +284,7 @@ public class CommitReadAccess {
 			+ "";
 
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			return db.dsl().fetchLazy(query, root.getHashAsString(), root.getRepoId().getIdAsString())
+			return db.dsl().fetchLazy(query, rootHash.getHash(), repoId.getIdAsString())
 				.stream()
 				.map(record -> (String) record.getValue(0))
 				.map(CommitHash::new)
