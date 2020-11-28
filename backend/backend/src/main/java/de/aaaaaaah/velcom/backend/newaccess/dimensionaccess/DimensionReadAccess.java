@@ -228,7 +228,7 @@ public class DimensionReadAccess {
 	private boolean needToMigrate() {
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
 			return db.selectFrom(DIMENSION)
-				.fetchOptional()
+				.fetch()
 				.isEmpty();
 		}
 	}
