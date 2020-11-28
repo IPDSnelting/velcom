@@ -16,6 +16,8 @@ import de.aaaaaaah.velcom.backend.newaccess.committaccess.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.Commit;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.FullCommit;
+import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.DimensionReadAccess;
+import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Dimension;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
 import io.micrometer.core.annotation.Timed;
 import java.util.ArrayList;
@@ -35,15 +37,17 @@ public class SignificantRunsCollector {
 	private final SignificanceFactors significanceFactors;
 	private final BenchmarkReadAccess benchmarkAccess;
 	private final CommitReadAccess commitAccess;
+	private final DimensionReadAccess dimensionAccess;
 	private final RunComparator runComparator;
 
 	public SignificantRunsCollector(SignificanceFactors significanceFactors,
 		BenchmarkReadAccess benchmarkAccess, CommitReadAccess commitAccess,
-		RunComparator runComparator) {
+		DimensionReadAccess dimensionAccess, RunComparator runComparator) {
 
 		this.significanceFactors = significanceFactors;
 		this.benchmarkAccess = Objects.requireNonNull(benchmarkAccess);
 		this.commitAccess = Objects.requireNonNull(commitAccess);
+		this.dimensionAccess = dimensionAccess;
 		this.runComparator = Objects.requireNonNull(runComparator);
 	}
 
@@ -68,9 +72,10 @@ public class SignificantRunsCollector {
 		List<Run> runs = benchmarkAccess.getRecentRuns(skip, SignificantRunsCollector.BATCH_SIZE);
 		Map<RepoId, List<FullCommit>> commitsPerRepo = getCommitsPerRepo(runs);
 		Map<CommitSource, Collection<Run>> parentRunsPerSource = getParentRunsPerSource(commitsPerRepo);
+		Set<Dimension> significantDimensions = dimensionAccess.getSignificantDimensions();
 
 		return runs.stream()
-			.flatMap(run -> getSignificantRun(run, parentRunsPerSource).stream())
+			.flatMap(run -> getSignificantRun(run, parentRunsPerSource, significantDimensions).stream())
 			.collect(toList());
 	}
 
@@ -119,10 +124,11 @@ public class SignificantRunsCollector {
 	 * @param run a run
 	 * @param parents a map of all known commits' parent runs. Is not required to contain an entry
 	 * 	for this particular run
+	 * @param significantDimensions all significant dimensions
 	 * @return a {@link SignificantRun} if the run is significant, {@link Optional#empty()} otherwise
 	 */
 	private Optional<SignificantRun> getSignificantRun(Run run,
-		Map<CommitSource, Collection<Run>> parents) {
+		Map<CommitSource, Collection<Run>> parents, Set<Dimension> significantDimensions) {
 
 		List<DimensionDifference> significantDifferences = run.getSource().getLeft()
 			.flatMap(source -> Optional.ofNullable(parents.get(source)))
@@ -130,7 +136,7 @@ public class SignificantRunsCollector {
 			.flatMap(Collection::stream)
 			.map(parent -> runComparator.compare(parent, run))
 			.flatMap(comparison -> comparison.getDifferences().stream())
-			.filter(this::isDifferenceSignificant)
+			.filter(difference -> isDifferenceSignificant(difference, significantDimensions))
 			.collect(toList());
 
 		if (hasFails(run) || !significantDifferences.isEmpty()) {
@@ -151,9 +157,14 @@ public class SignificantRunsCollector {
 
 	/**
 	 * @param diff the difference to check
+	 * @param significantDimensions all significant dimensions
 	 * @return true if the difference is significant according to the {@code significanceFactors}
 	 */
-	private boolean isDifferenceSignificant(DimensionDifference diff) {
+	private boolean isDifferenceSignificant(DimensionDifference diff,
+		Set<Dimension> significantDimensions) {
+
+		boolean dimensionSignificant = significantDimensions.contains(diff.getDimension());
+
 		boolean relSignificant = diff.getReldiff()
 			.map(reldiff -> Math.abs(reldiff) >= significanceFactors.getRelativeThreshold())
 			// There is no reldiff if the first value is 0. But if the second value is also zero, that
@@ -166,6 +177,6 @@ public class SignificantRunsCollector {
 			// If there is no stddev, this check should not prevent differences from being significant
 			.orElse(true);
 
-		return relSignificant && stddevSignificant;
+		return dimensionSignificant && relSignificant && stddevSignificant;
 	}
 }

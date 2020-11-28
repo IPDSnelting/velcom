@@ -167,7 +167,7 @@ public class ServerMain extends Application<GlobalConfig> {
 			benchmarkAccess, commitAccess, dimensionAccess
 		);
 		SignificantRunsCollector significantRunsCollector = new SignificantRunsCollector(
-			significanceFactors, benchmarkAccess, commitAccess, runComparator
+			significanceFactors, benchmarkAccess, commitAccess, dimensionAccess, runComparator
 		);
 
 		// Listener

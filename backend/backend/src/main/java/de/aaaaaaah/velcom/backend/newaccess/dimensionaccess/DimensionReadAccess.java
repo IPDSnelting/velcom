@@ -148,6 +148,15 @@ public class DimensionReadAccess {
 		}
 	}
 
+	public Set<Dimension> getSignificantDimensions() {
+		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
+			return db.selectFrom(DIMENSION)
+				.where(DIMENSION.SIGNIFICANT)
+				.stream()
+				.map(DimensionReadAccess::dimRecordToDim)
+				.collect(toSet());
+		}
+	}
 
 	/**
 	 * Find a repo's available dimensions, i. e. the dimensions a repo has at least one measurement
