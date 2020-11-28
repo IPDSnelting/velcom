@@ -1,5 +1,6 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
+import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.DimensionReadAccess;
 import de.aaaaaaah.velcom.backend.runner.Dispatcher;
 import de.aaaaaaah.velcom.shared.GitProperties;
 import java.util.List;
@@ -17,9 +18,11 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 public class DebugEndpoint {
 
+	private final DimensionReadAccess dimensionAccess;
 	private final Dispatcher dispatcher;
 
-	public DebugEndpoint(Dispatcher dispatcher) {
+	public DebugEndpoint(DimensionReadAccess dimensionAccess, Dispatcher dispatcher) {
+		this.dimensionAccess = dimensionAccess;
 		this.dispatcher = dispatcher;
 	}
 
@@ -29,11 +32,16 @@ public class DebugEndpoint {
 			.map(r -> new RunnerInfo(r.getName(), r.getVersionHash().orElse(null)))
 			.collect(Collectors.toList());
 
+		int amountOfForeignKeyViolatingDimensions = dimensionAccess
+			.getAmountOfForeignKeyViolatingDimensions();
+
 		return new GetReply(
-			true,
+			amountOfForeignKeyViolatingDimensions == 0,
 			GitProperties.getBuildTime(),
 			GitProperties.getHash(),
-			runnerHashes
+			runnerHashes,
+			dimensionAccess.getAmountOfDimensions(),
+			amountOfForeignKeyViolatingDimensions
 		);
 	}
 
@@ -43,14 +51,19 @@ public class DebugEndpoint {
 		private final String buildTime;
 		private final String backendHash;
 		private final List<RunnerInfo> runnerHashes;
+		private final int amountOfDimensions;
+		private final int amountOfForeignKeyViolatingDimensions;
 
 		public GetReply(boolean safeToUpdate, String buildTime, String backendHash,
-			List<RunnerInfo> runnerHashes) {
+			List<RunnerInfo> runnerHashes, int amountOfDimensions,
+			int amountOfForeignKeyViolatingDimensions) {
 
 			this.safeToUpdate = safeToUpdate;
 			this.buildTime = buildTime;
 			this.backendHash = backendHash;
 			this.runnerHashes = runnerHashes;
+			this.amountOfDimensions = amountOfDimensions;
+			this.amountOfForeignKeyViolatingDimensions = amountOfForeignKeyViolatingDimensions;
 		}
 
 		public boolean isSafeToUpdate() {
@@ -67,6 +80,14 @@ public class DebugEndpoint {
 
 		public List<RunnerInfo> getRunnerHashes() {
 			return runnerHashes;
+		}
+
+		public int getAmountOfDimensions() {
+			return amountOfDimensions;
+		}
+
+		public int getAmountOfForeignKeyViolatingDimensions() {
+			return amountOfForeignKeyViolatingDimensions;
 		}
 	}
 

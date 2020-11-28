@@ -6,6 +6,7 @@ import static java.util.stream.Collectors.toSet;
 import static org.jooq.codegen.db.tables.Dimension.DIMENSION;
 import static org.jooq.codegen.db.tables.Measurement.MEASUREMENT;
 import static org.jooq.codegen.db.tables.Run.RUN;
+import static org.jooq.impl.DSL.selectDistinct;
 
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Dimension;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.DimensionInfo;
@@ -299,6 +300,25 @@ public class DimensionReadAccess {
 
 		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
 			db.dsl().batchInsert(dimRecords).execute();
+		}
+	}
+
+	public int getAmountOfDimensions() {
+		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
+			return db.dsl().fetchCount(DIMENSION);
+		}
+	}
+
+	public int getAmountOfForeignKeyViolatingDimensions() {
+		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
+			return db.dsl().fetchCount(
+				selectDistinct(MEASUREMENT.BENCHMARK, MEASUREMENT.METRIC)
+					.from(MEASUREMENT)
+					.leftJoin(DIMENSION)
+					.on(DIMENSION.BENCHMARK.eq(MEASUREMENT.BENCHMARK))
+					.and(DIMENSION.METRIC.eq(MEASUREMENT.METRIC))
+					.where(DIMENSION.BENCHMARK.isNull())
+			);
 		}
 	}
 }
