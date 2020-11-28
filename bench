@@ -52,6 +52,12 @@ def get_lines(languages: List[str]) -> int:
     return total
 
 
+def get_todo_count(path: Path) -> int:
+    args = ["rg",  "TODO|FIXME", str(path)]
+    output: str = subprocess.check_output(args=args, stderr=sys.stderr)
+    return len(output.splitlines())
+
+
 def get_checkstyle_violations() -> int:
     violations: int = 0
     for path in target_path().glob("backend/*/target/checkstyle-result.xml"):
@@ -155,6 +161,22 @@ def build_makefile():
         lambda: get_lines(["TypeScript", "Vue", "Css", "Html"]),
         "lines",
         "NEUTRAL"
+    )
+
+    guarded_try_metric_or_nothing(
+        "frontend",
+        "todos",
+        lambda: get_todo_count(target_path() / "frontend"),
+        "",
+        "LESS_IS_BETTER"
+    )
+
+    guarded_try_metric_or_nothing(
+        "backend",
+        "todos",
+        lambda: get_todo_count(target_path() / "backend"),
+        "",
+        "LESS_IS_BETTER"
     )
 
     guarded_try_metric(
