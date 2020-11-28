@@ -265,20 +265,22 @@ public class CommitReadAccess {
 	public List<CommitHash> getDescendantCommits(Commit root) {
 		String query = "WITH RECURSIVE rec(hash) AS (\n"
 			+ "  VALUES (?)\n"                                    // <-- Binding #1 - Root hash
-			+ "\n"
+			+ "  \n"
 			+ "  UNION\n"
-			+ "\n"
+			+ "  \n"
 			+ "  SELECT commit_relationship.child_hash\n"
 			+ "  FROM commit_relationship\n"
 			+ "  JOIN rec\n"
-			+ "  ON rec.hash = commit_relationship.parent_hash\n"
+			+ "    ON rec.hash = commit_relationship.parent_hash\n"
 			+ "  WHERE repo_id = ?\n"                             // <-- Binding #2 - repo id
 			+ ")\n"
 			+ "\n"
-			+ "SELECT rec.hash "
-			+ " FROM rec\n"
-			+ "JOIN known_commit ON rec.hash = known_commit.hash\n"
-			+ "WHERE known_commit.tracked;";
+			+ "SELECT rec.hash \n"
+			+ "FROM rec\n"
+			+ "JOIN known_commit\n"
+			+ "  ON rec.hash = known_commit.hash\n"
+			+ "WHERE known_commit.tracked\n"
+			+ "";
 
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
 			return db.dsl().fetchLazy(query, root.getHashAsString(), root.getRepoId().getIdAsString())
