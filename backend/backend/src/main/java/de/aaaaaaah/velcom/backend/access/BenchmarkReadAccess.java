@@ -46,8 +46,6 @@ import java.util.stream.Collectors;
 import org.jooq.codegen.db.tables.records.MeasurementRecord;
 import org.jooq.codegen.db.tables.records.RunRecord;
 
-// TODO: 27.11.20 Insert or update dimensions before run (use transaction)
-
 /**
  * Provides read access to benchmark related entities such as runs and measurements.
  */

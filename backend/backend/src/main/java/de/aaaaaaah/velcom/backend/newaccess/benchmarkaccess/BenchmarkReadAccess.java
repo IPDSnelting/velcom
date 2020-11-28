@@ -10,8 +10,6 @@ import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.RunError;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.RunErrorType;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.exceptions.NoSuchRunException;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
-import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Dimension;
-import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.DimensionInfo;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.storage.db.DBReadAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
@@ -21,7 +19,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.jooq.codegen.db.tables.records.RunRecord;
@@ -49,13 +46,8 @@ public class BenchmarkReadAccess {
 
 	protected final DatabaseStorage databaseStorage;
 
-	// TODO: 04.10.20 Change db schema and get rid of this dimension "cache"
-	protected final Map<Dimension, DimensionInfo> dimensions;
-
 	public BenchmarkReadAccess(DatabaseStorage databaseStorage) {
 		this.databaseStorage = databaseStorage;
-
-		dimensions = new ConcurrentHashMap<>();
 	}
 
 	private static Optional<RunError> readError(@Nullable String errorType, @Nullable String error) {
