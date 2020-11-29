@@ -92,7 +92,6 @@ def guarded_try_metric_or_nothing(benchmark: str, metric: str, function, unit: s
         }
     except Exception as e:
         print(e, file=sys.stderr)
-        pass
 
 
 def guarded_try_metric(benchmark: str, metric: str, function, unit="seconds", resultInterpretation="LESS_IS_BETTER"):
