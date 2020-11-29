@@ -1,6 +1,7 @@
 package de.aaaaaaah.velcom.backend.data.runcomparison;
 
 import de.aaaaaaah.velcom.backend.access.entities.Dimension;
+import de.aaaaaaah.velcom.backend.access.entities.RunId;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
@@ -9,15 +10,17 @@ public class DimensionDifference {
 	private final Dimension dimension;
 	private final double first;
 	private final double second;
+	private final RunId oldRunId;
 	@Nullable
 	private final Double secondStddev;
 
 	public DimensionDifference(Dimension dimension, double first, double second,
-		@Nullable Double secondStddev) {
+		RunId oldRunId, @Nullable Double secondStddev) {
 
 		this.dimension = dimension;
 		this.first = first;
 		this.second = second;
+		this.oldRunId = oldRunId;
 		this.secondStddev = secondStddev;
 	}
 
@@ -31,6 +34,10 @@ public class DimensionDifference {
 
 	public double getSecond() {
 		return second;
+	}
+
+	public RunId getOldRunId() {
+		return oldRunId;
 	}
 
 	public Optional<Double> getSecondStddev() {

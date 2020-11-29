@@ -6,22 +6,25 @@ import de.aaaaaaah.velcom.backend.data.runcomparison.DimensionDifference;
 import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparison;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 public class JsonDimensionDifference {
 
 	private final JsonDimension dimension;
+	private final UUID oldRunId;
 	private final double diff;
 	@Nullable
 	private final Double reldiff;
 	@Nullable
 	private final Double stddev;
 
-	public JsonDimensionDifference(JsonDimension dimension, double diff, @Nullable Double reldiff,
-		@Nullable Double stddev) {
+	public JsonDimensionDifference(JsonDimension dimension, UUID oldRunId, double diff,
+		@Nullable Double reldiff, @Nullable Double stddev) {
 
 		this.dimension = dimension;
+		this.oldRunId = oldRunId;
 		this.diff = diff;
 		this.reldiff = reldiff;
 		this.stddev = stddev;
@@ -38,6 +41,7 @@ public class JsonDimensionDifference {
 
 		return new JsonDimensionDifference(
 			JsonDimension.fromDimensionInfo(dimensionInfos.get(difference.getDimension())),
+			difference.getOldRunId().getId(),
 			difference.getDiff(),
 			difference.getReldiff().orElse(null),
 			difference.getSecondStddev().orElse(null)
@@ -54,6 +58,10 @@ public class JsonDimensionDifference {
 
 	public JsonDimension getDimension() {
 		return dimension;
+	}
+
+	public UUID getOldRunId() {
+		return oldRunId;
 	}
 
 	public double getDiff() {
