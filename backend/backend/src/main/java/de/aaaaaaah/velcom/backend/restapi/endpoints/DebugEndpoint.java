@@ -32,16 +32,11 @@ public class DebugEndpoint {
 			.map(r -> new RunnerInfo(r.getName(), r.getVersionHash().orElse(null)))
 			.collect(Collectors.toList());
 
-		int amountOfForeignKeyViolatingDimensions = dimensionAccess
-			.getAmountOfForeignKeyViolatingDimensions();
-
 		return new GetReply(
-			amountOfForeignKeyViolatingDimensions == 0,
+			true,
 			GitProperties.getBuildTime(),
 			GitProperties.getHash(),
-			runnerHashes,
-			dimensionAccess.getAmountOfDimensions(),
-			amountOfForeignKeyViolatingDimensions
+			runnerHashes
 		);
 	}
 
@@ -51,19 +46,14 @@ public class DebugEndpoint {
 		private final String buildTime;
 		private final String backendHash;
 		private final List<RunnerInfo> runnerHashes;
-		private final int amountOfDimensions;
-		private final int amountOfForeignKeyViolatingDimensions;
 
 		public GetReply(boolean safeToUpdate, String buildTime, String backendHash,
-			List<RunnerInfo> runnerHashes, int amountOfDimensions,
-			int amountOfForeignKeyViolatingDimensions) {
+			List<RunnerInfo> runnerHashes) {
 
 			this.safeToUpdate = safeToUpdate;
 			this.buildTime = buildTime;
 			this.backendHash = backendHash;
 			this.runnerHashes = runnerHashes;
-			this.amountOfDimensions = amountOfDimensions;
-			this.amountOfForeignKeyViolatingDimensions = amountOfForeignKeyViolatingDimensions;
 		}
 
 		public boolean isSafeToUpdate() {
@@ -80,14 +70,6 @@ public class DebugEndpoint {
 
 		public List<RunnerInfo> getRunnerHashes() {
 			return runnerHashes;
-		}
-
-		public int getAmountOfDimensions() {
-			return amountOfDimensions;
-		}
-
-		public int getAmountOfForeignKeyViolatingDimensions() {
-			return amountOfForeignKeyViolatingDimensions;
 		}
 	}
 

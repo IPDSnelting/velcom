@@ -1,12 +1,10 @@
 package de.aaaaaaah.velcom.backend.newaccess.dimensionaccess;
 
-import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 import static org.jooq.codegen.db.tables.Dimension.DIMENSION;
 import static org.jooq.codegen.db.tables.Measurement.MEASUREMENT;
 import static org.jooq.codegen.db.tables.Run.RUN;
-import static org.jooq.impl.DSL.selectDistinct;
 
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Dimension;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.DimensionInfo;
@@ -15,16 +13,13 @@ import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Unit;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.exceptions.NoSuchDimensionException;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.storage.db.DBReadAccess;
-import de.aaaaaaah.velcom.backend.storage.db.DBWriteAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.jooq.codegen.db.Tables;
 import org.jooq.codegen.db.tables.records.DimensionRecord;
 import org.jooq.exception.DataAccessException;
 import org.slf4j.Logger;
@@ -217,117 +212,5 @@ public class DimensionReadAccess {
 		}
 
 		return availableDimensions;
-	}
-
-	///////////////
-	// Migration //
-	///////////////
-
-	// TODO: 25.11.20 Remove after migration
-	public void migrate() {
-		if (!needToMigrate()) {
-			LOGGER.debug("No need to migrate dimensions");
-			return;
-		}
-
-		LOGGER.info("Migrating dimensions");
-		insertAllDimensions(findAllCurrentDimensions());
-	}
-
-	// TODO: 25.11.20 Remove after migration
-	private boolean needToMigrate() {
-		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			return db.selectFrom(DIMENSION)
-				.fetch()
-				.isEmpty();
-		}
-	}
-
-	// TODO: 25.11.20 Remove after migration
-	private Set<DimensionInfo> findAllCurrentDimensions() {
-		Map<Dimension, DimensionInfo> dimensions = new HashMap<>();
-
-		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-
-			// Figure out which dimensions exist at all
-			db.selectDistinct(Tables.MEASUREMENT.BENCHMARK, Tables.MEASUREMENT.METRIC)
-				.from(Tables.MEASUREMENT)
-				.forEach(record -> {
-					Dimension dimension = new Dimension(record.component1(), record.component2());
-					dimensions.put(dimension, new DimensionInfo(dimension));
-				});
-
-			// Figure out the latest units
-			db.selectDistinct(Tables.MEASUREMENT.BENCHMARK, Tables.MEASUREMENT.METRIC,
-				Tables.MEASUREMENT.UNIT)
-				.from(RUN)
-				.join(Tables.MEASUREMENT).on(Tables.MEASUREMENT.RUN_ID.eq(RUN.ID))
-				.where(Tables.MEASUREMENT.UNIT.isNotNull())
-				.groupBy(Tables.MEASUREMENT.BENCHMARK, Tables.MEASUREMENT.METRIC)
-				.orderBy(RUN.STOP_TIME.desc())
-				.forEach(record -> {
-					Dimension dimension = new Dimension(record.value1(), record.value2());
-					DimensionInfo info = dimensions.get(dimension);
-					DimensionInfo newInfo = new DimensionInfo(
-						info.getDimension(),
-						new Unit(record.value3()),
-						info.getInterpretation(),
-						info.isSignificant()
-					);
-					dimensions.put(dimension, newInfo);
-				});
-
-			// Figure out the latest interpretations
-			db.selectDistinct(Tables.MEASUREMENT.BENCHMARK, Tables.MEASUREMENT.METRIC,
-				Tables.MEASUREMENT.INTERPRETATION)
-				.from(RUN)
-				.join(Tables.MEASUREMENT).on(Tables.MEASUREMENT.RUN_ID.eq(RUN.ID))
-				.where(Tables.MEASUREMENT.INTERPRETATION.isNotNull())
-				.groupBy(Tables.MEASUREMENT.BENCHMARK, Tables.MEASUREMENT.METRIC)
-				.orderBy(RUN.STOP_TIME.desc())
-				.forEach(record -> {
-					Dimension dimension = new Dimension(record.value1(), record.value2());
-					DimensionInfo info = dimensions.get(dimension);
-					DimensionInfo newInfo = new DimensionInfo(
-						info.getDimension(),
-						info.getUnit(),
-						Interpretation.fromTextualRepresentation(record.value3()),
-						info.isSignificant()
-					);
-					dimensions.put(dimension, newInfo);
-				});
-		}
-
-		return new HashSet<>(dimensions.values());
-	}
-
-	// TODO: 25.11.20 Remove after migration
-	private void insertAllDimensions(Set<DimensionInfo> dimensions) {
-		List<DimensionRecord> dimRecords = dimensions.stream()
-			.map(DimensionReadAccess::dimInfoToDimRecord)
-			.collect(toList());
-
-		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
-			db.dsl().batchInsert(dimRecords).execute();
-		}
-	}
-
-	public int getAmountOfDimensions() {
-		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			return db.dsl().fetchCount(DIMENSION);
-		}
-	}
-
-	public int getAmountOfForeignKeyViolatingDimensions() {
-		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			return db.dsl().fetchCount(
-				selectDistinct(MEASUREMENT.BENCHMARK, MEASUREMENT.METRIC)
-					.from(MEASUREMENT)
-					.leftJoin(DIMENSION)
-					.on(DIMENSION.BENCHMARK.eq(MEASUREMENT.BENCHMARK))
-					.and(DIMENSION.METRIC.eq(MEASUREMENT.METRIC))
-					.where(DIMENSION.BENCHMARK.isNull())
-			);
-		}
 	}
 }
