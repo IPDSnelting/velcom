@@ -387,17 +387,20 @@ export class Worker {
 
 export class DimensionDifference {
   readonly dimension: Dimension
+  readonly oldRunId: RunId
   readonly absDiff: number
   readonly relDiff?: number
   readonly stddev?: number
 
   constructor(
     dimension: Dimension,
+    oldRunId: RunId,
     absDiff: number,
     relDiff?: number,
     stddev?: number
   ) {
     this.dimension = dimension
+    this.oldRunId = oldRunId
     this.absDiff = absDiff
     this.relDiff = relDiff
     this.stddev = stddev

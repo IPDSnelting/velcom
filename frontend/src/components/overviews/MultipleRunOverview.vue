@@ -19,7 +19,11 @@
               <v-row no-gutters class="ma-0">
                 <v-col
                   v-for="relevantChange in relevantChanges(item)"
-                  :key="relevantChange.id.benchmark + relevantChange.id.metric"
+                  :key="
+                    relevantChange.oldRunId +
+                    relevantChange.id.benchmark +
+                    relevantChange.id.metric
+                  "
                   cols="auto"
                   class="mr-2 mt-2"
                 >
@@ -28,6 +32,13 @@
                     outlined
                     :color="relevantChange.color"
                     :input-value="true"
+                    :to="{
+                      name: 'run-comparison',
+                      params: {
+                        first: relevantChange.oldRunId,
+                        second: run(item).runId
+                      }
+                    }"
                   >
                     <v-icon left>{{ relevantChange.icon }}</v-icon>
                     {{ relevantChange.id.benchmark }} —
@@ -57,7 +68,8 @@ import {
   DimensionDifference,
   DimensionInterpretation,
   RunDescription,
-  RunDescriptionWithDifferences
+  RunDescriptionWithDifferences,
+  RunId
 } from '@/store/types'
 import RunOverview from './RunOverview.vue'
 import {
@@ -92,8 +104,10 @@ class RelevantChange {
   readonly change: string
   readonly color: string
   readonly icon: string
+  readonly oldRunId: RunId
 
   constructor(difference: DimensionDifference) {
+    this.oldRunId = difference.oldRunId
     this.id = difference.dimension
     if (difference.stddev !== undefined) {
       let change = difference.relDiff
