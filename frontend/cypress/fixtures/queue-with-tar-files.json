@@ -1,0 +1,28 @@
+{
+  "tasks": [
+    {
+      "id": "6050f4e1-9f3f-405f-90fe-459e074f63f8",
+      "author": "Admin",
+      "since": 1606683415,
+      "source": {
+        "type": "UPLOADED_TAR",
+        "source": {
+          "description": "My non-attached tar"
+        }
+      }
+    },
+    {
+      "id": "ee78bea4-a142-4a7c-9e72-2b209b01b777",
+      "author": "Admin",
+      "since": 1606683397,
+      "source": {
+        "type": "UPLOADED_TAR",
+        "source": {
+          "description": "My Test tar",
+          "repo_id": "44bb5c8d-b20d-4bef-bdad-c92767dfa489"
+        }
+      }
+    }
+  ],
+  "runners": []
+}

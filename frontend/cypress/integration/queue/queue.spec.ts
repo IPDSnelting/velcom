@@ -61,7 +61,7 @@ context('Queue', () => {
     cy.waitFor('[@queue]')
   })
 
-  it('displays commit in queue', () => {
+  it.only('displays commit in queue', () => {
     cy.route({
       method: 'GET',
       url: '/queue',
@@ -74,7 +74,11 @@ context('Queue', () => {
 
     cy.contains(
       'Merge pull request #78 from IPDSnelting/provide-manual-benchmark-feedback'
-    ).should('exist')
+    )
+      .should('exist')
+      .and('have.attr', 'href')
+      .and('include', 'task-detail')
+      .and('include', '67d41dca-67bf-4a21-b076-01e447033f47')
     cy.contains('9c952dc6173589f48874f95c64f014adcb7fd993').should('exist')
 
     cy.contains(
@@ -84,6 +88,35 @@ context('Queue', () => {
       .first()
       .find('.v-progress-linear')
       .should('exist')
+  })
+
+  it('displays tar in queue', () => {
+    cy.route({
+      method: 'GET',
+      url: '/queue',
+      response: 'fixture:queue-with-tar-files.json'
+    }).as('queue')
+
+    cy.visit('queue')
+
+    cy.waitFor('[@queue]')
+
+    cy.contains('My non-attached tar').should('exist')
+    cy.contains('My Test tar').should('exist')
+    cy.contains('6050f4e1-9f3f-405f-90fe-459e074f63f8').should('exist')
+    cy.contains('ee78bea4-a142-4a7c-9e72-2b209b01b777').should('exist')
+
+    cy.contains('My Test tar')
+      .should('have.attr', 'href')
+      .and('include', 'task-detail')
+      .and('include', 'ee78bea4-a142-4a7c-9e72-2b209b01b777')
+
+    cy.contains('My Test tar')
+      .parents('.v-card')
+      .first()
+      .find('.repo-name')
+      .should('exist')
+      .should('have.text', 'VelCom')
   })
 
   it('refreshes running time every second', () => {
