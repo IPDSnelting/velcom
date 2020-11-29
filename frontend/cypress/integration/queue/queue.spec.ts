@@ -61,7 +61,7 @@ context('Queue', () => {
     cy.waitFor('[@queue]')
   })
 
-  it.only('displays commit in queue', () => {
+  it('displays commit in queue', () => {
     cy.route({
       method: 'GET',
       url: '/queue',
@@ -142,5 +142,36 @@ context('Queue', () => {
     cy.contains('Running on', { timeout: 2000 }).should(it =>
       expect(it).to.not.contain(lastTime)
     )
+  })
+
+  it.only('leads to task detail', () => {
+    cy.route({
+      method: 'GET',
+      url: '/queue',
+      response: 'fixture:queue-with-one-commit.json'
+    })
+    cy.visit('task-detail/67d41dca-67bf-4a21-b076-01e447033f47').as(
+      'task-detail'
+    )
+
+    cy.waitFor('[@task-detail]')
+
+    cy.contains('Show snackbar message')
+    cy.contains(
+      'I-Al-Istannen <I-Al-Istannen@users.noreply.github.com> authored at 2020-09-22 11:38'
+    )
+    cy.contains('GitHub <noreply@github.com> committed at 2020-09-22 11:38')
+    cy.contains(
+      'Merge pull request #78 from IPDSnelting/provide-manual-benchmark-feedback'
+    )
+      .should('exist')
+      .and('have.attr', 'href')
+      .and('include', 'run-detail')
+      .and('include', '9c952dc6173589f48874f95c64f014adcb7fd993')
+      .and('include', '44bb5c8d-b20d-4bef-bdad-c92767dfa489')
+    cy.contains('9c952dc6173589f48874f95c64f014adcb7fd993').should('exist')
+
+    cy.contains('Runner output').should('exist')
+    cy.contains('No output received').should('exist')
   })
 })
