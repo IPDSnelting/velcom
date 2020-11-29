@@ -69,7 +69,11 @@
                   class="mx-1"
                   v-else
                 ></v-progress-circular>
-                <v-btn icon @click="deleteTask(task)">
+                <v-btn
+                  icon
+                  @click="deleteTask(task)"
+                  data-cy="delete-queue-item"
+                >
                   <v-icon color="red">{{ deleteIcon }}</v-icon>
                 </v-btn>
               </template>

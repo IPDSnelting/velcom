@@ -7,6 +7,7 @@
           small
           icon
           @click="item.handler && item.handler($event)"
+          :data-cy="item.dataCy"
           :to="item.to"
           :href="item.href"
           :target="item.external ? '_blank' : ''"
@@ -46,6 +47,7 @@ type ButtonDescription = {
   href?: string
   external?: boolean
   show: boolean
+  dataCy?: string
 }
 
 @Component
@@ -69,7 +71,8 @@ export default class CommitBenchmarkActions extends Vue {
         tooltip: this.hasExistingBenchmark
           ? 'Re-run all benchmarks for this commit'
           : 'Run all benchmarks for this commit',
-        show: this.isAdmin
+        show: this.isAdmin,
+        dataCy: 'initiate-benchmark'
       },
       {
         handler: this.benchmarkUpwards,

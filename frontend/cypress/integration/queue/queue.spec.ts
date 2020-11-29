@@ -1,5 +1,58 @@
 /// <reference types="cypress" />
 
+function login(type?: 'Repo-Admin') {
+  cy.get('#nav-bar').then($navBar => {
+    if ($navBar.text().indexOf('Login') >= 0) {
+      cy.get('#nav-bar').contains('Login').click()
+
+      if (type) {
+        cy.get('#login-dialog').contains('Repository-Admin').click()
+        cy.get('#login-dialog')
+          .get('[data-cy=repo-input]')
+          .type('VelCom{enter}')
+        cy.get('#login-dialog')
+          .get('[data-cy=password-input]')
+          .type('123456{enter}')
+      } else {
+        cy.get('#login-dialog').contains('Web-Admin').click()
+        cy.get('#login-dialog')
+          .get('[data-cy=password-input]')
+          .type('12345{enter}')
+      }
+    }
+  })
+}
+
+function logout() {
+  cy.get('#nav-bar').then($navBar => {
+    if ($navBar.text().indexOf('Logout') >= 0) {
+      cy.get('#nav-bar').contains('Logout').click()
+    }
+  })
+}
+
+function addCommitToQueue(repoId: string, hash: string) {
+  cy.visit(`run-detail/${repoId}/${hash}`)
+
+  login()
+
+  cy.route({
+    method: 'POST',
+    url: /queue\/commit\/.+/
+  }).as('postToQueue')
+
+  cy.get('[data-cy=initiate-benchmark]').click()
+
+  cy.wait('@postToQueue')
+}
+
+function clearQueue() {
+  cy.visit('/queue')
+  login()
+  cy.contains('Cancel all tasks').click()
+  logout()
+}
+
 context('Queue', () => {
   beforeEach(() => {
     cy.server()
@@ -144,7 +197,7 @@ context('Queue', () => {
     )
   })
 
-  it.only('leads to task detail', () => {
+  it('leads to task detail', () => {
     cy.route({
       method: 'GET',
       url: '/queue',
@@ -173,5 +226,151 @@ context('Queue', () => {
 
     cy.contains('Runner output').should('exist')
     cy.contains('No output received').should('exist')
+  })
+
+  it('shows admin buttons when logged in', () => {
+    addCommitToQueue(
+      '44bb5c8d-b20d-4bef-bdad-c92767dfa489',
+      'a4159999515f26e8a53ee0cee19be8a925f3ca6c'
+    )
+    cy.visit('/queue')
+
+    logout()
+
+    cy.contains('Upload Tar').should('not.exist')
+    cy.contains('Cancel all tasks').should('not.exist')
+    cy.contains('Refetch all repos').should('not.exist')
+    cy.get('.rocket').should('not.exist')
+    cy.get('[data-cy=delete-queue-item]').should('not.exist')
+
+    login()
+
+    cy.contains('Upload Tar').should('exist')
+    cy.contains('Cancel all tasks').should('exist')
+    cy.contains('Refetch all repos').should('exist')
+    cy.get('.rocket').should('exist')
+    cy.get('[data-cy=delete-queue-item]').should('exist')
+  })
+
+  it('shows some admin buttons when logged in as repo admin', () => {
+    addCommitToQueue(
+      '44bb5c8d-b20d-4bef-bdad-c92767dfa489',
+      'a4159999515f26e8a53ee0cee19be8a925f3ca6c'
+    )
+    cy.visit('/queue')
+
+    logout()
+
+    cy.contains('Upload Tar').should('not.exist')
+    cy.contains('Cancel all tasks').should('not.exist')
+    cy.contains('Refetch all repos').should('not.exist')
+    cy.get('.rocket').should('not.exist')
+    cy.get('[data-cy=delete-queue-item]').should('not.exist')
+
+    login('Repo-Admin')
+
+    cy.contains('Upload Tar').should('not.exist')
+    cy.contains('Cancel all tasks').should('not.exist')
+    cy.contains('Refetch all repos').should('not.exist')
+    cy.get('.rocket').should('not.exist')
+    cy.get('[data-cy=delete-queue-item]').should('not.exist')
+
+    cy.contains('Cancel all tasks for <VelCom>').should('exist')
+  })
+
+  it('delete works', () => {
+    clearQueue()
+    addCommitToQueue(
+      '44bb5c8d-b20d-4bef-bdad-c92767dfa489',
+      'a4159999515f26e8a53ee0cee19be8a925f3ca6c'
+    )
+
+    cy.visit('/queue')
+
+    cy.contains('[frontend] Fix standard deviation percent computation').should(
+      'exist'
+    )
+
+    cy.get('[data-cy=delete-queue-item]').click()
+
+    cy.contains('[frontend] Fix standard deviation percent computation').should(
+      'not.exist'
+    )
+  })
+
+  it('delete all works', () => {
+    clearQueue()
+    const commits = [
+      {
+        repoId: '44bb5c8d-b20d-4bef-bdad-c92767dfa489',
+        hash: 'a4159999515f26e8a53ee0cee19be8a925f3ca6c',
+        message: '[frontend] Fix standard deviation percent computation'
+      },
+      {
+        repoId: '44bb5c8d-b20d-4bef-bdad-c92767dfa489',
+        hash: '514442b558c9d08b260de9b1f1ae9744e1afd200',
+        message: '[frontend] Fix errors overflowing tooltip activator button'
+      },
+      {
+        repoId: 'd471b648-ce65-41e2-9c44-84fb82b73100',
+        hash: '2ecf009141772328dd3b5aa33326873b145a778d',
+        message: 'Little <img src=x onerror=alert(2)> tables we call him'
+      }
+    ]
+
+    commits.forEach(({ repoId, hash }) => {
+      addCommitToQueue(repoId, hash)
+    })
+    cy.visit('/queue')
+
+    commits.forEach(({ message }) => {
+      cy.contains(message).should('exist')
+    })
+    cy.contains('Cancel all tasks').click()
+
+    commits.forEach(({ message }) => {
+      cy.contains(message).should('not.exist')
+    })
+  })
+
+  it('delete all as repo admin works', () => {
+    clearQueue()
+    const commits = [
+      {
+        repoId: '44bb5c8d-b20d-4bef-bdad-c92767dfa489',
+        hash: 'a4159999515f26e8a53ee0cee19be8a925f3ca6c',
+        message: '[frontend] Fix standard deviation percent computation',
+        deleted: true
+      },
+      {
+        repoId: '44bb5c8d-b20d-4bef-bdad-c92767dfa489',
+        hash: '514442b558c9d08b260de9b1f1ae9744e1afd200',
+        message: '[frontend] Fix errors overflowing tooltip activator button',
+        deleted: true
+      },
+      {
+        repoId: 'd471b648-ce65-41e2-9c44-84fb82b73100',
+        hash: '2ecf009141772328dd3b5aa33326873b145a778d',
+        message: 'Little <img src=x onerror=alert(2)> tables we call him',
+        deleted: false
+      }
+    ]
+
+    commits.forEach(({ repoId, hash }) => {
+      addCommitToQueue(repoId, hash)
+    })
+    cy.visit('/queue')
+
+    logout()
+    login('Repo-Admin')
+
+    commits.forEach(({ message }) => {
+      cy.contains(message).should('exist')
+    })
+    cy.contains('Cancel all tasks for <VelCom>').click()
+
+    commits.forEach(({ message, deleted }) => {
+      cy.contains(message).should(deleted ? 'not.exist' : 'exist')
+    })
   })
 })
