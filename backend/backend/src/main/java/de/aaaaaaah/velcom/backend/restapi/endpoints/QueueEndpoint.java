@@ -51,7 +51,8 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 @Produces(MediaType.APPLICATION_JSON)
 public class QueueEndpoint {
 
-	// TODO: 12.09.20 Add one-up endpoint (also update the API spec)
+	private static final String AUTHOR_NAME_ADMIN = "Admin";
+	private static final String AUTHOR_NAME_REPO_ADMIN = "Repo-Admin";
 
 	private final CommitReadAccess commitReadAccess;
 	private final RepoReadAccess repoReadAccess;
@@ -65,6 +66,12 @@ public class QueueEndpoint {
 		this.repoReadAccess = repoReadAccess;
 		this.queue = queue;
 		this.dispatcher = dispatcher;
+	}
+
+	private static String getAuthor(boolean isAdmin) {
+		// There's no need to include the repo name or ID since that info is already included in the
+		// task's source.
+		return isAdmin ? AUTHOR_NAME_ADMIN : AUTHOR_NAME_REPO_ADMIN;
 	}
 
 	@GET
@@ -136,9 +143,9 @@ public class QueueEndpoint {
 	}
 
 	@DELETE
-	@Path("{taskId}")
+	@Path("{taskid}")
 	@Timed(histogram = true)
-	public void deleteTask(@Auth RepoUser user, @PathParam("taskId") UUID taskId)
+	public void deleteTask(@Auth RepoUser user, @PathParam("taskid") UUID taskId)
 		throws NoSuchTaskException {
 		Task task = queue.getTask(new TaskId(taskId));
 		if (task.getRepoId().isEmpty()) {
@@ -151,9 +158,9 @@ public class QueueEndpoint {
 	}
 
 	@PATCH
-	@Path("{taskId}")
+	@Path("{taskid}")
 	@Timed(histogram = true)
-	public void patchTask(@Auth RepoUser user, @PathParam("taskId") UUID taskId)
+	public void patchTask(@Auth RepoUser user, @PathParam("taskid") UUID taskId)
 		throws NoSuchTaskException {
 		user.guardAdminAccess();
 
@@ -164,11 +171,11 @@ public class QueueEndpoint {
 	}
 
 	@POST
-	@Path("commit/{repoId}/{hash}")
+	@Path("commit/{repoid}/{hash}")
 	@Timed(histogram = true)
 	public PostCommitReply addCommit(
 		@Auth RepoUser user,
-		@PathParam("repoId") UUID repoUuid,
+		@PathParam("repoid") UUID repoUuid,
 		@PathParam("hash") String commitHashString
 	) throws NoSuchRepoException {
 		RepoId repoId = new RepoId(repoUuid);
@@ -177,16 +184,13 @@ public class QueueEndpoint {
 		user.guardRepoAccess(repoId);
 
 		repoReadAccess.guardRepoExists(repoId);
-		// Ensure the commit exists, 404s otherwise
-		Commit commit = commitReadAccess.getCommit(repoId, commitHash);
+		commitReadAccess.guardCommitExists(repoId, commitHash);
 		// If at any point between these checks and inserting the task the repo is deleted, JOOQ will
 		// throw a DataAccessException (I believe) and this endpoint will return a 500. But the chance
 		// of that happening is low enough that putting in the effort to perform the checks in an atomic
 		// way is not worth it.
 
-		// There's no need to include the repo name or ID since that info is already included in the
-		// task's source.
-		String author = user.isAdmin() ? "Admin" : "Repo-Admin";
+		String author = getAuthor(user.isAdmin());
 
 		// TODO: Really don't tell them the id of the existing task?
 		final Optional<Task> insertedTask = queue
@@ -197,6 +201,36 @@ public class QueueEndpoint {
 		}
 
 		return new PostCommitReply(JsonTask.fromTask(insertedTask.get(), commitReadAccess));
+	}
+
+
+	@POST
+	@Path("commit/{repoid}/{hash}/one-up")
+	@Timed(histogram = true)
+	public PostOneUpReply PostOneUpReply(
+		@Auth RepoUser user,
+		@PathParam("repoid") UUID repoUuid,
+		@PathParam("hash") String commitHashString
+	) throws NoSuchRepoException {
+		RepoId repoId = new RepoId(repoUuid);
+		CommitHash rootHash = new CommitHash(commitHashString);
+
+		user.guardRepoAccess(repoId);
+		commitReadAccess.guardCommitExists(repoId, rootHash);
+
+		List<CommitHash> hashes = commitReadAccess.getDescendantCommits(repoId, rootHash);
+
+		String author = getAuthor(user.isAdmin());
+		queue.addCommits(author, repoId, hashes, TaskPriority.MANUAL);
+
+		List<JsonTask> tasks = queue.getAllTasksInOrder().stream()
+			.filter(it -> it.getRepoId().map(repoId::equals).orElse(false))
+			.filter(it -> it.getCommitHash().isPresent())
+			.filter(it -> hashes.contains(it.getCommitHash().get()))
+			.map(task -> JsonTask.fromTask(task, commitReadAccess))
+			.collect(Collectors.toList());
+
+		return new PostOneUpReply(tasks);
 	}
 
 	@POST
@@ -214,7 +248,7 @@ public class QueueEndpoint {
 		Optional<RepoId> repoId = Optional.ofNullable(repoUuid).map(RepoId::new);
 
 		Optional<Task> task = queue.addTar(
-			"Admin",
+			AUTHOR_NAME_ADMIN,
 			TaskPriority.MANUAL,
 			repoId.orElse(null),
 			description,
@@ -228,10 +262,10 @@ public class QueueEndpoint {
 		return new UploadTarReply(JsonTask.fromTask(task.get(), commitReadAccess));
 	}
 
-	@Path("task/{taskId}")
+	@Path("task/{taskid}")
 	@GET
 	@Timed(histogram = true)
-	public GetTaskInfoReply getTask(@PathParam("taskId") UUID taskId) {
+	public GetTaskInfoReply getTask(@PathParam("taskid") UUID taskId) {
 		int indexOfTask = 0;
 		Optional<Task> foundTask = Optional.empty();
 		for (Task task : queue.getAllTasksInOrder()) {
@@ -261,10 +295,10 @@ public class QueueEndpoint {
 		);
 	}
 
-	@Path("task/{taskId}/progress")
+	@Path("task/{taskid}/progress")
 	@GET
 	@Timed(histogram = true)
-	public GetTaskOutputReply getRunnerOutput(@PathParam("taskId") UUID taskId) {
+	public GetTaskOutputReply getRunnerOutput(@PathParam("taskid") UUID taskId) {
 		Optional<KnownRunner> worker = dispatcher.getKnownRunners().stream()
 			.filter(it -> it.getCurrentTask().isPresent())
 			.filter(it -> it.getCurrentTask().get().getId().getId().equals(taskId))
@@ -278,6 +312,19 @@ public class QueueEndpoint {
 			.orElse(new LinesWithOffset(0, List.of()));
 
 		return new GetTaskOutputReply(lastOutputLines.getLines(), lastOutputLines.getFirstLineOffset());
+	}
+
+	private static class PostOneUpReply {
+
+		private final List<JsonTask> tasks;
+
+		public PostOneUpReply(List<JsonTask> tasks) {
+			this.tasks = tasks;
+		}
+
+		public List<JsonTask> getTasks() {
+			return tasks;
+		}
 	}
 
 	private static class PostCommitReply {

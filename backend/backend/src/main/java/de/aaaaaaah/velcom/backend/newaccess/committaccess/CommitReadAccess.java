@@ -13,6 +13,7 @@ import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.FullCommit;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.exceptions.NoSuchCommitException;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.BranchName;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
+import de.aaaaaaah.velcom.backend.restapi.exception.NoSuchDimensionException;
 import de.aaaaaaah.velcom.backend.storage.db.DBReadAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import java.time.Instant;
@@ -99,6 +100,12 @@ public class CommitReadAccess {
 		} catch (DataAccessException e) {
 			throw new NoSuchCommitException(e, repoId, commitHash);
 		}
+	}
+
+	public void guardCommitExists(RepoId repoId, CommitHash commitHash)
+		throws NoSuchDimensionException {
+
+		getCommit(repoId, commitHash);
 	}
 
 	public List<Commit> getCommits(RepoId repoId, Collection<CommitHash> commitHashes) {
@@ -254,6 +261,40 @@ public class CommitReadAccess {
 
 			return query.stream()
 				.map(CommitReadAccess::knownCommitRecordToCommit)
+				.collect(toList());
+		}
+	}
+
+	/**
+	 * @param repoId the id of the root commit's repo
+	 * @param rootHash the hash of the root commit
+	 * @return all tracked commits descending from the given root.
+	 */
+	public List<CommitHash> getDescendantCommits(RepoId repoId, CommitHash rootHash) {
+		String query = "WITH RECURSIVE rec(hash) AS (\n"
+			+ "  VALUES (?)\n"                                    // <-- Binding #1 - Root hash
+			+ "  \n"
+			+ "  UNION\n"
+			+ "  \n"
+			+ "  SELECT commit_relationship.child_hash\n"
+			+ "  FROM commit_relationship\n"
+			+ "  JOIN rec\n"
+			+ "    ON rec.hash = commit_relationship.parent_hash\n"
+			+ "  WHERE repo_id = ?\n"                             // <-- Binding #2 - repo id
+			+ ")\n"
+			+ "\n"
+			+ "SELECT rec.hash \n"
+			+ "FROM rec\n"
+			+ "JOIN known_commit\n"
+			+ "  ON rec.hash = known_commit.hash\n"
+			+ "WHERE known_commit.tracked\n"
+			+ "";
+
+		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
+			return db.dsl().fetchLazy(query, rootHash.getHash(), repoId.getIdAsString())
+				.stream()
+				.map(record -> (String) record.getValue(0))
+				.map(CommitHash::new)
 				.collect(toList());
 		}
 	}

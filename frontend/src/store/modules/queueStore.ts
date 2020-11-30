@@ -80,21 +80,25 @@ export class QueueStore extends VxModule {
   @action
   async dispatchPrioritizeOpenTask(id: TaskId): Promise<void> {
     await axios.patch(`/queue/${id}`, {}, { showSuccessSnackbar: true })
-    this.prioritizeOpenTask(id)
+    // Re-fetch, as it might be at a quite different position now
+    await this.fetchQueue()
   }
 
   /**
    * Queues all commits upwards of (and including) the passed commit.
    *
    * @param {CommitDescription} commit the base commit to prioritize
-   * @returns {Promise<void>} a promise completing with an optional error
-   * @memberof QueueModuleStore
+   * @returns {Promise<number>} the amount of tasks added
    */
   @action
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async dispatchQueueUpwardsOf(commit: CommitDescription): Promise<void> {
-    // FIXME: Adjust API?
-    throw new Error('Not implementable!')
+  async dispatchQueueUpwardsOf(commit: CommitDescription): Promise<number> {
+    const response = await axios.post(
+      `/queue/commit/${commit.repoId}/${commit.hash}/one-up`
+    )
+
+    // Fetching the queue is not needed, as this option is only called from
+    // other pages
+    return response.data.tasks.length
   }
 
   /**
@@ -214,23 +218,6 @@ export class QueueStore extends VxModule {
   @mutation
   setOpenTasks(payload: Task[]): void {
     this._openTasks = payload.slice()
-  }
-
-  /**
-   * Moves a given manual task to the top of the queue. Locally!
-   *
-   * @param {string} id the id of the task
-   * @memberof QueueModuleStore
-   */
-  @mutation
-  prioritizeOpenTask(id: TaskId): void {
-    const oldIndex = this._openTasks.findIndex(task => task.id === id)
-    const task = this._openTasks[oldIndex]
-    if (oldIndex < 0) {
-      return
-    }
-    this._openTasks.splice(oldIndex, 1)
-    this._openTasks.unshift(task)
   }
 
   /**

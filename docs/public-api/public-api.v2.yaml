@@ -761,11 +761,11 @@ paths:
 
         The `start_time`, `end_time` and `duration` parameters work the same as for the `/graph/detail/{repoid}` endpoint.
         If some of the repos don't exist, they may be omitted from the response.
-  '/queue/task/{taskId}/progress':
+  '/queue/task/{taskid}/progress':
     parameters:
       - schema:
           type: string
-        name: taskId
+        name: taskid
         in: path
         required: true
     get:
@@ -792,7 +792,7 @@ paths:
                   - output
         '404':
           description: If the given task is not in the queue or not currently worked on by a runner.
-      operationId: get-queue-task-taskId-progress
+      operationId: get-queue-task-taskid-progress
       description: Returns the last 100 lines the benchmark script working on the given task reported on its standard error stream.
   /listener/fetch-all:
     post:
@@ -836,6 +836,38 @@ paths:
           description: Not Found
       operationId: get-queue-task-taskId
       description: Return the task and its position in the queue.
+  '/queue/commit/{repoid}/{hash}/one-up':
+    parameters:
+      - schema:
+          type: string
+        name: repoid
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: hash
+        in: path
+        required: true
+    post:
+      summary: One-up benchmark
+      operationId: post-queue-commit-repoid-hash-one-up
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tasks:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Task'
+        '404':
+          description: Commit Not Found
+      description: Benchmarks the given commit and all tracked descendants.
+      security:
+        - repo_admin_credentials: []
 components:
   schemas:
     CommitHash:
