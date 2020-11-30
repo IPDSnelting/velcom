@@ -1,6 +1,6 @@
 <template>
   <v-container>
-    <v-row v-if="!show404 && task === null && commit === null">
+    <v-row v-if="!show404 && taskInfo === null && commit === null">
       <v-col>
         <v-skeleton-loader type="card"></v-skeleton-loader>
       </v-col>
@@ -42,12 +42,34 @@
         </v-card>
       </v-col>
     </v-row>
-    <v-row v-if="task" no-gutters>
+    <v-row v-if="taskInfo" no-gutters>
       <v-col>
         <task-runner-output
           :task-id="taskId"
           @loading-failed="loadingOutputFailed"
-        ></task-runner-output>
+        >
+          <template #toolbar-right v-if="taskInfo">
+            <v-spacer></v-spacer>
+            <v-container
+              fluid
+              class="ma-0 pa-0"
+              style="flex: 0 0 0; flex-basis: content"
+            >
+              <v-row no-gutters justify="end">
+                <v-col class="ma-0 pa-0" cols="auto">
+                  #{{ taskInfo.position + 1 }}
+                </v-col>
+              </v-row>
+              <v-row no-gutters justify="end">
+                <v-col class="ma-0 pa-0" cols="auto">
+                  <span v-if="queuedSinceText" class="text-sm-body-1">
+                    {{ queuedSinceText }}
+                  </span>
+                </v-col>
+              </v-row>
+            </v-container>
+          </template>
+        </task-runner-output>
       </v-col>
     </v-row>
     <v-row v-if="show404">
@@ -67,7 +89,6 @@ import {
   Commit,
   CommitTaskSource,
   TarTaskSource,
-  Task,
   TaskSource
 } from '@/store/types'
 import { Watch } from 'vue-property-decorator'
@@ -75,10 +96,12 @@ import { vxm } from '@/store'
 import CommitDetail from '@/components/rundetail/CommitDetail.vue'
 import TaskRunnerOutput from '@/components/TaskRunnerOutput.vue'
 import InlineMinimalRepoDisplay from '@/components/InlineMinimalRepoDisplay.vue'
+import { TaskInfo } from '@/store/modules/queueStore'
+import { formatDurationShort } from '@/util/TimeUtil'
 
 @Component({
   components: {
-    InlineMinimalRepoDisplay,
+    'inline-minimal-repo-display': InlineMinimalRepoDisplay,
     'task-runner-output': TaskRunnerOutput,
     'page-404': NotFound404,
     'commit-detail': CommitDetail
@@ -87,20 +110,23 @@ import InlineMinimalRepoDisplay from '@/components/InlineMinimalRepoDisplay.vue'
 export default class TaskDetailView extends Vue {
   private show404: boolean = false
 
-  private task: Task | null = null
+  private taskInfo: TaskInfo | null = null
   private commit: Commit | null = null
   private nudgeToRunDetail: boolean = false
+
+  private timerIds: number[] = []
+  private queuedSinceText: string | null = null
 
   private get taskId() {
     return this.$route.params.taskId
   }
 
   private get tarSource() {
-    if (!this.task) {
+    if (!this.taskInfo || !this.taskInfo.task) {
       return null
     }
-    if (this.task.source instanceof TarTaskSource) {
-      return this.task.source
+    if (this.taskInfo.task.source instanceof TarTaskSource) {
+      return this.taskInfo.task.source
     }
     return null
   }
@@ -109,16 +135,13 @@ export default class TaskDetailView extends Vue {
   private async update() {
     this.show404 = false
 
-    await vxm.queueModule.fetchQueue()
+    this.taskInfo = await vxm.queueModule.fetchTaskInfo(this.taskId)
 
-    const myTask = vxm.queueModule.openTasks.find(it => it.id === this.taskId)
-    this.task = myTask || null
-
-    if (!this.task) {
+    if (!this.taskInfo) {
       await this.handleTaskNotFound()
       return
     }
-    await this.handleSource(this.task.source)
+    await this.handleSource(this.taskInfo.task.source)
   }
 
   private async handleSource(source: TaskSource) {
@@ -141,8 +164,25 @@ export default class TaskDetailView extends Vue {
   }
 
   private loadingOutputFailed() {
-    if (!vxm.queueModule.openTasks.find(it => it.id === this.taskId)) {
+    if (this.taskInfo === null) {
       this.handleTaskNotFound()
+    }
+  }
+
+  private updateDuration() {
+    if (!this.taskInfo) {
+      this.queuedSinceText = null
+      return
+    }
+
+    if (this.taskInfo.runningSince) {
+      this.queuedSinceText =
+        'running for ' +
+        formatDurationShort(this.taskInfo.runningSince, new Date())
+    } else {
+      this.queuedSinceText =
+        'queued for  ' +
+        formatDurationShort(this.taskInfo.task.since, new Date())
     }
   }
 
@@ -156,7 +196,17 @@ export default class TaskDetailView extends Vue {
   }
 
   private mounted() {
+    const updateTaskTimer = setInterval(() => {
+      this.update()
+    }, 10_000)
+    const updateDurationTimer = setInterval(() => this.updateDuration(), 1000)
+
+    this.timerIds = [updateTaskTimer, updateDurationTimer]
     this.update()
+  }
+
+  private destroyed() {
+    this.timerIds.forEach(clearInterval)
   }
 }
 </script>

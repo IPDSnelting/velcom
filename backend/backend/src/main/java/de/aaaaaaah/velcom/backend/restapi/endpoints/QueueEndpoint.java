@@ -26,6 +26,7 @@ import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.PATCH;
 import io.micrometer.core.annotation.Timed;
 import java.io.InputStream;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -227,6 +228,39 @@ public class QueueEndpoint {
 		return new UploadTarReply(JsonTask.fromTask(task.get(), commitReadAccess));
 	}
 
+	@Path("task/{taskId}")
+	@GET
+	@Timed(histogram = true)
+	public GetTaskInfoReply getTask(@PathParam("taskId") UUID taskId) {
+		int indexOfTask = 0;
+		Optional<Task> foundTask = Optional.empty();
+		for (Task task : queue.getAllTasksInOrder()) {
+			if (task.getIdAsUuid().equals(taskId)) {
+				foundTask = Optional.of(task);
+				break;
+			}
+			indexOfTask++;
+		}
+
+		if (foundTask.isEmpty()) {
+			throw new WebApplicationException(Status.NOT_FOUND);
+		}
+
+		Long runningSince = dispatcher.getKnownRunners().stream()
+			.filter(it -> it.getCurrentTask().isPresent())
+			.filter(it -> it.getCurrentTask().get().getId().getId().equals(taskId))
+			.findAny()
+			.flatMap(KnownRunner::getWorkingSince)
+			.map(Instant::getEpochSecond)
+			.orElse(null);
+
+		return new GetTaskInfoReply(JsonTask.fromTask(
+			foundTask.get(), commitReadAccess),
+			indexOfTask,
+			runningSince
+		);
+	}
+
 	@Path("task/{taskId}/progress")
 	@GET
 	@Timed(histogram = true)
@@ -307,6 +341,33 @@ public class QueueEndpoint {
 
 		public int getIndexOfFirstLine() {
 			return indexOfFirstLine;
+		}
+	}
+
+	private static class GetTaskInfoReply {
+
+		private final JsonTask task;
+		private final int position;
+		@Nullable
+		private final Long runningSince;
+
+		public GetTaskInfoReply(JsonTask task, int position, @Nullable Long runningSince) {
+			this.task = task;
+			this.position = position;
+			this.runningSince = runningSince;
+		}
+
+		public JsonTask getTask() {
+			return task;
+		}
+
+		public int getPosition() {
+			return position;
+		}
+
+		@Nullable
+		public Long getRunningSince() {
+			return runningSince;
 		}
 	}
 }

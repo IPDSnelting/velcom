@@ -804,6 +804,38 @@ paths:
       description: 'Check all repos (including the benchmark repo) for new commits and perform necessary internal updates. After fetching is complete, the runners will automatically use the newest version of the benchmark repo.'
       security:
         - admin_credentials: []
+  '/queue/task/{taskId}':
+    parameters:
+      - schema:
+          type: string
+        name: taskId
+        in: path
+        required: true
+    get:
+      summary: Get task info
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  task:
+                    $ref: '#/components/schemas/Task'
+                  position:
+                    type: number
+                    description: The position of this task in the queue. Zero based.
+                  running_since:
+                    $ref: '#/components/schemas/Time'
+                required:
+                  - task
+                  - position
+        '404':
+          description: Not Found
+      operationId: get-queue-task-taskId
+      description: Return the task and its position in the queue.
 components:
   schemas:
     CommitHash:

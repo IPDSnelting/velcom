@@ -3,6 +3,7 @@
     <v-card-title>
       <v-toolbar dark color="toolbarColor">
         Runner output (standard error stream)
+        <slot name="toolbar-right"></slot>
       </v-toolbar>
     </v-card-title>
     <v-card-text>
@@ -82,10 +83,8 @@ export default class TaskRunnerOutput extends Vue {
     this.loadingError = newOutput === null
 
     if (this.loadingError) {
-      await vxm.queueModule.fetchQueue()
-      this.taskInQueue = !!vxm.queueModule.openTasks.find(
-        it => it.id === this.taskId
-      )
+      const fetchedTask = await vxm.queueModule.fetchTaskInfo(this.taskId)
+      this.taskInQueue = fetchedTask !== null
       this.$emit('loading-failed')
       return
     }
