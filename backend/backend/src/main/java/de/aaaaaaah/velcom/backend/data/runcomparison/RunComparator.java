@@ -42,6 +42,7 @@ public class RunComparator {
 				dimension,
 				firstValues.getAverageValue(),
 				secondValues.getAverageValue(),
+				first.getId(),
 				getStddev(secondValues).orElse(null)
 			);
 			differences.add(difference);

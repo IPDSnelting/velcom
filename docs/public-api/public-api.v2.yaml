@@ -1155,9 +1155,12 @@ components:
         stddev:
           type: number
           description: The standard deviation of the run the new value is from. Only present if the amount of values in the sample is above the minimum stddev amount.
+        old_run_id:
+          $ref: '#/components/schemas/RunId'
       required:
         - dimension
         - diff
+        - old_run_id
   securitySchemes:
     admin_credentials:
       type: http
