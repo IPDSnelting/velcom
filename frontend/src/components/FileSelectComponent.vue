@@ -11,7 +11,7 @@
           <span class="font-weight-bold pl-1">{{ selectedFileName }}</span>
         </label>
         <input
-          accept=".tar"
+          accept=".tar,.tar.gz"
           @change="fileSelected"
           id="file-upload"
           type="file"
