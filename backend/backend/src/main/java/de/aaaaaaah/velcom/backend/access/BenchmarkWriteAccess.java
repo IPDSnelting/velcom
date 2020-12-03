@@ -267,6 +267,8 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 			// (since run was cached in repoRunCache, the run must have a repo source)
 			repoRunCache.invalidate(run.getSource().getLeft().orElseThrow().getHash());
 		}
+
+		availableDimensionsCache.invalidate(repoId);
 	}
 
 	/**
@@ -281,6 +283,8 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 
 		// Invalidate recent run cache and reload it from database
 		this.reloadRecentRunCache();
+
+		availableDimensionsCache.invalidate(repoId);
 	}
 
 }
