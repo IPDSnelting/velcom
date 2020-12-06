@@ -1109,6 +1109,12 @@ components:
               description: All measured values
               items:
                 type: number
+            stddev:
+              description: The standard deviation of the run the new value is from. Only present if the amount of values in the sample is above the minimum stddev amount.
+              type: number
+            stddev_percent:
+              type: number
+              description: stddev / value. Only present if the amount of values in the sample is above the minimum stddev amount.
           required:
             - dimension
             - value
@@ -1216,9 +1222,6 @@ components:
             (new value - old value) / old value
 
             Only present if the old_value is non-zero.
-        stddev:
-          type: number
-          description: The standard deviation of the run the new value is from. Only present if the amount of values in the sample is above the minimum stddev amount.
         old_run_id:
           $ref: '#/components/schemas/RunId'
       required:
