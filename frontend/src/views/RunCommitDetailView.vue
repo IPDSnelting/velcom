@@ -7,7 +7,13 @@
     </v-row>
     <v-row v-if="commit" no-gutters>
       <v-col>
-        <commit-detail :commit="commit"></commit-detail>
+        <commit-detail :commit="commit">
+          <template #body-trailing v-if="runWithDifferences">
+            <run-significance-chips
+              :run="runWithDifferences"
+            ></run-significance-chips>
+          </template>
+        </commit-detail>
       </v-col>
     </v-row>
     <v-row v-if="tarSource" no-gutters justify="center">
@@ -78,9 +84,11 @@ import RunTimeline from '@/components/rundetail/RunTimeline.vue'
 import { NotFoundError } from '@/store/modules/commitDetailComparisonStore'
 import { showCommitInDetailGraph } from '@/util/GraphNavigation'
 import TarOverview from '@/components/overviews/TarOverview.vue'
+import RunSignificanceChips from '@/components/RunSignificanceChips.vue'
 
 @Component({
   components: {
+    'run-significance-chips': RunSignificanceChips,
     'tar-overview': TarOverview,
     'page-404': NotFound404,
     'run-detail': RunDetail,

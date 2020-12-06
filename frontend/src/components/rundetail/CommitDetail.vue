@@ -99,6 +99,7 @@
                   </div>
                 </v-col>
               </v-row>
+              <slot name="body-trailing"></slot>
             </v-container>
           </v-card-text>
         </v-card>
