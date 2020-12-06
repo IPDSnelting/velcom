@@ -17,29 +17,34 @@ public class JsonMeasurement {
 	private final List<Double> values;
 	@Nullable
 	private final String error;
+	@Nullable
+	private final Double stddev;
+	@Nullable
+	private final Double stddevPercent;
 
 	private JsonMeasurement(JsonDimension dimension, @Nullable Double value,
-		@Nullable List<Double> values, @Nullable String error) {
+		@Nullable List<Double> values, @Nullable String error, @Nullable Double stddev,
+		@Nullable Double stddevPercent) {
 
 		this.dimension = dimension;
 		this.value = value;
 		this.values = values;
 		this.error = error;
+		this.stddev = stddev;
+		this.stddevPercent = stddevPercent;
 	}
 
 	public static JsonMeasurement successful(JsonDimension dimension, double value,
-		List<Double> values) {
-
-		return new JsonMeasurement(dimension, value, values, null);
+		List<Double> values, Double stddev, Double stddevPercent) {
+		return new JsonMeasurement(dimension, value, values, null, stddev, stddevPercent);
 	}
 
 	public static JsonMeasurement successful(JsonDimension dimension, double value) {
-
-		return new JsonMeasurement(dimension, value, null, null);
+		return new JsonMeasurement(dimension, value, null, null, null, null);
 	}
 
 	public static JsonMeasurement failed(JsonDimension dimension, String error) {
-		return new JsonMeasurement(dimension, null, null, error);
+		return new JsonMeasurement(dimension, null, null, error, null, null);
 	}
 
 	/**
@@ -64,11 +69,13 @@ public class JsonMeasurement {
 			return failed(dimension, left.getErrorMessage());
 		} else {
 			MeasurementValues right = content.getRight().get();
-			if (allValues) {
-				return successful(dimension, right.getAverageValue(), right.getValues());
-			} else {
-				return successful(dimension, right.getAverageValue());
-			}
+			return successful(
+				dimension,
+				right.getAverageValue(),
+				allValues ? right.getValues() : null,
+				right.getStddev().orElse(null),
+				right.getStddevPercent().orElse(null)
+			);
 		}
 	}
 
@@ -89,5 +96,15 @@ public class JsonMeasurement {
 	@Nullable
 	public String getError() {
 		return error;
+	}
+
+	@Nullable
+	public Double getStddev() {
+		return stddev;
+	}
+
+	@Nullable
+	public Double getStddevPercent() {
+		return stddevPercent;
 	}
 }

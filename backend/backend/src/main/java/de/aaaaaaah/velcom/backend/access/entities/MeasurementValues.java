@@ -59,6 +59,16 @@ public class MeasurementValues {
 		return Optional.of(result);
 	}
 
+	/**
+	 * @return stddev / averageValue
+	 */
+	public Optional<Double> getStddevPercent() {
+		if (getAverageValue() == 0) {
+			return Optional.empty();
+		}
+		return getStddev().map(it -> it / getAverageValue());
+	}
+
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) {
