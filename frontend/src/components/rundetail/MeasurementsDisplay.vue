@@ -106,6 +106,7 @@ class Item {
     interpretation: DimensionInterpretation,
     value?: number,
     standardDeviation?: number,
+    standardDeviationPercent?: number,
     change?: number,
     changePercent?: number,
     error?: string
@@ -115,10 +116,7 @@ class Item {
     this.unit = unit
     this.value = value
     this.standardDeviation = standardDeviation
-    this.standardDeviationPercent = this.computeStandardDeviationPercent(
-      value,
-      standardDeviation
-    )
+    this.standardDeviationPercent = standardDeviationPercent
     this.change = change
     this.changePercent = changePercent
     this.error = error
@@ -160,20 +158,6 @@ class Item {
       return this.formatNumber(number)
     }
     return this.formatNumber(number * 100) + '%'
-  }
-
-  private computeStandardDeviationPercent(
-    value?: number,
-    standardDeviation?: number
-  ): number | undefined {
-    if (value === undefined || standardDeviation === undefined) {
-      return undefined
-    }
-    // divide by zero :(
-    if (value === 0) {
-      return undefined
-    }
-    return standardDeviation / value
   }
 
   private computeChangeColor(
@@ -286,7 +270,8 @@ export default class MeasurementsDisplay extends Vue {
       measurement.dimension.unit,
       measurement.dimension.interpretation,
       measurement.value,
-      difference ? difference.stddev : undefined,
+      measurement.stddev,
+      measurement.stddevPercent,
       difference ? difference.absDiff : undefined,
       difference ? difference.relDiff : undefined
     )
