@@ -400,17 +400,20 @@ export class DimensionDifference {
   readonly oldRunId: RunId
   readonly absDiff: number
   readonly relDiff?: number
+  readonly stddevDiff?: number
 
   constructor(
     dimension: Dimension,
     oldRunId: RunId,
     absDiff: number,
-    relDiff?: number
+    relDiff?: number,
+    stddevDiff?: number
   ) {
     this.dimension = dimension
     this.oldRunId = oldRunId
     this.absDiff = absDiff
     this.relDiff = relDiff
+    this.stddevDiff = stddevDiff
   }
 }
 

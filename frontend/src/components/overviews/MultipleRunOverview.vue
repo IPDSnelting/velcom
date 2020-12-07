@@ -109,13 +109,11 @@ class RelevantChange {
   constructor(difference: DimensionDifference) {
     this.oldRunId = difference.oldRunId
     this.id = difference.dimension
-    if (difference.stddev !== undefined) {
+    if (difference.stddevDiff !== undefined) {
       let change = difference.relDiff
         ? this.formatPercentage(difference.relDiff)
         : this.formatNumber(difference.absDiff)
-      change += ` (${this.formatNumber(
-        difference.absDiff / difference.stddev
-      )} σ)`
+      change += ` (${this.formatNumber(difference.stddevDiff)} σ)`
 
       this.change = change
     } else {

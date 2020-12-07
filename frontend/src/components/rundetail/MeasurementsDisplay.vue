@@ -193,10 +193,10 @@ class Item {
 })
 export default class MeasurementsDisplay extends Vue {
   @Prop()
-  private measurements!: Measurement[]
+  private readonly measurements!: Measurement[]
 
   @Prop()
-  private differences?: DimensionDifference[]
+  private readonly differences?: DimensionDifference[]
 
   private showDetailErrorDialog: boolean = false
   private safeDetailErrorDialogMessage: string = ''
@@ -292,6 +292,7 @@ export default class MeasurementsDisplay extends Vue {
       measurementError.dimension.metric,
       measurementError.dimension.unit,
       measurementError.dimension.interpretation,
+      undefined,
       undefined,
       undefined,
       undefined,
