@@ -3,6 +3,7 @@ package de.aaaaaaah.velcom.backend.restapi.endpoints.utils;
 import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
 import de.aaaaaaah.velcom.backend.access.entities.RunId;
+import de.aaaaaaah.velcom.backend.data.runcomparison.SignificanceFactors;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.exceptions.NoSuchRunException;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
@@ -60,12 +61,14 @@ public class EndpointUtils {
 	 * @param dimensionAccess a {@link DimensionReadAccess}
 	 * @param commitAccess a {@link CommitReadAccess}
 	 * @param run the run
+	 * @param significanceFactors the current significance factors (required for stddev
+	 * 	calculations)
 	 * @param allValues whether the full lists of values should also be included for each
 	 * 	measurement
 	 * @return the created {@link JsonRun}
 	 */
 	public static JsonRun fromRun(DimensionReadAccess dimensionAccess, CommitReadAccess commitAccess,
-		Run run, boolean allValues) {
+		Run run, SignificanceFactors significanceFactors, boolean allValues) {
 
 		JsonSource source = JsonSource.fromSource(run.getSource(), commitAccess);
 		Map<Dimension, DimensionInfo> dimensionInfos = dimensionAccess
@@ -94,6 +97,7 @@ public class EndpointUtils {
 				JsonResult.fromMeasurements(
 					run.getResult().getRight().get(),
 					dimensionInfos,
+					significanceFactors,
 					allValues
 				)
 			);

@@ -1,6 +1,7 @@
 package de.aaaaaaah.velcom.backend.restapi.jsonobjects;
 
 import de.aaaaaaah.velcom.backend.access.entities.Measurement;
+import de.aaaaaaah.velcom.backend.data.runcomparison.SignificanceFactors;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.RunError;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Dimension;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.DimensionInfo;
@@ -63,16 +64,23 @@ public class JsonResult {
 	 *
 	 * @param measurements the measurements to use
 	 * @param dimensionInfos the dimensions for each measurement
+	 * @param significanceFactors the current significance factors (required for stddev
+	 * 	calculations)
 	 * @param allValues whether the full lists of values should also be included for each
 	 * 	measurement
 	 * @return the newly created {@link JsonResult}
 	 */
 	public static JsonResult fromMeasurements(Collection<Measurement> measurements,
-		Map<Dimension, DimensionInfo> dimensionInfos, boolean allValues) {
+		Map<Dimension, DimensionInfo> dimensionInfos, SignificanceFactors significanceFactors,
+		boolean allValues) {
 
 		List<JsonMeasurement> jsonMeasurements = measurements.stream()
-			.map(measurement -> JsonMeasurement
-				.fromMeasurement(measurement, dimensionInfos.get(measurement.getDimension()), allValues))
+			.map(measurement -> JsonMeasurement.fromMeasurement(
+				measurement,
+				dimensionInfos.get(measurement.getDimension()),
+				significanceFactors,
+				allValues
+			))
 			.collect(Collectors.toList());
 		return successful(jsonMeasurements);
 	}

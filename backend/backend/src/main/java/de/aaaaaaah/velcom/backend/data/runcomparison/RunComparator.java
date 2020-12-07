@@ -43,7 +43,7 @@ public class RunComparator {
 				firstValues.getAverageValue(),
 				secondValues.getAverageValue(),
 				first.getId(),
-				getStddev(secondValues).orElse(null)
+				secondValues.getStddevWith(significanceFactors).orElse(null)
 			);
 			differences.add(difference);
 		}
@@ -66,13 +66,5 @@ public class RunComparator {
 		}
 
 		return measurements;
-	}
-
-	private Optional<Double> getStddev(MeasurementValues measurementValues) {
-		if (measurementValues.getValues().size() < significanceFactors.getMinStddevAmount()) {
-			return Optional.empty();
-		}
-
-		return measurementValues.getStddev();
 	}
 }
