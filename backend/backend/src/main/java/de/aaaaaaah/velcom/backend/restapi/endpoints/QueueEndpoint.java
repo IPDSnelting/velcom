@@ -266,6 +266,8 @@ public class QueueEndpoint {
 			);
 
 			if (task.isEmpty()) {
+				// The task is empty if the tar could not be stored in the data dir, which should not happen
+				// during normal operation.
 				throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
 			}
 

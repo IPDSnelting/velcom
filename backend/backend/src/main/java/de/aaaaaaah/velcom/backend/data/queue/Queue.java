@@ -184,7 +184,7 @@ public class Queue {
 	 * @param repoId the id of the repo the tar file should to (or null)
 	 * @param description the tar file's description
 	 * @param inputStream the tar file's contents
-	 * @return the new task or empty if no task was created
+	 * @return the new task or empty if the tar file could not be stored and no task was created
 	 */
 	public Optional<Task> addTar(String author, TaskPriority priority, @Nullable RepoId repoId,
 		String description, InputStream inputStream) {
