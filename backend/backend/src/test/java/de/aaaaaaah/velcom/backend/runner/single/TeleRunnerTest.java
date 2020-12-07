@@ -41,6 +41,7 @@ import java.lang.reflect.Field;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.BeforeEach;
@@ -207,7 +208,7 @@ class TeleRunnerTest {
 		runner.setRunnerInformation(new GetStatusReply(
 			"Hello", "my version", "currentHash", false, Status.IDLE, null, null
 		));
-		when(benchRepo.getCurrentHash()).thenReturn(new CommitHash("otherHash"));
+		when(benchRepo.getCurrentHash()).thenReturn(Optional.of(new CommitHash("otherHash")));
 
 		runner.sendAvailableWork(mock(AwaitSendWorkEnd.class));
 		verify(connection, times(2)).createBinaryOutputStream();
