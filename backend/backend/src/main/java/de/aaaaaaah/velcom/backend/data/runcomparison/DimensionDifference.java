@@ -14,8 +14,8 @@ public class DimensionDifference {
 	@Nullable
 	private final Double secondStddev;
 
-	public DimensionDifference(Dimension dimension, double first, double second,
-		RunId oldRunId, @Nullable Double secondStddev) {
+	public DimensionDifference(Dimension dimension, double first, double second, RunId oldRunId,
+		@Nullable Double secondStddev) {
 
 		this.dimension = dimension;
 		this.first = first;
@@ -44,15 +44,29 @@ public class DimensionDifference {
 		return Optional.ofNullable(secondStddev);
 	}
 
+	/**
+	 * @return second - first
+	 */
 	public double getDiff() {
 		return second - first;
 	}
 
+	/**
+	 * @return (second - first) / first, if first != 0
+	 */
 	public Optional<Double> getReldiff() {
 		if (first == 0) {
 			return Optional.empty();
 		}
 
 		return Optional.of((second - first) / first);
+	}
+
+	/**
+	 * @return (second - first) / second stddev, if second stddev exists
+	 */
+	public Optional<Double> getStddevDiff() {
+		return getSecondStddev()
+			.map(stddev -> getDiff() / stddev);
 	}
 }

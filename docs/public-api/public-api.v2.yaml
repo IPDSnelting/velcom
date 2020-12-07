@@ -1221,7 +1221,13 @@ components:
           description: |-
             (new value - old value) / old value
 
-            Only present if the old_value is non-zero.
+            Only present if the old value is non-zero.
+        stddev_diff:
+          type: string
+          description: |-
+            (new value - old value) / stddev of new values
+
+            Only present if the old value is non-zero and the amount of new values is above the min stddev limit.
         old_run_id:
           $ref: '#/components/schemas/RunId'
       required:

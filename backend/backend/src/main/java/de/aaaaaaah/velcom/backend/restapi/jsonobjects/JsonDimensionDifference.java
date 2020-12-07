@@ -17,14 +17,17 @@ public class JsonDimensionDifference {
 	private final double diff;
 	@Nullable
 	private final Double reldiff;
+	@Nullable
+	private final Double stddevDiff;
 
 	public JsonDimensionDifference(JsonDimension dimension, UUID oldRunId, double diff,
-		@Nullable Double reldiff) {
+		@Nullable Double reldiff, @Nullable Double stddevDiff) {
 
 		this.dimension = dimension;
 		this.oldRunId = oldRunId;
 		this.diff = diff;
 		this.reldiff = reldiff;
+		this.stddevDiff = stddevDiff;
 	}
 
 	/**
@@ -40,7 +43,8 @@ public class JsonDimensionDifference {
 			JsonDimension.fromDimensionInfo(dimensionInfos.get(difference.getDimension())),
 			difference.getOldRunId().getId(),
 			difference.getDiff(),
-			difference.getReldiff().orElse(null)
+			difference.getReldiff().orElse(null),
+			difference.getStddevDiff().orElse(null)
 		);
 	}
 
@@ -67,5 +71,10 @@ public class JsonDimensionDifference {
 	@Nullable
 	public Double getReldiff() {
 		return reldiff;
+	}
+
+	@Nullable
+	public Double getStddevDiff() {
+		return stddevDiff;
 	}
 }
