@@ -9,7 +9,13 @@
           :dimension="pointDialogDimension"
           @close="pointDialogOpen = false"
         ></datapoint-dialog>
-        <div id="chart-container">
+        <div id="chart-container" @wheel="echartsScrolled">
+          <div id="zoomout-container" v-show="showScrollZoomoutIndicator">
+            <div id="zoomout-target" class="text-h3 text-center">
+              Scroll me out of view to zoom out and load more data
+            </div>
+            <div style="height: 100em; width: 20em"></div>
+          </div>
           <v-chart
             ref="chart"
             :autoresize="true"
@@ -142,6 +148,9 @@ export default class EchartsDetailGraph extends Vue {
   // <!--<editor-fold desc="FIELDS">-->
   private chartOptions: EChartOption = {}
   private seriesGenerator: SeriesGenerationFunction = this.buildLineSeries
+
+  private showScrollZoomoutIndicator: boolean = false
+  private observer!: IntersectionObserver
 
   // >>>> Datapoint Dialog >>>>
   private pointDialogOpen: boolean = false
@@ -446,6 +455,30 @@ export default class EchartsDetailGraph extends Vue {
 
   // <!--<editor-fold desc="LIFECYCLE HOOKS">-->
   mounted(): void {
+    this.observer = new IntersectionObserver(
+      entries => {
+        entries.forEach(it => {
+          if (!it.isIntersecting) {
+            document.getElementById('zoomout-container')!.scrollTo({ top: 0 })
+            this.showScrollZoomoutIndicator = false
+            this.observer.unobserve(document.getElementById('zoomout-target')!)
+
+            vxm.detailGraphModule.startTime = new Date(
+              vxm.detailGraphModule.startTime.getTime() -
+                7 * 1000 * 60 * 60 * 24
+            )
+            vxm.detailGraphModule.endTime = new Date(
+              vxm.detailGraphModule.endTime.getTime() + 7 * 1000 * 60 * 60 * 24
+            )
+            vxm.detailGraphModule.fetchDetailGraph()
+          }
+        })
+      },
+      {
+        root: document.getElementById('zoomout-container')
+      }
+    )
+
     this.updateGraph()
   }
   // <!--</editor-fold>-->
@@ -575,6 +608,30 @@ export default class EchartsDetailGraph extends Vue {
   // <!--</editor-fold>-->
 
   // <!--<editor-fold desc="ECHARTS EVENT HANDLER">-->
+  private echartsScrolled(e: WheelEvent) {
+    if (
+      vxm.detailGraphModule.zoomXEndValue !== null ||
+      vxm.detailGraphModule.zoomXStartValue !== null
+    ) {
+      return
+    }
+
+    // scrolling upwards => zooming in
+    if (e.deltaY <= 0) {
+      document.getElementById('zoomout-container')!.scrollTo({ top: 0 })
+      this.showScrollZoomoutIndicator = false
+      this.observer.unobserve(document.getElementById('zoomout-target')!)
+      return
+    }
+
+    if (this.showScrollZoomoutIndicator) {
+      return
+    }
+
+    this.showScrollZoomoutIndicator = true
+    this.observer.observe(document.getElementById('zoomout-target')!)
+  }
+
   private echartsZoomed(e: any) {
     if (!e.batch || e.batch.length === 0) {
       this.setZoomOnCorrectAxis(e.dataZoomId)
@@ -782,6 +839,25 @@ export default class EchartsDetailGraph extends Vue {
 #chart-container {
   position: relative;
   height: 80vh;
+}
+
+#zoomout-container {
+  background-color: rgba(0, 0, 0, 0.25);
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  z-index: 10;
+  top: 0;
+  left: 0;
+  overflow-y: scroll;
+}
+
+#zoomout-target {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  transform: translateY(-50%);
 }
 </style>
 
