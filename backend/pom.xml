@@ -147,6 +147,8 @@
           <configuration>
             <excludes>
               <exclude>org/jooq/codegen/**/*.class</exclude>
+              <exclude>de/aaaaaaah/velcom/runner/RunnerCliSpec_Parser.class</exclude>
+              <exclude>de/aaaaaaah/velcom/runner/RunnerCliSpec_Parser$*.class</exclude>
             </excludes>
           </configuration>
         </plugin>

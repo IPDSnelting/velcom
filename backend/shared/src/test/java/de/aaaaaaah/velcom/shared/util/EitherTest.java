@@ -1,5 +1,6 @@
 package de.aaaaaaah.velcom.shared.util;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -48,4 +49,50 @@ class EitherTest {
 		assertNotEquals(right, weird);
 	}
 
+	@Test
+	void mapLeft() {
+		var mappedLeft = Either.ofLeft(20).mapLeft(it -> it + 40);
+		assertThat(mappedLeft.isLeft()).isTrue();
+		assertThat(mappedLeft.getLeft()).isPresent();
+		assertThat(mappedLeft.getRight()).isEmpty();
+		assertThat(mappedLeft.getLeft()).isPresent().contains(60);
+
+		var mappedRight = Either.ofRight(20).mapLeft(it -> "d");
+		assertThat(mappedRight.isRight()).isTrue();
+		assertThat(mappedRight.getLeft()).isEmpty();
+		assertThat(mappedRight.getRight()).isPresent().contains(20);
+	}
+
+	@Test
+	void mapRight() {
+		var mappedRight = Either.ofRight(20).mapRight(it -> it + 40);
+		assertThat(mappedRight.isRight()).isTrue();
+		assertThat(mappedRight.getRight()).isPresent();
+		assertThat(mappedRight.getLeft()).isEmpty();
+		assertThat(mappedRight.getRight()).isPresent().contains(60);
+
+		var mappedLeft = Either.ofLeft(20).mapRight(it -> "d");
+		assertThat(mappedLeft.isLeft()).isTrue();
+		assertThat(mappedLeft.getRight()).isEmpty();
+		assertThat(mappedLeft.getLeft()).isPresent().contains(20);
+	}
+
+	@Test
+	void mapBoth() {
+		Either<Integer, String> lefty = Either.ofLeft(20).mapBoth(
+			i -> i + 40,
+			s -> s + "hey"
+		);
+
+		assertThat(lefty.getRight()).isEmpty();
+		assertThat(lefty.getLeft()).isPresent().contains(60);
+
+		var righty = Either.<Integer, String>ofRight("you ").mapBoth(
+			i -> i + 40,
+			s -> s + "hey"
+		);
+
+		assertThat(righty.getLeft()).isEmpty();
+		assertThat(righty.getRight()).isPresent().contains("you hey");
+	}
 }

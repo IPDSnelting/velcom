@@ -71,6 +71,39 @@ class NamedSectionsTest {
 	}
 
 	@Test
+	void addToFront() {
+		sections.addSection("hello", "world");
+
+		String expected = ""
+			+ "###########\n"
+			+ "## hello ##\n"
+			+ "###########\n"
+			+ "world\n";
+
+		assertThat(sections.format()).isEqualTo(expected);
+
+		sections.addSectionInFront("front!", "I am priority");
+		NamedRows rows = new NamedRows();
+		rows.add("hello", "world");
+		sections.addSectionInFront("frontier", rows);
+
+		expected = ""
+			+ "##############\n"
+			+ "## frontier ##\n"
+			+ "##############\n"
+			+ "hello: world\n"
+			+ "\n"
+			+ "############\n"
+			+ "## front! ##\n"
+			+ "############\n"
+			+ "I am priority\n"
+			+ "\n"
+			+ expected;
+
+		assertThat(sections.format()).isEqualTo(expected);
+	}
+
+	@Test
 	void automaticallyAddNewlineWhenNecessary() {
 		sections.addSection("with newline", "see?\n");
 		sections.addSection("without newline", "see?");
