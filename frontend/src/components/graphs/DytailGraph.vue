@@ -371,16 +371,6 @@ export default class DytailGraph extends Vue {
               return x % 1 === 0
                 ? this.xAxisFormatter(new Date(x), [start, end])
                 : ''
-            },
-            ticker: function (min, max, pixels, opts, dygraph: Dygraph) {
-              // now shut up, eslint
-              return (Dygraph as any).getDateAxis(
-                min,
-                max,
-                (Dygraph as any).Granularity.DAILY, // please, just shut up
-                opts,
-                dygraph
-              )
             }
           },
           y: {
