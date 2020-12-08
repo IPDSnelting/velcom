@@ -25,6 +25,7 @@ import de.aaaaaaah.velcom.shared.util.Pair;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.PATCH;
 import io.micrometer.core.annotation.Timed;
+import java.io.IOException;
 import java.io.InputStream;
 import java.time.Instant;
 import java.util.List;
@@ -33,6 +34,7 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.zip.GZIPInputStream;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.ws.rs.Consumes;
@@ -45,6 +47,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
 @Path("/queue")
@@ -241,25 +244,35 @@ public class QueueEndpoint {
 		@Auth RepoUser user,
 		@Nonnull @FormDataParam("description") String description,
 		@Nullable @FormDataParam("repo_id") UUID repoUuid,
-		@FormDataParam("file") InputStream inputStream
-	) {
+		@FormDataParam("file") InputStream inputStream,
+		@FormDataParam("file") FormDataContentDisposition fileDisposition
+	) throws IOException {
 		user.guardAdminAccess();
 
 		Optional<RepoId> repoId = Optional.ofNullable(repoUuid).map(RepoId::new);
 
-		Optional<Task> task = queue.addTar(
-			AUTHOR_NAME_ADMIN,
-			TaskPriority.MANUAL,
-			repoId.orElse(null),
-			description,
-			inputStream
-		);
+		final InputStream uncompressedInput =
+			fileDisposition.getFileName().endsWith(".tar.gz")
+				? new GZIPInputStream(inputStream)
+				: inputStream;
 
-		if (task.isEmpty()) {
-			throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
+		try (uncompressedInput) {
+			Optional<Task> task = queue.addTar(
+				AUTHOR_NAME_ADMIN,
+				TaskPriority.MANUAL,
+				repoId.orElse(null),
+				description,
+				uncompressedInput
+			);
+
+			if (task.isEmpty()) {
+				// The task is empty if the tar could not be stored in the data dir, which should not happen
+				// during normal operation.
+				throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
+			}
+
+			return new UploadTarReply(JsonTask.fromTask(task.get(), commitReadAccess));
 		}
-
-		return new UploadTarReply(JsonTask.fromTask(task.get(), commitReadAccess));
 	}
 
 	@Path("task/{taskid}")

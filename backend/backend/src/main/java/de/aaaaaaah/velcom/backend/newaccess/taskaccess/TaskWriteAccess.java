@@ -121,7 +121,8 @@ public class TaskWriteAccess extends TaskReadAccess {
 	 * @param description the tar file's description
 	 * @param repoId the associated repo id, if any
 	 * @param inputStream the tar file contents
-	 * @return the newly created task (if a task was created)
+	 * @return the newly created task or empty if the tar file could not be stored for some reason and
+	 * 	no task was created
 	 */
 	public Optional<Task> insertTar(String author, TaskPriority priority, String description,
 		@Nullable RepoId repoId, InputStream inputStream) {

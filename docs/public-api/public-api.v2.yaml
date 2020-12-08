@@ -117,7 +117,10 @@ paths:
       security:
         - admin_credentials: []
       parameters: []
-      description: This endpoint allows users to upload a tar file that the server should benchmark. The tar file is added to the queue with a relatively high priority.
+      description: |-
+        This endpoint allows users to upload a tar file that the server should benchmark. The tar file is added to the queue with a relatively high priority.
+
+        If the filename specified in the form-data body ends with `.tar.gz`, the tar file will be automatically uncompressed. If it doesn't it is treated as a normal, uncompressed tar file.
       tags:
         - queue
       requestBody:
