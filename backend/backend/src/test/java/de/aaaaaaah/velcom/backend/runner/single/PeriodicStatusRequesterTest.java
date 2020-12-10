@@ -23,7 +23,6 @@ import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.ClientBoundP
 import de.aaaaaaah.velcom.shared.protocol.serialization.serverbound.GetResultReply;
 import de.aaaaaaah.velcom.shared.protocol.serialization.serverbound.GetStatusReply;
 import de.aaaaaaah.velcom.shared.protocol.statemachine.StateMachine;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
@@ -53,8 +52,7 @@ class PeriodicStatusRequesterTest {
 		this.statusRequester = new PeriodicStatusRequester(
 			teleRunner,
 			runnerConnection,
-			stateMachine,
-			Duration.ofSeconds(3)
+			stateMachine
 		);
 	}
 
