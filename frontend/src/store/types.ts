@@ -243,11 +243,21 @@ export class MeasurementSuccess {
   readonly dimension: Dimension
   readonly value: number
   readonly values: number[]
+  readonly stddev?: number
+  readonly stddevPercent?: number
 
-  constructor(dimension: Dimension, value: number, values: number[]) {
+  constructor(
+    dimension: Dimension,
+    value: number,
+    values: number[],
+    stddev?: number,
+    stddevPercent?: number
+  ) {
     this.dimension = dimension
     this.value = value
     this.values = values
+    this.stddev = stddev
+    this.stddevPercent = stddevPercent
   }
 }
 
@@ -390,20 +400,20 @@ export class DimensionDifference {
   readonly oldRunId: RunId
   readonly absDiff: number
   readonly relDiff?: number
-  readonly stddev?: number
+  readonly stddevDiff?: number
 
   constructor(
     dimension: Dimension,
     oldRunId: RunId,
     absDiff: number,
     relDiff?: number,
-    stddev?: number
+    stddevDiff?: number
   ) {
     this.dimension = dimension
     this.oldRunId = oldRunId
     this.absDiff = absDiff
     this.relDiff = relDiff
-    this.stddev = stddev
+    this.stddevDiff = stddevDiff
   }
 }
 

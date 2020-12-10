@@ -190,7 +190,8 @@ public class ServerMain extends Application<GlobalConfig> {
 			new AllReposEndpoint(benchmarkAccess, dimensionAccess, repoAccess, tokenAccess,
 				availableDimensionsCache),
 			new CommitEndpoint(commitAccess, repoAccess, benchmarkAccess),
-			new CompareEndpoint(benchmarkAccess, commitAccess, dimensionAccess, runComparator),
+			new CompareEndpoint(benchmarkAccess, commitAccess, dimensionAccess, runComparator,
+				significanceFactors),
 			new DebugEndpoint(dimensionAccess, dispatcher),
 			new GraphComparisonEndpoint(dimensionAccess, comparison),
 			new GraphDetailEndpoint(commitAccess, benchmarkAccess, dimensionAccess, repoAccess),
@@ -200,7 +201,8 @@ public class ServerMain extends Application<GlobalConfig> {
 				significantRunsCollector),
 			new RepoEndpoint(dimensionAccess, repoAccess, tokenAccess, availableDimensionsCache,
 				listener),
-			new RunEndpoint(benchmarkAccess, commitAccess, dimensionAccess, runComparator),
+			new RunEndpoint(benchmarkAccess, commitAccess, dimensionAccess, runComparator,
+				significanceFactors),
 			new TestTokenEndpoint()
 		).forEach(endpoint -> environment.jersey().register(endpoint));
 	}

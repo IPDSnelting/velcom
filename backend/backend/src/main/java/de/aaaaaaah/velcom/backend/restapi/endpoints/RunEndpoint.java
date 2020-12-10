@@ -4,6 +4,7 @@ import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
 import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparator;
 import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparison;
+import de.aaaaaaah.velcom.backend.data.runcomparison.SignificanceFactors;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.CommitSource;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.exceptions.NoSuchRunException;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.CommitReadAccess;
@@ -36,14 +37,17 @@ public class RunEndpoint {
 	private final CommitReadAccess commitAccess;
 	private final DimensionReadAccess dimensionAccess;
 	private final RunComparator comparer;
+	private final SignificanceFactors significanceFactors;
 
 	public RunEndpoint(BenchmarkReadAccess benchmarkAccess, CommitReadAccess commitAccess,
-		DimensionReadAccess dimensionAccess, RunComparator comparer) {
+		DimensionReadAccess dimensionAccess, RunComparator comparer,
+		SignificanceFactors significanceFactors) {
 
 		this.benchmarkAccess = benchmarkAccess;
 		this.commitAccess = commitAccess;
 		this.dimensionAccess = dimensionAccess;
 		this.comparer = comparer;
+		this.significanceFactors = significanceFactors;
 	}
 
 	private Optional<Run> getPrevRun(Run run) {
@@ -92,7 +96,7 @@ public class RunEndpoint {
 		}
 
 		return new GetReply(
-			EndpointUtils.fromRun(dimensionAccess, commitAccess, run, allValues),
+			EndpointUtils.fromRun(dimensionAccess, commitAccess, run, significanceFactors, allValues),
 			differences.orElse(null)
 		);
 	}

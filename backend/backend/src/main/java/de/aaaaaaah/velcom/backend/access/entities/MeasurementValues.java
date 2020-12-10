@@ -1,5 +1,6 @@
 package de.aaaaaaah.velcom.backend.access.entities;
 
+import de.aaaaaaah.velcom.backend.data.runcomparison.SignificanceFactors;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Interpretation;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Unit;
 import java.util.Collections;
@@ -45,7 +46,24 @@ public class MeasurementValues {
 		return calculateAverage(values);
 	}
 
-	public Optional<Double> getStddev() {
+	/**
+	 * @return the standard deviation of the values, if there are more than {@link
+	 *  SignificanceFactors#getMinStddevAmount()} values
+	 */
+	public Optional<Double> getStddevWith(SignificanceFactors significanceFactors) {
+		if (values.size() >= significanceFactors.getMinStddevAmount()) {
+			return getStddev();
+		} else {
+			return Optional.empty();
+		}
+	}
+
+	/**
+	 * @return the standard deviation of the values, if there are at least two values. WARNING: When
+	 * 	calling this function, always use {@link SignificanceFactors#getMinStddevAmount()} to see
+	 * 	whether a standard deviation even makes sense in this situation.
+	 */
+	private Optional<Double> getStddev() {
 		int n = values.size();
 		if (n < 2) {
 			return Optional.empty();
@@ -57,6 +75,15 @@ public class MeasurementValues {
 			.reduce(0.0, Double::sum);
 		double result = Math.sqrt(sum / (n - 1));
 		return Optional.of(result);
+	}
+
+	/**
+	 * @return stddev / averageValue, if there are more than {@link SignificanceFactors#getMinStddevAmount()}
+	 * 	values
+	 */
+	public Optional<Double> getStddevPercentWith(SignificanceFactors significanceFactors) {
+		return getStddevWith(significanceFactors)
+			.map(it -> it / getAverageValue());
 	}
 
 	@Override

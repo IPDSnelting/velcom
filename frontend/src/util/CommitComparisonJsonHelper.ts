@@ -50,7 +50,9 @@ function measurementFromJson(json: any): Measurement {
   return new MeasurementSuccess(
     dimensionFromJson(json.dimension),
     json.value,
-    json.values
+    json.values,
+    json.stddev,
+    json.stddev_percent
   )
 }
 
@@ -91,7 +93,7 @@ export function differenceFromJson(json: any): DimensionDifference {
     json.old_run_id,
     json.diff,
     json.reldiff,
-    json.stddev
+    json.stddev_diff
   )
 }
 
