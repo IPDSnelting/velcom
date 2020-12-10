@@ -1,5 +1,6 @@
 package de.aaaaaaah.velcom.backend.runner.single;
 
+import de.aaaaaaah.velcom.backend.runner.Delays;
 import de.aaaaaaah.velcom.backend.runner.single.state.AwaitClearResultReply;
 import de.aaaaaaah.velcom.backend.runner.single.state.AwaitGetResultReply;
 import de.aaaaaaah.velcom.backend.runner.single.state.AwaitGetStatusReply;
@@ -54,7 +55,7 @@ public class PeriodicStatusRequester {
 				iteration();
 				// Keep some distance to not overload the runner with too many requests
 				//noinspection BusyWait
-				Thread.sleep(5000);
+				Thread.sleep(Delays.REQUEST_STATUS_INTERVAL.toMillis());
 			} catch (Exception e) {
 				LOGGER.error("Error communicating with runner or handling results", e);
 				try {

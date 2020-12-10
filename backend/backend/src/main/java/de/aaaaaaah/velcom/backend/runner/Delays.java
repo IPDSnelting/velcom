@@ -18,6 +18,12 @@ public final class Delays {
 	 */
 	public static final Duration AWAIT_COMMAND_REPLY = Duration.ofSeconds(10);
 
+	/**
+	 * How long to wait between "get_status" commands. This affects the update interval of the live
+	 * build log.
+	 */
+	public static final Duration REQUEST_STATUS_INTERVAL = Duration.ofSeconds(5);
+
 	private Delays() {
 		throw new UnsupportedOperationException();
 	}
