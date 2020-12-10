@@ -1,5 +1,6 @@
 package de.aaaaaaah.velcom.backend.runner.single;
 
+import de.aaaaaaah.velcom.backend.runner.Delays;
 import de.aaaaaaah.velcom.backend.runner.single.state.AwaitClearResultReply;
 import de.aaaaaaah.velcom.backend.runner.single.state.AwaitGetResultReply;
 import de.aaaaaaah.velcom.backend.runner.single.state.AwaitGetStatusReply;
@@ -30,19 +31,12 @@ public class PeriodicStatusRequester {
 	private final RunnerConnection connection;
 	private final StateMachine<TeleRunnerState> stateMachine;
 	private volatile boolean cancelled;
-	private final Duration sleepBetweenIteration;
 
 	public PeriodicStatusRequester(TeleRunner teleRunner, RunnerConnection connection,
 		StateMachine<TeleRunnerState> stateMachine) {
-		this(teleRunner, connection, stateMachine, Duration.ofSeconds(5));
-	}
-
-	public PeriodicStatusRequester(TeleRunner teleRunner, RunnerConnection connection,
-		StateMachine<TeleRunnerState> stateMachine, Duration sleepBetweenIteration) {
 		this.teleRunner = teleRunner;
 		this.connection = connection;
 		this.stateMachine = stateMachine;
-		this.sleepBetweenIteration = sleepBetweenIteration;
 
 		this.worker = new Thread(this::run, "PeriodicStatusRequester");
 		this.worker.setDaemon(true);
@@ -59,6 +53,9 @@ public class PeriodicStatusRequester {
 		while (!cancelled) {
 			try {
 				iteration();
+				// Keep some distance to not overload the runner with too many requests
+				//noinspection BusyWait
+				Thread.sleep(Delays.REQUEST_STATUS_INTERVAL.toMillis());
 			} catch (Exception e) {
 				LOGGER.error("Error communicating with runner or handling results", e);
 				try {
@@ -106,8 +103,6 @@ public class PeriodicStatusRequester {
 			teleRunner.handleResults(requestResults);
 
 			clearResults();
-
-			Thread.sleep(sleepBetweenIteration.toSeconds());
 		} catch (InterruptedException | CancellationException ignored) {
 		}
 	}

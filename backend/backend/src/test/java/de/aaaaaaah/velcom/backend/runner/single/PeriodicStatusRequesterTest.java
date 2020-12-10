@@ -23,7 +23,6 @@ import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.ClientBoundP
 import de.aaaaaaah.velcom.shared.protocol.serialization.serverbound.GetResultReply;
 import de.aaaaaaah.velcom.shared.protocol.serialization.serverbound.GetStatusReply;
 import de.aaaaaaah.velcom.shared.protocol.statemachine.StateMachine;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
@@ -53,8 +52,7 @@ class PeriodicStatusRequesterTest {
 		this.statusRequester = new PeriodicStatusRequester(
 			teleRunner,
 			runnerConnection,
-			stateMachine,
-			Duration.ofSeconds(0)
+			stateMachine
 		);
 	}
 
@@ -69,6 +67,23 @@ class PeriodicStatusRequesterTest {
 
 		verify(stateMachine, timeout(1000)).switchFromRestingState(any(AwaitGetStatusReply.class));
 		verify(runnerConnection, timeout(1000))
+			.send(argThat(argument -> argument.getType() == ClientBoundPacketType.GET_STATUS));
+	}
+
+	@Test
+	void doesNotRequestStatusTooOften() throws InterruptedException {
+		statusRequester.start();
+
+		ArgumentCaptor<AwaitGetStatusReply> captor = ArgumentCaptor.forClass(AwaitGetStatusReply.class);
+		verify(stateMachine, timeout(1000)).switchFromRestingState(captor.capture());
+		verify(runnerConnection, timeout(1000))
+			.send(argThat(argument -> argument.getType() == ClientBoundPacketType.GET_STATUS));
+
+		captor.getValue().getReplyFuture().complete(new GetStatusReply(
+			"info", "version", "version", false, Status.IDLE, null, null
+		));
+
+		verify(runnerConnection, after(2000).atMostOnce())
 			.send(argThat(argument -> argument.getType() == ClientBoundPacketType.GET_STATUS));
 	}
 
