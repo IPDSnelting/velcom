@@ -59,6 +59,8 @@ public class PeriodicStatusRequester {
 		while (!cancelled) {
 			try {
 				iteration();
+				//noinspection BusyWait
+				Thread.sleep(sleepBetweenIteration.toMillis());
 			} catch (Exception e) {
 				LOGGER.error("Error communicating with runner or handling results", e);
 				try {
@@ -106,8 +108,6 @@ public class PeriodicStatusRequester {
 			teleRunner.handleResults(requestResults);
 
 			clearResults();
-
-			Thread.sleep(sleepBetweenIteration.toSeconds());
 		} catch (InterruptedException | CancellationException ignored) {
 		}
 	}
