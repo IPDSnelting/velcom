@@ -156,6 +156,7 @@ public class TeleRunner {
 			LOGGER.warn("Had a connection when I was disposed");
 			this.connection.close(StatusCode.INTERNAL_ERROR);
 		}
+		getCurrentTask().ifPresent(task -> dispatcher.getQueue().abortTask(task.getId()));
 	}
 
 	/**
