@@ -31,8 +31,9 @@ public class Connection implements WebSocket.Listener, HeartbeatWebsocket {
 	private final CompletableFuture<Void> closedFuture;
 	private boolean closed;
 
-	private final WebSocket socket;
-	private final HeartbeatHandler heartbeatHandler;
+	// Initialized in #onOpen(). Should be initialized once constructor completes.
+	private WebSocket socket;
+	private HeartbeatHandler heartbeatHandler;
 
 	public Connection(TeleBackend teleBackend, URI address, String name, String token)
 		throws ExecutionException, InterruptedException {
@@ -44,15 +45,15 @@ public class Connection implements WebSocket.Listener, HeartbeatWebsocket {
 		closed = false;
 
 		LOGGER.debug("Opening connection to {}", address);
-		socket = HttpClient.newHttpClient()
+		HttpClient.newHttpClient()
 			.newWebSocketBuilder()
 			.header(RunnerConnectionHeader.CONNECT_RUNNER_NAME.getName(), name)
 			.header(RunnerConnectionHeader.CONNECT_RUNNER_TOKEN.getName(), token)
 			.buildAsync(address, this)
 			.get();
+		// At this point, #onOpen() should have been called already, so the socket and heartbeatHandler
+		// have been initialized.
 		LOGGER.debug("Successfully opened connection to {}", address);
-
-		heartbeatHandler = new HeartbeatHandler(this);
 	}
 
 	public synchronized void sendPacket(ServerBoundPacket packet) {
@@ -118,6 +119,18 @@ public class Connection implements WebSocket.Listener, HeartbeatWebsocket {
 
 	public Future<Void> getClosedFuture() {
 		return closedFuture;
+	}
+
+	@Override
+	public void onOpen(WebSocket webSocket) {
+		webSocket.request(1);
+
+		// Initial call by the websocket library, so we can use it to obtain our socket for socket-y
+		// purposes.
+		synchronized (this) {
+			socket = webSocket;
+			heartbeatHandler = new HeartbeatHandler(this);
+		}
 	}
 
 	@Override
