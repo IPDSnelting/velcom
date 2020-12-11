@@ -53,7 +53,7 @@ public class Connection implements WebSocket.Listener, HeartbeatWebsocket {
 			.get();
 		// At this point, #onOpen() should have been called already, so the socket and heartbeatHandler
 		// have been initialized.
-		LOGGER.debug("Successfully opened connection to {}", address);
+		LOGGER.info("Successfully opened connection to {}", address);
 	}
 
 	public synchronized void sendPacket(ServerBoundPacket packet) {
@@ -182,7 +182,7 @@ public class Connection implements WebSocket.Listener, HeartbeatWebsocket {
 	@Override
 	public synchronized void onError(WebSocket webSocket, Throwable error) {
 		// For some reason, this function is not called after a socket.abort().
-		LOGGER.debug("Connection closed abnormally");
+		LOGGER.warn("Connection closed abnormally");
 		cleanupAfterClosed();
 	}
 
