@@ -68,8 +68,8 @@ import MultipleRunOverview from '@/components/overviews/MultipleRunOverview.vue'
   }
 })
 export default class Home extends Vue {
-  private recentAmount: number = 5
-  private recentSignificantAmount = 10
+  private recentAmount: number = 10
+  private recentSignificantAmount: number = 10
 
   get recent(): RunDescription[] {
     return vxm.newsModule.recentRuns
