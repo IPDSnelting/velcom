@@ -146,7 +146,7 @@ export default class RunComparisonView extends Vue {
     if (!this.comparison) {
       return null
     }
-    return this.commitForRun(this.comparison.run1)
+    return this.commitForRun(this.comparison.run2)
   }
 
   private commitForRun(run: Run): CommitDescription | null {
