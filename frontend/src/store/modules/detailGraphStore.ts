@@ -57,7 +57,7 @@ export class DetailGraphStore extends VxModule {
   endTime: Date = new Date()
 
   beginYScaleAtZero: boolean = false
-  dayEquidistantGraph: boolean = false
+  dayEquidistantGraph: boolean = true
 
   /**
    * Fetches the data necessary to display the data points
