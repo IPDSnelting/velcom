@@ -37,7 +37,7 @@ class BenchmarkerTest {
 	Path rootTempDir;
 	Path benchRepoPath;
 	Path workPath;
-	private CompletableFuture<Void> finishFuture;
+	private CompletableFuture<Boolean> finishFuture;
 
 	private UUID taskId;
 	private LinuxSystemInfo systemInfo;
@@ -65,7 +65,8 @@ class BenchmarkerTest {
 				assertThat(result.getResult().getLeft()).isPresent();
 				String error = result.getResult().getLeft().get();
 				assertThat(error).containsIgnoringCase("not found");
-			}
+			},
+			false
 		);
 	}
 
@@ -90,7 +91,9 @@ class BenchmarkerTest {
 				assertThat(result.getResult().getLeft()).isPresent();
 				String error = result.getResult().getLeft().get();
 				assertThat(error).containsIgnoringCase("readable");
-			});
+			},
+			false
+		);
 	}
 
 	@Test
@@ -106,7 +109,8 @@ class BenchmarkerTest {
 				assertThat(result.getResult().getLeft()).isPresent();
 				String error = result.getResult().getLeft().get();
 				assertThat(error).containsIgnoringCase("executable");
-			}
+			},
+			false
 		);
 	}
 
@@ -125,7 +129,8 @@ class BenchmarkerTest {
 				String error = result.getResult().getLeft().get();
 				assertThat(error).containsIgnoringCase("invalid");
 				assertThat(error).containsIgnoringCase("output");
-			}
+			},
+			false
 		);
 	}
 
@@ -144,7 +149,8 @@ class BenchmarkerTest {
 				String error = result.getResult().getLeft().get();
 				assertThat(error).containsIgnoringCase("exit code");
 				assertThat(error).containsIgnoringCase("1");
-			}
+			},
+			false
 		);
 	}
 
@@ -166,7 +172,8 @@ class BenchmarkerTest {
 				assertThat(error).containsIgnoringCase("SIGINT");
 				assertThat(error).containsIgnoringCase("signal");
 				assertThat(error).containsIgnoringCase("Terminal interrupt");
-			}
+			},
+			false
 		);
 	}
 
@@ -186,7 +193,8 @@ class BenchmarkerTest {
 				assertThat(success.getBenchmarks()).isEmpty();
 				assertThat(success.getError()).isPresent();
 				assertThat(success.getError().get()).isEqualTo("Halloooo");
-			}
+			},
+			true
 		);
 	}
 
@@ -211,7 +219,8 @@ class BenchmarkerTest {
 					)
 				));
 				assertThat(success.getError()).isEmpty();
-			}
+			},
+			true
 		);
 	}
 
@@ -238,7 +247,8 @@ class BenchmarkerTest {
 					)
 				));
 				assertThat(success.getError()).isEmpty();
-			}
+			},
+			true
 		);
 	}
 
@@ -256,6 +266,7 @@ class BenchmarkerTest {
 		benchmarker.abort();
 
 		assertThat(finishFuture).succeedsWithin(Duration.ofSeconds(3));
+		assertThat(finishFuture.get()).isFalse();
 
 		assertThat(benchmarker.getResult()).isNotEmpty();
 		assertThat(benchmarker.getTaskId()).isEqualTo(taskId);
@@ -275,6 +286,7 @@ class BenchmarkerTest {
 		benchmarker.abort();
 
 		assertThat(finishFuture).succeedsWithin(Duration.ofSeconds(3));
+		assertThat(finishFuture.get()).isFalse();
 
 		assertThat(benchmarker.getResult()).isNotEmpty();
 		assertThat(benchmarker.getTaskId()).isEqualTo(taskId);
@@ -290,7 +302,8 @@ class BenchmarkerTest {
 
 		benchmarker.abort();
 
-		finishFuture.get(10, TimeUnit.SECONDS);
+		Boolean success = finishFuture.get(10, TimeUnit.SECONDS);
+		assertThat(success).isFalse();
 
 		Optional<BenchResult> result = benchmarker.getResult();
 
@@ -300,13 +313,14 @@ class BenchmarkerTest {
 		assertThat(result.get().getResult().getRight()).isEmpty();
 	}
 
-	private void doWithResult(Consumer<BenchResult> resultConsumer)
+	private void doWithResult(Consumer<BenchResult> resultConsumer, Boolean expectedSuccess)
 		throws InterruptedException, ExecutionException, TimeoutException {
 
 		Benchmarker benchmarker = new Benchmarker(finishFuture, taskId, workPath, BENCH_REPO_HASH,
 			benchRepoPath, startTime, RUNNER_NAME, systemInfo);
 
-		finishFuture.get(20, TimeUnit.SECONDS);
+		Boolean success = finishFuture.get(20, TimeUnit.SECONDS);
+		assertThat(success).isEqualTo(expectedSuccess);
 
 		Optional<BenchResult> resultOptional = benchmarker.getResult();
 

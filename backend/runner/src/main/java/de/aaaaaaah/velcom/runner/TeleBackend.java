@@ -172,9 +172,14 @@ public class TeleBackend {
 		}
 
 		if (reply.getRunId().isPresent()) {
-			LOGGER.info("{} - Starting benchmark", address);
-			startBenchmark(reply.getRunId().get()).get();
-			LOGGER.info("{} - Benchmark completed", address);
+			UUID taskId = reply.getRunId().get();
+			LOGGER.info("{} - Starting benchmark for task {}", address, taskId);
+			Boolean success = startBenchmark(taskId).get();
+			if (success) {
+				LOGGER.info("{} - Benchmark for task {} completed successfully", address, taskId);
+			} else {
+				LOGGER.info("{} - Benchmark for task {} completed unsuccessfully", address, taskId);
+			}
 			return true;
 		}
 
@@ -214,11 +219,11 @@ public class TeleBackend {
 		return replyFuture;
 	}
 
-	private CompletableFuture<Void> startBenchmark(UUID runId) {
+	private CompletableFuture<Boolean> startBenchmark(UUID runId) {
 		// The benchmarker is guaranteed to be null. For more detail, see the comment at the
 		// top of maybePerformBenchmark.
 
-		CompletableFuture<Void> benchmarkFinished = new CompletableFuture<>();
+		CompletableFuture<Boolean> benchmarkFinished = new CompletableFuture<>();
 
 		Benchmarker newBenchmarker = new Benchmarker(
 			benchmarkFinished,

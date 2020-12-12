@@ -39,7 +39,7 @@ public class Benchmarker {
 	private final AtomicReference<BenchResult> result; // nullable inside the reference
 	private final AtomicReference<Supplier<LinesWithOffset>> outputFetcher; // nullable inside the reference
 
-	private final CompletableFuture<Void> finishFuture;
+	private final CompletableFuture<Boolean> finishFuture;
 
 	private final UUID taskId;
 	private final Path taskRepoPath;
@@ -69,7 +69,7 @@ public class Benchmarker {
 	 * @param runnerName the name of this runner
 	 * @param systemInfo the system information of this runner
 	 */
-	public Benchmarker(CompletableFuture<Void> finishFuture, UUID taskId, Path taskRepoPath,
+	public Benchmarker(CompletableFuture<Boolean> finishFuture, UUID taskId, Path taskRepoPath,
 		@Nullable String benchRepoHash, Path benchRepoPath, Instant startTime, String runnerName,
 		LinuxSystemInfo systemInfo) {
 
@@ -213,7 +213,7 @@ public class Benchmarker {
 	 */
 	private void setResult(@Nonnull BenchResult result) {
 		this.result.compareAndSet(null, result);
-		finishFuture.complete(null);
+		finishFuture.complete(result.isSuccess());
 	}
 
 	private StreamsProcessOutput<ProgramResult> startBenchExecution(NamedRows generalInfo,

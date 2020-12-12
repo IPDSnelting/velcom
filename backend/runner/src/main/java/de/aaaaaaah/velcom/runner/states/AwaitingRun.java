@@ -32,7 +32,8 @@ public class AwaitingRun extends RunnerState {
 
 	@Override
 	public void onEnter() {
-		LOGGER.info("{} - Receiving task repo", teleBackend.getAddress());
+		LOGGER.info("{} - Receiving task repo for task {}", teleBackend.getAddress(),
+			reply.getRunId().get());
 
 		try {
 			Path taskRepoTmpPath = teleBackend.getTaskRepoTmpPath();
