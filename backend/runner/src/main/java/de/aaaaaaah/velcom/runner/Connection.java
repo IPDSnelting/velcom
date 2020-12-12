@@ -182,7 +182,7 @@ public class Connection implements WebSocket.Listener, HeartbeatWebsocket {
 	@Override
 	public synchronized void onError(WebSocket webSocket, Throwable error) {
 		// For some reason, this function is not called after a socket.abort().
-		LOGGER.debug("Connection closed abnormally");
+		LOGGER.warn("Connection closed abnormally");
 		cleanupAfterClosed();
 	}
 

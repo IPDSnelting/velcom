@@ -83,13 +83,14 @@ public class TeleBackend {
 		//noinspection InfiniteLoopStatement
 		while (true) {
 			try {
-				LOGGER.info("Connecting to {}", address);
+				LOGGER.info("{} - Connecting", address);
 				Connection conn = new Connection(this, address, name, token);
+				LOGGER.info("{} - Connected", address);
 				connection = conn;
 				conn.getClosedFuture().get();
-				LOGGER.info("Disconnected from {}, reconnecting immediately", address);
+				LOGGER.info("{} - Disconnected, reconnecting immediately", address);
 			} catch (ExecutionException | InterruptedException e) {
-				LOGGER.warn("Failed to connect to {}, retrying soon", address);
+				LOGGER.warn("{} - Failed to connect, retrying soon", address);
 				//noinspection BusyWait
 				Thread.sleep(Delays.RECONNECT_AFTER_FAILED_CONNECTION.toMillis());
 			}
@@ -136,7 +137,7 @@ public class TeleBackend {
 		try {
 			clearTmpFiles();
 		} catch (IOException e) {
-			LOGGER.warn("Could not clear temporary files", e);
+			LOGGER.warn("{} - Could not clear temporary files", address, e);
 			return false;
 		}
 
@@ -148,7 +149,9 @@ public class TeleBackend {
 			reply = replyFuture.get();
 		} catch (ExecutionException | CancellationException e) {
 			LOGGER.debug(
-				"Backend has no new files or something went wrong while trying to download them");
+				"{} - Backend has no new files or something went wrong while trying to download them",
+				address
+			);
 			return false;
 		}
 
@@ -158,20 +161,25 @@ public class TeleBackend {
 				benchRepoDir.setHash(reply.getBenchHash().get());
 			}
 		} catch (IOException e) {
-			LOGGER.warn("Could not unpack tar files", e);
+			LOGGER.warn("{} - Could not unpack tar files", address, e);
 			return false;
 		}
 		try {
 			clearTmpFiles();
 		} catch (IOException e) {
-			LOGGER.warn("Could not clear temporary files", e);
+			LOGGER.warn("{} - Could not clear temporary files", address, e);
 			return false;
 		}
 
 		if (reply.getRunId().isPresent()) {
-			LOGGER.info("{}: Starting benchmark", this);
-			startBenchmark(reply.getRunId().get()).get();
-			LOGGER.info("{}: Benchmark completed", this);
+			UUID taskId = reply.getRunId().get();
+			LOGGER.info("{} - Starting benchmark for task {}", address, taskId);
+			Boolean success = startBenchmark(taskId).get();
+			if (success) {
+				LOGGER.info("{} - Benchmark for task {} completed successfully", address, taskId);
+			} else {
+				LOGGER.info("{} - Benchmark for task {} completed unsuccessfully", address, taskId);
+			}
 			return true;
 		}
 
@@ -211,11 +219,11 @@ public class TeleBackend {
 		return replyFuture;
 	}
 
-	private CompletableFuture<Void> startBenchmark(UUID runId) {
+	private CompletableFuture<Boolean> startBenchmark(UUID runId) {
 		// The benchmarker is guaranteed to be null. For more detail, see the comment at the
 		// top of maybePerformBenchmark.
 
-		CompletableFuture<Void> benchmarkFinished = new CompletableFuture<>();
+		CompletableFuture<Boolean> benchmarkFinished = new CompletableFuture<>();
 
 		Benchmarker newBenchmarker = new Benchmarker(
 			benchmarkFinished,
@@ -305,6 +313,10 @@ public class TeleBackend {
 
 	public Path getTaskRepoTmpPath() {
 		return taskRepoDir.getTmpFilePath();
+	}
+
+	public URI getAddress() {
+		return address;
 	}
 
 	@Override
