@@ -193,7 +193,7 @@ export default class EchartsDetailGraph extends Vue {
       },
       yAxis: {
         type: 'value',
-        scale: this.beginYAtZero
+        scale: !this.beginYAtZero
       },
       toolbox: {
         left: 'center',
