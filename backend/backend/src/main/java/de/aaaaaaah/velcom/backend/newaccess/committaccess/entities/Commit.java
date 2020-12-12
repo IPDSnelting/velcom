@@ -6,6 +6,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+/**
+ * A git commit. For a version that includes parent and child hashes, see {@link FullCommit}.
+ */
 public class Commit {
 
 	private final RepoId repoId;

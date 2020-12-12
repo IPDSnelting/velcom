@@ -27,6 +27,9 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
+/**
+ * A utility class for helper functions specific to the REST API endpoints.
+ */
 public class EndpointUtils {
 
 	private EndpointUtils() {
@@ -40,6 +43,7 @@ public class EndpointUtils {
 	 * @param id the run's ID, or the commit's repo id, if {@code hash} is specified
 	 * @param hash the commit's hash, if the run should be obtained through a commit
 	 * @return the run if it can be found
+	 * @throws NoSuchRunException if the specified run does not exist
 	 */
 	public static Run getRun(BenchmarkReadAccess benchmarkAccess, UUID id, @Nullable String hash)
 		throws NoSuchRunException {

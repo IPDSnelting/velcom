@@ -2,6 +2,9 @@ package de.aaaaaaah.velcom.backend.newaccess.committaccess.entities;
 
 import java.util.Objects;
 
+/**
+ * A git commit hash (40 characters of hexadecimal digits).
+ */
 public class CommitHash {
 
 	private final String hash;

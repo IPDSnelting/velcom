@@ -4,6 +4,9 @@ import java.util.Objects;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
+/**
+ * Information associated globally with a dimension.
+ */
 public class DimensionInfo {
 
 	private static final boolean DEFAULT_SIGNIFICANCE = true;

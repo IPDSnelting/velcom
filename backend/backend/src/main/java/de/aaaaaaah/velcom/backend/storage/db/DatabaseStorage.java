@@ -90,6 +90,8 @@ public class DatabaseStorage {
 	 *
 	 * @param handler the handler that is executed within the context of the transaction. The handler
 	 * 	will be called once and its return value returned from the transaction.
+	 * @param <T> the handler's return type
+	 * @return whatever the handler returned
 	 */
 	public <T> T acquireReadTransaction(CheckedFunction<DBReadAccess, T, Throwable> handler) {
 		AtomicReference<T> result = new AtomicReference<>();
@@ -123,6 +125,8 @@ public class DatabaseStorage {
 	 *
 	 * @param handler the handler that is executed within the context of the transaction. The handler
 	 * 	will be called once and its return value returned from the transaction.
+	 * @param <T> the handler's return type
+	 * @return whatever the handler returned
 	 */
 	public <T> T acquireWriteTransaction(CheckedFunction<DBWriteAccess, T, Throwable> handler) {
 		AtomicReference<T> result = new AtomicReference<>();

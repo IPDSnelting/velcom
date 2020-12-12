@@ -9,7 +9,7 @@ import de.aaaaaaah.velcom.backend.access.entities.AuthToken;
 public interface HashAlgorithm {
 
 	/**
-	 * Generates the appropriate hash for the given token
+	 * Generate the appropriate hash for the given token.
 	 *
 	 * @param token the token
 	 * @return the hash
@@ -17,7 +17,7 @@ public interface HashAlgorithm {
 	String generateHash(AuthToken token);
 
 	/**
-	 * Checks whether nor not the provided token verifies against the provided hash.
+	 * Check whether nor not the provided token verifies against the provided hash.
 	 *
 	 * @param hash the hash
 	 * @param token the token

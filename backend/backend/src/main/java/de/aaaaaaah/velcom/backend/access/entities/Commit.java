@@ -8,6 +8,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+/**
+ * A git commit.
+ */
 public class Commit {
 
 	private final RepoId repoId;

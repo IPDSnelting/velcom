@@ -5,6 +5,9 @@ import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Dimension;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
+/**
+ * The difference between two runs in a single dimension.
+ */
 public class DimensionDifference {
 
 	private final Dimension dimension;
