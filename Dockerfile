@@ -50,17 +50,17 @@ RUN useradd --uid $USER_ID velcom
 #   \ V / (_) | | |_| | | | | | |  __/\__ \
 #    \_/ \___/|_|\__,_|_| |_| |_|\___||___/
 
-# Set up some volumes. You should mount these volumes to your host file system
-# or a named docker volumne using the '-v' option.
-# See the example backend config for a more elaborate explanation of these
-# directories
+# Set up some volumes. You should mount this volume to your host file system
+# or a named docker volume using the '-v' option.
+# See the example backend config for a more elaborate explanation of the
+# directories.
+# There are two other directories you might want to persist:
+#  - /home/velcom/data if you want to persist your data
+#  - /home/velcom/cache to speed up restarts
+# Remember: You need to adjust the path if you changed their paths in the config!
 
 # - config/ (the suggested location for your config file)
 VOLUME ["/home/velcom/config"]
-# - data/  : Essential files (e.g. the database)
-VOLUME ["/home/velcom/data"]
-# - cache/ : Non-essential files that shoukd be persisted between restarts
-VOLUME ["/home/velcom/cache"]
 
 
 #  ____            _
@@ -84,7 +84,7 @@ EXPOSE 82
 # |____/ \__\__,_|_|   \__|\__,_| .__/
 #                               |_|
 
-# This docker image needs a custom startup script that starts velcom *and*
+# This docker image needs a custom startup script that starts VelCom *and*
 # nginx
 COPY start-backend-docker.sh /home/velcom/start.sh
 
