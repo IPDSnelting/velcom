@@ -157,6 +157,12 @@ export default class RunSignificanceChips extends Vue {
   private readonly run!: RunDescriptionWithDifferences | RunWithDifferences
 
   private get relevantChanges(): RelevantChange[] {
+    if (
+      this.run instanceof RunWithDifferences &&
+      this.run.significantDifferences
+    ) {
+      return this.run.significantDifferences.map(it => new RelevantChange(it))
+    }
     if (this.run.differences) {
       return this.run.differences.map(it => new RelevantChange(it))
     }

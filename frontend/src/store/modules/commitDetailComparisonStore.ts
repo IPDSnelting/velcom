@@ -44,8 +44,15 @@ export class CommitDetailComparisonStore extends VxModule {
       const differences = response.data.differences
         ? response.data.differences.map(differenceFromJson)
         : undefined
+      const significantDifferences = response.data.differences
+        ? response.data.significant_differences.map(differenceFromJson)
+        : undefined
 
-      return new RunWithDifferences(runFromJson(response.data.run), differences)
+      return new RunWithDifferences(
+        runFromJson(response.data.run),
+        differences,
+        significantDifferences
+      )
     } catch (e) {
       if (e.response && e.response.status === 404) {
         throw new NotFoundError()
