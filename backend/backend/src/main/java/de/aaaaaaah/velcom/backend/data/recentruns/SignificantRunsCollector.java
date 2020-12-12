@@ -139,7 +139,7 @@ public class SignificantRunsCollector {
 			.filter(difference -> isDifferenceSignificant(difference, significantDimensions))
 			.collect(toList());
 
-		if (hasFails(run) || !significantDifferences.isEmpty()) {
+		if (hasSignificantFails(run, significantDimensions) || !significantDifferences.isEmpty()) {
 			return Optional.of(new SignificantRun(run, significantDifferences));
 		} else {
 			return Optional.empty();
@@ -147,11 +147,13 @@ public class SignificantRunsCollector {
 	}
 
 	/**
-	 * @return true if the run has failed measurements or is entirely failed
+	 * @return true if the run has failed significant measurements or is entirely failed
 	 */
-	private boolean hasFails(Run run) {
+	private boolean hasSignificantFails(Run run, Set<Dimension> significantDimensions) {
 		return run.getResult().getRight()
-			.map(ms -> ms.stream().anyMatch(m -> m.getContent().isLeft()))
+			.map(ms -> ms.stream()
+				.filter(m -> significantDimensions.contains(m.getDimension()))
+				.anyMatch(m -> m.getContent().isLeft()))
 			.orElse(true);
 	}
 
