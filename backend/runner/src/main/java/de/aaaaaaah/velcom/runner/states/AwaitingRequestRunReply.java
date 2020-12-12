@@ -3,12 +3,12 @@ package de.aaaaaaah.velcom.runner.states;
 import de.aaaaaaah.velcom.runner.Connection;
 import de.aaaaaaah.velcom.runner.Delays;
 import de.aaaaaaah.velcom.runner.TeleBackend;
-import de.aaaaaaah.velcom.shared.util.Timeout;
 import de.aaaaaaah.velcom.shared.protocol.StatusCode;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Serializer;
 import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.ClientBoundPacket;
 import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.ClientBoundPacketType;
 import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.RequestRunReply;
+import de.aaaaaaah.velcom.shared.util.Timeout;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import org.slf4j.Logger;
@@ -40,7 +40,7 @@ public class AwaitingRequestRunReply extends RunnerState {
 
 	@Override
 	public void onEnter() {
-		LOGGER.debug("Waiting for request_run_reply from {}", teleBackend);
+		LOGGER.debug("{} - Waiting for request_run_reply", teleBackend.getAddress());
 		timeout.start();
 	}
 
@@ -52,7 +52,8 @@ public class AwaitingRequestRunReply extends RunnerState {
 			.filter(p -> p.getType() == ClientBoundPacketType.REQUEST_RUN_REPLY)
 			.flatMap(p -> serializer.deserialize(p.getData(), RequestRunReply.class))
 			.map(p -> {
-				LOGGER.debug("{}: hasBench {}, hasRun {}", teleBackend, p.hasBench(), p.hasRun());
+				LOGGER
+					.debug("{} - hasBench {}, hasRun {}", teleBackend.getAddress(), p.hasBench(), p.hasRun());
 				if (p.hasBench()) {
 					owningReplyFuture = false;
 					return new AwaitingBench(teleBackend, connection, p, replyFuture);

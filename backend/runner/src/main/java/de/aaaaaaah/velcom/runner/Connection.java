@@ -53,7 +53,7 @@ public class Connection implements WebSocket.Listener, HeartbeatWebsocket {
 			.get();
 		// At this point, #onOpen() should have been called already, so the socket and heartbeatHandler
 		// have been initialized.
-		LOGGER.info("Successfully opened connection to {}", address);
+		LOGGER.debug("Successfully opened connection to {}", address);
 	}
 
 	public synchronized void sendPacket(ServerBoundPacket packet) {

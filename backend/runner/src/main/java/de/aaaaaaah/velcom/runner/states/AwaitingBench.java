@@ -35,14 +35,14 @@ public class AwaitingBench extends RunnerState {
 
 	@Override
 	public void onEnter() {
-		LOGGER.info("{}: Receiving bench repo", teleBackend);
+		LOGGER.info("{} - Receiving bench repo", teleBackend.getAddress());
 
 		try {
 			Path benchRepoTmpPath = teleBackend.getBenchRepoTmpPath();
 			Files.createDirectories(benchRepoTmpPath.getParent());
 			tmpFile = Files.newOutputStream(benchRepoTmpPath);
 		} catch (IOException e) {
-			LOGGER.warn("{}: Could not open stream to bench repo tmp file", teleBackend, e);
+			LOGGER.warn("{} - Could not open stream to bench repo tmp file", teleBackend.getAddress(), e);
 		}
 	}
 
@@ -54,7 +54,7 @@ public class AwaitingBench extends RunnerState {
 			try {
 				tmpFile.write(bytes);
 			} catch (IOException e) {
-				LOGGER.warn("{}: Could not stream to bench repo tmp file", teleBackend, e);
+				LOGGER.warn("{} - Could not stream to bench repo tmp file", teleBackend.getAddress(), e);
 				tmpFile = null;
 			}
 		}
@@ -79,7 +79,8 @@ public class AwaitingBench extends RunnerState {
 			try {
 				tmpFile.close();
 			} catch (IOException e) {
-				LOGGER.warn("{}: Could not close stream to bench repo tmp file", teleBackend, e);
+				LOGGER
+					.warn("{} - Could not close stream to bench repo tmp file", teleBackend.getAddress(), e);
 			}
 		}
 
