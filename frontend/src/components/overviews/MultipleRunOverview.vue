@@ -15,8 +15,11 @@
           :key="index"
         >
           <run-overview :run="run(item)">
-            <template #content v-if="showSignificantChips(item)">
-              <run-significance-chips :run="item"></run-significance-chips>
+            <template #content v-if="differences(item)">
+              <run-significance-chips
+                :differences="differences(item)"
+                :run-id="run(item).runId"
+              ></run-significance-chips>
             </template>
           </run-overview>
         </v-col>
@@ -29,7 +32,11 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
-import { RunDescription, RunDescriptionWithDifferences } from '@/store/types'
+import {
+  DimensionDifference,
+  RunDescription,
+  RunDescriptionWithDifferences
+} from '@/store/types'
 import RunOverview from './RunOverview.vue'
 import RunSignificanceChips from '@/components/RunSignificanceChips.vue'
 
@@ -56,10 +63,12 @@ export default class MultipleRunOverview extends Vue {
     return run instanceof RunDescriptionWithDifferences ? run.run : run
   }
 
-  private showSignificantChips(
+  private differences(
     run: RunDescription | RunDescriptionWithDifferences
-  ) {
+  ): DimensionDifference[] | undefined {
     return run instanceof RunDescriptionWithDifferences
+      ? run.differences
+      : undefined
   }
 }
 </script>

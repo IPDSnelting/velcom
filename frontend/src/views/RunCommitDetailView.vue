@@ -8,9 +8,10 @@
     <v-row v-if="commit" no-gutters>
       <v-col>
         <commit-detail :commit="commit">
-          <template #body-trailing v-if="runWithDifferences">
+          <template #body-trailing v-if="dimensionDifferences">
             <run-significance-chips
-              :run="runWithDifferences"
+              :differences="dimensionDifferences"
+              :run-id="runWithDifferences.run.id"
             ></run-significance-chips>
           </template>
         </commit-detail>
@@ -74,8 +75,9 @@ import {
   Commit,
   CommitTaskSource,
   Dimension,
-  RunWithDifferences,
-  TarTaskSource
+  TarTaskSource,
+  DimensionDifference,
+  RunWithDifferences
 } from '@/store/types'
 import NotFound404 from './NotFound404.vue'
 import RunDetail from '@/components/rundetail/RunDetail.vue'
@@ -109,6 +111,13 @@ export default class RunCommitDetailView extends Vue {
 
   private get secondComponent(): string | undefined {
     return this.$route.params['second']
+  }
+
+  private get dimensionDifferences(): DimensionDifference[] | undefined {
+    if (!this.runWithDifferences) {
+      return undefined
+    }
+    return this.runWithDifferences.significantDifferences
   }
 
   private async navigateToDetailGraph(dimension: Dimension) {

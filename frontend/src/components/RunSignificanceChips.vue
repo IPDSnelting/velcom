@@ -41,9 +41,7 @@ import {
   Dimension,
   DimensionDifference,
   DimensionInterpretation,
-  RunDescriptionWithDifferences,
-  RunId,
-  RunWithDifferences
+  RunId
 } from '@/store/types'
 import {
   mdiChevronDoubleDown,
@@ -154,25 +152,13 @@ class RelevantChange {
 @Component
 export default class RunSignificanceChips extends Vue {
   @Prop()
-  private readonly run!: RunDescriptionWithDifferences | RunWithDifferences
+  private readonly differences!: DimensionDifference[]
+
+  @Prop()
+  private readonly runId!: RunId
 
   private get relevantChanges(): RelevantChange[] {
-    if (
-      this.run instanceof RunWithDifferences &&
-      this.run.significantDifferences
-    ) {
-      return this.run.significantDifferences.map(it => new RelevantChange(it))
-    }
-    if (this.run.differences) {
-      return this.run.differences.map(it => new RelevantChange(it))
-    }
-    return []
-  }
-
-  private get runId(): RunId {
-    return this.run instanceof RunWithDifferences
-      ? this.run.run.id
-      : this.run.run.runId
+    return this.differences.map(it => new RelevantChange(it))
   }
 }
 </script>
