@@ -19,12 +19,12 @@ public class NamedRows {
 	}
 
 	public void addEscaped(String name, String value) {
-		add(name, StringHelper.escape(value));
+		add(name, StringHelper.quote(value));
 	}
 
 	public void addEscapedArray(String name, String[] array) {
 		String entries = Arrays.stream(array)
-			.map(StringHelper::escape)
+			.map(StringHelper::quote)
 			.collect(Collectors.joining(", "));
 
 		add(name, "[" + entries + "]");

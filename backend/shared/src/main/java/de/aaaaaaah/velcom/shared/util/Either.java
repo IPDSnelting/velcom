@@ -68,10 +68,28 @@ public final class Either<L, R> {
 		return Optional.ofNullable(right);
 	}
 
+	/**
+	 * Turn an {@link Either} into a value of another type using one function to convert a left value
+	 * to the target type and one to convert a right value to the target type.
+	 *
+	 * @param left the function that creates a value of the target type from a left value
+	 * @param right the function that creates a value of the target type from a right value
+	 * @param <Result> the target type
+	 * @return a value of the target type using either the left or right function
+	 */
 	public <Result> Result consume(Function<L, Result> left, Function<R, Result> right) {
 		return isLeft() ? left.apply(this.left) : right.apply(this.right);
 	}
 
+	/**
+	 * Map one of two functions over the {@link Either} depeding on whether it's left or right.
+	 *
+	 * @param left the function to map over a left value
+	 * @param right the function to map over the right value
+	 * @param <L2> the result left type
+	 * @param <R2> the result right type
+	 * @return the mapped-over {@link Either}
+	 */
 	public <L2, R2> Either<L2, R2> mapBoth(Function<L, L2> left, Function<R, R2> right) {
 		return consume(
 			l -> Either.ofLeft(left.apply(l)),
@@ -79,10 +97,24 @@ public final class Either<L, R> {
 		);
 	}
 
+	/**
+	 * Map a function over the left value, if the {@link Either} is left.
+	 *
+	 * @param left the function to map over the left value
+	 * @param <L2> the resulting left type
+	 * @return the mapped-over {@link Either}
+	 */
 	public <L2> Either<L2, R> mapLeft(Function<L, L2> left) {
 		return mapBoth(left, it -> it);
 	}
 
+	/**
+	 * Map a function over the right value, if the {@link Either} is right.
+	 *
+	 * @param right the function to map over the right value
+	 * @param <R2> the resulting right type
+	 * @return the mapped-over {@link Either}
+	 */
 	public <R2> Either<L, R2> mapRight(Function<R, R2> right) {
 		return mapBoth(it -> it, right);
 	}

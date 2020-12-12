@@ -17,8 +17,8 @@ public class FailedToAddRepoException extends RuntimeException {
 
 	public FailedToAddRepoException(Throwable t, String name, RemoteUrl remoteUrl) {
 		super(
-			"failed to add repo named " + StringHelper.escape(name)
-				+ " for remote url " + StringHelper.escape(remoteUrl.getUrl()),
+			"failed to add repo named " + StringHelper.quote(name)
+				+ " for remote url " + StringHelper.quote(remoteUrl.getUrl()),
 			t
 		);
 
