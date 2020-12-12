@@ -2,6 +2,9 @@ package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
 import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
+import de.aaaaaaah.velcom.backend.data.recentruns.SignificantRun;
+import de.aaaaaaah.velcom.backend.data.recentruns.SignificantRunsCollector;
+import de.aaaaaaah.velcom.backend.data.runcomparison.DimensionDifference;
 import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparator;
 import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparison;
 import de.aaaaaaah.velcom.backend.data.runcomparison.SignificanceFactors;
@@ -20,7 +23,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -38,16 +43,19 @@ public class RunEndpoint {
 	private final DimensionReadAccess dimensionAccess;
 	private final RunComparator comparer;
 	private final SignificanceFactors significanceFactors;
+	private final SignificantRunsCollector significantRunsCollector;
 
 	public RunEndpoint(BenchmarkReadAccess benchmarkAccess, CommitReadAccess commitAccess,
 		DimensionReadAccess dimensionAccess, RunComparator comparer,
-		SignificanceFactors significanceFactors) {
+		SignificanceFactors significanceFactors,
+		SignificantRunsCollector significantRunsCollector) {
 
 		this.benchmarkAccess = benchmarkAccess;
 		this.commitAccess = commitAccess;
 		this.dimensionAccess = dimensionAccess;
 		this.comparer = comparer;
 		this.significanceFactors = significanceFactors;
+		this.significantRunsCollector = significantRunsCollector;
 	}
 
 	private Optional<Run> getPrevRun(Run run) {
@@ -83,6 +91,7 @@ public class RunEndpoint {
 
 		// Obtain differences to previous run
 		Optional<List<JsonDimensionDifference>> differences;
+		Optional<List<JsonDimensionDifference>> significantDifferences;
 		if (diffPrev) {
 			differences = getPrevRun(run)
 				.map(prevRun -> {
@@ -91,13 +100,28 @@ public class RunEndpoint {
 						.getDimensionInfoMap(comparison.getDimensions());
 					return JsonDimensionDifference.fromRunComparison(comparison, infos);
 				});
+			significantDifferences = significantRunsCollector.getSignificantRun(run)
+				.map(SignificantRun::getDifferences)
+				.map(sigDifferences -> {
+					Set<Dimension> dimensions = sigDifferences.stream()
+						.map(DimensionDifference::getDimension)
+						.collect(Collectors.toSet());
+					Map<Dimension, DimensionInfo> dimensionInfos = dimensionAccess.getDimensionInfoMap(
+						dimensions);
+
+					return sigDifferences.stream()
+						.map(it -> JsonDimensionDifference.fromDimensionDifference(it, dimensionInfos))
+						.collect(Collectors.toList());
+				});
 		} else {
 			differences = Optional.empty();
+			significantDifferences = Optional.empty();
 		}
 
 		return new GetReply(
 			EndpointUtils.fromRun(dimensionAccess, commitAccess, run, significanceFactors, allValues),
-			differences.orElse(null)
+			differences.orElse(null),
+			significantDifferences.orElse(null)
 		);
 	}
 
@@ -106,10 +130,14 @@ public class RunEndpoint {
 		public final JsonRun run;
 		@Nullable
 		public final List<JsonDimensionDifference> differences;
+		@Nullable
+		public final List<JsonDimensionDifference> significantDifferences;
 
-		public GetReply(JsonRun run, @Nullable List<JsonDimensionDifference> differences) {
+		public GetReply(JsonRun run, @Nullable List<JsonDimensionDifference> differences,
+			@Nullable List<JsonDimensionDifference> significantDifferences) {
 			this.run = run;
 			this.differences = differences;
+			this.significantDifferences = significantDifferences;
 		}
 	}
 }

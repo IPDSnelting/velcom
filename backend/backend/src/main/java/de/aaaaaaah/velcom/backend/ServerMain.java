@@ -202,7 +202,7 @@ public class ServerMain extends Application<GlobalConfig> {
 			new RepoEndpoint(dimensionAccess, repoAccess, tokenAccess, availableDimensionsCache,
 				listener),
 			new RunEndpoint(benchmarkAccess, commitAccess, dimensionAccess, runComparator,
-				significanceFactors),
+				significanceFactors, significantRunsCollector),
 			new TestTokenEndpoint()
 		).forEach(endpoint -> environment.jersey().register(endpoint));
 	}
