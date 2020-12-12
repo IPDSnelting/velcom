@@ -5,6 +5,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * A way to pretty-print multiple named sections, each consisting of {@link NamedRows} or a single
+ * {@link String}.
+ */
 public class NamedSections {
 
 	private final List<Section> sections;
@@ -13,13 +17,20 @@ public class NamedSections {
 		sections = new ArrayList<>();
 	}
 
+
+	/**
+	 * Add a string as a new section after all other sections.
+	 *
+	 * @param name the name of the section
+	 * @param content the content of the section
+	 */
 	public void addSection(String name, String content) {
 		sections.add(new Section(name, Either.ofLeft(content)));
 	}
 
 	/**
-	 * Add a {@link NamedRows} as a new section. Any further changes to the {@link NamedRows} object
-	 * will be reflected in the section contents.
+	 * Add a {@link NamedRows} as a new section after all other sections. Any further changes to the
+	 * {@link NamedRows} object will be reflected in the section contents.
 	 *
 	 * @param name the name of the section
 	 * @param rows the content of the section
@@ -28,13 +39,19 @@ public class NamedSections {
 		sections.add(new Section(name, Either.ofRight(rows)));
 	}
 
+	/**
+	 * Add a string as a new section in front of all all other sections.
+	 *
+	 * @param name the name of the section
+	 * @param content the content of the section
+	 */
 	public void addSectionInFront(String name, String content) {
 		sections.add(0, new Section(name, Either.ofLeft(content)));
 	}
 
 	/**
-	 * Add a {@link NamedRows} as a new section in front (above) of all all other sections. Any
-	 * further changes to the {@link NamedRows} object will be reflected in the section contents.
+	 * Add a {@link NamedRows} as a new section in front of all all other sections. Any further
+	 * changes to the {@link NamedRows} object will be reflected in the section contents.
 	 *
 	 * @param name the name of the section
 	 * @param rows the content of the section
@@ -43,6 +60,11 @@ public class NamedSections {
 		sections.add(0, new Section(name, Either.ofRight(rows)));
 	}
 
+	/**
+	 * Turn the sections into a string. Only at this point are any {@link NamedRows} formatted.
+	 *
+	 * @return the sections formatted into a single multiline string
+	 */
 	public String format() {
 		return sections.stream()
 			.map(Section::format)

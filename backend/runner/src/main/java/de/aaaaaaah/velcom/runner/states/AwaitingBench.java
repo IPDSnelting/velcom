@@ -12,6 +12,11 @@ import java.util.concurrent.CompletableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * This state is entered if the backend replied that it had a new bench repo for the runner. After
+ * downloading the new bench repo, this state either transitions into {@link AwaitingRun} or into
+ * {@link Idle} again.
+ */
 public class AwaitingBench extends RunnerState {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(AwaitingBench.class);

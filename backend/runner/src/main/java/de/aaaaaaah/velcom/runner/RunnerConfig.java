@@ -7,6 +7,10 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.util.List;
 
+/**
+ * The runner's config file. Meant to be deserialized from JSON. Contains a comment section, some
+ * values and one section for each backend the runner should connect to.
+ */
 @JsonIgnoreProperties("_comment")
 public class RunnerConfig {
 
@@ -30,6 +34,9 @@ public class RunnerConfig {
 		return backends;
 	}
 
+	/**
+	 * Section describing a single backend and how the runner should connect to it.
+	 */
 	public static class BackendEntry {
 
 		private final URI address;

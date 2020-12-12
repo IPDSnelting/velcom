@@ -14,10 +14,19 @@ import javax.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * The runner's main class. Loads the config, starts up the runner and contains the main loop asking
+ * the backends for new bench and task repos.
+ */
 public class RunnerMain {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(RunnerMain.class);
 
+	/**
+	 * The runner's main class's main method. Starts the runner.
+	 *
+	 * @param args the command line arguments
+	 */
 	public static void main(String[] args) {
 		System.out.println("Welcome to VelCom!");
 		System.out.printf("Version:     %s (runner)%n", GitProperties.getVersion());

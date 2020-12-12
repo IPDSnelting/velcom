@@ -12,6 +12,10 @@ import java.util.concurrent.CompletableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * This state is entered if the backend replied that it had a task repo for the runner. After
+ * downloading the task repo, this state transitions into {@link Idle}.
+ */
 public class AwaitingRun extends RunnerState {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(AwaitingRun.class);
