@@ -197,15 +197,14 @@ context('Queue', () => {
     )
   })
 
-  it('leads to task detail', () => {
-    cy.route({
-      method: 'GET',
-      url: '/queue',
-      response: 'fixture:queue-with-one-commit.json'
-    })
-    cy.visit('task-detail/67d41dca-67bf-4a21-b076-01e447033f47').as(
-      'task-detail'
+  it.only('leads to task detail', () => {
+    addCommitToQueue(
+      '44bb5c8d-b20d-4bef-bdad-c92767dfa489',
+      '9c952dc6173589f48874f95c64f014adcb7fd993'
     )
+    cy.visit('/queue')
+
+    cy.contains('Merge pull request #78 from').click()
 
     cy.waitFor('[@task-detail]')
 
