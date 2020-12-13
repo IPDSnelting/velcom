@@ -24,7 +24,13 @@
     </v-tooltip>
     <v-tooltip top v-if="commitRemoteLink && commitRemoteIcon">
       <template #activator="{ on }">
-        <v-btn icon v-on="on" :href="commitRemoteLink">
+        <v-btn
+          icon
+          v-on="on"
+          :href="commitRemoteLink"
+          target="_blank"
+          rel="noopener nofollow"
+        >
           <v-icon>{{ commitRemoteIcon }}</v-icon>
         </v-btn>
       </template>
