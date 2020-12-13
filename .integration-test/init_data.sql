@@ -1,5 +1,28 @@
 PRAGMA foreign_keys=OFF;
 BEGIN TRANSACTION;
+CREATE TABLE IF NOT EXISTS dimension (
+  benchmark      TEXT     NOT NULL,
+  metric         TEXT     NOT NULL,
+  unit           TEXT     NOT NULL,
+  interpretation TEXT     NOT NULL,
+  significant    BOOLEAN  NOT NULL,
+
+  PRIMARY KEY (benchmark, metric)
+);
+-- Test repo
+INSERT INTO "dimension" VALUES('test','Lines C++ with % and many äöüß& special chars <img src=x onerror=alert(1)>','','NEUTRAL',1);
+INSERT INTO "dimension" VALUES('test','value2','badingles','LESS_IS_BETTER',1);
+INSERT INTO "dimension" VALUES('test','value1','furlong','MORE_IS_BETTER',1);
+-- VelCom
+INSERT INTO "dimension" VALUES('backend','build_time','seconds','LESS_IS_BETTER',1);
+INSERT INTO "dimension" VALUES('backend','checkstyle_violations','','LESS_IS_BETTER',1);
+INSERT INTO "dimension" VALUES('backend','coverage','percent','MORE_IS_BETTER',1);
+INSERT INTO "dimension" VALUES('backend','sloc','lines','NEUTRAL',1);
+INSERT INTO "dimension" VALUES('frontend','build_time','seconds','LESS_IS_BETTER',1);
+INSERT INTO "dimension" VALUES('frontend','sloc','lines','NEUTRAL',1);
+INSERT INTO "dimension" VALUES('frontend','todos','','LESS_IS_BETTER',1);
+INSERT INTO "dimension" VALUES('misc','always zero','cats','NEUTRAL',1);
+
 CREATE TABLE IF NOT EXISTS "repo"
 (
     id         CHAR(36) PRIMARY KEY  NOT NULL,
