@@ -9,7 +9,7 @@
           :dimension="pointDialogDimension"
           @close="pointDialogOpen = false"
         ></datapoint-dialog>
-        <div id="chart" :style="{ height: '500px' }"></div>
+        <div id="chart" :style="{ height: '500px' }" @wheel="wheelEvent"></div>
         <div id="ranger" :style="{ height: '500px', height: '30px' }"></div>
       </v-col>
     </v-row>
@@ -50,6 +50,9 @@ export default class DytailGraph extends Vue {
 
   @Prop({ default: true })
   private dayEquidistant!: boolean
+
+  @Prop({ default: () => () => ({}) })
+  private wheelEvent!: (e: WheelEvent) => void
 
   private graph!: Dygraph
 

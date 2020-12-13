@@ -9,7 +9,7 @@
           :dimension="pointDialogDimension"
           @close="pointDialogOpen = false"
         ></datapoint-dialog>
-        <div id="chart-container" @wheel="echartsScrolled">
+        <div id="chart-container" @wheel="wheelEvent">
           <v-chart
             ref="chart"
             :autoresize="true"
@@ -149,6 +149,9 @@ export default class EchartsDetailGraph extends Vue {
 
   @Prop({ default: true })
   private dayEquidistant!: boolean
+
+  @Prop({ default: () => () => ({}) })
+  private wheelEvent!: (e: WheelEvent) => void
   // <!--</editor-fold>-->
 
   // <!--<editor-fold desc="FIELDS">-->
@@ -597,28 +600,6 @@ export default class EchartsDetailGraph extends Vue {
   // <!--</editor-fold>-->
 
   // <!--<editor-fold desc="ECHARTS EVENT HANDLER">-->
-  private echartsScrolled(e: WheelEvent) {
-    if (
-      vxm.detailGraphModule.zoomXEndValue !== null ||
-      vxm.detailGraphModule.zoomXStartValue !== null
-    ) {
-      return
-    }
-
-    // scrolling upwards => zooming in
-    if (e.deltaY <= 0) {
-      return
-    }
-
-    vxm.detailGraphModule.startTime = new Date(
-      vxm.detailGraphModule.startTime.getTime() - 7 * 1000 * 60 * 60 * 24
-    )
-    vxm.detailGraphModule.endTime = new Date(
-      vxm.detailGraphModule.endTime.getTime() + 7 * 1000 * 60 * 60 * 24
-    )
-    vxm.detailGraphModule.fetchDetailGraph()
-  }
-
   private echartsZoomed(e: any) {
     if (!e.batch || e.batch.length === 0) {
       this.setZoomOnCorrectAxis(e.dataZoomId)
