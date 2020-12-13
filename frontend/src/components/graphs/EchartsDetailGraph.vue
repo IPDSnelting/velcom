@@ -258,7 +258,8 @@ export default class EchartsDetailGraph extends Vue {
         trigger: 'axis',
         axisPointer: {},
         // TODO: Extract in own helper?
-        formatter: this.tooltipFormatter
+        formatter: this.tooltipFormatter,
+        confine: true
       },
       series: this.dimensions.map(this.seriesGenerator)
     }
