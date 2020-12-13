@@ -71,16 +71,16 @@ context('Homepage', () => {
   it('fetches more normal runs', () => {
     cy.get('[data-cy="recent_runs"]').as('recent_runs')
 
-    countRuns('@recent_runs').should('have.length', 5)
-
-    loadMoreRuns(15, '@recent_runs')
-    countRuns('@recent_runs').should('have.length', 15)
+    countRuns('@recent_runs').should('have.length', 10)
 
     // The pagination should be hidden for < 20 runs
     cy.get('@recent_runs').contains('Items per page').should('not.exist')
 
-    // 25 loaded
-    loadMoreRuns(25, '@recent_runs')
+    loadMoreRuns(20, '@recent_runs')
+    countRuns('@recent_runs').should('have.length', 20)
+
+    // 30 loaded
+    loadMoreRuns(30, '@recent_runs')
 
     // Only 20 displayed, it is paginated
     countRuns('@recent_runs').should('have.length', 20)
