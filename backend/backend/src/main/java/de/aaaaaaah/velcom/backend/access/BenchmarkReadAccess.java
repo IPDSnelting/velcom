@@ -14,6 +14,7 @@ import de.aaaaaaah.velcom.backend.access.entities.MeasurementError;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementValues;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
 import de.aaaaaaah.velcom.backend.access.entities.RunId;
+import de.aaaaaaah.velcom.backend.newaccess.AccessUtils;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.CommitSource;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.RunError;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.RunErrorType;
@@ -273,17 +274,11 @@ public class BenchmarkReadAccess {
 			.map(runRecord -> {
 				RunId runId = new RunId(UUID.fromString(runRecord.getId()));
 
-				final Either<CommitSource, TarSource> source;
-
-				if (runRecord.getCommitHash() != null) {
-					source = Either.ofLeft(new CommitSource(
-						new RepoId(UUID.fromString(runRecord.getRepoId())),
-						new CommitHash(runRecord.getCommitHash())
-					));
-				} else {
-					// If commit hash is null, tar desc must be present
-					source = Either.ofRight(new TarSource(runRecord.getTarDesc()));
-				}
+				final Either<CommitSource, TarSource> source = AccessUtils.readSource(
+					runRecord.getRepoId(),
+					runRecord.getCommitHash(),
+					runRecord.getTarDesc()
+				);
 
 				if (runRecord.getError() != null) {
 					RunError error = new RunError(

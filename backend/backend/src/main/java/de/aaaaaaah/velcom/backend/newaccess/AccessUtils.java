@@ -5,6 +5,7 @@ import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.TarSource;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.shared.util.Either;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 public class AccessUtils {
@@ -34,13 +35,13 @@ public class AccessUtils {
 				RepoId.fromString(repoId),
 				new CommitHash(commitHash)
 			));
-		} else if (repoId != null) { // Must be tar source with repo id
+		} else { // Must be tar source
 			return Either.ofRight(new TarSource(
 				tarDesc,
-				RepoId.fromString(repoId)
+				Optional.ofNullable(repoId)
+					.map(RepoId::fromString)
+					.orElse(null)
 			));
-		} else { // Must be tar source without repo id
-			return Either.ofRight(new TarSource(tarDesc));
 		}
 	}
 
