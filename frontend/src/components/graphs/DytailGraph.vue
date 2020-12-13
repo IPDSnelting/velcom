@@ -151,6 +151,16 @@ export default class DytailGraph extends Vue {
       const dimensionRows = data.map(val => {
         const safeDimension = escapeHtml(val.labelHTML)
         const color = val.color
+        const dimension = this.dimensions.find(
+          it => escapeHtml(it.toString()) === val.labelHTML
+        )
+
+        let value: string = this.numberFormat.format(val.y)
+        if (dimension && datapoint.unbenchmarked(dimension)) {
+          value = 'Unbenchmarked'
+        } else if (dimension && !datapoint.successful(dimension)) {
+          value = 'Failed'
+        }
 
         return `
                 <tr>
@@ -158,7 +168,7 @@ export default class DytailGraph extends Vue {
                     <span class="color-preview" style="background-color: ${color}"></span>
                     ${safeDimension}
                   </td>
-                  <td>${this.numberFormat.format(val.y)}</td>
+                  <td>${value}</td>
                 </tr>
                 `
       })
