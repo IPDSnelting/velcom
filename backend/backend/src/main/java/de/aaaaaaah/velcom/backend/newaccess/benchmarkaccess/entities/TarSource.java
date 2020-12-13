@@ -11,10 +11,6 @@ public class TarSource {
 	@Nullable
 	private final RepoId repoId;
 
-	public TarSource(String description) {
-		this(description, null);
-	}
-
 	public TarSource(String description, @Nullable RepoId repoId) {
 		this.description = Objects.requireNonNull(description);
 		this.repoId = repoId;
