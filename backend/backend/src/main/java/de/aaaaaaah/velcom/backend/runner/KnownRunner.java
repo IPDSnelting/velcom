@@ -74,6 +74,9 @@ public class KnownRunner {
 		return Optional.ofNullable(currentTask);
 	}
 
+	/**
+	 * @return true if runner is currently disconnected
+	 */
 	public boolean hasLostConnection() {
 		return lostConnection;
 	}
