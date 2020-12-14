@@ -3,14 +3,14 @@ package de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities;
 import java.util.Objects;
 
 /**
- * Locates a remote repository
+ * Locate a remote repository.
  */
 public class RemoteUrl {
 
 	private final String url;
 
 	/**
-	 * Constructs a new remote url
+	 * Construct a new remote url.
 	 *
 	 * @param url the url
 	 */

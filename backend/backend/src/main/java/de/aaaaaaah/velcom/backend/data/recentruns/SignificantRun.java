@@ -6,6 +6,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * A run that has been found to be significant. Contains the significant {@link
+ * DimensionDifference}s which caused this.
+ */
 public class SignificantRun {
 
 	private final Run run;

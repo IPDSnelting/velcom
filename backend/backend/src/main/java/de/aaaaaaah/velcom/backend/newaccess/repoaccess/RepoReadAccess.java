@@ -63,6 +63,12 @@ public class RepoReadAccess {
 		}
 	}
 
+	/**
+	 * Check if a repo exists.
+	 *
+	 * @param repoId the id of the repo to look for
+	 * @throws NoSuchRepoException if the repo doesn't exist
+	 */
 	public void guardRepoExists(RepoId repoId) throws NoSuchRepoException {
 		getRepo(repoId);
 	}

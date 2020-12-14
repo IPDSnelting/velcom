@@ -108,6 +108,14 @@ public class EndpointUtils {
 		}
 	}
 
+	/**
+	 * Parse a string of colon-separated arguments. The string is split into sections by double colons
+	 * "::". The sections are split into elements by single colons ":". Each sections must contain at
+	 * least two elements, the first of which is the section's name.
+	 *
+	 * @param args the string to parse
+	 * @return the parsed sections and arguments
+	 */
 	public static List<Pair<String, List<String>>> parseColonSeparatedArgs(String args) {
 		return Arrays.stream(args.split("::"))
 			.map(s -> {
@@ -125,6 +133,15 @@ public class EndpointUtils {
 			.collect(Collectors.toList());
 	}
 
+	/**
+	 * Parse a string of colon-separated arguments into dimensions. Each section represents multiple
+	 * dimensions with the same benchmark. The section name is the benchmark and the section's other
+	 * elements are the metrics. The same rules as with {@link #parseColonSeparatedArgs(String)}
+	 * apply.
+	 *
+	 * @param args the string to parse
+	 * @return the parsed dimensions
+	 */
 	public static Set<Dimension> parseDimensions(String args) {
 		return parseColonSeparatedArgs(args).stream()
 			.flatMap(pair -> pair.getSecond().stream()
@@ -132,6 +149,15 @@ public class EndpointUtils {
 			.collect(Collectors.toSet());
 	}
 
+	/**
+	 * Parse a string of colon-separated arguments into repos and their branches. Each section
+	 * represents a repo with the repo name being the section's name. Each further element in the
+	 * section is the name of a branch in the corresponding repo. The he same rules as with {@link
+	 * #parseColonSeparatedArgs(String)} apply.
+	 *
+	 * @param args the string to parse
+	 * @return the parsed repos and branch names
+	 */
 	public static Map<RepoId, Set<BranchName>> parseRepos(String args) {
 		return parseColonSeparatedArgs(args).stream()
 			.collect(Collectors.toMap(
@@ -140,6 +166,18 @@ public class EndpointUtils {
 			));
 	}
 
+	/**
+	 * Get the start and end time of an interval that is defined by zero, one or two of three possible
+	 * values. If the start time and duration parameters are both null, the returned start time is
+	 * null as this function will not guess a start time. Otherwise, the returned start and end time
+	 * will never be null.
+	 *
+	 * @param startTimeEpoch the interval's start time in epoch time (seconds)
+	 * @param endTimeEpoch the interval's end time in epoch time (seconds)
+	 * @param durationInSeconds the interval's duration in seconds
+	 * @return the interval's start and end time
+	 * @throws InvalidQueryParamsException if all three parameters are not null
+	 */
 	public static Pair<Instant, Instant> getStartAndEndTime(@Nullable Long startTimeEpoch,
 		@Nullable Long endTimeEpoch, @Nullable Integer durationInSeconds) {
 

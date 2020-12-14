@@ -10,6 +10,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
+/**
+ * A task is an item in the queue. When it is benchmarked by a runner, it turns into a run.
+ */
 public class Task {
 
 	private final TaskId id;

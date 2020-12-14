@@ -21,6 +21,12 @@ public class RepoId implements Comparable<RepoId> {
 		this(UUID.randomUUID());
 	}
 
+	/**
+	 * Create a new {@link RepoId} from a UUID string.
+	 *
+	 * @param string the UUID as string
+	 * @return the repo id
+	 */
 	public static RepoId fromString(String string) {
 		return new RepoId(UUID.fromString(string));
 	}

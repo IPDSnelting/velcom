@@ -47,6 +47,7 @@ public class MeasurementValues {
 	}
 
 	/**
+	 * @param significanceFactors the significance factors to use
 	 * @return the standard deviation of the values, if there are more than {@link
 	 *  SignificanceFactors#getMinStddevAmount()} values
 	 */
@@ -78,6 +79,7 @@ public class MeasurementValues {
 	}
 
 	/**
+	 * @param significanceFactors the significance factors to use
 	 * @return stddev / averageValue, if there are more than {@link SignificanceFactors#getMinStddevAmount()}
 	 * 	values
 	 */

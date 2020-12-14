@@ -82,6 +82,7 @@ public class RunnerAwareServerFactory implements ServerFactory {
 	 * Sets the config to use.
 	 *
 	 * @param config the config to use
+	 * @throws IllegalStateException if a config has already been set
 	 */
 	public void setConfig(GlobalConfig config) {
 		if (this.config != null) {
@@ -94,6 +95,7 @@ public class RunnerAwareServerFactory implements ServerFactory {
 	 * Sets the server factory to delegate to.
 	 *
 	 * @param underlying the underlying server factory
+	 * @throws IllegalStateException if a server factory has already been set
 	 */
 	public void setServerFactory(ServerFactory underlying) {
 		if (this.underlying != null) {
@@ -107,6 +109,7 @@ public class RunnerAwareServerFactory implements ServerFactory {
 	 * Sets the dispatcher to use.
 	 *
 	 * @param dispatcher the dispatcher
+	 * @throws IllegalStateException if a dispatcher has already been set
 	 */
 	public void setDispatcher(Dispatcher dispatcher) {
 		if (this.dispatcher != null) {
@@ -119,6 +122,7 @@ public class RunnerAwareServerFactory implements ServerFactory {
 	 * Sets the bench reo to use.
 	 *
 	 * @param benchRepo the bench repo
+	 * @throws IllegalStateException if a bench repo has already been set
 	 */
 	public void setBenchRepo(BenchRepo benchRepo) {
 		if (this.benchRepo != null) {

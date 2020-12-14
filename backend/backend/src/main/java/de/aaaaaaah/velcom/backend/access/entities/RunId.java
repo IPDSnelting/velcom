@@ -22,6 +22,12 @@ public class RunId {
 		this(UUID.randomUUID());
 	}
 
+	/**
+	 * Create a new {@link RunId} from a UUID string.
+	 *
+	 * @param string the UUID as string
+	 * @return the run id
+	 */
 	public static RunId fromString(String string) {
 		return new RunId(UUID.fromString(string));
 	}
@@ -34,6 +40,11 @@ public class RunId {
 		return id.toString();
 	}
 
+	/**
+	 * Convert a run id to a task id.
+	 *
+	 * @return a task id with the same UUID
+	 */
 	public TaskId toTaskId() {
 		return new TaskId(id);
 	}

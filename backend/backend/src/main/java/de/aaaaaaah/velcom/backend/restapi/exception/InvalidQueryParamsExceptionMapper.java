@@ -4,6 +4,9 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.ext.ExceptionMapper;
 
+/**
+ * An {@link ExceptionMapper} that transforms {@link InvalidQueryParamsException}s to BAD_REQUEST.
+ */
 public class InvalidQueryParamsExceptionMapper implements
 	ExceptionMapper<InvalidQueryParamsException> {
 

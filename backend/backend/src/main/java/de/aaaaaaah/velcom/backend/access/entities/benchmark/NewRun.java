@@ -106,6 +106,11 @@ public class NewRun {
 		}
 	}
 
+	/**
+	 * Convert this new run to an actual {@link Run}.
+	 *
+	 * @return the run
+	 */
 	public Run toRun() {
 		return result.consume(
 			error -> new Run(id, author, runnerName, runnerInfo, startTime, stopTime, source, error),

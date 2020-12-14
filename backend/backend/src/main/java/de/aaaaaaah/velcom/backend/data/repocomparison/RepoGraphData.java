@@ -5,6 +5,9 @@ import static java.util.Objects.requireNonNull;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
 import java.util.List;
 
+/**
+ * Data for a single repo in a {@link de.aaaaaaah.velcom.backend.data.repocomparison.RepoComparisonGraph}.
+ */
 public class RepoGraphData {
 
 	private final RepoId repoId;

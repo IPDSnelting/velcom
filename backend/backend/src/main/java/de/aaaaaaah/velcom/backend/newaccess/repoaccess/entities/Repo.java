@@ -3,6 +3,9 @@ package de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities;
 import java.util.Objects;
 import java.util.UUID;
 
+/**
+ * The information velcom knows about a repository it tracks.
+ */
 public class Repo {
 
 	private final RepoId id;

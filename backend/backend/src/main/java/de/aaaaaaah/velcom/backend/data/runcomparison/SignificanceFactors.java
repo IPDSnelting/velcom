@@ -1,5 +1,9 @@
 package de.aaaaaaah.velcom.backend.data.runcomparison;
 
+/**
+ * A few factors describing how the standard deviation and significance of a run should be
+ * determined.
+ */
 public class SignificanceFactors {
 
 	private final double relativeThreshold;
