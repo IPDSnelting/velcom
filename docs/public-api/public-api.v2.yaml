@@ -205,6 +205,11 @@ paths:
                     description: Only present if the `diff_prev` parameter is set to `true` and there is an unambiguous previous commit with a run
                     items:
                       $ref: '#/components/schemas/DimensionDifference'
+                  significant_differences:
+                    type: array
+                    description: The runs significant differences to all direct parent runs. Only present if the `diff_prev` parameter is set to `true`.
+                    items:
+                      $ref: '#/components/schemas/DimensionDifference'
                 required:
                   - run
         '404':
