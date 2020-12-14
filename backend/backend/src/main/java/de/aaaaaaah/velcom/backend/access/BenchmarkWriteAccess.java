@@ -40,6 +40,9 @@ import org.jooq.codegen.db.tables.records.MeasurementRecord;
 import org.jooq.codegen.db.tables.records.MeasurementValueRecord;
 import org.jooq.codegen.db.tables.records.RunRecord;
 
+/**
+ * Provides read and write access to benchmark related entities such as runs and measurements.
+ */
 public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 
 	private final AvailableDimensionsCache availableDimensionsCache;

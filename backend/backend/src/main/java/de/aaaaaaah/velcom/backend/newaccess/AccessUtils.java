@@ -8,6 +8,9 @@ import de.aaaaaaah.velcom.shared.util.Either;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
+/**
+ * A utility class containing helper functions specific to the access layer.
+ */
 public class AccessUtils {
 
 	private AccessUtils() {
@@ -16,11 +19,11 @@ public class AccessUtils {
 
 	/**
 	 * Interpret a repo id, commit hash and tar description as a source.
-	 * <p>
-	 * If a commit hash is present, the source is a {@link CommitSource}, otherwise it is a {@link
-	 * TarSource}. If it is a {@link CommitSource}, the repo id must also be present and the tar
-	 * description must not be present. If it is a {@link TarSource}, the repo id may or may not be
-	 * present.
+	 *
+	 * <p> If a commit hash is present, the source is a {@link CommitSource}, otherwise it is a
+	 * {@link TarSource}. If it is a {@link CommitSource}, the repo id must also be present and the
+	 * tar description must not be present. If it is a {@link TarSource}, the repo id may or may not
+	 * be present.
 	 *
 	 * @param repoId the repo id
 	 * @param commitHash the commit hash

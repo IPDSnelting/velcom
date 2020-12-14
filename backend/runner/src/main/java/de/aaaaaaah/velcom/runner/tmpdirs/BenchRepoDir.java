@@ -13,6 +13,11 @@ import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * This class manages the directory where the bench repo is stored, as well as the file containing
+ * the bench repo's hash and a temporary file used while downloading and unpacking a new bench
+ * repo.
+ */
 public class BenchRepoDir {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(BenchRepoDir.class);
@@ -63,6 +68,11 @@ public class BenchRepoDir {
 		writer.flush();
 	}
 
+	/**
+	 * Delete the directory and hash file.
+	 *
+	 * @throws IOException if something io-related goes wrong during the deletion
+	 */
 	public void clear() throws IOException {
 		setHash(null);
 		FileHelper.deleteDirectoryOrFile(dirPath);

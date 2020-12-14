@@ -31,6 +31,9 @@ import org.jooq.codegen.db.tables.records.CommitRelationshipRecord;
 import org.jooq.codegen.db.tables.records.KnownCommitRecord;
 import org.jooq.exception.DataAccessException;
 
+/**
+ * Provides read access to the git commits stored in the database.
+ */
 public class CommitReadAccess {
 
 	protected final DatabaseStorage databaseStorage;
@@ -102,6 +105,13 @@ public class CommitReadAccess {
 		}
 	}
 
+	/**
+	 * Check if a commit exists.
+	 *
+	 * @param repoId the commit's repo id
+	 * @param commitHash the commit's hash
+	 * @throws NoSuchDimensionException if the commit doesn't exist
+	 */
 	public void guardCommitExists(RepoId repoId, CommitHash commitHash)
 		throws NoSuchDimensionException {
 

@@ -18,6 +18,12 @@ public class CommitSource {
 		this.hash = Objects.requireNonNull(hash);
 	}
 
+	/**
+	 * Create a new {@link CommitSource} from an existing commit.
+	 *
+	 * @param commit the commit to create the source from
+	 * @return the source
+	 */
 	public static CommitSource fromCommit(Commit commit) {
 		return new CommitSource(commit.getRepoId(), commit.getHash());
 	}

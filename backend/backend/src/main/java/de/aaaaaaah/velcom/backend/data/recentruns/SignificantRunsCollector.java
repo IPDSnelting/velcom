@@ -29,6 +29,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+/**
+ * This class detects significant runs.
+ */
 public class SignificantRunsCollector {
 
 	private static final int BATCH_SIZE = 50;
@@ -51,6 +54,13 @@ public class SignificantRunsCollector {
 		this.runComparator = Objects.requireNonNull(runComparator);
 	}
 
+	/**
+	 * Find the specified amount of significant runs, starting at the most recent run and going
+	 * backwards from there.
+	 *
+	 * @param amount the maximum amount of significant runs to return
+	 * @return the significant runs which were found
+	 */
 	@Timed(histogram = true)
 	public List<SignificantRun> collectMostRecent(int amount) {
 		List<SignificantRun> runs = new ArrayList<>();
@@ -121,6 +131,8 @@ public class SignificantRunsCollector {
 	}
 
 	/**
+	 * Check if a run is significant.
+	 *
 	 * @param run a run
 	 * @param parents a map of all known commits' parent runs. Is not required to contain an entry
 	 * 	for this particular run

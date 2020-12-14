@@ -9,6 +9,9 @@ import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
 
+/**
+ * An authenticator for admin and repo admin access.
+ */
 public class RepoAuthenticator implements Authenticator<BasicCredentials, RepoUser> {
 
 	private final TokenReadAccess tokenAccess;

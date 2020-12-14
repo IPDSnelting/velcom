@@ -6,6 +6,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * The result of comparing two runs.
+ */
 public class RunComparison {
 
 	private final Run first;

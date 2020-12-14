@@ -63,7 +63,7 @@ public class RecentRunsEndpoint {
 		final List<JsonRunEntry> runEntries;
 		if (significant) {
 			runEntries = significantRunsCollector.collectMostRecent(n).stream()
-				.map(run -> toJsonRunEntry(run.getRun(), run.getDifferences()))
+				.map(run -> toJsonRunEntry(run.getRun(), run.getSignificantDifferences()))
 				.collect(Collectors.toList());
 		} else {
 			runEntries = benchmarkAccess.getRecentRuns(0, n).stream()

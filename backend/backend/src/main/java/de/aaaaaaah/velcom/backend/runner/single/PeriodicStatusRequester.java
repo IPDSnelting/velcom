@@ -12,7 +12,6 @@ import de.aaaaaaah.velcom.shared.protocol.serialization.clientbound.GetStatus;
 import de.aaaaaaah.velcom.shared.protocol.serialization.serverbound.GetResultReply;
 import de.aaaaaaah.velcom.shared.protocol.serialization.serverbound.GetStatusReply;
 import de.aaaaaaah.velcom.shared.protocol.statemachine.StateMachine;
-import java.time.Duration;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;

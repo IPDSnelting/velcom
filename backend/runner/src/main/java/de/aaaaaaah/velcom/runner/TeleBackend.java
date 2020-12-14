@@ -79,6 +79,11 @@ public class TeleBackend {
 	@Nullable
 	private volatile Connection connection;
 
+	/**
+	 * Start and run an infinite loop that connects to the backend and communicates with it.
+	 *
+	 * @throws InterruptedException if the thread is interrupted
+	 */
 	public void run() throws InterruptedException {
 		//noinspection InfiniteLoopStatement
 		while (true) {
@@ -286,6 +291,9 @@ public class TeleBackend {
 		}
 	}
 
+	/**
+	 * Try to abort the current run. Does nothing if no run is currently running.
+	 */
 	public void abortCurrentRun() {
 		getBenchmarker().ifPresent(benchmarker -> {
 			globalStatus.set(Status.ABORT);

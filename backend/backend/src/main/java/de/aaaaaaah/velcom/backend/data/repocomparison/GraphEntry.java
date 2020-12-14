@@ -5,6 +5,9 @@ import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
 import java.time.Instant;
 import java.util.Objects;
 
+/**
+ * An entry for a single commit and value in the {@link RepoComparisonGraph}.
+ */
 public class GraphEntry {
 
 	private final CommitHash hash;

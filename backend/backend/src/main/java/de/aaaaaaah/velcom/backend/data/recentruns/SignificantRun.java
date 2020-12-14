@@ -6,30 +6,33 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * A run that has been found to be significant. Contains the significant {@link
+ * DimensionDifference}s which caused this.
+ */
 public class SignificantRun {
 
 	private final Run run;
-	private final List<DimensionDifference> differences;
+	private final List<DimensionDifference> significantDifferences;
 
-	public SignificantRun(Run run, List<DimensionDifference> differences) {
+	public SignificantRun(Run run, List<DimensionDifference> significantDifferences) {
 		this.run = Objects.requireNonNull(run);
-		this.differences = new ArrayList<>(Objects.requireNonNull(differences));
+		this.significantDifferences = new ArrayList<>(Objects.requireNonNull(significantDifferences));
 	}
 
 	public Run getRun() {
 		return run;
 	}
 
-	public List<DimensionDifference> getDifferences() {
-		return differences;
+	public List<DimensionDifference> getSignificantDifferences() {
+		return significantDifferences;
 	}
 
 	@Override
 	public String toString() {
 		return "SignificantRun{" +
 			"run=" + run +
-			", differences=" + differences +
+			", significantDifferences=" + significantDifferences +
 			'}';
 	}
-
 }

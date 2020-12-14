@@ -4,6 +4,9 @@ import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
 import java.time.Instant;
 import java.util.Set;
 
+/**
+ * A git commit with parent and child hashes.
+ */
 public class FullCommit extends Commit {
 
 	private final Set<CommitHash> parentHashes;

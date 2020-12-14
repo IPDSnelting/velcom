@@ -8,6 +8,9 @@ import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
+/**
+ * Data for a graph that compares multiple repos in a single dimension.
+ */
 public class RepoComparisonGraph {
 
 	private final DimensionInfo dimensionInfo;

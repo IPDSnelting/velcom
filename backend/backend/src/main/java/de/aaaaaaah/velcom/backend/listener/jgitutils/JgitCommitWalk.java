@@ -19,6 +19,10 @@ import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 
+/**
+ * A way to query and traverse a jgit repository. Hides away ugly jgit-specific details. Use with
+ * try-with-resources.
+ */
 public class JgitCommitWalk implements AutoCloseable {
 
 	private final Repository repo;

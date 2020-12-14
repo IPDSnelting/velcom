@@ -35,6 +35,14 @@ public class RepoWriteAccess extends RepoReadAccess {
 		this.availableDimensionsCache = availableDimensionsCache;
 	}
 
+	/**
+	 * Add a new repo to the database. Does not clone the repo.
+	 *
+	 * @param name the repo's name
+	 * @param remoteUrl the repo's remote url
+	 * @return the newly added repo
+	 * @throws FailedToAddRepoException if the repo could not be added to the database
+	 */
 	public Repo addRepo(String name, RemoteUrl remoteUrl) throws FailedToAddRepoException {
 		UUID id = UUID.randomUUID();
 		RepoRecord record = new RepoRecord(id.toString(), name, remoteUrl.getUrl());
@@ -48,6 +56,11 @@ public class RepoWriteAccess extends RepoReadAccess {
 		return new Repo(new RepoId(id), name, remoteUrl);
 	}
 
+	/**
+	 * Delete an existing repo from the database. Does nothing if the repo is not in the database.
+	 *
+	 * @param repoId the repo's id
+	 */
 	public void deleteRepo(RepoId repoId) {
 		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
 			db.deleteFrom(REPO)
@@ -58,6 +71,14 @@ public class RepoWriteAccess extends RepoReadAccess {
 		availableDimensionsCache.invalidate(repoId);
 	}
 
+	/**
+	 * Change the name and/or remote url of a repo. Does nothing if no new name and no new remote url
+	 * are given.
+	 *
+	 * @param repoId the repo's id
+	 * @param name the new name (or null to keep the old name)
+	 * @param remoteUrl the new remote url (or null to keep the old remote url)
+	 */
 	public void updateRepo(RepoId repoId, @Nullable String name, @Nullable RemoteUrl remoteUrl) {
 		// Not the nicest implementation, but simple to write and understand.
 
@@ -87,12 +108,11 @@ public class RepoWriteAccess extends RepoReadAccess {
 	}
 
 	/**
-	 * Sets which branches of this repo should be tracked.
-	 * <p>
-	 * It may take a while for this change to take effect
+	 * Sets which branches of this repo should be tracked. It may take a while for this change to take
+	 * effect.
 	 *
-	 * @param repoId
-	 * @param trackedBranches
+	 * @param repoId the id of the repo whose branches to set
+	 * @param trackedBranches the new set of tracked branches
 	 */
 	public void setTrackedBranches(RepoId repoId, Collection<BranchName> trackedBranches) {
 		Set<String> trackedNames = trackedBranches.stream()

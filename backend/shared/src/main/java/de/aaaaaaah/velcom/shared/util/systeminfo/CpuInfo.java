@@ -58,6 +58,9 @@ public class CpuInfo {
 			.collect(Collectors.toSet());
 	}
 
+	/**
+	 * @return a human-readable string summarizing this info
+	 */
 	public String format() {
 		String models = String.join(",", coreModels());
 		int n = virtualCoreCount();

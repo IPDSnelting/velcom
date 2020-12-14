@@ -25,6 +25,9 @@ import org.jooq.exception.DataAccessException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Provides read access to the global list of dimensions and their associated information.
+ */
 public class DimensionReadAccess {
 
 	private final Logger LOGGER = LoggerFactory.getLogger(DimensionReadAccess.class);
@@ -48,6 +51,12 @@ public class DimensionReadAccess {
 		);
 	}
 
+	/**
+	 * Convert a {@link DimensionInfo} to a JDBC record for the "dimension" table.
+	 *
+	 * @param info the dimension info to convert
+	 * @return the newly created database record
+	 */
 	public static DimensionRecord dimInfoToDimRecord(DimensionInfo info) {
 		return new DimensionRecord(
 			info.getDimension().getBenchmark(),

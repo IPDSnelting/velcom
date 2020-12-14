@@ -73,6 +73,9 @@ public class MemoryInfo {
 		}
 	}
 
+	/**
+	 * @return a human-readable string summarizing this info
+	 */
 	public String format() {
 		if (totalMemoryKib > 256 * 1024) {
 			return String

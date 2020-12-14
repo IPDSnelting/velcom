@@ -316,6 +316,8 @@ public class TeleRunner {
 
 	/**
 	 * Sends a {@link RequestRunReply} and any needed TARs.
+	 *
+	 * @param endState the state to transition to after the work was sent
 	 */
 	public void sendAvailableWork(AwaitSendWorkEnd endState) {
 		prepareAndSendWork();

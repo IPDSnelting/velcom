@@ -64,6 +64,11 @@ public class NewMeasurement {
 		return content;
 	}
 
+	/**
+	 * Convert this new measurement to an actual {@link Measurement}.
+	 *
+	 * @return the measurement
+	 */
 	public Measurement toMeasurement() {
 		return content.consume(
 			error -> new Measurement(runId, dimension, error),

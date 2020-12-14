@@ -4,6 +4,9 @@ import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
 import java.time.Instant;
 import java.util.Set;
 
+/**
+ * Wrapper class for commits from a jgit repository.
+ */
 public class JgitCommit {
 
 	private final CommitHash hash;

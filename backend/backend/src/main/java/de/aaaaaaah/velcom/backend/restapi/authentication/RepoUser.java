@@ -7,6 +7,10 @@ import javax.annotation.Nullable;
 import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.core.Response.Status;
 
+/**
+ * A user is either an admin, in which case they have access to all repos and some additional
+ * functionality, or a repo admin, in which case they have access to only a single repo.
+ */
 public class RepoUser implements Principal {
 
 	@Nullable
@@ -25,6 +29,13 @@ public class RepoUser implements Principal {
 		return Optional.ofNullable(repoId);
 	}
 
+	/**
+	 * Check if this user has access to a repo.
+	 *
+	 * @param repoId the repo's id
+	 * @return whether this user may access the repo. Returns true for all ids if the user is an
+	 * 	admin.
+	 */
 	public boolean mayAccessRepo(RepoId repoId) {
 		// If this user has no repo id, they're an admin and thus have access to all repos.
 		return getRepoId().map(repoId::equals).orElse(true);

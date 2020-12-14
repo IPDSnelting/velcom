@@ -87,8 +87,8 @@ public class StateMachine<S extends State> {
 	 *
 	 * @param newState the state to switch to
 	 * @return true if the state was switched successfully, false otherwise
-	 * @throws InterruptedException if the thread got interrupted while waiting for the state
-	 * 	machine to enter a resting state
+	 * @throws InterruptedException if the thread got interrupted while waiting for the state machine
+	 * 	to enter a resting state
 	 */
 	public boolean switchFromRestingState(S newState) throws InterruptedException {
 		lock.lock();

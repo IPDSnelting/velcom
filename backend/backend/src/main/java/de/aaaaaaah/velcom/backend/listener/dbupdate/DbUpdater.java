@@ -53,6 +53,8 @@ public class DbUpdater {
 	 * 	date (or author date in case of ties) in ascending order (except when this is the repo's first
 	 * 	update, in which case the order is not defined). These might (but should usually not) include
 	 * 	commits that are already in the queue.
+	 * @throws DbUpdateException if the db could not be updated for a repo. Other repos may have
+	 * 	already been updated successfully.
 	 */
 	// TODO: 21.10.20 Delete unreachable commits
 	public List<CommitHash> update() throws DbUpdateException {

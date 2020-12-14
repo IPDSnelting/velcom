@@ -43,8 +43,8 @@ public enum StatusCode {
 	}
 
 	/**
-	 * A human-readable description of the status code. Don't use this as the websocket close
-	 * reason! Instead, use {@link #getDescriptionAsReason()}.
+	 * A human-readable description of the status code. Don't use this as the websocket close reason!
+	 * Instead, use {@link #getDescriptionAsReason()}.
 	 *
 	 * @return the status code description
 	 */

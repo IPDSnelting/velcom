@@ -11,6 +11,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 
+/**
+ * Compare two runs, respecting the significance factors when calculating the standard deviation.
+ */
 public class RunComparator {
 
 	private final SignificanceFactors significanceFactors;
