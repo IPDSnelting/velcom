@@ -177,7 +177,8 @@ public class Benchmarker {
 			List<String> lines = stdErr.lines().collect(Collectors.toList());
 
 			int maxLinesToReturn = 100;
-			List<String> sublist = lines.subList(Math.max(lines.size() - maxLinesToReturn, 0), lines.size());
+			List<String> sublist = lines
+				.subList(Math.max(lines.size() - maxLinesToReturn, 0), lines.size());
 
 			int indexFirstLine = lines.size() - sublist.size();
 
