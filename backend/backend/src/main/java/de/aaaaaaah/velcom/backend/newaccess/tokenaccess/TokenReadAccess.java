@@ -17,6 +17,9 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 import org.jooq.codegen.db.tables.records.RepoTokenRecord;
 
+/**
+ * Access for testing whether auth tokens exist and are valid.
+ */
 public class TokenReadAccess {
 
 	protected final DatabaseStorage databaseStorage;

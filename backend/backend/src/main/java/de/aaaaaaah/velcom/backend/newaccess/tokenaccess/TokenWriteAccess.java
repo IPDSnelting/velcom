@@ -6,6 +6,9 @@ import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import java.util.Objects;
 import javax.annotation.Nullable;
 
+/**
+ * Access for setting and removing auth tokens on repos.
+ */
 public class TokenWriteAccess extends TokenReadAccess {
 
 	public TokenWriteAccess(DatabaseStorage databaseStorage, AuthToken adminToken, int hashIterations,

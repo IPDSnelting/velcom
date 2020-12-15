@@ -29,6 +29,9 @@ import org.jooq.codegen.db.tables.records.TaskRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Access for manipulating tasks.
+ */
 public class TaskWriteAccess extends TaskReadAccess {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(TaskWriteAccess.class);

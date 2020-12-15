@@ -159,6 +159,8 @@ public class SignificantRunsCollector {
 	}
 
 	/**
+	 * @param run a run
+	 * @param significantDimensions all significant dimensions
 	 * @return true if the run has failed significant measurements or is entirely failed
 	 */
 	private boolean hasSignificantFails(Run run, Set<Dimension> significantDimensions) {
