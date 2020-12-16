@@ -77,10 +77,10 @@ export class DetailGraphStore extends VxModule {
   async fetchDetailGraph(): Promise<DetailDataPoint[]> {
     const dayInMillis: number = 60 * 60 * 24
     const effectiveStartTime: number = Math.floor(
-      this.bufferedTimespan.bufferedStartTime.getTime() / 1000
+      this.bufferedTimespan.startTime.getTime() / 1000
     )
     const effectiveEndTime: number = Math.floor(
-      this.bufferedTimespan.bufferedEndTime.getTime() / 1000 + dayInMillis
+      this.bufferedTimespan.endTime.getTime() / 1000 + dayInMillis
     )
 
     // If we have selected no dimensions, we don't event need to make a request
@@ -157,7 +157,6 @@ export class DetailGraphStore extends VxModule {
           return
         }
         const relativeDate = dateFromRelative(queryValue, relative)
-        console.log(queryValue, relativeDate)
         if (relativeDate) {
           action(relativeDate.getTime())
         }
@@ -299,9 +298,17 @@ export class DetailGraphStore extends VxModule {
     }
   }
 
-  get bufferedTimespan(): { bufferedStartTime: Date; bufferedEndTime: Date } {
+  /**
+   * Returns the boundaries of the buffered timespan that is used when fetchin a
+   * new detail graph. The buffered timespan extends the timespan implied
+   * by start and end date to allow for panning a little outside the graph
+   * boundaries without having to wait for a new graph to be fetched
+   *
+   * @type {startTime: Date, endTime: Date}
+   */
+  get bufferedTimespan(): { startTime: Date; endTime: Date } {
     let buffer: number = 0
-    if (this.duration <= this.maxToBuffer) {
+    if (this.duration <= this.minToBuffer) {
       buffer = this.minBuffer
     } else if (this.duration >= this.maxToBuffer) {
       buffer = this.maxBuffer
@@ -315,7 +322,7 @@ export class DetailGraphStore extends VxModule {
     )
     const bufferedEndTime = new Date(this.endTime.getTime() + bufferMillis / 2)
 
-    return { bufferedStartTime, bufferedEndTime }
+    return { startTime: bufferedStartTime, endTime: bufferedEndTime }
   }
 
   /**

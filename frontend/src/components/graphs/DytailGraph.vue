@@ -120,22 +120,6 @@ export default class DytailGraph extends Vue {
     return vxm.userModule.darkThemeSelected ? 2 : 1.5
   }
 
-  private get minDateValue(): number {
-    const min = Math.min.apply(
-      Math,
-      this.datapoints.map(it => it.committerDate.getTime())
-    )
-    return min || 0
-  }
-
-  private get maxDateValue(): number {
-    const max = Math.max.apply(
-      Math,
-      this.datapoints.map(it => it.committerDate.getTime())
-    )
-    return max || 0
-  }
-
   private get numberFormat(): Intl.NumberFormat {
     return new Intl.NumberFormat(
       new Intl.NumberFormat().resolvedOptions().locale,
@@ -319,7 +303,7 @@ export default class DytailGraph extends Vue {
     const data: number[][] = []
 
     // One array entry = #dimensions data points per commit
-    // one array entry has the form [x-val, dim1, dim2, ...]
+    // each array entry has the form [x-val, dim1, dim2, ...]
     for (let i = 0; i < this.datapoints.length; i++) {
       data[i] = [this.datapoints[i].positionDate.getTime()]
     }
@@ -342,8 +326,10 @@ export default class DytailGraph extends Vue {
       labels: ['x', ...this.dimensions.map(it => escapeHtml(it.toString()))],
       colors: this.dimensionsColors(),
       dateWindow: [
-        vxm.detailGraphModule.zoomXStartValue || this.minDateValue,
-        vxm.detailGraphModule.zoomXEndValue || this.maxDateValue
+        vxm.detailGraphModule.zoomXStartValue ||
+          vxm.detailGraphModule.startTime.getTime(),
+        vxm.detailGraphModule.zoomXEndValue ||
+          vxm.detailGraphModule.endTime.getTime()
       ],
       valueRange: [
         vxm.detailGraphModule.zoomYStartValue,
@@ -399,7 +385,7 @@ export default class DytailGraph extends Vue {
         drawPoints: false,
         animatedZooms: false, // does not work with slider
         pointSize: 3,
-        panEdgeFraction: 0.3,
+        panEdgeFraction: 0.5,
         zoomCallback: this.dygraphsZoomed,
         legendFormatter: this.tooltipFormatter,
         crosshairColor: 'currentColor',
@@ -433,13 +419,19 @@ export default class DytailGraph extends Vue {
 
   private dygraphsPanned() {
     if (vxm.detailGraphModule.endTime.getTime() < this.graph.xAxisRange()[1]) {
-      vxm.detailGraphModule.endTime = new Date(this.graph.xAxisRange()[1])
-      debounce(vxm.detailGraphModule.fetchDetailGraph, defaultWaitTime)()
+      debounce(() => {
+        vxm.detailGraphModule.fetchDetailGraph()
+        vxm.detailGraphModule.endTime = new Date(this.graph.xAxisRange()[1])
+        vxm.detailGraphModule.zoomXEndValue = this.graph.xAxisRange()[1]
+      }, defaultWaitTime)()
     } else if (
       vxm.detailGraphModule.startTime.getTime() > this.graph.xAxisRange()[0]
     ) {
-      vxm.detailGraphModule.startTime = new Date(this.graph.xAxisRange()[0])
-      debounce(vxm.detailGraphModule.fetchDetailGraph, defaultWaitTime)()
+      debounce(() => {
+        vxm.detailGraphModule.fetchDetailGraph()
+        vxm.detailGraphModule.startTime = new Date(this.graph.xAxisRange()[0])
+        vxm.detailGraphModule.zoomXStartValue = this.graph.xAxisRange()[0]
+      }, defaultWaitTime)()
     }
   }
 
@@ -452,8 +444,8 @@ export default class DytailGraph extends Vue {
       vxm.detailGraphModule.zoomXStartValue = startX
       vxm.detailGraphModule.zoomXEndValue = endX
     } else {
-      vxm.detailGraphModule.zoomXStartValue = null
-      vxm.detailGraphModule.zoomXEndValue = null
+      vxm.detailGraphModule.zoomXStartValue = vxm.detailGraphModule.startTime.getTime()
+      vxm.detailGraphModule.zoomXEndValue = vxm.detailGraphModule.endTime.getTime()
     }
 
     if (this.graph.isZoomed('y')) {

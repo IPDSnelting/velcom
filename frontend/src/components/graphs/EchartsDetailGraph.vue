@@ -169,22 +169,6 @@ export default class EchartsDetailGraph extends Vue {
     return vxm.detailGraphModule.detailGraph
   }
 
-  private get minDateValue(): number {
-    const min = Math.min.apply(
-      Math,
-      this.detailDataPoints.map(it => it.positionDate.getTime())
-    )
-    return min || 0
-  }
-
-  private get maxDateValue(): number {
-    const max = Math.max.apply(
-      Math,
-      this.detailDataPoints.map(it => it.positionDate.getTime())
-    )
-    return max || 0
-  }
-
   // <!--<editor-fold desc="ECHARTS GRAPH OPTIONS">-->
   @Watch('detailDataPoints')
   @Watch('beginYAtZero')
@@ -203,8 +187,8 @@ export default class EchartsDetailGraph extends Vue {
       },
       xAxis: {
         type: 'time',
-        min: 'dataMin',
-        max: 'dataMax'
+        min: vxm.detailGraphModule.startTime.getTime(),
+        max: vxm.detailGraphModule.endTime.getTime()
       },
       yAxis: {
         type: 'value',
@@ -659,8 +643,8 @@ export default class EchartsDetailGraph extends Vue {
   }
 
   private echartsZoomReset() {
-    vxm.detailGraphModule.zoomXStartValue = this.minDateValue
-    vxm.detailGraphModule.zoomXEndValue = this.maxDateValue
+    vxm.detailGraphModule.zoomXStartValue = vxm.detailGraphModule.startTime.getTime()
+    vxm.detailGraphModule.zoomXEndValue = vxm.detailGraphModule.endTime.getTime()
     vxm.detailGraphModule.zoomYStartValue = null
     vxm.detailGraphModule.zoomYEndValue = null
     this.updateGraph()

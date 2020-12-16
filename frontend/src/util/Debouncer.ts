@@ -1,4 +1,5 @@
-export const defaultWaitTime = 250
+// fitted to allow somewhat pleasant graph panning/reloading-cycle
+export const defaultWaitTime = 200
 
 export function debounce<F extends (...args: any[]) => any>(
   func: F,
