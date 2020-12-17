@@ -31,15 +31,7 @@
     </v-row>
     <v-row v-if="tarSource" justify="center">
       <v-col cols="auto">
-        <v-card outlined>
-          <v-card-title> Tar '{{ tarSource.description }}' </v-card-title>
-          <v-card-subtitle v-if="tarSource.repoId">
-            Attached to
-            <inline-minimal-repo-display
-              :repo-id="tarSource.repoId"
-            ></inline-minimal-repo-display>
-          </v-card-subtitle>
-        </v-card>
+        <tar-overview :tar-source="tarSource"></tar-overview>
       </v-col>
     </v-row>
     <v-row v-if="taskInfo" no-gutters>
@@ -98,9 +90,11 @@ import TaskRunnerOutput from '@/components/TaskRunnerOutput.vue'
 import InlineMinimalRepoDisplay from '@/components/InlineMinimalRepoDisplay.vue'
 import { TaskInfo } from '@/store/modules/queueStore'
 import { formatDurationShort } from '@/util/TimeUtil'
+import TarOverview from '@/components/overviews/TarOverview.vue'
 
 @Component({
   components: {
+    'tar-overview': TarOverview,
     'inline-minimal-repo-display': InlineMinimalRepoDisplay,
     'task-runner-output': TaskRunnerOutput,
     'page-404': NotFound404,

@@ -10,6 +10,11 @@
         <commit-detail :commit="commit"></commit-detail>
       </v-col>
     </v-row>
+    <v-row v-if="tarSource" no-gutters justify="center">
+      <v-col cols="auto">
+        <tar-overview :tar-source="tarSource"></tar-overview>
+      </v-col>
+    </v-row>
     <v-row v-if="runWithDifferences" no-gutters>
       <v-col>
         <run-detail
@@ -63,7 +68,8 @@ import {
   Commit,
   CommitTaskSource,
   Dimension,
-  RunWithDifferences
+  RunWithDifferences,
+  TarTaskSource
 } from '@/store/types'
 import NotFound404 from './NotFound404.vue'
 import RunDetail from '@/components/rundetail/RunDetail.vue'
@@ -71,9 +77,11 @@ import CommitDetail from '@/components/rundetail/CommitDetail.vue'
 import RunTimeline from '@/components/rundetail/RunTimeline.vue'
 import { NotFoundError } from '@/store/modules/commitDetailComparisonStore'
 import { showCommitInDetailGraph } from '@/util/GraphNavigation'
+import TarOverview from '@/components/overviews/TarOverview.vue'
 
 @Component({
   components: {
+    'tar-overview': TarOverview,
     'page-404': NotFound404,
     'run-detail': RunDetail,
     'commit-detail': CommitDetail,
@@ -83,6 +91,7 @@ import { showCommitInDetailGraph } from '@/util/GraphNavigation'
 export default class RunCommitDetailView extends Vue {
   private runWithDifferences: RunWithDifferences | null = null
   private commit: Commit | null = null
+  private tarSource: TarTaskSource | null = null
   private show404: boolean = false
   private finishedLoading: boolean = false
 
@@ -125,6 +134,7 @@ export default class RunCommitDetailView extends Vue {
     this.show404 = false
     this.runWithDifferences = null
     this.commit = null
+    this.tarSource = null
     this.finishedLoading = false
 
     if (this.firstComponent && !this.secondComponent) {
@@ -139,6 +149,8 @@ export default class RunCommitDetailView extends Vue {
           repoId: run.source.commitDescription.repoId,
           commitHash: run.source.commitDescription.hash
         })
+      } else {
+        this.tarSource = run.source
       }
     } else if (this.firstComponent && this.secondComponent) {
       // we have a repo id and commit hash
