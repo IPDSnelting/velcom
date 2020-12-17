@@ -38,6 +38,7 @@
               :dimensions="selectedDimensions"
               :beginYAtZero="yStartsAtZero"
               :dayEquidistant="dayEquidistantGraphSelected"
+              :wheelEvent="mouseWheelOnGraph"
             ></component>
           </v-card-text>
         </v-card>
@@ -266,6 +267,7 @@ import DytailGraph from '@/components/graphs/DytailGraph.vue'
 import { Watch } from 'vue-property-decorator'
 import ShareGraphLinkDialog from '@/views/ShareGraphLinkDialog.vue'
 import GraphPlaceholder from '@/components/graphs/GraphPlaceholder.vue'
+import OverscrollToZoom from '@/components/graphs/OverscrollToZoom'
 
 @Component({
   components: {
@@ -320,6 +322,8 @@ export default class RepoDetail extends Vue {
       name: 'Fast'
     }
   ]
+
+  private overscrollToZoom = new OverscrollToZoom()
 
   private selectedGraphComponent: typeof Vue | null = GraphPlaceholder
 
@@ -439,6 +443,10 @@ export default class RepoDetail extends Vue {
       return
     }
     this.selectedGraphComponent = component
+  }
+
+  private mouseWheelOnGraph(e: WheelEvent) {
+    this.overscrollToZoom.scrolled(e)
   }
 
   @Watch('id')

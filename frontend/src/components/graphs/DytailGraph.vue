@@ -9,7 +9,8 @@
           :dimension="pointDialogDimension"
           @close="pointDialogOpen = false"
         ></datapoint-dialog>
-        <div id="chart" :style="{ height: '500px' }"></div>
+        <div id="chart" :style="{ height: '500px' }" @wheel="wheelEvent"></div>
+        <div id="ranger" :style="{ height: '500px', height: '30px' }"></div>
       </v-col>
     </v-row>
   </v-container>
@@ -26,6 +27,7 @@ import 'dygraphs/css/dygraph.css'
 import Crosshair from 'dygraphs/src/extras/crosshair.js'
 import { escapeHtml } from '@/util/TextUtils'
 import { formatDate } from '@/util/TimeUtil'
+import { debounce, defaultWaitTime } from '@/util/Debouncer.ts'
 import DetailDatapointDialog from '@/components/dialogs/DetailDatapointDialog.vue'
 
 // eslint-disable-next-line no-undef
@@ -40,6 +42,7 @@ type RealOptions = dygraphs.Options & {
   }
 })
 export default class DytailGraph extends Vue {
+  // <!--<editor-fold desc="PROPS">-->
   @Prop()
   private dimensions!: Dimension[]
 
@@ -49,17 +52,50 @@ export default class DytailGraph extends Vue {
   @Prop({ default: true })
   private dayEquidistant!: boolean
 
-  private graph!: Dygraph
+  @Prop({ default: () => () => ({}) })
+  private wheelEvent!: (e: WheelEvent) => void
+  // <!--</editor-fold>-->
 
+  // <!--<editor-fold desc="FIELDS">-->
+  private graph!: Dygraph
   private height: number = 500
+
+  // >>>> Datapoint Dialog >>>>
   private pointDialogDatapoint: DetailDataPoint | null = null
   private pointDialogDimension: Dimension | null = null
   private pointDialogOpen: boolean = false
+  // <<<< Datapoint Dialog <<<<
+  //  <!--</editor-fold>-->
 
+  // <!--<editor-fold desc="DATA POINTS">-->
   private get datapoints(): DetailDataPoint[] {
     return vxm.detailGraphModule.detailGraph
   }
 
+  /**
+   * The only possibility one has to find the (abstract) data point for a given
+   * point in the graph is to go by x axis position ( = the author date).
+   * This is not guaranteed to give the correct data point, but it's accurate
+   * enough to display a fitting tooltip
+   *
+   * @param authorDate: date on which to search for a data point
+   * @private
+   */
+  private datapointByPositionDate(
+    authorDate: number
+  ): DetailDataPoint | undefined {
+    return this.datapoints.find(
+      point => point.positionDate.getTime() === authorDate
+    )
+  }
+
+  /**
+   * Returns the first DataPoint that contains a (successful) benchmark for a given
+   * dimension, therefore providing a value by which it can be placed in the graph
+   *
+   * @param dimension: the ID of the dimension of interest
+   * @private
+   */
   private firstSuccessful(dimension: DimensionId): number {
     for (const datapoint of this.datapoints) {
       const value = datapoint.values.get(dimension)
@@ -70,6 +106,143 @@ export default class DytailGraph extends Vue {
     return this.height / 2
   }
 
+  //  <!--</editor-fold>-->
+
+  // <!--<editor-fold desc="LIFECYCLE HOOKS">-->
+  /**
+   * initialize graph with all options, but without data
+   */
+  mounted(): void {
+    // empty string because div is not expected to be NULL
+    const chartDiv = document.getElementById('chart') || ''
+
+    this.graph = new Dygraph(
+      // containing div
+      chartDiv,
+
+      [[1, 1]],
+
+      {
+        axes: {
+          x: {
+            axisLineColor: 'currentColor',
+            axisLabelFormatter: (
+              x: number | Date,
+              granularity: number,
+              opts: (name: string) => any,
+              dygraph: Dygraph
+            ) => {
+              const [start, end] = dygraph.xAxisRange()
+              if (x instanceof Date) {
+                return this.xAxisFormatter(x, [start, end])
+              }
+              return x % 1 === 0
+                ? this.xAxisFormatter(new Date(x), [start, end])
+                : ''
+            }
+          },
+          y: {
+            axisLineColor: 'currentColor'
+          }
+        },
+        ylabel: this.yLabel,
+        pointClickCallback: this.pointClickCallback,
+        labels: ['', ''], // will be replaced in update
+        legend: 'follow',
+        labelsSeparateLines: true,
+        connectSeparatedPoints: true,
+        drawPoints: false,
+        animatedZooms: false, // does not work with slider
+        pointSize: 3,
+        panEdgeFraction: 0.5,
+        zoomCallback: this.dygraphsZoomed,
+        legendFormatter: this.tooltipFormatter,
+        crosshairColor: 'currentColor',
+        showRangeSelector: true,
+        rangeSelectorHeight: 30,
+        rangeSelectorPlotLineWidth: this.selectorLineWidth,
+        rangeSelectorAlpha: this.selectorAlpha,
+        rangeSelectorForegroundLineWidth: 0.5,
+        rangeSelectorPlotFillColor: '',
+        rangeSelectorPlotStrokeColor: 'grey',
+        rangeSelectorBackgroundStrokeColor: 'currentColor',
+        plugins: [new Crosshair({ direction: 'vertical' })],
+        drawHighlightPointCallback: this.drawHighlightPointCallback as any,
+        highlightCircleSize: 5,
+        // and, to keep the ability to brush and zoom:
+        interactionModel: this.fancyPanningInteractions
+      } as RealOptions
+    )
+
+    this.update()
+  }
+
+  @Watch('datapoints')
+  @Watch('dimensions')
+  @Watch('beginYAtZero')
+  @Watch('darkTheme')
+  @Watch('dayEquidistant')
+  private update() {
+    const data: number[][] = []
+
+    // One array entry = #dimensions data points per commit
+    // each array entry has the form [x-val, dim1, dim2, ...]
+    for (let i = 0; i < this.datapoints.length; i++) {
+      data[i] = [this.datapoints[i].positionDate.getTime()]
+    }
+
+    for (const dimension of this.dimensions) {
+      let lastValue = this.firstSuccessful(dimension)
+      this.datapoints.forEach((point, index) => {
+        let pointValue = point.values.get(dimension)
+        if (typeof pointValue !== 'number') {
+          pointValue = lastValue
+        }
+        lastValue = pointValue
+
+        data[index].push(pointValue)
+      })
+    }
+
+    this.graph.updateOptions({
+      file: data,
+      labels: ['x', ...this.dimensions.map(it => escapeHtml(it.toString()))],
+      colors: this.dimensionsColors(),
+      dateWindow: [
+        vxm.detailGraphModule.zoomXStartValue ||
+          vxm.detailGraphModule.startTime.getTime(),
+        vxm.detailGraphModule.zoomXEndValue ||
+          vxm.detailGraphModule.endTime.getTime()
+      ],
+      valueRange: [
+        vxm.detailGraphModule.zoomYStartValue,
+        vxm.detailGraphModule.zoomYEndValue
+      ],
+      includeZero: this.beginYAtZero,
+      rangeSelectorPlotLineWidth: this.selectorLineWidth,
+      rangeSelectorAlpha: this.selectorAlpha
+    } as RealOptions)
+
+    this.drawMarkers()
+  }
+  //  <!--</editor-fold>-->
+
+  // <!--<editor-fold desc="FORMATTERS">-->
+
+  /**
+   * corrects numbers to three decimal places
+   */
+  private get numberFormat(): Intl.NumberFormat {
+    return new Intl.NumberFormat(
+      new Intl.NumberFormat().resolvedOptions().locale,
+      { maximumFractionDigits: 3 }
+    )
+  }
+
+  /**
+   * if only the values for one metric are displayed in the graph, the
+   * y axis is labeled
+   */
   private get yLabel(): string {
     if (this.dimensions.length === 1) {
       return this.dimensions[0].metric + ' in ' + this.dimensions[0].unit
@@ -77,8 +250,18 @@ export default class DytailGraph extends Vue {
     return ''
   }
 
+  /**
+   * formats the date that determines the x axis position of a data point, depending on the length
+   * of the timespan currently displayed on the x axis:
+   * no more than two days -> hh:mm \n mm-dd
+   * otherwise             -> mm-dd \n yyyy
+   * @param d: date to format
+   * @param start: start value of x axis (required by dygraph)
+   * @param end: end value of x axis (required by dygraph)
+   * @private
+   */
   private xAxisFormatter(d: Date, [start, end]: [number, number]): string {
-    const dateString: string = d.getDate() + '-' + (d.getMonth() + 1)
+    const dateString: string = d.getMonth() + 1 + '-' + d.getDate()
     const hourString: string | number =
       d.getHours().toString().length === 1 ? '0' + d.getHours() : d.getHours()
     const minuteString: string | number =
@@ -93,51 +276,15 @@ export default class DytailGraph extends Vue {
     return dateString + '\n' + d.getFullYear()
   }
 
-  private dimensionColor(dimension: DimensionId) {
-    return vxm.colorModule.colorByIndex(
-      vxm.detailGraphModule.colorIndex(dimension)!
-    )
-  }
-
-  private dimensionsColors(): string[] {
-    return this.dimensions.map(this.dimensionColor)
-  }
-
-  private get graphFailedOrUnbenchmarkedColor() {
-    return this.$vuetify.theme.currentTheme.graphFailedOrUnbenchmarked as string
-  }
-
-  private get selectorAlpha(): number {
-    return vxm.userModule.darkThemeSelected ? 0.2 : 0.7
-  }
-
-  private get selectorLineWidth(): number {
-    return vxm.userModule.darkThemeSelected ? 2 : 1.5
-  }
-
-  private get minDateValue(): number {
-    const min = Math.min.apply(
-      Math,
-      this.datapoints.map(it => it.committerDate.getTime())
-    )
-    return min || 0
-  }
-
-  private get maxDateValue(): number {
-    const max = Math.max.apply(
-      Math,
-      this.datapoints.map(it => it.committerDate.getTime())
-    )
-    return max || 0
-  }
-
-  private get numberFormat(): Intl.NumberFormat {
-    return new Intl.NumberFormat(
-      new Intl.NumberFormat().resolvedOptions().locale,
-      { maximumFractionDigits: 3 }
-    )
-  }
-
+  /**
+   * dygraphs doesn't provide tooltips, but it does provide a legend which can be used as
+   * tooltips. For each data point, the legend shows additional info like the hash
+   * of the corresponding commit, the author and (if there is a successful benchmark) the
+   * benchmarked values
+   *
+   * @param legendData: the legend to format
+   * @private
+   */
   // eslint-disable-next-line no-undef
   private tooltipFormatter(legendData: dygraphs.LegendData) {
     const datapoint = this.datapointByPositionDate(legendData.x)
@@ -149,6 +296,16 @@ export default class DytailGraph extends Vue {
       const dimensionRows = data.map(val => {
         const safeDimension = escapeHtml(val.labelHTML)
         const color = val.color
+        const dimension = this.dimensions.find(
+          it => escapeHtml(it.toString()) === val.labelHTML
+        )
+
+        let value: string = this.numberFormat.format(val.y)
+        if (dimension && datapoint.unbenchmarked(dimension)) {
+          value = 'Unbenchmarked'
+        } else if (dimension && !datapoint.successful(dimension)) {
+          value = 'Failed'
+        }
 
         return `
                 <tr>
@@ -156,7 +313,7 @@ export default class DytailGraph extends Vue {
                     <span class="color-preview" style="background-color: ${color}"></span>
                     ${safeDimension}
                   </td>
-                  <td>${this.numberFormat.format(val.y)}</td>
+                  <td>${value}</td>
                 </tr>
                 `
       })
@@ -187,62 +344,59 @@ export default class DytailGraph extends Vue {
     return "something went wrong :(\n couldn't find commit"
   }
 
-  // Used in the watcher for up()
+  //  <!--</editor-fold>-->
+
+  // <!--<editor-fold desc="COLORS AND THEMES">-->
+
+  // Used in the watcher for update()
   // noinspection JSUnusedLocalSymbols
   private get darkTheme() {
     return vxm.userModule.darkThemeSelected
   }
 
-  private datapointByPositionDate(
-    authorDate: number
-  ): DetailDataPoint | undefined {
-    return this.datapoints.find(
-      point => point.positionDate.getTime() === authorDate
+  private dimensionColor(dimension: DimensionId) {
+    return vxm.colorModule.colorByIndex(
+      vxm.detailGraphModule.colorIndex(dimension)!
     )
   }
 
-  private pointClickCallback(e: MouseEvent, graphPoint: any) {
-    const datapoint: DetailDataPoint | undefined = graphPoint.xval
-      ? this.datapointByPositionDate(graphPoint.xval)
-      : undefined
-
-    if (!datapoint) {
-      return
-    }
-
-    // Datapoint dialog on right click
-    if (e.button === 2) {
-      this.pointDialogDatapoint = datapoint
-      this.pointDialogDimension = this.dimensions.find(
-        it => it.toString() === graphPoint.name
-      )!
-      this.pointDialogOpen = true
-
-      return
-    }
-
-    // New tab on control
-    if (e.ctrlKey) {
-      const routeData = this.$router.resolve({
-        name: 'run-detail',
-        params: {
-          first: vxm.detailGraphModule.selectedRepoId,
-          second: datapoint.hash
-        }
-      })
-      window.open(routeData.href, '_blank')
-    } else {
-      // open it in place on a normal left click
-      this.$router.push({
-        name: 'run-detail',
-        params: {
-          first: vxm.detailGraphModule.selectedRepoId,
-          second: datapoint.hash
-        }
-      })
-    }
+  private dimensionsColors(): string[] {
+    return this.dimensions.map(this.dimensionColor)
   }
 
+  private get graphFailedOrUnbenchmarkedColor() {
+    return this.$vuetify.theme.currentTheme.graphFailedOrUnbenchmarked as string
+  }
+
+  private get selectorAlpha(): number {
+    return vxm.userModule.darkThemeSelected ? 0.2 : 0.7
+  }
+
+  private get selectorLineWidth(): number {
+    return vxm.userModule.darkThemeSelected ? 2 : 1.5
+  }
+
+  //  <!--</editor-fold>-->
+
+  // <!--<editor-fold desc="DATA POINT DISPLAY">-->
+
+  /**
+   * style the data points in the graph depending on wether they were successfully
+   * benchmarked or not:
+   * failed benchmark for given dimension     -> gray cross icon
+   * no benchmark for given dimension         -> grey empty circle
+   * successful benchmark for given dimension -> filled in circle in dimension color
+   *
+   * @param g: the graph
+   * @param seriesName: the name of the given dimension
+   * @param canvasContext
+   * @param cx: x axis position
+   * @param cy: y axis position
+   * @param color: dimension color
+   * @param pointSize
+   * @param idx: index in the data point series
+   * @private
+   */
   private drawHighlightPointCallback(
     g: Dygraph,
     seriesName: string,
@@ -295,151 +449,10 @@ export default class DytailGraph extends Vue {
     }
   }
 
-  @Watch('datapoints')
-  @Watch('dimensions')
-  @Watch('beginYAtZero')
-  @Watch('darkTheme')
-  @Watch('dayEquidistant')
-  private up() {
-    const data: number[][] = []
-
-    // One array entry = #dimensions data points per commit
-    // one array entry has the form [x-val, dim1, dim2, ...]
-    for (let i = 0; i < this.datapoints.length; i++) {
-      data[i] = [this.datapoints[i].positionDate.getTime()]
-    }
-
-    for (const dimension of this.dimensions) {
-      let lastValue = this.firstSuccessful(dimension)
-      this.datapoints.forEach((point, index) => {
-        let pointValue = point.values.get(dimension)
-        if (typeof pointValue !== 'number') {
-          pointValue = lastValue
-        }
-        lastValue = pointValue
-
-        data[index].push(pointValue)
-      })
-    }
-
-    this.graph.updateOptions({
-      file: data,
-      labels: ['x', ...this.dimensions.map(it => escapeHtml(it.toString()))],
-      colors: this.dimensionsColors(),
-      dateWindow: [
-        vxm.detailGraphModule.zoomXStartValue || this.minDateValue,
-        vxm.detailGraphModule.zoomXEndValue || this.maxDateValue
-      ],
-      valueRange: [
-        vxm.detailGraphModule.zoomYStartValue,
-        vxm.detailGraphModule.zoomYEndValue
-      ],
-      includeZero: this.beginYAtZero,
-      rangeSelectorPlotLineWidth: this.selectorLineWidth,
-      rangeSelectorAlpha: this.selectorAlpha
-    } as RealOptions)
-
-    this.drawMarkers()
-  }
-
-  mounted(): void {
-    // empty string because div is not expected to be NULL
-    const chartDiv = document.getElementById('chart') || ''
-
-    this.graph = new Dygraph(
-      // containing div
-      chartDiv,
-
-      [[1, 1]],
-
-      {
-        axes: {
-          x: {
-            axisLineColor: 'currentColor',
-            axisLabelFormatter: (
-              x: number | Date,
-              granularity: number,
-              opts: (name: string) => any,
-              dygraph: Dygraph
-            ) => {
-              const [start, end] = dygraph.xAxisRange()
-              if (x instanceof Date) {
-                return this.xAxisFormatter(x, [start, end])
-              }
-              return x % 1 === 0
-                ? this.xAxisFormatter(new Date(x), [start, end])
-                : ''
-            },
-            ticker: function (min, max, pixels, opts, dygraph: Dygraph) {
-              // now shut up, eslint
-              return (Dygraph as any).getDateAxis(
-                min,
-                max,
-                (Dygraph as any).Granularity.DAILY, // please, just shut up
-                opts,
-                dygraph
-              )
-            }
-          },
-          y: {
-            axisLineColor: 'currentColor'
-          }
-        },
-        ylabel: this.yLabel,
-        pointClickCallback: this.pointClickCallback,
-        labels: ['', ''], // will be replaced in update
-        legend: 'follow',
-        labelsSeparateLines: true,
-        connectSeparatedPoints: true,
-        drawPoints: false,
-        animatedZooms: false, // does not work with slider
-        pointSize: 3,
-        panEdgeFraction: 0.00001,
-        zoomCallback: this.dygraphsZoomed,
-        legendFormatter: this.tooltipFormatter,
-        crosshairColor: 'currentColor',
-        plugins: [new Crosshair({ direction: 'vertical' })],
-        showRangeSelector: true,
-        rangeSelectorHeight: 30,
-        rangeSelectorPlotLineWidth: this.selectorLineWidth,
-        rangeSelectorAlpha: this.selectorAlpha,
-        rangeSelectorForegroundLineWidth: 0.5,
-        rangeSelectorPlotFillColor: '',
-        rangeSelectorPlotStrokeColor: 'grey',
-        drawHighlightPointCallback: this.drawHighlightPointCallback as any,
-        highlightCircleSize: 5,
-        rangeSelectorBackgroundStrokeColor: 'currentColor',
-        // and, to keep the ability to brush and zoom:
-        interactionModel: Dygraph.defaultInteractionModel
-      } as RealOptions
-    )
-
-    this.up()
-  }
-
-  private dygraphsZoomed(
-    startX: number,
-    endX: number,
-    yRanges: [number, number][]
-  ) {
-    if (this.graph.isZoomed('x')) {
-      vxm.detailGraphModule.zoomXStartValue = startX
-      vxm.detailGraphModule.zoomXEndValue = endX
-    } else {
-      vxm.detailGraphModule.zoomXStartValue = null
-      vxm.detailGraphModule.zoomXEndValue = null
-    }
-
-    if (this.graph.isZoomed('y')) {
-      const [yZoomStart, yZoomEnd] = yRanges[0]
-      vxm.detailGraphModule.zoomYStartValue = yZoomStart
-      vxm.detailGraphModule.zoomYEndValue = yZoomEnd
-    } else {
-      vxm.detailGraphModule.zoomYStartValue = null
-      vxm.detailGraphModule.zoomYEndValue = null
-    }
-  }
-
+  /**
+   * draw a little flag to merk the reference data point, if specified and in the
+   * current timespan
+   */
   private drawMarkers() {
     const annotations = []
     if (vxm.detailGraphModule.referenceDatapoint) {
@@ -457,6 +470,128 @@ export default class DytailGraph extends Vue {
 
     this.graph.setAnnotations(annotations)
   }
+
+  //  <!--</editor-fold>-->
+
+  // <!--<editor-fold desc="CUSTOM GRAPH INTERACTIONS">-->
+
+  /**
+   * what to when interacting with a point in the graph:
+   * left click: navigate to corresponding commit detail page
+   * right click: open data point dialog
+   *
+   * @param e: mouse event
+   * @param graphPoint: the point that was clicked
+   * @private
+   */
+  private pointClickCallback(e: MouseEvent, graphPoint: any) {
+    const datapoint: DetailDataPoint | undefined = graphPoint.xval
+      ? this.datapointByPositionDate(graphPoint.xval)
+      : undefined
+
+    if (!datapoint) {
+      return
+    }
+
+    // Datapoint dialog on right click
+    if (e.button === 2) {
+      this.pointDialogDatapoint = datapoint
+      this.pointDialogDimension = this.dimensions.find(
+        it => it.toString() === graphPoint.name
+      )!
+      this.pointDialogOpen = true
+
+      return
+    }
+
+    // New tab on control
+    if (e.ctrlKey) {
+      const routeData = this.$router.resolve({
+        name: 'run-detail',
+        params: {
+          first: vxm.detailGraphModule.selectedRepoId,
+          second: datapoint.hash
+        }
+      })
+      window.open(routeData.href, '_blank')
+    } else {
+      // open it in place on a normal left click
+      this.$router.push({
+        name: 'run-detail',
+        params: {
+          first: vxm.detailGraphModule.selectedRepoId,
+          second: datapoint.hash
+        }
+      })
+    }
+  }
+
+  /**
+   * the default dygraph interactions, but altered to load new data if panning
+   * exceeded the graph boundaries
+   *
+   * @private
+   */
+  private fancyPanningInteractions = Object.assign(
+    {},
+    Dygraph.defaultInteractionModel,
+    {
+      mouseup: (event: MouseEvent, g: any, context: any) => {
+        if (context.isPanning) {
+          ;(Dygraph as any).endPan(event, g, context)
+          this.dygraphsPanned()
+        }
+      }
+    }
+  )
+
+  /**
+   * determine if panning exceeded the graph boundaries and fetch new data if needed
+   *
+   * @private
+   */
+  private dygraphsPanned() {
+    if (vxm.detailGraphModule.endTime.getTime() < this.graph.xAxisRange()[1]) {
+      debounce(() => {
+        vxm.detailGraphModule.fetchDetailGraph()
+        vxm.detailGraphModule.endTime = new Date(this.graph.xAxisRange()[1])
+        vxm.detailGraphModule.zoomXEndValue = this.graph.xAxisRange()[1]
+      }, defaultWaitTime)()
+    } else if (
+      vxm.detailGraphModule.startTime.getTime() > this.graph.xAxisRange()[0]
+    ) {
+      debounce(() => {
+        vxm.detailGraphModule.fetchDetailGraph()
+        vxm.detailGraphModule.startTime = new Date(this.graph.xAxisRange()[0])
+        vxm.detailGraphModule.zoomXStartValue = this.graph.xAxisRange()[0]
+      }, defaultWaitTime)()
+    }
+  }
+
+  private dygraphsZoomed(
+    startX: number,
+    endX: number,
+    yRanges: [number, number][]
+  ) {
+    if (this.graph.isZoomed('x')) {
+      vxm.detailGraphModule.zoomXStartValue = startX
+      vxm.detailGraphModule.zoomXEndValue = endX
+    } else {
+      vxm.detailGraphModule.zoomXStartValue = vxm.detailGraphModule.startTime.getTime()
+      vxm.detailGraphModule.zoomXEndValue = vxm.detailGraphModule.endTime.getTime()
+    }
+
+    if (this.graph.isZoomed('y')) {
+      const [yZoomStart, yZoomEnd] = yRanges[0]
+      vxm.detailGraphModule.zoomYStartValue = yZoomStart
+      vxm.detailGraphModule.zoomYEndValue = yZoomEnd
+    } else {
+      vxm.detailGraphModule.zoomYStartValue = null
+      vxm.detailGraphModule.zoomYEndValue = null
+    }
+  }
+
+  // <!--</editor-fold>-->
 }
 </script>
 

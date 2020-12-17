@@ -9,7 +9,7 @@
           :dimension="pointDialogDimension"
           @close="pointDialogOpen = false"
         ></datapoint-dialog>
-        <div id="chart-container">
+        <div id="chart-container" @wheel="wheelEvent">
           <v-chart
             ref="chart"
             :autoresize="true"
@@ -61,6 +61,11 @@ import { CustomKeyEqualsMap } from '@/util/CustomKeyEqualsMap'
 type ValidEchartsSeries = EChartOption.SeriesLine | EChartOption.SeriesGraph
 type SeriesGenerationFunction = (id: DimensionId) => ValidEchartsSeries
 
+type BenchmarkStatus = 'success' | 'failed' | 'unbenchmarked'
+
+const crossIcon =
+  'path://M24 20.188l-8.315-8.209 8.2-8.282-3.697-3.697-8.212 8.318-8.31-8.203-3.666 3.666 8.321 8.24-8.206 8.313 3.666 3.666 8.237-8.318 8.285 8.203z'
+
 class EchartsDataPoint {
   // convenience methods for accessing the value
   readonly time: Date
@@ -92,12 +97,13 @@ class EchartsDataPoint {
 
   readonly summary: string
   readonly author: string
+  readonly benchmarkStatus: BenchmarkStatus
 
   constructor(
     time: Date,
     committerDate: Date,
     dataValue: number,
-    symbol: string,
+    benchmarkStatus: BenchmarkStatus,
     name: string,
     color: string,
     borderColor: string,
@@ -107,8 +113,8 @@ class EchartsDataPoint {
     this.time = time
     this.committerDate = committerDate
     this.dataValue = dataValue
-    this.symbol = symbol
     this.value = [this.time, this.dataValue]
+    this.benchmarkStatus = benchmarkStatus
     this.name = name
     this.itemStyle = {
       color: color,
@@ -117,6 +123,12 @@ class EchartsDataPoint {
     }
     this.summary = summary
     this.author = author
+
+    if (benchmarkStatus === 'success' || benchmarkStatus === 'unbenchmarked') {
+      this.symbol = 'circle'
+    } else {
+      this.symbol = crossIcon
+    }
   }
 }
 
@@ -137,6 +149,9 @@ export default class EchartsDetailGraph extends Vue {
 
   @Prop({ default: true })
   private dayEquidistant!: boolean
+
+  @Prop({ default: () => () => ({}) })
+  private wheelEvent!: (e: WheelEvent) => void
   // <!--</editor-fold>-->
 
   // <!--<editor-fold desc="FIELDS">-->
@@ -152,22 +167,6 @@ export default class EchartsDetailGraph extends Vue {
 
   private get detailDataPoints(): DetailDataPoint[] {
     return vxm.detailGraphModule.detailGraph
-  }
-
-  private get minDateValue(): number {
-    const min = Math.min.apply(
-      Math,
-      this.detailDataPoints.map(it => it.positionDate.getTime())
-    )
-    return min || 0
-  }
-
-  private get maxDateValue(): number {
-    const max = Math.max.apply(
-      Math,
-      this.detailDataPoints.map(it => it.positionDate.getTime())
-    )
-    return max || 0
   }
 
   // <!--<editor-fold desc="ECHARTS GRAPH OPTIONS">-->
@@ -188,8 +187,8 @@ export default class EchartsDetailGraph extends Vue {
       },
       xAxis: {
         type: 'time',
-        min: 'dataMin',
-        max: 'dataMax'
+        min: vxm.detailGraphModule.startTime.getTime(),
+        max: vxm.detailGraphModule.endTime.getTime()
       },
       yAxis: {
         type: 'value',
@@ -243,7 +242,8 @@ export default class EchartsDetailGraph extends Vue {
         trigger: 'axis',
         axisPointer: {},
         // TODO: Extract in own helper?
-        formatter: this.tooltipFormatter
+        formatter: this.tooltipFormatter,
+        confine: true
       },
       series: this.dimensions.map(this.seriesGenerator)
     }
@@ -271,13 +271,22 @@ export default class EchartsDetailGraph extends Vue {
       const safeBenchmark = escapeHtml(dimension.benchmark)
       const safeMetric = escapeHtml(dimension.metric)
 
+      let value: string
+      if (datapoint.benchmarkStatus === 'success') {
+        value = this.numberFormat.format(datapoint.dataValue)
+      } else if (datapoint.benchmarkStatus === 'unbenchmarked') {
+        value = 'Unbenchmarked'
+      } else {
+        value = 'Failed'
+      }
+
       return `
                 <tr>
                   <td>
                     <span class="color-preview" style="background-color: ${color}"></span>
                     ${safeBenchmark} - ${safeMetric}
                   </td>
-                  <td>${this.numberFormat.format(datapoint.dataValue)}</td>
+                  <td>${value}</td>
                 </tr>
                 `
     })
@@ -309,8 +318,6 @@ export default class EchartsDetailGraph extends Vue {
   // <!--</editor-fold>-->
 
   // <!--<editor-fold desc="SERIES GENERATION">-->
-
-  // <!--<editor-fold desc="SERIES GENERATION">-->
   private findFirstSuccessful = (dimension: DimensionId) => {
     const point = this.detailDataPoints.find(it => it.successful(dimension))
 
@@ -323,7 +330,7 @@ export default class EchartsDetailGraph extends Vue {
   private buildPointsForSingleDimension(dimension: DimensionId) {
     let lastSuccessfulValue: number = this.findFirstSuccessful(dimension)
     return this.detailDataPoints.map(point => {
-      let symbol = 'circle'
+      let benchmarkStatus: BenchmarkStatus = 'success'
       let color = this.dimensionColor(dimension)
       let borderColor = color
 
@@ -335,10 +342,11 @@ export default class EchartsDetailGraph extends Vue {
 
       if (point.failed(dimension)) {
         // grey circle
-        symbol = this.crossIcon
+        benchmarkStatus = 'failed'
         color = this.graphFailedOrUnbenchmarkedColor
         borderColor = color
       } else if (point.unbenchmarked(dimension)) {
+        benchmarkStatus = 'unbenchmarked'
         // empty circle with outline
         color = this.graphBackgroundColor
         borderColor = this.graphFailedOrUnbenchmarkedColor
@@ -348,7 +356,7 @@ export default class EchartsDetailGraph extends Vue {
         point.positionDate,
         point.committerDate,
         pointValue,
-        symbol,
+        benchmarkStatus,
         point.hash,
         color,
         borderColor,
@@ -633,8 +641,8 @@ export default class EchartsDetailGraph extends Vue {
   }
 
   private echartsZoomReset() {
-    vxm.detailGraphModule.zoomXStartValue = this.minDateValue
-    vxm.detailGraphModule.zoomXEndValue = this.maxDateValue
+    vxm.detailGraphModule.zoomXStartValue = vxm.detailGraphModule.startTime.getTime()
+    vxm.detailGraphModule.zoomXEndValue = vxm.detailGraphModule.endTime.getTime()
     vxm.detailGraphModule.zoomYStartValue = null
     vxm.detailGraphModule.zoomYEndValue = null
     this.updateGraph()
@@ -772,9 +780,6 @@ export default class EchartsDetailGraph extends Vue {
     }
   }
   // <!--</editor-fold>-->
-
-  private readonly crossIcon =
-    'path://M24 20.188l-8.315-8.209 8.2-8.282-3.697-3.697-8.212 8.318-8.31-8.203-3.666 3.666 8.321 8.24-8.206 8.313 3.666 3.666 8.237-8.318 8.285 8.203z'
 }
 </script>
 
