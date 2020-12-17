@@ -1,13 +1,13 @@
-package de.aaaaaaah.velcom.backend.access;
+package de.aaaaaaah.velcom.backend.newaccess.tokenaccess;
 
 import static org.jooq.codegen.db.tables.RepoToken.REPO_TOKEN;
 import static org.jooq.impl.DSL.selectFrom;
 
-import de.aaaaaaah.velcom.backend.access.entities.AuthToken;
-import de.aaaaaaah.velcom.backend.access.hashalgorithm.Argon2Algorithm;
-import de.aaaaaaah.velcom.backend.access.hashalgorithm.HashAlgorithm;
-import de.aaaaaaah.velcom.backend.access.hashalgorithm.V1Argon2Algorithm;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
+import de.aaaaaaah.velcom.backend.newaccess.tokenaccess.entities.AuthToken;
+import de.aaaaaaah.velcom.backend.newaccess.tokenaccess.hashalgorithm.Argon2Algorithm;
+import de.aaaaaaah.velcom.backend.newaccess.tokenaccess.hashalgorithm.HashAlgorithm;
+import de.aaaaaaah.velcom.backend.newaccess.tokenaccess.hashalgorithm.V1Argon2Algorithm;
 import de.aaaaaaah.velcom.backend.storage.db.DBReadAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DBWriteAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
@@ -17,6 +17,9 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 import org.jooq.codegen.db.tables.records.RepoTokenRecord;
 
+/**
+ * Access for testing whether auth tokens exist and are valid.
+ */
 public class TokenReadAccess {
 
 	protected final DatabaseStorage databaseStorage;

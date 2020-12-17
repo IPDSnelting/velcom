@@ -1,10 +1,10 @@
-package de.aaaaaaah.velcom.backend.access.hashalgorithm;
+package de.aaaaaaah.velcom.backend.newaccess.tokenaccess.hashalgorithm;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import de.aaaaaaah.velcom.backend.access.entities.AuthToken;
+import de.aaaaaaah.velcom.backend.newaccess.tokenaccess.entities.AuthToken;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;

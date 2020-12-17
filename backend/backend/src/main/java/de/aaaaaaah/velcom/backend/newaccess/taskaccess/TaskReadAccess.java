@@ -16,6 +16,9 @@ import java.util.stream.Collectors;
 import org.jooq.codegen.db.tables.records.TaskRecord;
 import org.jooq.exception.DataAccessException;
 
+/**
+ * Access for retrieving tasks and their status.
+ */
 public class TaskReadAccess {
 
 	protected final DatabaseStorage databaseStorage;
