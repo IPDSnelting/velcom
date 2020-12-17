@@ -318,8 +318,6 @@ export default class EchartsDetailGraph extends Vue {
   // <!--</editor-fold>-->
 
   // <!--<editor-fold desc="SERIES GENERATION">-->
-
-  // <!--<editor-fold desc="SERIES GENERATION">-->
   private findFirstSuccessful = (dimension: DimensionId) => {
     const point = this.detailDataPoints.find(it => it.successful(dimension))
 
