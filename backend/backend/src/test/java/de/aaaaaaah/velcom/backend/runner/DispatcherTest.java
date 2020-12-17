@@ -13,6 +13,7 @@ import de.aaaaaaah.velcom.backend.runner.single.TeleRunner;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Status;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,7 +41,8 @@ class DispatcherTest {
 			null,
 			false,
 			null,
-			null
+			null,
+			List.of()
 		);
 	}
 

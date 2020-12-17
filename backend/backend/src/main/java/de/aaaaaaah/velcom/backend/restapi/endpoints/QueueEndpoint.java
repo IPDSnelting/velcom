@@ -312,19 +312,35 @@ public class QueueEndpoint {
 	@GET
 	@Timed(histogram = true)
 	public GetTaskOutputReply getRunnerOutput(@PathParam("taskid") UUID taskId) {
-		Optional<KnownRunner> worker = dispatcher.getKnownRunners().stream()
+		Optional<LinesWithOffset> lastOutputLinesOpt = findLinesForTask(taskId);
+
+		if (lastOutputLinesOpt.isEmpty()) {
+			throw new WebApplicationException(Status.NOT_FOUND);
+		}
+
+		LinesWithOffset lastOutputLines = lastOutputLinesOpt
+			.orElse(new LinesWithOffset(0, List.of()));
+
+		return new GetTaskOutputReply(lastOutputLines.getLines(), lastOutputLines.getFirstLineOffset());
+	}
+
+	private Optional<LinesWithOffset> findLinesForTask(UUID taskId) {
+		Optional<KnownRunner> activeWorker = dispatcher.getKnownRunners().stream()
 			.filter(it -> it.getCurrentTask().isPresent())
 			.filter(it -> it.getCurrentTask().get().getId().getId().equals(taskId))
 			.findAny();
 
-		if (worker.isEmpty()) {
-			throw new WebApplicationException(Status.NOT_FOUND);
+		if (activeWorker.isPresent()) {
+			LinesWithOffset lastOutputLines = activeWorker.get().getLastOutputLines()
+				.orElse(new LinesWithOffset(0, List.of()));
+			return Optional.of(lastOutputLines);
 		}
 
-		LinesWithOffset lastOutputLines = worker.get().getLastOutputLines()
-			.orElse(new LinesWithOffset(0, List.of()));
-
-		return new GetTaskOutputReply(lastOutputLines.getLines(), lastOutputLines.getFirstLineOffset());
+		return dispatcher.getKnownRunners().stream()
+			.flatMap(it -> it.getCompletedTasks().stream())
+			.filter(it -> it.getTaskId().getId().equals(taskId))
+			.findFirst()
+			.map(it -> it.getLastLogLines().orElse(new LinesWithOffset(0, List.of())));
 	}
 
 	private static class PostOneUpReply {
