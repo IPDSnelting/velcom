@@ -55,6 +55,34 @@ public class SignificantRunsCollector {
 	}
 
 	/**
+	 * Tries to fetch the {@link SignificantRun} for a given {@link Run}, if the run has any
+	 * significant changes.
+	 *
+	 * @param run the run
+	 * @return the significant run if it was significant, empty otherwise
+	 */
+	@Timed(histogram = true)
+	public Optional<SignificantRun> getSignificantRun(Run run) {
+		Optional<CommitSource> commitSource = run.getSource().getLeft();
+		if (commitSource.isEmpty()) {
+			return Optional.empty();
+		}
+		CommitSource source = commitSource.get();
+
+		Set<CommitHash> parentHashes = commitAccess.getParentHashes(
+			source.getRepoId(),
+			source.getHash()
+		);
+		Collection<Run> parentRuns = benchmarkAccess
+			.getLatestRuns(source.getRepoId(), parentHashes)
+			.values();
+
+		Set<Dimension> significantDimensions = dimensionAccess.getSignificantDimensions();
+
+		return getSignificantRun(run, Map.of(source, parentRuns), significantDimensions);
+	}
+
+	/**
 	 * Find the specified amount of significant runs, starting at the most recent run and going
 	 * backwards from there.
 	 *

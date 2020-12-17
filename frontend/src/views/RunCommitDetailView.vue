@@ -7,7 +7,14 @@
     </v-row>
     <v-row v-if="commit" no-gutters>
       <v-col>
-        <commit-detail :commit="commit"></commit-detail>
+        <commit-detail :commit="commit">
+          <template #body-trailing v-if="dimensionDifferences">
+            <run-significance-chips
+              :differences="dimensionDifferences"
+              :run-id="runWithDifferences.run.id"
+            ></run-significance-chips>
+          </template>
+        </commit-detail>
       </v-col>
     </v-row>
     <v-row v-if="tarSource" no-gutters justify="center">
@@ -68,8 +75,9 @@ import {
   Commit,
   CommitTaskSource,
   Dimension,
-  RunWithDifferences,
-  TarTaskSource
+  TarTaskSource,
+  DimensionDifference,
+  RunWithDifferences
 } from '@/store/types'
 import NotFound404 from './NotFound404.vue'
 import RunDetail from '@/components/rundetail/RunDetail.vue'
@@ -78,9 +86,11 @@ import RunTimeline from '@/components/rundetail/RunTimeline.vue'
 import { NotFoundError } from '@/store/modules/commitDetailComparisonStore'
 import { showCommitInDetailGraph } from '@/util/GraphNavigation'
 import TarOverview from '@/components/overviews/TarOverview.vue'
+import RunSignificanceChips from '@/components/RunSignificanceChips.vue'
 
 @Component({
   components: {
+    'run-significance-chips': RunSignificanceChips,
     'tar-overview': TarOverview,
     'page-404': NotFound404,
     'run-detail': RunDetail,
@@ -101,6 +111,13 @@ export default class RunCommitDetailView extends Vue {
 
   private get secondComponent(): string | undefined {
     return this.$route.params['second']
+  }
+
+  private get dimensionDifferences(): DimensionDifference[] | undefined {
+    if (!this.runWithDifferences) {
+      return undefined
+    }
+    return this.runWithDifferences.significantDifferences
   }
 
   private async navigateToDetailGraph(dimension: Dimension) {

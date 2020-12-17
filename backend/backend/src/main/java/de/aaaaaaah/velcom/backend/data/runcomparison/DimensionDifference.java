@@ -58,7 +58,7 @@ public class DimensionDifference {
 	 * @return (second - first) / first, if first != 0
 	 */
 	public Optional<Double> getReldiff() {
-		if (first == 0) {
+		if (first == 0) { // Don't divide by 0
 			return Optional.empty();
 		}
 
@@ -70,6 +70,7 @@ public class DimensionDifference {
 	 */
 	public Optional<Double> getStddevDiff() {
 		return getSecondStddev()
+			.filter(stddev -> stddev != 0) // Don't divide by 0
 			.map(stddev -> getDiff() / stddev);
 	}
 }
