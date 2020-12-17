@@ -103,7 +103,7 @@ public class RunEndpoint {
 
 			Optional<List<DimensionDifference>> significantDiffs = significantRunsCollector
 				.getSignificantRun(run)
-				.map(SignificantRun::getDifferences);
+				.map(SignificantRun::getSignificantDifferences);
 
 			Set<Dimension> dimensions = Stream.of(prevRunDiffs, significantDiffs)
 				.flatMap(Optional::stream)
