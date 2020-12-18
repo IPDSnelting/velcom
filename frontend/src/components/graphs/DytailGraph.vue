@@ -74,7 +74,7 @@ export default class DytailGraph extends Vue {
 
   /**
    * The only possibility one has to find the (abstract) data point for a given
-   * point in the graph is to go by x axis position ( = the author date).
+   * point in the graph is to go by x axis position ( = the committer date).
    * This is not guaranteed to give the correct data point, but it's accurate
    * enough to display a fitting tooltip
    *
@@ -450,7 +450,7 @@ export default class DytailGraph extends Vue {
   }
 
   /**
-   * draw a little flag to merk the reference data point, if specified and in the
+   * draw a little flag to mark the reference data point, if specified and in the
    * current timespan
    */
   private drawMarkers() {
@@ -476,7 +476,7 @@ export default class DytailGraph extends Vue {
   // <!--<editor-fold desc="CUSTOM GRAPH INTERACTIONS">-->
 
   /**
-   * what to when interacting with a point in the graph:
+   * what to do when interacting with a point in the graph:
    * left click: navigate to corresponding commit detail page
    * right click: open data point dialog
    *
