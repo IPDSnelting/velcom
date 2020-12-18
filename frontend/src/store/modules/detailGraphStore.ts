@@ -219,7 +219,6 @@ export class DetailGraphStore extends VxModule {
   // <!--<editor-fold desc="GET / SET TIME">-->
 
   get startTime(): Date {
-    console.log('start: ' + this._startTime.getHours())
     return this._startTime
   }
 
@@ -231,12 +230,10 @@ export class DetailGraphStore extends VxModule {
   }
 
   get endTime(): Date {
-    console.log('end: ' + this._startTime.getHours())
     return this._endTime
   }
 
   set endTime(time: Date) {
-    console.log(time.getHours())
     if (!(time.getHours() !== 0)) {
       time.setHours(24, 0, 0, 0) // next midnight
     }

@@ -39,7 +39,11 @@
               :beginYAtZero="yStartsAtZero"
               :dayEquidistant="dayEquidistantGraphSelected"
               :wheelEvent="mouseWheelOnGraph"
-            ></component>
+            >
+            </component>
+            <v-overlay :value="showOverlay" :absolute="true" opacity="1">
+              {{ overlayMsg }}
+            </v-overlay>
           </v-card-text>
         </v-card>
       </v-col>
@@ -291,6 +295,10 @@ export default class RepoDetail extends Vue {
   private today = new Date().toISOString().substr(0, 10)
 
   private graphPlaceholderHeight: number = 100
+
+  private showOverlay: boolean = false
+  private overlayMsg: string = 'hi'
+
   private useMatrixSelector: boolean = false
 
   /**
@@ -452,8 +460,11 @@ export default class RepoDetail extends Vue {
   @Watch('id')
   @Watch('selectedDimensions')
   private async retrieveGraphData(): Promise<void> {
-    if (this.stopAfterStart()) {
+    console.log(vxm.detailGraphModule.detailGraph)
+    if (this.stopAfterStart() && this.selectedDimensions.length !== 0) {
       this.selectedGraphComponent = GraphPlaceholder
+
+      this.showOverlay = false
 
       if (this.$refs.graphComponent) {
         this.graphPlaceholderHeight = (this.$refs
@@ -467,6 +478,16 @@ export default class RepoDetail extends Vue {
       if (correctSeries) {
         this.selectedGraphComponent = correctSeries.component
       }
+      if (vxm.detailGraphModule.detailGraph.length === 0) {
+        this.showOverlay = true
+        this.overlayMsg =
+          'There are no commits within the specified time period that have been benchmarked with these metrics.'
+      } else {
+        this.showOverlay = false
+      }
+    } else if (this.selectedDimensions.length === 0) {
+      this.showOverlay = true
+      this.overlayMsg = 'No data available.Please select benchmark and metric.'
     }
   }
 
