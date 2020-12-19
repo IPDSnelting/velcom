@@ -460,7 +460,6 @@ export default class RepoDetail extends Vue {
   @Watch('id')
   @Watch('selectedDimensions')
   private async retrieveGraphData(): Promise<void> {
-    console.log(vxm.detailGraphModule.detailGraph)
     if (this.stopAfterStart() && this.selectedDimensions.length !== 0) {
       this.selectedGraphComponent = GraphPlaceholder
 

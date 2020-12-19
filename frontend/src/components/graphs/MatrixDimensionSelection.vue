@@ -146,12 +146,6 @@ export default class MatrixMeasurementIdSelection extends Vue {
 
   private metricColor(benchmark: string, metric: string): string {
     if (this.selectedDimensionSet.has(benchmark + ' - ' + metric)) {
-      console.log(
-        vxm.detailGraphModule.colorIndex({
-          benchmark: benchmark,
-          metric: metric
-        })
-      )
       return vxm.colorModule.colorByIndex(
         vxm.detailGraphModule.colorIndex({
           benchmark: benchmark,
