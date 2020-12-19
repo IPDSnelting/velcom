@@ -96,7 +96,9 @@ export class RepoStore extends VxModule {
 
   @action
   async triggerListenerFetch(): Promise<void> {
-    await axios.post(`/listener/fetch-all`)
+    await axios.post(`/listener/fetch-all`, undefined, {
+      snackbarPriority: 2
+    })
   }
 
   @mutation

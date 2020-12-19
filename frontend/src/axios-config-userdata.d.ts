@@ -45,6 +45,13 @@ declare module 'axios' {
     snackbarTag?: string
 
     /**
+     * The priority of this message. Higher priority
+     * (i.e. the snackbarPriority is larger) messages prevent lower ones from
+     * showing up.
+     */
+    snackbarPriority?: number
+
+    /**
      * A number uniquely identifying this request.
      *
      * @type {number}

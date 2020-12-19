@@ -44,7 +44,7 @@ export class CommitDetailComparisonStore extends VxModule {
       const differences = response.data.differences
         ? response.data.differences.map(differenceFromJson)
         : undefined
-      const significantDifferences = response.data.differences
+      const significantDifferences = response.data.significant_differences
         ? response.data.significant_differences.map(differenceFromJson)
         : undefined
 
