@@ -49,7 +49,7 @@
         </v-btn>
       </template>
       <template
-        v-for="{ slotName, displayField, tooltip } in headerFormats"
+        v-for="{ slotName, displayField, tooltip, colored } in headerFormats"
         v-slot:[slotName]="{ item }"
       >
         <span :key="slotName">
@@ -58,7 +58,7 @@
             :tooltip-message="
               typeof tooltip === 'string' ? tooltip : tooltip(item)
             "
-            :color="item.changeColor"
+            :color="colored ? item.changeColor : undefined"
           ></measurement-value>
         </span>
       </template>
@@ -206,7 +206,8 @@ export default class MeasurementsDisplay extends Vue {
       {
         slotName: 'item.change',
         displayField: 'changeFormatted',
-        tooltip: 'No unambiguous parent commit found'
+        tooltip: 'No unambiguous parent commit found',
+        colored: true
       },
       {
         slotName: 'item.changePercent',
@@ -216,19 +217,22 @@ export default class MeasurementsDisplay extends Vue {
             return 'No unambiguous parent commit found'
           }
           return "The old value was zero. I can't divide by it :/"
-        }
+        },
+        colored: true
       },
       {
         slotName: 'item.standardDeviation',
         displayField: 'standardDeviationFormatted',
         tooltip:
-          'Not applicable as the benchmark script did not report enough values'
+          'Not applicable as the benchmark script did not report enough values',
+        colored: false
       },
       {
         slotName: 'item.standardDeviationPercent',
         displayField: 'standardDeviationPercentFormatted',
         tooltip:
-          'Not applicable as the benchmark script did not report enough values'
+          'Not applicable as the benchmark script did not report enough values',
+        colored: false
       }
     ]
   }
