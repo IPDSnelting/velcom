@@ -62,7 +62,7 @@ export default class Snackbar extends Vue implements ISnackbar {
     this.displayNormalText(
       this.appendTag('Please stand by, processing', `'${tag}'`) + '...',
       'info',
-      60 * 60 * 1000,
+      1000 * 60 * 5, // ms * seconds * minutes
       priority
     )
     this.loading = true

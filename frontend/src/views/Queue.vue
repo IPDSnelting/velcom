@@ -154,7 +154,8 @@ export default class Queue extends Vue {
 
     this.$globalSnackbar.setSuccess(
       'listener',
-      'Re-fetched repo and updated benchrepo'
+      'Re-fetched repo and updated benchrepo',
+      2
     )
   }
 

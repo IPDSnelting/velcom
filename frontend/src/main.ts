@@ -57,7 +57,7 @@ axios.interceptors.request.use(
 
       setTimeout(() => {
         if (loadingElements.has(randomTag)) {
-          vue.$globalSnackbar.setLoading(prefix)
+          vue.$globalSnackbar.setLoading(prefix, config.snackbarPriority)
         }
       }, 1000)
     }
@@ -69,7 +69,11 @@ axios.interceptors.request.use(
     // Always display network errors
     if (!error.response) {
       const prefix = error.config.snackbarTag || ''
-      vue.$globalSnackbar.setError(prefix, extractErrorMessage(error))
+      vue.$globalSnackbar.setError(
+        prefix,
+        extractErrorMessage(error),
+        error.config.snackbarPriority
+      )
     }
     return Promise.reject(error)
   }
@@ -81,10 +85,17 @@ axios.interceptors.response.use(
     loadingElements.delete(response.config.randomTag!)
 
     const prefix = response.config.snackbarTag || ''
-    vue.$globalSnackbar.finishedLoading(prefix)
+    vue.$globalSnackbar.finishedLoading(
+      prefix,
+      response.config.snackbarPriority
+    )
 
     if (response.config.showSuccessSnackbar) {
-      vue.$globalSnackbar.setSuccess(prefix, 'Success!')
+      vue.$globalSnackbar.setSuccess(
+        prefix,
+        'Success!',
+        response.config.snackbarPriority
+      )
     }
 
     return response
@@ -94,7 +105,11 @@ axios.interceptors.response.use(
 
     if (!error.config.hideFromSnackbar && !error.config.hideErrorSnackbar) {
       const prefix = error.config.snackbarTag || ''
-      vue.$globalSnackbar.setError(prefix, extractErrorMessage(error))
+      vue.$globalSnackbar.setError(
+        prefix,
+        extractErrorMessage(error),
+        error.config.snackbarPriority
+      )
     }
     return Promise.reject(error)
   }
