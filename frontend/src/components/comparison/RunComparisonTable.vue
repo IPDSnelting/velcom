@@ -1,5 +1,12 @@
 <template>
-  <v-data-table :headers="headers" :items="items" multi-sort>
+  <v-data-table
+    :headers="headers"
+    :items="items"
+    :items-per-page="-1"
+    multi-sort
+    dense
+    class="compare-table"
+  >
     <template #[`item.difference`]="{ item, value }">
       <span :style="{ color: item.changeColor }">{{
         item.formatNumber(value)
@@ -191,5 +198,28 @@ export default class RunComparisonTable extends Vue {
 <style scoped>
 .change-arrow {
   font-size: 1.75em;
+}
+</style>
+
+<!--suppress CssUnresolvedCustomProperty -->
+<style>
+.compare-table tbody tr:hover {
+  cursor: pointer;
+}
+
+/* LIGHT THEME alternating colors */
+.theme--light .compare-table tbody tr:nth-child(even) {
+  background-color: var(--v-rowHighlight-lighten1);
+}
+.theme--light .compare-table tbody tr:hover {
+  background-color: var(--v-rowHighlight-darken1) !important;
+}
+
+/* DARK THEME alternating colors */
+.theme--dark .compare-table tbody tr:nth-child(even) {
+  background-color: var(--v-rowHighlight-darken1);
+}
+.theme--dark .compare-table tbody tr:hover {
+  background-color: var(--v-rowHighlight-lighten1) !important;
 }
 </style>

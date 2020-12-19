@@ -6,7 +6,7 @@
           <v-card-title>
             <v-toolbar dark color="toolbarColor">Run Comparison</v-toolbar>
           </v-card-title>
-          <v-card-text>
+          <v-card-text style="max-width: 1185px; margin: auto">
             <comparison-table
               :first="comparison.run1"
               :second="comparison.run2"
