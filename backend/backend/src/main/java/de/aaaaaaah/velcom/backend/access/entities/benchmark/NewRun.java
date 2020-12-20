@@ -1,5 +1,7 @@
 package de.aaaaaaah.velcom.backend.access.entities.benchmark;
 
+import static java.util.stream.Collectors.toList;
+
 import de.aaaaaaah.velcom.backend.access.entities.Measurement;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
 import de.aaaaaaah.velcom.backend.access.entities.RunId;
@@ -10,10 +12,8 @@ import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.shared.util.Either;
 import java.time.Instant;
 import java.util.Collection;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 /**
  * An entity used for adding new runs via the BenchmarkAccess.
@@ -112,16 +112,13 @@ public class NewRun {
 	 * @return the run
 	 */
 	public Run toRun() {
-		return result.consume(
-			error -> new Run(id, author, runnerName, runnerInfo, startTime, stopTime, source, error),
-			newMeasurements -> {
-				List<Measurement> measurements = newMeasurements.stream()
-					.map(NewMeasurement::toMeasurement)
-					.collect(Collectors.toList());
-				return new Run(id, author, runnerName, runnerInfo, startTime, stopTime, source,
-					measurements);
-			}
+		Either<RunError, Collection<Measurement>> result = this.result.mapRight(
+			newMeasurements -> newMeasurements.stream()
+				.map(NewMeasurement::toMeasurement)
+				.collect(toList())
 		);
+
+		return new Run(id, author, runnerName, runnerInfo, startTime, stopTime, source, result);
 	}
 
 	@Override

@@ -280,38 +280,26 @@ public class BenchmarkReadAccess {
 					runRecord.getTarDesc()
 				);
 
+				final Either<RunError, Collection<Measurement>> result;
 				if (runRecord.getError() != null) {
-					RunError error = new RunError(
+					result = Either.ofLeft(new RunError(
 						runRecord.getError(),
 						RunErrorType.fromTextualRepresentation(runRecord.getErrorType())
-					);
-
-					return new Run(
-						runId,
-						runRecord.getAuthor(),
-						runRecord.getRunnerName(),
-						runRecord.getRunnerInfo(),
-						runRecord.getStartTime(
-
-						),
-						runRecord.getStopTime(),
-						source,
-						error
-					);
+					));
 				} else {
-					List<Measurement> measurements = runToMeasurementMap.getOrDefault(runId, List.of());
-
-					return new Run(
-						runId,
-						runRecord.getAuthor(),
-						runRecord.getRunnerName(),
-						runRecord.getRunnerInfo(),
-						runRecord.getStartTime(),
-						runRecord.getStopTime(),
-						source,
-						measurements
-					);
+					result = Either.ofRight(runToMeasurementMap.getOrDefault(runId, List.of()));
 				}
+
+				return new Run(
+					runId,
+					runRecord.getAuthor(),
+					runRecord.getRunnerName(),
+					runRecord.getRunnerInfo(),
+					runRecord.getStartTime(),
+					runRecord.getStopTime(),
+					source,
+					result
+				);
 			})
 			.collect(toList());
 	}

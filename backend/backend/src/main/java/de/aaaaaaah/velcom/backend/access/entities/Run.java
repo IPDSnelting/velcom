@@ -12,7 +12,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 
 /**
  * A run is a single execution of the benchmark script.
@@ -33,22 +32,9 @@ public class Run {
 	private final Either<CommitSource, TarSource> source;
 	private final Either<RunError, Collection<Measurement>> result;
 
-	public Run(RunId runId, String author, String runnerName, String runnerInfo, Instant startTime,
+	public Run(RunId id, String author, String runnerName, String runnerInfo, Instant startTime,
 		Instant stopTime, Either<CommitSource, TarSource> source,
-		Collection<Measurement> measurements) {
-
-		this(runId, author, runnerName, runnerInfo, startTime, stopTime, source, null, measurements);
-	}
-
-	public Run(RunId runId, String author, String runnerName, String runnerInfo, Instant startTime,
-		Instant stopTime, Either<CommitSource, TarSource> source, RunError error) {
-
-		this(runId, author, runnerName, runnerInfo, startTime, stopTime, source, error, null);
-	}
-
-	private Run(RunId id, String author, String runnerName, String runnerInfo, Instant startTime,
-		Instant stopTime, Either<CommitSource, TarSource> source, @Nullable RunError error,
-		@Nullable Collection<Measurement> measurements) {
+		Either<RunError, Collection<Measurement>> result) {
 
 		this.id = Objects.requireNonNull(id);
 		this.author = Objects.requireNonNull(author);
@@ -57,18 +43,7 @@ public class Run {
 		this.startTime = Objects.requireNonNull(startTime);
 		this.stopTime = Objects.requireNonNull(stopTime);
 		this.source = Objects.requireNonNull(source);
-
-		if (error != null && measurements != null) {
-			throw new IllegalArgumentException(
-				"either error or measurement must be present, but not both at the same time!"
-			);
-		} else if (error != null) {
-			this.result = Either.ofLeft(error);
-		} else if (measurements != null) {
-			this.result = Either.ofRight(measurements);
-		} else {
-			throw new IllegalArgumentException("both error and measurement are null");
-		}
+		this.result = result;
 	}
 
 	public RunId getId() {
@@ -104,11 +79,10 @@ public class Run {
 	}
 
 	public Optional<RepoId> getRepoId() {
-		if (getSource().isLeft()) {
-			return Optional.of(getSource().getLeft().get().getRepoId());
-		} else {
-			return getSource().getRight().get().getRepoId();
-		}
+		return getSource().consume(
+			commitSource -> Optional.of(commitSource.getRepoId()),
+			TarSource::getRepoId
+		);
 	}
 
 	public Set<Dimension> getAllDimensionsUsed() {
@@ -127,10 +101,9 @@ public class Run {
 			", runnerInfo='" + runnerInfo + '\'' +
 			", startTime=" + startTime +
 			", stopTime=" + stopTime +
-			", repoSource=" + source +
+			", source=" + source +
 			", result=" + result +
 			'}';
 	}
-
 }
 
