@@ -2,9 +2,12 @@ package de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess;
 
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 import static org.jooq.codegen.db.Tables.MEASUREMENT;
 import static org.jooq.codegen.db.Tables.MEASUREMENT_VALUE;
+import static org.jooq.codegen.db.Tables.RUN;
+import static org.jooq.impl.DSL.max;
 
 import de.aaaaaaah.velcom.backend.access.entities.Measurement;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementError;
@@ -134,12 +137,55 @@ public class BenchmarkReadAccess {
 		return null; // TODO: 20.12.20 Implement
 	}
 
-	public Optional<RunId> getLatestRunId(RepoId repoId, CommitHash missingHash) {
-		return null; // TODO: 20.12.20 Implement
+	/**
+	 * Find the id of a commit's latest run.
+	 *
+	 * @param repoId the commit's repo
+	 * @param commitHash the commit's hash
+	 * @return the id of the commit's latest run, or empty if the commit has no associated run
+	 */
+	public Optional<RunId> getLatestRunId(RepoId repoId, CommitHash commitHash) {
+		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
+			return db.selectFrom(RUN)
+				.where(RUN.REPO_ID.eq(repoId.getIdAsString()))
+				.and(RUN.COMMIT_HASH.eq(commitHash.getHash()))
+				.orderBy(RUN.START_TIME.desc())
+				.fetchOptional()
+				.map(record -> RunId.fromString(record.getId()));
+		}
 	}
 
-	public Map<CommitHash, RunId> getLatestRunIds(RepoId repoId, List<CommitHash> missingHashes) {
-		return null; // TODO: 20.12.20 Implement
+	/**
+	 * Find the id of the latest run for each commit.
+	 *
+	 * @param repoId the repo the commits are in
+	 * @param commitHashes the commits whose latest runs to find
+	 * @return a map containing each commit's latest run's id. If a commit has not associated run, it
+	 * 	is omitted from this map.
+	 */
+	public Map<CommitHash, RunId> getLatestRunIds(RepoId repoId,
+		Collection<CommitHash> commitHashes) {
+
+		Set<String> hashStrings = commitHashes.stream()
+			.map(CommitHash::getHash)
+			.collect(toSet());
+
+		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
+			return db.select(
+				RUN.COMMIT_HASH,
+				RUN.ID,
+				max(RUN.START_TIME) // Sqlite-specific, grab latest run
+			)
+				.from(RUN)
+				.where(RUN.REPO_ID.eq(repoId.getIdAsString()))
+				.and(RUN.COMMIT_HASH.in(hashStrings))
+				.groupBy(RUN.COMMIT_HASH)
+				.stream()
+				.collect(toMap(
+					record -> new CommitHash(record.value1()),
+					record -> RunId.fromString(record.value2())
+				));
+		}
 	}
 
 //	public Run getRun(RunId runId) throws NoSuchRunException {
@@ -204,62 +250,6 @@ public class BenchmarkReadAccess {
 //				.stream()
 //				.map(BenchmarkReadAccess::runRecordToRun)
 //				.collect(Collectors.toList());
-//		}
-//	}
-//
-//	public Optional<Run> getLatestRun(RepoId repoId, CommitHash commitHash) {
-//		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-//			return db.selectFrom(RUN)
-//				.where(RUN.REPO_ID.eq(repoId.getIdAsString()))
-//				.and(RUN.COMMIT_HASH.eq(commitHash.getHash()))
-//				.orderBy(RUN.START_TIME.desc())
-//				.fetchOptional()
-//				.map(BenchmarkReadAccess::runRecordToRun);
-//		}
-//	}
-//
-//	public Map<CommitHash, Run> getLatestRuns(RepoId repoId, Collection<CommitHash> commitHashes) {
-//		Set<String> commitHashStrings = commitHashes.stream()
-//			.map(CommitHash::getHash)
-//			.collect(toSet());
-//
-//		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-//			return db.select(
-//				RUN.ID,
-//				RUN.AUTHOR,
-//				RUN.RUNNER_NAME,
-//				RUN.RUNNER_INFO,
-//				max(RUN.START_TIME), // Sqlite-specific, grab latest run
-//				RUN.STOP_TIME,
-//				RUN.REPO_ID,
-//				RUN.COMMIT_HASH,
-//				RUN.TAR_DESC,
-//				RUN.ERROR_TYPE,
-//				RUN.ERROR
-//			)
-//				.from(RUN)
-//				.where(RUN.REPO_ID.eq(repoId.getIdAsString()))
-//				.and(RUN.COMMIT_HASH.in(commitHashStrings))
-//				.groupBy(RUN.COMMIT_HASH)
-//				.fetchMap(RUN.COMMIT_HASH)
-//				.entrySet()
-//				.stream()
-//				.collect(Collectors.toMap(
-//					entry -> new CommitHash(entry.getKey()),
-//					entry -> {
-//						var record = entry.getValue();
-//						return new Run(
-//							RunId.fromString(record.value1()), // id
-//							record.value2(), // author
-//							record.value3(), // runner_name
-//							record.value4(), // runner_info
-//							record.value5(), // start_time
-//							record.value6(), // stop_time
-//							AccessUtils.readSource(record.value7(), record.value8(), record.value9()),
-//							readError(record.value10(), record.value11()).orElse(null)
-//						);
-//					}
-//				));
 //		}
 //	}
 }
