@@ -1,6 +1,5 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
-import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.caches.AvailableDimensionsCache;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.DimensionReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Dimension;
@@ -31,17 +30,14 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 public class AllReposEndpoint {
 
-	private final BenchmarkReadAccess benchmarkAccess;
 	private final DimensionReadAccess dimensionAccess;
 	private final RepoReadAccess repoAccess;
 	private final TokenReadAccess tokenAccess;
 	private final AvailableDimensionsCache availableDimensionsCache;
 
-	public AllReposEndpoint(BenchmarkReadAccess benchmarkAccess, DimensionReadAccess dimensionAccess,
-		RepoReadAccess repoAccess, TokenReadAccess tokenAccess,
-		AvailableDimensionsCache availableDimensionsCache) {
+	public AllReposEndpoint(DimensionReadAccess dimensionAccess, RepoReadAccess repoAccess,
+		TokenReadAccess tokenAccess, AvailableDimensionsCache availableDimensionsCache) {
 
-		this.benchmarkAccess = benchmarkAccess;
 		this.dimensionAccess = dimensionAccess;
 		this.repoAccess = repoAccess;
 		this.tokenAccess = tokenAccess;

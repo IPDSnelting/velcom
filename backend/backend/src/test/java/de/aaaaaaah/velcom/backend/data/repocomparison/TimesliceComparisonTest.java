@@ -1,16 +1,16 @@
 package de.aaaaaaah.velcom.backend.data.repocomparison;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Matchers.anyCollection;
+import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.access.entities.Measurement;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementValues;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
 import de.aaaaaaah.velcom.backend.access.entities.RunId;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.Commit;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
@@ -121,7 +121,7 @@ class TimesliceComparisonTest {
 		runMap.put(c3Hash, r3);
 		runMap.put(c4Hash, r4);
 
-		when(benchmarkReadAccess.getLatestRuns(eq(repoId), anyCollection())).thenReturn(runMap);
+		when(benchmarkReadAccess.getLatestRuns(eq(repoId), anySet())).thenReturn(runMap);
 		when(dimensionAccess.getDimensionInfo(dimension)).thenReturn(dimensionInfo);
 	}
 

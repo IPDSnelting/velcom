@@ -2,11 +2,11 @@ package de.aaaaaaah.velcom.backend.data.queue;
 
 import static java.util.stream.Collectors.toList;
 
-import de.aaaaaaah.velcom.backend.access.BenchmarkWriteAccess;
 import de.aaaaaaah.velcom.backend.access.entities.benchmark.NewRun;
 import de.aaaaaaah.velcom.backend.newaccess.archiveaccess.ArchiveReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.archiveaccess.exceptions.TarRetrieveException;
 import de.aaaaaaah.velcom.backend.newaccess.archiveaccess.exceptions.TarTransferException;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.BenchmarkWriteAccess;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.newaccess.taskaccess.TaskWriteAccess;

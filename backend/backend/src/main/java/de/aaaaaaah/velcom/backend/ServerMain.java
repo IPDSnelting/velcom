@@ -2,7 +2,6 @@ package de.aaaaaaah.velcom.backend;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
-import de.aaaaaaah.velcom.backend.access.BenchmarkWriteAccess;
 import de.aaaaaaah.velcom.backend.data.benchrepo.BenchRepo;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.data.recentruns.SignificantRunsCollector;
@@ -11,6 +10,7 @@ import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparator;
 import de.aaaaaaah.velcom.backend.data.runcomparison.SignificanceFactors;
 import de.aaaaaaah.velcom.backend.listener.Listener;
 import de.aaaaaaah.velcom.backend.newaccess.archiveaccess.ArchiveReadAccess;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.BenchmarkWriteAccess;
 import de.aaaaaaah.velcom.backend.newaccess.caches.AvailableDimensionsCache;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.DimensionReadAccess;
@@ -146,9 +146,7 @@ public class ServerMain extends Application<GlobalConfig> {
 			tarFileStorage,
 			configuration.getBenchmarkRepoRemoteUrl()
 		);
-		BenchmarkWriteAccess benchmarkAccess = new BenchmarkWriteAccess(
-			databaseStorage, repoAccess, availableDimensionsCache
-		);
+		BenchmarkWriteAccess benchmarkAccess = new BenchmarkWriteAccess(databaseStorage);
 
 		taskAccess.resetAllTaskStatuses();
 		taskAccess.cleanUpTarFiles();
@@ -187,12 +185,11 @@ public class ServerMain extends Application<GlobalConfig> {
 
 		// Endpoints
 		Stream.of(
-			new AllReposEndpoint(benchmarkAccess, dimensionAccess, repoAccess, tokenAccess,
-				availableDimensionsCache),
-			new CommitEndpoint(commitAccess, repoAccess, benchmarkAccess),
+			new AllReposEndpoint(dimensionAccess, repoAccess, tokenAccess, availableDimensionsCache),
+			new CommitEndpoint(commitAccess, benchmarkAccess),
 			new CompareEndpoint(benchmarkAccess, commitAccess, dimensionAccess, runComparator,
 				significanceFactors),
-			new DebugEndpoint(dimensionAccess, dispatcher),
+			new DebugEndpoint(dispatcher),
 			new GraphComparisonEndpoint(dimensionAccess, comparison),
 			new GraphDetailEndpoint(commitAccess, benchmarkAccess, dimensionAccess, repoAccess),
 			new ListenerEndpoint(listener),

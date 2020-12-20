@@ -16,13 +16,16 @@ import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.CommitSourc
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.RunError;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.RunErrorType;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.TarSource;
+import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Dimension;
+import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.storage.db.DBReadAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import de.aaaaaaah.velcom.shared.util.Either;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import org.jooq.codegen.db.tables.records.RunRecord;
 
@@ -109,6 +112,34 @@ public class BenchmarkReadAccess {
 				);
 			})
 			.collect(toList());
+	}
+
+	public Run getRun(RunId runId) {
+		return null; // TODO: 20.12.20 Implement
+	}
+
+	public Optional<Run> getLatestRun(RepoId repoId, CommitHash commitHash) {
+		return null; // TODO: 20.12.20 Implement
+	}
+
+	public Map<CommitHash, Run> getLatestRuns(RepoId repoId, Set<CommitHash> keySet) {
+		return null; // TODO: 20.12.20 Implement
+	}
+
+	public List<Run> getAllRuns(RepoId repoId, CommitHash hash) {
+		return null; // TODO: 20.12.20 Implement
+	}
+
+	public List<Run> getRecentRuns(int skip, int batchSize) {
+		return null; // TODO: 20.12.20 Implement
+	}
+
+	public Optional<RunId> getLatestRunId(RepoId repoId, CommitHash missingHash) {
+		return null; // TODO: 20.12.20 Implement
+	}
+
+	public Map<CommitHash, RunId> getLatestRunIds(RepoId repoId, List<CommitHash> missingHashes) {
+		return null; // TODO: 20.12.20 Implement
 	}
 
 //	public Run getRun(RunId runId) throws NoSuchRunException {

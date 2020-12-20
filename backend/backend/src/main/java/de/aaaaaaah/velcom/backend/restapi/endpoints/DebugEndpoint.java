@@ -1,6 +1,5 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
-import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.DimensionReadAccess;
 import de.aaaaaaah.velcom.backend.runner.Dispatcher;
 import de.aaaaaaah.velcom.shared.GitProperties;
 import java.util.List;
@@ -18,11 +17,9 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 public class DebugEndpoint {
 
-	private final DimensionReadAccess dimensionAccess;
 	private final Dispatcher dispatcher;
 
-	public DebugEndpoint(DimensionReadAccess dimensionAccess, Dispatcher dispatcher) {
-		this.dimensionAccess = dimensionAccess;
+	public DebugEndpoint(Dispatcher dispatcher) {
 		this.dispatcher = dispatcher;
 	}
 
