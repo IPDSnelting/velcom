@@ -70,10 +70,7 @@ public class NewMeasurement {
 	 * @return the measurement
 	 */
 	public Measurement toMeasurement() {
-		return content.consume(
-			error -> new Measurement(runId, dimension, error),
-			values -> new Measurement(runId, dimension, values)
-		);
+		return new Measurement(runId, dimension, content);
 	}
 
 	@Override

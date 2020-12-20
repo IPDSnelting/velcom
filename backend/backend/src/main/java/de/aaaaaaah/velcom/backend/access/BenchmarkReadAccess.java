@@ -249,23 +249,20 @@ public class BenchmarkReadAccess {
 				measurementRecord.getBenchmark(), measurementRecord.getMetric()
 			);
 
-			final Measurement measurement;
-
 			// Read measurement content
+			final Either<MeasurementError, MeasurementValues> content;
 			if (measurementRecord.getError() != null) {
-				var measurementError = new MeasurementError(measurementRecord.getError());
-				measurement = new Measurement(runId, dimension, measurementError);
+				content = Either.ofLeft(new MeasurementError(measurementRecord.getError()));
 			} else {
-				List<Double> values = valueMap.get(measurementRecord.getId());
-				var measurementValues = new MeasurementValues(values);
-				measurement = new Measurement(runId, dimension, measurementValues);
+				content = Either.ofRight(new MeasurementValues(valueMap.get(measurementRecord.getId())));
 			}
+
+			Measurement measurement = new Measurement(runId, dimension, content);
 
 			// Insert measurement into map
 			if (!runToMeasurementMap.containsKey(runId)) {
 				runToMeasurementMap.put(runId, new ArrayList<>());
 			}
-
 			runToMeasurementMap.get(runId).add(measurement);
 		});
 

@@ -2,7 +2,6 @@ package de.aaaaaaah.velcom.backend.access.entities;
 
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Dimension;
 import de.aaaaaaah.velcom.shared.util.Either;
-import java.util.Objects;
 
 /**
  * A measurement can either be successful, in which case it must contain the measured values and
@@ -15,16 +14,12 @@ public class Measurement {
 	private final Dimension dimension;
 	private final Either<MeasurementError, MeasurementValues> content;
 
-	public Measurement(RunId runId, Dimension dimension, MeasurementError error) {
-		this.runId = Objects.requireNonNull(runId);
-		this.dimension = Objects.requireNonNull(dimension);
-		this.content = Either.ofLeft(error);
-	}
+	public Measurement(RunId runId, Dimension dimension,
+		Either<MeasurementError, MeasurementValues> content) {
 
-	public Measurement(RunId runId, Dimension dimension, MeasurementValues values) {
-		this.runId = Objects.requireNonNull(runId);
-		this.dimension = Objects.requireNonNull(dimension);
-		this.content = Either.ofRight(values);
+		this.runId = runId;
+		this.dimension = dimension;
+		this.content = content;
 	}
 
 	public RunId getRunId() {

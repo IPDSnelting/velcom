@@ -100,13 +100,13 @@ class TimesliceComparisonTest {
 		repoBranches.put(repoId, startBranches);
 
 		m1 = new Measurement(mock(RunId.class), dimension,
-			new MeasurementValues(List.of(1d, 2d, 3d)));
+			Either.ofRight(new MeasurementValues(List.of(1d, 2d, 3d))));
 		m2 = new Measurement(mock(RunId.class), dimension,
-			new MeasurementValues(List.of(4d, 5d, 6d)));
+			Either.ofRight(new MeasurementValues(List.of(4d, 5d, 6d))));
 		m3 = new Measurement(mock(RunId.class), dimension,
-			new MeasurementValues(List.of(7d, 8d, 9d)));
+			Either.ofRight(new MeasurementValues(List.of(7d, 8d, 9d))));
 		m4 = new Measurement(mock(RunId.class), dimension,
-			new MeasurementValues(List.of(10d, 11d, 12d)));
+			Either.ofRight(new MeasurementValues(List.of(10d, 11d, 12d))));
 		r1 = mock(Run.class);
 		r2 = mock(Run.class);
 		r3 = mock(Run.class);
