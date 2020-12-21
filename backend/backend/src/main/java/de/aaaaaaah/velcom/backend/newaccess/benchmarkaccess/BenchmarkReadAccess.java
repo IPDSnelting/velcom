@@ -146,14 +146,14 @@ public class BenchmarkReadAccess {
 			.map(RunId::getIdAsString)
 			.collect(toSet());
 
-		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
+		return databaseStorage.acquireReadTransaction(db -> {
 			List<RunRecord> runRecords = db.selectFrom(RUN)
 				.where(RUN.ID.in(runIdStrings))
 				.stream()
 				.collect(toList());
 
 			return loadRuns(db, runRecords);
-		}
+		});
 	}
 
 	/**
