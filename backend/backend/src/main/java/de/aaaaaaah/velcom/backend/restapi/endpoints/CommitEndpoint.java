@@ -1,8 +1,5 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
-import static java.util.Comparator.comparing;
-
-import de.aaaaaaah.velcom.backend.access.entities.Run;
 import de.aaaaaaah.velcom.backend.access.entities.RunId;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.caches.RunCache;
@@ -17,7 +14,6 @@ import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRunDescription;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRunDescription.JsonSuccess;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonSource;
 import io.micrometer.core.annotation.Timed;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -77,9 +73,7 @@ public class CommitEndpoint {
 			.collect(Collectors.toList());
 
 		List<RunId> runIds = benchmarkAccess.getAllRunIds(repoId, hash);
-		List<Run> runs = new ArrayList<>(runCache.getRuns(benchmarkAccess, runIds).values());
-		runs.sort(comparing(Run::getStartTime));
-		List<JsonRunDescription> jsonRuns = runs.stream()
+		List<JsonRunDescription> runs = runCache.getRunsInOrder(benchmarkAccess, runIds).stream()
 			.map(run -> new JsonRunDescription(
 				run.getId().getId(),
 				run.getStartTime().getEpochSecond(),
@@ -100,7 +94,7 @@ public class CommitEndpoint {
 			commit.getCommitterDate().getEpochSecond(),
 			commit.getSummary(),
 			commit.getMessageWithoutSummary().orElse(null),
-			jsonRuns
+			runs
 		));
 	}
 

@@ -1,9 +1,11 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
 import de.aaaaaaah.velcom.backend.access.entities.Run;
+import de.aaaaaaah.velcom.backend.access.entities.RunId;
 import de.aaaaaaah.velcom.backend.data.recentruns.SignificantRunsCollector;
 import de.aaaaaaah.velcom.backend.data.runcomparison.DimensionDifference;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.BenchmarkReadAccess;
+import de.aaaaaaah.velcom.backend.newaccess.caches.RunCache;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.DimensionReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Dimension;
@@ -38,14 +40,17 @@ public class RecentRunsEndpoint {
 	private final BenchmarkReadAccess benchmarkAccess;
 	private final CommitReadAccess commitAccess;
 	private final DimensionReadAccess dimensionAccess;
+	private final RunCache runCache;
 	private final SignificantRunsCollector significantRunsCollector;
 
 	public RecentRunsEndpoint(BenchmarkReadAccess benchmarkAccess, CommitReadAccess commitAccess,
-		DimensionReadAccess dimensionAccess, SignificantRunsCollector significantRunsCollector) {
+		DimensionReadAccess dimensionAccess, RunCache runCache,
+		SignificantRunsCollector significantRunsCollector) {
 
 		this.benchmarkAccess = benchmarkAccess;
 		this.commitAccess = commitAccess;
 		this.dimensionAccess = dimensionAccess;
+		this.runCache = runCache;
 		this.significantRunsCollector = significantRunsCollector;
 	}
 
@@ -66,7 +71,8 @@ public class RecentRunsEndpoint {
 				.map(run -> toJsonRunEntry(run.getRun(), run.getSignificantDifferences()))
 				.collect(Collectors.toList());
 		} else {
-			runEntries = benchmarkAccess.getRecentRuns(0, n).stream()
+			List<RunId> recentRunIds = benchmarkAccess.getRecentRunIds(0, n);
+			runEntries = runCache.getRunsInOrder(benchmarkAccess, recentRunIds).stream()
 				.map(run -> toJsonRunEntry(run, null))
 				.collect(Collectors.toList());
 		}

@@ -202,7 +202,7 @@ public class ServerMain extends Application<GlobalConfig> {
 			new ListenerEndpoint(listener),
 			new QueueEndpoint(commitAccess, repoAccess, queue, dispatcher),
 			new RecentRunsEndpoint(benchmarkAccess, commitAccess, dimensionAccess,
-				significantRunsCollector),
+				runCache, significantRunsCollector),
 			new RepoEndpoint(dimensionAccess, repoAccess, tokenAccess, availableDimensionsCache,
 				listener),
 			new RunEndpoint(benchmarkAccess, commitAccess, dimensionAccess, runCache, latestRunCache,

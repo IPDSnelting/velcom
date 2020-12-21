@@ -7,6 +7,7 @@ import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 
 import de.aaaaaaah.velcom.backend.access.entities.Run;
+import de.aaaaaaah.velcom.backend.access.entities.RunId;
 import de.aaaaaaah.velcom.backend.data.runcomparison.DimensionDifference;
 import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparator;
 import de.aaaaaaah.velcom.backend.data.runcomparison.SignificanceFactors;
@@ -114,7 +115,8 @@ public class SignificantRunsCollector {
 		//   2.2. Load parent runs per CommitSource
 		// 3. Filter out significant runs
 
-		List<Run> runs = benchmarkAccess.getRecentRuns(skip, SignificantRunsCollector.BATCH_SIZE);
+		List<RunId> recentRunIds = benchmarkAccess.getRecentRunIds(skip, BATCH_SIZE);
+		List<Run> runs = runCache.getRunsInOrder(benchmarkAccess, recentRunIds);
 		Map<RepoId, List<FullCommit>> commitsPerRepo = getCommitsPerRepo(runs);
 		Map<CommitSource, Collection<Run>> parentRunsPerSource = getParentRunsPerSource(commitsPerRepo);
 		Set<Dimension> significantDimensions = dimensionAccess.getSignificantDimensions();

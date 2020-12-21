@@ -176,10 +176,6 @@ public class BenchmarkReadAccess {
 		}
 	}
 
-	public List<Run> getRecentRuns(int skip, int batchSize) {
-		return null; // TODO: 20.12.20 Implement
-	}
-
 	/**
 	 * Get the ids of the most recent runs ordered by their start time.
 	 *
