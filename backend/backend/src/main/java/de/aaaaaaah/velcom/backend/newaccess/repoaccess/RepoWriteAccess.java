@@ -5,6 +5,8 @@ import static org.jooq.codegen.db.tables.Repo.REPO;
 import static org.jooq.impl.DSL.field;
 
 import de.aaaaaaah.velcom.backend.newaccess.caches.AvailableDimensionsCache;
+import de.aaaaaaah.velcom.backend.newaccess.caches.LatestRunCache;
+import de.aaaaaaah.velcom.backend.newaccess.caches.RunCache;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.BranchName;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RemoteUrl;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.Repo;
@@ -26,13 +28,18 @@ import org.jooq.exception.DataAccessException;
 public class RepoWriteAccess extends RepoReadAccess {
 
 	private final AvailableDimensionsCache availableDimensionsCache;
+	private final RunCache runCache;
+	private final LatestRunCache latestRunCache;
 
 	public RepoWriteAccess(DatabaseStorage databaseStorage,
-		AvailableDimensionsCache availableDimensionsCache) {
+		AvailableDimensionsCache availableDimensionsCache, RunCache runCache,
+		LatestRunCache latestRunCache) {
 
 		super(databaseStorage);
 
 		this.availableDimensionsCache = availableDimensionsCache;
+		this.runCache = runCache;
+		this.latestRunCache = latestRunCache;
 	}
 
 	/**
@@ -69,6 +76,11 @@ public class RepoWriteAccess extends RepoReadAccess {
 		}
 
 		availableDimensionsCache.invalidate(repoId);
+
+		// No need to be more efficient about it since this doesn't happen very often anyways.
+		runCache.invalidateAll();
+
+		latestRunCache.invalidate(repoId);
 	}
 
 	/**

@@ -12,6 +12,8 @@ import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.CommitSourc
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.RunError;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.RunErrorType;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.TarSource;
+import de.aaaaaaah.velcom.backend.newaccess.caches.AvailableDimensionsCache;
+import de.aaaaaaah.velcom.backend.newaccess.caches.LatestRunCache;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.DimensionReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Dimension;
@@ -32,8 +34,16 @@ import org.jooq.codegen.db.tables.records.RunRecord;
 
 public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 
-	public BenchmarkWriteAccess(DatabaseStorage databaseStorage) {
+	private final AvailableDimensionsCache availableDimensionsCache;
+	private final LatestRunCache latestRunCache;
+
+	public BenchmarkWriteAccess(DatabaseStorage databaseStorage,
+		AvailableDimensionsCache availableDimensionsCache, LatestRunCache latestRunCache) {
+
 		super(databaseStorage);
+
+		this.availableDimensionsCache = availableDimensionsCache;
+		this.latestRunCache = latestRunCache;
 	}
 
 	/**
@@ -49,6 +59,10 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 			insertNewRun(db, newRun);
 			insertNewMeasurements(db, newRun);
 		});
+
+		newRun.getRepoId().ifPresent(availableDimensionsCache::invalidate);
+		newRun.getSource().getLeft().ifPresent(
+			commitSource -> latestRunCache.invalidate(commitSource.getRepoId(), commitSource.getHash()));
 	}
 
 	private void deleteTask(DBWriteAccess db, TaskId taskId) {

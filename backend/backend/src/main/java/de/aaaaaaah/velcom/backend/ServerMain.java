@@ -136,7 +136,8 @@ public class ServerMain extends Application<GlobalConfig> {
 		TaskWriteAccess taskAccess = new TaskWriteAccess(databaseStorage, tarFileStorage);
 		CommitReadAccess commitAccess = new CommitReadAccess(databaseStorage);
 		DimensionReadAccess dimensionAccess = new DimensionReadAccess(databaseStorage);
-		RepoWriteAccess repoAccess = new RepoWriteAccess(databaseStorage, availableDimensionsCache);
+		RepoWriteAccess repoAccess = new RepoWriteAccess(databaseStorage, availableDimensionsCache,
+			runCache, latestRunCache);
 		TokenWriteAccess tokenAccess = new TokenWriteAccess(
 			databaseStorage,
 			new AuthToken(configuration.getWebAdminToken()),
@@ -150,7 +151,8 @@ public class ServerMain extends Application<GlobalConfig> {
 			tarFileStorage,
 			configuration.getBenchmarkRepoRemoteUrl()
 		);
-		BenchmarkWriteAccess benchmarkAccess = new BenchmarkWriteAccess(databaseStorage);
+		BenchmarkWriteAccess benchmarkAccess = new BenchmarkWriteAccess(databaseStorage,
+			availableDimensionsCache, latestRunCache);
 
 		taskAccess.resetAllTaskStatuses();
 		taskAccess.cleanUpTarFiles();
