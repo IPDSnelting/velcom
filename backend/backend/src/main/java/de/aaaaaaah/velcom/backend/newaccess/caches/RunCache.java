@@ -15,6 +15,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Caches runs by their id. Needs to be invalidated when runs or repos are deleted (but not when
+ * runs are added, since it only stores those runs that exist).
+ */
+// TODO: 21.12.20 Also store which runs don't exist?
 public class RunCache {
 
 	private static final int MAXIMUM_SIZE = 10000;

@@ -12,7 +12,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Caches repos' available dimensions. Needs to be invalidated when runs are added or deleted.
+ * Caches repos' available dimensions. Needs to be invalidated when runs are added or deleted, or
+ * when repos are deleted.
  */
 public class AvailableDimensionsCache {
 

@@ -17,6 +17,10 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Caches the latest runs for a commit. Needs to be invalidated when runs are added or deleted, or
+ * when repos are deleted.
+ */
 public class LatestRunCache {
 
 	private static final int MAXIMUM_SIZE = 10000;
