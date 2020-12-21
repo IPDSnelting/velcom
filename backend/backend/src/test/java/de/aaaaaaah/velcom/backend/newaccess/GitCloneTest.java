@@ -1,4 +1,4 @@
-package de.aaaaaaah.velcom.backend.access;
+package de.aaaaaaah.velcom.backend.newaccess;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -14,6 +14,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Tests jgit's behaviour when cloning repos with submodules.
+ */
 class GitCloneTest {
 
 	@TempDir
@@ -37,7 +40,7 @@ class GitCloneTest {
 		// Write file to submodule
 		Files.writeString(submodulePath.resolve("test.txt"), "Version 1");
 
-		// commit it
+		// Commit it
 		Git subGit = Git.open(submodulePath.toFile());
 		subGit.add().addFilepattern("test.txt").call();
 		subGit.commit().setMessage("Hey").setAuthor("Aith", "er").call();
@@ -65,7 +68,7 @@ class GitCloneTest {
 			Git.wrap(submoduleWalk.getRepository()).pull().setStrategy(MergeStrategy.THEIRS).call();
 		}
 		repoGit.add().addFilepattern("submodule").call();
-		// commit modification
+		// Commit modification
 		repoGit.commit().setAuthor("Auth", "er").setMessage("Updated submodule").call();
 
 		Git.init().setDirectory(tempDir.resolve("bench_repo").toFile()).call();
