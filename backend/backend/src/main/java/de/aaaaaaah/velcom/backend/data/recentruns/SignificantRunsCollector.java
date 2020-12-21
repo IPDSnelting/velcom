@@ -12,6 +12,8 @@ import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparator;
 import de.aaaaaaah.velcom.backend.data.runcomparison.SignificanceFactors;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.CommitSource;
+import de.aaaaaaah.velcom.backend.newaccess.caches.LatestRunCache;
+import de.aaaaaaah.velcom.backend.newaccess.caches.RunCache;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.Commit;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
@@ -41,16 +43,21 @@ public class SignificantRunsCollector {
 	private final BenchmarkReadAccess benchmarkAccess;
 	private final CommitReadAccess commitAccess;
 	private final DimensionReadAccess dimensionAccess;
+	private final RunCache runCache;
+	private final LatestRunCache latestRunCache;
 	private final RunComparator runComparator;
 
 	public SignificantRunsCollector(SignificanceFactors significanceFactors,
 		BenchmarkReadAccess benchmarkAccess, CommitReadAccess commitAccess,
-		DimensionReadAccess dimensionAccess, RunComparator runComparator) {
+		DimensionReadAccess dimensionAccess, RunCache runCache, LatestRunCache latestRunCache,
+		RunComparator runComparator) {
 
 		this.significanceFactors = significanceFactors;
 		this.benchmarkAccess = Objects.requireNonNull(benchmarkAccess);
 		this.commitAccess = Objects.requireNonNull(commitAccess);
 		this.dimensionAccess = dimensionAccess;
+		this.runCache = runCache;
+		this.latestRunCache = latestRunCache;
 		this.runComparator = Objects.requireNonNull(runComparator);
 	}
 
@@ -73,8 +80,8 @@ public class SignificantRunsCollector {
 			source.getRepoId(),
 			source.getHash()
 		);
-		Collection<Run> parentRuns = benchmarkAccess
-			.getLatestRuns(source.getRepoId(), parentHashes)
+		Collection<Run> parentRuns = latestRunCache
+			.getLatestRuns(benchmarkAccess, runCache, source.getRepoId(), parentHashes)
 			.values();
 
 		Set<Dimension> significantDimensions = dimensionAccess.getSignificantDimensions();
@@ -138,7 +145,9 @@ public class SignificantRunsCollector {
 			Set<CommitHash> parentHashes = commits.stream()
 				.flatMap(commit -> commit.getParentHashes().stream())
 				.collect(toSet());
-			parentRuns.put(repoId, benchmarkAccess.getLatestRuns(repoId, parentHashes));
+			Map<CommitHash, Run> latestRuns = latestRunCache
+				.getLatestRuns(benchmarkAccess, runCache, repoId, parentHashes);
+			parentRuns.put(repoId, latestRuns);
 		});
 
 		return commitsPerRepo.values().stream()

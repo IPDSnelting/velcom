@@ -7,6 +7,8 @@ import de.aaaaaaah.velcom.backend.access.entities.Measurement;
 import de.aaaaaaah.velcom.backend.access.entities.MeasurementValues;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.BenchmarkReadAccess;
+import de.aaaaaaah.velcom.backend.newaccess.caches.LatestRunCache;
+import de.aaaaaaah.velcom.backend.newaccess.caches.RunCache;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.Commit;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
@@ -61,14 +63,19 @@ public class GraphDetailEndpoint {
 	private final BenchmarkReadAccess benchmarkAccess;
 	private final DimensionReadAccess dimensionAccess;
 	private final RepoReadAccess repoAccess;
+	private final RunCache runCache;
+	private final LatestRunCache latestRunCache;
 
 	public GraphDetailEndpoint(CommitReadAccess commitAccess, BenchmarkReadAccess benchmarkAccess,
-		DimensionReadAccess dimensionAccess, RepoReadAccess repoAccess) {
+		DimensionReadAccess dimensionAccess, RepoReadAccess repoAccess, RunCache runCache,
+		LatestRunCache latestRunCache) {
 
 		this.commitAccess = commitAccess;
 		this.benchmarkAccess = benchmarkAccess;
 		this.dimensionAccess = dimensionAccess;
 		this.repoAccess = repoAccess;
+		this.runCache = runCache;
+		this.latestRunCache = latestRunCache;
 	}
 
 	@GET
@@ -116,7 +123,8 @@ public class GraphDetailEndpoint {
 		commits.sort(Comparator.comparing(Commit::getCommitterDate));
 
 		// Obtain the relevant runs
-		Map<CommitHash, Run> runs = benchmarkAccess.getLatestRuns(repoId, hashes.keySet());
+		Map<CommitHash, Run> runs = latestRunCache
+			.getLatestRuns(benchmarkAccess, runCache, repoId, hashes.keySet());
 
 		// Finally, put everything together.
 		List<JsonDimension> jsonDimensions = existingDimensions.stream()

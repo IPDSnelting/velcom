@@ -5,6 +5,8 @@ import de.aaaaaaah.velcom.backend.access.entities.RunId;
 import de.aaaaaaah.velcom.backend.data.runcomparison.SignificanceFactors;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.exceptions.NoSuchRunException;
+import de.aaaaaaah.velcom.backend.newaccess.caches.LatestRunCache;
+import de.aaaaaaah.velcom.backend.newaccess.caches.RunCache;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.DimensionReadAccess;
@@ -45,17 +47,17 @@ public class EndpointUtils {
 	 * @return the run if it can be found
 	 * @throws NoSuchRunException if the specified run does not exist
 	 */
-	public static Run getRun(BenchmarkReadAccess benchmarkAccess, UUID id, @Nullable String hash)
-		throws NoSuchRunException {
+	public static Run getRun(BenchmarkReadAccess benchmarkAccess, RunCache runCache,
+		LatestRunCache latestRunCache, UUID id, @Nullable String hash) throws NoSuchRunException {
 
 		if (hash == null) {
 			RunId runId = new RunId(id);
-			return benchmarkAccess.getRun(runId);
+			return runCache.getRun(benchmarkAccess, runId);
 		} else {
 			RepoId repoId = new RepoId(id);
 			CommitHash commitHash = new CommitHash(hash);
 			// TODO use exception instead
-			return benchmarkAccess.getLatestRun(repoId, commitHash).get();
+			return latestRunCache.getLatestRun(benchmarkAccess, runCache, repoId, commitHash).get();
 		}
 	}
 

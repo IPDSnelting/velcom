@@ -12,6 +12,8 @@ import de.aaaaaaah.velcom.backend.listener.Listener;
 import de.aaaaaaah.velcom.backend.newaccess.archiveaccess.ArchiveReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.BenchmarkWriteAccess;
 import de.aaaaaaah.velcom.backend.newaccess.caches.AvailableDimensionsCache;
+import de.aaaaaaah.velcom.backend.newaccess.caches.LatestRunCache;
+import de.aaaaaaah.velcom.backend.newaccess.caches.RunCache;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.DimensionReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.RepoWriteAccess;
@@ -127,6 +129,8 @@ public class ServerMain extends Application<GlobalConfig> {
 
 		// Caches
 		AvailableDimensionsCache availableDimensionsCache = new AvailableDimensionsCache();
+		LatestRunCache latestRunCache = new LatestRunCache();
+		RunCache runCache = new RunCache();
 
 		// Access layer
 		TaskWriteAccess taskAccess = new TaskWriteAccess(databaseStorage, tarFileStorage);
@@ -161,10 +165,11 @@ public class ServerMain extends Application<GlobalConfig> {
 		);
 		RunComparator runComparator = new RunComparator(significanceFactors);
 		TimesliceComparison comparison = new TimesliceComparison(
-			benchmarkAccess, commitAccess, dimensionAccess
-		);
+			benchmarkAccess, commitAccess, dimensionAccess,
+			runCache, latestRunCache);
 		SignificantRunsCollector significantRunsCollector = new SignificantRunsCollector(
-			significanceFactors, benchmarkAccess, commitAccess, dimensionAccess, runComparator
+			significanceFactors, benchmarkAccess, commitAccess, dimensionAccess, runCache, latestRunCache,
+			runComparator
 		);
 
 		// Listener
@@ -187,18 +192,21 @@ public class ServerMain extends Application<GlobalConfig> {
 		Stream.of(
 			new AllReposEndpoint(dimensionAccess, repoAccess, tokenAccess, availableDimensionsCache),
 			new CommitEndpoint(commitAccess, benchmarkAccess),
-			new CompareEndpoint(benchmarkAccess, commitAccess, dimensionAccess, runComparator,
+			new CompareEndpoint(benchmarkAccess, commitAccess, dimensionAccess, runCache, latestRunCache,
+				runComparator,
 				significanceFactors),
 			new DebugEndpoint(dispatcher),
 			new GraphComparisonEndpoint(dimensionAccess, comparison),
-			new GraphDetailEndpoint(commitAccess, benchmarkAccess, dimensionAccess, repoAccess),
+			new GraphDetailEndpoint(commitAccess, benchmarkAccess, dimensionAccess, repoAccess, runCache,
+				latestRunCache),
 			new ListenerEndpoint(listener),
 			new QueueEndpoint(commitAccess, repoAccess, queue, dispatcher),
 			new RecentRunsEndpoint(benchmarkAccess, commitAccess, dimensionAccess,
 				significantRunsCollector),
 			new RepoEndpoint(dimensionAccess, repoAccess, tokenAccess, availableDimensionsCache,
 				listener),
-			new RunEndpoint(benchmarkAccess, commitAccess, dimensionAccess, runComparator,
+			new RunEndpoint(benchmarkAccess, commitAccess, dimensionAccess, runCache, latestRunCache,
+				runComparator,
 				significanceFactors, significantRunsCollector),
 			new TestTokenEndpoint()
 		).forEach(endpoint -> environment.jersey().register(endpoint));

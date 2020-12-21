@@ -6,6 +6,8 @@ import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparison;
 import de.aaaaaaah.velcom.backend.data.runcomparison.SignificanceFactors;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.exceptions.NoSuchRunException;
+import de.aaaaaaah.velcom.backend.newaccess.caches.LatestRunCache;
+import de.aaaaaaah.velcom.backend.newaccess.caches.RunCache;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.DimensionReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Dimension;
@@ -35,16 +37,20 @@ public class CompareEndpoint {
 	private final BenchmarkReadAccess benchmarkAccess;
 	private final CommitReadAccess commitAccess;
 	private final DimensionReadAccess dimensionAccess;
+	private final RunCache runCache;
+	private final LatestRunCache latestRunCache;
 	private final RunComparator comparer;
 	private final SignificanceFactors significanceFactors;
 
 	public CompareEndpoint(BenchmarkReadAccess benchmarkAccess, CommitReadAccess commitAccess,
-		DimensionReadAccess dimensionAccess, RunComparator comparer,
-		SignificanceFactors significanceFactors) {
+		DimensionReadAccess dimensionAccess, RunCache runCache, LatestRunCache latestRunCache,
+		RunComparator comparer, SignificanceFactors significanceFactors) {
 
 		this.benchmarkAccess = benchmarkAccess;
 		this.commitAccess = commitAccess;
 		this.dimensionAccess = dimensionAccess;
+		this.runCache = runCache;
+		this.latestRunCache = latestRunCache;
 		this.comparer = comparer;
 		this.significanceFactors = significanceFactors;
 	}
@@ -60,8 +66,8 @@ public class CompareEndpoint {
 	) throws NoSuchRunException {
 		boolean allValues = (allValuesOptional != null) && allValuesOptional;
 
-		Run run1 = EndpointUtils.getRun(benchmarkAccess, runUuid1, hash1);
-		Run run2 = EndpointUtils.getRun(benchmarkAccess, runUuid2, hash2);
+		Run run1 = EndpointUtils.getRun(benchmarkAccess, runCache, latestRunCache, runUuid1, hash1);
+		Run run2 = EndpointUtils.getRun(benchmarkAccess, runCache, latestRunCache, runUuid2, hash2);
 
 		RunComparison comparison = comparer.compare(run1, run2);
 

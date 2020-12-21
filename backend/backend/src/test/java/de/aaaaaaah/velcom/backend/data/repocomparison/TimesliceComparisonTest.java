@@ -1,6 +1,7 @@
 package de.aaaaaaah.velcom.backend.data.repocomparison;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -11,6 +12,8 @@ import de.aaaaaaah.velcom.backend.access.entities.MeasurementValues;
 import de.aaaaaaah.velcom.backend.access.entities.Run;
 import de.aaaaaaah.velcom.backend.access.entities.RunId;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.BenchmarkReadAccess;
+import de.aaaaaaah.velcom.backend.newaccess.caches.LatestRunCache;
+import de.aaaaaaah.velcom.backend.newaccess.caches.RunCache;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.Commit;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
@@ -37,6 +40,8 @@ class TimesliceComparisonTest {
 	private BenchmarkReadAccess benchmarkReadAccess;
 	private CommitReadAccess commitReadAccess;
 	private DimensionReadAccess dimensionAccess;
+	private RunCache runCache;
+	private LatestRunCache latestRunCache;
 	private RepoComparison comparison;
 
 	private Dimension dimension;
@@ -70,7 +75,10 @@ class TimesliceComparisonTest {
 		benchmarkReadAccess = mock(BenchmarkReadAccess.class);
 		commitReadAccess = mock(CommitReadAccess.class);
 		dimensionAccess = mock(DimensionReadAccess.class);
-		comparison = new TimesliceComparison(benchmarkReadAccess, commitReadAccess, dimensionAccess);
+		runCache = mock(RunCache.class);
+		latestRunCache = mock(LatestRunCache.class);
+		comparison = new TimesliceComparison(benchmarkReadAccess, commitReadAccess, dimensionAccess,
+			runCache, latestRunCache);
 
 		c1Hash = new CommitHash("hash1");
 		c2Hash = new CommitHash("hash2");
@@ -121,7 +129,13 @@ class TimesliceComparisonTest {
 		runMap.put(c3Hash, r3);
 		runMap.put(c4Hash, r4);
 
-		when(benchmarkReadAccess.getLatestRuns(eq(repoId), anySet())).thenReturn(runMap);
+		when(latestRunCache.getLatestRuns(
+			any(BenchmarkReadAccess.class),
+			any(RunCache.class),
+			eq(repoId),
+			anySet()
+		)).thenReturn(runMap);
+
 		when(dimensionAccess.getDimensionInfo(dimension)).thenReturn(dimensionInfo);
 	}
 

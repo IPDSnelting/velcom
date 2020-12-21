@@ -11,6 +11,8 @@ import de.aaaaaaah.velcom.backend.data.repocomparison.grouping.GroupByDay;
 import de.aaaaaaah.velcom.backend.data.repocomparison.grouping.GroupByHour;
 import de.aaaaaaah.velcom.backend.data.repocomparison.grouping.GroupByWeek;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.BenchmarkReadAccess;
+import de.aaaaaaah.velcom.backend.newaccess.caches.LatestRunCache;
+import de.aaaaaaah.velcom.backend.newaccess.caches.RunCache;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.Commit;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
@@ -55,6 +57,8 @@ public class TimesliceComparison implements RepoComparison {
 	private final BenchmarkReadAccess benchmarkAccess;
 	private final CommitReadAccess commitAccess;
 	private final DimensionReadAccess dimensionAccess;
+	private final RunCache runCache;
+	private final LatestRunCache latestRunCache;
 
 	/**
 	 * Constructs a new time slice comparison.
@@ -62,13 +66,17 @@ public class TimesliceComparison implements RepoComparison {
 	 * @param benchmarkAccess the benchmark access used to collect benchmark data
 	 * @param commitAccess the commit access used to collect commit data
 	 * @param dimensionAccess the dimension access
+	 * @param runCache
+	 * @param latestRunCache
 	 */
 	public TimesliceComparison(BenchmarkReadAccess benchmarkAccess, CommitReadAccess commitAccess,
-		DimensionReadAccess dimensionAccess) {
+		DimensionReadAccess dimensionAccess, RunCache runCache, LatestRunCache latestRunCache) {
 
 		this.benchmarkAccess = benchmarkAccess;
 		this.commitAccess = commitAccess;
 		this.dimensionAccess = dimensionAccess;
+		this.runCache = runCache;
+		this.latestRunCache = latestRunCache;
 	}
 
 	@Override
@@ -116,7 +124,8 @@ public class TimesliceComparison implements RepoComparison {
 			.collect(toMap(Commit::getHash, commit -> commit));
 
 		// 2.) Get relevant runs & values
-		Map<CommitHash, Run> latestRuns = benchmarkAccess.getLatestRuns(repoId, commitMap.keySet());
+		Map<CommitHash, Run> latestRuns = latestRunCache
+			.getLatestRuns(benchmarkAccess, runCache, repoId, commitMap.keySet());
 
 		if (latestRuns.isEmpty()) {
 			return Optional.empty(); // No graph data available

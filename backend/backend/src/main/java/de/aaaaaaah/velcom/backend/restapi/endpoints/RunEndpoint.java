@@ -12,6 +12,8 @@ import de.aaaaaaah.velcom.backend.data.runcomparison.SignificanceFactors;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.CommitSource;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.exceptions.NoSuchRunException;
+import de.aaaaaaah.velcom.backend.newaccess.caches.LatestRunCache;
+import de.aaaaaaah.velcom.backend.newaccess.caches.RunCache;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.DimensionReadAccess;
@@ -45,18 +47,22 @@ public class RunEndpoint {
 	private final BenchmarkReadAccess benchmarkAccess;
 	private final CommitReadAccess commitAccess;
 	private final DimensionReadAccess dimensionAccess;
+	private final RunCache runCache;
+	private final LatestRunCache latestRunCache;
 	private final RunComparator comparer;
 	private final SignificanceFactors significanceFactors;
 	private final SignificantRunsCollector significantRunsCollector;
 
 	public RunEndpoint(BenchmarkReadAccess benchmarkAccess, CommitReadAccess commitAccess,
-		DimensionReadAccess dimensionAccess, RunComparator comparer,
-		SignificanceFactors significanceFactors,
+		DimensionReadAccess dimensionAccess, RunCache runCache, LatestRunCache latestRunCache,
+		RunComparator comparer, SignificanceFactors significanceFactors,
 		SignificantRunsCollector significantRunsCollector) {
 
 		this.benchmarkAccess = benchmarkAccess;
 		this.commitAccess = commitAccess;
 		this.dimensionAccess = dimensionAccess;
+		this.runCache = runCache;
+		this.latestRunCache = latestRunCache;
 		this.comparer = comparer;
 		this.significanceFactors = significanceFactors;
 		this.significantRunsCollector = significantRunsCollector;
@@ -74,7 +80,8 @@ public class RunEndpoint {
 			.iterator();
 		if (parentHashIt.hasNext()) {
 			CommitHash parentHash = parentHashIt.next();
-			return benchmarkAccess.getLatestRun(commitSource.getRepoId(), parentHash);
+			return latestRunCache
+				.getLatestRun(benchmarkAccess, runCache, commitSource.getRepoId(), parentHash);
 		} else {
 			return Optional.empty(); // No unambiguous previous commit
 		}
@@ -91,7 +98,7 @@ public class RunEndpoint {
 		boolean allValues = (allValuesOptional != null) && allValuesOptional;
 		boolean diffPrev = (diffPrevOptional != null) && diffPrevOptional;
 
-		Run run = EndpointUtils.getRun(benchmarkAccess, runUuid, hashString);
+		Run run = EndpointUtils.getRun(benchmarkAccess, runCache, latestRunCache, runUuid, hashString);
 
 		// Obtain differences to previous run
 		Optional<List<JsonDimensionDifference>> differences;
