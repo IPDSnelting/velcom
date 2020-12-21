@@ -60,6 +60,7 @@ public class RunnerConnection implements WebSocketListener, WebSocketFrameListen
 
 		addCloseListener(this.periodicStatusRequester::cancel);
 		addCloseListener(this.heartbeatHandler::shutdown);
+		addCloseListener(() -> LOGGER.info("Connection to '{}' closed", runner.getRunnerName()));
 	}
 
 	/**

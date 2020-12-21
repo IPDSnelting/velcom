@@ -56,6 +56,9 @@ public class PeriodicStatusRequester {
 				//noinspection BusyWait
 				Thread.sleep(Delays.REQUEST_STATUS_INTERVAL.toMillis());
 			} catch (Exception e) {
+				if (cancelled) {
+					return;
+				}
 				LOGGER.error("Error communicating with runner or handling results", e);
 				try {
 					clearResults();
