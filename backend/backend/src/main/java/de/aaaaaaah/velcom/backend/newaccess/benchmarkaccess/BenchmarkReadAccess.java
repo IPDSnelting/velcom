@@ -121,6 +121,10 @@ public class BenchmarkReadAccess {
 		return null; // TODO: 20.12.20 Implement
 	}
 
+	public List<Run> getRuns(Collection<RunId> runIds) {
+		return null; // TODO: 21.12.20 Implement
+	}
+
 	public Optional<Run> getLatestRun(RepoId repoId, CommitHash commitHash) {
 		return null; // TODO: 20.12.20 Implement
 	}

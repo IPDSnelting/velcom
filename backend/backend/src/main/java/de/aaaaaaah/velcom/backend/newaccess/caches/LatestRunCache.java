@@ -4,6 +4,7 @@ import static java.util.stream.Collectors.toMap;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import de.aaaaaaah.velcom.backend.access.entities.Run;
 import de.aaaaaaah.velcom.backend.access.entities.RunId;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
@@ -12,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -43,9 +45,8 @@ public class LatestRunCache {
 		);
 	}
 
-	public Map<CommitHash, Optional<RunId>> getLatestRunIds(BenchmarkReadAccess benchmarkAccess,
-		RepoId repoId,
-		Collection<CommitHash> commitHashes) {
+	public Map<CommitHash, RunId> getLatestRunIds(BenchmarkReadAccess benchmarkAccess,
+		RepoId repoId, Collection<CommitHash> commitHashes) {
 
 		return getCacheForRepo(repoId).getAll(
 			commitHashes,
@@ -59,7 +60,32 @@ public class LatestRunCache {
 						it -> Optional.ofNullable(missingIds.get(it))
 					));
 			}
-		);
+		).entrySet().stream()
+			.filter(entry -> entry.getValue().isPresent())
+			.collect(toMap(
+				Entry::getKey,
+				entry -> entry.getValue().get()
+			));
+	}
+
+	public Optional<Run> getLatestRun(BenchmarkReadAccess benchmarkAccess, RunCache runCache,
+		RepoId repoId, CommitHash commitHash) {
+
+		return getLatestRunId(benchmarkAccess, repoId, commitHash)
+			.map(runId -> runCache.getRun(benchmarkAccess, runId));
+	}
+
+	public Map<CommitHash, Run> getLatestRuns(BenchmarkReadAccess benchmarkAccess, RunCache runCache,
+		RepoId repoId, Collection<CommitHash> commitHashes) {
+
+		Map<CommitHash, RunId> latestRunIds = getLatestRunIds(benchmarkAccess, repoId, commitHashes);
+		Map<RunId, Run> runs = runCache.getRuns(benchmarkAccess, latestRunIds.values());
+
+		return latestRunIds.entrySet().stream()
+			.collect(toMap(
+				Entry::getKey,
+				entry -> runs.get(entry.getValue())
+			));
 	}
 
 	public void invalidate(RepoId repoId, CommitHash commitHash) {
