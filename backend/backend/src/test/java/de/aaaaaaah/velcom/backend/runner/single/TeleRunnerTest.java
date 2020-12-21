@@ -10,11 +10,11 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import de.aaaaaaah.velcom.backend.access.entities.RunId;
-import de.aaaaaaah.velcom.backend.access.entities.benchmark.NewRun;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.RunId;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.builder.NewRun;
 import de.aaaaaaah.velcom.backend.data.benchrepo.BenchRepo;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
-import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.CommitSource;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.sources.CommitSource;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.RunError;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.RunErrorType;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;

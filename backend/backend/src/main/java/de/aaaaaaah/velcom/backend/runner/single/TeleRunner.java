@@ -1,10 +1,10 @@
 package de.aaaaaaah.velcom.backend.runner.single;
 
-import de.aaaaaaah.velcom.backend.access.entities.RunBuilder;
-import de.aaaaaaah.velcom.backend.access.entities.benchmark.NewRun;
 import de.aaaaaaah.velcom.backend.data.benchrepo.BenchRepo;
 import de.aaaaaaah.velcom.backend.newaccess.archiveaccess.exceptions.TarRetrieveException;
 import de.aaaaaaah.velcom.backend.newaccess.archiveaccess.exceptions.TarTransferException;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.builder.NewRun;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.builder.RunBuilder;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.RunErrorType;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Dimension;

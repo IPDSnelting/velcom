@@ -1,6 +1,6 @@
 package de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities;
 
-import de.aaaaaaah.velcom.backend.access.entities.RunId;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.RunId;
 import java.util.Objects;
 import java.util.UUID;
 

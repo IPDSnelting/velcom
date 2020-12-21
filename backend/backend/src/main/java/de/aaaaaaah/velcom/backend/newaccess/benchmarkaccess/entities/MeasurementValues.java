@@ -1,4 +1,4 @@
-package de.aaaaaaah.velcom.backend.access.entities;
+package de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities;
 
 import de.aaaaaaah.velcom.backend.data.runcomparison.SignificanceFactors;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Interpretation;

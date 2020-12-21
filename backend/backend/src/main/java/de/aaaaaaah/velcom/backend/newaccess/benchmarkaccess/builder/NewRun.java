@@ -1,13 +1,13 @@
-package de.aaaaaaah.velcom.backend.access.entities.benchmark;
+package de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.builder;
 
 import static java.util.stream.Collectors.toList;
 
-import de.aaaaaaah.velcom.backend.access.entities.Measurement;
-import de.aaaaaaah.velcom.backend.access.entities.Run;
-import de.aaaaaaah.velcom.backend.access.entities.RunId;
-import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.CommitSource;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.Measurement;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.Run;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.RunError;
-import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.TarSource;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.RunId;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.sources.CommitSource;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.sources.TarSource;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.shared.util.Either;
 import java.time.Instant;

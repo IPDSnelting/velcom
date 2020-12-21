@@ -1,7 +1,7 @@
 package de.aaaaaaah.velcom.backend.restapi.jsonobjects;
 
-import de.aaaaaaah.velcom.backend.access.entities.Measurement;
 import de.aaaaaaah.velcom.backend.data.runcomparison.SignificanceFactors;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.Measurement;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.DimensionInfo;
 import java.util.List;
 import javax.annotation.Nullable;

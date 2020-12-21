@@ -1,7 +1,7 @@
 package de.aaaaaaah.velcom.backend.runner;
 
-import de.aaaaaaah.velcom.backend.access.entities.benchmark.NewRun;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.builder.NewRun;
 import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.Task;
 import de.aaaaaaah.velcom.backend.runner.single.TeleRunner;
 import de.aaaaaaah.velcom.shared.util.execution.DaemonThreadFactory;

@@ -5,13 +5,13 @@ import static java.util.stream.Collectors.toMap;
 import static org.jooq.codegen.db.Tables.DIMENSION;
 import static org.jooq.codegen.db.tables.Task.TASK;
 
-import de.aaaaaaah.velcom.backend.access.entities.MeasurementError;
-import de.aaaaaaah.velcom.backend.access.entities.benchmark.NewMeasurement;
-import de.aaaaaaah.velcom.backend.access.entities.benchmark.NewRun;
-import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.CommitSource;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.MeasurementError;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.builder.NewMeasurement;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.builder.NewRun;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.sources.CommitSource;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.RunError;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.RunErrorType;
-import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.TarSource;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.sources.TarSource;
 import de.aaaaaaah.velcom.backend.newaccess.caches.AvailableDimensionsCache;
 import de.aaaaaaah.velcom.backend.newaccess.caches.LatestRunCache;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;

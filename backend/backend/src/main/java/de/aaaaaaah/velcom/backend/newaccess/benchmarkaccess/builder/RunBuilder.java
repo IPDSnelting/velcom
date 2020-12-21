@@ -1,11 +1,12 @@
-package de.aaaaaaah.velcom.backend.access.entities;
+package de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.builder;
 
-import de.aaaaaaah.velcom.backend.access.entities.benchmark.NewMeasurement;
-import de.aaaaaaah.velcom.backend.access.entities.benchmark.NewRun;
-import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.CommitSource;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.MeasurementError;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.MeasurementValues;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.RunError;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.RunErrorType;
-import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.TarSource;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.RunId;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.sources.CommitSource;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.sources.TarSource;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Dimension;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Interpretation;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Unit;

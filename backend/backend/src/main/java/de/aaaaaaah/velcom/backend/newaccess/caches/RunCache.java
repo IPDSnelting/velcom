@@ -5,9 +5,9 @@ import static java.util.stream.Collectors.toMap;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import de.aaaaaaah.velcom.backend.access.entities.Run;
-import de.aaaaaaah.velcom.backend.access.entities.RunId;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.BenchmarkReadAccess;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.Run;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.RunId;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.exceptions.NoSuchRunException;
 import java.util.ArrayList;
 import java.util.Collection;

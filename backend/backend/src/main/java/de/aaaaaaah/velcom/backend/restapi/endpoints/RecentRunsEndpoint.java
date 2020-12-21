@@ -1,10 +1,10 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
-import de.aaaaaaah.velcom.backend.access.entities.Run;
-import de.aaaaaaah.velcom.backend.access.entities.RunId;
 import de.aaaaaaah.velcom.backend.data.recentruns.SignificantRunsCollector;
 import de.aaaaaaah.velcom.backend.data.runcomparison.DimensionDifference;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.BenchmarkReadAccess;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.Run;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.RunId;
 import de.aaaaaaah.velcom.backend.newaccess.caches.RunCache;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.DimensionReadAccess;

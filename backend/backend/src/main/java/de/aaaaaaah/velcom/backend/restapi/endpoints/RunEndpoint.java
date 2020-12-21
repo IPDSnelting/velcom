@@ -2,7 +2,6 @@ package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
 import static java.util.stream.Collectors.toList;
 
-import de.aaaaaaah.velcom.backend.access.entities.Run;
 import de.aaaaaaah.velcom.backend.data.recentruns.SignificantRun;
 import de.aaaaaaah.velcom.backend.data.recentruns.SignificantRunsCollector;
 import de.aaaaaaah.velcom.backend.data.runcomparison.DimensionDifference;
@@ -10,7 +9,8 @@ import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparator;
 import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparison;
 import de.aaaaaaah.velcom.backend.data.runcomparison.SignificanceFactors;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.BenchmarkReadAccess;
-import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.CommitSource;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.Run;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.sources.CommitSource;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.exceptions.NoSuchRunException;
 import de.aaaaaaah.velcom.backend.newaccess.caches.LatestRunCache;
 import de.aaaaaaah.velcom.backend.newaccess.caches.RunCache;

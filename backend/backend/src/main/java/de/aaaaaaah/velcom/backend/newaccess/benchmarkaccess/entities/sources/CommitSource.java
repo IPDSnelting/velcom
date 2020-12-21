@@ -1,4 +1,4 @@
-package de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities;
+package de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.sources;
 
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.Commit;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;

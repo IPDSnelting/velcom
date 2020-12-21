@@ -1,7 +1,7 @@
 package de.aaaaaaah.velcom.backend.restapi.jsonobjects;
 
-import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.CommitSource;
-import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.TarSource;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.sources.CommitSource;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.sources.TarSource;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.Commit;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;

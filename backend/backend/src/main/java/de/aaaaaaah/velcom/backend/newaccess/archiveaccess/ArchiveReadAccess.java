@@ -2,7 +2,7 @@ package de.aaaaaaah.velcom.backend.newaccess.archiveaccess;
 
 import de.aaaaaaah.velcom.backend.newaccess.archiveaccess.exceptions.TarRetrieveException;
 import de.aaaaaaah.velcom.backend.newaccess.archiveaccess.exceptions.TarTransferException;
-import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.CommitSource;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.sources.CommitSource;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.Task;
 import de.aaaaaaah.velcom.backend.storage.repo.GuickCloning.CloneException;

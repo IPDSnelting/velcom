@@ -1,6 +1,6 @@
 package de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.exceptions;
 
-import de.aaaaaaah.velcom.backend.access.entities.RunId;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.RunId;
 
 /**
  * This exception is thrown whenever an invalid {@link RunId} is used.

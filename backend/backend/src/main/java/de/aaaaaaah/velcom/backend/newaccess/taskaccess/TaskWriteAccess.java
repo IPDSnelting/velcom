@@ -3,8 +3,8 @@ package de.aaaaaaah.velcom.backend.newaccess.taskaccess;
 import static org.jooq.codegen.db.tables.Task.TASK;
 import static org.jooq.impl.DSL.not;
 
-import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.CommitSource;
-import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.TarSource;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.sources.CommitSource;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.sources.TarSource;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.Task;

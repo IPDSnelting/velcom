@@ -1,8 +1,8 @@
 package de.aaaaaaah.velcom.backend.data.runcomparison;
 
-import de.aaaaaaah.velcom.backend.access.entities.Measurement;
-import de.aaaaaaah.velcom.backend.access.entities.MeasurementValues;
-import de.aaaaaaah.velcom.backend.access.entities.Run;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.Measurement;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.MeasurementValues;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.Run;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Dimension;
 import java.util.ArrayList;
 import java.util.Collection;
