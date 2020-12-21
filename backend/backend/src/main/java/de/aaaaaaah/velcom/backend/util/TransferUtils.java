@@ -2,7 +2,7 @@ package de.aaaaaaah.velcom.backend.util;
 
 import static java.util.function.Predicate.not;
 
-import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.access.committaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.storage.repo.GuickCloning;
 import de.aaaaaaah.velcom.backend.storage.repo.GuickCloning.CloneException;
 import de.aaaaaaah.velcom.backend.storage.repo.RepoStorage;

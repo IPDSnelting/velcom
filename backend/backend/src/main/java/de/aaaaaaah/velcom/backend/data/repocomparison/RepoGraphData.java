@@ -2,7 +2,7 @@ package de.aaaaaaah.velcom.backend.data.repocomparison;
 
 import static java.util.Objects.requireNonNull;
 
-import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
+import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RepoId;
 import java.util.List;
 
 /**

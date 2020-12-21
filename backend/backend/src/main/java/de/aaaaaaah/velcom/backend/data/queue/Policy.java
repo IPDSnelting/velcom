@@ -4,9 +4,9 @@ import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toCollection;
 
-import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
-import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.Task;
-import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.TaskPriority;
+import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RepoId;
+import de.aaaaaaah.velcom.backend.access.taskaccess.entities.Task;
+import de.aaaaaaah.velcom.backend.access.taskaccess.entities.TaskPriority;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;

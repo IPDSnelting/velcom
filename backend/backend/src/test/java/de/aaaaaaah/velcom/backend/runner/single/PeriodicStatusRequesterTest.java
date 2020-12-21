@@ -9,8 +9,8 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.Task;
-import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.TaskId;
+import de.aaaaaaah.velcom.backend.access.taskaccess.entities.Task;
+import de.aaaaaaah.velcom.backend.access.taskaccess.entities.TaskId;
 import de.aaaaaaah.velcom.backend.runner.single.state.AwaitClearResultReply;
 import de.aaaaaaah.velcom.backend.runner.single.state.AwaitGetResultReply;
 import de.aaaaaaah.velcom.backend.runner.single.state.AwaitGetStatusReply;

@@ -6,11 +6,11 @@ import static org.jooq.codegen.db.tables.Branch.BRANCH;
 import static org.jooq.codegen.db.tables.CommitRelationship.COMMIT_RELATIONSHIP;
 import static org.jooq.codegen.db.tables.KnownCommit.KNOWN_COMMIT;
 
+import de.aaaaaaah.velcom.backend.access.committaccess.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.access.repoaccess.entities.BranchName;
+import de.aaaaaaah.velcom.backend.access.repoaccess.entities.Repo;
 import de.aaaaaaah.velcom.backend.listener.jgitutils.JgitCommit;
 import de.aaaaaaah.velcom.backend.listener.jgitutils.JgitCommitWalk;
-import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
-import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.BranchName;
-import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.Repo;
 import de.aaaaaaah.velcom.backend.storage.db.DBWriteAccess;
 import java.io.IOException;
 import java.util.ArrayList;

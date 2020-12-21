@@ -1,7 +1,7 @@
 package de.aaaaaaah.velcom.backend.data.runcomparison;
 
-import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.Run;
-import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Dimension;
+import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.Run;
+import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.Dimension;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;

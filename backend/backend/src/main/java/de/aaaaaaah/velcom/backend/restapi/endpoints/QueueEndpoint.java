@@ -2,17 +2,17 @@ package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
 import static java.util.stream.Collectors.toMap;
 
+import de.aaaaaaah.velcom.backend.access.committaccess.CommitReadAccess;
+import de.aaaaaaah.velcom.backend.access.committaccess.entities.Commit;
+import de.aaaaaaah.velcom.backend.access.committaccess.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.access.repoaccess.RepoReadAccess;
+import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RepoId;
+import de.aaaaaaah.velcom.backend.access.repoaccess.exceptions.NoSuchRepoException;
+import de.aaaaaaah.velcom.backend.access.taskaccess.entities.Task;
+import de.aaaaaaah.velcom.backend.access.taskaccess.entities.TaskId;
+import de.aaaaaaah.velcom.backend.access.taskaccess.entities.TaskPriority;
+import de.aaaaaaah.velcom.backend.access.taskaccess.exceptions.NoSuchTaskException;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
-import de.aaaaaaah.velcom.backend.newaccess.committaccess.CommitReadAccess;
-import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.Commit;
-import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
-import de.aaaaaaah.velcom.backend.newaccess.repoaccess.RepoReadAccess;
-import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
-import de.aaaaaaah.velcom.backend.newaccess.repoaccess.exceptions.NoSuchRepoException;
-import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.Task;
-import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.TaskId;
-import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.TaskPriority;
-import de.aaaaaaah.velcom.backend.newaccess.taskaccess.exceptions.NoSuchTaskException;
 import de.aaaaaaah.velcom.backend.restapi.authentication.RepoUser;
 import de.aaaaaaah.velcom.backend.restapi.exception.TaskAlreadyExistsException;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRunner;

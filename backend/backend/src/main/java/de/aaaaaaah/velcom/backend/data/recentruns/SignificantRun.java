@@ -1,7 +1,7 @@
 package de.aaaaaaah.velcom.backend.data.recentruns;
 
+import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.Run;
 import de.aaaaaaah.velcom.backend.data.runcomparison.DimensionDifference;
-import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.Run;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
