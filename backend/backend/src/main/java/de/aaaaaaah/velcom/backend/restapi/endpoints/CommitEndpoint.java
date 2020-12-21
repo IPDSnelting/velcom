@@ -1,6 +1,11 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
+import static java.util.Comparator.comparing;
+
+import de.aaaaaaah.velcom.backend.access.entities.Run;
+import de.aaaaaaah.velcom.backend.access.entities.RunId;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.BenchmarkReadAccess;
+import de.aaaaaaah.velcom.backend.newaccess.caches.RunCache;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.Commit;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
@@ -12,6 +17,7 @@ import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRunDescription;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRunDescription.JsonSuccess;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonSource;
 import io.micrometer.core.annotation.Timed;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -28,12 +34,16 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 public class CommitEndpoint {
 
-	private final CommitReadAccess commitAccess;
 	private final BenchmarkReadAccess benchmarkAccess;
+	private final CommitReadAccess commitAccess;
+	private final RunCache runCache;
 
-	public CommitEndpoint(CommitReadAccess commitAccess, BenchmarkReadAccess benchmarkAccess) {
-		this.commitAccess = commitAccess;
+	public CommitEndpoint(BenchmarkReadAccess benchmarkAccess, CommitReadAccess commitAccess,
+		RunCache runCache) {
+
 		this.benchmarkAccess = benchmarkAccess;
+		this.commitAccess = commitAccess;
+		this.runCache = runCache;
 	}
 
 	@GET
@@ -66,7 +76,10 @@ public class CommitEndpoint {
 			.map(JsonCommitDescription::fromCommit)
 			.collect(Collectors.toList());
 
-		List<JsonRunDescription> runs = benchmarkAccess.getAllRuns(repoId, hash).stream()
+		List<RunId> runIds = benchmarkAccess.getAllRunIds(repoId, hash);
+		List<Run> runs = new ArrayList<>(runCache.getRuns(benchmarkAccess, runIds).values());
+		runs.sort(comparing(Run::getStartTime));
+		List<JsonRunDescription> jsonRuns = runs.stream()
 			.map(run -> new JsonRunDescription(
 				run.getId().getId(),
 				run.getStartTime().getEpochSecond(),
@@ -87,7 +100,7 @@ public class CommitEndpoint {
 			commit.getCommitterDate().getEpochSecond(),
 			commit.getSummary(),
 			commit.getMessageWithoutSummary().orElse(null),
-			runs
+			jsonRuns
 		));
 	}
 

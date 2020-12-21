@@ -19,6 +19,7 @@ import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.CommitSourc
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.RunError;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.RunErrorType;
 import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.TarSource;
+import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.exceptions.NoSuchRunException;
 import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Dimension;
 import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
@@ -26,6 +27,7 @@ import de.aaaaaaah.velcom.backend.storage.db.DBReadAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import de.aaaaaaah.velcom.shared.util.Either;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -117,20 +119,95 @@ public class BenchmarkReadAccess {
 			.collect(toList());
 	}
 
-	public Run getRun(RunId runId) {
-		return null; // TODO: 20.12.20 Implement
+	/**
+	 * Get a run by its id.
+	 *
+	 * @param runId the run's id
+	 * @return the run, if one exists
+	 * @throws NoSuchRunException if no run with the given id is found
+	 */
+	public Run getRun(RunId runId) throws NoSuchRunException {
+		List<Run> runs = getRuns(List.of(runId));
+		if (runs.size() == 1) {
+			return runs.get(0);
+		} else {
+			throw new NoSuchRunException(runId);
+		}
 	}
 
+	/**
+	 * Get multiple runs by their ids.
+	 *
+	 * @param runIds the ids of the runs to retrieve
+	 * @return a list containing only those of the runs that exist, in no particular order
+	 */
 	public List<Run> getRuns(Collection<RunId> runIds) {
-		return null; // TODO: 21.12.20 Implement
+		Set<String> runIdStrings = runIds.stream()
+			.map(RunId::getIdAsString)
+			.collect(toSet());
+
+		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
+			List<RunRecord> runRecords = db.selectFrom(RUN)
+				.where(RUN.ID.in(runIdStrings))
+				.stream()
+				.collect(toList());
+
+			return loadRuns(db, runRecords);
+		}
 	}
 
-	public List<Run> getAllRuns(RepoId repoId, CommitHash hash) {
-		return null; // TODO: 20.12.20 Implement
+	/**
+	 * Get all runs of a specific commit ordered by their start time.
+	 *
+	 * @param repoId the id of the repository the commit is in
+	 * @param commitHash the hash of the commit
+	 * @return all runs for the commit, ordered from new to old
+	 */
+	public List<RunId> getAllRunIds(RepoId repoId, CommitHash commitHash) {
+		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
+			return db.selectFrom(RUN)
+				.where(RUN.REPO_ID.eq(repoId.getIdAsString()))
+				.and(RUN.COMMIT_HASH.eq(commitHash.getHash()))
+				.orderBy(RUN.START_TIME.desc())
+				.stream()
+				.map(RunRecord::getId)
+				.map(RunId::fromString)
+				.collect(toList());
+		}
 	}
 
 	public List<Run> getRecentRuns(int skip, int batchSize) {
 		return null; // TODO: 20.12.20 Implement
+	}
+
+	/**
+	 * Get the ids of the most recent runs ordered by their start time.
+	 *
+	 * @param skip how many recent runs to skip
+	 * @param amount how many recent runs to collect
+	 * @return a sorted list containing the recent runs from new to old
+	 * @throws IllegalArgumentException if skip/amount is negative
+	 */
+	public List<RunId> getRecentRunIds(int skip, int amount) throws IllegalArgumentException {
+		if (skip < 0) {
+			throw new IllegalArgumentException("skip must be positive");
+		}
+		if (amount < 0) {
+			throw new IllegalArgumentException("amount must be positive");
+		}
+		if (amount == 0) {
+			return Collections.emptyList();
+		}
+
+		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
+			return db.selectFrom(RUN)
+				.orderBy(RUN.START_TIME.desc())
+				.limit(skip, amount)
+				.stream()
+				.map(RunRecord::getId)
+				.map(RunId::fromString)
+				.collect(toList());
+		}
 	}
 
 	/**
@@ -183,69 +260,4 @@ public class BenchmarkReadAccess {
 				));
 		}
 	}
-
-//	public Run getRun(RunId runId) throws NoSuchRunException {
-//		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-//			RunRecord runRecord = db.fetchOne(RUN, RUN.ID.eq(runId.getIdAsString()));
-//			return runRecordToRun(runRecord);
-//		} catch (DataAccessException e) {
-//			throw new NoSuchRunException(e, runId);
-//		}
-//	}
-//
-//	public List<Run> getRuns(RunId runId) {
-//
-//	}
-//
-//	/**
-//	 * Works like {@link #getRun(RunId)} in that a {@link NoSuchRunException} is thrown if no run with
-//	 * the specified id exists. This method is meant for the cases where a run must exist but more
-//	 * detail is not needed.
-//	 *
-//	 * @param runId the id of the run that must exist
-//	 * @throws NoSuchRunException if no run with that id exists
-//	 */
-//	public void guardRunExists(RunId runId) throws NoSuchRunException {
-//		getRun(runId);
-//	}
-//
-//	public List<Run> getRecentRuns(int skip, int amount) throws IllegalArgumentException {
-//		if (skip < 0) {
-//			throw new IllegalArgumentException("skip must be positive");
-//		}
-//		if (amount < 0) {
-//			throw new IllegalArgumentException("amount must be positive");
-//		}
-//		if (amount == 0) {
-//			return Collections.emptyList();
-//		}
-//
-//		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-//			return db.selectFrom(RUN)
-//				.orderBy(RUN.START_TIME.desc())
-//				.limit(skip, amount)
-//				.stream()
-//				.map(BenchmarkReadAccess::runRecordToRun)
-//				.collect(Collectors.toList());
-//		}
-//	}
-//
-//	/**
-//	 * Get all runs of a specific commit, ordered from most to least recent.
-//	 *
-//	 * @param repoId the id of the repository the commit is in
-//	 * @param commitHash the hash of the commit
-//	 * @return all runs for the commit, ordered from most to least recent
-//	 */
-//	public List<Run> getAllRuns(RepoId repoId, CommitHash commitHash) {
-//		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-//			return db.selectFrom(RUN)
-//				.where(RUN.REPO_ID.eq(repoId.getIdAsString()))
-//				.and(RUN.COMMIT_HASH.eq(commitHash.getHash()))
-//				.orderBy(RUN.START_TIME.desc())
-//				.stream()
-//				.map(BenchmarkReadAccess::runRecordToRun)
-//				.collect(Collectors.toList());
-//		}
-//	}
 }

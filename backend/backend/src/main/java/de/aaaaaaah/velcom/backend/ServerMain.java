@@ -191,7 +191,7 @@ public class ServerMain extends Application<GlobalConfig> {
 		// Endpoints
 		Stream.of(
 			new AllReposEndpoint(dimensionAccess, repoAccess, tokenAccess, availableDimensionsCache),
-			new CommitEndpoint(commitAccess, benchmarkAccess),
+			new CommitEndpoint(benchmarkAccess, commitAccess, runCache),
 			new CompareEndpoint(benchmarkAccess, commitAccess, dimensionAccess, runCache, latestRunCache,
 				runComparator,
 				significanceFactors),

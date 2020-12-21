@@ -1,5 +1,6 @@
 package de.aaaaaaah.velcom.backend.newaccess.caches;
 
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 
 import com.github.benmanes.caffeine.cache.Cache;
@@ -12,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class RunCache {
 
@@ -39,6 +41,16 @@ public class RunCache {
 					.collect(toMap(Run::getId, it -> it));
 			}
 		);
+	}
+
+	public List<Run> getRunsInOrder(BenchmarkReadAccess benchmarkReadAccess,
+		Collection<RunId> runIds) {
+
+		Map<RunId, Run> runs = getRuns(benchmarkReadAccess, runIds);
+		return runIds.stream()
+			.map(runs::get)
+			.filter(Objects::nonNull)
+			.collect(toList());
 	}
 
 	public void invalidate(RunId runId) {
