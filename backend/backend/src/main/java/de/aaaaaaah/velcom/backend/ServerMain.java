@@ -164,13 +164,11 @@ public class ServerMain extends Application<GlobalConfig> {
 			configuration.getSignificanceMinStddevAmount()
 		);
 		RunComparator runComparator = new RunComparator(significanceFactors);
-		TimesliceComparison comparison = new TimesliceComparison(
-			benchmarkAccess, commitAccess, dimensionAccess,
-			runCache, latestRunCache);
+		TimesliceComparison comparison = new TimesliceComparison(benchmarkAccess, commitAccess,
+			dimensionAccess, runCache, latestRunCache);
 		SignificantRunsCollector significantRunsCollector = new SignificantRunsCollector(
 			significanceFactors, benchmarkAccess, commitAccess, dimensionAccess, runCache, latestRunCache,
-			runComparator
-		);
+			runComparator);
 
 		// Listener
 		Listener listener = new Listener(databaseStorage, repoStorage, repoAccess, benchRepo, queue,
@@ -193,21 +191,19 @@ public class ServerMain extends Application<GlobalConfig> {
 			new AllReposEndpoint(dimensionAccess, repoAccess, tokenAccess, availableDimensionsCache),
 			new CommitEndpoint(benchmarkAccess, commitAccess, runCache),
 			new CompareEndpoint(benchmarkAccess, commitAccess, dimensionAccess, runCache, latestRunCache,
-				runComparator,
-				significanceFactors),
+				runComparator, significanceFactors),
 			new DebugEndpoint(dispatcher),
 			new GraphComparisonEndpoint(dimensionAccess, comparison),
 			new GraphDetailEndpoint(commitAccess, benchmarkAccess, dimensionAccess, repoAccess, runCache,
 				latestRunCache),
 			new ListenerEndpoint(listener),
 			new QueueEndpoint(commitAccess, repoAccess, queue, dispatcher),
-			new RecentRunsEndpoint(benchmarkAccess, commitAccess, dimensionAccess,
-				runCache, significantRunsCollector),
+			new RecentRunsEndpoint(benchmarkAccess, commitAccess, dimensionAccess, runCache,
+				significantRunsCollector),
 			new RepoEndpoint(dimensionAccess, repoAccess, tokenAccess, availableDimensionsCache,
 				listener),
 			new RunEndpoint(benchmarkAccess, commitAccess, dimensionAccess, runCache, latestRunCache,
-				runComparator,
-				significanceFactors, significantRunsCollector),
+				runComparator, significanceFactors, significantRunsCollector),
 			new TestTokenEndpoint()
 		).forEach(endpoint -> environment.jersey().register(endpoint));
 	}
