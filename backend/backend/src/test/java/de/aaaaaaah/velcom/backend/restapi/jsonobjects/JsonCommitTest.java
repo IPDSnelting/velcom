@@ -12,6 +12,8 @@ class JsonCommitTest extends SerializingTest {
 		Object object = new JsonCommit(
 			UUID.fromString("24dd4fd3-5c6d-4542-a7a4-b181f37295a6"),
 			"e16272feb472dc4d357cc19dd97112c036a67990",
+			true,
+			List.of(),
 			List.of(),
 			List.of(),
 			List.of(),
@@ -26,7 +28,9 @@ class JsonCommitTest extends SerializingTest {
 		String json = "{"
 			+ "\"repo_id\": \"24dd4fd3-5c6d-4542-a7a4-b181f37295a6\","
 			+ "\"hash\": \"e16272feb472dc4d357cc19dd97112c036a67990\","
-			+ "\"parents\": [],"
+			+ "\"tracked\": true,"
+			+ "\"tracked_parents\": [],"
+			+ "\"untracked_parents\": [],"
 			+ "\"tracked_children\": [],"
 			+ "\"untracked_children\": [],"
 			+ "\"author\": \"authorName\","
