@@ -8,7 +8,7 @@ import java.util.UUID;
 public class BenchResult {
 
 	private final UUID runId;
-	private Either<String, Result> result;
+	private final Either<String, Result> result;
 	private final Instant startTime;
 	private final Instant stopTime;
 

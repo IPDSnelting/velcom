@@ -37,7 +37,7 @@ public class ArchiveReadAccess {
 	private final TarFileStorage tarFileStorage;
 	private final String benchRepoUrl;
 
-	private AtomicInteger nextArchivePathNr;
+	private final AtomicInteger nextArchivePathNr;
 
 	public ArchiveReadAccess(Path rootDir, RepoStorage repoStorage, TarFileStorage tarFileStorage,
 		String benchRepoUrl) throws IOException {

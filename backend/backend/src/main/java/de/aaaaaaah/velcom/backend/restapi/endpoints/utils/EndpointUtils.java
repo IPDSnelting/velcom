@@ -80,34 +80,19 @@ public class EndpointUtils {
 		Map<Dimension, DimensionInfo> dimensionInfos = dimensionAccess
 			.getDimensionInfoMap(run.getAllDimensionsUsed());
 
-		if (run.getResult().isLeft()) {
-			return new JsonRun(
-				run.getId().getId(),
-				run.getAuthor(),
-				run.getRunnerName(),
-				run.getRunnerInfo(),
-				run.getStartTime().getEpochSecond(),
-				run.getStopTime().getEpochSecond(),
-				source,
-				JsonResult.fromRunError(run.getResult().getLeft().get())
-			);
-		} else {
-			return new JsonRun(
-				run.getId().getId(),
-				run.getAuthor(),
-				run.getRunnerName(),
-				run.getRunnerInfo(),
-				run.getStartTime().getEpochSecond(),
-				run.getStopTime().getEpochSecond(),
-				source,
-				JsonResult.fromMeasurements(
-					run.getResult().getRight().get(),
-					dimensionInfos,
-					significanceFactors,
-					allValues
-				)
-			);
-		}
+		return new JsonRun(
+			run.getId().getId(),
+			run.getAuthor(),
+			run.getRunnerName(),
+			run.getRunnerInfo(),
+			run.getStartTime().getEpochSecond(),
+			run.getStopTime().getEpochSecond(),
+			source,
+			run.getResult().consume(
+				JsonResult::fromRunError,
+				it -> JsonResult.fromMeasurements(it, dimensionInfos, significanceFactors, allValues)
+			)
+		);
 	}
 
 	/**

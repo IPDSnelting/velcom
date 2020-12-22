@@ -13,8 +13,10 @@ public class TestCommit {
 	private final String message;
 	private final String file;
 	private final String content;
-	private final Optional<String> branch;
-	private final Optional<Instant> authorDate;
+	private final @Nullable
+	String branch;
+	private final @Nullable
+	Instant authorDate;
 
 	public TestCommit(String message) {
 		this(message, "afile.txt", dummyContent(), null, null);
@@ -42,8 +44,8 @@ public class TestCommit {
 		this.message = message;
 		this.file = file;
 		this.content = content;
-		this.branch = Optional.ofNullable(branch);
-		this.authorDate = Optional.ofNullable(authorDate);
+		this.branch = branch;
+		this.authorDate = authorDate;
 	}
 
 	public String getMessage() {
@@ -59,11 +61,11 @@ public class TestCommit {
 	}
 
 	public Optional<String> getBranch() {
-		return branch;
+		return Optional.ofNullable(branch);
 	}
 
 	public Optional<Instant> getAuthorDate() {
-		return authorDate;
+		return Optional.ofNullable(authorDate);
 	}
 
 	@Override

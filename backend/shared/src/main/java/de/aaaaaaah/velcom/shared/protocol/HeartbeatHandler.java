@@ -43,6 +43,7 @@ public class HeartbeatHandler {
 		Thread thread = new Thread(() -> {
 			while (run) {
 				try {
+					//noinspection BusyWait
 					Thread.sleep(timeoutMillis / 2);
 				} catch (InterruptedException ignored) {
 				}
