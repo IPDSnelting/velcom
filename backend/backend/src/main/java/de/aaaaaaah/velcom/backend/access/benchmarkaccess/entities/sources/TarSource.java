@@ -5,6 +5,9 @@ import java.util.Objects;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
+/**
+ * A source describing that the task originated from a tar. The task may be attached to a repo.
+ */
 public class TarSource {
 
 	private final String description;

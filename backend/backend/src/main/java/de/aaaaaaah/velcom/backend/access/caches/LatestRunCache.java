@@ -92,10 +92,21 @@ public class LatestRunCache {
 			));
 	}
 
+	/**
+	 * Invalidate the latest run for a specific commit.
+	 *
+	 * @param repoId the commit's repo
+	 * @param commitHash the commit hash
+	 */
 	public void invalidate(RepoId repoId, CommitHash commitHash) {
 		getCacheForRepo(repoId).invalidate(commitHash);
 	}
 
+	/**
+	 * Invalidate an entire repo's latest runs.
+	 *
+	 * @param repoId the repo's id
+	 */
 	public void invalidate(RepoId repoId) {
 		cache.remove(repoId);
 	}

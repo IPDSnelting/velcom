@@ -42,6 +42,8 @@ public class EndpointUtils {
 	 * Obtain a {@link Run} either by its ID or by a commit.
 	 *
 	 * @param benchmarkAccess a {@link BenchmarkReadAccess}
+	 * @param runCache a {@link RunCache}
+	 * @param latestRunCache a {@link LatestRunCache}
 	 * @param id the run's ID, or the commit's repo id, if {@code hash} is specified
 	 * @param hash the commit's hash, if the run should be obtained through a commit
 	 * @return the run if it can be found

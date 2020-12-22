@@ -21,6 +21,9 @@ import java.util.concurrent.Future;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * A web socket connection to a backend.
+ */
 public class Connection implements WebSocket.Listener, HeartbeatWebsocket {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(Connection.class);
@@ -56,6 +59,11 @@ public class Connection implements WebSocket.Listener, HeartbeatWebsocket {
 		LOGGER.debug("Successfully opened connection to {}", address);
 	}
 
+	/**
+	 * Send a packet to the server.
+	 *
+	 * @param packet the packet to send to the server
+	 */
 	public synchronized void sendPacket(ServerBoundPacket packet) {
 		if (closed) {
 			return;
@@ -83,6 +91,12 @@ public class Connection implements WebSocket.Listener, HeartbeatWebsocket {
 		heartbeatHandler.shutdown();
 	}
 
+	/**
+	 * Close the connection gracefully. Uses {@link #forceClose(StatusCode)} if the connection is not
+	 * closed within the {@link Delays#CLOSE_CONNECTION_TIMEOUT}.
+	 *
+	 * @param statusCode the status code to close the connection with
+	 */
 	public synchronized void close(StatusCode statusCode) {
 		if (closed) {
 			return;
@@ -96,6 +110,12 @@ public class Connection implements WebSocket.Listener, HeartbeatWebsocket {
 		disconnectTimeout.start();
 	}
 
+
+	/**
+	 * Forcefully close the connection immediately.
+	 *
+	 * @param statusCode the status code to close the connection with
+	 */
 	public synchronized void forceClose(StatusCode statusCode) {
 		if (closed) {
 			return;
@@ -109,6 +129,15 @@ public class Connection implements WebSocket.Listener, HeartbeatWebsocket {
 		cleanupAfterClosed();
 	}
 
+	/**
+	 * Allow outside functions to switch the state machine state. Waits for a resting state and then
+	 * switches to the specified state.
+	 *
+	 * @param state the state to switch to
+	 * @return whether the state was switched successfully
+	 * @throws InterruptedException if the thread got interrupted while waiting for the state machine
+	 * 	to enter a resting state
+	 */
 	public boolean switchFromRestingState(RunnerState state) throws InterruptedException {
 		return stateMachine.switchFromRestingState(state);
 	}
