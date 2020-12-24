@@ -58,8 +58,8 @@
                 <v-col cols="6" class="pr-4">
                   <div v-if="parent" class="d-flex justify-start">
                     <commit-navigation-button
-                      :commitDescription="parent"
-                      :tracked="true"
+                      :commitDescription="parent.description"
+                      :tracked="parent.tracked"
                       type="PARENT"
                     ></commit-navigation-button>
                   </div>
@@ -112,18 +112,20 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
-import { Commit, CommitChild, CommitDescription } from '@/store/types'
+import { Commit, TrackedCommitDescription } from '@/store/types'
 import { formatDateUTC, formatDate } from '@/util/TimeUtil'
 import InlineMinimalRepoNameDisplay from '../InlineMinimalRepoDisplay.vue'
 import CommitBenchmarkActions from '../CommitBenchmarkActions.vue'
 import CommitNavigationButton from './CommitNavigationButton.vue'
-import { vxm } from '@/store'
 
 class NavigationTarget {
-  readonly parent: CommitDescription | null
-  readonly child: CommitChild | null
+  readonly parent: TrackedCommitDescription | null
+  readonly child: TrackedCommitDescription | null
 
-  constructor(parent: CommitDescription | null, child: CommitChild | null) {
+  constructor(
+    parent: TrackedCommitDescription | null,
+    child: TrackedCommitDescription | null
+  ) {
     this.parent = parent
     this.child = child
   }
@@ -146,10 +148,6 @@ export default class CommitDetail extends Vue {
 
   private formatDateUTC(date: Date) {
     return formatDateUTC(date)
-  }
-
-  private get isAdmin(): boolean {
-    return vxm.userModule.isAdmin
   }
 
   private get navigationTargets(): NavigationTarget[] {
