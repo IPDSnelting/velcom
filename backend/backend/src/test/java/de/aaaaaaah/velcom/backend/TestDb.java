@@ -1,12 +1,29 @@
 package de.aaaaaaah.velcom.backend;
 
+import static java.util.stream.Collectors.toList;
+
+import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.MeasurementError;
+import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.MeasurementValues;
+import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.RunError;
+import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.RunErrorType;
+import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.RunId;
+import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.sources.CommitSource;
+import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.sources.TarSource;
 import de.aaaaaaah.velcom.backend.access.committaccess.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.Dimension;
 import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.DimensionInfo;
+import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.Interpretation;
+import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.Unit;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.BranchName;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RemoteUrl;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RepoId;
+import de.aaaaaaah.velcom.shared.util.Either;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import javax.annotation.Nullable;
 import org.flywaydb.core.Flyway;
 import org.jooq.DSLContext;
 import org.jooq.SQLDialect;
@@ -14,7 +31,10 @@ import org.jooq.codegen.db.tables.records.BranchRecord;
 import org.jooq.codegen.db.tables.records.CommitRelationshipRecord;
 import org.jooq.codegen.db.tables.records.DimensionRecord;
 import org.jooq.codegen.db.tables.records.KnownCommitRecord;
+import org.jooq.codegen.db.tables.records.MeasurementRecord;
+import org.jooq.codegen.db.tables.records.MeasurementValueRecord;
 import org.jooq.codegen.db.tables.records.RepoRecord;
+import org.jooq.codegen.db.tables.records.RunRecord;
 import org.jooq.impl.DSL;
 import org.sqlite.SQLiteConfig;
 import org.sqlite.SQLiteConfig.JournalMode;
@@ -144,5 +164,71 @@ public class TestDb {
 			dimensionInfo.getInterpretation().getTextualRepresentation(),
 			dimensionInfo.isSignificant()
 		)).execute();
+	}
+
+	public void addRun(RunId runId, String author, String runnerName, String runnerInfo,
+		Instant startTime, Instant stopTime, Either<CommitSource, TarSource> source,
+		@Nullable RunError error) {
+
+		dslContext.batchInsert(new RunRecord(
+			runId.getIdAsString(),
+			author,
+			runnerName,
+			runnerInfo,
+			startTime,
+			stopTime,
+			source.consume(cs -> Optional.of(cs.getRepoId()), TarSource::getRepoId)
+				.map(RepoId::getIdAsString)
+				.orElse(null),
+			source.getLeft()
+				.map(CommitSource::getHash)
+				.map(CommitHash::getHash)
+				.orElse(null),
+			source.getRight()
+				.map(TarSource::getDescription)
+				.orElse(null),
+			Optional.ofNullable(error)
+				.map(RunError::getType)
+				.map(RunErrorType::getTextualRepresentation)
+				.orElse(null),
+			Optional.ofNullable(error)
+				.map(RunError::getMessage)
+				.orElse(null)
+		)).execute();
+	}
+
+	public void addRun(RunId runId, Either<CommitSource, TarSource> source) {
+		addRun(runId, "author", "runnerName", "runnerInfo", Instant.now(), Instant.now(), source, null);
+	}
+
+	public UUID addMeasurement(RunId runId, Dimension dimension, Unit unit,
+		Interpretation interpretation, Either<MeasurementError, MeasurementValues> result) {
+
+		UUID measurementId = UUID.randomUUID();
+
+		dslContext.batchInsert(new MeasurementRecord(
+			measurementId.toString(),
+			runId.getIdAsString(),
+			dimension.getBenchmark(),
+			dimension.getMetric(),
+			unit.getName(),
+			interpretation.getTextualRepresentation(),
+			result.getLeft()
+				.map(MeasurementError::getErrorMessage)
+				.orElse(null)
+		)).execute();
+
+		result.getRight().ifPresent(values -> dslContext
+			.batchInsert(values.getValues().stream()
+				.map(value -> new MeasurementValueRecord(measurementId.toString(), value))
+				.collect(toList()))
+			.execute());
+
+		return measurementId;
+	}
+
+	public UUID addMeasurement(RunId runId, Dimension dimension) {
+		return addMeasurement(runId, dimension, Unit.DEFAULT, Interpretation.DEFAULT,
+			Either.ofRight(new MeasurementValues(List.of(1d, 2d, 3d))));
 	}
 }

@@ -164,7 +164,7 @@ public class DimensionReadAccess {
 
 	/**
 	 * Find a repo's available dimensions, i. e. the dimensions a repo has at least one measurement
-	 * for.
+	 * for. Only considers runs for commits, not runs for tars.
 	 *
 	 * @param repoId the repo's id
 	 * @return the repo's available dimensions
