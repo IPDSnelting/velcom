@@ -1,6 +1,5 @@
 package de.aaaaaaah.velcom.backend.access.dimensionaccess;
 
-import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -18,7 +17,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.jooq.codegen.db.tables.records.DimensionRecord;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -37,15 +35,7 @@ class DimensionReadAccessTest {
 	void setUp(@TempDir Path tempDir) {
 		TestDb testDb = new TestDb(tempDir);
 
-		List<DimensionRecord> dimensionRecords = DIMENSIONS.stream()
-			.map(info -> new DimensionRecord(
-				info.getDimension().getBenchmark(),
-				info.getDimension().getMetric(),
-				info.getUnit().getName(),
-				info.getInterpretation().getTextualRepresentation(),
-				info.isSignificant()
-			)).collect(toList());
-		testDb.db().batchInsert(dimensionRecords).execute();
+		DIMENSIONS.forEach(testDb::addDimension);
 
 		DatabaseStorage databaseStorage = new DatabaseStorage(testDb.closeAndGetJdbcUrl());
 		access = new DimensionReadAccess(databaseStorage);

@@ -1,6 +1,7 @@
 package de.aaaaaaah.velcom.backend;
 
 import de.aaaaaaah.velcom.backend.access.committaccess.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.DimensionInfo;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.BranchName;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RemoteUrl;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RepoId;
@@ -11,6 +12,7 @@ import org.jooq.DSLContext;
 import org.jooq.SQLDialect;
 import org.jooq.codegen.db.tables.records.BranchRecord;
 import org.jooq.codegen.db.tables.records.CommitRelationshipRecord;
+import org.jooq.codegen.db.tables.records.DimensionRecord;
 import org.jooq.codegen.db.tables.records.KnownCommitRecord;
 import org.jooq.codegen.db.tables.records.RepoRecord;
 import org.jooq.impl.DSL;
@@ -120,11 +122,27 @@ public class TestDb {
 			Instant.now(), message);
 	}
 
+	public void addCommit(RepoId repoId, CommitHash commitHash) {
+
+		addCommit(repoId, commitHash, true, true, "author", Instant.now(), "committer", Instant.now(),
+			"message");
+	}
+
 	public void addCommitRel(RepoId repoId, CommitHash parent, CommitHash child) {
 		dslContext.batchInsert(new CommitRelationshipRecord(
 			repoId.getIdAsString(),
 			parent.getHash(),
 			child.getHash()
+		)).execute();
+	}
+
+	public void addDimension(DimensionInfo dimensionInfo) {
+		dslContext.batchInsert(new DimensionRecord(
+			dimensionInfo.getDimension().getBenchmark(),
+			dimensionInfo.getDimension().getMetric(),
+			dimensionInfo.getUnit().getName(),
+			dimensionInfo.getInterpretation().getTextualRepresentation(),
+			dimensionInfo.isSignificant()
 		)).execute();
 	}
 }

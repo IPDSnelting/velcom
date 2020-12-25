@@ -22,14 +22,11 @@ import de.aaaaaaah.velcom.backend.access.repoaccess.exceptions.NoSuchRepoExcepti
 import de.aaaaaaah.velcom.backend.storage.db.DBReadAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import java.nio.file.Path;
-import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 import org.jooq.Result;
-import org.jooq.codegen.db.tables.records.BranchRecord;
 import org.jooq.codegen.db.tables.records.KnownCommitRecord;
-import org.jooq.codegen.db.tables.records.RepoRecord;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -91,37 +88,22 @@ class RepoWriteAccessTest {
 		TestDb testDb = new TestDb(tempDir);
 
 		// Insert repos
-		testDb.db().batchInsert(
-			new RepoRecord(REPO1_ID.getIdAsString(), REPO1_NAME, REPO1_URL.getUrl()),
-			new RepoRecord(REPO2_ID.getIdAsString(), REPO2_NAME, REPO2_URL.getUrl()),
-			new RepoRecord(REPO3_ID.getIdAsString(), REPO3_NAME, REPO3_URL.getUrl())
-		).execute();
+		testDb.addRepo(REPO1_ID, REPO1_NAME, REPO1_URL);
+		testDb.addRepo(REPO2_ID, REPO2_NAME, REPO2_URL);
+		testDb.addRepo(REPO3_ID, REPO3_NAME, REPO3_URL);
 
 		// Insert dummy commits
-		List<KnownCommitRecord> commitRecords = Stream
-			.concat(REPO1_BRANCHES.stream(), REPO2_BRANCHES.stream())
-			.map(branch -> new KnownCommitRecord(
-				branch.getRepoId().getIdAsString(),
-				branch.getLatestCommitHash().getHash(),
-				true, true,
-				"author", Instant.now(),
-				"committer", Instant.now(),
-				"message"
-			))
-			.collect(toList());
-		testDb.db().batchInsert(commitRecords).execute();
+		Stream.concat(REPO1_BRANCHES.stream(), REPO2_BRANCHES.stream())
+			.forEach(branch -> testDb.addCommit(branch.getRepoId(), branch.getLatestCommitHash()));
 
 		// Insert branches
-		List<BranchRecord> branchRecords = Stream
-			.concat(REPO1_BRANCHES.stream(), REPO2_BRANCHES.stream())
-			.map(branch -> new BranchRecord(
-				branch.getRepoId().getIdAsString(),
-				branch.getName().getName(),
-				branch.getLatestCommitHash().getHash(),
+		Stream.concat(REPO1_BRANCHES.stream(), REPO2_BRANCHES.stream())
+			.forEach(branch -> testDb.addBranch(
+				branch.getRepoId(),
+				branch.getName(),
+				branch.getLatestCommitHash(),
 				branch.isTracked()
-			))
-			.collect(toList());
-		testDb.db().batchInsert(branchRecords).execute();
+			));
 
 		databaseStorage = new DatabaseStorage(testDb.closeAndGetJdbcUrl());
 		availableDimensionsCache = mock(AvailableDimensionsCache.class);
