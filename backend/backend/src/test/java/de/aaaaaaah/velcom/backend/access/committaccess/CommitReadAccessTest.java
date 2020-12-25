@@ -11,9 +11,11 @@ import de.aaaaaaah.velcom.backend.access.committaccess.entities.Commit;
 import de.aaaaaaah.velcom.backend.access.committaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.committaccess.entities.FullCommit;
 import de.aaaaaaah.velcom.backend.access.committaccess.exceptions.NoSuchCommitException;
+import de.aaaaaaah.velcom.backend.access.repoaccess.entities.BranchName;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,7 +35,7 @@ class CommitReadAccessTest {
 	 *                \
 	 *                 I
 	 *
-	 * Commit E is on a tracked branch while commit G is on an untracked branch.
+	 * Commit E is on a tracked branch named T while commit G is on an untracked branch named U.
 	 * Thus, commits A, B, C, D and E are tracked while commits F and G are untracked.
 	 * Commits H and I are not reachable from any branch.
 	 */
@@ -66,15 +68,24 @@ class CommitReadAccessTest {
 		TestDb testDb = new TestDb(tempDir);
 
 		testDb.addRepo(REPO_ID);
-		testDb.addCommit(REPO_ID, COMM_A_HASH, true, true, "A");
-		testDb.addCommit(REPO_ID, COMM_B_HASH, true, true, "B");
-		testDb.addCommit(REPO_ID, COMM_C_HASH, true, true, "C");
-		testDb.addCommit(REPO_ID, COMM_D_HASH, true, true, "D");
-		testDb.addCommit(REPO_ID, COMM_E_HASH, true, true, "E");
-		testDb.addCommit(REPO_ID, COMM_F_HASH, true, false, "F");
-		testDb.addCommit(REPO_ID, COMM_G_HASH, true, false, "G");
-		testDb.addCommit(REPO_ID, COMM_H_HASH, false, false, "H");
-		testDb.addCommit(REPO_ID, COMM_I_HASH, false, false, "I");
+		testDb.addCommit(REPO_ID, COMM_A_HASH, true, true,
+			"aA", Instant.ofEpochSecond(1600010001), "cA", Instant.ofEpochSecond(1600010002), "A");
+		testDb.addCommit(REPO_ID, COMM_B_HASH, true, true,
+			"aB", Instant.ofEpochSecond(1600020001), "cB", Instant.ofEpochSecond(1600020002), "B");
+		testDb.addCommit(REPO_ID, COMM_C_HASH, true, true,
+			"aC", Instant.ofEpochSecond(1600030001), "cC", Instant.ofEpochSecond(1600030002), "C");
+		testDb.addCommit(REPO_ID, COMM_D_HASH, true, true,
+			"aD", Instant.ofEpochSecond(1600040001), "cD", Instant.ofEpochSecond(1600040002), "D");
+		testDb.addCommit(REPO_ID, COMM_E_HASH, true, true,
+			"aE", Instant.ofEpochSecond(1600050001), "cE", Instant.ofEpochSecond(1600050002), "E");
+		testDb.addCommit(REPO_ID, COMM_F_HASH, true, false,
+			"aF", Instant.ofEpochSecond(1600060001), "cF", Instant.ofEpochSecond(1600060002), "F");
+		testDb.addCommit(REPO_ID, COMM_G_HASH, true, false,
+			"aG", Instant.ofEpochSecond(1600070001), "cG", Instant.ofEpochSecond(1600070002), "G");
+		testDb.addCommit(REPO_ID, COMM_H_HASH, false, false,
+			"aH", Instant.ofEpochSecond(1600080001), "cH", Instant.ofEpochSecond(1600080002), "H");
+		testDb.addCommit(REPO_ID, COMM_I_HASH, false, false,
+			"aI", Instant.ofEpochSecond(1600090001), "cI", Instant.ofEpochSecond(1600090002), "I");
 		testDb.addCommitRel(REPO_ID, COMM_A_HASH, COMM_B_HASH);
 		testDb.addCommitRel(REPO_ID, COMM_B_HASH, COMM_C_HASH);
 		testDb.addCommitRel(REPO_ID, COMM_B_HASH, COMM_F_HASH);
@@ -84,77 +95,59 @@ class CommitReadAccessTest {
 		testDb.addCommitRel(REPO_ID, COMM_D_HASH, COMM_H_HASH);
 		testDb.addCommitRel(REPO_ID, COMM_F_HASH, COMM_G_HASH);
 		testDb.addCommitRel(REPO_ID, COMM_F_HASH, COMM_I_HASH);
+		testDb.addBranch(REPO_ID, BranchName.fromName("T"), COMM_E_HASH, true);
+		testDb.addBranch(REPO_ID, BranchName.fromName("U"), COMM_G_HASH, false);
 
 		DatabaseStorage databaseStorage = new DatabaseStorage(testDb.closeAndGetJdbcUrl());
 		access = new CommitReadAccess(databaseStorage);
 	}
 
+	private void checkCommit(Commit commit, RepoId repoId, CommitHash commitHash, boolean isReachable,
+		boolean isTracked, String author, int authorDate, String committer, int committerDate,
+		String message) {
+
+		assertThat(commit.getRepoId()).isEqualTo(repoId);
+		assertThat(commit.getHash()).isEqualTo(commitHash);
+		assertThat(commit.isReachable()).isEqualTo(isReachable);
+		assertThat(commit.isTracked()).isEqualTo(isTracked);
+		assertThat(commit.getAuthor()).isEqualTo(author);
+		assertThat(commit.getAuthorDate()).isEqualTo(Instant.ofEpochSecond(authorDate));
+		assertThat(commit.getCommitter()).isEqualTo(committer);
+		assertThat(commit.getCommitterDate()).isEqualTo(Instant.ofEpochSecond(committerDate));
+		assertThat(commit.getMessage()).isEqualTo(message);
+	}
+
+	private void checkFullCommit(FullCommit commit, RepoId repoId, CommitHash commitHash,
+		boolean isReachable, boolean isTracked, String author, int authorDate, String committer,
+		int committerDate, String message, List<CommitHash> parents, List<CommitHash> children) {
+
+		checkCommit(commit, repoId, commitHash, isReachable, isTracked, author, authorDate, committer,
+			committerDate, message);
+
+		assertThat(commit.getParentHashes()).containsExactlyInAnyOrderElementsOf(parents);
+		assertThat(commit.getChildHashes()).containsExactlyInAnyOrderElementsOf(children);
+	}
+
 	@Test
 	void getCommit() {
-		// TODO: 2020-12-24 Also check author and committer info?
-
-		Commit commitA = access.getCommit(REPO_ID, COMM_A_HASH);
-		assertThat(commitA.getRepoId()).isEqualTo(REPO_ID);
-		assertThat(commitA.getHash()).isEqualTo(COMM_A_HASH);
-		assertThat(commitA.getMessage()).isEqualTo("A");
-		assertThat(commitA.isReachable()).isTrue();
-		assertThat(commitA.isTracked()).isTrue();
-
-		Commit commitB = access.getCommit(REPO_ID, COMM_B_HASH);
-		assertThat(commitB.getRepoId()).isEqualTo(REPO_ID);
-		assertThat(commitB.getHash()).isEqualTo(COMM_B_HASH);
-		assertThat(commitB.getMessage()).isEqualTo("B");
-		assertThat(commitB.isReachable()).isTrue();
-		assertThat(commitB.isTracked()).isTrue();
-
-		Commit commitC = access.getCommit(REPO_ID, COMM_C_HASH);
-		assertThat(commitC.getRepoId()).isEqualTo(REPO_ID);
-		assertThat(commitC.getHash()).isEqualTo(COMM_C_HASH);
-		assertThat(commitC.getMessage()).isEqualTo("C");
-		assertThat(commitC.isReachable()).isTrue();
-		assertThat(commitC.isTracked()).isTrue();
-
-		Commit commitD = access.getCommit(REPO_ID, COMM_D_HASH);
-		assertThat(commitD.getRepoId()).isEqualTo(REPO_ID);
-		assertThat(commitD.getHash()).isEqualTo(COMM_D_HASH);
-		assertThat(commitD.getMessage()).isEqualTo("D");
-		assertThat(commitD.isReachable()).isTrue();
-		assertThat(commitD.isTracked()).isTrue();
-
-		Commit commitE = access.getCommit(REPO_ID, COMM_E_HASH);
-		assertThat(commitE.getRepoId()).isEqualTo(REPO_ID);
-		assertThat(commitE.getHash()).isEqualTo(COMM_E_HASH);
-		assertThat(commitE.getMessage()).isEqualTo("E");
-		assertThat(commitE.isReachable()).isTrue();
-		assertThat(commitE.isTracked()).isTrue();
-
-		Commit commitF = access.getCommit(REPO_ID, COMM_F_HASH);
-		assertThat(commitF.getRepoId()).isEqualTo(REPO_ID);
-		assertThat(commitF.getHash()).isEqualTo(COMM_F_HASH);
-		assertThat(commitF.getMessage()).isEqualTo("F");
-		assertThat(commitF.isReachable()).isTrue();
-		assertThat(commitF.isTracked()).isFalse();
-
-		Commit commitG = access.getCommit(REPO_ID, COMM_G_HASH);
-		assertThat(commitG.getRepoId()).isEqualTo(REPO_ID);
-		assertThat(commitG.getHash()).isEqualTo(COMM_G_HASH);
-		assertThat(commitG.getMessage()).isEqualTo("G");
-		assertThat(commitG.isReachable()).isTrue();
-		assertThat(commitG.isTracked()).isFalse();
-
-		Commit commitH = access.getCommit(REPO_ID, COMM_H_HASH);
-		assertThat(commitH.getRepoId()).isEqualTo(REPO_ID);
-		assertThat(commitH.getHash()).isEqualTo(COMM_H_HASH);
-		assertThat(commitH.getMessage()).isEqualTo("H");
-		assertThat(commitH.isReachable()).isFalse();
-		assertThat(commitH.isTracked()).isFalse();
-
-		Commit commitI = access.getCommit(REPO_ID, COMM_I_HASH);
-		assertThat(commitI.getRepoId()).isEqualTo(REPO_ID);
-		assertThat(commitI.getHash()).isEqualTo(COMM_I_HASH);
-		assertThat(commitI.getMessage()).isEqualTo("I");
-		assertThat(commitI.isReachable()).isFalse();
-		assertThat(commitI.isTracked()).isFalse();
+		checkCommit(access.getCommit(REPO_ID, COMM_A_HASH), REPO_ID, COMM_A_HASH, true, true,
+			"aA", 1600010001, "cA", 1600010002, "A");
+		checkCommit(access.getCommit(REPO_ID, COMM_B_HASH), REPO_ID, COMM_B_HASH, true, true,
+			"aB", 1600020001, "cB", 1600020002, "B");
+		checkCommit(access.getCommit(REPO_ID, COMM_C_HASH), REPO_ID, COMM_C_HASH, true, true,
+			"aC", 1600030001, "cC", 1600030002, "C");
+		checkCommit(access.getCommit(REPO_ID, COMM_D_HASH), REPO_ID, COMM_D_HASH, true, true,
+			"aD", 1600040001, "cD", 1600040002, "D");
+		checkCommit(access.getCommit(REPO_ID, COMM_E_HASH), REPO_ID, COMM_E_HASH, true, true,
+			"aE", 1600050001, "cE", 1600050002, "E");
+		checkCommit(access.getCommit(REPO_ID, COMM_F_HASH), REPO_ID, COMM_F_HASH, true, false,
+			"aF", 1600060001, "cF", 1600060002, "F");
+		checkCommit(access.getCommit(REPO_ID, COMM_G_HASH), REPO_ID, COMM_G_HASH, true, false,
+			"aG", 1600070001, "cG", 1600070002, "G");
+		checkCommit(access.getCommit(REPO_ID, COMM_H_HASH), REPO_ID, COMM_H_HASH, false, false,
+			"aH", 1600080001, "cH", 1600080002, "H");
+		checkCommit(access.getCommit(REPO_ID, COMM_I_HASH), REPO_ID, COMM_I_HASH, false, false,
+			"aI", 1600090001, "cI", 1600090002, "I");
 
 		RepoId nonexistentId = new RepoId();
 		CommitHash nonexistentHash = new CommitHash("f49028fa485c0bcda6104c8c8b4e97addbde7079");
@@ -228,26 +221,12 @@ class CommitReadAccessTest {
 		Map<CommitHash, Commit> commitMap = commits.stream()
 			.collect(toMap(Commit::getHash, it -> it));
 
-		Commit commitB = commitMap.get(COMM_B_HASH);
-		assertThat(commitB.getRepoId()).isEqualTo(REPO_ID);
-		assertThat(commitB.getHash()).isEqualTo(COMM_B_HASH);
-		assertThat(commitB.getMessage()).isEqualTo("B");
-		assertThat(commitB.isReachable()).isTrue();
-		assertThat(commitB.isTracked()).isTrue();
-
-		Commit commitG = commitMap.get(COMM_G_HASH);
-		assertThat(commitG.getRepoId()).isEqualTo(REPO_ID);
-		assertThat(commitG.getHash()).isEqualTo(COMM_G_HASH);
-		assertThat(commitG.getMessage()).isEqualTo("G");
-		assertThat(commitG.isReachable()).isTrue();
-		assertThat(commitG.isTracked()).isFalse();
-
-		Commit commitI = commitMap.get(COMM_I_HASH);
-		assertThat(commitI.getRepoId()).isEqualTo(REPO_ID);
-		assertThat(commitI.getHash()).isEqualTo(COMM_I_HASH);
-		assertThat(commitI.getMessage()).isEqualTo("I");
-		assertThat(commitI.isReachable()).isFalse();
-		assertThat(commitI.isTracked()).isFalse();
+		checkCommit(commitMap.get(COMM_B_HASH), REPO_ID, COMM_B_HASH, true, true,
+			"aB", 1600020001, "cB", 1600020002, "B");
+		checkCommit(commitMap.get(COMM_G_HASH), REPO_ID, COMM_G_HASH, true, false,
+			"aG", 1600070001, "cG", 1600070002, "G");
+		checkCommit(commitMap.get(COMM_I_HASH), REPO_ID, COMM_I_HASH, false, false,
+			"aI", 1600090001, "cI", 1600090002, "I");
 
 		assertThat(access.getCommits(nonexistentId, List.of(COMM_A_HASH, COMM_E_HASH, COMM_I_HASH)))
 			.isEmpty();
@@ -255,87 +234,33 @@ class CommitReadAccessTest {
 
 	@Test
 	void getFullCommit() {
-		FullCommit commitA = access.getFullCommit(REPO_ID, COMM_A_HASH);
-		assertThat(commitA.getRepoId()).isEqualTo(REPO_ID);
-		assertThat(commitA.getHash()).isEqualTo(COMM_A_HASH);
-		assertThat(commitA.getMessage()).isEqualTo("A");
-		assertThat(commitA.isReachable()).isTrue();
-		assertThat(commitA.isTracked()).isTrue();
-		assertThat(commitA.getParentHashes()).containsExactlyInAnyOrder();
-		assertThat(commitA.getChildHashes()).containsExactlyInAnyOrder(COMM_B_HASH);
-
-		FullCommit commitB = access.getFullCommit(REPO_ID, COMM_B_HASH);
-		assertThat(commitB.getRepoId()).isEqualTo(REPO_ID);
-		assertThat(commitB.getHash()).isEqualTo(COMM_B_HASH);
-		assertThat(commitB.getMessage()).isEqualTo("B");
-		assertThat(commitB.isReachable()).isTrue();
-		assertThat(commitB.isTracked()).isTrue();
-		assertThat(commitB.getParentHashes()).containsExactlyInAnyOrder(COMM_A_HASH);
-		assertThat(commitB.getChildHashes()).containsExactlyInAnyOrder(COMM_C_HASH, COMM_F_HASH);
-
-		FullCommit commitC = access.getFullCommit(REPO_ID, COMM_C_HASH);
-		assertThat(commitC.getRepoId()).isEqualTo(REPO_ID);
-		assertThat(commitC.getHash()).isEqualTo(COMM_C_HASH);
-		assertThat(commitC.getMessage()).isEqualTo("C");
-		assertThat(commitC.isReachable()).isTrue();
-		assertThat(commitC.isTracked()).isTrue();
-		assertThat(commitC.getParentHashes()).containsExactlyInAnyOrder(COMM_B_HASH);
-		assertThat(commitC.getChildHashes()).containsExactlyInAnyOrder(COMM_D_HASH);
-
-		FullCommit commitD = access.getFullCommit(REPO_ID, COMM_D_HASH);
-		assertThat(commitD.getRepoId()).isEqualTo(REPO_ID);
-		assertThat(commitD.getHash()).isEqualTo(COMM_D_HASH);
-		assertThat(commitD.getMessage()).isEqualTo("D");
-		assertThat(commitD.isReachable()).isTrue();
-		assertThat(commitD.isTracked()).isTrue();
-		assertThat(commitD.getParentHashes()).containsExactlyInAnyOrder(COMM_C_HASH);
-		assertThat(commitD.getChildHashes())
-			.containsExactlyInAnyOrder(COMM_E_HASH, COMM_F_HASH, COMM_H_HASH);
-
-		FullCommit commitE = access.getFullCommit(REPO_ID, COMM_E_HASH);
-		assertThat(commitE.getRepoId()).isEqualTo(REPO_ID);
-		assertThat(commitE.getHash()).isEqualTo(COMM_E_HASH);
-		assertThat(commitE.getMessage()).isEqualTo("E");
-		assertThat(commitE.isReachable()).isTrue();
-		assertThat(commitE.isTracked()).isTrue();
-		assertThat(commitE.getParentHashes()).containsExactlyInAnyOrder(COMM_D_HASH);
-		assertThat(commitE.getChildHashes()).containsExactlyInAnyOrder();
-
-		FullCommit commitF = access.getFullCommit(REPO_ID, COMM_F_HASH);
-		assertThat(commitF.getRepoId()).isEqualTo(REPO_ID);
-		assertThat(commitF.getHash()).isEqualTo(COMM_F_HASH);
-		assertThat(commitF.getMessage()).isEqualTo("F");
-		assertThat(commitF.isReachable()).isTrue();
-		assertThat(commitF.isTracked()).isFalse();
-		assertThat(commitF.getParentHashes()).containsExactlyInAnyOrder(COMM_B_HASH, COMM_D_HASH);
-		assertThat(commitF.getChildHashes()).containsExactlyInAnyOrder(COMM_G_HASH, COMM_I_HASH);
-
-		FullCommit commitG = access.getFullCommit(REPO_ID, COMM_G_HASH);
-		assertThat(commitG.getRepoId()).isEqualTo(REPO_ID);
-		assertThat(commitG.getHash()).isEqualTo(COMM_G_HASH);
-		assertThat(commitG.getMessage()).isEqualTo("G");
-		assertThat(commitG.isReachable()).isTrue();
-		assertThat(commitG.isTracked()).isFalse();
-		assertThat(commitG.getParentHashes()).containsExactlyInAnyOrder(COMM_F_HASH);
-		assertThat(commitG.getChildHashes()).containsExactlyInAnyOrder();
-
-		FullCommit commitH = access.getFullCommit(REPO_ID, COMM_H_HASH);
-		assertThat(commitH.getRepoId()).isEqualTo(REPO_ID);
-		assertThat(commitH.getHash()).isEqualTo(COMM_H_HASH);
-		assertThat(commitH.getMessage()).isEqualTo("H");
-		assertThat(commitH.isReachable()).isFalse();
-		assertThat(commitH.isTracked()).isFalse();
-		assertThat(commitH.getParentHashes()).containsExactlyInAnyOrder(COMM_D_HASH);
-		assertThat(commitH.getChildHashes()).containsExactlyInAnyOrder();
-
-		FullCommit commitI = access.getFullCommit(REPO_ID, COMM_I_HASH);
-		assertThat(commitI.getRepoId()).isEqualTo(REPO_ID);
-		assertThat(commitI.getHash()).isEqualTo(COMM_I_HASH);
-		assertThat(commitI.getMessage()).isEqualTo("I");
-		assertThat(commitI.isReachable()).isFalse();
-		assertThat(commitI.isTracked()).isFalse();
-		assertThat(commitI.getParentHashes()).containsExactlyInAnyOrder(COMM_F_HASH);
-		assertThat(commitI.getChildHashes()).containsExactlyInAnyOrder();
+		checkFullCommit(access.getFullCommit(REPO_ID, COMM_A_HASH), REPO_ID, COMM_A_HASH, true, true,
+			"aA", 1600010001, "cA", 1600010002, "A",
+			List.of(), List.of(COMM_B_HASH));
+		checkFullCommit(access.getFullCommit(REPO_ID, COMM_B_HASH), REPO_ID, COMM_B_HASH, true, true,
+			"aB", 1600020001, "cB", 1600020002, "B",
+			List.of(COMM_A_HASH), List.of(COMM_C_HASH, COMM_F_HASH));
+		checkFullCommit(access.getFullCommit(REPO_ID, COMM_C_HASH), REPO_ID, COMM_C_HASH, true, true,
+			"aC", 1600030001, "cC", 1600030002, "C",
+			List.of(COMM_B_HASH), List.of(COMM_D_HASH));
+		checkFullCommit(access.getFullCommit(REPO_ID, COMM_D_HASH), REPO_ID, COMM_D_HASH, true, true,
+			"aD", 1600040001, "cD", 1600040002, "D",
+			List.of(COMM_C_HASH), List.of(COMM_E_HASH, COMM_F_HASH, COMM_H_HASH));
+		checkFullCommit(access.getFullCommit(REPO_ID, COMM_E_HASH), REPO_ID, COMM_E_HASH, true, true,
+			"aE", 1600050001, "cE", 1600050002, "E",
+			List.of(COMM_D_HASH), List.of());
+		checkFullCommit(access.getFullCommit(REPO_ID, COMM_F_HASH), REPO_ID, COMM_F_HASH, true, false,
+			"aF", 1600060001, "cF", 1600060002, "F",
+			List.of(COMM_B_HASH, COMM_D_HASH), List.of(COMM_G_HASH, COMM_I_HASH));
+		checkFullCommit(access.getFullCommit(REPO_ID, COMM_G_HASH), REPO_ID, COMM_G_HASH, true, false,
+			"aG", 1600070001, "cG", 1600070002, "G",
+			List.of(COMM_F_HASH), List.of());
+		checkFullCommit(access.getFullCommit(REPO_ID, COMM_H_HASH), REPO_ID, COMM_H_HASH, false, false,
+			"aH", 1600080001, "cH", 1600080002, "H",
+			List.of(COMM_D_HASH), List.of());
+		checkFullCommit(access.getFullCommit(REPO_ID, COMM_I_HASH), REPO_ID, COMM_I_HASH, false, false,
+			"aI", 1600090001, "cI", 1600090002, "I",
+			List.of(COMM_F_HASH), List.of());
 
 		RepoId nonexistentId = new RepoId();
 		CommitHash nonexistentHash = new CommitHash("f49028fa485c0bcda6104c8c8b4e97addbde7079");
@@ -361,6 +286,7 @@ class CommitReadAccessTest {
 	void promoteCommits() {
 		CommitHash nonexistentHash = new CommitHash("f49028fa485c0bcda6104c8c8b4e97addbde7079");
 
+		// Missing COMM_I_HASH and including one nonexistent hash
 		List<FullCommit> commits = access.promoteCommits(access.getCommits(REPO_ID,
 			List.of(COMM_A_HASH, COMM_B_HASH, COMM_C_HASH, COMM_D_HASH, COMM_E_HASH, COMM_F_HASH,
 				COMM_G_HASH, COMM_H_HASH, nonexistentHash)));
@@ -373,78 +299,30 @@ class CommitReadAccessTest {
 		Map<CommitHash, FullCommit> commitMap = commits.stream()
 			.collect(toMap(Commit::getHash, it -> it));
 
-		FullCommit commitA = commitMap.get(COMM_A_HASH);
-		assertThat(commitA.getRepoId()).isEqualTo(REPO_ID);
-		assertThat(commitA.getHash()).isEqualTo(COMM_A_HASH);
-		assertThat(commitA.getMessage()).isEqualTo("A");
-		assertThat(commitA.isReachable()).isTrue();
-		assertThat(commitA.isTracked()).isTrue();
-		assertThat(commitA.getParentHashes()).isEmpty();
-		assertThat(commitA.getChildHashes()).containsExactlyInAnyOrder(COMM_B_HASH);
-
-		FullCommit commitB = commitMap.get(COMM_B_HASH);
-		assertThat(commitB.getRepoId()).isEqualTo(REPO_ID);
-		assertThat(commitB.getHash()).isEqualTo(COMM_B_HASH);
-		assertThat(commitB.getMessage()).isEqualTo("B");
-		assertThat(commitB.isReachable()).isTrue();
-		assertThat(commitB.isTracked()).isTrue();
-		assertThat(commitB.getParentHashes()).containsExactlyInAnyOrder(COMM_A_HASH);
-		assertThat(commitB.getChildHashes()).containsExactlyInAnyOrder(COMM_C_HASH, COMM_F_HASH);
-
-		FullCommit commitC = commitMap.get(COMM_C_HASH);
-		assertThat(commitC.getRepoId()).isEqualTo(REPO_ID);
-		assertThat(commitC.getHash()).isEqualTo(COMM_C_HASH);
-		assertThat(commitC.getMessage()).isEqualTo("C");
-		assertThat(commitC.isReachable()).isTrue();
-		assertThat(commitC.isTracked()).isTrue();
-		assertThat(commitC.getParentHashes()).containsExactlyInAnyOrder(COMM_B_HASH);
-		assertThat(commitC.getChildHashes()).containsExactlyInAnyOrder(COMM_D_HASH);
-
-		FullCommit commitD = commitMap.get(COMM_D_HASH);
-		assertThat(commitD.getRepoId()).isEqualTo(REPO_ID);
-		assertThat(commitD.getHash()).isEqualTo(COMM_D_HASH);
-		assertThat(commitD.getMessage()).isEqualTo("D");
-		assertThat(commitD.isReachable()).isTrue();
-		assertThat(commitD.isTracked()).isTrue();
-		assertThat(commitD.getParentHashes()).containsExactlyInAnyOrder(COMM_C_HASH);
-		assertThat(commitD.getChildHashes())
-			.containsExactlyInAnyOrder(COMM_E_HASH, COMM_F_HASH, COMM_H_HASH);
-
-		FullCommit commitE = commitMap.get(COMM_E_HASH);
-		assertThat(commitE.getRepoId()).isEqualTo(REPO_ID);
-		assertThat(commitE.getHash()).isEqualTo(COMM_E_HASH);
-		assertThat(commitE.getMessage()).isEqualTo("E");
-		assertThat(commitE.isReachable()).isTrue();
-		assertThat(commitE.isTracked()).isTrue();
-		assertThat(commitE.getParentHashes()).containsExactlyInAnyOrder(COMM_D_HASH);
-		assertThat(commitE.getChildHashes()).isEmpty();
-
-		FullCommit commitF = commitMap.get(COMM_F_HASH);
-		assertThat(commitF.getRepoId()).isEqualTo(REPO_ID);
-		assertThat(commitF.getHash()).isEqualTo(COMM_F_HASH);
-		assertThat(commitF.getMessage()).isEqualTo("F");
-		assertThat(commitF.isReachable()).isTrue();
-		assertThat(commitF.isTracked()).isFalse();
-		assertThat(commitF.getParentHashes()).containsExactlyInAnyOrder(COMM_B_HASH, COMM_D_HASH);
-		assertThat(commitF.getChildHashes()).containsExactlyInAnyOrder(COMM_G_HASH, COMM_I_HASH);
-
-		FullCommit commitG = commitMap.get(COMM_G_HASH);
-		assertThat(commitG.getRepoId()).isEqualTo(REPO_ID);
-		assertThat(commitG.getHash()).isEqualTo(COMM_G_HASH);
-		assertThat(commitG.getMessage()).isEqualTo("G");
-		assertThat(commitG.isReachable()).isTrue();
-		assertThat(commitG.isTracked()).isFalse();
-		assertThat(commitG.getParentHashes()).containsExactlyInAnyOrder(COMM_F_HASH);
-		assertThat(commitG.getChildHashes()).isEmpty();
-
-		FullCommit commitH = commitMap.get(COMM_H_HASH);
-		assertThat(commitH.getRepoId()).isEqualTo(REPO_ID);
-		assertThat(commitH.getHash()).isEqualTo(COMM_H_HASH);
-		assertThat(commitH.getMessage()).isEqualTo("H");
-		assertThat(commitH.isReachable()).isFalse();
-		assertThat(commitH.isTracked()).isFalse();
-		assertThat(commitH.getParentHashes()).containsExactlyInAnyOrder(COMM_D_HASH);
-		assertThat(commitH.getChildHashes()).isEmpty();
+		checkFullCommit(commitMap.get(COMM_A_HASH), REPO_ID, COMM_A_HASH, true, true,
+			"aA", 1600010001, "cA", 1600010002, "A",
+			List.of(), List.of(COMM_B_HASH));
+		checkFullCommit(commitMap.get(COMM_B_HASH), REPO_ID, COMM_B_HASH, true, true,
+			"aB", 1600020001, "cB", 1600020002, "B",
+			List.of(COMM_A_HASH), List.of(COMM_C_HASH, COMM_F_HASH));
+		checkFullCommit(commitMap.get(COMM_C_HASH), REPO_ID, COMM_C_HASH, true, true,
+			"aC", 1600030001, "cC", 1600030002, "C",
+			List.of(COMM_B_HASH), List.of(COMM_D_HASH));
+		checkFullCommit(commitMap.get(COMM_D_HASH), REPO_ID, COMM_D_HASH, true, true,
+			"aD", 1600040001, "cD", 1600040002, "D",
+			List.of(COMM_C_HASH), List.of(COMM_E_HASH, COMM_F_HASH, COMM_H_HASH));
+		checkFullCommit(commitMap.get(COMM_E_HASH), REPO_ID, COMM_E_HASH, true, true,
+			"aE", 1600050001, "cE", 1600050002, "E",
+			List.of(COMM_D_HASH), List.of());
+		checkFullCommit(commitMap.get(COMM_F_HASH), REPO_ID, COMM_F_HASH, true, false,
+			"aF", 1600060001, "cF", 1600060002, "F",
+			List.of(COMM_B_HASH, COMM_D_HASH), List.of(COMM_G_HASH, COMM_I_HASH));
+		checkFullCommit(commitMap.get(COMM_G_HASH), REPO_ID, COMM_G_HASH, true, false,
+			"aG", 1600070001, "cG", 1600070002, "G",
+			List.of(COMM_F_HASH), List.of());
+		checkFullCommit(commitMap.get(COMM_H_HASH), REPO_ID, COMM_H_HASH, false, false,
+			"aH", 1600080001, "cH", 1600080002, "H",
+			List.of(COMM_D_HASH), List.of());
 	}
 
 	@Test
@@ -498,6 +376,90 @@ class CommitReadAccessTest {
 		assertThat(access.getDescendantCommits(REPO_ID, nonexistentHash)).isEmpty();
 	}
 
-	// TODO: 2020-12-24 Test getCommitsBetween
-	// TODO: 2020-12-24 Test getTrackedCommitsBetween
+	@Test
+	void getTrackedCommitsBetween() {
+		// Check that untracked and unreachable commits are not included
+
+		List<Commit> commits = access.getTrackedCommitsBetween(REPO_ID,
+			Instant.ofEpochSecond(1600030000), Instant.ofEpochSecond(1600080005));
+		assertThat(commits.stream()
+			.map(Commit::getHash))
+			.containsExactlyInAnyOrder(COMM_C_HASH, COMM_D_HASH, COMM_E_HASH);
+
+		// Check off-by-one errors and that committer and not author time is used
+
+		commits = access.getTrackedCommitsBetween(REPO_ID,
+			Instant.ofEpochSecond(1600040003), Instant.ofEpochSecond(1600050002));
+		assertThat(commits.stream()
+			.map(Commit::getHash))
+			.containsExactlyInAnyOrder(COMM_E_HASH);
+
+		commits = access.getTrackedCommitsBetween(REPO_ID,
+			Instant.ofEpochSecond(1600040002), Instant.ofEpochSecond(1600050001));
+		assertThat(commits.stream()
+			.map(Commit::getHash))
+			.containsExactlyInAnyOrder(COMM_D_HASH);
+	}
+
+	@Test
+	void getCommitsBetween() {
+		// From an untracked branch
+
+		List<Commit> commits = access.getCommitsBetween(REPO_ID, List.of(BranchName.fromName("U")),
+			Instant.ofEpochSecond(1600020000), Instant.ofEpochSecond(1600060005));
+		assertThat(commits.stream()
+			.map(Commit::getHash))
+			.containsExactlyInAnyOrder(COMM_B_HASH, COMM_C_HASH, COMM_D_HASH, COMM_F_HASH);
+
+		commits = access.getCommitsBetween(REPO_ID, List.of(BranchName.fromName("U")),
+			Instant.ofEpochSecond(1600020000), Instant.ofEpochSecond(1600090005));
+		assertThat(commits.stream()
+			.map(Commit::getHash))
+			.containsExactlyInAnyOrder(COMM_B_HASH, COMM_C_HASH, COMM_D_HASH, COMM_F_HASH, COMM_G_HASH);
+
+		// From a tracked branch
+
+		commits = access.getCommitsBetween(REPO_ID, List.of(BranchName.fromName("T")),
+			Instant.ofEpochSecond(1600020000), Instant.ofEpochSecond(1600040005));
+		assertThat(commits.stream()
+			.map(Commit::getHash))
+			.containsExactlyInAnyOrder(COMM_B_HASH, COMM_C_HASH, COMM_D_HASH);
+
+		commits = access.getCommitsBetween(REPO_ID, List.of(BranchName.fromName("T")),
+			Instant.ofEpochSecond(1600020000), Instant.ofEpochSecond(1600090005));
+		assertThat(commits.stream()
+			.map(Commit::getHash))
+			.containsExactlyInAnyOrder(COMM_B_HASH, COMM_C_HASH, COMM_D_HASH, COMM_E_HASH);
+
+		// From both branches
+
+		commits = access.getCommitsBetween(REPO_ID,
+			List.of(BranchName.fromName("T"), BranchName.fromName("U")),
+			Instant.ofEpochSecond(1600020000), Instant.ofEpochSecond(1600060005));
+		assertThat(commits.stream()
+			.map(Commit::getHash))
+			.containsExactlyInAnyOrder(COMM_B_HASH, COMM_C_HASH, COMM_D_HASH, COMM_E_HASH, COMM_F_HASH);
+
+		commits = access.getCommitsBetween(REPO_ID,
+			List.of(BranchName.fromName("T"), BranchName.fromName("U")),
+			Instant.ofEpochSecond(1600020000), Instant.ofEpochSecond(1600090005));
+		assertThat(commits.stream()
+			.map(Commit::getHash))
+			.containsExactlyInAnyOrder(COMM_B_HASH, COMM_C_HASH, COMM_D_HASH, COMM_E_HASH, COMM_F_HASH,
+				COMM_G_HASH);
+
+		// Check off-by-one errors and that author and not committer time is used
+
+		commits = access.getCommitsBetween(REPO_ID, List.of(BranchName.fromName("T")),
+			Instant.ofEpochSecond(1600040002), Instant.ofEpochSecond(1600050001));
+		assertThat(commits.stream()
+			.map(Commit::getHash))
+			.containsExactlyInAnyOrder(COMM_E_HASH);
+
+		commits = access.getCommitsBetween(REPO_ID, List.of(BranchName.fromName("T")),
+			Instant.ofEpochSecond(1600040001), Instant.ofEpochSecond(1600050000));
+		assertThat(commits.stream()
+			.map(Commit::getHash))
+			.containsExactlyInAnyOrder(COMM_D_HASH);
+	}
 }
