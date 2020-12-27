@@ -45,8 +45,7 @@ public class CommitSource {
 			return false;
 		}
 		CommitSource that = (CommitSource) o;
-		return Objects.equals(repoId, that.repoId) &&
-			Objects.equals(hash, that.hash);
+		return Objects.equals(repoId, that.repoId) && Objects.equals(hash, that.hash);
 	}
 
 	@Override
