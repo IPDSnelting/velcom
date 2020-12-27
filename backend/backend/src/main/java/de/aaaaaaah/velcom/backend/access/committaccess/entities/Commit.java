@@ -1,10 +1,12 @@
 package de.aaaaaaah.velcom.backend.access.committaccess.entities;
 
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RepoId;
+import de.aaaaaaah.velcom.shared.util.Pair;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import javax.swing.Painter;
 
 /**
  * A git commit. For a version that includes parent and child hashes, see {@link FullCommit}.
@@ -106,32 +108,20 @@ public class Commit {
 		return message;
 	}
 
-	public List<String> getSections() {
-		List<String> lines = message.lines().collect(Collectors.toList());
-
-		int firstEmptyLine = lines.indexOf("");
-		if (firstEmptyLine == -1) {
-			// No empty line, meaning there is only a summary and no other sections
-			return List.of(message);
+	public Pair<String, Optional<String>> getSections() {
+		String[] split = message.split("\n\n", 2);
+		if (split.length == 2) {
+			return new Pair<>(split[0] + "\n", Optional.of(split[1]));
+		} else {
+			return new Pair<>(message, Optional.empty());
 		}
-
-		String summary = lines.subList(0, firstEmptyLine).stream()
-			.collect(Collectors.joining("\n", "", "\n"));
-		String rest = lines.subList(firstEmptyLine + 1, lines.size()).stream()
-			.collect(Collectors.joining("\n", "", "\n"));
-		return List.of(summary, rest);
 	}
 
 	public String getSummary() {
-		return getSections().get(0);
+		return getSections().getFirst();
 	}
 
 	public Optional<String> getMessageWithoutSummary() {
-		List<String> sections = getSections();
-		if (sections.size() == 2) {
-			return Optional.of(sections.get(1));
-		} else {
-			return Optional.empty();
-		}
+		return getSections().getSecond();
 	}
 }
