@@ -96,12 +96,12 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 				} else {
 					measurement.getUnit()
 						.map(Unit::getName)
-						.filter(it -> record.getUnit().equals(it))
+						.filter(it -> !record.getUnit().equals(it))
 						.ifPresent(record::setUnit);
 
 					measurement.getInterpretation()
 						.map(Interpretation::getTextualRepresentation)
-						.filter(it -> record.getInterpretation().equals(it))
+						.filter(it -> !record.getInterpretation().equals(it))
 						.ifPresent(record::setInterpretation);
 				}
 			});
