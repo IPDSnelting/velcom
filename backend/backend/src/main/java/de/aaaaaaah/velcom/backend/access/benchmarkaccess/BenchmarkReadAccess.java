@@ -219,6 +219,7 @@ public class BenchmarkReadAccess {
 				.where(RUN.REPO_ID.eq(repoId.getIdAsString()))
 				.and(RUN.COMMIT_HASH.eq(commitHash.getHash()))
 				.orderBy(RUN.START_TIME.desc())
+				.limit(1)
 				.fetchOptional()
 				.map(record -> RunId.fromString(record.getId()));
 		}

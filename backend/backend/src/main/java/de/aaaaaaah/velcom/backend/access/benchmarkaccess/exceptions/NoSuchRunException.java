@@ -14,11 +14,6 @@ public class NoSuchRunException extends RuntimeException {
 		this.invalidId = invalidId;
 	}
 
-	public NoSuchRunException(Throwable t, RunId invalidId) {
-		super("no run with id " + invalidId, t);
-		this.invalidId = invalidId;
-	}
-
 	public RunId getInvalidId() {
 		return invalidId;
 	}

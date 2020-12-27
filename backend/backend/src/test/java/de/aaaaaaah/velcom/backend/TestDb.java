@@ -166,6 +166,10 @@ public class TestDb {
 		)).execute();
 	}
 
+	public void addDimension(Dimension dimension) {
+		addDimension(new DimensionInfo(dimension));
+	}
+
 	public void addRun(RunId runId, String author, String runnerName, String runnerInfo,
 		Instant startTime, Instant stopTime, Either<CommitSource, TarSource> source,
 		@Nullable RunError error) {
@@ -201,8 +205,8 @@ public class TestDb {
 		addRun(runId, "author", "runnerName", "runnerInfo", Instant.now(), Instant.now(), source, null);
 	}
 
-	public UUID addMeasurement(RunId runId, Dimension dimension, Unit unit,
-		Interpretation interpretation, Either<MeasurementError, MeasurementValues> result) {
+	public UUID addMeasurement(RunId runId, Dimension dimension, @Nullable Unit unit,
+		@Nullable Interpretation interpretation, Either<MeasurementError, MeasurementValues> result) {
 
 		UUID measurementId = UUID.randomUUID();
 
@@ -211,8 +215,12 @@ public class TestDb {
 			runId.getIdAsString(),
 			dimension.getBenchmark(),
 			dimension.getMetric(),
-			unit.getName(),
-			interpretation.getTextualRepresentation(),
+			Optional.ofNullable(unit)
+				.map(Unit::getName)
+				.orElse(null),
+			Optional.ofNullable(interpretation)
+				.map(Interpretation::getTextualRepresentation)
+				.orElse(null),
 			result.getLeft()
 				.map(MeasurementError::getErrorMessage)
 				.orElse(null)

@@ -25,6 +25,23 @@ public class RunError {
 	}
 
 	@Override
+	public boolean equals(Object o) {
+		if (this == o) {
+			return true;
+		}
+		if (o == null || getClass() != o.getClass()) {
+			return false;
+		}
+		RunError runError = (RunError) o;
+		return Objects.equals(errorMessage, runError.errorMessage) && type == runError.type;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(errorMessage, type);
+	}
+
+	@Override
 	public String toString() {
 		return "RunError{" +
 			"errorMessage='" + errorMessage + '\'' +
