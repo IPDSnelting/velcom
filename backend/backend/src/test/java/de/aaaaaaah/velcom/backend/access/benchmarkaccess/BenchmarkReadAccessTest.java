@@ -12,6 +12,7 @@ import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.Run;
 import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.RunError;
 import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.RunErrorType;
 import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.RunId;
+import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.ShortRunDescription;
 import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.sources.CommitSource;
 import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.sources.TarSource;
 import de.aaaaaaah.velcom.backend.access.benchmarkaccess.exceptions.NoSuchRunException;
@@ -108,7 +109,7 @@ class BenchmarkReadAccessTest {
 
 		testDb.addRepo(REPO1_ID);
 		testDb.addRepo(REPO2_ID);
-		testDb.addCommit(REPO1_ID, COMMIT1_HASH);
+		testDb.addCommit(REPO1_ID, COMMIT1_HASH, true, true, "blad9bla");
 		testDb.addCommit(REPO1_ID, COMMIT2_HASH);
 		testDb.addCommit(REPO1_ID, COMMIT3_HASH);
 		testDb.addCommit(REPO2_ID, COMMIT4_HASH);
@@ -359,5 +360,99 @@ class BenchmarkReadAccessTest {
 		assertThat(run7.getResult())
 			.isEqualTo(Either.ofLeft(new RunError("em7", RunErrorType.BENCH_SCRIPT_ERROR)));
 		assertThat(run7.getAllDimensionsUsed()).isEmpty();
+	}
+
+	@Test
+	void searchRuns() {
+		assertThat(access.searchRuns(false, null, null, null, null, null, null)
+			.stream()
+			.map(ShortRunDescription::getId))
+			.containsExactlyInAnyOrder(RUN1_ID, RUN2_ID, RUN3_ID, RUN4_ID, RUN5_ID, RUN6_ID, RUN7_ID,
+				RUN8_ID, RUN9_ID, RUN10_ID);
+
+		assertThat(access.searchRuns(true, null, null, null, null, null, null)
+			.stream()
+			.map(ShortRunDescription::getId))
+			.containsExactlyInAnyOrder(RUN1_ID, RUN2_ID, RUN3_ID, RUN4_ID, RUN7_ID, RUN8_ID, RUN9_ID,
+				RUN10_ID);
+
+		// Restricted to repo 1
+
+		assertThat(access.searchRuns(false, null, REPO1_ID, null, null, null, null)
+			.stream()
+			.map(ShortRunDescription::getId))
+			.containsExactlyInAnyOrder(RUN3_ID, RUN4_ID, RUN5_ID, RUN6_ID, RUN7_ID, RUN8_ID);
+
+		assertThat(access.searchRuns(true, null, REPO1_ID, null, null, null, null)
+			.stream()
+			.map(ShortRunDescription::getId))
+			.containsExactlyInAnyOrder(RUN3_ID, RUN4_ID, RUN7_ID, RUN8_ID);
+
+		// Restricted to commit 1
+
+		assertThat(access.searchRuns(false, null, null, COMMIT1_HASH, null, null, null)
+			.stream()
+			.map(ShortRunDescription::getId))
+			.containsExactlyInAnyOrder(RUN5_ID, RUN6_ID, RUN7_ID);
+
+		assertThat(access.searchRuns(true, null, null, COMMIT1_HASH, null, null, null)
+			.stream()
+			.map(ShortRunDescription::getId))
+			.containsExactlyInAnyOrder(RUN7_ID);
+
+		// With certain description
+
+		assertThat(access.searchRuns(false, null, null, null, "d9", null, null)
+			.stream()
+			.map(ShortRunDescription::getId))
+			.containsExactlyInAnyOrder(RUN5_ID, RUN6_ID, RUN7_ID, RUN9_ID);
+
+		assertThat(access.searchRuns(true, null, null, null, "d9", null, null)
+			.stream()
+			.map(ShortRunDescription::getId))
+			.containsExactlyInAnyOrder(RUN7_ID, RUN9_ID);
+
+		// Ordered by run start time
+
+		assertThat(access.searchRuns(false, null, null, null, null, true, null)
+			.stream()
+			.map(ShortRunDescription::getId))
+			.containsExactly(RUN7_ID, RUN2_ID, RUN8_ID, RUN4_ID, RUN10_ID, RUN9_ID, RUN3_ID, RUN6_ID,
+				RUN5_ID, RUN1_ID);
+
+		assertThat(access.searchRuns(false, null, null, null, null, false, null)
+			.stream()
+			.map(ShortRunDescription::getId))
+			.containsExactly(RUN1_ID, RUN5_ID, RUN6_ID, RUN3_ID, RUN9_ID, RUN10_ID, RUN4_ID, RUN8_ID,
+				RUN2_ID, RUN7_ID);
+
+		assertThat(access.searchRuns(true, null, null, null, null, true, null)
+			.stream()
+			.map(ShortRunDescription::getId))
+			.containsExactly(RUN7_ID, RUN2_ID, RUN8_ID, RUN4_ID, RUN10_ID, RUN9_ID, RUN3_ID, RUN1_ID);
+
+		assertThat(access.searchRuns(true, null, null, null, null, false, null)
+			.stream()
+			.map(ShortRunDescription::getId))
+			.containsExactly(RUN1_ID, RUN3_ID, RUN9_ID, RUN10_ID, RUN4_ID, RUN8_ID, RUN2_ID, RUN7_ID);
+
+		// Ordered by run start time with limit
+
+		assertThat(access.searchRuns(false, 3, null, null, null, true, null)
+			.stream()
+			.map(ShortRunDescription::getId))
+			.containsExactly(RUN7_ID, RUN2_ID, RUN8_ID);
+
+		assertThat(access.searchRuns(true, 4, null, null, null, false, null)
+			.stream()
+			.map(ShortRunDescription::getId))
+			.containsExactly(RUN1_ID, RUN3_ID, RUN9_ID, RUN10_ID);
+
+		assertThat(access.searchRuns(false, 7000, null, null, null, false, null)
+			.stream()
+			.map(ShortRunDescription::getId))
+			.containsExactly(RUN1_ID, RUN5_ID, RUN6_ID, RUN3_ID, RUN9_ID, RUN10_ID, RUN4_ID, RUN8_ID,	RUN2_ID, RUN7_ID);
+
+		// TODO: 2020-12-29 Test ordered by committer time
 	}
 }
