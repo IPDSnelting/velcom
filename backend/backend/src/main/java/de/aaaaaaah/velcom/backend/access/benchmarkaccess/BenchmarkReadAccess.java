@@ -4,10 +4,10 @@ import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
+import static org.jooq.codegen.db.Tables.LATEST_RUN;
 import static org.jooq.codegen.db.Tables.MEASUREMENT;
 import static org.jooq.codegen.db.Tables.MEASUREMENT_VALUE;
 import static org.jooq.codegen.db.Tables.RUN;
-import static org.jooq.impl.DSL.max;
 
 import de.aaaaaaah.velcom.backend.access.AccessUtils;
 import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.Measurement;
@@ -215,11 +215,9 @@ public class BenchmarkReadAccess {
 	 */
 	public Optional<RunId> getLatestRunId(RepoId repoId, CommitHash commitHash) {
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			return db.selectFrom(RUN)
-				.where(RUN.REPO_ID.eq(repoId.getIdAsString()))
-				.and(RUN.COMMIT_HASH.eq(commitHash.getHash()))
-				.orderBy(RUN.START_TIME.desc())
-				.limit(1)
+			return db.selectFrom(LATEST_RUN)
+				.where(LATEST_RUN.REPO_ID.eq(repoId.getIdAsString()))
+				.and(LATEST_RUN.COMMIT_HASH.eq(commitHash.getHash()))
 				.fetchOptional()
 				.map(record -> RunId.fromString(record.getId()));
 		}
@@ -241,19 +239,13 @@ public class BenchmarkReadAccess {
 			.collect(toSet());
 
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			return db.select(
-				RUN.COMMIT_HASH,
-				RUN.ID,
-				max(RUN.START_TIME) // Sqlite-specific, grab latest run
-			)
-				.from(RUN)
-				.where(RUN.REPO_ID.eq(repoId.getIdAsString()))
-				.and(RUN.COMMIT_HASH.in(hashStrings))
-				.groupBy(RUN.COMMIT_HASH)
+			return db.selectFrom(LATEST_RUN)
+				.where(LATEST_RUN.REPO_ID.eq(repoId.getIdAsString()))
+				.and(LATEST_RUN.COMMIT_HASH.in(hashStrings))
 				.stream()
 				.collect(toMap(
-					record -> new CommitHash(record.value1()),
-					record -> RunId.fromString(record.value2())
+					record -> new CommitHash(record.getCommitHash()),
+					record -> RunId.fromString(record.getId())
 				));
 		}
 	}
