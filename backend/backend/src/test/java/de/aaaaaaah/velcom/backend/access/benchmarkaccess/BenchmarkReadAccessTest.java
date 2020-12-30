@@ -110,9 +110,9 @@ class BenchmarkReadAccessTest {
 		testDb.addRepo(REPO1_ID);
 		testDb.addRepo(REPO2_ID);
 		testDb.addCommit(REPO1_ID, COMMIT1_HASH, true, true, "blad9bla");
-		testDb.addCommit(REPO1_ID, COMMIT2_HASH);
-		testDb.addCommit(REPO1_ID, COMMIT3_HASH);
-		testDb.addCommit(REPO2_ID, COMMIT4_HASH);
+		testDb.addCommit(REPO1_ID, COMMIT2_HASH, true, true, "m2");
+		testDb.addCommit(REPO1_ID, COMMIT3_HASH, true, true, "m3");
+		testDb.addCommit(REPO2_ID, COMMIT4_HASH, true, true, "m4");
 
 		testDb.addRun(RUN1_ID, "a1", "rn1", "ri1", RUN1_START, RUN1_START.plusSeconds(1),
 			Either.ofRight(new TarSource("td1", null)), null);
@@ -451,8 +451,33 @@ class BenchmarkReadAccessTest {
 		assertThat(access.searchRuns(false, 7000, null, null, null, false, null)
 			.stream()
 			.map(ShortRunDescription::getId))
-			.containsExactly(RUN1_ID, RUN5_ID, RUN6_ID, RUN3_ID, RUN9_ID, RUN10_ID, RUN4_ID, RUN8_ID,	RUN2_ID, RUN7_ID);
+			.containsExactly(RUN1_ID, RUN5_ID, RUN6_ID, RUN3_ID, RUN9_ID, RUN10_ID, RUN4_ID, RUN8_ID,
+				RUN2_ID, RUN7_ID);
 
 		// TODO: 2020-12-29 Test ordered by committer time
+	}
+
+	@Test
+	void getShortRunDescription() {
+		assertThat(access.getShortRunDescription(RUN1_ID))
+			.isEqualTo(new ShortRunDescription(RUN1_ID, null, "td1"));
+		assertThat(access.getShortRunDescription(RUN2_ID))
+			.isEqualTo(new ShortRunDescription(RUN2_ID, null, "td2"));
+		assertThat(access.getShortRunDescription(RUN3_ID))
+			.isEqualTo(new ShortRunDescription(RUN3_ID, null, "td3"));
+		assertThat(access.getShortRunDescription(RUN4_ID))
+			.isEqualTo(new ShortRunDescription(RUN4_ID, null, "td4"));
+		assertThat(access.getShortRunDescription(RUN5_ID))
+			.isEqualTo(new ShortRunDescription(RUN5_ID, "blad9bla", null));
+		assertThat(access.getShortRunDescription(RUN6_ID))
+			.isEqualTo(new ShortRunDescription(RUN6_ID, "blad9bla", null));
+		assertThat(access.getShortRunDescription(RUN7_ID))
+			.isEqualTo(new ShortRunDescription(RUN7_ID, "blad9bla", null));
+		assertThat(access.getShortRunDescription(RUN8_ID))
+			.isEqualTo(new ShortRunDescription(RUN8_ID, "m2", null));
+		assertThat(access.getShortRunDescription(RUN9_ID))
+			.isEqualTo(new ShortRunDescription(RUN9_ID, null, "td9"));
+		assertThat(access.getShortRunDescription(RUN10_ID))
+			.isEqualTo(new ShortRunDescription(RUN10_ID, "m4", null));
 	}
 }

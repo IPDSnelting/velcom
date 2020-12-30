@@ -4,6 +4,8 @@ import static java.util.stream.Collectors.toList;
 
 import de.aaaaaaah.velcom.backend.access.benchmarkaccess.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.Run;
+import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.RunId;
+import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.ShortRunDescription;
 import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.sources.CommitSource;
 import de.aaaaaaah.velcom.backend.access.benchmarkaccess.exceptions.NoSuchRunException;
 import de.aaaaaaah.velcom.backend.access.caches.LatestRunCache;
@@ -35,8 +37,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
-import javax.swing.text.html.Option;
-import javax.validation.constraints.Null;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -159,6 +159,24 @@ public class RunEndpoint {
 			this.run = run;
 			this.differences = differences;
 			this.significantDifferences = significantDifferences;
+		}
+	}
+
+	@GET
+	@Path("{runid}")
+	@Timed(histogram = true)
+	public GetShortReply getShort(@PathParam("runid") UUID runUuid) throws NoSuchRunException {
+		RunId runId = new RunId(runUuid);
+		ShortRunDescription run = benchmarkAccess.getShortRunDescription(runId);
+		return new GetShortReply(JsonShortRunDescription.fromShortRunDescription(run));
+	}
+
+	private static class GetShortReply {
+
+		public final JsonShortRunDescription run;
+
+		public GetShortReply(JsonShortRunDescription run) {
+			this.run = run;
 		}
 	}
 

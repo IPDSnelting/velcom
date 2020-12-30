@@ -1,10 +1,13 @@
 package de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities;
 
+import java.util.Objects;
 import javax.annotation.Nullable;
 
 public class ShortRunDescription {
 
 	private final RunId id;
+
+	// TODO: 2020-12-30 Use Either
 	@Nullable
 	private final String commitSummary;
 	@Nullable
@@ -31,5 +34,33 @@ public class ShortRunDescription {
 	@Nullable
 	public String getTarDescription() {
 		return tarDescription;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) {
+			return true;
+		}
+		if (o == null || getClass() != o.getClass()) {
+			return false;
+		}
+		ShortRunDescription that = (ShortRunDescription) o;
+		return Objects.equals(id, that.id) && Objects
+			.equals(commitSummary, that.commitSummary) && Objects
+			.equals(tarDescription, that.tarDescription);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(id, commitSummary, tarDescription);
+	}
+
+	@Override
+	public String toString() {
+		return "ShortRunDescription{" +
+			"id=" + id +
+			", commitSummary='" + commitSummary + '\'' +
+			", tarDescription='" + tarDescription + '\'' +
+			'}';
 	}
 }

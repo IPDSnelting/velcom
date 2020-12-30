@@ -357,4 +357,18 @@ public class BenchmarkReadAccess {
 			}
 		}
 	}
+
+	public ShortRunDescription getShortRunDescription(RunId runId) throws NoSuchRunException {
+		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
+			return db.select(KNOWN_COMMIT.MESSAGE, RUN.TAR_DESC)
+				.from(RUN)
+				.leftJoin(KNOWN_COMMIT)
+				.on(KNOWN_COMMIT.REPO_ID.eq(RUN.REPO_ID))
+				.and(KNOWN_COMMIT.HASH.eq(RUN.COMMIT_HASH))
+				.where(RUN.ID.eq(runId.getIdAsString()))
+				.fetchOptional()
+				.map(record -> new ShortRunDescription(runId, record.value1(), record.value2()))
+				.orElseThrow(() -> new NoSuchRunException(runId));
+		}
+	}
 }

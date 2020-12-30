@@ -934,6 +934,36 @@ paths:
           name: order_by_committer_time
           description: 'If true, return runs ordered by committer time in descending order. If false, return runs ordered by committer time in ascending order. Has no effect if not set.'
       description: Search through runs using different criteria.
+  '/run/{runid}/short':
+    parameters:
+      - schema:
+          type: string
+        name: runid
+        in: path
+        required: true
+    get:
+      summary: get short run description
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  run:
+                    $ref: '#/components/schemas/ShortRunDescription'
+                required:
+                  - run
+        '404':
+          description: Not Found
+      operationId: get-run-runid-short
+      description: |-
+        Retrieve a run by its id.
+
+        If a commit hash is specified, it instead interprets the run id as repo id and uses that commit's latest run, if one exists.
+      parameters: []
 components:
   schemas:
     CommitHash:
