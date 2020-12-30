@@ -964,6 +964,37 @@ paths:
 
         If a commit hash is specified, it instead interprets the run id as repo id and uses that commit's latest run, if one exists.
       parameters: []
+  '/commit/{repoid}/{hash}/short':
+    parameters:
+      - schema:
+          type: string
+        name: repoid
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: hash
+        in: path
+        required: true
+    get:
+      summary: get short commit description
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  summary:
+                    type: string
+                required:
+                  - summary
+        '404':
+          description: Not Found
+      operationId: get-commit-repoid-hash-short
+      description: ''
 components:
   schemas:
     CommitHash:
