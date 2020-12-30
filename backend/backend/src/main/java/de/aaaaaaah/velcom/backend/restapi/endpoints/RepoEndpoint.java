@@ -1,12 +1,13 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
+import static java.util.stream.Collectors.toList;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import de.aaaaaaah.velcom.backend.access.caches.AvailableDimensionsCache;
 import de.aaaaaaah.velcom.backend.access.dimensionaccess.DimensionReadAccess;
 import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.Dimension;
 import de.aaaaaaah.velcom.backend.access.repoaccess.RepoWriteAccess;
-import de.aaaaaaah.velcom.backend.access.repoaccess.entities.Branch;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.BranchName;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RemoteUrl;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.Repo;
@@ -17,6 +18,7 @@ import de.aaaaaaah.velcom.backend.access.tokenaccess.TokenWriteAccess;
 import de.aaaaaaah.velcom.backend.access.tokenaccess.entities.AuthToken;
 import de.aaaaaaah.velcom.backend.listener.Listener;
 import de.aaaaaaah.velcom.backend.restapi.authentication.RepoUser;
+import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonBranch;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimension;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRepo;
 import io.dropwizard.auth.Auth;
@@ -66,30 +68,21 @@ public class RepoEndpoint {
 	}
 
 	private JsonRepo toJsonRepo(Repo repo) {
-		List<Branch> allBranches = repoAccess.getAllBranches(repo.getId());
-		List<String> trackedNames = allBranches.stream()
-			.filter(Branch::isTracked)
-			.map(Branch::getName)
-			.map(BranchName::getName)
-			.collect(Collectors.toList());
-		List<String> untrackedNames = allBranches.stream()
-			.filter(branch -> !branch.isTracked())
-			.map(Branch::getName)
-			.map(BranchName::getName)
-			.collect(Collectors.toList());
+		List<JsonBranch> branches = repoAccess.getAllBranches(repo.getId()).stream()
+			.map(JsonBranch::fromBranch)
+			.collect(toList());
 
 		Set<Dimension> dimensions = availableDimensionsCache
 			.getAvailableDimensionsFor(dimensionAccess, repo.getId());
 		List<JsonDimension> jsonDimensions = dimensionAccess.getDimensionInfos(dimensions).stream()
 			.map(JsonDimension::fromDimensionInfo)
-			.collect(Collectors.toList());
+			.collect(toList());
 
 		return new JsonRepo(
 			repo.getIdAsUuid(),
 			repo.getName(),
 			repo.getRemoteUrlAsString(),
-			untrackedNames,
-			trackedNames,
+			branches,
 			tokenAccess.hasToken(repo.getId()),
 			jsonDimensions
 		);

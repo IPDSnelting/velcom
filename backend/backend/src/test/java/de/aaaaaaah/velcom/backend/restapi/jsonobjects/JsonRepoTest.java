@@ -14,8 +14,11 @@ class JsonRepoTest extends SerializingTest {
 			UUID.fromString("24dd4fd3-5c6d-4542-a7a4-b181f37295a6"),
 			"velcom",
 			"https://vel.com/",
-			List.of("untracked", "branches"),
-			List.of("main"),
+			List.of(
+				new JsonBranch("main", true, "foo"),
+				new JsonBranch("untracked", false, "bar"),
+				new JsonBranch("branches", false, "baz")
+			),
 			false,
 			List.of(new JsonDimension("b", "m", "u", Interpretation.NEUTRAL))
 		);
@@ -23,8 +26,11 @@ class JsonRepoTest extends SerializingTest {
 			+ "\"id\": \"24dd4fd3-5c6d-4542-a7a4-b181f37295a6\","
 			+ "\"name\": \"velcom\","
 			+ "\"remote_url\": \"https://vel.com/\","
-			+ "\"untracked_branches\": [\"untracked\", \"branches\"],"
-			+ "\"tracked_branches\": [\"main\"],"
+			+ "\"branches\": ["
+			+ "  {\"name\": \"main\", \"tracked\": true, \"latest_commit\": \"foo\"},"
+			+ "  {\"name\": \"untracked\", \"tracked\": false, \"latest_commit\": \"bar\"},"
+			+ "  {\"name\": \"branches\", \"tracked\": false, \"latest_commit\": \"baz\"}"
+			+ "],"
 			+ "\"has_token\": false,"
 			+ "\"dimensions\": [{"
 			+ "  \"benchmark\": \"b\","

@@ -8,19 +8,17 @@ public class JsonRepo {
 	private final UUID id;
 	private final String name;
 	private final String remoteUrl;
-	private final List<String> untrackedBranches;
-	private final List<String> trackedBranches;
+	private final List<JsonBranch> branches;
 	private final boolean hasToken;
 	private final List<JsonDimension> dimensions;
 
-	public JsonRepo(UUID id, String name, String remoteUrl, List<String> untrackedBranches,
-		List<String> trackedBranches, boolean hasToken, List<JsonDimension> dimensions) {
+	public JsonRepo(UUID id, String name, String remoteUrl, List<JsonBranch> branches,
+		boolean hasToken, List<JsonDimension> dimensions) {
 
 		this.id = id;
 		this.name = name;
 		this.remoteUrl = remoteUrl;
-		this.untrackedBranches = untrackedBranches;
-		this.trackedBranches = trackedBranches;
+		this.branches = branches;
 		this.hasToken = hasToken;
 		this.dimensions = dimensions;
 	}
@@ -37,12 +35,8 @@ public class JsonRepo {
 		return remoteUrl;
 	}
 
-	public List<String> getUntrackedBranches() {
-		return untrackedBranches;
-	}
-
-	public List<String> getTrackedBranches() {
-		return trackedBranches;
+	public List<JsonBranch> getBranches() {
+		return branches;
 	}
 
 	public boolean isHasToken() {
