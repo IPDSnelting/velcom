@@ -14,6 +14,7 @@ public class ShortRunDescription {
 		@Nullable String tarDescription) {
 
 		this.id = id;
+		// TODO: 2020-12-30 Use commit summary instead of entire message
 		this.commitSummary = commitSummary;
 		this.tarDescription = tarDescription;
 	}

@@ -876,6 +876,64 @@ paths:
       description: Benchmarks the given commit and all tracked descendants.
       security:
         - repo_admin_credentials: []
+  /run/search:
+    get:
+      summary: search runs
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  runs:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ShortRunDescription'
+                required:
+                  - runs
+      operationId: get-run-search
+      parameters:
+        - schema:
+            type: boolean
+          in: query
+          name: latest_runs_only
+          description: 'If set, only the latest run of each commit is returned'
+        - schema:
+            type: integer
+          in: query
+          name: limit
+          description: Maximum number of runs to return
+        - schema:
+            type: string
+            format: uuid
+          in: query
+          name: repo_id
+          description: Only include runs from this repo
+        - schema:
+            type: string
+            pattern: '^[a-fA-F0-9]{40}$'
+          in: query
+          name: commit_hash
+          description: Only include runs from this commit
+        - schema:
+            type: string
+          in: query
+          name: description
+          description: A string that must occur in the commit message or tar description
+        - schema:
+            type: boolean
+          in: query
+          name: order_by_run_start_time
+          description: 'If true, return runs ordered by start time in descending order. If false, return runs ordered by start time in ascending order. Has no effect if not set.'
+        - schema:
+            type: boolean
+          in: query
+          name: order_by_committer_time
+          description: 'If true, return runs ordered by committer time in descending order. If false, return runs ordered by committer time in ascending order. Has no effect if not set.'
+      description: Search through runs using different criteria.
 components:
   schemas:
     CommitHash:
@@ -1253,6 +1311,20 @@ components:
         - dimension
         - diff
         - old_run_id
+    ShortRunDescription:
+      title: ShortRunDescription
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/RunId'
+        commitSummary:
+          type: string
+          description: 'If the run is attached to a commit, the commit''s summary'
+        tarDescription:
+          type: string
+          description: 'If the run is attached to a tar, the tar''s description'
+      required:
+        - id
   securitySchemes:
     admin_credentials:
       type: http
