@@ -1,2 +1,1 @@
-def main():
-    print("Hello world")
+from .main import main
