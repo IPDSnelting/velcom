@@ -1,6 +1,6 @@
 <template>
-  <v-container fluid>
-    <v-row align="baseline" justify="center">
+  <v-container fluid class="ma-0 pa-0">
+    <v-row align="baseline" justify="center" no-gutters>
       <v-col>
         <v-card>
           <v-card-text class="ma-0 pa-0">
