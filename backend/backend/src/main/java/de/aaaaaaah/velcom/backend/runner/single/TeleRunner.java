@@ -45,6 +45,11 @@ import org.slf4j.LoggerFactory;
 public class TeleRunner {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(TeleRunner.class);
+	/**
+	 * Completed tasks are cached so we can continue to show output lines in the frontend even if the
+	 * task has finished. This variable controls *how many* are ached.
+ 	 */
+	private static final int MAX_CACHED_COMPLETED_TASKS = 2;
 
 	private final AtomicReference<GetStatusReply> runnerInformation;
 	private final Queue<CompletedTask> lastResults;
@@ -245,14 +250,14 @@ public class TeleRunner {
 		}
 
 		synchronized (lastResults) {
-			// TODO: Find a sensible value. Currently it keeps 2 results around
-			while (lastResults.size() >= 2) {
-				lastResults.poll();
-			}
 			lastResults.offer(new CompletedTask(
 				new TaskId(resultReply.getRunId()),
 				runnerInformation.get().getLastOutputLines().orElse(null)
 			));
+
+			while (lastResults.size() >= MAX_CACHED_COMPLETED_TASKS) {
+				lastResults.poll();
+			}
 		}
 
 		NewRun run;
