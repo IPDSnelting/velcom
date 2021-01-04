@@ -255,7 +255,7 @@ public class TeleRunner {
 				runnerInformation.get().getLastOutputLines().orElse(null)
 			));
 
-			while (lastResults.size() >= MAX_CACHED_COMPLETED_TASKS) {
+			while (lastResults.size() > MAX_CACHED_COMPLETED_TASKS) {
 				lastResults.poll();
 			}
 		}
