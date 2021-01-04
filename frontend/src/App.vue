@@ -1,7 +1,7 @@
 <template>
   <v-app>
     <v-main>
-      <nav-bar v-on:refresh="refresh"></nav-bar>
+      <nav-bar @refresh-view="routerViewKey++"></nav-bar>
       <snackbar ref="global-snackbar"></snackbar>
       <router-view :key="routerViewKey" />
       <theme-selector @use-dark-theme="setDarkTheme"></theme-selector>
@@ -29,12 +29,6 @@ import { storeToLocalStorage } from './store/persistence'
 export default class App extends Vue {
   private clickHandler: any = this.checkClick
   private routerViewKey: number = 0
-
-  private refresh(routeName: string) {
-    if (this.$route.name === routeName) {
-      this.routerViewKey++
-    }
-  }
 
   private checkClick(event: Event) {
     if (!event.srcElement) {

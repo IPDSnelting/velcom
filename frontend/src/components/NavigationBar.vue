@@ -7,12 +7,9 @@
       ></v-app-bar-nav-icon>
       <v-tooltip bottom color="rgba(0,0,0,0)" class="logoTooltip">
         <template #activator="{ on }">
-          <router-link
-            class="concealed-link"
-            :to="{ name: 'home' }"
-            @click="$emit('refresh', 'home')"
-          >
+          <router-link class="concealed-link" :to="{ name: 'home' }">
             <img
+              @click="refresh('home')"
               id="logo"
               v-on="on"
               width="45px"
@@ -26,10 +23,10 @@
         <img src="@/assets/mini-logo.png" alt="logo" class="mx-4" id="logo" />
       </v-tooltip>
       <router-link class="concealed-link" :to="{ name: 'home' }">
-        <v-toolbar-title id="title" @click="$emit('refresh', 'home')"
-          >{{ title }}
-        </v-toolbar-title></router-link
-      >
+        <v-toolbar-title id="title" @click="refresh('home')">
+          {{ title }}
+        </v-toolbar-title>
+      </router-link>
 
       <v-spacer></v-spacer>
 
@@ -40,7 +37,7 @@
         :key="item.routeName"
         text
         :to="{ name: item.routeName }"
-        @click="$emit('refresh', item.routeName)"
+        @click="refresh(item.routeName)"
       >
         {{ item.label }}
         <v-icon right dark :size="iconFontSize">{{ item.icon }}</v-icon>
@@ -105,6 +102,7 @@ import router from '../router'
 import LoginDialog from '../components/dialogs/LoginDialog.vue'
 import { mdiAccountCircleOutline, mdiLogout } from '@mdi/js'
 import { vxm } from '@/store'
+import { Watch } from 'vue-property-decorator'
 
 class NavigationItem {
   readonly routeName: string
@@ -127,6 +125,7 @@ export default class NavigationBar extends Vue {
   private iconFontSize = 22
   private title = 'VelCom'
 
+  private lastNavigatedRoute: string | null = null
   private drawerShown = false
 
   get validRoutes(): NavigationItem[] {
@@ -148,12 +147,29 @@ export default class NavigationBar extends Vue {
     return route.meta.navigable
   }
 
+  private get currentRouteName(): string {
+    return this.$route.name!
+  }
+
+  @Watch('currentRouteName')
+  private onRouteChange(newValue: string, oldValue: string) {
+    this.lastNavigatedRoute = newValue
+  }
+
   get loggedIn(): boolean {
     return vxm.userModule.loggedIn
   }
 
-  logout(): void {
+  private logout(): void {
     vxm.userModule.logOut()
+  }
+
+  private refresh(routeName: string): void {
+    if (this.lastNavigatedRoute === routeName) {
+      this.lastNavigatedRoute = null
+      return
+    }
+    this.$emit('refresh-view')
   }
 
   // ============== ICONS ==============
