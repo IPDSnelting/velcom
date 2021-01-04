@@ -3,7 +3,6 @@ import VueRouter, { RouteConfig, RouterOptions } from 'vue-router'
 import Home from '../views/Home.vue'
 import RepoComparison from '../views/RepoComparison.vue'
 import RepoDetailFrame from '../views/RepoDetailFrame.vue'
-import RepoDetail from '../views/RepoDetail.vue'
 import Queue from '../views/Queue.vue'
 import NotFound404 from '../views/NotFound404.vue'
 import RunCommitDetailView from '../views/RunCommitDetailView.vue'
@@ -73,16 +72,9 @@ const routes: RouteInfo[] = [
     }
   },
   {
-    path: '/repo-detail',
-    name: 'repo-detail-frame',
+    path: '/repo-detail/:id?',
+    name: 'repo-detail',
     component: RepoDetailFrame,
-    children: [
-      {
-        path: ':id',
-        name: 'repo-detail',
-        component: RepoDetail
-      }
-    ],
     meta: {
       label: 'Repo Detail',
       navigable: true,
@@ -185,7 +177,7 @@ router.afterEach(to => {
 })
 
 router.beforeEach((to, from, next) => {
-  if (to.name === 'repo-detail') {
+  if (to.name === 'repo-detail' && to.params.id) {
     vxm.detailGraphModule.selectedRepoId = to.params.id
   }
   next()

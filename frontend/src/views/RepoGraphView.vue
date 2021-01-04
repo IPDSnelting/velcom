@@ -1,10 +1,5 @@
 <template>
   <v-container v-if="repo">
-    <v-row>
-      <v-col>
-        <repo-base-information :repo="repo"></repo-base-information>
-      </v-col>
-    </v-row>
     <v-row align="baseline" justify="center" no-gutters>
       <v-col class="ma-0 pa-0">
         <repo-graph
@@ -46,7 +41,7 @@ import RepoGraphTimespanControls from '@/components/repodetail/RepoGraphTimespan
     RepoBaseInformation
   }
 })
-export default class RepoDetail extends Vue {
+export default class RepoGraphView extends Vue {
   private reloadGraphDataCounter = 0
 
   private get repoId() {

@@ -4,14 +4,10 @@
       <v-toolbar color="toolbarColor" dark>
         {{ repo.name }}
         <span class="ml-5 subtitle-1">{{ repo.id }}</span>
-        <v-spacer></v-spacer>
-        <v-btn icon @click="showDetails = !showDetails">
-          <v-icon>{{ showDetails ? upIcon : downIcon }}</v-icon>
-        </v-btn>
       </v-toolbar>
     </v-card-title>
     <v-expand-transition>
-      <div v-show="showDetails">
+      <div>
         <v-card-text>
           <v-container fluid>
             <v-row align="center">
@@ -86,7 +82,6 @@ export default class RepoBaseInformation extends Vue {
   @Prop()
   private repo!: Repo
 
-  private showDetails: boolean = false
   private upIcon = mdiChevronUp
   private downIcon = mdiChevronDown
 
