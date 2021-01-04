@@ -173,7 +173,9 @@ export class DetailGraphStore extends VxModule {
     // Anchors to the current date
     extractDate('zoomXEnd', new Date(), value => {
       this.zoomXEndValue = value
-      vxm.detailGraphModule.endTime = new Date(value)
+      const asDate = new Date(value)
+      asDate.setDate(asDate.getDate() + 1)
+      vxm.detailGraphModule.endTime = asDate
     })
     // Anchors to the end date (or the current one if not specified)
     extractDate(
@@ -181,7 +183,9 @@ export class DetailGraphStore extends VxModule {
       new Date(this.zoomXEndValue || new Date().getTime()),
       value => {
         this.zoomXStartValue = value
-        vxm.detailGraphModule.startTime = new Date(value)
+        const asDate = new Date(value)
+        asDate.setDate(asDate.getDate() - 1)
+        vxm.detailGraphModule.startTime = asDate
       }
     )
     extractFloat('zoomYStart', value => {
