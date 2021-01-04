@@ -127,6 +127,7 @@ export default class RepoGraphTimespanControls extends Vue {
       saveFunction: (field: TimeField, value: string) => {
         this.saveMenu(field.ref, value)
         vxm.detailGraphModule.startTime = new Date(value)
+        this.$emit('reload-graph-data')
       },
       allowedDates: (value: string) => {
         return new Date(value) <= vxm.detailGraphModule.endTime
@@ -141,6 +142,7 @@ export default class RepoGraphTimespanControls extends Vue {
       saveFunction: (field: TimeField, value: string) => {
         this.saveMenu(field.ref, value)
         vxm.detailGraphModule.endTime = new Date(value)
+        this.$emit('reload-graph-data')
       },
       allowedDates: (value: string) => {
         return new Date(value) >= vxm.detailGraphModule.startTime
@@ -190,6 +192,8 @@ export default class RepoGraphTimespanControls extends Vue {
         vxm.detailGraphModule.endTime.getTime() - durationAsMillis
       )
     }
+
+    this.$emit('reload-graph-data')
   }
   // <!--</editor-fold>-->
 

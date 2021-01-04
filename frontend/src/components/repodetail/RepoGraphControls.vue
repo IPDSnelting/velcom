@@ -68,6 +68,7 @@ import MatrixDimensionSelection from '@/components/graphs/MatrixDimensionSelecti
 import DimensionSelection from '@/components/graphs/DimensionSelection.vue'
 import { Dimension } from '@/store/types'
 import { vxm } from '@/store'
+import { Watch } from 'vue-property-decorator'
 
 @Component({
   components: {
@@ -77,6 +78,12 @@ import { vxm } from '@/store'
 })
 export default class RepoGraphControls extends Vue {
   private useMatrixSelector: boolean = false
+
+  @Watch('selectedDimensions')
+  @Watch('repoId')
+  private reloadGraphData() {
+    this.$emit('reload-graph-data')
+  }
 
   private get repoId() {
     return vxm.detailGraphModule.selectedRepoId

@@ -54,7 +54,7 @@ import DytailGraph from '@/components/graphs/DytailGraph.vue'
 import OverscrollToZoom from '@/components/graphs/OverscrollToZoom'
 import GraphPlaceholder from '@/components/graphs/GraphPlaceholder.vue'
 import { Dimension } from '@/store/types'
-import { Watch } from 'vue-property-decorator'
+import { Prop, Watch } from 'vue-property-decorator'
 
 const availableGraphComponents = [
   {
@@ -90,6 +90,9 @@ export default class RepoGraphs extends Vue {
   private selectedGraphComponent: typeof Vue | null = GraphPlaceholder
   private overscrollToZoom = new OverscrollToZoom()
 
+  @Prop()
+  private readonly reloadGraphDataCounter!: number
+
   private get selectedDimensions(): Dimension[] {
     return vxm.detailGraphModule.selectedDimensions
   }
@@ -113,22 +116,7 @@ export default class RepoGraphs extends Vue {
     this.selectedGraphComponent = component
   }
 
-  // used in watcher
-  // noinspection JSUnusedLocalSymbols
-  private get repoId() {
-    return vxm.detailGraphModule.selectedRepoId
-  }
-
-  private get graphDataRange() {
-    return {
-      start: vxm.detailGraphModule.startTime,
-      end: vxm.detailGraphModule.endTime
-    }
-  }
-
-  @Watch('repoId')
-  @Watch('selectedDimensions')
-  @Watch('graphDataRange')
+  @Watch('reloadGraphDataCounter')
   private async retrieveGraphData(): Promise<void> {
     this.selectedGraphComponent = GraphPlaceholder
 
