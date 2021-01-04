@@ -1,7 +1,17 @@
+@import '~vuetify/src/styles/styles.sass';
+
 $material-dark: (
-  "background": #2f3136,
-  "cards": #2f3136,
-  "text": (
-    "primary": rgba(255,255,255, 0.87)
+  'background': #2f3136,
+  'cards': #2f3136,
+  'text': (
+    'primary': rgba(255, 255, 255, 0.87)
+  )
+);
+
+// You need to map-merge your new SASS variables
+$grid-breakpoints: map-merge(
+  $grid-breakpoints,
+  (
+    xl: 1300px
   )
 );
