@@ -33,6 +33,7 @@ export type PermanentLinkOptions = Partial<{
 }>
 
 export class DetailGraphStore extends VxModule {
+  // <!--<editor-fold desc="STATE">-->
   private _detailGraph: DetailDataPoint[] = []
   private _selectedRepoId: RepoId = ''
   private _selectedDimensions: Dimension[] = []
@@ -47,6 +48,13 @@ export class DetailGraphStore extends VxModule {
   referenceDatapoint: DimensionDetailPoint | null = null
   commitToCompare: DimensionDetailPoint | null = null
 
+  // One week in the past, as elegant as ever
+  private _startTime: Date = new Date(
+    new Date(new Date().setDate(new Date().getDate() - 7)).setHours(0, 0, 0, 0)
+  )
+
+  private _endTime: Date = new Date(new Date().setHours(24, 0, 0, 0))
+
   zoomXStartValue: number | null = null
   zoomXEndValue: number | null = null
   zoomYStartValue: number | null = null
@@ -59,12 +67,11 @@ export class DetailGraphStore extends VxModule {
   private maxBuffer: number = 182 // ~ half a year
   private bufferRatio: number = 0.5
 
-  // One week in the past, as elegant as ever
-  startTime: Date = new Date(new Date().setDate(new Date().getDate() - 7))
-  endTime: Date = new Date()
-
   beginYScaleAtZero: boolean = false
   dayEquidistantGraph: boolean = true
+  //  <!--</editor-fold>-->
+
+  // <!--<editor-fold desc="ACTIONS">-->
 
   /**
    * Fetches the data necessary to display the data points
@@ -166,7 +173,7 @@ export class DetailGraphStore extends VxModule {
     // Anchors to the current date
     extractDate('zoomXEnd', new Date(), value => {
       this.zoomXEndValue = value
-      this.endTime = new Date(value)
+      vxm.detailGraphModule.endTime = new Date(value)
     })
     // Anchors to the end date (or the current one if not specified)
     extractDate(
@@ -174,7 +181,7 @@ export class DetailGraphStore extends VxModule {
       new Date(this.zoomXEndValue || new Date().getTime()),
       value => {
         this.zoomXStartValue = value
-        this.startTime = new Date(value)
+        vxm.detailGraphModule.startTime = new Date(value)
       }
     )
     extractFloat('zoomYStart', value => {
@@ -200,11 +207,101 @@ export class DetailGraphStore extends VxModule {
       })
     }
   }
+  //  <!--</editor-fold>-->
+
+  // <!--<editor-fold desc="MUTATIONS">-->
+  @mutation
+  setDetailGraph(graph: DetailDataPoint[]): void {
+    this._detailGraph = graph
+  }
+  //  <!--</editor-fold>-->
+
+  // <!--<editor-fold desc="GET / SET TIME">-->
+
+  get startTime(): Date {
+    return this._startTime
+  }
+
+  set startTime(time: Date) {
+    if (!(time.getHours() !== 0)) {
+      time.setHours(0, 0, 0, 0) // last midnight
+    }
+    this._startTime = time
+  }
+
+  get endTime(): Date {
+    return this._endTime
+  }
+
+  set endTime(time: Date) {
+    if (!(time.getHours() !== 0)) {
+      time.setHours(24, 0, 0, 0) // next midnight
+    }
+    this._endTime = time
+  }
 
   get duration(): number {
     const timeDiff = this.endTime.getTime() - this.startTime.getTime()
 
     return Math.ceil(timeDiff / (1000 * 3600 * 24))
+  }
+
+  /**
+   * Returns the boundaries of the buffered timespan that is used when fetchin a
+   * new detail graph. The buffered timespan extends the timespan implied
+   * by start and end date to allow for panning a little outside the graph
+   * boundaries without having to wait for a new graph to be fetched
+   *
+   * @type {startTime: Date, endTime: Date}
+   */
+  get bufferedTimespan(): { startTime: Date; endTime: Date } {
+    let buffer: number = 0
+    if (this.duration <= this.minToBuffer) {
+      buffer = this.minBuffer
+    } else if (this.duration >= this.maxToBuffer) {
+      buffer = this.maxBuffer
+    } else {
+      buffer = this.duration * this.bufferRatio
+    }
+    const bufferMillis = buffer * 1000 * 60 * 60 * 24 // ms * minutes * hours * days
+
+    const bufferedStartTime = new Date(
+      this.startTime.getTime() - bufferMillis / 2
+    )
+    const bufferedEndTime = new Date(this.endTime.getTime() + bufferMillis / 2)
+
+    return { startTime: bufferedStartTime, endTime: bufferedEndTime }
+  }
+  //  <!--</editor-fold>-->
+
+  // <!--<editor-fold desc="GET / SET DIMENSIONS">-->
+
+  /**
+   * Returns all selected dimensions.
+   *
+   * @readonly
+   * @type {Dimension[]}
+   * @memberof detailGraphStore
+   */
+  get selectedDimensions(): Dimension[] {
+    return this._selectedDimensions
+  }
+
+  /**
+   * Sets the selected dimensions.
+   *
+   * @memberof detailGraphStore
+   */
+  set selectedDimensions(dimensions: Dimension[]) {
+    dimensions.forEach(it => {
+      if (!it) {
+        throw new Error('UNDEFINED OR NULL!')
+      }
+      if (!this.colorIndexMap.has(it)) {
+        this.colorIndexMap.set(it, this.firstFreeColorIndex++)
+      }
+    })
+    this._selectedDimensions = dimensions
   }
 
   /**
@@ -246,85 +343,9 @@ export class DetailGraphStore extends VxModule {
 
     return resultString.slice(0, resultString.length - 2)
   }
+  //  <!--</editor-fold>-->
 
-  @mutation
-  setDetailGraph(graph: DetailDataPoint[]): void {
-    this._detailGraph = graph
-  }
-
-  /**
-   * Returns a permanent link to the current detail graph state
-   */
-  get permanentLink(): (options?: PermanentLinkOptions) => string {
-    return options => {
-      const orUndefined = (it: any) => (it ? '' + it : undefined)
-      const orElse = (it: any, subst: any) => (it ? '' + it : '' + subst)
-      function respectOptions<T>(
-        name: keyof PermanentLinkOptions,
-        value: T
-      ): T | undefined {
-        if (!options || options[name]) {
-          return value
-        }
-        return undefined
-      }
-
-      const route = router.resolve({
-        name: 'repo-detail',
-        params: { id: this.selectedRepoId },
-        query: {
-          zoomYStart: respectOptions(
-            'includeYZoom',
-            orUndefined(this.zoomYStartValue)
-          ),
-          zoomYEnd: respectOptions(
-            'includeYZoom',
-            orUndefined(this.zoomYEndValue)
-          ),
-          zoomXStart:
-            options && options.includeXZoom
-              ? orElse(this.zoomXStartValue, this.startTime.getTime())
-              : orUndefined(this.startTime.getTime()),
-          zoomXEnd:
-            options && options.includeXZoom
-              ? orElse(this.zoomXEndValue, this.endTime.getTime())
-              : orUndefined(this.endTime.getTime()),
-          dimensions: respectOptions('includeDimensions', this.dimensionString),
-          dayEquidistant: this.dayEquidistantGraph ? 'true' : undefined
-        }
-      })
-
-      return location.origin + route.href
-    }
-  }
-
-  /**
-   * Returns the boundaries of the buffered timespan that is used when fetchin a
-   * new detail graph. The buffered timespan extends the timespan implied
-   * by start and end date to allow for panning a little outside the graph
-   * boundaries without having to wait for a new graph to be fetched
-   *
-   * @type {startTime: Date, endTime: Date}
-   */
-  get bufferedTimespan(): { startTime: Date; endTime: Date } {
-    let buffer: number = 0
-    if (this.duration <= this.minToBuffer) {
-      buffer = this.minBuffer
-    } else if (this.duration >= this.maxToBuffer) {
-      buffer = this.maxBuffer
-    } else {
-      buffer = this.duration * this.bufferRatio
-    }
-    const bufferMillis = buffer * 1000 * 60 * 60 * 24 // ms * minutes * hours * days
-
-    const bufferedStartTime = new Date(
-      this.startTime.getTime() - bufferMillis / 2
-    )
-    const bufferedEndTime = new Date(this.endTime.getTime() + bufferMillis / 2)
-
-    return { startTime: bufferedStartTime, endTime: bufferedEndTime }
-  }
-
+  // <!--<editor-fold desc="GET / SET GRAPH">-->
   /**
    * Returns the locally stored data for a repo detail graph
    *
@@ -364,34 +385,6 @@ export class DetailGraphStore extends VxModule {
       }
     }
     return visibleDataPoints
-  }
-
-  /**
-   * Returns all selected dimensions.
-   *
-   * @readonly
-   * @type {Dimension[]}
-   * @memberof detailGraphStore
-   */
-  get selectedDimensions(): Dimension[] {
-    return this._selectedDimensions
-  }
-
-  /**
-   * Sets the selected dimensions.
-   *
-   * @memberof detailGraphStore
-   */
-  set selectedDimensions(dimensions: Dimension[]) {
-    dimensions.forEach(it => {
-      if (!it) {
-        throw new Error('UNDEFINED OR NULL!')
-      }
-      if (!this.colorIndexMap.has(it)) {
-        this.colorIndexMap.set(it, this.firstFreeColorIndex++)
-      }
-    })
-    this._selectedDimensions = dimensions
   }
 
   /**
@@ -438,4 +431,54 @@ export class DetailGraphStore extends VxModule {
   get colorIndex(): (dimension: DimensionId) => number | undefined {
     return dimension => this.colorIndexMap.get(dimension)
   }
+  //  <!--</editor-fold>-->
+
+  // <!--<editor-fold desc="GET / SET PERMANENT LINK">-->
+
+  /**
+   * Returns a permanent link to the current detail graph state
+   */
+  get permanentLink(): (options?: PermanentLinkOptions) => string {
+    return options => {
+      const orUndefined = (it: any) => (it ? '' + it : undefined)
+      const orElse = (it: any, subst: any) => (it ? '' + it : '' + subst)
+      function respectOptions<T>(
+        name: keyof PermanentLinkOptions,
+        value: T
+      ): T | undefined {
+        if (!options || options[name]) {
+          return value
+        }
+        return undefined
+      }
+
+      const route = router.resolve({
+        name: 'repo-detail',
+        params: { id: this.selectedRepoId },
+        query: {
+          zoomYStart: respectOptions(
+            'includeYZoom',
+            orUndefined(this.zoomYStartValue)
+          ),
+          zoomYEnd: respectOptions(
+            'includeYZoom',
+            orUndefined(this.zoomYEndValue)
+          ),
+          zoomXStart:
+            options && options.includeXZoom
+              ? orElse(this.zoomXStartValue, this.startTime.getTime())
+              : orUndefined(this.startTime.getTime()),
+          zoomXEnd:
+            options && options.includeXZoom
+              ? orElse(this.zoomXEndValue, this.endTime.getTime())
+              : orUndefined(this.endTime.getTime()),
+          dimensions: respectOptions('includeDimensions', this.dimensionString),
+          dayEquidistant: this.dayEquidistantGraph ? 'true' : undefined
+        }
+      })
+
+      return location.origin + route.href
+    }
+  }
+  //  <!--</editor-fold>-->
 }

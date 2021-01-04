@@ -3,15 +3,28 @@ import { vxm } from '@/store'
 export default class OverscrollToZoom {
   private scrollToZoomInProgress = false
 
+  private isZoomedOut(): boolean {
+    if (
+      vxm.detailGraphModule.zoomXStartValue == null &&
+      vxm.detailGraphModule.zoomXEndValue == null
+    ) {
+      return true
+    }
+
+    return (
+      vxm.detailGraphModule.zoomXStartValue ===
+        vxm.detailGraphModule.startTime.getTime() &&
+      vxm.detailGraphModule.zoomXEndValue ===
+        vxm.detailGraphModule.endTime.getTime()
+    )
+  }
+
   /**
    * Should be called when a wheel event was triggered.
    * @param e the wheel event
    */
   public scrolled(e: WheelEvent): void {
-    if (
-      vxm.detailGraphModule.zoomXEndValue !== null ||
-      vxm.detailGraphModule.zoomXStartValue !== null
-    ) {
+    if (!this.isZoomedOut()) {
       return
     }
 
