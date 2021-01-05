@@ -14,6 +14,7 @@ import de.aaaaaaah.velcom.shared.protocol.serialization.Status;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -78,14 +79,18 @@ class DispatcherTest {
 
 	@Test
 	void cleansUpDisconnectedRunner() throws InterruptedException {
+		AtomicBoolean returnInvalidPingTime = new AtomicBoolean(false);
 		TeleRunner runner = getRunner();
 		when(runner.hasConnection()).thenReturn(false);
-		when(runner.getLastPing()).then(
-			invocation -> Instant.now().minus(runnerGracePeriod).minusMillis(1)
+		when(runner.getLastPing()).then(invocation -> returnInvalidPingTime.get()
+			? Instant.now().minus(runnerGracePeriod).minusMillis(1)
+			: Instant.now()
 		);
 
 		dispatcher.addRunner(runner);
 		assertThat(dispatcher.getTeleRunner(runner.getRunnerName())).get().isSameAs(runner);
+
+		returnInvalidPingTime.set(true);
 
 		Thread.sleep(2000);
 		assertThat(dispatcher.getTeleRunner(runner.getRunnerName())).isEmpty();
