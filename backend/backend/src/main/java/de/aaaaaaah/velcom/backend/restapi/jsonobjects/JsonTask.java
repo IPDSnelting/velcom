@@ -1,7 +1,7 @@
 package de.aaaaaaah.velcom.backend.restapi.jsonobjects;
 
-import de.aaaaaaah.velcom.backend.newaccess.committaccess.CommitReadAccess;
-import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.Task;
+import de.aaaaaaah.velcom.backend.access.committaccess.CommitReadAccess;
+import de.aaaaaaah.velcom.backend.access.taskaccess.entities.Task;
 import java.util.UUID;
 
 public class JsonTask {

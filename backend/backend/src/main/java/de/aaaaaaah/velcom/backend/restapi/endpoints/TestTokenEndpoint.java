@@ -1,6 +1,6 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
-import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
+import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.restapi.authentication.RepoUser;
 import io.dropwizard.auth.Auth;
 import io.micrometer.core.annotation.Timed;

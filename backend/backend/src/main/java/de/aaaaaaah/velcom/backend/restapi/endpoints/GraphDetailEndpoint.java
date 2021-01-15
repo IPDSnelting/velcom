@@ -3,20 +3,22 @@ package de.aaaaaaah.velcom.backend.restapi.endpoints;
 import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toMap;
 
-import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
-import de.aaaaaaah.velcom.backend.access.entities.Measurement;
-import de.aaaaaaah.velcom.backend.access.entities.MeasurementValues;
-import de.aaaaaaah.velcom.backend.access.entities.Run;
-import de.aaaaaaah.velcom.backend.newaccess.committaccess.CommitReadAccess;
-import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.Commit;
-import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
-import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.FullCommit;
-import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.DimensionReadAccess;
-import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Dimension;
-import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.DimensionInfo;
-import de.aaaaaaah.velcom.backend.newaccess.repoaccess.RepoReadAccess;
-import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
-import de.aaaaaaah.velcom.backend.newaccess.repoaccess.exceptions.NoSuchRepoException;
+import de.aaaaaaah.velcom.backend.access.benchmarkaccess.BenchmarkReadAccess;
+import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.Measurement;
+import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.MeasurementValues;
+import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.Run;
+import de.aaaaaaah.velcom.backend.access.caches.LatestRunCache;
+import de.aaaaaaah.velcom.backend.access.caches.RunCache;
+import de.aaaaaaah.velcom.backend.access.committaccess.CommitReadAccess;
+import de.aaaaaaah.velcom.backend.access.committaccess.entities.Commit;
+import de.aaaaaaah.velcom.backend.access.committaccess.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.access.committaccess.entities.FullCommit;
+import de.aaaaaaah.velcom.backend.access.dimensionaccess.DimensionReadAccess;
+import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.Dimension;
+import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.DimensionInfo;
+import de.aaaaaaah.velcom.backend.access.repoaccess.RepoReadAccess;
+import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RepoId;
+import de.aaaaaaah.velcom.backend.access.repoaccess.exceptions.NoSuchRepoException;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.utils.EndpointUtils;
 import de.aaaaaaah.velcom.backend.restapi.exception.InvalidQueryParamsException;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimension;
@@ -61,14 +63,19 @@ public class GraphDetailEndpoint {
 	private final BenchmarkReadAccess benchmarkAccess;
 	private final DimensionReadAccess dimensionAccess;
 	private final RepoReadAccess repoAccess;
+	private final RunCache runCache;
+	private final LatestRunCache latestRunCache;
 
 	public GraphDetailEndpoint(CommitReadAccess commitAccess, BenchmarkReadAccess benchmarkAccess,
-		DimensionReadAccess dimensionAccess, RepoReadAccess repoAccess) {
+		DimensionReadAccess dimensionAccess, RepoReadAccess repoAccess, RunCache runCache,
+		LatestRunCache latestRunCache) {
 
 		this.commitAccess = commitAccess;
 		this.benchmarkAccess = benchmarkAccess;
 		this.dimensionAccess = dimensionAccess;
 		this.repoAccess = repoAccess;
+		this.runCache = runCache;
+		this.latestRunCache = latestRunCache;
 	}
 
 	@GET
@@ -116,7 +123,8 @@ public class GraphDetailEndpoint {
 		commits.sort(Comparator.comparing(Commit::getCommitterDate));
 
 		// Obtain the relevant runs
-		Map<CommitHash, Run> runs = benchmarkAccess.getLatestRuns(repoId, hashes.keySet());
+		Map<CommitHash, Run> runs = latestRunCache
+			.getLatestRuns(benchmarkAccess, runCache, repoId, hashes.keySet());
 
 		// Finally, put everything together.
 		List<JsonDimension> jsonDimensions = existingDimensions.stream()

@@ -1,7 +1,7 @@
 package de.aaaaaaah.velcom.backend.restapi.jsonobjects;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Interpretation;
+import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.Interpretation;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;

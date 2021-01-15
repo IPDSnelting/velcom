@@ -1,12 +1,13 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
-import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
-import de.aaaaaaah.velcom.backend.newaccess.committaccess.CommitReadAccess;
-import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.Commit;
-import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
-import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.FullCommit;
-import de.aaaaaaah.velcom.backend.newaccess.repoaccess.RepoReadAccess;
-import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
+import de.aaaaaaah.velcom.backend.access.benchmarkaccess.BenchmarkReadAccess;
+import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.RunId;
+import de.aaaaaaah.velcom.backend.access.caches.RunCache;
+import de.aaaaaaah.velcom.backend.access.committaccess.CommitReadAccess;
+import de.aaaaaaah.velcom.backend.access.committaccess.entities.Commit;
+import de.aaaaaaah.velcom.backend.access.committaccess.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.access.committaccess.entities.FullCommit;
+import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonCommit;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonCommitDescription;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRunDescription;
@@ -29,16 +30,16 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 public class CommitEndpoint {
 
-	private final CommitReadAccess commitAccess;
-	private final RepoReadAccess repoAccess;
 	private final BenchmarkReadAccess benchmarkAccess;
+	private final CommitReadAccess commitAccess;
+	private final RunCache runCache;
 
-	public CommitEndpoint(CommitReadAccess commitAccess, RepoReadAccess repoAccess,
-		BenchmarkReadAccess benchmarkAccess) {
+	public CommitEndpoint(BenchmarkReadAccess benchmarkAccess, CommitReadAccess commitAccess,
+		RunCache runCache) {
 
-		this.commitAccess = commitAccess;
-		this.repoAccess = repoAccess;
 		this.benchmarkAccess = benchmarkAccess;
+		this.commitAccess = commitAccess;
+		this.runCache = runCache;
 	}
 
 	@GET
@@ -71,7 +72,8 @@ public class CommitEndpoint {
 			.map(JsonCommitDescription::fromCommit)
 			.collect(Collectors.toList());
 
-		List<JsonRunDescription> runs = benchmarkAccess.getAllRuns(repoId, hash).stream()
+		List<RunId> runIds = benchmarkAccess.getAllRunIds(repoId, hash);
+		List<JsonRunDescription> runs = runCache.getRunsInOrder(benchmarkAccess, runIds).stream()
 			.map(run -> new JsonRunDescription(
 				run.getId().getId(),
 				run.getStartTime().getEpochSecond(),

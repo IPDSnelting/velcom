@@ -1,26 +1,29 @@
 package de.aaaaaaah.velcom.backend.data.repocomparison;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Matchers.anyCollection;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
-import de.aaaaaaah.velcom.backend.access.entities.Measurement;
-import de.aaaaaaah.velcom.backend.access.entities.MeasurementValues;
-import de.aaaaaaah.velcom.backend.access.entities.Run;
-import de.aaaaaaah.velcom.backend.access.entities.RunId;
-import de.aaaaaaah.velcom.backend.newaccess.committaccess.CommitReadAccess;
-import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.Commit;
-import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
-import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.DimensionReadAccess;
-import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Dimension;
-import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.DimensionInfo;
-import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Interpretation;
-import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Unit;
-import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.BranchName;
-import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
+import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.Measurement;
+import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.MeasurementValues;
+import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.Run;
+import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.RunId;
+import de.aaaaaaah.velcom.backend.access.benchmarkaccess.BenchmarkReadAccess;
+import de.aaaaaaah.velcom.backend.access.caches.LatestRunCache;
+import de.aaaaaaah.velcom.backend.access.caches.RunCache;
+import de.aaaaaaah.velcom.backend.access.committaccess.CommitReadAccess;
+import de.aaaaaaah.velcom.backend.access.committaccess.entities.Commit;
+import de.aaaaaaah.velcom.backend.access.committaccess.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.access.dimensionaccess.DimensionReadAccess;
+import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.Dimension;
+import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.DimensionInfo;
+import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.Interpretation;
+import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.Unit;
+import de.aaaaaaah.velcom.backend.access.repoaccess.entities.BranchName;
+import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.shared.util.Either;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -37,6 +40,8 @@ class TimesliceComparisonTest {
 	private BenchmarkReadAccess benchmarkReadAccess;
 	private CommitReadAccess commitReadAccess;
 	private DimensionReadAccess dimensionAccess;
+	private RunCache runCache;
+	private LatestRunCache latestRunCache;
 	private RepoComparison comparison;
 
 	private Dimension dimension;
@@ -70,7 +75,10 @@ class TimesliceComparisonTest {
 		benchmarkReadAccess = mock(BenchmarkReadAccess.class);
 		commitReadAccess = mock(CommitReadAccess.class);
 		dimensionAccess = mock(DimensionReadAccess.class);
-		comparison = new TimesliceComparison(benchmarkReadAccess, commitReadAccess, dimensionAccess);
+		runCache = mock(RunCache.class);
+		latestRunCache = mock(LatestRunCache.class);
+		comparison = new TimesliceComparison(benchmarkReadAccess, commitReadAccess, dimensionAccess,
+			runCache, latestRunCache);
 
 		c1Hash = new CommitHash("hash1");
 		c2Hash = new CommitHash("hash2");
@@ -100,13 +108,13 @@ class TimesliceComparisonTest {
 		repoBranches.put(repoId, startBranches);
 
 		m1 = new Measurement(mock(RunId.class), dimension,
-			new MeasurementValues(List.of(1d, 2d, 3d)));
+			Either.ofRight(new MeasurementValues(List.of(1d, 2d, 3d))));
 		m2 = new Measurement(mock(RunId.class), dimension,
-			new MeasurementValues(List.of(4d, 5d, 6d)));
+			Either.ofRight(new MeasurementValues(List.of(4d, 5d, 6d))));
 		m3 = new Measurement(mock(RunId.class), dimension,
-			new MeasurementValues(List.of(7d, 8d, 9d)));
+			Either.ofRight(new MeasurementValues(List.of(7d, 8d, 9d))));
 		m4 = new Measurement(mock(RunId.class), dimension,
-			new MeasurementValues(List.of(10d, 11d, 12d)));
+			Either.ofRight(new MeasurementValues(List.of(10d, 11d, 12d))));
 		r1 = mock(Run.class);
 		r2 = mock(Run.class);
 		r3 = mock(Run.class);
@@ -121,7 +129,13 @@ class TimesliceComparisonTest {
 		runMap.put(c3Hash, r3);
 		runMap.put(c4Hash, r4);
 
-		when(benchmarkReadAccess.getLatestRuns(eq(repoId), anyCollection())).thenReturn(runMap);
+		when(latestRunCache.getLatestRuns(
+			any(BenchmarkReadAccess.class),
+			any(RunCache.class),
+			eq(repoId),
+			anySet()
+		)).thenReturn(runMap);
+
 		when(dimensionAccess.getDimensionInfo(dimension)).thenReturn(dimensionInfo);
 	}
 

@@ -99,7 +99,7 @@ public class DatabaseStorage {
 		try (final DBReadAccess db = acquireReadAccess()) {
 			db.dsl().transaction(cfg -> {
 				try (DBReadAccess inTransactionDB = new DBReadAccess(cfg.dsl())) {
-					handler.accept(inTransactionDB);
+					result.set(handler.accept(inTransactionDB));
 				}
 			});
 		}

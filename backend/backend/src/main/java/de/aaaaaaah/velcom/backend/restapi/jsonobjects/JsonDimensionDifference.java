@@ -1,9 +1,9 @@
 package de.aaaaaaah.velcom.backend.restapi.jsonobjects;
 
+import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.Dimension;
+import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.DimensionInfo;
 import de.aaaaaaah.velcom.backend.data.runcomparison.DimensionDifference;
 import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparison;
-import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Dimension;
-import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.DimensionInfo;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;

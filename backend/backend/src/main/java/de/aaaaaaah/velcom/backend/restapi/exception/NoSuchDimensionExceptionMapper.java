@@ -1,6 +1,6 @@
 package de.aaaaaaah.velcom.backend.restapi.exception;
 
-import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.exceptions.NoSuchDimensionException;
+import de.aaaaaaah.velcom.backend.access.dimensionaccess.exceptions.NoSuchDimensionException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.ext.ExceptionMapper;

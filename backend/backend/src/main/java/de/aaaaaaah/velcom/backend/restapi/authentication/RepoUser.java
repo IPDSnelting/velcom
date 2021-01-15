@@ -1,6 +1,6 @@
 package de.aaaaaaah.velcom.backend.restapi.authentication;
 
-import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
+import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RepoId;
 import java.security.Principal;
 import java.util.Optional;
 import javax.annotation.Nullable;

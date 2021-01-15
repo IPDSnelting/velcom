@@ -1,17 +1,19 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints.utils;
 
-import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
-import de.aaaaaaah.velcom.backend.access.entities.Run;
-import de.aaaaaaah.velcom.backend.access.entities.RunId;
+import de.aaaaaaah.velcom.backend.access.benchmarkaccess.BenchmarkReadAccess;
+import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.Run;
+import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.RunId;
+import de.aaaaaaah.velcom.backend.access.benchmarkaccess.exceptions.NoSuchRunException;
+import de.aaaaaaah.velcom.backend.access.caches.LatestRunCache;
+import de.aaaaaaah.velcom.backend.access.caches.RunCache;
+import de.aaaaaaah.velcom.backend.access.committaccess.CommitReadAccess;
+import de.aaaaaaah.velcom.backend.access.committaccess.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.access.dimensionaccess.DimensionReadAccess;
+import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.Dimension;
+import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.DimensionInfo;
+import de.aaaaaaah.velcom.backend.access.repoaccess.entities.BranchName;
+import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.data.runcomparison.SignificanceFactors;
-import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.exceptions.NoSuchRunException;
-import de.aaaaaaah.velcom.backend.newaccess.committaccess.CommitReadAccess;
-import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
-import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.DimensionReadAccess;
-import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Dimension;
-import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.DimensionInfo;
-import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.BranchName;
-import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.restapi.exception.InvalidQueryParamsException;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonResult;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRun;
@@ -45,17 +47,17 @@ public class EndpointUtils {
 	 * @return the run if it can be found
 	 * @throws NoSuchRunException if the specified run does not exist
 	 */
-	public static Run getRun(BenchmarkReadAccess benchmarkAccess, UUID id, @Nullable String hash)
-		throws NoSuchRunException {
+	public static Run getRun(BenchmarkReadAccess benchmarkAccess, RunCache runCache,
+		LatestRunCache latestRunCache, UUID id, @Nullable String hash) throws NoSuchRunException {
 
 		if (hash == null) {
 			RunId runId = new RunId(id);
-			return benchmarkAccess.getRun(runId);
+			return runCache.getRun(benchmarkAccess, runId);
 		} else {
 			RepoId repoId = new RepoId(id);
 			CommitHash commitHash = new CommitHash(hash);
 			// TODO use exception instead
-			return benchmarkAccess.getLatestRun(repoId, commitHash).get();
+			return latestRunCache.getLatestRun(benchmarkAccess, runCache, repoId, commitHash).get();
 		}
 	}
 

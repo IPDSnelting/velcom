@@ -2,7 +2,7 @@ package de.aaaaaaah.velcom.backend.data.repocomparison;
 
 import static java.util.Objects.requireNonNull;
 
-import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.DimensionInfo;
+import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.DimensionInfo;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;

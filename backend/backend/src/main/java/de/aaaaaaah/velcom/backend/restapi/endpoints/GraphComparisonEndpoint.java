@@ -2,12 +2,12 @@ package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
 import static java.util.stream.Collectors.toList;
 
+import de.aaaaaaah.velcom.backend.access.dimensionaccess.DimensionReadAccess;
+import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.Dimension;
+import de.aaaaaaah.velcom.backend.access.repoaccess.entities.BranchName;
+import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.data.repocomparison.RepoComparison;
 import de.aaaaaaah.velcom.backend.data.repocomparison.RepoComparisonGraph;
-import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.DimensionReadAccess;
-import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Dimension;
-import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.BranchName;
-import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.utils.EndpointUtils;
 import de.aaaaaaah.velcom.backend.restapi.exception.InvalidQueryParamsException;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimension;

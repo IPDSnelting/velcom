@@ -1,6 +1,6 @@
 package de.aaaaaaah.velcom.backend.restapi.exception;
 
-import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.exceptions.NoSuchRunException;
+import de.aaaaaaah.velcom.backend.access.benchmarkaccess.exceptions.NoSuchRunException;
 import java.util.UUID;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;

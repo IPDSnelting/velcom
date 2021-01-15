@@ -2,7 +2,17 @@ package de.aaaaaaah.velcom.backend;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
-import de.aaaaaaah.velcom.backend.access.BenchmarkWriteAccess;
+import de.aaaaaaah.velcom.backend.access.archiveaccess.ArchiveReadAccess;
+import de.aaaaaaah.velcom.backend.access.benchmarkaccess.BenchmarkWriteAccess;
+import de.aaaaaaah.velcom.backend.access.caches.AvailableDimensionsCache;
+import de.aaaaaaah.velcom.backend.access.caches.LatestRunCache;
+import de.aaaaaaah.velcom.backend.access.caches.RunCache;
+import de.aaaaaaah.velcom.backend.access.committaccess.CommitReadAccess;
+import de.aaaaaaah.velcom.backend.access.dimensionaccess.DimensionReadAccess;
+import de.aaaaaaah.velcom.backend.access.repoaccess.RepoWriteAccess;
+import de.aaaaaaah.velcom.backend.access.taskaccess.TaskWriteAccess;
+import de.aaaaaaah.velcom.backend.access.tokenaccess.TokenWriteAccess;
+import de.aaaaaaah.velcom.backend.access.tokenaccess.entities.AuthToken;
 import de.aaaaaaah.velcom.backend.data.benchrepo.BenchRepo;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.data.recentruns.SignificantRunsCollector;
@@ -10,14 +20,6 @@ import de.aaaaaaah.velcom.backend.data.repocomparison.TimesliceComparison;
 import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparator;
 import de.aaaaaaah.velcom.backend.data.runcomparison.SignificanceFactors;
 import de.aaaaaaah.velcom.backend.listener.Listener;
-import de.aaaaaaah.velcom.backend.newaccess.archiveaccess.ArchiveReadAccess;
-import de.aaaaaaah.velcom.backend.newaccess.caches.AvailableDimensionsCache;
-import de.aaaaaaah.velcom.backend.newaccess.committaccess.CommitReadAccess;
-import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.DimensionReadAccess;
-import de.aaaaaaah.velcom.backend.newaccess.repoaccess.RepoWriteAccess;
-import de.aaaaaaah.velcom.backend.newaccess.taskaccess.TaskWriteAccess;
-import de.aaaaaaah.velcom.backend.newaccess.tokenaccess.TokenWriteAccess;
-import de.aaaaaaah.velcom.backend.newaccess.tokenaccess.entities.AuthToken;
 import de.aaaaaaah.velcom.backend.restapi.authentication.RepoAuthenticator;
 import de.aaaaaaah.velcom.backend.restapi.authentication.RepoUser;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.AllReposEndpoint;
@@ -127,12 +129,15 @@ public class ServerMain extends Application<GlobalConfig> {
 
 		// Caches
 		AvailableDimensionsCache availableDimensionsCache = new AvailableDimensionsCache();
+		LatestRunCache latestRunCache = new LatestRunCache();
+		RunCache runCache = new RunCache();
 
 		// Access layer
 		TaskWriteAccess taskAccess = new TaskWriteAccess(databaseStorage, tarFileStorage);
 		CommitReadAccess commitAccess = new CommitReadAccess(databaseStorage);
 		DimensionReadAccess dimensionAccess = new DimensionReadAccess(databaseStorage);
-		RepoWriteAccess repoAccess = new RepoWriteAccess(databaseStorage, availableDimensionsCache);
+		RepoWriteAccess repoAccess = new RepoWriteAccess(databaseStorage, availableDimensionsCache,
+			runCache, latestRunCache);
 		TokenWriteAccess tokenAccess = new TokenWriteAccess(
 			databaseStorage,
 			new AuthToken(configuration.getWebAdminToken()),
@@ -146,9 +151,8 @@ public class ServerMain extends Application<GlobalConfig> {
 			tarFileStorage,
 			configuration.getBenchmarkRepoRemoteUrl()
 		);
-		BenchmarkWriteAccess benchmarkAccess = new BenchmarkWriteAccess(
-			databaseStorage, repoAccess, availableDimensionsCache
-		);
+		BenchmarkWriteAccess benchmarkAccess = new BenchmarkWriteAccess(databaseStorage,
+			availableDimensionsCache, latestRunCache);
 
 		taskAccess.resetAllTaskStatuses();
 		taskAccess.cleanUpTarFiles();
@@ -162,12 +166,11 @@ public class ServerMain extends Application<GlobalConfig> {
 			configuration.getSignificanceMinStddevAmount()
 		);
 		RunComparator runComparator = new RunComparator(significanceFactors);
-		TimesliceComparison comparison = new TimesliceComparison(
-			benchmarkAccess, commitAccess, dimensionAccess
-		);
+		TimesliceComparison comparison = new TimesliceComparison(benchmarkAccess, commitAccess,
+			dimensionAccess, runCache, latestRunCache);
 		SignificantRunsCollector significantRunsCollector = new SignificantRunsCollector(
-			significanceFactors, benchmarkAccess, commitAccess, dimensionAccess, runComparator
-		);
+			significanceFactors, benchmarkAccess, commitAccess, dimensionAccess, runCache, latestRunCache,
+			runComparator);
 
 		// Listener
 		Listener listener = new Listener(databaseStorage, repoStorage, repoAccess, benchRepo, queue,
@@ -187,22 +190,22 @@ public class ServerMain extends Application<GlobalConfig> {
 
 		// Endpoints
 		Stream.of(
-			new AllReposEndpoint(benchmarkAccess, dimensionAccess, repoAccess, tokenAccess,
-				availableDimensionsCache),
-			new CommitEndpoint(commitAccess, repoAccess, benchmarkAccess),
-			new CompareEndpoint(benchmarkAccess, commitAccess, dimensionAccess, runComparator,
-				significanceFactors),
-			new DebugEndpoint(dimensionAccess, dispatcher),
+			new AllReposEndpoint(dimensionAccess, repoAccess, tokenAccess, availableDimensionsCache),
+			new CommitEndpoint(benchmarkAccess, commitAccess, runCache),
+			new CompareEndpoint(benchmarkAccess, commitAccess, dimensionAccess, runCache, latestRunCache,
+				runComparator, significanceFactors),
+			new DebugEndpoint(dispatcher),
 			new GraphComparisonEndpoint(dimensionAccess, comparison),
-			new GraphDetailEndpoint(commitAccess, benchmarkAccess, dimensionAccess, repoAccess),
+			new GraphDetailEndpoint(commitAccess, benchmarkAccess, dimensionAccess, repoAccess, runCache,
+				latestRunCache),
 			new ListenerEndpoint(listener),
 			new QueueEndpoint(commitAccess, repoAccess, queue, dispatcher),
-			new RecentRunsEndpoint(benchmarkAccess, commitAccess, dimensionAccess,
+			new RecentRunsEndpoint(benchmarkAccess, commitAccess, dimensionAccess, runCache,
 				significantRunsCollector),
 			new RepoEndpoint(dimensionAccess, repoAccess, tokenAccess, availableDimensionsCache,
 				listener),
-			new RunEndpoint(benchmarkAccess, commitAccess, dimensionAccess, runComparator,
-				significanceFactors, significantRunsCollector),
+			new RunEndpoint(benchmarkAccess, commitAccess, dimensionAccess, runCache, latestRunCache,
+				runComparator, significanceFactors, significantRunsCollector),
 			new TestTokenEndpoint()
 		).forEach(endpoint -> environment.jersey().register(endpoint));
 	}

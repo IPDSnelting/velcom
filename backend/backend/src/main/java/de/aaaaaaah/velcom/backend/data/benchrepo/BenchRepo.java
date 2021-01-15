@@ -1,9 +1,9 @@
 package de.aaaaaaah.velcom.backend.data.benchrepo;
 
-import de.aaaaaaah.velcom.backend.newaccess.archiveaccess.ArchiveReadAccess;
-import de.aaaaaaah.velcom.backend.newaccess.archiveaccess.exceptions.TarRetrieveException;
-import de.aaaaaaah.velcom.backend.newaccess.archiveaccess.exceptions.TarTransferException;
-import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.access.archiveaccess.ArchiveReadAccess;
+import de.aaaaaaah.velcom.backend.access.archiveaccess.exceptions.TarRetrieveException;
+import de.aaaaaaah.velcom.backend.access.archiveaccess.exceptions.TarTransferException;
+import de.aaaaaaah.velcom.backend.access.committaccess.entities.CommitHash;
 import java.io.OutputStream;
 import java.util.Objects;
 import java.util.Optional;

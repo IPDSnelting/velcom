@@ -6,19 +6,22 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 
-import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
-import de.aaaaaaah.velcom.backend.access.entities.Run;
+import de.aaaaaaah.velcom.backend.access.benchmarkaccess.BenchmarkReadAccess;
+import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.Run;
+import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.RunId;
+import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.sources.CommitSource;
+import de.aaaaaaah.velcom.backend.access.caches.LatestRunCache;
+import de.aaaaaaah.velcom.backend.access.caches.RunCache;
+import de.aaaaaaah.velcom.backend.access.committaccess.CommitReadAccess;
+import de.aaaaaaah.velcom.backend.access.committaccess.entities.Commit;
+import de.aaaaaaah.velcom.backend.access.committaccess.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.access.committaccess.entities.FullCommit;
+import de.aaaaaaah.velcom.backend.access.dimensionaccess.DimensionReadAccess;
+import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.Dimension;
+import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.data.runcomparison.DimensionDifference;
 import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparator;
 import de.aaaaaaah.velcom.backend.data.runcomparison.SignificanceFactors;
-import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.CommitSource;
-import de.aaaaaaah.velcom.backend.newaccess.committaccess.CommitReadAccess;
-import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.Commit;
-import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
-import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.FullCommit;
-import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.DimensionReadAccess;
-import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Dimension;
-import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
 import io.micrometer.core.annotation.Timed;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -41,16 +44,21 @@ public class SignificantRunsCollector {
 	private final BenchmarkReadAccess benchmarkAccess;
 	private final CommitReadAccess commitAccess;
 	private final DimensionReadAccess dimensionAccess;
+	private final RunCache runCache;
+	private final LatestRunCache latestRunCache;
 	private final RunComparator runComparator;
 
 	public SignificantRunsCollector(SignificanceFactors significanceFactors,
 		BenchmarkReadAccess benchmarkAccess, CommitReadAccess commitAccess,
-		DimensionReadAccess dimensionAccess, RunComparator runComparator) {
+		DimensionReadAccess dimensionAccess, RunCache runCache, LatestRunCache latestRunCache,
+		RunComparator runComparator) {
 
 		this.significanceFactors = significanceFactors;
 		this.benchmarkAccess = Objects.requireNonNull(benchmarkAccess);
 		this.commitAccess = Objects.requireNonNull(commitAccess);
 		this.dimensionAccess = dimensionAccess;
+		this.runCache = runCache;
+		this.latestRunCache = latestRunCache;
 		this.runComparator = Objects.requireNonNull(runComparator);
 	}
 
@@ -73,8 +81,8 @@ public class SignificantRunsCollector {
 			source.getRepoId(),
 			source.getHash()
 		);
-		Collection<Run> parentRuns = benchmarkAccess
-			.getLatestRuns(source.getRepoId(), parentHashes)
+		Collection<Run> parentRuns = latestRunCache
+			.getLatestRuns(benchmarkAccess, runCache, source.getRepoId(), parentHashes)
 			.values();
 
 		Set<Dimension> significantDimensions = dimensionAccess.getSignificantDimensions();
@@ -107,7 +115,8 @@ public class SignificantRunsCollector {
 		//   2.2. Load parent runs per CommitSource
 		// 3. Filter out significant runs
 
-		List<Run> runs = benchmarkAccess.getRecentRuns(skip, SignificantRunsCollector.BATCH_SIZE);
+		List<RunId> recentRunIds = benchmarkAccess.getRecentRunIds(skip, BATCH_SIZE);
+		List<Run> runs = runCache.getRunsInOrder(benchmarkAccess, recentRunIds);
 		Map<RepoId, List<FullCommit>> commitsPerRepo = getCommitsPerRepo(runs);
 		Map<CommitSource, Collection<Run>> parentRunsPerSource = getParentRunsPerSource(commitsPerRepo);
 		Set<Dimension> significantDimensions = dimensionAccess.getSignificantDimensions();
@@ -138,7 +147,9 @@ public class SignificantRunsCollector {
 			Set<CommitHash> parentHashes = commits.stream()
 				.flatMap(commit -> commit.getParentHashes().stream())
 				.collect(toSet());
-			parentRuns.put(repoId, benchmarkAccess.getLatestRuns(repoId, parentHashes));
+			Map<CommitHash, Run> latestRuns = latestRunCache
+				.getLatestRuns(benchmarkAccess, runCache, repoId, parentHashes);
+			parentRuns.put(repoId, latestRuns);
 		});
 
 		return commitsPerRepo.values().stream()

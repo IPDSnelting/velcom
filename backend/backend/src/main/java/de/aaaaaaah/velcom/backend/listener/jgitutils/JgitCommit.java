@@ -1,6 +1,6 @@
 package de.aaaaaaah.velcom.backend.listener.jgitutils;
 
-import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.access.committaccess.entities.CommitHash;
 import java.time.Instant;
 import java.util.Set;
 

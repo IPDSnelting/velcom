@@ -1,16 +1,15 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
-import de.aaaaaaah.velcom.backend.access.BenchmarkReadAccess;
-import de.aaaaaaah.velcom.backend.newaccess.caches.AvailableDimensionsCache;
-import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.DimensionReadAccess;
-import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.Dimension;
-import de.aaaaaaah.velcom.backend.newaccess.dimensionaccess.entities.DimensionInfo;
-import de.aaaaaaah.velcom.backend.newaccess.repoaccess.RepoReadAccess;
-import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.Branch;
-import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.BranchName;
-import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.Repo;
-import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
-import de.aaaaaaah.velcom.backend.newaccess.tokenaccess.TokenReadAccess;
+import de.aaaaaaah.velcom.backend.access.caches.AvailableDimensionsCache;
+import de.aaaaaaah.velcom.backend.access.dimensionaccess.DimensionReadAccess;
+import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.Dimension;
+import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.DimensionInfo;
+import de.aaaaaaah.velcom.backend.access.repoaccess.RepoReadAccess;
+import de.aaaaaaah.velcom.backend.access.repoaccess.entities.Branch;
+import de.aaaaaaah.velcom.backend.access.repoaccess.entities.BranchName;
+import de.aaaaaaah.velcom.backend.access.repoaccess.entities.Repo;
+import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RepoId;
+import de.aaaaaaah.velcom.backend.access.tokenaccess.TokenReadAccess;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimension;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRepo;
 import io.micrometer.core.annotation.Timed;
@@ -31,17 +30,14 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 public class AllReposEndpoint {
 
-	private final BenchmarkReadAccess benchmarkAccess;
 	private final DimensionReadAccess dimensionAccess;
 	private final RepoReadAccess repoAccess;
 	private final TokenReadAccess tokenAccess;
 	private final AvailableDimensionsCache availableDimensionsCache;
 
-	public AllReposEndpoint(BenchmarkReadAccess benchmarkAccess, DimensionReadAccess dimensionAccess,
-		RepoReadAccess repoAccess, TokenReadAccess tokenAccess,
-		AvailableDimensionsCache availableDimensionsCache) {
+	public AllReposEndpoint(DimensionReadAccess dimensionAccess, RepoReadAccess repoAccess,
+		TokenReadAccess tokenAccess, AvailableDimensionsCache availableDimensionsCache) {
 
-		this.benchmarkAccess = benchmarkAccess;
 		this.dimensionAccess = dimensionAccess;
 		this.repoAccess = repoAccess;
 		this.tokenAccess = tokenAccess;

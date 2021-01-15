@@ -2,12 +2,12 @@ package de.aaaaaaah.velcom.backend.data.queue;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.CommitSource;
-import de.aaaaaaah.velcom.backend.newaccess.benchmarkaccess.entities.TarSource;
-import de.aaaaaaah.velcom.backend.newaccess.committaccess.entities.CommitHash;
-import de.aaaaaaah.velcom.backend.newaccess.repoaccess.entities.RepoId;
-import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.Task;
-import de.aaaaaaah.velcom.backend.newaccess.taskaccess.entities.TaskPriority;
+import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.sources.CommitSource;
+import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.sources.TarSource;
+import de.aaaaaaah.velcom.backend.access.committaccess.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RepoId;
+import de.aaaaaaah.velcom.backend.access.taskaccess.entities.Task;
+import de.aaaaaaah.velcom.backend.access.taskaccess.entities.TaskPriority;
 import de.aaaaaaah.velcom.shared.util.Either;
 import java.util.ArrayList;
 import java.util.List;
