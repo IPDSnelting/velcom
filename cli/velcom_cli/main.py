@@ -37,9 +37,16 @@ def make_parser():
     default_config = subparsers.add_parser(
         "default-config",
         aliases=["dc"],
-        help="print a default config file on stdout",
+        help="print the default config file on stdout",
     )
     default_config.set_defaults(f=commands.default_config)
+
+    print_config = subparsers.add_parser(
+        "print-config",
+        aliases=["pc"],
+        help="print the currently active configuration on stdout",
+    )
+    print_config.set_defaults(f=commands.print_config)
 
     bench_tar = subparsers.add_parser(
         "bench-tar",

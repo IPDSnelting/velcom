@@ -31,8 +31,12 @@ class Config:
         return config
 
     @property
-    def profile(self):
+    def profile_name(self):
         if self.args.profile is None:
-            return self.parser[configparser.DEFAULTSECT]
+            return configparser.DEFAULTSECT
         else:
-            return self.parser[self.args.profile]
+            return self.args.profile
+
+    @property
+    def profile_section(self):
+        return self.parser[self.profile_name]
