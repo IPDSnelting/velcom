@@ -66,8 +66,8 @@ public class TimesliceComparison implements RepoComparison {
 	 * @param benchmarkAccess the benchmark access used to collect benchmark data
 	 * @param commitAccess the commit access used to collect commit data
 	 * @param dimensionAccess the dimension access
-	 * @param runCache
-	 * @param latestRunCache
+	 * @param runCache the run cache
+	 * @param latestRunCache the latest run cache
 	 */
 	public TimesliceComparison(BenchmarkReadAccess benchmarkAccess, CommitReadAccess commitAccess,
 		DimensionReadAccess dimensionAccess, RunCache runCache, LatestRunCache latestRunCache) {
@@ -134,11 +134,9 @@ public class TimesliceComparison implements RepoComparison {
 		// 3.) Filter out unsuccessful measurements
 		Map<CommitHash, Measurement> measurementMap = new HashMap<>();
 
-		latestRuns.forEach((hash, run) -> {
-			findMeasurement(dimensionInfo.getDimension(), run)
-				.filter(m -> m.getContent().isRight())
-				.ifPresent(values -> measurementMap.put(hash, values));
-		});
+		latestRuns.forEach((hash, run) -> findMeasurement(dimensionInfo.getDimension(), run)
+			.filter(m -> m.getContent().isRight())
+			.ifPresent(values -> measurementMap.put(hash, values)));
 
 		if (measurementMap.isEmpty()) {
 			return Optional.empty(); // No graph data available
@@ -252,7 +250,6 @@ public class TimesliceComparison implements RepoComparison {
 
 		return grouper;
 	}
-
 
 	private Optional<Measurement> findMeasurement(Dimension name, Run run) {
 		if (run.getResult().isRight()) {

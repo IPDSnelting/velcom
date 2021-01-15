@@ -32,6 +32,9 @@ import org.jooq.codegen.db.tables.records.MeasurementRecord;
 import org.jooq.codegen.db.tables.records.MeasurementValueRecord;
 import org.jooq.codegen.db.tables.records.RunRecord;
 
+/**
+ * Access for adding new runs.
+ */
 public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 
 	private final AvailableDimensionsCache availableDimensionsCache;

@@ -17,9 +17,7 @@ public abstract class TimeoutState extends TeleRunnerState {
 		super(runner, connection);
 
 		timeout = Timeout.after(Delays.AWAIT_COMMAND_REPLY);
-		timeout.getCompletionStage().thenRun(() -> {
-			connection.close(StatusCode.COMMAND_TIMEOUT);
-		});
+		timeout.getCompletionStage().thenRun(() -> connection.close(StatusCode.COMMAND_TIMEOUT));
 	}
 
 	@Override

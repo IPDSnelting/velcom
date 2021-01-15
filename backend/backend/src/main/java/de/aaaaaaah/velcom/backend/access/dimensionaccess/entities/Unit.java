@@ -7,7 +7,7 @@ import java.util.Objects;
  */
 public class Unit {
 
-	public static Unit DEFAULT = new Unit("");
+	public static final Unit DEFAULT = new Unit("");
 
 	public Unit(String name) {
 		this.name = Objects.requireNonNull(name);

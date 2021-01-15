@@ -17,11 +17,6 @@ public class AwaitAbortRunReply extends TimeoutState {
 	}
 
 	@Override
-	public void onExit() {
-		super.onExit();
-	}
-
-	@Override
 	protected Optional<TeleRunnerState> onPacket(ServerBoundPacket packet) {
 		return super.onPacket(packet).or(() -> Optional.of(packet)
 			.filter(it -> it.getType() == ServerBoundPacketType.ABORT_RUN_REPLY)

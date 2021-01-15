@@ -99,11 +99,10 @@ public class NewRun {
 	}
 
 	public Optional<RepoId> getRepoId() {
-		if (getSource().isLeft()) {
-			return Optional.of(getSource().getLeft().get().getRepoId());
-		} else {
-			return getSource().getRight().get().getRepoId();
-		}
+		return getSource().consume(
+			commitSource -> Optional.of(commitSource.getRepoId()),
+			TarSource::getRepoId
+		);
 	}
 
 	/**

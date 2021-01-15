@@ -42,6 +42,8 @@ public class EndpointUtils {
 	 * Obtain a {@link Run} either by its ID or by a commit.
 	 *
 	 * @param benchmarkAccess a {@link BenchmarkReadAccess}
+	 * @param runCache a {@link RunCache}
+	 * @param latestRunCache a {@link LatestRunCache}
 	 * @param id the run's ID, or the commit's repo id, if {@code hash} is specified
 	 * @param hash the commit's hash, if the run should be obtained through a commit
 	 * @return the run if it can be found
@@ -80,34 +82,19 @@ public class EndpointUtils {
 		Map<Dimension, DimensionInfo> dimensionInfos = dimensionAccess
 			.getDimensionInfoMap(run.getAllDimensionsUsed());
 
-		if (run.getResult().isLeft()) {
-			return new JsonRun(
-				run.getId().getId(),
-				run.getAuthor(),
-				run.getRunnerName(),
-				run.getRunnerInfo(),
-				run.getStartTime().getEpochSecond(),
-				run.getStopTime().getEpochSecond(),
-				source,
-				JsonResult.fromRunError(run.getResult().getLeft().get())
-			);
-		} else {
-			return new JsonRun(
-				run.getId().getId(),
-				run.getAuthor(),
-				run.getRunnerName(),
-				run.getRunnerInfo(),
-				run.getStartTime().getEpochSecond(),
-				run.getStopTime().getEpochSecond(),
-				source,
-				JsonResult.fromMeasurements(
-					run.getResult().getRight().get(),
-					dimensionInfos,
-					significanceFactors,
-					allValues
-				)
-			);
-		}
+		return new JsonRun(
+			run.getId().getId(),
+			run.getAuthor(),
+			run.getRunnerName(),
+			run.getRunnerInfo(),
+			run.getStartTime().getEpochSecond(),
+			run.getStopTime().getEpochSecond(),
+			source,
+			run.getResult().consume(
+				JsonResult::fromRunError,
+				it -> JsonResult.fromMeasurements(it, dimensionInfos, significanceFactors, allValues)
+			)
+		);
 	}
 
 	/**

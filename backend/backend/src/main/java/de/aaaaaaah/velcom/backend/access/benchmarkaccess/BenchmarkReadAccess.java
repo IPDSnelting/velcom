@@ -35,7 +35,7 @@ import java.util.Set;
 import org.jooq.codegen.db.tables.records.RunRecord;
 
 /**
- * Access for runs and their measurements.
+ * Access for retrieving runs and their measurements.
  */
 public class BenchmarkReadAccess {
 

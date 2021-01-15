@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 
 class StateMachineTest {
 
-	class Resting implements State {
+	static class Resting implements State {
 
 		@Override
 		public boolean isResting() {
@@ -16,11 +16,11 @@ class StateMachineTest {
 		}
 	}
 
-	class Unrest implements State {
+	static class Unrest implements State {
 
 	}
 
-	class RandomUnrest implements State {
+	static class RandomUnrest implements State {
 
 	}
 

@@ -58,10 +58,9 @@ public class RunCache {
 			.collect(toList());
 	}
 
-	public void invalidate(RunId runId) {
-		cache.invalidate(runId);
-	}
-
+	/**
+	 * Invalidate all entries.
+	 */
 	public void invalidateAll() {
 		cache.invalidateAll();
 	}
