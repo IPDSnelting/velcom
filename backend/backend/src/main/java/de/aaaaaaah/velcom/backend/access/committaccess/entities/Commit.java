@@ -3,10 +3,7 @@ package de.aaaaaaah.velcom.backend.access.committaccess.entities;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.shared.util.Pair;
 import java.time.Instant;
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import javax.swing.Painter;
 
 /**
  * A git commit. For a version that includes parent and child hashes, see {@link FullCommit}.
