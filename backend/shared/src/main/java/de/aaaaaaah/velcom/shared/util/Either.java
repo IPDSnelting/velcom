@@ -136,4 +136,9 @@ public final class Either<L, R> {
 	public int hashCode() {
 		return Objects.hash(left, right);
 	}
+
+	@Override
+	public String toString() {
+		return consume(l -> "Either.ofLeft(" + l + ")", r -> "Either.ofRight(" + r + ")");
+	}
 }

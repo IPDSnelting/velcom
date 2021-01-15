@@ -2,6 +2,7 @@ package de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities;
 
 import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.Dimension;
 import de.aaaaaaah.velcom.shared.util.Either;
+import java.util.Objects;
 
 /**
  * A measurement can either be successful, in which case it must contain the measured values and
@@ -34,4 +35,21 @@ public class Measurement {
 		return content;
 	}
 
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) {
+			return true;
+		}
+		if (o == null || getClass() != o.getClass()) {
+			return false;
+		}
+		Measurement that = (Measurement) o;
+		return Objects.equals(runId, that.runId) && Objects
+			.equals(dimension, that.dimension) && Objects.equals(content, that.content);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(runId, dimension, content);
+	}
 }

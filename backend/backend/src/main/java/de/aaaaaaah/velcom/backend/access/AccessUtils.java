@@ -34,11 +34,22 @@ public class AccessUtils {
 		@Nullable String commitHash, @Nullable String tarDesc) {
 
 		if (commitHash != null) { // Must be commit source
+			if (repoId == null) {
+				throw new IllegalArgumentException("repoId must not be null if commit hash is not null");
+			}
+			if (tarDesc != null) {
+				throw new IllegalArgumentException("tarDesc must be null if commit hash is not null");
+			}
+
 			return Either.ofLeft(new CommitSource(
 				RepoId.fromString(repoId),
 				new CommitHash(commitHash)
 			));
 		} else { // Must be tar source
+			if (tarDesc == null) {
+				throw new IllegalArgumentException("tarDesc must not be null if commit hash is null");
+			}
+
 			return Either.ofRight(new TarSource(
 				tarDesc,
 				Optional.ofNullable(repoId)

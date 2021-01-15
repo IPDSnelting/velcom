@@ -73,37 +73,17 @@ public class RepoReadAccess {
 		getRepo(repoId);
 	}
 
+	/**
+	 * Retrieve all of a repo's branches.
+	 *
+	 * @param repoId the id of the repo whose branches to return
+	 * @return all of the repo's branches, or an empty list if the repo doesn't exist
+	 */
 	public List<Branch> getAllBranches(RepoId repoId) {
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
 			return db.fetch(
 				BRANCH,
 				BRANCH.REPO_ID.eq(repoId.getIdAsString())
-			)
-				.stream()
-				.map(RepoReadAccess::branchRecordToBranch)
-				.collect(Collectors.toList());
-		}
-	}
-
-	public List<Branch> getTrackedBranches(RepoId repoId) {
-		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			return db.fetch(
-				BRANCH,
-				BRANCH.REPO_ID.eq(repoId.getIdAsString())
-					.and(BRANCH.TRACKED)
-			)
-				.stream()
-				.map(RepoReadAccess::branchRecordToBranch)
-				.collect(Collectors.toList());
-		}
-	}
-
-	public List<Branch> getUntrackedBranches(RepoId repoId) {
-		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			return db.fetch(
-				BRANCH,
-				BRANCH.REPO_ID.eq(repoId.getIdAsString())
-					.and(BRANCH.TRACKED.neg())
 			)
 				.stream()
 				.map(RepoReadAccess::branchRecordToBranch)

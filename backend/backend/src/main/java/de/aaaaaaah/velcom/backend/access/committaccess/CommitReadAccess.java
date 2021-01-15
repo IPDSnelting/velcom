@@ -118,6 +118,14 @@ public class CommitReadAccess {
 		getCommit(repoId, commitHash);
 	}
 
+	/**
+	 * Get multiple commits from a single repo at the same time.
+	 *
+	 * @param repoId the repo the commits ar in
+	 * @param commitHashes the commits' hashes
+	 * @return all commits which could be found. Commits could not be found are simply not included in
+	 * 	this list.
+	 */
 	public List<Commit> getCommits(RepoId repoId, Collection<CommitHash> commitHashes) {
 		Set<String> hashes = commitHashes.stream()
 			.map(CommitHash::getHash)
@@ -281,8 +289,18 @@ public class CommitReadAccess {
 	 * @return all tracked commits descending from the given root.
 	 */
 	public List<CommitHash> getDescendantCommits(RepoId repoId, CommitHash rootHash) {
-		String query = "WITH RECURSIVE rec(hash) AS (\n"
-			+ "  VALUES (?)\n"                                    // <-- Binding #1 - Root hash
+		String query = "WITH RECURSIVE\n"
+			+ "\n"
+			+ "initial(hash) AS (\n"
+			+ "  VALUES (?)\n" // <-- Binding #1 - Root hash
+			+ "),\n"
+			+ "\n"
+			+ "rec(hash) AS (\n"
+			+ "  SELECT initial.hash\n"
+			+ "  FROM initial\n"
+			+ "  JOIN known_commit\n"
+			+ "    ON initial.hash = known_commit.hash\n"
+			+ "  WHERE known_commit.repo_id = ?\n" // <-- Binding #2 - repo id
 			+ "  \n"
 			+ "  UNION\n"
 			+ "  \n"
@@ -290,7 +308,7 @@ public class CommitReadAccess {
 			+ "  FROM commit_relationship\n"
 			+ "  JOIN rec\n"
 			+ "    ON rec.hash = commit_relationship.parent_hash\n"
-			+ "  WHERE repo_id = ?\n"                             // <-- Binding #2 - repo id
+			+ "  WHERE repo_id = ?\n" // <-- Binding #3 - repo id
 			+ ")\n"
 			+ "\n"
 			+ "SELECT rec.hash \n"
@@ -301,7 +319,8 @@ public class CommitReadAccess {
 			+ "";
 
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			return db.dsl().fetchLazy(query, rootHash.getHash(), repoId.getIdAsString())
+			return db.dsl()
+				.fetchLazy(query, rootHash.getHash(), repoId.getIdAsString(), repoId.getIdAsString())
 				.stream()
 				.map(record -> (String) record.getValue(0))
 				.map(CommitHash::new)
@@ -343,7 +362,7 @@ public class CommitReadAccess {
 			+ "WITH RECURSIVE rec(hash) AS (\n"
 			+ "  SELECT branch.latest_commit_hash"
 			+ "  FROM branch"
-			+ "  WHERE branch.repo_id = ?" // Binding #1
+			+ "  WHERE branch.repo_id = ?" // <-- Binding #1
 			+ "  AND branch.name IN (" + branchNamesBindings + ")\n" // <-- Binding #2 (multiple values)
 			+ "  \n"
 			+ "  UNION\n"
