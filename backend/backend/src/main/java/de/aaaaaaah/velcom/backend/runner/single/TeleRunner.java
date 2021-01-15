@@ -15,6 +15,7 @@ import de.aaaaaaah.velcom.backend.access.taskaccess.exceptions.NoSuchTaskExcepti
 import de.aaaaaaah.velcom.backend.data.benchrepo.BenchRepo;
 import de.aaaaaaah.velcom.backend.runner.Dispatcher;
 import de.aaaaaaah.velcom.backend.runner.KnownRunner;
+import de.aaaaaaah.velcom.backend.runner.KnownRunner.CompletedTask;
 import de.aaaaaaah.velcom.backend.runner.single.state.AwaitAbortRunReply;
 import de.aaaaaaah.velcom.backend.runner.single.state.AwaitSendWorkEnd;
 import de.aaaaaaah.velcom.shared.protocol.StatusCode;
@@ -30,7 +31,10 @@ import de.aaaaaaah.velcom.shared.util.ExceptionHelper;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.time.Instant;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Optional;
+import java.util.Queue;
 import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,8 +45,14 @@ import org.slf4j.LoggerFactory;
 public class TeleRunner {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(TeleRunner.class);
+	/**
+	 * Completed tasks are cached so we can continue to show output lines in the frontend even if the
+	 * task has finished. This variable controls *how many* are ached.
+ 	 */
+	private static final int MAX_CACHED_COMPLETED_TASKS = 2;
 
 	private final AtomicReference<GetStatusReply> runnerInformation;
+	private final Queue<CompletedTask> lastResults;
 	private final String runnerName;
 	private final Serializer serializer;
 	private final Dispatcher dispatcher;
@@ -65,6 +75,7 @@ public class TeleRunner {
 		this.myCurrentTask = new AtomicReference<>();
 		this.workingSince = new AtomicReference<>();
 		this.lastPing = new AtomicReference<>();
+		this.lastResults = new ArrayDeque<>();
 	}
 
 	/**
@@ -173,16 +184,19 @@ public class TeleRunner {
 	public KnownRunner getRunnerInformation() {
 		GetStatusReply reply = runnerInformation.get();
 
-		return new KnownRunner(
-			getRunnerName(),
-			reply.getInfo(),
-			reply.getVersionHash().orElse(null),
-			reply.getStatus(),
-			myCurrentTask.get(),
-			!hasConnection(),
-			workingSince.get(),
-			reply.getLastOutputLines().orElse(null)
-		);
+		synchronized (lastResults) {
+			return new KnownRunner(
+				getRunnerName(),
+				reply.getInfo(),
+				reply.getVersionHash().orElse(null),
+				reply.getStatus(),
+				myCurrentTask.get(),
+				!hasConnection(),
+				workingSince.get(),
+				reply.getLastOutputLines().orElse(null),
+				new ArrayList<>(lastResults)
+			);
+		}
 	}
 
 	/**
@@ -233,6 +247,17 @@ public class TeleRunner {
 			// than never
 			dispatcher.getQueue().abortTask(new TaskId(resultReply.getRunId()));
 			return;
+		}
+
+		synchronized (lastResults) {
+			lastResults.offer(new CompletedTask(
+				new TaskId(resultReply.getRunId()),
+				runnerInformation.get().getLastOutputLines().orElse(null)
+			));
+
+			while (lastResults.size() > MAX_CACHED_COMPLETED_TASKS) {
+				lastResults.poll();
+			}
 		}
 
 		NewRun run;

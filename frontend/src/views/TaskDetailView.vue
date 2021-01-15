@@ -129,12 +129,14 @@ export default class TaskDetailView extends Vue {
   private async update() {
     this.show404 = false
 
-    this.taskInfo = await vxm.queueModule.fetchTaskInfo(this.taskId)
+    const newInfo = await vxm.queueModule.fetchTaskInfo(this.taskId)
 
-    if (!this.taskInfo) {
+    if (!newInfo) {
       await this.handleTaskNotFound()
       return
     }
+
+    this.taskInfo = newInfo
     await this.handleSource(this.taskInfo.task.source)
   }
 

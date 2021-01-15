@@ -134,8 +134,7 @@ class TeleRunnerTest {
 		runner.setRunnerInformation(first);
 
 		assertThat(runner.getRunnerInformation()).isEqualTo(new KnownRunner(
-			runner.getRunnerName(), "hey", "there", Status.IDLE, null, true, null, null
-		));
+			runner.getRunnerName(), "hey", "there", Status.IDLE, null, true, null, null,			List.of()));
 
 		GetStatusReply second = new GetStatusReply(
 			"hey2", "there2", "my2", false, Status.IDLE, null, null
@@ -143,8 +142,7 @@ class TeleRunnerTest {
 		runner.setRunnerInformation(second);
 
 		assertThat(runner.getRunnerInformation()).isEqualTo(new KnownRunner(
-			runner.getRunnerName(), "hey2", "there2", Status.IDLE, null, true, null, null
-		));
+			runner.getRunnerName(), "hey2", "there2", Status.IDLE, null, true, null, null, List.of()));
 	}
 
 	// FIXME: This is questionable below here

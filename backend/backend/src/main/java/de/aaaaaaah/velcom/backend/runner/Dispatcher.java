@@ -4,12 +4,14 @@ import de.aaaaaaah.velcom.backend.access.benchmarkaccess.builder.NewRun;
 import de.aaaaaaah.velcom.backend.access.taskaccess.entities.Task;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.runner.single.TeleRunner;
+import de.aaaaaaah.velcom.shared.util.LinesWithOffset;
 import de.aaaaaaah.velcom.shared.util.execution.DaemonThreadFactory;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -136,6 +138,25 @@ public class Dispatcher implements IDispatcher {
 		}
 
 		return nextTask;
+	}
+
+	public Optional<LinesWithOffset> findLinesForTask(UUID taskId) {
+		Optional<KnownRunner> activeWorker = getKnownRunners().stream()
+			.filter(it -> it.getCurrentTask().isPresent())
+			.filter(it -> it.getCurrentTask().get().getId().getId().equals(taskId))
+			.findAny();
+
+		if (activeWorker.isPresent()) {
+			LinesWithOffset lastOutputLines = activeWorker.get().getLastOutputLines()
+				.orElse(new LinesWithOffset(0, List.of()));
+			return Optional.of(lastOutputLines);
+		}
+
+		return getKnownRunners().stream()
+			.flatMap(it -> it.getCompletedTasks().stream())
+			.filter(it -> it.getTaskId().getId().equals(taskId))
+			.findFirst()
+			.map(it -> it.getLastLogLines().orElse(new LinesWithOffset(0, List.of())));
 	}
 
 	/**

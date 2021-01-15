@@ -1,9 +1,11 @@
 package de.aaaaaaah.velcom.backend.runner;
 
 import de.aaaaaaah.velcom.backend.access.taskaccess.entities.Task;
+import de.aaaaaaah.velcom.backend.access.taskaccess.entities.TaskId;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Status;
 import de.aaaaaaah.velcom.shared.util.LinesWithOffset;
 import java.time.Instant;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import javax.annotation.Nullable;
@@ -25,6 +27,7 @@ public class KnownRunner {
 	final LinesWithOffset lastOutputLines;
 	@Nullable
 	private final Instant workingSince;
+	private final List<CompletedTask> completedTasks;
 
 	/**
 	 * Creates a new known runner.
@@ -37,10 +40,12 @@ public class KnownRunner {
 	 * @param lostConnection true if the connection to the runner is lost
 	 * @param workingSince the time the runner is working on a run now
 	 * @param lastOutputLines the last output lines
+	 * @param completedTasks the last few completed tasks
 	 */
 	public KnownRunner(String name, String information, @Nullable String versionHash,
 		Status lastStatus, @Nullable Task task, boolean lostConnection,
-		@Nullable Instant workingSince, @Nullable LinesWithOffset lastOutputLines) {
+		@Nullable Instant workingSince, @Nullable LinesWithOffset lastOutputLines,
+		List<CompletedTask> completedTasks) {
 		this.name = Objects.requireNonNull(name, "name can not be null!");
 		this.information = Objects.requireNonNull(information, "information can not be null!");
 		this.versionHash = versionHash;
@@ -49,6 +54,7 @@ public class KnownRunner {
 		this.lostConnection = lostConnection;
 		this.workingSince = workingSince;
 		this.lastOutputLines = lastOutputLines;
+		this.completedTasks = completedTasks;
 	}
 
 	public String getName() {
@@ -95,6 +101,13 @@ public class KnownRunner {
 		return Optional.ofNullable(workingSince);
 	}
 
+	/**
+	 * @return the last few completed tasks
+	 */
+	public List<CompletedTask> getCompletedTasks() {
+		return completedTasks;
+	}
+
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) {
@@ -131,5 +144,25 @@ public class KnownRunner {
 			", currentTask=" + currentTask +
 			", workingSince=" + workingSince +
 			'}';
+	}
+
+	public static class CompletedTask {
+
+		private final TaskId taskId;
+		@Nullable
+		private final LinesWithOffset lastLogLines;
+
+		public CompletedTask(TaskId taskId, @Nullable LinesWithOffset lastLogLines) {
+			this.taskId = taskId;
+			this.lastLogLines = lastLogLines;
+		}
+
+		public TaskId getTaskId() {
+			return taskId;
+		}
+
+		public Optional<LinesWithOffset> getLastLogLines() {
+			return Optional.ofNullable(lastLogLines);
+		}
 	}
 }

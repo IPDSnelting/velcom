@@ -312,17 +312,13 @@ public class QueueEndpoint {
 	@GET
 	@Timed(histogram = true)
 	public GetTaskOutputReply getRunnerOutput(@PathParam("taskid") UUID taskId) {
-		Optional<KnownRunner> worker = dispatcher.getKnownRunners().stream()
-			.filter(it -> it.getCurrentTask().isPresent())
-			.filter(it -> it.getCurrentTask().get().getId().getId().equals(taskId))
-			.findAny();
+		Optional<LinesWithOffset> lastOutputLinesOpt = dispatcher.findLinesForTask(taskId);
 
-		if (worker.isEmpty()) {
+		if (lastOutputLinesOpt.isEmpty()) {
 			throw new WebApplicationException(Status.NOT_FOUND);
 		}
 
-		LinesWithOffset lastOutputLines = worker.get().getLastOutputLines()
-			.orElse(new LinesWithOffset(0, List.of()));
+		LinesWithOffset lastOutputLines = lastOutputLinesOpt.orElseThrow();
 
 		return new GetTaskOutputReply(lastOutputLines.getLines(), lastOutputLines.getFirstLineOffset());
 	}
