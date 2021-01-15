@@ -17,7 +17,7 @@ def make_parser():
         type=Path,
         metavar="CONFIGFILE",
         help="load config from CONFIGFILE instead of the default"
-        " ~/.velcom.conf",
+        " paths (~/.config/velcom/velcom.conf, ~/.velcom.conf)",
     )
 
     subparsers = parser.add_subparsers(
@@ -41,7 +41,10 @@ def make_parser():
 
 def read_config(config_file_path=None):
     if config_file_path is None:
-        paths = [Path("~/.velcom.conf").expanduser()]
+        paths = [
+            Path("~/.config/velcom/velcom.conf").expanduser(),
+            Path("~/.velcom.conf").expanduser(),
+        ]
     else:
         paths = [config_file_path]
 
