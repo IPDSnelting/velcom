@@ -8,6 +8,10 @@ import requests
 
 # TODO Allow specifying a repo
 def command(config):
+    site_url = config.geturl("site_url")
+    api_url = config.geturl("api_url")
+    admin_pw = config.get("admin_pw")
+
     bench_dir = config.args.bench_dir or Path.cwd()
 
     print("Creating temporary file")
@@ -19,15 +23,12 @@ def command(config):
             tarf.add(bench_dir, arcname="")  # Recursive by default
         tmpf.seek(0)  # Otherwise we'd be sending no data
 
-        site_url = config.geturl("site_url")
-        api_url = config.geturl("api_url")
-
         upload_api_url = api_url + "queue/upload/tar"
         description = f"CLI upload of {bench_dir.resolve().name}"
         print(f"Uploading tar file to {upload_api_url}")
         response = requests.post(
             upload_api_url,
-            auth=("admin", config.get("admin_pw")),
+            auth=("admin", admin_pw),
             data={"description": description},
             # Specifying a file name ending in ".tar.gz" so the server knows
             # that this is a gzipped tar file
