@@ -35,8 +35,8 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -242,10 +242,10 @@ public class QueueEndpoint {
 	@Timed(histogram = true)
 	public UploadTarReply uploadTar(
 		@Auth RepoUser user,
-		@Nonnull @FormDataParam("description") String description,
+		@NotNull @FormDataParam("description") String description,
 		@Nullable @FormDataParam("repo_id") UUID repoUuid,
-		@FormDataParam("file") InputStream inputStream,
-		@FormDataParam("file") FormDataContentDisposition fileDisposition
+		@NotNull @FormDataParam("file") InputStream inputStream,
+		@NotNull @FormDataParam("file") FormDataContentDisposition fileDisposition
 	) throws IOException {
 		user.guardAdminAccess();
 
