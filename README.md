@@ -13,3 +13,6 @@ or information on the
 For more details on development, such as which branches are considered stable, see the
 [workflow and conventions](https://github.com/IPDSnelting/velcom/wiki/Workflow-and-Conventions)
 page.
+
+For instructions on how to install and configure the CLI, see
+[the CLI's README](cli/README.md).
