@@ -44,6 +44,19 @@ class Config:
     def get(self, *args, **kwargs):
         return self.parser.get(self.profile_name, *args, **kwargs)
 
+    def geturl(self, *args, **kwargs):
+        """
+        Like get, but automatically appends a "/" if the url doesn't already
+        end with one.
+        """
+
+        url = self.get(*args, **kwargs)
+
+        if not url.endswith("/"):
+            url += "/"
+
+        return url
+
     def getint(self, *args, **kwargs):
         return self.parser.getint(self.profile_name, *args, **kwargs)
 

@@ -19,13 +19,8 @@ def command(config):
             tarf.add(bench_dir, arcname="")  # Recursive by default
         tmpf.seek(0)  # Otherwise we'd be sending no data
 
-        api_url = config.get("api_url")
-        if not api_url.endswith("/"):
-            api_url += "/"
-
-        site_url = config.get("site_url")
-        if not site_url.endswith("/"):
-            site_url += "/"
+        site_url = config.geturl("site_url")
+        api_url = config.geturl("api_url")
 
         upload_api_url = api_url + "queue/upload/tar"
         description = f"CLI upload of {bench_dir.resolve().name}"
