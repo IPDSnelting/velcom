@@ -1,4 +1,5 @@
 import argparse
+import configparser
 from pathlib import Path
 
 from . import commands
@@ -64,4 +65,8 @@ def make_parser():
 def main():
     args = make_parser().parse_args()
     config = Config.load(args)
-    args.f(config)
+    try:
+        args.f(config)
+    except configparser.NoOptionError as e:
+        print(e)
+        exit(1)
