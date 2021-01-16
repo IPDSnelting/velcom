@@ -20,6 +20,14 @@
                         params: { first: commit.repoId, second: commit.hash }
                       }"
                     >
+                      <v-tooltip v-if="!commit.tracked" bottom>
+                        <template #activator="{ on }">
+                          <v-icon v-on="on">
+                            {{ untrackedIcon }}
+                          </v-icon>
+                        </template>
+                        This commit is not reachable from any tracked branch.
+                      </v-tooltip>
                       <span class="mx-2 message font-weight-regular">
                         {{ commit.summary }}
                       </span>
@@ -117,6 +125,7 @@ import { formatDateUTC, formatDate } from '@/util/TimeUtil'
 import InlineMinimalRepoNameDisplay from '../InlineMinimalRepoDisplay.vue'
 import CommitBenchmarkActions from '../CommitBenchmarkActions.vue'
 import CommitNavigationButton from './CommitNavigationButton.vue'
+import { mdiCompassOffOutline } from '@mdi/js'
 
 class NavigationTarget {
   readonly parent: TrackedCommitDescription | null
@@ -175,6 +184,8 @@ export default class CommitDetail extends Vue {
 
     return targets
   }
+
+  private readonly untrackedIcon = mdiCompassOffOutline
 }
 </script>
 

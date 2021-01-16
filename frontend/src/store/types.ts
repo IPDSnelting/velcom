@@ -141,6 +141,7 @@ export class Commit {
   readonly committerDate: Date
   readonly summary: string
   readonly message: string | ''
+  readonly tracked: boolean
   /**
    * Sorted in reverse start order (newest run first)
    */
@@ -166,6 +167,7 @@ export class Commit {
     committerDate: Date,
     message: string,
     summary: string,
+    tracked: boolean,
     runs: RunDescription[],
     parents: TrackedCommitDescription[],
     children: TrackedCommitDescription[]
@@ -178,6 +180,7 @@ export class Commit {
     this.committerDate = committerDate
     this.message = message
     this.summary = summary
+    this.tracked = tracked
     this.runs = runs
     this.parents = parents
     this.children = children
