@@ -5,12 +5,6 @@ from . import commands
 from .config import Config
 
 
-# TODO Move to separate module
-def cmd_bench_tar(config):
-    print("Placeholder bench-tar")
-    print(f"{config = }")
-
-
 def make_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -34,6 +28,8 @@ def make_parser():
         help="one of the following commands:",
     )
 
+    # TODO Move subparser specifications to modules of respective commands
+
     default_config = subparsers.add_parser(
         "default-config",
         aliases=["dc"],
@@ -48,19 +44,19 @@ def make_parser():
     )
     print_config.set_defaults(f=commands.print_config)
 
-    bench_tar = subparsers.add_parser(
-        "bench-tar",
-        aliases=["bt"],
+    bench_dir = subparsers.add_parser(
+        "bench-dir",
+        aliases=["bd"],
         help="benchmark a directory by uploading it as a tar file",
     )
-    bench_tar.add_argument(
+    bench_dir.add_argument(
         "bench_dir",
         nargs="?",
         type=Path,
         metavar="BENCHDIR",
         help="directory to benchmark (default: current directory)"
     )
-    bench_tar.set_defaults(f=cmd_bench_tar)
+    bench_dir.set_defaults(f=commands.bench_dir)
 
     return parser
 
