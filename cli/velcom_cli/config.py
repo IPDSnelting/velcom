@@ -3,13 +3,17 @@ from pathlib import Path
 
 
 class Config:
+    DEFAULT = configparser.DEFAULTSECT
+
     def __init__(self, args, parser):
         self.args = args
         self.parser = parser
 
     @classmethod
     def default_parser(cls):
-        return configparser.ConfigParser()
+        config = configparser.ConfigParser()
+        config[cls.DEFAULT]["default_profile"] = cls.DEFAULT
+        return config
 
     @classmethod
     def load(cls, args):
@@ -29,11 +33,7 @@ class Config:
     @property
     def profile_name(self):
         if self.args.profile is None:
-            return self.parser.get(
-                configparser.DEFAULTSECT,
-                "default_profile",
-                fallback=configparser.DEFAULTSECT,
-            )
+            return self.parser.get(self.DEFAULT, "default_profile")
         else:
             return self.args.profile
 
