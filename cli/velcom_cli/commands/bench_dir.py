@@ -16,7 +16,7 @@ def command(config):
 
     print("Creating temporary file")
     with tempfile.TemporaryFile() as tmpf:
-        print(f"Tar-ing {bench_dir.resolve().relative_to(Path.cwd())}")
+        print(f"Tar-ing {bench_dir.resolve()}")
 
         # Using gzip compression
         with tarfile.open(mode="x:gz", fileobj=tmpf) as tarf:
