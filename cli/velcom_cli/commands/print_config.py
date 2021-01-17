@@ -30,7 +30,7 @@ def command(config):
     print("######################" + profile_hashes)
     print()
 
-    for k, v in config.profile_section.items():
+    for k, v in config.items():
         print(f"{k} = {v}")
 
     print()

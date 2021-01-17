@@ -41,6 +41,7 @@ def main():
     config = Config.load(args)
     try:
         args.f(config)
-    except configparser.NoOptionError as e:
+    except configparser.Error as e:
+        print("Configuration error:")
         print(e)
         exit(1)

@@ -37,10 +37,6 @@ class Config:
         else:
             return self.args.profile
 
-    @property
-    def profile_section(self):
-        return self.parser[self.profile_name]
-
     def get(self, *args, **kwargs):
         return self.parser.get(self.profile_name, *args, **kwargs)
 
@@ -65,3 +61,6 @@ class Config:
 
     def getboolean(self, *args, **kwargs):
         return self.parser.getboolean(self.profile_name, *args, **kwargs)
+
+    def items(self, *args, **kwargs):
+        return self.parser.items(self.profile_name, *args, **kwargs)
