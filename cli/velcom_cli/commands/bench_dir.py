@@ -52,9 +52,10 @@ def find_repo_id(repos, repo):
         return ids_by_name[normalize(repo)]
 
     print(f"Invalid repo id or name: {repo!r}")
+    print()
     print("Available repos:")
     for repo in repos:
-        print(f"{repo['id']} - {repo['name']}")
+        print(f"  {repo['id']} - {repo['name']}")
     exit(1)
 
 
@@ -71,10 +72,10 @@ def command(config):
         response = requests.get(api_url + "all-repos")
         repos = json.loads(response.text)["repos"]
         repo_id = find_repo_id(repos, repo)
+        print(f"Attached to repo id {repo_id}")
 
-    print("Creating temporary file")
     with tempfile.TemporaryFile() as tmpf:
-        print(f"Tar-ing {bench_dir.resolve()}")
+        print(f"[1/2] Tar-ing {bench_dir.resolve()}")
 
         # Using gzip compression
         with tarfile.open(mode="x:gz", fileobj=tmpf) as tarf:
@@ -82,8 +83,8 @@ def command(config):
         tmpf.seek(0)  # Otherwise we'd be sending no data
 
         upload_api_url = api_url + "queue/upload/tar"
+        print(f"[2/2] Uploading tar file to {upload_api_url}")
         description = f"CLI upload of {bench_dir.resolve().name}"
-        print(f"Uploading tar file to {upload_api_url}")
         response = requests.post(
             upload_api_url,
             auth=("admin", admin_pw),
@@ -94,5 +95,6 @@ def command(config):
         )
 
         info = json.loads(response.text)
-        print(f"Task at {site_url}task-detail/{info['task']['id']}")
-        print(f"Run soon at {site_url}run-detail/{info['task']['id']}")
+        print()
+        print(f"Task: {site_url}task-detail/{info['task']['id']}")
+        print(f" Run: {site_url}run-detail/{info['task']['id']}")
