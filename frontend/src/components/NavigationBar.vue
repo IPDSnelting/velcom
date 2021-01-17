@@ -152,7 +152,7 @@ export default class NavigationBar extends Vue {
   }
 
   @Watch('currentRouteName')
-  private onRouteChange(newValue: string, oldValue: string) {
+  private onRouteChange(newValue: string) {
     this.lastNavigatedRoute = newValue
   }
 
