@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 import {
   Commit,
-  CommitChild,
   DimensionDifference,
   Measurement,
   MeasurementError,
@@ -12,7 +11,8 @@ import {
   RunResult,
   RunResultScriptError,
   RunResultSuccess,
-  RunResultVelcomError
+  RunResultVelcomError,
+  TrackedCommitDescription
 } from '@/store/types'
 import {
   commitDescriptionFromJson,
@@ -66,12 +66,20 @@ export function runDescriptionFromJson(json: any): RunDescription {
 }
 
 export function commitFromJson(json: any): Commit {
-  const trackedChildren = json.tracked_children.map(
-    (it: any) => new CommitChild(true, commitDescriptionFromJson(it))
-  )
+  const toCommitDescription = (tracked: boolean) => {
+    return (it: any) =>
+      new TrackedCommitDescription(tracked, commitDescriptionFromJson(it))
+  }
+
+  const trackedChildren = json.tracked_children.map(toCommitDescription(true))
   const untrackedChildren = json.untracked_children.map(
-    (it: any) => new CommitChild(false, commitDescriptionFromJson(it))
+    toCommitDescription(false)
   )
+  const trackedParents = json.tracked_parents.map(toCommitDescription(true))
+  const untrackedParents = json.untracked_parents.map(
+    toCommitDescription(false)
+  )
+
   return new Commit(
     json.repo_id,
     json.hash,
@@ -81,8 +89,9 @@ export function commitFromJson(json: any): Commit {
     new Date(json.committer_date * 1000),
     json.message || '',
     json.summary,
+    json.tracked,
     json.runs.map(runDescriptionFromJson),
-    json.parents.map(commitDescriptionFromJson),
+    trackedParents.concat(untrackedParents),
     trackedChildren.concat(untrackedChildren)
   )
 }

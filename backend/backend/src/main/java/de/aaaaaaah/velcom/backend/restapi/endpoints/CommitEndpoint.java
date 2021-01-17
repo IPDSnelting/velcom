@@ -1,5 +1,7 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
+import static java.util.stream.Collectors.toList;
+
 import de.aaaaaaah.velcom.backend.access.benchmarkaccess.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.RunId;
 import de.aaaaaaah.velcom.backend.access.caches.RunCache;
@@ -16,7 +18,6 @@ import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonSource;
 import io.micrometer.core.annotation.Timed;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -54,23 +55,27 @@ public class CommitEndpoint {
 
 		FullCommit commit = commitAccess.getFullCommit(repoId, hash);
 
-		List<JsonCommitDescription> parents = commitAccess
-			.getCommits(repoId, commit.getParentHashes())
-			.stream()
+		List<Commit> parentCommits = commitAccess.getCommits(repoId, commit.getParentHashes());
+		List<JsonCommitDescription> trackedParents = parentCommits.stream()
+			.filter(Commit::isTracked)
 			.map(JsonCommitDescription::fromCommit)
-			.collect(Collectors.toList());
+			.collect(toList());
+		List<JsonCommitDescription> untrackedParents = parentCommits.stream()
+			.filter(it -> !it.isTracked())
+			.map(JsonCommitDescription::fromCommit)
+			.collect(toList());
 
 		List<Commit> childCommits = commitAccess.getCommits(repoId, commit.getChildHashes());
 		List<JsonCommitDescription> trackedChildren = childCommits.stream()
 			.filter(Commit::isReachable)
 			.filter(Commit::isTracked)
 			.map(JsonCommitDescription::fromCommit)
-			.collect(Collectors.toList());
+			.collect(toList());
 		List<JsonCommitDescription> untrackedChildren = childCommits.stream()
 			.filter(Commit::isReachable)
 			.filter(it -> !it.isTracked())
 			.map(JsonCommitDescription::fromCommit)
-			.collect(Collectors.toList());
+			.collect(toList());
 
 		List<RunId> runIds = benchmarkAccess.getAllRunIds(repoId, hash);
 		List<JsonRunDescription> runs = runCache.getRunsInOrder(benchmarkAccess, runIds).stream()
@@ -80,12 +85,14 @@ public class CommitEndpoint {
 				JsonSuccess.fromRunResult(run.getResult()),
 				JsonSource.fromSource(run.getSource(), commitAccess)
 			))
-			.collect(Collectors.toList());
+			.collect(toList());
 
 		return new GetReply(new JsonCommit(
 			commit.getRepoId().getId(),
 			commit.getHash().getHash(),
-			parents,
+			commit.isTracked(),
+			trackedParents,
+			untrackedParents,
 			trackedChildren,
 			untrackedChildren,
 			commit.getAuthor(),

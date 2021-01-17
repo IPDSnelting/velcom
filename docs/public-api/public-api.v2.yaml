@@ -927,8 +927,17 @@ components:
           $ref: '#/components/schemas/RepoId'
         hash:
           $ref: '#/components/schemas/RepoId'
-        parents:
+        tracked:
+          type: boolean
+          description: Whether this commit can be reached from at least one tracked branch
+        tracked_parents:
           type: array
+          description: Parent commits that can be reached from at least one tracked branch
+          items:
+            $ref: '#/components/schemas/CommitDescription'
+        untracked_parents:
+          type: array
+          description: 'Parent commits that can''t be reached from any tracked branch. If the commit is tracked, this list should always be empty.'
           items:
             $ref: '#/components/schemas/CommitDescription'
         tracked_children:
@@ -963,7 +972,9 @@ components:
       required:
         - repo_id
         - hash
-        - parents
+        - tracked
+        - tracked_parents
+        - untracked_parents
         - tracked_children
         - untracked_children
         - author

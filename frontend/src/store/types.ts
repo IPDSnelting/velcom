@@ -107,13 +107,28 @@ export class Dimension {
 
 export type CommitHash = Flavor<string, 'commit_hash'>
 
-export class CommitChild {
+export class TrackedCommitDescription {
   readonly tracked: boolean
   readonly description: CommitDescription
 
   constructor(tracked: boolean, description: CommitDescription) {
     this.tracked = tracked
     this.description = description
+  }
+
+  static comparator(): (
+    a: TrackedCommitDescription,
+    b: TrackedCommitDescription
+  ) => number {
+    return (a: TrackedCommitDescription, b: TrackedCommitDescription) => {
+      if (a.tracked && b.tracked) {
+        return a.description.summary.localeCompare(b.description.summary)
+      }
+      if (a.tracked) {
+        return -1
+      }
+      return 1
+    }
   }
 }
 
@@ -126,19 +141,21 @@ export class Commit {
   readonly committerDate: Date
   readonly summary: string
   readonly message: string | ''
+  readonly tracked: boolean
   /**
    * Sorted in reverse start order (newest run first)
    */
   readonly runs: RunDescription[]
   /**
-   * Sorted alphabetically.
-   */
-  readonly parents: CommitDescription[]
-  /**
-   * Tracked children will come before tracked children,
+   * Tracked parents will come before untracked parents,
    * inside the buckets they are sorted alphabetically
    */
-  readonly children: CommitChild[]
+  readonly parents: TrackedCommitDescription[]
+  /**
+   * Tracked children will come before untracked children,
+   * inside the buckets they are sorted alphabetically
+   */
+  readonly children: TrackedCommitDescription[]
 
   // noinspection DuplicatedCode
   constructor(
@@ -150,9 +167,10 @@ export class Commit {
     committerDate: Date,
     message: string,
     summary: string,
+    tracked: boolean,
     runs: RunDescription[],
-    parents: CommitDescription[],
-    children: CommitChild[]
+    parents: TrackedCommitDescription[],
+    children: TrackedCommitDescription[]
   ) {
     this.repoId = repoId
     this.hash = hash
@@ -162,21 +180,14 @@ export class Commit {
     this.committerDate = committerDate
     this.message = message
     this.summary = summary
+    this.tracked = tracked
     this.runs = runs
     this.parents = parents
     this.children = children
 
     this.runs.sort((a, b) => b.startTime.getTime() - a.startTime.getTime())
-    this.parents.sort((a, b) => a.summary.localeCompare(b.summary))
-    this.children.sort((a, b) => {
-      if (a.tracked && b.tracked) {
-        return a.description.summary.localeCompare(b.description.summary)
-      }
-      if (a.tracked) {
-        return -1
-      }
-      return 1
-    })
+    this.parents.sort(TrackedCommitDescription.comparator())
+    this.children.sort(TrackedCommitDescription.comparator())
   }
 }
 
