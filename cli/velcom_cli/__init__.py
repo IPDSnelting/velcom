@@ -29,9 +29,10 @@ def make_parser():
         help="one of the following commands:",
     )
 
-    commands.default_config.register(subparsers)
-    commands.print_config.register(subparsers)
     commands.bench_dir.register(subparsers)
+    commands.default_config.register(subparsers)
+    commands.list_repos.register(subparsers)
+    commands.print_config.register(subparsers)
 
     return parser
 
