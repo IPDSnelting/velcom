@@ -6,6 +6,22 @@ from pathlib import Path
 import requests
 
 
+def register(subparsers):
+    parser = subparsers.add_parser(
+        "bench-dir",
+        aliases=["bd"],
+        help="benchmark a directory by uploading it as a tar file",
+    )
+    parser.add_argument(
+        "bench_dir",
+        nargs="?",
+        type=Path,
+        metavar="BENCHDIR",
+        help="directory to benchmark (default: current directory)"
+    )
+    parser.set_defaults(f=command)
+
+
 # TODO Allow specifying a repo
 def command(config):
     site_url = config.geturl("site_url")

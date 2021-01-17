@@ -1,6 +1,15 @@
 import io
 
 
+def register(subparsers):
+    parser = subparsers.add_parser(
+        "print-config",
+        aliases=["pc"],
+        help="print the currently active configuration on stdout",
+    )
+    parser.set_defaults(f=command)
+
+
 def command(config):
     print("####################")
     print("## Current config ##")

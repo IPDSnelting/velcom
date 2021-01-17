@@ -29,35 +29,9 @@ def make_parser():
         help="one of the following commands:",
     )
 
-    # TODO Move subparser specifications to modules of respective commands
-
-    default_config = subparsers.add_parser(
-        "default-config",
-        aliases=["dc"],
-        help="print the default config file on stdout",
-    )
-    default_config.set_defaults(f=commands.default_config)
-
-    print_config = subparsers.add_parser(
-        "print-config",
-        aliases=["pc"],
-        help="print the currently active configuration on stdout",
-    )
-    print_config.set_defaults(f=commands.print_config)
-
-    bench_dir = subparsers.add_parser(
-        "bench-dir",
-        aliases=["bd"],
-        help="benchmark a directory by uploading it as a tar file",
-    )
-    bench_dir.add_argument(
-        "bench_dir",
-        nargs="?",
-        type=Path,
-        metavar="BENCHDIR",
-        help="directory to benchmark (default: current directory)"
-    )
-    bench_dir.set_defaults(f=commands.bench_dir)
+    commands.default_config.register(subparsers)
+    commands.print_config.register(subparsers)
+    commands.bench_dir.register(subparsers)
 
     return parser
 
