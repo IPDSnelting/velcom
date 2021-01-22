@@ -138,7 +138,7 @@ paths:
                 file:
                   type: string
                   format: binary
-                  description: 'Only `.tar` files, no `.tar.gz` or other formats supported'
+                  description: 'Only `.tar` or `.tar.gz` files, no other formats supported'
               required:
                 - description
                 - file
