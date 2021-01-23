@@ -93,8 +93,6 @@ First, run the following command to build the `backend.jar` and `runner.jar`:
 $ scripts/build-backend
 ```
 
-**TODO**: Implement `build-backend` script
-
 The `backend.jar` can be found at `backend/backend/target/backend.jar`. Copy
 this to the directory you want your backend to run in. Also copy over the
 example config from `backend/backend/src/main/resources/example_config.yml` and

@@ -1,0 +1,30 @@
+#!/usr/bin/env python3
+
+import argparse
+import subprocess
+
+def build():
+    subprocess.run(
+        ["mvn", "package"],
+        cwd="backend",
+        check=True,
+    )
+
+def main():
+    parser = argparse.ArgumentParser()
+    args = parser.parse_args()
+
+    try:
+        build()
+    except subprocess.CalledProcessError:
+        print()
+        print("Build failed :(")
+        exit(1)
+    else:
+        print()
+        print("Build successful :)")
+        print("The backend.jar is at backend/backend/target/backend.jar")
+        print("The runner.jar is at backend/runner/target/runner.jar")
+
+if __name__ == "__main__":
+    main()
