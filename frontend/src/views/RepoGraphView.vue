@@ -1,5 +1,5 @@
 <template>
-  <v-container v-if="repo">
+  <v-container v-if="repo" class="ma-0 pa-0">
     <v-row align="baseline" justify="center" no-gutters>
       <v-col class="ma-0 pa-0">
         <repo-graph
@@ -7,14 +7,14 @@
         ></repo-graph>
       </v-col>
     </v-row>
-    <v-row align="baseline" justify="center">
+    <v-row align="baseline" justify="center" class="mt-2" no-gutters>
       <v-col>
         <repo-graph-controls
           @reload-graph-data="reloadGraphDataCounter++"
         ></repo-graph-controls>
       </v-col>
     </v-row>
-    <v-row align="baseline" justify="center" no-gutters>
+    <v-row align="baseline" justify="center" class="mt-2" no-gutters>
       <v-col>
         <repo-graph-timespan-controls
           @reload-graph-data="reloadGraphDataCounter++"

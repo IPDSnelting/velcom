@@ -1,19 +1,18 @@
 <template>
   <div class="repo-detail-frame">
-    <v-container class="mt-0 pt-0">
-      <v-row align="center" justify="center">
-        <v-col cols="auto">
+    <v-container>
+      <v-row align="center" justify="left" class="pa-1">
+        <v-col cols="12" :sm="!selectedRepoId ? '' : '3'">
           <repo-select v-model="selectedRepoId" :repos="allRepos"></repo-select>
         </v-col>
-        <v-spacer></v-spacer>
-        <v-col cols="auto">
-          <v-tabs v-model="selectedTab">
+        <v-col cols="auto" v-if="selectedRepoId">
+          <v-tabs v-model="selectedTab" show-arrows>
             <v-tab>Repo Information</v-tab>
             <v-tab>Graph</v-tab>
             <v-tab>Commit search</v-tab>
           </v-tabs>
         </v-col>
-        <v-spacer></v-spacer>
+        <v-spacer v-if="isAdmin && selectedRepoId"></v-spacer>
         <v-col cols="auto" v-if="isAdmin">
           <repo-add>
             <template #activator="{ on }">
@@ -25,16 +24,16 @@
           </repo-add>
         </v-col>
       </v-row>
-      <v-row>
+      <v-row no-gutters>
         <v-col cols="12">
           <v-tabs-items v-model="selectedTab">
-            <v-tab-item>
+            <v-tab-item class="pa-1">
               <repo-base-information
                 v-if="repo"
                 :repo="repo"
               ></repo-base-information>
             </v-tab-item>
-            <v-tab-item>
+            <v-tab-item class="pa-1">
               <repo-graph-view></repo-graph-view>
             </v-tab-item>
             <v-tab-item>Hello world 3</v-tab-item>
