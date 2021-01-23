@@ -1,0 +1,48 @@
+#!/usr/bin/env python3
+
+import argparse
+import subprocess
+
+def build(env):
+    subprocess.run(
+        ["yarnpkg", "install"],
+        cwd="frontend",
+        check=True,
+    )
+
+    if env is None:
+        subprocess.run(
+            ["yarnpkg", "build"],
+            cwd="frontend",
+            check=True,
+        )
+    else:
+        subprocess.run(
+            ["yarnpkg", "build", "--mode", env],
+            cwd="frontend",
+            check=True,
+        )
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--env",
+        metavar="NAME",
+        help="name of the build environment to use. A corresponding file"
+        " '.env.NAME' must be present in the frontend/ directory"
+    )
+    args = parser.parse_args()
+
+    try:
+        build(args.env)
+    except subprocess.CalledProcessError:
+        print()
+        print("Build failed :(")
+        exit(1)
+    else:
+        print()
+        print("Build successful :)")
+        print("The frontend files are at frontend/dist/")
+
+if __name__ == "__main__":
+    main()

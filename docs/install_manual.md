@@ -70,14 +70,11 @@ BASE_URL="/velcom/"
 VUE_APP_BASE_URL="https://example.com/velcom/api/"
 ```
 
-Then, run the following command:
+Then, run the following command (see its `--help` for available flags):
 
 ```bash
 $ scripts/build-frontend
 ```
-
-**TODO**: Implement `build-frontend` script
-**TODO**: Mention profile choice flag (or at least --help)
 
 The frontend's static files are now located in the directory `frontend/dist/`.
 Copy them to wherever your web server requires them to be. If the web server
