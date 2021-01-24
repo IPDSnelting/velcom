@@ -60,5 +60,5 @@ export const vxm = {
   repoModule: createProxy(store, RepoStore),
   userModule: createProxy(store, UserStore),
   detailGraphModule: createProxy(store, DetailGraphStore),
-  runSearchModule: createProxy(store, RunSearchStore),
+  runSearchModule: createProxy(store, RunSearchStore)
 }

@@ -387,6 +387,10 @@ export class ShortRunDescription {
     }
     return this.id
   }
+
+  get type(): 'tar' | 'commit' {
+    return this.commitSummary !== undefined ? 'commit' : 'tar'
+  }
 }
 
 export class RunWithDifferences {

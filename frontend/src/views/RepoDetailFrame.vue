@@ -66,7 +66,7 @@ import RunSearch from '@/components/search/RunSearch.vue'
 
 @Component({
   components: {
-    RunSearch,
+    'run-search': RunSearch,
     'repo-graph-view': RepoGraphView,
     'repo-base-information': RepoBaseInformation,
     'repo-select': RepoSelectionComponent,
