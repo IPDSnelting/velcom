@@ -1,5 +1,6 @@
 {
   "_comment": {
+    "info": "For more details, see https://github.com/IPDSnelting/velcom/blob/main/docs/install_manual.md#runner",
     "name": "The name of the runner. Must be unique across runners.",
     "backends": {
       "_comment": "A list of backends this runner will connect to.",

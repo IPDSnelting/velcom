@@ -141,8 +141,6 @@ Since the config file can only contain rudimentary comments, here is a detailed
 description of the various config options. If you are unsure where a specific
 option should go, see the example config.
 
-**TODO**: Mention this section in runner example config?
-
 - `name`: A unique identifier for this runner. The backend uses the runner names
   to identify runners. This way, the backend can, for example, distinguish
   between a known runner reconnecting and a new runner connecting.
