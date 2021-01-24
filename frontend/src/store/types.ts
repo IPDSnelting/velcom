@@ -373,11 +373,18 @@ export class ShortRunDescription {
   readonly id: RunId
   readonly commitSummary?: string
   readonly tarSummary?: string
+  readonly commitHash?: CommitHash
 
-  constructor(id: RunId, commitSummary: string, tarSummary: string) {
+  constructor(
+    id: RunId,
+    commitSummary?: string,
+    tarSummary?: string,
+    commitHash?: CommitHash
+  ) {
     this.id = id
     this.commitSummary = commitSummary
     this.tarSummary = tarSummary
+    this.commitHash = commitHash
   }
 
   get summary(): string {

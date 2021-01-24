@@ -135,7 +135,7 @@ export default class RunSearchField extends Vue {
       repoId: this.repoId
     })
     const newItems = fetchedItems.map(
-      it => new SearchItem(it.id, it.summary, undefined, it.type)
+      it => new SearchItem(it.id, it.summary, it.commitHash, it.type)
     )
 
     this.items = this.branchItems

@@ -10,6 +10,7 @@ export function shortRunDescriptionFromJson(json: any): ShortRunDescription {
   return new ShortRunDescription(
     json.id,
     json.commit_summary,
-    json.tar_description
+    json.tar_description,
+    json.commit_hash
   )
 }
