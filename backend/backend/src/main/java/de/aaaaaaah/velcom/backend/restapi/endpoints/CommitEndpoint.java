@@ -113,6 +113,7 @@ public class CommitEndpoint {
 		}
 	}
 
+	@Path("/short")
 	@GET
 	@Timed(histogram = true)
 	public GetShortReply getShort(

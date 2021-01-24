@@ -163,7 +163,7 @@ public class RunEndpoint {
 	}
 
 	@GET
-	@Path("{runid}")
+	@Path("{runid}/short")
 	@Timed(histogram = true)
 	public GetShortReply getShort(@PathParam("runid") UUID runUuid) throws NoSuchRunException {
 		RunId runId = new RunId(runUuid);
