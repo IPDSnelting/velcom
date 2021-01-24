@@ -203,8 +203,13 @@ export default class RunSearchField extends Vue {
 </style>
 
 <style>
-.highlight-partial-match .v-list-item__mask {
+.theme--dark .highlight-partial-match .v-list-item__mask {
   color: var(--v-accent-base) !important;
   background-color: transparent !important;
+}
+
+.theme--light .highlight-partial-match .v-list-item__mask {
+  background-color: var(--v-primary-base) !important;
+  color: white !important;
 }
 </style>
