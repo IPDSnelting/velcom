@@ -10,7 +10,7 @@
         </v-card>
       </v-col>
     </v-row>
-    <v-row no-gutters v-if="measurements !== undefined">
+    <v-row no-gutters v-if="measurements !== undefined" class="mt-3">
       <v-col>
         <v-card>
           <v-card-title>
