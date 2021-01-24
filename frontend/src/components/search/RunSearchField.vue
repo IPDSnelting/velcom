@@ -5,6 +5,7 @@
     :loading="isLoading"
     :search-input.sync="search"
     :items="items"
+    :filter="filter"
     item-text="text"
     item-value="id"
     label="Search for a run, branch, commit, ..."
@@ -16,8 +17,10 @@
     <template v-slot:no-data>
       <v-list-item>
         <v-list-item-title>
-          Search for a commit message, hash, branch or run. Start typing for
-          suggestions.
+          <span v-if="items.length === 0 && !search">
+            Start typing for suggestions…
+          </span>
+          <span v-else>No run matches your query</span>
         </v-list-item-title>
       </v-list-item>
     </template>
@@ -43,8 +46,10 @@
         <v-list-item-title
           v-html="parent.genFilteredText(item.text)"
         ></v-list-item-title>
-        <v-list-item-subtitle v-if="item.subtext">
-          {{ item.subtext }}
+        <v-list-item-subtitle
+          v-if="item.subtext"
+          v-html="parent.genFilteredText(item.subtext)"
+        >
         </v-list-item-subtitle>
       </v-list-item-content>
     </template>
@@ -120,6 +125,13 @@ export default class RunSearchField extends Vue {
     }
   }
 
+  private filter(item: SearchItem, search: string) {
+    return (
+      item.text.toLocaleLowerCase().includes(search.toLocaleLowerCase()) ||
+      item.subtext?.toLocaleLowerCase().includes(search.toLocaleLowerCase())
+    )
+  }
+
   private get refreshFunction() {
     return debounce(() => {
       this.fetchSearchResults()
@@ -131,6 +143,7 @@ export default class RunSearchField extends Vue {
 
     const fetchedItems = await vxm.runSearchModule.searchRun({
       description: this.search || undefined,
+      commitHash: this.search || undefined,
       orderBy: 'committer_date',
       repoId: this.repoId
     })
