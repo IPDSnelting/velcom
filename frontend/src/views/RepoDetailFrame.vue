@@ -75,7 +75,13 @@ import RunSearch from '@/components/search/RunSearch.vue'
   }
 })
 export default class RepoDetailFrame extends Vue {
-  private selectedTab = 1
+  private get selectedTab() {
+    return vxm.detailGraphModule.selectedTab
+  }
+
+  private set selectedTab(selectedTab: number) {
+    vxm.detailGraphModule.selectedTab = selectedTab
+  }
 
   get selectedRepoId(): string {
     return this.$route.params.id
