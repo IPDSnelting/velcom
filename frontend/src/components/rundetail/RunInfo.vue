@@ -1,7 +1,7 @@
 <template>
   <v-card>
     <v-card-title>
-      <v-toolbar dark color="primary">
+      <v-toolbar dark color="toolbarColor">
         <slot name="title">Run Information</slot>
       </v-toolbar>
     </v-card-title>
