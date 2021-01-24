@@ -9,21 +9,29 @@ public class ShortRunDescription {
 
 	// TODO: 2020-12-30 Use Either
 	@Nullable
+	private final String commitHash;
+	@Nullable
 	private final String commitSummary;
 	@Nullable
 	private final String tarDescription;
 
-	public ShortRunDescription(RunId id, @Nullable String commitSummary,
+	public ShortRunDescription(RunId id, @Nullable String commitHash, @Nullable String commitSummary,
 		@Nullable String tarDescription) {
 
 		this.id = id;
 		// TODO: 2020-12-30 Use commit summary instead of entire message
+		this.commitHash = commitHash;
 		this.commitSummary = commitSummary;
 		this.tarDescription = tarDescription;
 	}
 
 	public RunId getId() {
 		return id;
+	}
+
+	@Nullable
+	public String getCommitHash() {
+		return commitHash;
 	}
 
 	@Nullable

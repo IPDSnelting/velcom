@@ -8,14 +8,18 @@ public class JsonShortRunDescription {
 
 	private final UUID id;
 	@Nullable
+	private final String commitHash;
+	@Nullable
 	private final String commitSummary;
 	@Nullable
 	private final String tarDescription;
 
-	public JsonShortRunDescription(UUID id, @Nullable String commitSummary,
+	public JsonShortRunDescription(UUID id, @Nullable String commitHash,
+		@Nullable String commitSummary,
 		@Nullable String tarDescription) {
 
 		this.id = id;
+		this.commitHash = commitHash;
 		this.commitSummary = commitSummary;
 		this.tarDescription = tarDescription;
 	}
@@ -23,6 +27,7 @@ public class JsonShortRunDescription {
 	public static JsonShortRunDescription fromShortRunDescription(ShortRunDescription description) {
 		return new JsonShortRunDescription(
 			description.getId().getId(),
+			description.getCommitHash(),
 			description.getCommitSummary(),
 			description.getTarDescription()
 		);
@@ -30,6 +35,11 @@ public class JsonShortRunDescription {
 
 	public UUID getId() {
 		return id;
+	}
+
+	@Nullable
+	public String getCommitHash() {
+		return commitHash;
 	}
 
 	@Nullable

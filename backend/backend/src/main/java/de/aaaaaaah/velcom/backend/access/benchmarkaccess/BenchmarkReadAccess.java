@@ -36,7 +36,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
-import org.jooq.Record3;
+import org.jooq.Record4;
 import org.jooq.ResultQuery;
 import org.jooq.codegen.db.tables.records.RunRecord;
 
@@ -272,7 +272,7 @@ public class BenchmarkReadAccess {
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
 			if (latestRunsOnly) {
 				var query = db
-					.select(LATEST_RUN.ID, KNOWN_COMMIT.MESSAGE, LATEST_RUN.TAR_DESC)
+					.select(LATEST_RUN.ID, LATEST_RUN.COMMIT_HASH, KNOWN_COMMIT.MESSAGE, LATEST_RUN.TAR_DESC)
 					.from(LATEST_RUN)
 					.leftJoin(KNOWN_COMMIT)
 					.on(KNOWN_COMMIT.REPO_ID.eq(LATEST_RUN.REPO_ID))
@@ -290,7 +290,7 @@ public class BenchmarkReadAccess {
 						.or(KNOWN_COMMIT.MESSAGE.contains(description)));
 				}
 
-				final ResultQuery<Record3<String, String, String>> resultQuery;
+				final ResultQuery<Record4<String, String, String, String>> resultQuery;
 				if (orderByRunStartTimeDesc != null) {
 					resultQuery = query.orderBy(orderByRunStartTimeDesc
 						? LATEST_RUN.START_TIME.desc()
@@ -309,12 +309,13 @@ public class BenchmarkReadAccess {
 					.map(record -> new ShortRunDescription(
 						RunId.fromString(record.value1()),
 						record.value2(),
-						record.value3()
+						record.value3(),
+						record.value4()
 					))
 					.collect(toList());
 			} else {
 				var query = db
-					.select(RUN.ID, KNOWN_COMMIT.MESSAGE, RUN.TAR_DESC)
+					.select(RUN.ID, RUN.COMMIT_HASH, KNOWN_COMMIT.MESSAGE, RUN.TAR_DESC)
 					.from(RUN)
 					.leftJoin(KNOWN_COMMIT)
 					.on(KNOWN_COMMIT.REPO_ID.eq(RUN.REPO_ID))
@@ -332,7 +333,7 @@ public class BenchmarkReadAccess {
 						.or(KNOWN_COMMIT.MESSAGE.contains(description)));
 				}
 
-				final ResultQuery<Record3<String, String, String>> resultQuery;
+				final ResultQuery<Record4<String, String, String, String>> resultQuery;
 				if (orderByRunStartTimeDesc != null) {
 					resultQuery = query.orderBy(orderByRunStartTimeDesc
 						? RUN.START_TIME.desc()
@@ -351,7 +352,8 @@ public class BenchmarkReadAccess {
 					.map(record -> new ShortRunDescription(
 						RunId.fromString(record.value1()),
 						record.value2(),
-						record.value3()
+						record.value3(),
+						record.value4()
 					))
 					.collect(toList());
 			}
@@ -360,14 +362,19 @@ public class BenchmarkReadAccess {
 
 	public ShortRunDescription getShortRunDescription(RunId runId) throws NoSuchRunException {
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			return db.select(KNOWN_COMMIT.MESSAGE, RUN.TAR_DESC)
+			return db.select(RUN.COMMIT_HASH, KNOWN_COMMIT.MESSAGE, RUN.TAR_DESC)
 				.from(RUN)
 				.leftJoin(KNOWN_COMMIT)
 				.on(KNOWN_COMMIT.REPO_ID.eq(RUN.REPO_ID))
 				.and(KNOWN_COMMIT.HASH.eq(RUN.COMMIT_HASH))
 				.where(RUN.ID.eq(runId.getIdAsString()))
 				.fetchOptional()
-				.map(record -> new ShortRunDescription(runId, record.value1(), record.value2()))
+				.map(record -> new ShortRunDescription(
+					runId,
+					record.value1(),
+					record.value2(),
+					record.value3()
+				))
 				.orElseThrow(() -> new NoSuchRunException(runId));
 		}
 	}

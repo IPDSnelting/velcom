@@ -460,24 +460,24 @@ class BenchmarkReadAccessTest {
 	@Test
 	void getShortRunDescription() {
 		assertThat(access.getShortRunDescription(RUN1_ID))
-			.isEqualTo(new ShortRunDescription(RUN1_ID, null, "td1"));
+			.isEqualTo(new ShortRunDescription(RUN1_ID, null, null, "td1"));
 		assertThat(access.getShortRunDescription(RUN2_ID))
-			.isEqualTo(new ShortRunDescription(RUN2_ID, null, "td2"));
+			.isEqualTo(new ShortRunDescription(RUN2_ID, null, null, "td2"));
 		assertThat(access.getShortRunDescription(RUN3_ID))
-			.isEqualTo(new ShortRunDescription(RUN3_ID, null, "td3"));
+			.isEqualTo(new ShortRunDescription(RUN3_ID, null, null, "td3"));
 		assertThat(access.getShortRunDescription(RUN4_ID))
-			.isEqualTo(new ShortRunDescription(RUN4_ID, null, "td4"));
+			.isEqualTo(new ShortRunDescription(RUN4_ID, null, null, "td4"));
 		assertThat(access.getShortRunDescription(RUN5_ID))
-			.isEqualTo(new ShortRunDescription(RUN5_ID, "blad9bla", null));
+			.isEqualTo(new ShortRunDescription(RUN5_ID, COMMIT1_HASH.getHash(), "blad9bla", null));
 		assertThat(access.getShortRunDescription(RUN6_ID))
-			.isEqualTo(new ShortRunDescription(RUN6_ID, "blad9bla", null));
+			.isEqualTo(new ShortRunDescription(RUN6_ID, COMMIT1_HASH.getHash(), "blad9bla", null));
 		assertThat(access.getShortRunDescription(RUN7_ID))
-			.isEqualTo(new ShortRunDescription(RUN7_ID, "blad9bla", null));
+			.isEqualTo(new ShortRunDescription(RUN7_ID, COMMIT1_HASH.getHash(), "blad9bla", null));
 		assertThat(access.getShortRunDescription(RUN8_ID))
-			.isEqualTo(new ShortRunDescription(RUN8_ID, "m2", null));
+			.isEqualTo(new ShortRunDescription(RUN8_ID, COMMIT2_HASH.getHash(), "m2", null));
 		assertThat(access.getShortRunDescription(RUN9_ID))
-			.isEqualTo(new ShortRunDescription(RUN9_ID, null, "td9"));
+			.isEqualTo(new ShortRunDescription(RUN9_ID, null, null, "td9"));
 		assertThat(access.getShortRunDescription(RUN10_ID))
-			.isEqualTo(new ShortRunDescription(RUN10_ID, "m4", null));
+			.isEqualTo(new ShortRunDescription(RUN10_ID, COMMIT4_HASH.getHash(), "m4", null));
 	}
 }
