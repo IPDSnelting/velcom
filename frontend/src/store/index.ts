@@ -14,6 +14,7 @@ import {
   persistenceLocalStorage,
   persistenceSessionStorage
 } from './persistence'
+import { RunSearchStore } from '@/store/modules/runSearchStore'
 
 export interface RootState {
   baseUrl: string
@@ -25,6 +26,7 @@ export interface RootState {
   repoModule: RepoStore
   detailGraphModule: DetailGraphStore
   userModule: UserStore
+  runSearchModule: RunSearchStore
 }
 
 deletedOutdatedLocalData()
@@ -43,7 +45,8 @@ export const store = new Vuex.Store({
     ...extractVuexModule(ComparisonGraphStore),
     ...extractVuexModule(DetailGraphStore),
     ...extractVuexModule(RepoStore),
-    ...extractVuexModule(UserStore)
+    ...extractVuexModule(UserStore),
+    ...extractVuexModule(RunSearchStore)
   },
   plugins: [persistenceLocalStorage.plugin, persistenceSessionStorage.plugin]
 })
@@ -56,5 +59,6 @@ export const vxm = {
   comparisonGraphModule: createProxy(store, ComparisonGraphStore),
   repoModule: createProxy(store, RepoStore),
   userModule: createProxy(store, UserStore),
-  detailGraphModule: createProxy(store, DetailGraphStore)
+  detailGraphModule: createProxy(store, DetailGraphStore),
+  runSearchModule: createProxy(store, RunSearchStore),
 }

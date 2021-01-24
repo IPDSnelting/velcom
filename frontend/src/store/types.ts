@@ -367,6 +367,28 @@ export class RunDescription {
   }
 }
 
+export class ShortRunDescription {
+  readonly id: RunId
+  readonly commitSummary?: string
+  readonly tarSummary?: string
+
+  constructor(id: RunId, commitSummary: string, tarSummary: string) {
+    this.id = id
+    this.commitSummary = commitSummary
+    this.tarSummary = tarSummary
+  }
+
+  get summary(): string {
+    if (this.commitSummary) {
+      return this.commitSummary
+    }
+    if (this.tarSummary) {
+      return this.tarSummary
+    }
+    return this.id
+  }
+}
+
 export class RunWithDifferences {
   readonly run: Run
   readonly differences?: DimensionDifference[]

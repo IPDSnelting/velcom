@@ -36,7 +36,9 @@
             <v-tab-item class="pa-1">
               <repo-graph-view></repo-graph-view>
             </v-tab-item>
-            <v-tab-item>Hello world 3</v-tab-item>
+            <v-tab-item class="pa-1">
+              <run-search></run-search>
+            </v-tab-item>
           </v-tabs-items>
         </v-col>
       </v-row>
@@ -60,9 +62,11 @@ import RepoAddDialog from '../components/dialogs/RepoAddDialog.vue'
 import NotFound404 from './NotFound404.vue'
 import RepoBaseInformation from '@/components/repodetail/RepoBaseInformation.vue'
 import RepoGraphView from '@/views/RepoGraphView.vue'
+import RunSearch from '@/components/search/RunSearch.vue'
 
 @Component({
   components: {
+    RunSearch,
     'repo-graph-view': RepoGraphView,
     'repo-base-information': RepoBaseInformation,
     'repo-select': RepoSelectionComponent,
