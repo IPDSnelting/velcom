@@ -21,7 +21,7 @@ jobs:
           node-version: '12'
 
       - name: "Build frontend (aaaaaaah.de)"
-        run: "make frontend mode=production-single-port"
+        run: "./scripts/build-frontend --env production-aaaaaaah"
       - name: "Upload frontend artifacts (aaaaaaah.de)"
         uses: actions/upload-artifact@v2
         with:
@@ -39,7 +39,7 @@ jobs:
           node-version: '12'
 
       - name: "Build frontend (kit.edu)"
-        run: "make frontend mode=production-kit-single-port"
+        run: "./scripts/build-frontend --env production-kit"
       - name: "Upload frontend artifacts (kit.edu)"
         uses: actions/upload-artifact@v2
         with:
@@ -63,7 +63,7 @@ jobs:
             ${{ runner.os }}-maven-
 
       - name: "Build backend"
-        run: "make backend"
+        run: "./scripts/build-backend"
 
       - name: "Upload backend/backend artifact"
         uses: actions/upload-artifact@v2
