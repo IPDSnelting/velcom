@@ -20,7 +20,7 @@ export function repoFromJson(json: any): Repo {
 }
 
 export function repoBranchFromJson(json: any): RepoBranch {
-  return new RepoBranch(json.name, json.tracked, json.last_commit)
+  return new RepoBranch(json.name, json.tracked, json.latest_commit)
 }
 
 export function dimensionFromJson(json: any): Dimension {
