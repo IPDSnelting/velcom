@@ -187,20 +187,19 @@ public class RunEndpoint {
 		@QueryParam("latest_runs_only") @Nullable Boolean latestRunsOnlyBool,
 		@QueryParam("limit") @Nullable Integer limit,
 		@QueryParam("repo_id") @Nullable UUID repoUuid,
-		@QueryParam("commit_hash") @Nullable String commitHashString,
+		@QueryParam("commit_hash") @Nullable String commitHash,
 		@QueryParam("description") @Nullable String description,
 		@QueryParam("order_by_run_start_time") @Nullable Boolean orderByRunStartTime,
 		@QueryParam("order_by_committer_time") @Nullable Boolean orderByCommitterTime
 	) {
 		boolean latestRunsOnly = latestRunsOnlyBool != null && latestRunsOnlyBool;
 		Optional<RepoId> repoId = Optional.ofNullable(repoUuid).map(RepoId::new);
-		Optional<CommitHash> commitHash = Optional.ofNullable(commitHashString).map(CommitHash::new);
 
 		List<JsonShortRunDescription> runs = benchmarkAccess.searchRuns(
 			latestRunsOnly,
 			limit,
 			repoId.orElse(null),
-			commitHash.orElse(null),
+			commitHash,
 			description,
 			orderByRunStartTime,
 			orderByCommitterTime

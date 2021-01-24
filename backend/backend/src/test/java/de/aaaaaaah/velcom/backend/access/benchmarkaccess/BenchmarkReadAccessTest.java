@@ -390,12 +390,12 @@ class BenchmarkReadAccessTest {
 
 		// Restricted to commit 1
 
-		assertThat(access.searchRuns(false, null, null, COMMIT1_HASH, null, null, null)
+		assertThat(access.searchRuns(false, null, null, COMMIT1_HASH.getHash(), null, null, null)
 			.stream()
 			.map(ShortRunDescription::getId))
 			.containsExactlyInAnyOrder(RUN5_ID, RUN6_ID, RUN7_ID);
 
-		assertThat(access.searchRuns(true, null, null, COMMIT1_HASH, null, null, null)
+		assertThat(access.searchRuns(true, null, null, COMMIT1_HASH.getHash(), null, null, null)
 			.stream()
 			.map(ShortRunDescription::getId))
 			.containsExactlyInAnyOrder(RUN7_ID);

@@ -281,11 +281,13 @@ public class BenchmarkReadAccess {
 	 * 	descending order
 	 * @return a list of {@link ShortRunDescription}s for runs matching the specified criteria
 	 */
+	// TODO: 24.01.21 Add tests for partial commit hash
+	// TODO: 24.01.21 Add tests specifying commit hash and description at the same time
 	public List<ShortRunDescription> searchRuns(
 		boolean latestRunsOnly,
 		@Nullable Integer limit,
 		@Nullable RepoId repoId,
-		@Nullable CommitHash commitHash,
+		@Nullable String commitHash,
 		@Nullable String description,
 		@Nullable Boolean orderByRunStartTimeDesc,
 		@Nullable Boolean orderByCommitterTimeDesc
@@ -301,7 +303,7 @@ public class BenchmarkReadAccess {
 				} else {
 					condition = falseCondition();
 					if (commitHash != null) {
-						condition = condition.or(LATEST_RUN.COMMIT_HASH.eq(commitHash.getHash()));
+						condition = condition.or(LATEST_RUN.COMMIT_HASH.contains(commitHash));
 					}
 					if (description != null) {
 						condition = condition.or(LATEST_RUN.TAR_DESC.contains(description)
@@ -352,7 +354,7 @@ public class BenchmarkReadAccess {
 				} else {
 					condition = falseCondition();
 					if (commitHash != null) {
-						condition = condition.or(RUN.COMMIT_HASH.eq(commitHash.getHash()));
+						condition = condition.or(RUN.COMMIT_HASH.contains(commitHash));
 					}
 					if (description != null) {
 						condition = condition.or(RUN.TAR_DESC.contains(description)

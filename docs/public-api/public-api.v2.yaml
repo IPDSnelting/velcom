@@ -914,10 +914,9 @@ paths:
           description: Only include runs from this repo
         - schema:
             type: string
-            pattern: '^[a-fA-F0-9]{40}$'
           in: query
           name: commit_hash
-          description: Only include runs from this commit
+          description: A string that must occur in the commit hash
         - schema:
             type: string
           in: query
