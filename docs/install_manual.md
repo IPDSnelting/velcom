@@ -17,10 +17,10 @@ A VelCom instance consists of three main parts: The **frontend**, the
    particular way. More details can be found in the [frontend
    section](#Frontend).
 
-2. The **backend** is a java-based server that coordinates benchmarks and stores
-   the results. It provides a REST API ([OpenAPI
-   spec](public-api/public-api.v2.yaml)) for the **frontend**. It also provides
-   a websocket server which the **runners** connect to.
+2. The **backend** is a java-based server that clones repos, coordinates
+   benchmarks for those repos and stores the results. It provides a REST API
+   ([OpenAPI spec](public-api/public-api.v2.yaml)) for the **frontend**. It also
+   provides a websocket server which the **runners** connect to.
 
 3. The **runners** are java programs that run benchmarks they receive from the
    **backend**. These should usually run on dedicated machines which are all
@@ -39,9 +39,9 @@ Here is a diagram of how all the different components work together:
             |  +---------+  |                    |
             |               |                    |
           +-------------------+                  |
-          | |               | |                  |
-      .---|-´     nginx     `-|---.              |
-      |   | (or other server) |   |              |
+          | |     nginx     | |                  |
+      .---|-´   (or other   `-|---.              |
+      |   |    web server)    |   |              |
       |   +-------------------+   |              |
       |                           |              |
 https://url/*             https://url/api/*      |
