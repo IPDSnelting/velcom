@@ -1,7 +1,7 @@
 <template>
   <div class="repo-detail-frame">
     <v-container>
-      <v-row align="center" justify="left" class="pa-1">
+      <v-row align="center" justify="start" class="pa-1">
         <v-col cols="12" :sm="!selectedRepoId ? '' : '3'">
           <repo-select v-model="selectedRepoId" :repos="allRepos"></repo-select>
         </v-col>

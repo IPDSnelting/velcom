@@ -4,10 +4,12 @@ import { CustomKeyEqualsMap } from '@/util/CustomKeyEqualsMap'
 export class RepoBranch {
   readonly name: string
   readonly tracked: boolean
+  readonly lastCommit: CommitHash
 
-  constructor(name: string, tracked: boolean) {
+  constructor(name: string, tracked: boolean, lastCommit: CommitHash) {
     this.name = name
     this.tracked = tracked
+    this.lastCommit = lastCommit
   }
 }
 

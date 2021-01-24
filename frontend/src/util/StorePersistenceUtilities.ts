@@ -29,7 +29,7 @@ function hydrateDimensionId(it: DimensionId | Dimension) {
 
 // <editor-fold desc="REPO BRANCH">
 function hydrateRepoBranch(it: RepoBranch) {
-  return new RepoBranch(it.name, it.tracked)
+  return new RepoBranch(it.name, it.tracked, it.lastCommit)
 }
 // </editor-fold>
 
