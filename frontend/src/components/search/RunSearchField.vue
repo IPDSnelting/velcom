@@ -12,7 +12,6 @@
     hide-details
     hide-selected
     chips
-    clearable
   >
     <template v-slot:no-data>
       <v-list-item>
