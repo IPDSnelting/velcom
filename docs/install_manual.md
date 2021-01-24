@@ -54,6 +54,20 @@ https://url/*             https://url/api/*      |
                    +--------+         +-------------+
 ```
 
+## Required software
+
+To build velcom, the following software must be installed on your computer:
+
+- [Python 3](https://www.python.org/)
+- [Yarn](https://yarnpkg.com/)
+- [Maven](https://maven.apache.org/)
+- JDK 11
+
+To run the frontend, you will need to install and configure a web server like
+`nginx`. To run the backend, you will need a JRE 11. We recommend you also
+install `git` for faster clone times. To run the runner, you will only need a
+JRE 11.
+
 ## Frontend
 
 First, edit `frontend/.env.production`. Set `BASE_URL` to the path where the
