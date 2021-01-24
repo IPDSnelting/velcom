@@ -70,17 +70,23 @@ class SearchItem {
   readonly text: string
   readonly subtext?: string
   readonly type: 'tar' | 'commit' | 'branch'
+  readonly repoId?: string
+  readonly commitHash?: string
 
   constructor(
     id: string,
     text: string,
     subtext: string | undefined,
-    type: 'tar' | 'commit' | 'branch'
+    type: 'tar' | 'commit' | 'branch',
+    repoId?: string,
+    commitHash?: string
   ) {
     this.id = id
     this.text = text
     this.subtext = subtext
     this.type = type
+    this.repoId = repoId
+    this.commitHash = commitHash
   }
 
   get icon() {
@@ -94,7 +100,7 @@ class SearchItem {
   }
 }
 
-export type RunSearchValue = { value: string; isRun: boolean }
+export type RunSearchValue = { value: string; repoId?: string }
 
 @Component
 export default class RunSearchField extends Vue {
@@ -103,8 +109,8 @@ export default class RunSearchField extends Vue {
   private isLoading: boolean = false
   private search: string | null = null
 
-  @Prop()
-  private readonly repoId!: RepoId
+  @Prop({ default: null })
+  private readonly repoId!: RepoId | null
 
   @Watch('search')
   private async onSearchChange() {
@@ -119,9 +125,9 @@ export default class RunSearchField extends Vue {
       this.$emit('input', null)
     } else {
       this.$emit('input', {
-        value: this.selectedRun.id,
-        isRun: this.selectedRun.id.includes('-')
-      })
+        value: this.selectedRun.commitHash || this.selectedRun.id,
+        repoId: this.selectedRun.repoId
+      } as RunSearchValue)
     }
   }
 
@@ -145,31 +151,38 @@ export default class RunSearchField extends Vue {
       description: this.search || undefined,
       commitHash: this.search || undefined,
       orderBy: 'committer_date',
-      repoId: this.repoId
+      repoId: this.repoId || undefined
     })
     const newItems = fetchedItems.map(
       it => new SearchItem(it.id, it.summary, it.commitHash, it.type)
     )
 
     this.items = this.branchItems
-      .concat(newItems)
       .sort((a, b) => a.text.localeCompare(b.text))
+      .concat(newItems.sort((a, b) => a.text.localeCompare(b.text)))
 
     this.isLoading = false
   }
 
   private get branchItems() {
-    const repo = vxm.repoModule.repoById(this.repoId)
-    if (!repo) {
-      return []
-    }
-    return repo.branches.map(it => {
-      let subtext = it.lastCommit
-      if (!it.tracked) {
-        subtext += ' (Untracked)'
-      }
-      return new SearchItem(it.name, it.name, subtext, 'branch')
-    })
+    return vxm.repoModule.allRepos
+      .filter(repo => (this.repoId ? this.repoId === repo.id : true))
+      .flatMap(repo => {
+        return repo.branches.map(it => {
+          let subtext = it.lastCommit
+          if (!it.tracked) {
+            subtext += ' (Untracked)'
+          }
+          return new SearchItem(
+            it.name,
+            it.name,
+            subtext,
+            'branch',
+            repo.id,
+            it.lastCommit
+          )
+        })
+      })
   }
 }
 </script>

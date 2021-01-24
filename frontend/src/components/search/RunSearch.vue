@@ -55,19 +55,25 @@ export default class RunSearch extends Vue {
       return
     }
     const query: Dictionary<string> = {}
+    let first: string = this.firstRun.value
+    let second: string = this.secondRun.value
 
-    if (!this.firstRun.isRun) {
+    // first is a hash + repoId pair
+    if (this.firstRun.repoId) {
       query.hash1 = this.firstRun.value
+      first = this.firstRun.repoId
     }
-    if (!this.secondRun.isRun) {
+    // second is a hash + repoId pair
+    if (this.secondRun.repoId) {
       query.hash2 = this.secondRun.value
+      second = this.secondRun.repoId
     }
 
     this.$router.push({
       name: 'run-comparison',
       params: {
-        first: this.firstRun.isRun ? this.firstRun.value : this.repoId,
-        second: this.secondRun.isRun ? this.secondRun.value : this.repoId
+        first: first,
+        second: second
       },
       query: query
     })
