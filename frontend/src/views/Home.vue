@@ -12,17 +12,22 @@
             <v-card-text>
               <v-container fluid>
                 <v-row align="baseline" justify="center">
-                  <multiple-run-overview
-                    :runs="recentSignificant"
-                  ></multiple-run-overview>
+                  <v-col class="mx-0 px-0">
+                    <multiple-run-overview
+                      :runs="recentSignificant"
+                    ></multiple-run-overview>
+                  </v-col>
                 </v-row>
                 <v-row align="baseline" justify="end">
-                  <v-btn
-                    text
-                    color="primary"
-                    @click="recentSignificantAmount += 5"
-                    >load more</v-btn
-                  >
+                  <v-col cols="auto">
+                    <v-btn
+                      text
+                      color="primary"
+                      @click="recentSignificantAmount += 5"
+                    >
+                      load more
+                    </v-btn>
+                  </v-col>
                 </v-row>
               </v-container>
             </v-card-text>
@@ -38,12 +43,18 @@
             <v-card-text>
               <v-container fluid>
                 <v-row align="baseline" justify="center">
-                  <multiple-run-overview :runs="recent"></multiple-run-overview>
+                  <v-col class="mx-0 px-0">
+                    <multiple-run-overview
+                      :runs="recent"
+                    ></multiple-run-overview>
+                  </v-col>
                 </v-row>
                 <v-row align="baseline" justify="end">
-                  <v-btn text color="primary" @click="recentAmount += 10"
-                    >load more</v-btn
-                  >
+                  <v-col cols="auto">
+                    <v-btn text color="primary" @click="recentAmount += 10">
+                      load more
+                    </v-btn>
+                  </v-col>
                 </v-row>
               </v-container>
             </v-card-text>
