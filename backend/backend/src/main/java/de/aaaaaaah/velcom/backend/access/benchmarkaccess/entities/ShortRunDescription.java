@@ -1,6 +1,9 @@
 package de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities;
 
+import de.aaaaaaah.velcom.backend.access.committaccess.entities.Commit;
+import de.aaaaaaah.velcom.shared.util.Pair;
 import java.util.Objects;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 public class ShortRunDescription {
@@ -15,13 +18,16 @@ public class ShortRunDescription {
 	@Nullable
 	private final String tarDescription;
 
-	public ShortRunDescription(RunId id, @Nullable String commitHash, @Nullable String commitSummary,
+	public ShortRunDescription(RunId id, @Nullable String commitHash, @Nullable String commitMessage,
 		@Nullable String tarDescription) {
 
 		this.id = id;
 		// TODO: 2020-12-30 Use commit summary instead of entire message
 		this.commitHash = commitHash;
-		this.commitSummary = commitSummary;
+		this.commitSummary = Optional.ofNullable(commitMessage)
+			.map(Commit::splitMessageIntoSections)
+			.map(Pair::getFirst)
+			.orElse(null);
 		this.tarDescription = tarDescription;
 	}
 
