@@ -42,7 +42,7 @@
         <v-icon>{{ item.icon }}</v-icon>
       </v-list-item-avatar>
 
-      <v-list-item-content>
+      <v-list-item-content class="highlight-partial-match">
         <v-list-item-title
           v-html="parent.genFilteredText(item.text)"
         ></v-list-item-title>
@@ -199,5 +199,12 @@ export default class RunSearchField extends Vue {
 .selection-container {
   color: var(--v-primary-base);
   flex: 1 1 100%;
+}
+</style>
+
+<style>
+.highlight-partial-match .v-list-item__mask {
+  color: var(--v-accent-base) !important;
+  background-color: transparent !important;
 }
 </style>
