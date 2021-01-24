@@ -9,6 +9,7 @@ import static org.jooq.codegen.db.Tables.LATEST_RUN;
 import static org.jooq.codegen.db.Tables.MEASUREMENT;
 import static org.jooq.codegen.db.Tables.MEASUREMENT_VALUE;
 import static org.jooq.codegen.db.Tables.RUN;
+import static org.jooq.impl.DSL.falseCondition;
 import static org.jooq.impl.DSL.trueCondition;
 
 import de.aaaaaaah.velcom.backend.access.AccessUtils;
@@ -36,6 +37,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
+import org.jooq.Condition;
 import org.jooq.Record4;
 import org.jooq.ResultQuery;
 import org.jooq.codegen.db.tables.records.RunRecord;
@@ -258,6 +260,27 @@ public class BenchmarkReadAccess {
 		}
 	}
 
+	/**
+	 * Search for runs. The logical connection between the various filtering conditions can be thought
+	 * of as follows:
+	 *
+	 * <p> latestRunsOnly && limit && repoId && (commitHash || description) &&
+	 * oneOf(orderbyRunStartTimeDesc, orderByCommitterTimeDesc)
+	 *
+	 * @param latestRunsOnly if set to true, only the latest runs will be returned for commits with
+	 * 	multiple runs
+	 * @param limit an upper limit on the amount of runs that will be returned. For a maximum amount,
+	 * 	see {@link BenchmarkReadAccess#SEARCH_LIMIT}
+	 * @param repoId id or part of the id of a repo to which the search should be restricted
+	 * @param commitHash hash or part of a hash for which runs should be returned
+	 * @param description description (tar description or commit message) for which runs should be
+	 * 	returned
+	 * @param orderByRunStartTimeDesc order the resulting runs by their start time in descending
+	 * 	order
+	 * @param orderByCommitterTimeDesc order the resulting runs by their commit's committer time in
+	 * 	descending order
+	 * @return a list of {@link ShortRunDescription}s for runs matching the specified criteria
+	 */
 	public List<ShortRunDescription> searchRuns(
 		boolean latestRunsOnly,
 		@Nullable Integer limit,
@@ -271,23 +294,31 @@ public class BenchmarkReadAccess {
 
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
 			if (latestRunsOnly) {
+
+				Condition condition;
+				if (commitHash == null && description == null) {
+					condition = trueCondition();
+				} else {
+					condition = falseCondition();
+					if (commitHash != null) {
+						condition = condition.or(LATEST_RUN.COMMIT_HASH.eq(commitHash.getHash()));
+					}
+					if (description != null) {
+						condition = condition.or(LATEST_RUN.TAR_DESC.contains(description)
+							.or(KNOWN_COMMIT.MESSAGE.contains(description)));
+					}
+				}
+
 				var query = db
 					.select(LATEST_RUN.ID, LATEST_RUN.COMMIT_HASH, KNOWN_COMMIT.MESSAGE, LATEST_RUN.TAR_DESC)
 					.from(LATEST_RUN)
 					.leftJoin(KNOWN_COMMIT)
 					.on(KNOWN_COMMIT.REPO_ID.eq(LATEST_RUN.REPO_ID))
 					.and(KNOWN_COMMIT.HASH.eq(LATEST_RUN.COMMIT_HASH))
-					.where(trueCondition());
+					.where(condition);
 
 				if (repoId != null) {
 					query = query.and(LATEST_RUN.REPO_ID.eq(repoId.getIdAsString()));
-				}
-				if (commitHash != null) {
-					query = query.and(LATEST_RUN.COMMIT_HASH.eq(commitHash.getHash()));
-				}
-				if (description != null) {
-					query = query.and(LATEST_RUN.TAR_DESC.contains(description)
-						.or(KNOWN_COMMIT.MESSAGE.contains(description)));
 				}
 
 				final ResultQuery<Record4<String, String, String, String>> resultQuery;
@@ -314,23 +345,31 @@ public class BenchmarkReadAccess {
 					))
 					.collect(toList());
 			} else {
+
+				Condition condition;
+				if (commitHash == null && description == null) {
+					condition = trueCondition();
+				} else {
+					condition = falseCondition();
+					if (commitHash != null) {
+						condition = condition.or(RUN.COMMIT_HASH.eq(commitHash.getHash()));
+					}
+					if (description != null) {
+						condition = condition.or(RUN.TAR_DESC.contains(description)
+							.or(KNOWN_COMMIT.MESSAGE.contains(description)));
+					}
+				}
+
 				var query = db
 					.select(RUN.ID, RUN.COMMIT_HASH, KNOWN_COMMIT.MESSAGE, RUN.TAR_DESC)
 					.from(RUN)
 					.leftJoin(KNOWN_COMMIT)
 					.on(KNOWN_COMMIT.REPO_ID.eq(RUN.REPO_ID))
 					.and(KNOWN_COMMIT.HASH.eq(RUN.COMMIT_HASH))
-					.where(trueCondition());
+					.where(condition);
 
 				if (repoId != null) {
 					query = query.and(RUN.REPO_ID.eq(repoId.getIdAsString()));
-				}
-				if (commitHash != null) {
-					query = query.and(RUN.COMMIT_HASH.eq(commitHash.getHash()));
-				}
-				if (description != null) {
-					query = query.and(RUN.TAR_DESC.contains(description)
-						.or(KNOWN_COMMIT.MESSAGE.contains(description)));
 				}
 
 				final ResultQuery<Record4<String, String, String, String>> resultQuery;
