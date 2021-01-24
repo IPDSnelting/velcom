@@ -293,8 +293,8 @@ class BenchmarkReadAccessTest {
 
 		assertThatThrownBy(() -> access.getRun(nonexistentId))
 			.isInstanceOf(NoSuchRunException.class)
-			.extracting("invalidId")
-			.isEqualTo(nonexistentId);
+			.extracting("invalidSource")
+			.isEqualTo(Either.ofLeft(nonexistentId));
 
 		List<Run> runs = access.getRuns(List.of(RUN4_ID, RUN5_ID, RUN6_ID, RUN7_ID, nonexistentId));
 		Map<RunId, Run> runMap = runs.stream()

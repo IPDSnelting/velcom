@@ -58,8 +58,8 @@ public class EndpointUtils {
 		} else {
 			RepoId repoId = new RepoId(id);
 			CommitHash commitHash = new CommitHash(hash);
-			// TODO use exception instead
-			return latestRunCache.getLatestRun(benchmarkAccess, runCache, repoId, commitHash).get();
+			return latestRunCache.getLatestRun(benchmarkAccess, runCache, repoId, commitHash)
+				.orElseThrow(() -> new NoSuchRunException(repoId, commitHash));
 		}
 	}
 
