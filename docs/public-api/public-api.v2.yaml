@@ -1368,12 +1368,12 @@ components:
       properties:
         id:
           $ref: '#/components/schemas/RunId'
-        commitHash:
+        commit_hash:
           $ref: '#/components/schemas/CommitHash'
-        commitSummary:
+        commit_summary:
           type: string
           description: 'If the run is attached to a commit, the commit''s summary'
-        tarDescription:
+        tar_description:
           type: string
           description: 'If the run is attached to a tar, the tar''s description'
       required:
