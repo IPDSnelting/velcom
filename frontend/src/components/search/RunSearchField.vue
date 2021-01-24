@@ -1,6 +1,7 @@
 <template>
   <v-autocomplete
     v-model="selectedRun"
+    return-object
     :loading="isLoading"
     :search-input.sync="search"
     :items="items"
@@ -26,8 +27,7 @@
         v-bind="attr"
         :input-value="selected"
         v-on="on"
-        style="color: var(--v-primary-base); flex: 1 1 100%"
-        class="d-flex align-center"
+        class="d-flex align-center selection-container"
       >
         <v-icon color="primary" left>{{ item.icon }}</v-icon>
         <div class="selection-text">{{ item.text }}</div>
@@ -69,7 +69,7 @@ class SearchItem {
   constructor(
     id: string,
     text: string,
-    subtext?: string,
+    subtext: string | undefined,
     type: 'tar' | 'commit' | 'branch'
   ) {
     this.id = id
@@ -89,6 +89,8 @@ class SearchItem {
   }
 }
 
+export type RunSearchValue = { value: string; isRun: boolean }
+
 @Component
 export default class RunSearchField extends Vue {
   private selectedRun: SearchItem | null = null
@@ -106,11 +108,16 @@ export default class RunSearchField extends Vue {
     }
   }
 
-  private shorten(input: string) {
-    if (input.length < 30) {
-      return input
+  @Watch('selectedRun')
+  private onRunSelected() {
+    if (!this.selectedRun) {
+      this.$emit('input', null)
+    } else {
+      this.$emit('input', {
+        value: this.selectedRun.id,
+        isRun: this.selectedRun.id.includes('-')
+      })
     }
-    return input.substr(0, 30)
   }
 
   private get refreshFunction() {
@@ -123,7 +130,7 @@ export default class RunSearchField extends Vue {
     this.isLoading = true
 
     const fetchedItems = await vxm.runSearchModule.searchRun({
-      description: this.search,
+      description: this.search || undefined,
       orderBy: 'committer_date',
       repoId: this.repoId
     })
@@ -154,12 +161,17 @@ export default class RunSearchField extends Vue {
 }
 </script>
 
+<!--suppress CssUnresolvedCustomProperty -->
 <style scoped>
 .selection-text {
   height: 18px;
   overflow: hidden;
   text-overflow: ellipsis;
   width: 100%;
+  flex: 1 1 100%;
+}
+.selection-container {
+  color: var(--v-primary-base);
   flex: 1 1 100%;
 }
 </style>
