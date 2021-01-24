@@ -22,16 +22,16 @@
     </template>
 
     <template v-slot:selection="{ attr, on, item, selected }">
-      <v-chip
+      <div
         v-bind="attr"
         :input-value="selected"
-        color="primary"
-        class="white--text"
         v-on="on"
+        style="color: var(--v-primary-base); flex: 1 1 100%"
+        class="d-flex align-center"
       >
-        <v-icon left>{{ item.icon }}</v-icon>
-        <span>{{ shorten(item.text) }}</span>
-      </v-chip>
+        <v-icon color="primary" left>{{ item.icon }}</v-icon>
+        <div class="selection-text">{{ item.text }}</div>
+      </div>
     </template>
 
     <template v-slot:item="{ parent, item }">
@@ -131,7 +131,10 @@ export default class RunSearchField extends Vue {
       it => new SearchItem(it.id, it.summary, undefined, it.type)
     )
 
-    this.items = this.branchItems.concat(newItems)
+    this.items = this.branchItems
+      .concat(newItems)
+      .sort((a, b) => a.text.localeCompare(b.text))
+
     this.isLoading = false
   }
 
@@ -140,15 +143,23 @@ export default class RunSearchField extends Vue {
     if (!repo) {
       return []
     }
-    return repo.branches
-      .map(it => {
-        let subtext = it.lastCommit
-        if (!it.tracked) {
-          subtext += ' (Untracked)'
-        }
-        return new SearchItem(it.name, it.name, subtext, 'branch')
-      })
-      .sort((a, b) => a.text.localeCompare(b.text))
+    return repo.branches.map(it => {
+      let subtext = it.lastCommit
+      if (!it.tracked) {
+        subtext += ' (Untracked)'
+      }
+      return new SearchItem(it.name, it.name, subtext, 'branch')
+    })
   }
 }
 </script>
+
+<style scoped>
+.selection-text {
+  height: 18px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+  flex: 1 1 100%;
+}
+</style>

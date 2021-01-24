@@ -1,7 +1,12 @@
 <template>
   <v-container fluid class="ma-0 pa-0">
-    <v-row>
-      <v-col>
+    <v-row align="center">
+      <v-col cols="auto">Compare</v-col>
+      <v-col cols="4">
+        <run-search-field :repo-id="repoId"></run-search-field>
+      </v-col>
+      <v-col cols="auto">to</v-col>
+      <v-col cols="4">
         <run-search-field :repo-id="repoId"></run-search-field>
       </v-col>
     </v-row>
