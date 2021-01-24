@@ -13,7 +13,6 @@
             :lg="item.alwaysAuto ? 'auto' : '2'"
             md="auto"
             sm="auto"
-            class="pt-0"
             v-for="item in runInfoItems"
             :key="item.header"
           >

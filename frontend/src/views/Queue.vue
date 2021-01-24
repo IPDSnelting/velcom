@@ -39,8 +39,9 @@
                       text
                       outlined
                       @click="uploadTarDialogOpen = true"
-                      >Upload Tar</v-btn
                     >
+                      Upload Tar
+                    </v-btn>
                   </v-col>
                   <v-spacer></v-spacer>
                   <v-col cols="auto" class="mb-5" v-if="isWebsiteAdmin">

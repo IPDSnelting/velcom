@@ -23,7 +23,7 @@
           ></commit-overview-base>
         </v-col>
       </v-row>
-      <v-row class="mx-1" v-if="tar">
+      <v-row class="mx-1" v-if="tar" justify="center">
         <v-col cols="auto">
           <tar-overview :tar-source="tar"></tar-overview>
         </v-col>
