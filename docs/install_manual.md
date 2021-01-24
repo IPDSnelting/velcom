@@ -97,7 +97,10 @@ exists in `frontend/dist/`, it must respond with the `frontend/dist/index.html`
 file. The only exception to this rule is the path to the API and its children,
 which must instead be redirected to the backend.
 
-**TODO**: Mention example nginx config.
+An [example nginx config](nginx-example-config) is available. It includes
+`nginx.conf`, which is the main nginx configuration, and `example-site`, which
+should be placed in the `sites-available/` directory and symlinked to in the
+`sites-enabled/` directory.
 
 ## Backend
 
