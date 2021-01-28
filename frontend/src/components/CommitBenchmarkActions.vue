@@ -3,7 +3,7 @@
     <v-tooltip top v-if="isAdmin">
       <template #activator="{ on }">
         <v-btn v-on="on" icon @click="benchmark">
-          <v-icon class="rocket">
+          <v-icon>
             {{ hasExistingBenchmark ? rebenchmarkIcon : benchmarkIcon }}
           </v-icon>
         </v-btn>
@@ -21,6 +21,14 @@
       </template>
       Benchmarks all commits upwards of this commit (this
       <strong>one</strong> and <strong>up</strong>)
+    </v-tooltip>
+    <v-tooltip top v-if="runId">
+      <template #activator="{ on }">
+        <v-btn icon v-on="on" :to="compareRunLocation">
+          <v-icon>{{ compareIcon }}</v-icon>
+        </v-btn>
+      </template>
+      Compares this run with another
     </v-tooltip>
     <v-tooltip top v-if="commitRemoteLink && commitRemoteIcon">
       <template #activator="{ on }">
@@ -49,11 +57,12 @@ import {
   mdiGitlab,
   mdiHistory,
   mdiOneUp,
-  mdiOpenInNew
+  mdiOpenInNew,
+  mdiScaleBalance
 } from '@mdi/js'
 import { Prop } from 'vue-property-decorator'
 import { vxm } from '@/store'
-import { CommitDescription, Repo } from '@/store/types'
+import { CommitDescription, Repo, RunId } from '@/store/types'
 
 @Component
 export default class CommitBenchmarkActions extends Vue {
@@ -62,6 +71,9 @@ export default class CommitBenchmarkActions extends Vue {
 
   @Prop()
   private commitDescription!: CommitDescription
+
+  @Prop({ default: null })
+  private runId!: RunId | null
 
   private get isAdmin(): boolean {
     return vxm.userModule.isAdmin
@@ -79,6 +91,18 @@ export default class CommitBenchmarkActions extends Vue {
       this.commitDescription
     )
     this.$globalSnackbar.setSuccess('one-up', `One upped ${taskCount} commits!`)
+  }
+
+  private get compareRunLocation() {
+    if (!this.runId) {
+      return null
+    }
+    return {
+      name: 'prepare-run-compare',
+      params: {
+        first: this.runId
+      }
+    }
   }
 
   private get repo(): Repo | undefined {
@@ -139,6 +163,7 @@ export default class CommitBenchmarkActions extends Vue {
   private rebenchmarkIcon = mdiHistory
   private benchmarkIcon = mdiFlash
   private benchmarkUpwardsIcon = mdiOneUp
+  private compareIcon = mdiScaleBalance
   // ==============       ==============
 }
 </script>
