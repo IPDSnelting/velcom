@@ -58,7 +58,7 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { RepoId } from '@/store/types'
+import { RepoId, RunId } from '@/store/types'
 import { Prop, Watch } from 'vue-property-decorator'
 import { vxm } from '@/store'
 import { debounce } from '@/util/Debouncer'
@@ -110,6 +110,9 @@ export default class RunSearchField extends Vue {
 
   @Prop({ default: null })
   private readonly repoId!: RepoId | null
+
+  @Prop({ default: null })
+  private readonly initialRunId!: RunId | null
 
   @Watch('search')
   private async onSearchChange() {
@@ -182,6 +185,30 @@ export default class RunSearchField extends Vue {
           )
         })
       })
+  }
+
+  private async mounted() {
+    if (!this.initialRunId) {
+      return
+    }
+    const fetchedRun = await vxm.runSearchModule.fetchShortRun(
+      this.initialRunId
+    )
+    if (!fetchedRun) {
+      return
+    }
+    const localItem = this.items.find(item => item.id === this.initialRunId)
+    if (localItem) {
+      this.selectedRun = localItem
+      return
+    }
+    this.selectedRun = new SearchItem(
+      this.initialRunId,
+      fetchedRun.summary,
+      undefined,
+      fetchedRun.type
+    )
+    this.items.push(this.selectedRun)
   }
 }
 </script>

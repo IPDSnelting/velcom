@@ -4,11 +4,12 @@
       <v-col cols="auto">Compare</v-col>
       <v-col cols="12" sm="4">
         <run-search-field
+          :initial-run-id="initialFirstRunId"
           @input="firstRun = $event"
           :repo-id="repoId"
         ></run-search-field>
       </v-col>
-      <v-col cols="auto">to</v-col>
+      <v-col cols="auto">with</v-col>
       <v-col cols="12" sm="4">
         <run-search-field
           @input="secondRun = $event"
@@ -36,8 +37,9 @@ import Component from 'vue-class-component'
 import RunSearchField, {
   RunSearchValue
 } from '@/components/search/RunSearchField.vue'
-import { vxm } from '@/store'
 import { Dictionary } from 'vue-router/types/router'
+import { Prop } from 'vue-property-decorator'
+import { RepoId, RunId } from '@/store/types'
 
 @Component({
   components: { RunSearchField }
@@ -46,9 +48,11 @@ export default class RunSearch extends Vue {
   private firstRun: RunSearchValue | null = null
   private secondRun: RunSearchValue | null = null
 
-  private get repoId() {
-    return vxm.detailGraphModule.selectedRepoId
-  }
+  @Prop({ default: null })
+  private readonly repoId!: RepoId | null
+
+  @Prop({ default: null })
+  private readonly initialFirstRunId!: RunId | null
 
   private compare() {
     if (!this.firstRun || !this.secondRun) {

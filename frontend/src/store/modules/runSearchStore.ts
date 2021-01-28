@@ -1,6 +1,6 @@
 import { action, createModule } from 'vuex-class-component'
 import axios from 'axios'
-import { RepoId, ShortRunDescription } from '@/store/types'
+import { RepoId, RunId, ShortRunDescription } from '@/store/types'
 import { shortRunDescriptionFromJson } from '@/util/RunSearchJsonHelper'
 
 const VxModule = createModule({
@@ -34,5 +34,20 @@ export class RunSearchStore extends VxModule {
     })
 
     return response.data.runs.map(shortRunDescriptionFromJson)
+  }
+
+  @action
+  public async fetchShortRun(
+    runId: RunId
+  ): Promise<ShortRunDescription | null> {
+    try {
+      const response = await axios.get(`/run/${runId}/short`)
+      return shortRunDescriptionFromJson(response.data.run)
+    } catch (e) {
+      if (e.response && e.response.status === 404) {
+        return null
+      }
+      throw e
+    }
   }
 }
