@@ -33,6 +33,16 @@
                 </v-row>
               </v-container>
             </v-col>
+            <v-col cols="auto" class="ml-3">
+              <v-tooltip top>
+                <template #activator="{ on }">
+                  <v-btn v-on="on" small icon :to="compareRunLocation">
+                    <v-icon>{{ compareIcon }}</v-icon>
+                  </v-btn>
+                </template>
+                Compares this run with another
+              </v-tooltip>
+            </v-col>
           </v-row>
         </v-container>
       </v-list-item-content>
@@ -47,6 +57,7 @@ import { TarTaskSource, RunId, TaskId } from '@/store/types'
 import CommitChip from '../CommitChip.vue'
 import InlineMinimalRepoNameDisplay from '../InlineMinimalRepoDisplay.vue'
 import { RawLocation } from 'vue-router'
+import { mdiScaleBalance } from '@mdi/js'
 
 @Component({
   components: {
@@ -56,13 +67,25 @@ import { RawLocation } from 'vue-router'
 })
 export default class TarTaskOverview extends Vue {
   @Prop()
-  private source!: TarTaskSource
+  private readonly source!: TarTaskSource
 
   @Prop()
-  private id!: RunId | TaskId
+  private readonly id!: RunId | TaskId
 
   @Prop()
-  private linkLocation!: RawLocation
+  private readonly linkLocation!: RawLocation
+
+  private get compareRunLocation() {
+    return {
+      name: 'prepare-run-compare',
+      params: {
+        first: this.id
+      }
+    }
+  }
+
+  // ===== ICONS =====
+  private compareIcon = mdiScaleBalance
 }
 </script>
 
