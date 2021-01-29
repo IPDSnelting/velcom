@@ -9,7 +9,6 @@
           <v-tabs v-model="selectedTab" show-arrows>
             <v-tab>Repo Information</v-tab>
             <v-tab>Graph</v-tab>
-            <v-tab>Commit search</v-tab>
           </v-tabs>
         </v-col>
         <v-spacer v-if="isAdmin && selectedRepoId"></v-spacer>
@@ -35,9 +34,6 @@
             </v-tab-item>
             <v-tab-item class="pa-1">
               <repo-graph-view></repo-graph-view>
-            </v-tab-item>
-            <v-tab-item class="pa-1">
-              <run-search></run-search>
             </v-tab-item>
           </v-tabs-items>
         </v-col>

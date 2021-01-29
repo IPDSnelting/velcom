@@ -44,6 +44,7 @@ import Component from 'vue-class-component'
 import RunSearch from '@/components/search/RunSearch.vue'
 import RepoSelectionComponent from '@/components/RepoSelectionComponent.vue'
 import { vxm } from '@/store'
+import { Watch } from 'vue-property-decorator'
 
 @Component({
   components: { RepoSelectionComponent, RunSearch }
@@ -52,8 +53,20 @@ export default class PrepareRunCompare extends Vue {
   private repoId: string = ''
   private constrainToRepo: boolean = false
 
+  @Watch('urlRepoId')
+  private onUrlRepoIdChange() {
+    if (this.urlRepoId) {
+      this.repoId = this.urlRepoId
+      this.constrainToRepo = true
+    }
+  }
+
   private get firstRunId() {
     return this.$route.params['first']
+  }
+
+  private get urlRepoId(): string | undefined {
+    return this.$route.query['repoId'] as string | undefined
   }
 
   private get effectiveRepoId(): string | undefined {
@@ -62,6 +75,10 @@ export default class PrepareRunCompare extends Vue {
 
   private get allRepos() {
     return vxm.repoModule.allRepos
+  }
+
+  private mounted() {
+    this.onUrlRepoIdChange()
   }
 }
 </script>
