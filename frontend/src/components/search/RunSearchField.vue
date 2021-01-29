@@ -9,9 +9,9 @@
     item-text="text"
     item-value="id"
     label="Search for a run, branch, commit, ..."
-    hide-details
     hide-selected
     chips
+    :error-messages="errorMessages"
   >
     <template v-slot:no-data>
       <v-list-item>
@@ -107,6 +107,7 @@ export default class RunSearchField extends Vue {
   private items: SearchItem[] = []
   private isLoading: boolean = false
   private search: string | null = null
+  private errorMessages: string[] = []
 
   @Prop({ default: null })
   private readonly repoId!: RepoId | null
@@ -122,15 +123,37 @@ export default class RunSearchField extends Vue {
   }
 
   @Watch('selectedRun')
-  private onRunSelected() {
+  private async onRunSelected() {
     if (!this.selectedRun) {
       this.$emit('input', null)
+      this.errorMessages = []
     } else {
+      if (await this.validateRunExists(this.selectedRun)) {
+        this.errorMessages = []
+      } else {
+        this.errorMessages = ['No run found for tip of branch']
+      }
+
       this.$emit('input', {
         value: this.selectedRun.commitHash || this.selectedRun.id,
         repoId: this.selectedRun.repoId
       } as RunSearchValue)
     }
+  }
+
+  private async validateRunExists(item: SearchItem) {
+    if (!item) {
+      return true
+    }
+    if (!item.repoId || !item.commitHash) {
+      return true
+    }
+    const commit = await vxm.commitDetailComparisonModule.fetchCommit({
+      repoId: item.repoId,
+      commitHash: item.commitHash
+    })
+
+    return commit.runs.length > 0
   }
 
   private filter(item: SearchItem, search: string) {
@@ -228,6 +251,7 @@ export default class RunSearchField extends Vue {
 }
 </style>
 
+<!--suppress CssUnresolvedCustomProperty -->
 <style>
 .theme--dark .highlight-partial-match .v-list-item__mask {
   color: var(--v-accent-base) !important;

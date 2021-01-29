@@ -1,33 +1,35 @@
 <template>
   <v-container fluid>
-    <v-row align="center" justify="center">
-      <v-col cols="auto">Compare</v-col>
-      <v-col cols="12" sm="4">
-        <run-search-field
-          :initial-run-id="initialFirstRunId"
-          @input="firstRun = $event"
-          :repo-id="repoId"
-        ></run-search-field>
-      </v-col>
-      <v-col cols="auto">with</v-col>
-      <v-col cols="12" sm="4">
-        <run-search-field
-          @input="secondRun = $event"
-          :repo-id="repoId"
-        ></run-search-field>
-      </v-col>
-    </v-row>
-    <v-row align="center" justify="center" class="mt-6">
-      <v-col cols="auto">
-        <v-btn
-          :disabled="!firstRun || !secondRun"
-          color="primary"
-          @click="compare"
-        >
-          Compare…
-        </v-btn>
-      </v-col>
-    </v-row>
+    <v-form v-model="formValid">
+      <v-row align="center" justify="center">
+        <v-col cols="auto">Compare</v-col>
+        <v-col cols="12" sm="4">
+          <run-search-field
+            :initial-run-id="initialFirstRunId"
+            @input="firstRun = $event"
+            :repo-id="repoId"
+          ></run-search-field>
+        </v-col>
+        <v-col cols="auto">with</v-col>
+        <v-col cols="12" sm="4">
+          <run-search-field
+            @input="secondRun = $event"
+            :repo-id="repoId"
+          ></run-search-field>
+        </v-col>
+      </v-row>
+      <v-row align="center" justify="center" class="mt-6">
+        <v-col cols="auto">
+          <v-btn
+            :disabled="!firstRun || !secondRun || !formValid"
+            color="primary"
+            @click="compare"
+          >
+            Compare…
+          </v-btn>
+        </v-col>
+      </v-row>
+    </v-form>
   </v-container>
 </template>
 
@@ -47,6 +49,7 @@ import { RepoId, RunId } from '@/store/types'
 export default class RunSearch extends Vue {
   private firstRun: RunSearchValue | null = null
   private secondRun: RunSearchValue | null = null
+  private formValid: boolean = false
 
   @Prop({ default: null })
   private readonly repoId!: RepoId | null
