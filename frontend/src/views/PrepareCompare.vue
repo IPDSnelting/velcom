@@ -26,6 +26,7 @@
               </v-col>
               <v-col cols="auto">
                 <repo-selection-component
+                  :disabled="!constrainToRepo"
                   v-model="repoId"
                   :repos="allRepos"
                 ></repo-selection-component>
