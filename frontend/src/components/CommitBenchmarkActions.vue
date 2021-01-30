@@ -6,7 +6,7 @@
           v-on="on"
           small
           icon
-          @click="item.handler && item.handler"
+          @click="item.handler && item.handler($event)"
           :to="item.to"
           :href="item.href"
           :target="item.external ? '_blank' : ''"
