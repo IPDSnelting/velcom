@@ -67,21 +67,21 @@ export default class CommitBenchmarkActions extends Vue {
           ? this.rebenchmarkIcon
           : this.benchmarkIcon,
         tooltip: this.hasExistingBenchmark
-          ? 'Re-runs all benchmarks for this commit'
-          : 'Runs all benchmarks for this commit',
+          ? 'Re-run all benchmarks for this commit'
+          : 'Run all benchmarks for this commit',
         show: this.isAdmin
       },
       {
         handler: this.benchmarkUpwards,
         icon: this.benchmarkUpwardsIcon,
         tooltip:
-          'Benchmarks all commits upwards of this commit (this <strong>one</strong> and <strong>up</strong>)',
+          'Benchmark all commits upwards of this commit (this <strong>one</strong> and <strong>up</strong>)',
         show: this.isAdmin
       },
       {
         to: this.compareRunLocation || undefined,
         icon: this.compareIcon,
-        tooltip: 'Compares this run with another',
+        tooltip: 'Compare this run with another',
         show: this.runId !== null
       },
       {

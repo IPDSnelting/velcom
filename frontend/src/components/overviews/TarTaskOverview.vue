@@ -40,7 +40,7 @@
                     <v-icon>{{ compareIcon }}</v-icon>
                   </v-btn>
                 </template>
-                Compares this run with another
+                Compare this run with another
               </v-tooltip>
             </v-col>
           </v-row>
