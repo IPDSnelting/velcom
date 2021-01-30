@@ -1,0 +1,69 @@
+#!/usr/bin/env python3
+
+import argparse
+import subprocess
+import shutil
+from pathlib import Path
+import os
+
+
+def run(root_dir):
+    temp_folder = Path(root_dir)
+    if not temp_folder.exists():
+        temp_folder.mkdir(parents=True)
+
+    config_folder = temp_folder / "config"
+    data_folder = temp_folder / "data"
+
+    if not config_folder.exists():
+        config_folder.mkdir()
+    if not data_folder.exists():
+        data_folder.mkdir()
+
+    os.chmod(data_folder, int("777", base=8))
+
+    if not Path(config_folder, "config.yml").exists():
+        shutil.copy2("backend/backend/src/main/resources/example_config.yml",
+                     config_folder / "config.yml")
+    else:
+        print("Using existing config in", config_folder.resolve())
+
+    command = ["sudo", "docker", "run",
+               "-it", "--rm",
+               "-v", str(config_folder.resolve()) + ":/home/velcom/config",
+               "-v", str(data_folder.resolve()) + ":/home/velcom/data",
+               "-p", "8080:80",
+               "-p", "8082:82",
+               "velcom-server:latest",
+               "/home/velcom/config/config.yml"
+               ]
+
+    print("Frontend/Backend  port: 8080")
+    print("Runner connection port: 8082")
+    print()
+    print()
+
+    print("\033[94;1m::\033[0m\033[1m Docker command: \033[92;1m" + " ".join(command) + "\033[0m")
+    subprocess.run(command, check=True)
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("root_dir", action="store",
+                        help="The directory to mount the config/data directory in")
+    args = parser.parse_args()
+
+    try:
+        run(args.root_dir)
+    except subprocess.CalledProcessError as e:
+        if e.returncode == 130:
+            print()
+            print("Goodbye :)")
+            return
+        print()
+        print("Docker command failed :(")
+        exit(1)
+
+
+if __name__ == "__main__":
+    main()
