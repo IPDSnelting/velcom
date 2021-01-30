@@ -105,13 +105,17 @@ public class Commit {
 		return message;
 	}
 
-	public Pair<String, Optional<String>> getSections() {
+	public static Pair<String, Optional<String>> splitMessageIntoSections(String message) {
 		String[] split = message.split("\n\n", 2);
 		if (split.length == 2) {
 			return new Pair<>(split[0] + "\n", Optional.of(split[1]));
 		} else {
 			return new Pair<>(message, Optional.empty());
 		}
+	}
+
+	public Pair<String, Optional<String>> getSections() {
+		return splitMessageIntoSections(message);
 	}
 
 	public String getSummary() {

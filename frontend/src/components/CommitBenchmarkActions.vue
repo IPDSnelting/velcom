@@ -1,40 +1,21 @@
 <template>
   <span>
-    <v-tooltip top v-if="isAdmin">
-      <template #activator="{ on }">
-        <v-btn v-on="on" icon @click="benchmark">
-          <v-icon class="rocket">
-            {{ hasExistingBenchmark ? rebenchmarkIcon : benchmarkIcon }}
-          </v-icon>
-        </v-btn>
-      </template>
-      <span v-if="hasExistingBenchmark">
-        Re-runs all benchmarks for this commit
-      </span>
-      <span v-else>Runs all benchmarks for this commit</span>
-    </v-tooltip>
-    <v-tooltip top v-if="isAdmin">
-      <template #activator="{ on }">
-        <v-btn icon v-on="on" @click="benchmarkUpwards">
-          <v-icon>{{ benchmarkUpwardsIcon }}</v-icon>
-        </v-btn>
-      </template>
-      Benchmarks all commits upwards of this commit (this
-      <strong>one</strong> and <strong>up</strong>)
-    </v-tooltip>
-    <v-tooltip top v-if="commitRemoteLink && commitRemoteIcon">
+    <v-tooltip top v-for="item in buttonDescriptions" :key="item.tooltip">
       <template #activator="{ on }">
         <v-btn
-          icon
           v-on="on"
-          :href="commitRemoteLink"
-          target="_blank"
-          rel="noopener nofollow"
+          small
+          icon
+          @click="item.handler && item.handler"
+          :to="item.to"
+          :href="item.href"
+          :target="item.external ? '_blank' : ''"
+          :rel="item.external ? 'noopener nofollow' : ''"
         >
-          <v-icon>{{ commitRemoteIcon }}</v-icon>
+          <v-icon>{{ item.icon }}</v-icon>
         </v-btn>
       </template>
-      View this commit on <strong>{{ getRemoteHostname }}</strong>
+      <span v-html="item.tooltip"></span>
     </v-tooltip>
   </span>
 </template>
@@ -49,11 +30,23 @@ import {
   mdiGitlab,
   mdiHistory,
   mdiOneUp,
-  mdiOpenInNew
+  mdiOpenInNew,
+  mdiScaleBalance
 } from '@mdi/js'
 import { Prop } from 'vue-property-decorator'
 import { vxm } from '@/store'
-import { CommitDescription, Repo } from '@/store/types'
+import { CommitDescription, Repo, RunId } from '@/store/types'
+import { RawLocation } from 'vue-router'
+
+type ButtonDescription = {
+  handler?: (e: MouseEvent) => void
+  icon: string
+  tooltip: string
+  to?: RawLocation
+  href?: string
+  external?: boolean
+  show: boolean
+}
 
 @Component
 export default class CommitBenchmarkActions extends Vue {
@@ -62,6 +55,44 @@ export default class CommitBenchmarkActions extends Vue {
 
   @Prop()
   private commitDescription!: CommitDescription
+
+  @Prop({ default: null })
+  private runId!: RunId | null
+
+  private get buttonDescriptions(): ButtonDescription[] {
+    return [
+      {
+        handler: this.benchmark,
+        icon: this.hasExistingBenchmark
+          ? this.rebenchmarkIcon
+          : this.benchmarkIcon,
+        tooltip: this.hasExistingBenchmark
+          ? 'Re-run all benchmarks for this commit'
+          : 'Run all benchmarks for this commit',
+        show: this.isAdmin
+      },
+      {
+        handler: this.benchmarkUpwards,
+        icon: this.benchmarkUpwardsIcon,
+        tooltip:
+          'Benchmark all commits upwards of this commit (this <strong>one</strong> and <strong>up</strong>)',
+        show: this.isAdmin
+      },
+      {
+        to: this.compareRunLocation || undefined,
+        icon: this.compareIcon,
+        tooltip: 'Compare this run with another',
+        show: this.runId !== null
+      },
+      {
+        href: this.commitRemoteLink,
+        icon: this.commitRemoteIcon,
+        tooltip: `View this commit on <strong>${this.getRemoteHostname}</strong>`,
+        external: true,
+        show: true
+      }
+    ].filter(it => it.show)
+  }
 
   private get isAdmin(): boolean {
     return vxm.userModule.isAdmin
@@ -79,6 +110,18 @@ export default class CommitBenchmarkActions extends Vue {
       this.commitDescription
     )
     this.$globalSnackbar.setSuccess('one-up', `One upped ${taskCount} commits!`)
+  }
+
+  private get compareRunLocation() {
+    if (!this.runId) {
+      return null
+    }
+    return {
+      name: 'prepare-run-compare',
+      params: {
+        first: this.runId
+      }
+    }
   }
 
   private get repo(): Repo | undefined {
@@ -119,9 +162,9 @@ export default class CommitBenchmarkActions extends Vue {
     return match[2] || match[3]
   }
 
-  private get commitRemoteIcon(): string | undefined {
+  private get commitRemoteIcon(): string {
     if (!this.repo) {
-      return undefined
+      return mdiOpenInNew
     }
     if (this.repo.remoteURL.includes('github.com')) {
       return mdiGithub
@@ -139,6 +182,7 @@ export default class CommitBenchmarkActions extends Vue {
   private rebenchmarkIcon = mdiHistory
   private benchmarkIcon = mdiFlash
   private benchmarkUpwardsIcon = mdiOneUp
+  private compareIcon = mdiScaleBalance
   // ==============       ==============
 }
 </script>

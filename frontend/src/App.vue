@@ -18,6 +18,7 @@ import { vxm } from './store'
 import { Watch } from 'vue-property-decorator'
 import ThemeSelector from './components/ThemeSelector.vue'
 import { storeToLocalStorage } from './store/persistence'
+import { Route } from 'vue-router'
 
 @Component({
   components: {
@@ -68,8 +69,10 @@ export default class App extends Vue {
     document.addEventListener('mousedown', this.clickHandler)
 
     vxm.repoModule.fetchRepos()
-    this.$router.afterEach(() => {
-      vxm.repoModule.fetchRepos()
+    this.$router.afterEach((to: Route, from: Route) => {
+      if (to.name !== from.name) {
+        vxm.repoModule.fetchRepos()
+      }
     })
   }
 

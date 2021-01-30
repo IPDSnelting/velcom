@@ -1,5 +1,5 @@
 <template>
-  <v-container fluid class="pa-0 ma-0">
+  <v-container fluid class="px-0 mx-0 pt-0">
     <v-row no-gutters>
       <v-col v-if="error !== undefined">
         <v-card>
@@ -10,7 +10,7 @@
         </v-card>
       </v-col>
     </v-row>
-    <v-row no-gutters v-if="measurements !== undefined">
+    <v-row no-gutters v-if="measurements !== undefined" class="mt-3">
       <v-col>
         <v-card>
           <v-card-title>

@@ -7,7 +7,10 @@
     </v-row>
     <v-row v-if="commit" no-gutters>
       <v-col>
-        <commit-detail :commit="commit">
+        <commit-detail
+          :commit="commit"
+          :selected-run="runWithDifferences ? runWithDifferences.run.id : null"
+        >
           <template #body-trailing v-if="dimensionDifferences">
             <run-significance-chips
               :differences="dimensionDifferences"

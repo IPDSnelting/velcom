@@ -5,13 +5,17 @@
         {{ repo.name }}
         <span class="ml-5 subtitle-1">{{ repo.id }}</span>
         <v-spacer></v-spacer>
-        <v-btn icon @click="showDetails = !showDetails">
-          <v-icon>{{ showDetails ? upIcon : downIcon }}</v-icon>
+        <v-btn
+          text
+          :to="{ name: 'prepare-run-compare', query: { repoId: repo.id } }"
+        >
+          Compare Runs
+          <v-icon right size="22">{{ compareRunIcon }}</v-icon>
         </v-btn>
       </v-toolbar>
     </v-card-title>
     <v-expand-transition>
-      <div v-show="showDetails">
+      <div>
         <v-card-text>
           <v-container fluid>
             <v-row align="center">
@@ -75,7 +79,7 @@ import { Prop } from 'vue-property-decorator'
 import { Repo, RepoBranch } from '@/store/types'
 import { vxm } from '@/store'
 import RepoUpdateDialog from '@/components/dialogs/RepoUpdateDialog.vue'
-import { mdiChevronUp, mdiChevronDown } from '@mdi/js'
+import { mdiChevronUp, mdiChevronDown, mdiScaleBalance } from '@mdi/js'
 
 @Component({
   components: {
@@ -86,7 +90,6 @@ export default class RepoBaseInformation extends Vue {
   @Prop()
   private repo!: Repo
 
-  private showDetails: boolean = false
   private upIcon = mdiChevronUp
   private downIcon = mdiChevronDown
 
@@ -141,6 +144,9 @@ export default class RepoBaseInformation extends Vue {
       return b(x, y)
     }
   }
+
+  // ===== ICONS =====
+  private compareRunIcon = mdiScaleBalance
 }
 </script>
 

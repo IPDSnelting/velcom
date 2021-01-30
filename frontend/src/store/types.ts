@@ -4,10 +4,12 @@ import { CustomKeyEqualsMap } from '@/util/CustomKeyEqualsMap'
 export class RepoBranch {
   readonly name: string
   readonly tracked: boolean
+  readonly lastCommit: CommitHash
 
-  constructor(name: string, tracked: boolean) {
+  constructor(name: string, tracked: boolean, lastCommit: CommitHash) {
     this.name = name
     this.tracked = tracked
+    this.lastCommit = lastCommit
   }
 }
 
@@ -364,6 +366,39 @@ export class RunDescription {
     this.startTime = startTime
     this.success = success
     this.source = source
+  }
+}
+
+export class ShortRunDescription {
+  readonly id: RunId
+  readonly commitSummary?: string
+  readonly tarSummary?: string
+  readonly commitHash?: CommitHash
+
+  constructor(
+    id: RunId,
+    commitSummary?: string,
+    tarSummary?: string,
+    commitHash?: CommitHash
+  ) {
+    this.id = id
+    this.commitSummary = commitSummary
+    this.tarSummary = tarSummary
+    this.commitHash = commitHash
+  }
+
+  get summary(): string {
+    if (this.commitSummary) {
+      return this.commitSummary
+    }
+    if (this.tarSummary) {
+      return this.tarSummary
+    }
+    return this.id
+  }
+
+  get type(): 'tar' | 'commit' {
+    return this.commitSummary !== undefined ? 'commit' : 'tar'
   }
 }
 

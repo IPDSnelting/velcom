@@ -10,9 +10,9 @@
       <v-list-item-avatar>
         <v-tooltip top v-if="isSuccessful">
           <template #activator="{ on }">
-            <v-icon v-on="on" size="32px" color="success">{{
-              successIcon
-            }}</v-icon>
+            <v-icon v-on="on" size="32px" color="success">
+              {{ successIcon }}
+            </v-icon>
           </template>
           This run was successful :)
         </v-tooltip>
@@ -34,6 +34,7 @@
       <commit-benchmark-actions
         :hasExistingBenchmark="true"
         :commitDescription="commit"
+        :run-id="run.runId"
       ></commit-benchmark-actions>
       <slot name="actions"></slot>
     </template>

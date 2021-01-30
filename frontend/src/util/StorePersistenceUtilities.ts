@@ -29,7 +29,7 @@ function hydrateDimensionId(it: DimensionId | Dimension) {
 
 // <editor-fold desc="REPO BRANCH">
 function hydrateRepoBranch(it: RepoBranch) {
-  return new RepoBranch(it.name, it.tracked)
+  return new RepoBranch(it.name, it.tracked, it.lastCommit)
 }
 // </editor-fold>
 
@@ -137,7 +137,8 @@ export function detailGraphStoreToJson(store: DetailGraphStore): string {
     colorIndexMap: Array.from((store as any).colorIndexMap.entries()),
     commitToCompare: serializeDimensionDetailPoint(store.commitToCompare),
     beginYScaleAtZero: store.beginYScaleAtZero,
-    dayEquidistantGraph: store.dayEquidistantGraph
+    dayEquidistantGraph: store.dayEquidistantGraph,
+    selectedTab: store.selectedTab
   })
 }
 // </editor-fold>

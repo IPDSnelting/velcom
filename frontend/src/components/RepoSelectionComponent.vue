@@ -35,10 +35,6 @@ export default class RepoSelectionComponent extends Vue {
   @Model('value', { type: String })
   private repoId!: string
 
-  private setRepoId(newValue: string) {
-    this.$emit('value', newValue)
-  }
-
   @Prop({ default: () => [] })
   private rules!: [(input: string) => string | boolean]
 
@@ -47,6 +43,10 @@ export default class RepoSelectionComponent extends Vue {
 
   @Prop({ default: false })
   private disabled!: boolean
+
+  private setRepoId(newValue: string) {
+    this.$emit('value', newValue)
+  }
 
   // ============== ICONS ==============
   private repoIcon = mdiSourceBranch

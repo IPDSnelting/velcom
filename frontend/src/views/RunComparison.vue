@@ -24,7 +24,7 @@
         />
       </v-col>
     </v-row>
-    <v-row v-if="comparison && comparison.run2">
+    <v-row v-if="comparison && comparison.run2" class="mt-3">
       <v-col>
         <comparison-run-info
           :run="comparison.run2"

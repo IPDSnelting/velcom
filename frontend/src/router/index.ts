@@ -3,7 +3,6 @@ import VueRouter, { RouteConfig, RouterOptions } from 'vue-router'
 import Home from '../views/Home.vue'
 import RepoComparison from '../views/RepoComparison.vue'
 import RepoDetailFrame from '../views/RepoDetailFrame.vue'
-import RepoDetail from '../views/RepoDetail.vue'
 import Queue from '../views/Queue.vue'
 import NotFound404 from '../views/NotFound404.vue'
 import RunCommitDetailView from '../views/RunCommitDetailView.vue'
@@ -17,6 +16,7 @@ import {
 } from '@mdi/js'
 import { vxm } from '@/store'
 import TaskDetailView from '@/views/TaskDetailView.vue'
+import PrepareRunCompare from '@/views/PrepareCompare.vue'
 
 Vue.use(VueRouter)
 
@@ -26,6 +26,7 @@ export type RouteName =
   | 'repo-detail-frame'
   | 'repo-detail'
   | 'queue'
+  | 'prepare-run-compare'
   | 'run-comparison'
   | 'run-detail'
   | 'task-detail'
@@ -73,16 +74,9 @@ const routes: RouteInfo[] = [
     }
   },
   {
-    path: '/repo-detail',
-    name: 'repo-detail-frame',
+    path: '/repo-detail/:id?',
+    name: 'repo-detail',
     component: RepoDetailFrame,
-    children: [
-      {
-        path: ':id',
-        name: 'repo-detail',
-        component: RepoDetail
-      }
-    ],
     meta: {
       label: 'Repo Detail',
       navigable: true,
@@ -109,6 +103,15 @@ const routes: RouteInfo[] = [
     }
   },
   {
+    path: '/prepare-run-compare/:first?',
+    name: 'prepare-run-compare',
+    component: PrepareRunCompare,
+    meta: {
+      navigable: false,
+      label: 'Prepare Run Comparison'
+    }
+  },
+  {
     path: '/run-detail/:first/:second?',
     name: 'run-detail',
     component: RunCommitDetailView,
@@ -129,9 +132,6 @@ const routes: RouteInfo[] = [
   {
     path: '/about',
     name: 'about',
-    // route level code-splitting
-    // this generates a separate chunk (about.[hash].js) for this route
-    // which is lazy-loaded when the route is visited.
     component: () =>
       import(/* webpackChunkName: "about" */ '../views/About.vue'),
     meta: {
@@ -185,7 +185,7 @@ router.afterEach(to => {
 })
 
 router.beforeEach((to, from, next) => {
-  if (to.name === 'repo-detail') {
+  if (to.name === 'repo-detail' && to.params.id) {
     vxm.detailGraphModule.selectedRepoId = to.params.id
   }
   next()

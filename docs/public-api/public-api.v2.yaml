@@ -876,6 +876,124 @@ paths:
       description: Benchmarks the given commit and all tracked descendants.
       security:
         - repo_admin_credentials: []
+  /run/search:
+    get:
+      summary: search runs
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  runs:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ShortRunDescription'
+                required:
+                  - runs
+      operationId: get-run-search
+      parameters:
+        - schema:
+            type: boolean
+          in: query
+          name: latest_runs_only
+          description: 'If set, only the latest run of each commit is returned'
+        - schema:
+            type: integer
+          in: query
+          name: limit
+          description: Maximum number of runs to return
+        - schema:
+            type: string
+            format: uuid
+          in: query
+          name: repo_id
+          description: Only include runs from this repo
+        - schema:
+            type: string
+          in: query
+          name: commit_hash
+          description: A string that must occur in the commit hash
+        - schema:
+            type: string
+          in: query
+          name: description
+          description: A string that must occur in the commit message or tar description
+        - schema:
+            type: boolean
+          in: query
+          name: order_by_run_start_time
+          description: 'If true, return runs ordered by start time in descending order. If false, return runs ordered by start time in ascending order. Has no effect if not set.'
+        - schema:
+            type: boolean
+          in: query
+          name: order_by_committer_time
+          description: 'If true, return runs ordered by committer time in descending order. If false, return runs ordered by committer time in ascending order. Has no effect if not set.'
+      description: Search through runs using different criteria.
+  '/run/{runid}/short':
+    parameters:
+      - schema:
+          type: string
+        name: runid
+        in: path
+        required: true
+    get:
+      summary: get short run description
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  run:
+                    $ref: '#/components/schemas/ShortRunDescription'
+                required:
+                  - run
+        '404':
+          description: Not Found
+      operationId: get-run-runid-short
+      description: |-
+        Retrieve a run by its id.
+
+        If a commit hash is specified, it instead interprets the run id as repo id and uses that commit's latest run, if one exists.
+      parameters: []
+  '/commit/{repoid}/{hash}/short':
+    parameters:
+      - schema:
+          type: string
+        name: repoid
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: hash
+        in: path
+        required: true
+    get:
+      summary: get short commit description
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  summary:
+                    type: string
+                required:
+                  - summary
+        '404':
+          description: Not Found
+      operationId: get-commit-repoid-hash-short
+      description: ''
 components:
   schemas:
     CommitHash:
@@ -1161,20 +1279,12 @@ components:
           description: The name given to the repo when it was created
         remote_url:
           $ref: '#/components/schemas/RemoteUrl'
-        untracked_branches:
+        branches:
           type: array
           description: All of the repo's untracked branches
           uniqueItems: true
           items:
-            type: string
-            minLength: 1
-        tracked_branches:
-          type: array
-          description: All of the repo's tracked branches
-          uniqueItems: true
-          items:
-            type: string
-            minLength: 1
+            $ref: '#/components/schemas/Branch'
         has_token:
           type: boolean
           description: Whether the repo has an individual authentication token
@@ -1187,8 +1297,7 @@ components:
         - id
         - name
         - remote_url
-        - untracked_branches
-        - tracked_branches
+        - branches
         - has_token
         - dimensions
     RemoteUrl:
@@ -1253,6 +1362,38 @@ components:
         - dimension
         - diff
         - old_run_id
+    ShortRunDescription:
+      title: ShortRunDescription
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/RunId'
+        commit_hash:
+          $ref: '#/components/schemas/CommitHash'
+        commit_summary:
+          type: string
+          description: 'If the run is attached to a commit, the commit''s summary'
+        tar_description:
+          type: string
+          description: 'If the run is attached to a tar, the tar''s description'
+      required:
+        - id
+    Branch:
+      title: Branch
+      type: object
+      properties:
+        name:
+          type: string
+          description: The name of the branch
+        tracked:
+          type: boolean
+          description: Whether the branch is tracked
+        latest_commit:
+          $ref: '#/components/schemas/CommitHash'
+      required:
+        - name
+        - tracked
+        - latest_commit
   securitySchemes:
     admin_credentials:
       type: http

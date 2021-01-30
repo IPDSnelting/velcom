@@ -4,6 +4,8 @@ import static java.util.stream.Collectors.toList;
 
 import de.aaaaaaah.velcom.backend.access.benchmarkaccess.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.Run;
+import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.RunId;
+import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.ShortRunDescription;
 import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.sources.CommitSource;
 import de.aaaaaaah.velcom.backend.access.benchmarkaccess.exceptions.NoSuchRunException;
 import de.aaaaaaah.velcom.backend.access.caches.LatestRunCache;
@@ -13,6 +15,7 @@ import de.aaaaaaah.velcom.backend.access.committaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.dimensionaccess.DimensionReadAccess;
 import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.Dimension;
 import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.DimensionInfo;
+import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.data.recentruns.SignificantRun;
 import de.aaaaaaah.velcom.backend.data.recentruns.SignificantRunsCollector;
 import de.aaaaaaah.velcom.backend.data.runcomparison.DimensionDifference;
@@ -22,6 +25,7 @@ import de.aaaaaaah.velcom.backend.data.runcomparison.SignificanceFactors;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.utils.EndpointUtils;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimensionDifference;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRun;
+import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonShortRunDescription;
 import io.micrometer.core.annotation.Timed;
 import java.util.Collection;
 import java.util.Iterator;
@@ -40,7 +44,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
-@Path("/run/{runid}")
+@Path("/run")
 @Produces(MediaType.APPLICATION_JSON)
 public class RunEndpoint {
 
@@ -88,6 +92,7 @@ public class RunEndpoint {
 	}
 
 	@GET
+	@Path("{runid}")
 	@Timed(histogram = true)
 	public GetReply get(
 		@PathParam("runid") UUID runUuid,
@@ -154,6 +159,64 @@ public class RunEndpoint {
 			this.run = run;
 			this.differences = differences;
 			this.significantDifferences = significantDifferences;
+		}
+	}
+
+	@GET
+	@Path("{runid}/short")
+	@Timed(histogram = true)
+	public GetShortReply getShort(@PathParam("runid") UUID runUuid) throws NoSuchRunException {
+		RunId runId = new RunId(runUuid);
+		ShortRunDescription run = benchmarkAccess.getShortRunDescription(runId);
+		return new GetShortReply(JsonShortRunDescription.fromShortRunDescription(run));
+	}
+
+	private static class GetShortReply {
+
+		public final JsonShortRunDescription run;
+
+		public GetShortReply(JsonShortRunDescription run) {
+			this.run = run;
+		}
+	}
+
+	@GET
+	@Path("search")
+	@Timed(histogram = true)
+	public SearchGetReply searchGet(
+		@QueryParam("latest_runs_only") @Nullable Boolean latestRunsOnlyBool,
+		@QueryParam("limit") @Nullable Integer limit,
+		@QueryParam("repo_id") @Nullable UUID repoUuid,
+		@QueryParam("commit_hash") @Nullable String commitHash,
+		@QueryParam("description") @Nullable String description,
+		@QueryParam("order_by_run_start_time") @Nullable Boolean orderByRunStartTime,
+		@QueryParam("order_by_committer_time") @Nullable Boolean orderByCommitterTime
+	) {
+		boolean latestRunsOnly = latestRunsOnlyBool != null && latestRunsOnlyBool;
+		Optional<RepoId> repoId = Optional.ofNullable(repoUuid).map(RepoId::new);
+
+		List<JsonShortRunDescription> runs = benchmarkAccess.searchRuns(
+			latestRunsOnly,
+			limit,
+			repoId.orElse(null),
+			commitHash,
+			description,
+			orderByRunStartTime,
+			orderByCommitterTime
+		)
+			.stream()
+			.map(JsonShortRunDescription::fromShortRunDescription)
+			.collect(toList());
+
+		return new SearchGetReply(runs);
+	}
+
+	private static class SearchGetReply {
+
+		public final List<JsonShortRunDescription> runs;
+
+		public SearchGetReply(List<JsonShortRunDescription> runs) {
+			this.runs = runs;
 		}
 	}
 }

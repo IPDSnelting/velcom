@@ -9,7 +9,7 @@
           :dimension="pointDialogDimension"
           @close="pointDialogOpen = false"
         ></datapoint-dialog>
-        <div id="chart-container" @wheel="wheelEvent">
+        <div id="chart-container" @wheel="$emit('wheel', $event)">
           <v-chart
             ref="chart"
             :autoresize="true"
@@ -149,9 +149,6 @@ export default class EchartsDetailGraph extends Vue {
 
   @Prop({ default: true })
   private dayEquidistant!: boolean
-
-  @Prop({ default: () => () => ({}) })
-  private wheelEvent!: (e: WheelEvent) => void
   // <!--</editor-fold>-->
 
   // <!--<editor-fold desc="FIELDS">-->

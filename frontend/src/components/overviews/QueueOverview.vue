@@ -1,5 +1,5 @@
 <template>
-  <v-container fluid class="my-0 py-0">
+  <v-container fluid>
     <v-data-iterator
       :items="queueItems"
       :hide-default-footer="queueItems.length < defaultItemsPerPage"

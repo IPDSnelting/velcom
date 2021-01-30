@@ -49,7 +49,6 @@ public class CommitEndpoint {
 		@PathParam("repoid") UUID repoUuid,
 		@PathParam("hash") String hashString
 	) {
-
 		RepoId repoId = new RepoId(repoUuid);
 		CommitHash hash = new CommitHash(hashString);
 
@@ -111,6 +110,29 @@ public class CommitEndpoint {
 
 		public GetReply(JsonCommit commit) {
 			this.commit = commit;
+		}
+	}
+
+	@Path("/short")
+	@GET
+	@Timed(histogram = true)
+	public GetShortReply getShort(
+		@PathParam("repoid") UUID repoUuid,
+		@PathParam("hash") String hashString
+	) {
+		RepoId repoId = new RepoId(repoUuid);
+		CommitHash commitHash = new CommitHash(hashString);
+
+		Commit commit = commitAccess.getCommit(repoId, commitHash);
+		return new GetShortReply(commit.getSummary());
+	}
+
+	private static class GetShortReply {
+
+		public final String summary;
+
+		public GetShortReply(String summary) {
+			this.summary = summary;
 		}
 	}
 }

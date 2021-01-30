@@ -48,6 +48,7 @@
                     <commit-benchmark-actions
                       :commitDescription="commit"
                       :hasExistingBenchmark="commit.runs.length > 0"
+                      :run-id="selectedRun"
                     ></commit-benchmark-actions>
                   </v-col>
                 </v-row>
@@ -120,7 +121,7 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
-import { Commit, TrackedCommitDescription } from '@/store/types'
+import { Commit, RunId, TrackedCommitDescription } from '@/store/types'
 import { formatDateUTC, formatDate } from '@/util/TimeUtil'
 import InlineMinimalRepoNameDisplay from '../InlineMinimalRepoDisplay.vue'
 import CommitBenchmarkActions from '../CommitBenchmarkActions.vue'
@@ -150,6 +151,9 @@ class NavigationTarget {
 export default class CommitDetail extends Vue {
   @Prop()
   private commit!: Commit
+
+  @Prop({ default: null })
+  private readonly selectedRun!: RunId | null
 
   private formatDate(date: Date) {
     return formatDate(date)

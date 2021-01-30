@@ -69,6 +69,8 @@ export class DetailGraphStore extends VxModule {
 
   beginYScaleAtZero: boolean = false
   dayEquidistantGraph: boolean = true
+
+  selectedTab: number = 1
   //  <!--</editor-fold>-->
 
   // <!--<editor-fold desc="ACTIONS">-->
