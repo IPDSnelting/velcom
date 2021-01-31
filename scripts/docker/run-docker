@@ -6,8 +6,19 @@ import shutil
 from pathlib import Path
 import os
 
+_OUTPUT_COMMAND_HEADER = "\033[94;1m::\033[0m\033[1m"
+_OUTPUT_COMMAND = "\033[92;1m"
+_OUTPUT_RESET = "\033[0m"
 
-def run(root_dir):
+
+def _execute_root(command, message):
+    if os.geteuid() != 0:
+        command = ["sudo"] + command
+    print(_OUTPUT_COMMAND_HEADER, message, _OUTPUT_COMMAND, " ".join(command), _OUTPUT_RESET)
+    subprocess.run(command, check=True)
+
+
+def run(root_dir, main_port, runner_port, uid):
     temp_folder = Path(root_dir)
     if not temp_folder.exists():
         temp_folder.mkdir(parents=True)
@@ -20,7 +31,12 @@ def run(root_dir):
     if not data_folder.exists():
         data_folder.mkdir()
 
-    os.chmod(data_folder, int("777", base=8))
+    if uid is None:
+        print("No --uid specified, changing permission of data folder to 0777.")
+        os.chmod(data_folder, int("777", base=8))
+    else:
+        command = ["chown", str(data_folder.resolve()), str(uid), str(uid)]
+        _execute_root(command, "Changing data folder ownership:")
 
     if not Path(config_folder, "config.yml").exists():
         shutil.copy2("backend/backend/src/main/resources/example_config.yml",
@@ -28,33 +44,38 @@ def run(root_dir):
     else:
         print("Using existing config in", config_folder.resolve())
 
-    command = ["sudo", "docker", "run",
+    command = ["docker", "run",
                "-it", "--rm",
                "-v", str(config_folder.resolve()) + ":/home/velcom/config",
                "-v", str(data_folder.resolve()) + ":/home/velcom/data",
-               "-p", "8080:80",
-               "-p", "8082:82",
+               "-p", str(main_port) + ":80",
+               "-p", str(runner_port) + ":82",
                "velcom-server:latest",
                "/home/velcom/config/config.yml"
                ]
 
-    print("Frontend/Backend  port: 8080")
-    print("Runner connection port: 8082")
-    print()
+    print("Frontend/Backend  port: " + str(main_port))
+    print("Runner connection port: " + str(runner_port))
     print()
 
-    print("\033[94;1m::\033[0m\033[1m Docker command: \033[92;1m" + " ".join(command) + "\033[0m")
-    subprocess.run(command, check=True)
+    _execute_root(command, "Docker command:")
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("root_dir", action="store",
                         help="The directory to mount the config/data directory in")
+    parser.add_argument("--uid", action="store", type=int, default=None,
+                        help="The UID that should own the data folder. "
+                        "If not supplied the data directory will be changed to mode 0777")
+    parser.add_argument("--main-port", action="store", type=int, default=8080,
+                        help="The port the backend and frontend will be bound to")
+    parser.add_argument("--runner-port", action="store", type=int, default=8082,
+                        help="The port runners can connect to")
     args = parser.parse_args()
 
     try:
-        run(args.root_dir)
+        run(args.root_dir, args.main_port, args.runner_port, args.uid)
     except subprocess.CalledProcessError as e:
         if e.returncode == 130:
             print()
