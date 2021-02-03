@@ -6,6 +6,7 @@
       </v-col>
       <v-col cols="auto mr-4 mb-2">
         <v-btn
+          outlined
           text
           color="primary"
           @click="changed([])"

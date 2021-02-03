@@ -9,8 +9,9 @@
                 <v-col :md="useMatrixSelector ? '' : '5'" sm="12" cols="12">
                   <v-btn
                     @click="useMatrixSelector = !useMatrixSelector"
-                    text
                     color="primary"
+                    outlined
+                    text
                   >
                     <span v-if="useMatrixSelector">Use tree selector</span>
                     <span v-if="!useMatrixSelector">Use matrix selector</span>
@@ -31,6 +32,7 @@
                   <v-btn
                     color="primary"
                     outlined
+                    text
                     class="mr-4"
                     @click="
                       dayEquidistantGraphSelected = !dayEquidistantGraphSelected
@@ -45,6 +47,7 @@
                     @click="yStartsAtZero = !yStartsAtZero"
                     color="primary"
                     outlined
+                    text
                   >
                     <span v-if="yStartsAtZero">
                       Begin Y-Axis at minimum value
