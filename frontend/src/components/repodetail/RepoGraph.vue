@@ -26,15 +26,28 @@
             </v-row>
           </v-card-title>
           <v-card-text>
-            <component
-              ref="graphComponent"
-              :placeholderHeight="graphPlaceholderHeight"
-              :is="selectedGraphComponent"
-              :dimensions="selectedDimensions"
-              :beginYAtZero="yStartsAtZero"
-              :dayEquidistant="dayEquidistantGraphSelected"
-              @wheel="overscrollToZoom.scrolled($event)"
-            ></component>
+            <v-row no-gutters>
+              <v-col style="position: relative">
+                <component
+                  ref="graphComponent"
+                  :placeholderHeight="graphPlaceholderHeight"
+                  :is="selectedGraphComponent"
+                  :dimensions="selectedDimensions"
+                  :beginYAtZero="yStartsAtZero"
+                  :dayEquidistant="dayEquidistantGraphSelected"
+                  @wheel="overscrollToZoom.scrolled($event)"
+                ></component>
+                <v-overlay
+                  v-if="overlayText"
+                  absolute
+                  class="ma-0 pa-0"
+                  z-index="20"
+                  color="black"
+                >
+                  <span class="text-h6">{{ overlayText }}</span>
+                </v-overlay>
+              </v-col>
+            </v-row>
           </v-card-text>
         </v-card>
       </v-col>
@@ -55,6 +68,7 @@ import OverscrollToZoom from '@/components/graphs/OverscrollToZoom'
 import GraphPlaceholder from '@/components/graphs/GraphPlaceholder.vue'
 import { Dimension } from '@/store/types'
 import { Prop, Watch } from 'vue-property-decorator'
+import { getInnerHeight } from '@/util/MeasurementUtils'
 
 const availableGraphComponents = [
   {
@@ -116,13 +130,21 @@ export default class RepoGraphs extends Vue {
     this.selectedGraphComponent = component
   }
 
+  private get overlayText() {
+    if (this.selectedDimensions.length === 0) {
+      return 'Please select a benchmark and metric below.'
+    }
+    // We do not show an overlay if we have no datapoints as you can load more by zooming out
+    return null
+  }
+
   @Watch('reloadGraphDataCounter')
   private async retrieveGraphData(): Promise<void> {
     this.selectedGraphComponent = GraphPlaceholder
 
     if (this.$refs.graphComponent) {
-      this.graphPlaceholderHeight = (this.$refs
-        .graphComponent as Vue).$el.clientHeight
+      const element = (this.$refs.graphComponent as Vue).$el as HTMLElement
+      this.graphPlaceholderHeight = getInnerHeight(element)
     }
 
     await vxm.detailGraphModule.fetchDetailGraph()
