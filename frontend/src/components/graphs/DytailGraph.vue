@@ -600,22 +600,20 @@ export default class DytailGraph extends Vue {
 /*noinspection CssUnusedSymbol*/
 .dygraph-legend {
   position: absolute;
+  display: block;
   width: auto;
   border-style: solid;
   white-space: nowrap;
   z-index: 9999999;
-  transition: left 0.4s cubic-bezier(0.23, 1, 0.32, 1) 0s,
-    top 0.4s cubic-bezier(0.23, 1, 0.32, 1) 0s;
-  transition-duration: 1s;
-  background-color: rgba(50, 50, 50, 0.7);
-  border-width: 0;
-  border-color: rgb(51, 51, 51);
+  box-shadow: rgba(0, 0, 0, 0.2) 1px 2px 10px;
+  transition: opacity 0.2s cubic-bezier(0.23, 1, 0.32, 1) 0s, visibility 0.2s cubic-bezier(0.23, 1, 0.32, 1) 0s;
+  background-color: rgb(255, 255, 255);
+  border-width: 1px;
   border-radius: 4px;
-  color: rgb(255, 255, 255);
+  color: rgb(102, 102, 102);
   font: 14px / 21px sans-serif;
-  padding: 5px;
-  left: 378px;
-  top: -49px;
+  padding: 10px;
+  border-color: rgb(255, 255, 255);
   pointer-events: none;
 }
 

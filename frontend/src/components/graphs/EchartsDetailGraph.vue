@@ -232,7 +232,7 @@ export default class EchartsDetailGraph extends Vue {
           formatter: {
             year: '{MMM}\n{yyyy}',
             month: '{MMM}\n{yyyy}',
-            day: '{d}.{MM}.\n{yyyy}'
+            day: '{dd}.{MM}.\n{yyyy}'
           }
         }
       },
