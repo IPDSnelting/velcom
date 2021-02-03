@@ -71,6 +71,7 @@ export class DetailGraphStore extends VxModule {
   dayEquidistantGraph: boolean = true
 
   selectedTab: number = 1
+  selectedDimensionSelector: 'tree' | 'matrix' = 'tree'
   //  <!--</editor-fold>-->
 
   // <!--<editor-fold desc="ACTIONS">-->

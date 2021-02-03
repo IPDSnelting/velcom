@@ -77,8 +77,6 @@ import { Watch } from 'vue-property-decorator'
   }
 })
 export default class RepoGraphControls extends Vue {
-  private useMatrixSelector: boolean = false
-
   @Watch('selectedDimensions')
   @Watch('repoId')
   private reloadGraphData() {
@@ -87,6 +85,18 @@ export default class RepoGraphControls extends Vue {
 
   private get repoId() {
     return vxm.detailGraphModule.selectedRepoId
+  }
+
+  private get useMatrixSelector() {
+    return vxm.detailGraphModule.selectedDimensionSelector === 'matrix'
+  }
+
+  private set useMatrixSelector(useMatrixSelector: boolean) {
+    if (useMatrixSelector) {
+      vxm.detailGraphModule.selectedDimensionSelector = 'matrix'
+    } else {
+      vxm.detailGraphModule.selectedDimensionSelector = 'tree'
+    }
   }
 
   private get selectedDimensions(): Dimension[] {
