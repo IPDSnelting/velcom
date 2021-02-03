@@ -9,7 +9,7 @@
           :dimension="pointDialogDimension"
           @close="pointDialogOpen = false"
         ></datapoint-dialog>
-        <div id="chart-container" @wheel="$emit('wheel', $event)">
+        <div id="chart-container" @wheel.capture="$emit('wheel', $event)">
           <v-chart
             ref="chart"
             :autoresize="true"
@@ -650,12 +650,6 @@ export default class EchartsDetailGraph extends Vue {
           ? (zoom.startValue as number | undefined | null)
           : (zoom.endValue as number | undefined | null)
       if (value === null || value === undefined) {
-        return null
-      }
-
-      // We are fully zoomed out ==> set that to null
-      const zoomPercent = start === 'start' ? zoom.start : zoom.end
-      if (zoomPercent === 0 || zoomPercent === 100) {
         return null
       }
 
