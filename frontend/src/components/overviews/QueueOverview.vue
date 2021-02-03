@@ -54,13 +54,15 @@
                 </v-tooltip>
               </template>
               <template #actions v-if="isAdmin">
-                <v-btn
-                  icon
-                  v-if="!inProgress(task)"
-                  @click="liftToFront(task, $event)"
-                >
-                  <v-icon class="rocket">{{ liftToFrontIcon }}</v-icon>
-                </v-btn>
+                <v-tooltip left v-if="!inProgress(task)">
+                  <template #activator="{ on }">
+                    <v-btn v-on="on" icon @click="liftToFront(task, $event)">
+                      <v-icon class="rocket">{{ liftToFrontIcon }}</v-icon>
+                    </v-btn>
+                  </template>
+                  Lifts this task to the top of the queue, so it is executed
+                  next
+                </v-tooltip>
                 <v-progress-circular
                   indeterminate
                   color="accent"
