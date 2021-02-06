@@ -77,9 +77,13 @@ paths:
                           $ref: '#/components/schemas/RunId'
                         working_since:
                           $ref: '#/components/schemas/Time'
+                        lost_connection:
+                          type: boolean
+                          description: The backend holds on to disconnected runners for a while. This field indicates the backend currently lost connection to the runner.
                       required:
                         - name
                         - info
+                        - lost_connection
                 required:
                   - tasks
                   - runners
