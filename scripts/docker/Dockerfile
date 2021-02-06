@@ -54,14 +54,14 @@ RUN useradd --uid $USER_ID velcom
 # or a named docker volume using the '-v' option.
 # See the example backend config for a more elaborate explanation of the
 # directories.
-# There are two other directories you might want to persist:
-#  - /home/velcom/data if you want to persist your data
+# There is another directory you might want to persist:
 #  - /home/velcom/cache to speed up restarts
 # Remember: You need to adjust the path if you changed their paths in the config!
 
 # - config/ (the suggested location for your config file)
 VOLUME ["/home/velcom/config"]
-
+# - data/ (the suggested location for your config file)
+VOLUME ["/home/velcom/data"]
 
 #  ____            _
 # |  _ \ ___  _ __| |_ ___
