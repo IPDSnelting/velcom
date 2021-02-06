@@ -116,7 +116,7 @@ jobs:
 
       # BUILDING
       - name: "Build image"
-        run: "./scripts/docker/build-docker --uid=$UID --metrics CI"
+        run: "./scripts/docker/build-docker --uid $UID --metrics CI"
 
       - name: "Log into registry"
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
@@ -167,7 +167,7 @@ jobs:
         with:
           name: backend-artifacts
       - name: "Call deploy script"
-        run: "bash docs/deploy.sh ${{ github.actor }} ${{ secrets.GITHUB_TOKEN }}"
+        run: "bash scripts/deploy-aaaaaaah/deploy.sh ${{ github.actor }} ${{ secrets.GITHUB_TOKEN }}"
 
 
   # Push image to GitHub Packages.
@@ -201,7 +201,7 @@ jobs:
 
       # BUILDING
       - name: "Build image"
-        run: "./scripts/docker/build-docker --uid=$UID CI"
+        run: "./scripts/docker/build-docker --uid $UID CI"
 
       - name: "Log into registry"
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin

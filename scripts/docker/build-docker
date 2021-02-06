@@ -24,8 +24,8 @@ _FILE_MAPPINGS_CI = {
     "scripts/docker/example-site": "velcom-site",
     "scripts/docker/nginx.conf": "nginx.conf",
     "scripts/docker/start-backend-docker.sh": "start-backend-docker.sh",
-    "frontend/dist": "dist",
-    "backend/backend/target/backend.jar": "backend.jar",
+    "dist": "dist",
+    "backend.jar": "backend.jar",
 }
 
 _FILE_MAPPINGS_DEV_METRICS = {
@@ -80,10 +80,10 @@ def prune():
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("env", action="store", help="The file layout to use. Either 'CI' or 'DEV'")
+    parser.add_argument("env", help="The file layout to use. Either 'CI' or 'DEV'")
     parser.add_argument("--metrics", action="store_true", default=True,
                         help="Includes aspectj in the docker image to collect more metrics.")
-    parser.add_argument("--uid", action="store_true", default=10_000,
+    parser.add_argument("--uid", default=10_000,
                         help="The UID of the user inside the docker image. "
                         "The container drops privileges to a user with this UID before executing velcom. "
                         "You might need to adjust this if your mountpoints belong to a different user.")
