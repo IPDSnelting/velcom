@@ -20,16 +20,15 @@ def _execute_root(command, message):
 
 def run(root_dir, main_port, runner_port, uid):
     temp_folder = Path(root_dir)
-    if not temp_folder.exists():
-        temp_folder.mkdir(parents=True)
+    temp_folder.mkdir(parents=True, exist_ok=True)
 
     config_folder = temp_folder / "config"
     data_folder = temp_folder / "data"
+    cache_folder = temp_folder / "cache"
 
-    if not config_folder.exists():
-        config_folder.mkdir()
-    if not data_folder.exists():
-        data_folder.mkdir()
+    config_folder.mkdir(parents=True, exist_ok=True)
+    data_folder.mkdir(parents=True, exist_ok=True)
+    cache_folder.mkdir(parents=True, exist_ok=True)
 
     if uid is None:
         print("No --uid specified, changing permission of data folder to 0777.")
@@ -48,6 +47,7 @@ def run(root_dir, main_port, runner_port, uid):
                "-it", "--rm",
                "-v", str(config_folder.resolve()) + ":/home/velcom/config",
                "-v", str(data_folder.resolve()) + ":/home/velcom/data",
+               "-v", str(cache_folder.resolve()) + ":/home/velcom/cache",
                "-p", str(main_port) + ":80",
                "-p", str(runner_port) + ":82",
                "velcom-server:latest",
