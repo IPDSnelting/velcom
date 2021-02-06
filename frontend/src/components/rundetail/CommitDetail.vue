@@ -1,11 +1,11 @@
 <template>
-  <v-container fluid class="pa-0 ma-0">
-    <v-row>
+  <v-container fluid class="pa-0">
+    <v-row no-gutters>
       <v-col>
         <v-card>
           <v-card-title>
             <v-toolbar dark color="toolbarColor" class="wrapping-toolbar">
-              <v-container fluid>
+              <v-container fluid class="ma-0 pa-0">
                 <v-row
                   no-gutters
                   align="center"
