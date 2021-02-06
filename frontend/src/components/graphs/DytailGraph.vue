@@ -606,7 +606,8 @@ export default class DytailGraph extends Vue {
   white-space: nowrap;
   z-index: 9999999;
   box-shadow: rgba(0, 0, 0, 0.2) 1px 2px 10px;
-  transition: opacity 0.2s cubic-bezier(0.23, 1, 0.32, 1) 0s, visibility 0.2s cubic-bezier(0.23, 1, 0.32, 1) 0s;
+  transition: opacity 0.2s cubic-bezier(0.23, 1, 0.32, 1) 0s,
+    visibility 0.2s cubic-bezier(0.23, 1, 0.32, 1) 0s;
   background-color: rgb(255, 255, 255);
   border-width: 1px;
   border-radius: 4px;
