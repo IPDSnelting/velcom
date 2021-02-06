@@ -1,6 +1,7 @@
 package de.aaaaaaah.velcom.backend.restapi.jsonobjects;
 
 import de.aaaaaaah.velcom.backend.runner.KnownRunner;
+import de.aaaaaaah.velcom.shared.protocol.serialization.Status;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
@@ -14,13 +15,15 @@ public class JsonRunner {
 	private final UUID workingOn;
 	@Nullable
 	private final Long workingSince;
+	private final boolean lostConnection;
 
 	public JsonRunner(String name, String info, @Nullable UUID workingOn,
-		@Nullable Long workingSince) {
+		@Nullable Long workingSince, boolean lostConnection) {
 		this.name = Objects.requireNonNull(name, "name can not be null!");
 		this.info = Objects.requireNonNull(info, "info can not be null!");
 		this.workingOn = workingOn;
 		this.workingSince = workingSince;
+		this.lostConnection = lostConnection;
 	}
 
 	public static JsonRunner fromKnownRunner(KnownRunner runner) {
@@ -28,7 +31,8 @@ public class JsonRunner {
 			runner.getName(),
 			runner.getInformation(),
 			runner.getCurrentTask().map(it -> it.getId().getId()).orElse(null),
-			runner.getWorkingSince().map(Instant::getEpochSecond).orElse(null)
+			runner.getWorkingSince().map(Instant::getEpochSecond).orElse(null),
+			runner.hasLostConnection()
 		);
 	}
 
@@ -49,5 +53,9 @@ public class JsonRunner {
 	@Nullable
 	public Long getWorkingSince() {
 		return workingSince;
+	}
+
+	public boolean isLostConnection() {
+		return lostConnection;
 	}
 }
