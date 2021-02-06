@@ -113,8 +113,9 @@ $ scripts/build-backend
 
 The `backend.jar` can be found at `backend/backend/target/backend.jar`. Copy
 this to the directory you want your backend to run in. Also copy over the
-example config from `backend/backend/src/main/resources/example_config.yml` and
-rename it to `config.yml`.
+[example config](../backend/backend/src/main/resources/example_config.yml) from
+`backend/backend/src/main/resources/example_config.yml` and rename it to
+`config.yml`.
 
 Read carefully through the example config and choose appropriate config values.
 All available options are described in detail in the example config. The backend

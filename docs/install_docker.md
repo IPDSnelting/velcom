@@ -77,7 +77,7 @@ installation guide](install_manual.md). Then you can generate a docker image
 using the `build-docker` script:
 
 ```bash
-$ scripts/docker/build-docker DEV
+# scripts/docker/build-docker DEV
 ```
 
 The script will copy all necessary files to a temporary `.docker` folder in the
@@ -95,15 +95,18 @@ When running the image you need to be aware of a few general things:
 - The exposed port for the front- and backend is `80`
 - The exposed port for runner connections is `82`
 
-VelCom also uses three main folders you might want to mount outside the image:
-- `/home/velcom/config` - The directory for your backend config file
-- `/home/velcom/data` - The directory for all data VelCom needs to persist
-- `/home/velcom/cache` - The directory for data that might speedup application
-  startup but is not needed to operate correctly
+The docker image also exports three volumes you might want to mount:
+- `/home/velcom/config` (required) - The config file is placed here
+- `/home/velcom/data` (required) - All data VelCom needs to persist
+- `/home/velcom/cache` (optional) - Speeds up startup if persisted between restarts
 
-For a more thorough description of the `data` and `cache` directories, see the
-[example backend
-config](../backend/backend/src/main/resources/example_config.yml).
+Copy the [example
+config](../backend/backend/src/main/resources/example_config.yml) from
+`backend/backend/src/main/resources/example_config.yml` into your mounted config
+directory and rename it to `config.yml`. Read carefully through the example
+config and choose appropriate config values. All available options are described
+in detail in the example config. **Don't change the `dataDir`, `cacheDir` and
+`tmpDir` options!**
 
 The VelCom Docker image tries to be safe-ish and runs VelCom as a non-privileged
 `velcom` user after starting nginx. This might lead to conflicts with your `-v`
@@ -118,7 +121,7 @@ To make running the docker container a bit easier and act as a reference, a
 `run-docker` script is provided:
 
 ```bash
-$ scripts/docker/run-docker <directory>
+# scripts/docker/run-docker <directory>
 ```
 
 The script will create the passed directory if it doesn't exist and create two
