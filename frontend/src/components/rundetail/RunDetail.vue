@@ -6,7 +6,10 @@
           <v-card-title>
             <v-toolbar dark :color="runColor">{{ errorType }} Error</v-toolbar>
           </v-card-title>
-          <v-card-text class="mx-2 error-text" v-html="error"></v-card-text>
+          <v-card-text
+            class="mx-2 error-text overflow-y-auto"
+            v-html="error"
+          ></v-card-text>
         </v-card>
       </v-col>
     </v-row>
