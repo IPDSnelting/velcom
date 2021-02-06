@@ -15,8 +15,7 @@ A VelCom instance consists of three main parts: The **frontend**, the
 
 1. The **frontend** is a vue-based single page app running in the user's
    browser. It consists of a bunch of static files that need to be served in a
-   particular way. More details can be found in the [frontend
-   section](#Frontend).
+   particular way.
 
 2. The **backend** is a java-based server that clones repos, coordinates
    benchmarks for those repos and stores the results. It provides a REST API
@@ -29,8 +28,8 @@ A VelCom instance consists of three main parts: The **frontend**, the
 
 The Docker image contains the backend, frontend files and an nginx server
 routing requests correctly. Below is an adjusted version of the [VelCom
-structure diagram](installation_manual.md#project-structure) that includes the
-Docker image boundaries:
+structure diagram](install_manual.md#project-structure) that includes the Docker
+image boundaries:
 
 ```
                   +------+                     +------+
@@ -74,23 +73,21 @@ Docker image boundaries:
 ## Building
 
 You need to first build the frontend and backend according to the [manual
-installation guide](install_manual.md).
-
-Once that is done, you can generate a docker image using the `build-docker` script:
+installation guide](install_manual.md). Then you can generate a docker image
+using the `build-docker` script:
 
 ```bash
 $ scripts/docker/build-docker DEV
 ```
 
 The script will copy all necessary files to a temporary `.docker` folder in the
-project root and invoke the correct docker command to build it.
+project root and invoke the correct docker command to build it. If you want to
+know more about available flags and options refer to
+`scripts/docker/build-docker --help`.
 
 The script can optionally include the AspectJ runtime weaver in the docker
 image, which allows VelCom to provide more detailed metrics in
 prometheus/dropwizard metrics format.
-
-If you want to know more about available flags and options refer to
-`scripts/docker/build-docker --help`.
 
 ## Configuring and running
 
@@ -99,10 +96,11 @@ When running the image you need to be aware of a few general things:
 - The exposed port for runner connections is `82`
 
 VelCom also uses three main folders you might want to mount outside the image:
-- `/home/velcom/config` - The directory for your config file
+- `/home/velcom/config` - The directory for your backend config file
 - `/home/velcom/data` - The directory for all data VelCom needs to persist
 - `/home/velcom/cache` - The directory for data that might speedup application
   startup but is not needed to operate correctly
+
 For a more thorough description of the `data` and `cache` directories, see the
 [example backend
 config](../backend/backend/src/main/resources/example_config.yml).
