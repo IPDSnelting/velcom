@@ -82,10 +82,10 @@ $ scripts/docker/build-docker DEV
 ```
 The script will take care of copying all necessary files to a temporary
 `.docker` folder in the project root and invokes the correct docker command to
-build it.  
+build it.
 The script can optionally include the AspectJ runtime weaver in the docker
 image, which allows VelCom to provide more detailed metrics in
-prometheus/dropwizard metrics format.  
+prometheus/dropwizard metrics format.
 If you want to know more about available flags and options refer to `scripts/docker/build-docker --help`.
 
 ## Running it
@@ -104,7 +104,7 @@ might want to mount outside the image:
 The VelCom Docker image tries to be safe-ish and runs VelCom as a
 non-privileged `velcom` user after starting nginx. This might lead to conflicts
 with your `-v` mounted volumes: VelCom might not have sufficient permissions to
-access them.  
+access them.
 To solve this problem the `build-docker` script has a `UID` flag that can be
 used to specify the UID of the `velcom` user inside the docker image. You can
 then `chown` the host directories to the same UID.
