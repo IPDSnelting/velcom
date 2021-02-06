@@ -35,8 +35,10 @@ def run(root_dir, main_port, runner_port, uid):
         data_folder.chmod(0o777)
         cache_folder.chmod(0o777)
     else:
-        command = ["chown", str(data_folder.resolve()), str(uid), str(uid)]
+        command = ["chown", str(uid), str(data_folder.resolve())]
         _execute_root(command, "Changing data folder ownership:")
+        command = ["chown", str(uid), str(cache_folder.resolve())]
+        _execute_root(command, "Changing cache folder ownership:")
 
     if not Path(config_folder, "config.yml").exists():
         shutil.copy2("backend/backend/src/main/resources/example_config.yml",
