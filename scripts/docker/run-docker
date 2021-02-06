@@ -51,7 +51,6 @@ def run(root_dir, main_port, runner_port, uid):
                "-p", str(main_port) + ":80",
                "-p", str(runner_port) + ":82",
                "velcom-server:latest",
-               "/home/velcom/config/config.yml"
                ]
 
     print("Frontend/Backend  port: " + str(main_port))
