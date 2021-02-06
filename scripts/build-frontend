@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import shutil
 import subprocess
 
 def build(env):
@@ -23,6 +24,14 @@ def build(env):
             check=True,
         )
 
+def clean(clean_all=False):
+    print("Removing frontend/dist/")
+    shutil.rmtree("frontend/dist/", ignore_errors=True)
+
+    if clean_all:
+        print("Removing frontend/node_modules/")
+        shutil.rmtree("frontend/node_modules/", ignore_errors=True)
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -31,18 +40,31 @@ def main():
         help="name of the build environment to use. A corresponding file"
         " '.env.NAME' must be present in the frontend/ directory"
     )
+    parser.add_argument(
+        "--clean", "-c",
+        action="store_true",
+        help="clean up build files instead of building"
+    )
+    parser.add_argument(
+        "--clean-all",
+        action="store_true",
+        help="like --clean, but also removes node_modules"
+    )
     args = parser.parse_args()
 
-    try:
-        build(args.env)
-    except subprocess.CalledProcessError:
-        print()
-        print("Build failed :(")
-        exit(1)
+    if args.clean or args.clean_all:
+        clean(args.clean_all)
     else:
-        print()
-        print("Build successful :)")
-        print("The frontend files are at frontend/dist/")
+        try:
+            build(args.env)
+        except subprocess.CalledProcessError:
+            print()
+            print("Build failed :(")
+            exit(1)
+        else:
+            print()
+            print("Build successful :)")
+            print("The frontend files are at frontend/dist/")
 
 if __name__ == "__main__":
     main()

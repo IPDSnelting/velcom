@@ -10,21 +10,36 @@ def build():
         check=True,
     )
 
+def clean():
+    subprocess.run(
+        ["mvn", "clean"],
+        cwd="backend",
+        check=True,
+    )
+
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--clean", "-c",
+        action="store_true",
+        help="clean up build files instead of building"
+    )
     args = parser.parse_args()
 
-    try:
-        build()
-    except subprocess.CalledProcessError:
-        print()
-        print("Build failed :(")
-        exit(1)
+    if args.clean:
+        clean()
     else:
-        print()
-        print("Build successful :)")
-        print("The backend.jar is at backend/backend/target/backend.jar")
-        print("The runner.jar is at backend/runner/target/runner.jar")
+        try:
+            build()
+        except subprocess.CalledProcessError:
+            print()
+            print("Build failed :(")
+            exit(1)
+        else:
+            print()
+            print("Build successful :)")
+            print("The backend.jar is at backend/backend/target/backend.jar")
+            print("The runner.jar is at backend/runner/target/runner.jar")
 
 if __name__ == "__main__":
     main()
