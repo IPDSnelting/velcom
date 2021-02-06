@@ -1,0 +1,130 @@
+#!/usr/bin/env python3
+
+import argparse
+import subprocess
+import shutil
+from pathlib import Path
+
+
+class RequiredFileNotFound(RuntimeError):
+    pass
+
+
+_FILE_MAPPINGS_DEV = {
+    "scripts/docker/Dockerfile": "Dockerfile",
+    "scripts/docker/example-site": "velcom-site",
+    "scripts/docker/nginx.conf": "nginx.conf",
+    "scripts/docker/start-backend-docker.sh": "start-backend-docker.sh",
+    "frontend/dist": "dist",
+    "backend/backend/target/backend.jar": "backend.jar",
+}
+
+_FILE_MAPPINGS_CI = {
+    "scripts/docker/Dockerfile": "Dockerfile",
+    "scripts/docker/example-site": "velcom-site",
+    "scripts/docker/nginx.conf": "nginx.conf",
+    "scripts/docker/start-backend-docker.sh": "start-backend-docker.sh",
+    "frontend/dist": "dist",
+    "backend/backend/target/backend.jar": "backend.jar",
+}
+
+_FILE_MAPPINGS_DEV_METRICS = {
+    "backend/backend/target/dependency/aspectjweaver.jar": "aspectjweaver.jar"
+}
+
+_FILE_MAPPINGS_CI_METRICS = {
+    "aspectjweaver.jar": "aspectjweaver.jar"
+}
+
+
+def copyFiles(file_mappings):
+    root_dir = Path(".docker")
+    if root_dir.exists():
+        shutil.rmtree(root_dir)
+    root_dir.mkdir()
+    for source, dest in file_mappings.items():
+        source_path = Path(source)
+        if not source_path.exists():
+            raise RequiredFileNotFound("Couldn't find required file '" + str(source_path) + "'")
+
+        destination_path = Path(root_dir / dest)
+
+        if source_path.is_dir():
+            shutil.copytree(source_path, destination_path, symlinks=True)
+        else:
+            shutil.copy2(source_path, destination_path, follow_symlinks=False)
+
+
+def build(uid):
+    command = ["sudo", "docker", "build", "-t", "velcom-server:latest",
+               "--build-arg", "USER_ID=" + uid,
+               "."]
+    print("\033[94;1m::\033[0m\033[1m Docker command: \033[92;1m" + " ".join(command) + "\033[0m")
+    subprocess.run(
+        command,
+        cwd=".docker",
+        check=True,
+    )
+
+
+def prune():
+    command = ["sudo", "docker", "image", "prune",
+               "--filter", "until=10m", "--filter", "label=velcom-server",
+               "-f", "-a"]
+    print("\033[94;1m::\033[0m\033[1m Docker command: \033[92;1m" + " ".join(command) + "\033[0m")
+    subprocess.run(
+        command,
+        check=True,
+    )
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("env", action="store", help="The file layout to use. Either 'CI' or 'DEV'")
+    parser.add_argument("--metrics", action="store_true", default=True,
+                        help="Includes aspectj in the docker image to collect more metrics.")
+    parser.add_argument("--uid", action="store_true", default=10_000,
+                        help="The UID of the user inside the docker image. "
+                        "The container drops privileges to a user with this UID before executing velcom. "
+                        "You might need to adjust this if your mountpoints belong to a different user.")
+    parser.add_argument("--prune", action="store_true", default=True,
+                        help="Prune all older versions of the docker image.")
+    args = parser.parse_args()
+
+    active_file_mappings = {}
+
+    if args.env == "CI":
+        active_file_mappings = _FILE_MAPPINGS_CI.copy()
+        if args.metrics:
+            active_file_mappings.update(_FILE_MAPPINGS_CI_METRICS)
+    elif args.env == "DEV":
+        active_file_mappings = _FILE_MAPPINGS_DEV.copy()
+        if args.metrics:
+            active_file_mappings.update(_FILE_MAPPINGS_DEV_METRICS)
+    else:
+        print("error: environment must be either 'CI' or 'DEV'")
+        exit(1)
+
+    try:
+        copyFiles(active_file_mappings)
+        build(str(args.uid))
+
+        if args.prune:
+            prune()
+    except subprocess.CalledProcessError:
+        print()
+        print("Docker command failed :(")
+        exit(1)
+    except RequiredFileNotFound as e:
+        print(e)
+        print("Copying files failed :(")
+        exit(1)
+    else:
+        print()
+        print("Build successful :)")
+        print("The created image is called 'velcom-server'")
+        print("You can run the image for testing using \033[92;1mscripts/docker/run-docker\033[0;")
+
+
+if __name__ == "__main__":
+    main()

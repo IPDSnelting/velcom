@@ -1,0 +1,92 @@
+#!/usr/bin/env python3
+
+import argparse
+import subprocess
+import shutil
+from pathlib import Path
+import os
+
+_OUTPUT_COMMAND_HEADER = "\033[94;1m::\033[0m\033[1m"
+_OUTPUT_COMMAND = "\033[92;1m"
+_OUTPUT_RESET = "\033[0m"
+
+
+def _execute_root(command, message):
+    if os.geteuid() != 0:
+        command = ["sudo"] + command
+    print(_OUTPUT_COMMAND_HEADER, message, _OUTPUT_COMMAND, " ".join(command), _OUTPUT_RESET)
+    subprocess.run(command, check=True)
+
+
+def run(root_dir, main_port, runner_port, uid):
+    temp_folder = Path(root_dir)
+    temp_folder.mkdir(parents=True, exist_ok=True)
+
+    config_folder = temp_folder / "config"
+    data_folder = temp_folder / "data"
+    cache_folder = temp_folder / "cache"
+
+    config_folder.mkdir(parents=True, exist_ok=True)
+    data_folder.mkdir(parents=True, exist_ok=True)
+    cache_folder.mkdir(parents=True, exist_ok=True)
+
+    if uid is None:
+        print("No --uid specified, changing permission of data folder to 0o777.")
+        data_folder.chmod(0o777)
+        cache_folder.chmod(0o777)
+    else:
+        command = ["chown", str(uid), str(data_folder.resolve())]
+        _execute_root(command, "Changing data folder ownership:")
+        command = ["chown", str(uid), str(cache_folder.resolve())]
+        _execute_root(command, "Changing cache folder ownership:")
+
+    if not Path(config_folder, "config.yml").exists():
+        shutil.copy2("backend/backend/src/main/resources/example_config.yml",
+                     config_folder / "config.yml")
+    else:
+        print("Using existing config in", config_folder.resolve())
+
+    command = ["docker", "run",
+               "-it", "--rm",
+               "-v", str(config_folder.resolve()) + ":/home/velcom/config",
+               "-v", str(data_folder.resolve()) + ":/home/velcom/data",
+               "-v", str(cache_folder.resolve()) + ":/home/velcom/cache",
+               "-p", str(main_port) + ":80",
+               "-p", str(runner_port) + ":82",
+               "velcom-server:latest",
+               ]
+
+    print("Frontend/Backend  port: " + str(main_port))
+    print("Runner connection port: " + str(runner_port))
+    print()
+
+    _execute_root(command, "Docker command:")
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("root_dir", action="store",
+                        help="The directory to mount the config/data directory in")
+    parser.add_argument("--uid", action="store", type=int, default=None,
+                        help="The UID that should own the data folder. "
+                        "If not supplied the data directory will be changed to mode 0777")
+    parser.add_argument("--main-port", action="store", type=int, default=8080,
+                        help="The port the backend and frontend will be bound to")
+    parser.add_argument("--runner-port", action="store", type=int, default=8082,
+                        help="The port runners can connect to")
+    args = parser.parse_args()
+
+    try:
+        run(args.root_dir, args.main_port, args.runner_port, args.uid)
+    except subprocess.CalledProcessError as e:
+        if e.returncode == 130:
+            print()
+            print("Goodbye :)")
+            return
+        print()
+        print("Docker command failed :(")
+        exit(1)
+
+
+if __name__ == "__main__":
+    main()

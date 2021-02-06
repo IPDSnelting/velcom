@@ -6,7 +6,7 @@ LABEL "velcom-server"="true"
 
 
 #  ____            _
-# |  _ \ __ _  ___| | ____ _  __ _  ___  ___ 
+# |  _ \ __ _  ___| | ____ _  __ _  ___  ___
 # | |_) / _` |/ __| |/ / _` |/ _` |/ _ \/ __|
 # |  __/ (_| | (__|   < (_| | (_| |  __/\__ \
 # |_|   \__,_|\___|_|\_\__,_|\__, |\___||___/
@@ -21,15 +21,15 @@ RUN apt update && apt install nginx -y && apt install sudo -y && apt install git
 #  _   _       _
 # | \ | | __ _(_)_ __ __  __
 # |  \| |/ _` | | '_ \\ \/ /
-# | |\  | (_| | | | | |>  < 
+# | |\  | (_| | | | | |>  <
 # |_| \_|\__, |_|_| |_/_/\_\
 #        |___/
 
 # Preconfigured nginx configs for development on aaaaaaah.de
-COPY nginx-site-single-port /etc/nginx/sites-available/nginx-site
+COPY velcom-site /etc/nginx/sites-available/velcom-site
 COPY nginx.conf /etc/nginx/nginx.conf
 
-RUN ln -s /etc/nginx/sites-available/nginx-site /etc/nginx/sites-enabled && \
+RUN ln -s /etc/nginx/sites-available/velcom-site /etc/nginx/sites-enabled && \
     rm /etc/nginx/sites-enabled/default
 
 
@@ -54,14 +54,16 @@ RUN useradd --uid $USER_ID velcom
 # or a named docker volume using the '-v' option.
 # See the example backend config for a more elaborate explanation of the
 # directories.
-# There are two other directories you might want to persist:
-#  - /home/velcom/data if you want to persist your data
+# There is another directory you might want to persist:
 #  - /home/velcom/cache to speed up restarts
 # Remember: You need to adjust the path if you changed their paths in the config!
 
 # - config/ (the suggested location for your config file)
+# Please make sure your config file is named "config.yml", as the startup
+# script will look for that.
 VOLUME ["/home/velcom/config"]
-
+# - data/ (the suggested location for your config file)
+VOLUME ["/home/velcom/data"]
 
 #  ____            _
 # |  _ \ ___  _ __| |_ ___
@@ -117,4 +119,6 @@ RUN chown -R velcom:velcom /home/velcom
 
 
 # Execute the server, needs the path to the configuration file passed as an argument
+# Please make sure your config file is named "config.yml", as the startup
+# script will look for that.
 ENTRYPOINT ["/home/velcom/start.sh"]
