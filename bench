@@ -1,41 +1,83 @@
 #!/usr/bin/env python3
 
+import argparse
 import json
 import re
 import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Callable, List
-
-program_result = {}
+from typing import Callable, Dict, List
 
 
-def execute_program(args: List[str]) -> float:
-    """ Executes a given program and returns build time. """
+# Available interpretations
+I_LESS_IS_BETTER = "LESS_IS_BETTER"
+I_MORE_IS_BETTER = "MORE_IS_BETTER"
+I_NEUTRAL = "NEUTRAL"
+
+
+def measure(result: Dict, benchmark: str, metric: str, unit: str,
+            interpretation: str, value_func: Callable[[], int]) -> bool:
+    """ Do a measurement. Returns True if the measurement was successful. """
+    measurement = {
+        "unit": unit,
+        "interpretation": interpretation,
+    }
+
+    try:
+        measurement["values"] = value_func()
+        success = True
+    except subprocess.CalledProcessError as e:
+        stdout = e.stdout.decode('UTF-8') if e.stdout else '<Empty>'
+        stderr = e.stderr.decode('UTF-8') if e.stderr else '<Empty>'
+        measurement["error"] = f"{e}\nstdout: {stdout}\nstderr: {stderr}"
+        success = False
+    except Exception as e:
+        measurement["error"] = str(e)
+        success = False
+
+    if benchmark not in result:
+        result[benchmark] = {}
+    result[benchmark][metric] = measurement
+
+    return success
+
+
+def timing_run(repo_path: Path, args: List[str]) -> float:
+    """ Runs a given program and returns build time. """
     start = time.time()
-    subprocess.run(args, stdout=sys.stderr,
-                   stderr=sys.stderr, check=True)
+    subprocess.run(
+        args,
+        cwd=repo_path,
+        stdout=sys.stderr,
+        stderr=sys.stderr,
+        check=True,
+    )
     end = time.time()
     return end - start
 
 
-def get_coverage() -> float:
-    path = target_path() / "backend/aggregator/target/site/jacoco-aggregate/index.html"
+def get_backend_coverage(repo_path: Path) -> float:
+    path = repo_path / "backend/aggregator/target/site/jacoco-aggregate/index.html"
     coverage_regex = r'<td>Total</td><td class="bar">([\d,]+) of ([\d,]+)</td>'
+
     with open(path) as f:
         match = re.search(coverage_regex, f.read())
         if not match:
             raise Exception("Couldn't find coverage")
+
         missed = int(match.group(1).replace(",", ""))
         total = int(match.group(2).replace(",", ""))
         coverage = (total - missed) / total
+
         return coverage * 100  # percent
 
 
-def get_lines(languages: List[str]) -> int:
-    args: List[str] = ["tokei", "--output", "json", str(target_path())]
-    output: str = subprocess.check_output(args=args, stderr=sys.stderr)
+def get_lines(repo_path: Path, languages: List[str]) -> int:
+    output = subprocess.check_output(
+        ["tokei", "--output", "json", repo_path],
+        stderr=sys.stderr,  # TODO Check if manual redirection really necessary
+    )
     parsed_json = json.loads(output)
 
     total = 0
@@ -49,160 +91,119 @@ def get_lines(languages: List[str]) -> int:
         for file_infos in children.values():
             for file_info in file_infos:
                 total += file_info["stats"]["code"]
+
     return total
 
 
 def get_todo_count(path: Path) -> int:
-    args = ["rg",  "TODO|FIXME", str(path)]
-    output: str = subprocess.check_output(args=args, stderr=sys.stderr)
+    output = subprocess.check_output(
+        ["rg",  "TODO|FIXME", path],
+        stderr=sys.stderr,  # TODO Check if manual redirection really necessary
+    )
     return len(output.splitlines())
 
 
-def get_checkstyle_violations() -> int:
+def get_checkstyle_violations(repo_path: Path) -> int:
     violations: int = 0
-    for path in target_path().glob("backend/*/target/checkstyle-result.xml"):
+    for path in repo_path.glob("backend/*/target/checkstyle-result.xml"):
         with open(path, "r") as f:
             violations += len([line for line in f.readlines() if "<error " in line])
     return violations
 
 
-def can_use_makefile() -> bool:
-    """ Checks whether a usable make file exists. """
-    return (target_path() / "Makefile").exists()
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("repo_path")
+    args = parser.parse_args()
 
+    repo_path = Path(args.repo_path).resolve()
+    result = {}
 
-def target_path() -> Path:
-    """ Returns the path of the target repo. """
-    if Path(sys.argv[1]).is_absolute():
-        return Path(sys.argv[1])
-    return Path(__file__).resolve().parent / sys.argv[1]
-
-
-def guarded_try_metric_or_nothing(benchmark: str, metric: str, function, unit: str, resultInterpretation: str):
-    global program_result
-
-    if benchmark not in program_result:
-        program_result[benchmark] = {}
-
-    try:
-        program_result[benchmark][metric] = {
-            "unit": unit,
-            "resultInterpretation": resultInterpretation,
-            "results": [function()]
-        }
-    except Exception as e:
-        print(e, file=sys.stderr)
-
-
-def guarded_try_metric(benchmark: str, metric: str, function, unit="seconds", resultInterpretation="LESS_IS_BETTER"):
-    global program_result
-    if benchmark not in program_result:
-        program_result[benchmark] = {}
-    try:
-        program_result[benchmark][metric] = {
-            "unit": unit,
-            "resultInterpretation": resultInterpretation,
-            "results": [function()]
-        }
-    except subprocess.CalledProcessError as e:
-        stdout = e.stdout.decode('UTF-8') if e.stdout else '<Empty>'
-        stderr = e.stderr.decode('UTF-8') if e.stderr else '<Empty>'
-        program_result[benchmark][metric] = {
-            "error": str(e) + "\n StdOut: " + stdout + "\n StdErr: " + stderr
-        }
-    except Exception as e:
-        program_result[benchmark][metric] = {
-            "error": str(e)
-        }
-
-
-def build_makefile():
-    """ Builds VelCom with a makefile. """
-    guarded_try_metric(
-        "frontend",
-        "build_time",
-        lambda: execute_program(["make", "-C", str(target_path()), "frontend"])
-    )
-
-    guarded_try_metric(
+    backend_success = measure(
+        result,
         "backend",
         "build_time",
-        lambda: execute_program(["make", "-C", str(target_path()), "backend"])
+        "seconds",
+        I_LESS_IS_BETTER,
+        lambda: [timing_run(repo_path, [repo_path / "scripts" / "build-backend"])],
     )
 
-    guarded_try_metric(
-        "backend",
-        "coverage",
-        lambda: get_coverage(),
-        "percent",
-        "MORE_IS_BETTER"
-    )
+    if backend_success:
+        measure(
+            result,
+            "backend",
+            "coverage",
+            "percent",
+            I_MORE_IS_BETTER,
+            lambda: [get_backend_coverage(repo_path)]
+        )
 
-    guarded_try_metric(
-        "backend",
-        "checkstyle_violations",
-        lambda: get_checkstyle_violations(),
-        unit="",
-        resultInterpretation="LESS_IS_BETTER"
-    )
+        measure(
+            result,
+            "backend",
+            "sloc",
+            "lines",
+            I_NEUTRAL,
+            lambda: [get_lines(repo_path, ["Java"])],
+        )
 
-    guarded_try_metric_or_nothing(
-        "backend",
-        "sloc",
-        lambda: get_lines(["Java"]),
-        "lines",
-        "NEUTRAL"
-    )
+        measure(
+            result,
+            "backend",
+            "todos",
+            "",
+            I_LESS_IS_BETTER,
+            lambda: [get_todo_count(repo_path / "backend")],
+        )
 
-    guarded_try_metric_or_nothing(
+        measure(
+            result,
+            "backend",
+            "checkstyle_violations",
+            "",
+            I_LESS_IS_BETTER,
+            lambda: [get_checkstyle_violations(repo_path)],
+        )
+
+    frontend_success = measure(
+        result,
         "frontend",
-        "sloc",
-        lambda: get_lines(["TypeScript", "Vue", "Css", "Html"]),
-        "lines",
-        "NEUTRAL"
+        "build_time",
+        "seconds",
+        I_LESS_IS_BETTER,
+        lambda: [timing_run(repo_path, [repo_path / "scripts" / "build-frontend"])],
     )
 
-    guarded_try_metric_or_nothing(
-        "frontend",
-        "todos",
-        lambda: get_todo_count(target_path() / "frontend"),
-        "",
-        "LESS_IS_BETTER"
-    )
+    if frontend_success:
+        measure(
+            result,
+            "frontend",
+            "sloc",
+            "lines",
+            I_NEUTRAL,
+            lambda: [get_lines(repo_path, ["TypeScript", "Vue", "Css", "Html"])],
+        )
 
-    guarded_try_metric_or_nothing(
-        "backend",
-        "todos",
-        lambda: get_todo_count(target_path() / "backend"),
-        "",
-        "LESS_IS_BETTER"
-    )
+        measure(
+            result,
+            "frontend",
+            "todos",
+            "",
+            I_LESS_IS_BETTER,
+            lambda: [get_todo_count(repo_path / "frontend")],
+        )
 
-    guarded_try_metric(
+    measure(
+        result,
         "misc",
         "always zero",
-        lambda: 0,
         "cats",
-        "NEUTRAL"
+        I_NEUTRAL,
+        lambda: [0],
     )
 
-
-def build_error(message: str):
-    global program_result
-    program_result = {"error": message}
-
-
-def run():
-    """ Main function. """
-    if can_use_makefile():
-        build_makefile()
-        print(json.dumps(program_result))
-        exit(0)
-    else:
-        build_error("No Makefile found!")
-        print(json.dumps(program_result))
-        exit(0)
+    print(json.dumps(result))
 
 
 if __name__ == '__main__':
-    run()
+    main()

@@ -5,7 +5,7 @@ import subprocess
 
 def build():
     subprocess.run(
-        ["mvn", "package"],
+        ["mvn", "package", "site", "jacoco:report-aggregate"],
         cwd="backend",
         check=True,
     )
