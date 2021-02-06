@@ -31,8 +31,9 @@ def run(root_dir, main_port, runner_port, uid):
     cache_folder.mkdir(parents=True, exist_ok=True)
 
     if uid is None:
-        print("No --uid specified, changing permission of data folder to 0777.")
-        os.chmod(data_folder, int("777", base=8))
+        print("No --uid specified, changing permission of data folder to 0o777.")
+        data_folder.chmod(0o777)
+        cache_folder.chmod(0o777)
     else:
         command = ["chown", str(data_folder.resolve()), str(uid), str(uid)]
         _execute_root(command, "Changing data folder ownership:")
