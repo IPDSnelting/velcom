@@ -59,6 +59,8 @@ RUN useradd --uid $USER_ID velcom
 # Remember: You need to adjust the path if you changed their paths in the config!
 
 # - config/ (the suggested location for your config file)
+# Please make sure your config file is named "config.yml", as the startup
+# script will look for that.
 VOLUME ["/home/velcom/config"]
 # - data/ (the suggested location for your config file)
 VOLUME ["/home/velcom/data"]
@@ -117,4 +119,6 @@ RUN chown -R velcom:velcom /home/velcom
 
 
 # Execute the server, needs the path to the configuration file passed as an argument
+# Please make sure your config file is named "config.yml", as the startup
+# script will look for that.
 ENTRYPOINT ["/home/velcom/start.sh"]
