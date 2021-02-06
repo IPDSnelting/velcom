@@ -55,9 +55,9 @@ def copyFiles(file_mappings):
             shutil.copy2(source_path, destination_path, follow_symlinks=False)
 
 
-def build(user_id):
+def build(uid):
     command = ["sudo", "docker", "build", "-t", "velcom-server:latest",
-               "--build-arg", "USER_ID=" + user_id,
+               "--build-arg", "USER_ID=" + uid,
                "."]
     print("\033[94;1m::\033[0m\033[1m Docker command: \033[92;1m" + " ".join(command) + "\033[0m")
     subprocess.run(
@@ -83,7 +83,7 @@ def main():
     parser.add_argument("env", action="store", help="The file layout to use. Either 'CI' or 'DEV'")
     parser.add_argument("--metrics", action="store_true", default=True,
                         help="Includes aspectj in the docker image to collect more metrics.")
-    parser.add_argument("--user-id", action="store_true", default=10_000,
+    parser.add_argument("--uid", action="store_true", default=10_000,
                         help="The UID of the user inside the docker image. "
                         "The container drops privileges to a user with this UID before executing velcom. "
                         "You might need to adjust this if your mountpoints belong to a different user.")
@@ -107,7 +107,7 @@ def main():
 
     try:
         copyFiles(active_file_mappings)
-        build(str(args.user_id))
+        build(str(args.uid))
 
         if args.prune:
             prune()
