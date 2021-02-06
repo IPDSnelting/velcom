@@ -116,7 +116,7 @@ jobs:
 
       # BUILDING
       - name: "Build image"
-        run: "make docker-github-ci USER_ID=$UID --trace"
+        run: "./scripts/docker/build-docker --user-id=$UID --metrics CI"
 
       - name: "Log into registry"
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
@@ -201,7 +201,7 @@ jobs:
 
       # BUILDING
       - name: "Build image"
-        run: "make docker-github-ci USER_ID=$UID --trace"
+        run: "./scripts/docker/build-docker --user-id=$UID CI"
 
       - name: "Log into registry"
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
