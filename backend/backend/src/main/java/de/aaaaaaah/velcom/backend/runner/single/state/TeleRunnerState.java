@@ -7,11 +7,15 @@ import de.aaaaaaah.velcom.shared.protocol.serialization.serverbound.ServerBoundP
 import de.aaaaaaah.velcom.shared.protocol.serialization.serverbound.ServerBoundPacketType;
 import de.aaaaaaah.velcom.shared.protocol.statemachine.State;
 import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A state in the tele-runner state machine.
  */
 public class TeleRunnerState implements State {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(TeleRunnerState.class);
 
 	protected final TeleRunner runner;
 	protected final RunnerConnection connection;
@@ -35,6 +39,10 @@ public class TeleRunnerState implements State {
 		// If a packet has been received that could not be deserialized or handled, that is invalid
 		// behaviour.
 		if (newState.isEmpty()) {
+			LOGGER.info(
+				"Runner send a package I couldn't handle in {}. Content: '{}'",
+				getClass().getSimpleName(), text.substring(0, Math.min(text.length(), 100))
+			);
 			connection.close(StatusCode.ILLEGAL_PACKET);
 		}
 
