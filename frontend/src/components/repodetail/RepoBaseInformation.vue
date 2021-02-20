@@ -5,10 +5,7 @@
         {{ repo.name }}
         <span class="ml-5 subtitle-1">{{ repo.id }}</span>
         <v-spacer></v-spacer>
-        <v-btn
-          text
-          :to="{ name: 'prepare-run-compare', query: { repoId: repo.id } }"
-        >
+        <v-btn text :to="{ name: 'search', query: { repoId: repo.id } }">
           Compare Runs
           <v-icon right size="22">{{ compareRunIcon }}</v-icon>
         </v-btn>

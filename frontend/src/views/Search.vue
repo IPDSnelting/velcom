@@ -109,6 +109,24 @@ export default class Search extends Vue {
     this.debouncedLookup()
   }
 
+  private get runInUrl() {
+    return this.$route.params['runId']
+  }
+
+  @Watch('runInUrl')
+  private async adjustToUrl() {
+    if (!this.runInUrl) {
+      return
+    }
+    const result = await vxm.runSearchModule.searchRun({
+      query: this.runInUrl
+    })
+    if (!result) {
+      return
+    }
+    this.compareFirst = result[0]
+  }
+
   private markCommitForCompare(item: SearchItem) {
     if (!this.compareFirst) {
       this.compareFirst = item
@@ -162,9 +180,13 @@ export default class Search extends Vue {
       this.items = []
       return
     }
-    this.items = await vxm.runSearchModule.searchRunNew({
+    this.items = await vxm.runSearchModule.searchRun({
       query: this.searchQuery
     })
+  }
+
+  private mounted() {
+    this.adjustToUrl()
   }
 
   private readonly swapIcon = mdiSwapHorizontalBold

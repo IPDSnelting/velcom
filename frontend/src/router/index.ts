@@ -16,7 +16,6 @@ import {
 } from '@mdi/js'
 import { vxm } from '@/store'
 import TaskDetailView from '@/views/TaskDetailView.vue'
-import PrepareRunCompare from '@/views/PrepareCompare.vue'
 import Search from '@/views/Search.vue'
 
 Vue.use(VueRouter)
@@ -28,7 +27,6 @@ export type RouteName =
   | 'repo-detail'
   | 'queue'
   | 'search'
-  | 'prepare-run-compare'
   | 'run-comparison'
   | 'run-detail'
   | 'task-detail'
@@ -105,16 +103,7 @@ const routes: RouteInfo[] = [
     }
   },
   {
-    path: '/prepare-run-compare/:first?',
-    name: 'prepare-run-compare',
-    component: PrepareRunCompare,
-    meta: {
-      navigable: false,
-      label: 'Prepare Run Comparison'
-    }
-  },
-  {
-    path: '/search',
+    path: '/search/:runId?',
     name: 'search',
     component: Search,
     meta: {
