@@ -1,8 +1,25 @@
 <template>
   <v-container>
-    <v-row justify="center">
+    <v-row justify="space-between" class="px-5">
       <v-col>
         <h1>Voogle</h1>
+      </v-col>
+      <v-col cols="auto">
+        <v-row no-gutters align="center">
+          <v-col cols="auto" class="mr-4">
+            <v-checkbox
+              v-model="constrainToRepo"
+              label="Limit searches to the following repo"
+            ></v-checkbox>
+          </v-col>
+          <v-col cols="auto">
+            <repo-selection-component
+              :disabled="!constrainToRepo"
+              v-model="repoId"
+              :repos="allRepos"
+            ></repo-selection-component>
+          </v-col>
+        </v-row>
       </v-col>
     </v-row>
     <v-row>
@@ -88,14 +105,20 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import SearchResultList from '@/components/search/SearchResultList.vue'
 import { vxm } from '@/store'
-import { SearchItem, SearchItemCommit, SearchItemRun } from '@/store/types'
+import {
+  RepoId,
+  SearchItem,
+  SearchItemCommit,
+  SearchItemRun
+} from '@/store/types'
 import { Watch } from 'vue-property-decorator'
 import { debounce } from '@/util/Debouncer'
 import { mdiSwapHorizontalBold } from '@mdi/js'
 import { RawLocation } from 'vue-router'
+import RepoSelectionComponent from '@/components/RepoSelectionComponent.vue'
 
 @Component({
-  components: { SearchResultList }
+  components: { RepoSelectionComponent, SearchResultList }
 })
 export default class Search extends Vue {
   private searchQuery = ''
@@ -103,6 +126,8 @@ export default class Search extends Vue {
   private debouncedLookup = debounce(this.executeSearch, 300)
   private compareFirst: SearchItem | null = null
   private compareSecond: SearchItem | null = null
+  private repoId: RepoId | null = null
+  private constrainToRepo = false
 
   @Watch('searchQuery')
   private onQueryChange() {
@@ -113,18 +138,32 @@ export default class Search extends Vue {
     return this.$route.params['runId']
   }
 
+  private get repoIdInUrl() {
+    return this.$route.query['repoId']
+  }
+
   @Watch('runInUrl')
+  @Watch('repoIdInUrl')
   private async adjustToUrl() {
-    if (!this.runInUrl) {
-      return
+    if (this.repoIdInUrl) {
+      this.repoId = this.repoIdInUrl as string
+      this.constrainToRepo = true
     }
-    const result = await vxm.runSearchModule.searchRun({
-      query: this.runInUrl
-    })
-    if (!result) {
-      return
+
+    if (this.runInUrl) {
+      const result = await vxm.runSearchModule.searchRun({
+        query: this.runInUrl,
+        repoId: this.repoId || undefined
+      })
+      if (!result) {
+        return
+      }
+      this.compareFirst = result[0]
     }
-    this.compareFirst = result[0]
+  }
+
+  private get allRepos() {
+    return vxm.repoModule.allRepos
   }
 
   private markCommitForCompare(item: SearchItem) {
@@ -181,7 +220,8 @@ export default class Search extends Vue {
       return
     }
     this.items = await vxm.runSearchModule.searchRun({
-      query: this.searchQuery
+      query: this.searchQuery,
+      repoId: this.constrainToRepo ? this.repoId || undefined : undefined
     })
   }
 
