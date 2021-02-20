@@ -28,6 +28,7 @@ import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.storage.db.DBReadAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import de.aaaaaaah.velcom.shared.util.Either;
+import de.aaaaaaah.velcom.shared.util.Pair;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -35,8 +36,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
-import org.jooq.Record4;
-import org.jooq.SelectConditionStep;
 import org.jooq.codegen.db.tables.records.RunRecord;
 
 /**
@@ -256,12 +255,12 @@ public class BenchmarkReadAccess {
 		}
 	}
 
-	public List<ShortRunDescription> searchRuns(Integer limit, @Nullable RepoId repoId,
-		String queryStr) {
+	public List<Pair<ShortRunDescription, Optional<RepoId>>> searchRuns(Integer limit,
+		@Nullable RepoId repoId, String queryStr) {
 
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			SelectConditionStep<Record4<String, String, String, String>> query = db
-				.select(RUN.ID, KNOWN_COMMIT.HASH, KNOWN_COMMIT.MESSAGE, RUN.TAR_DESC)
+			var query = db
+				.select(RUN.ID, KNOWN_COMMIT.HASH, KNOWN_COMMIT.MESSAGE, RUN.TAR_DESC, RUN.REPO_ID)
 				.from(RUN)
 				.leftOuterJoin(KNOWN_COMMIT)
 				.on(KNOWN_COMMIT.HASH.eq(RUN.COMMIT_HASH))
@@ -278,11 +277,14 @@ public class BenchmarkReadAccess {
 			return query.orderBy(RUN.START_TIME.desc())
 				.limit(limit)
 				.stream()
-				.map(record -> new ShortRunDescription(
-					RunId.fromString(record.value1()),
-					record.value2(),
-					record.value3(),
-					record.value4()
+				.map(record -> new Pair<>(
+					new ShortRunDescription(
+						RunId.fromString(record.value1()),
+						record.value2(),
+						record.value3(),
+						record.value4()
+					),
+					Optional.ofNullable(record.value5()).map(RepoId::fromString)
 				))
 				.collect(toList());
 		}

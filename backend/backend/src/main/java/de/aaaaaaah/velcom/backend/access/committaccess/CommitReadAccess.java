@@ -6,6 +6,10 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static org.jooq.codegen.db.tables.CommitRelationship.COMMIT_RELATIONSHIP;
 import static org.jooq.codegen.db.tables.KnownCommit.KNOWN_COMMIT;
+import static org.jooq.codegen.db.tables.Run.RUN;
+import static org.jooq.impl.DSL.exists;
+import static org.jooq.impl.DSL.field;
+import static org.jooq.impl.DSL.select;
 
 import de.aaaaaaah.velcom.backend.access.committaccess.entities.Commit;
 import de.aaaaaaah.velcom.backend.access.committaccess.entities.CommitHash;
@@ -16,6 +20,7 @@ import de.aaaaaaah.velcom.backend.access.repoaccess.entities.BranchName;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.storage.db.DBReadAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
+import de.aaaaaaah.velcom.shared.util.Pair;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -30,6 +35,7 @@ import org.jooq.SelectConditionStep;
 import org.jooq.codegen.db.tables.records.CommitRelationshipRecord;
 import org.jooq.codegen.db.tables.records.KnownCommitRecord;
 import org.jooq.exception.DataAccessException;
+import org.jooq.impl.DSL;
 
 /**
  * Provides read access to the git commits stored in the database.
@@ -411,9 +417,27 @@ public class CommitReadAccess {
 		}
 	}
 
-	public List<Commit> searchCommits(int limit, @Nullable RepoId repoId, String queryStr) {
+	public List<Pair<Commit, Boolean>> searchCommits(int limit, @Nullable RepoId repoId,
+		String queryStr) {
+
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			SelectConditionStep<KnownCommitRecord> query = db.selectFrom(KNOWN_COMMIT)
+			var query = db.select(
+				KNOWN_COMMIT.REPO_ID,
+				KNOWN_COMMIT.HASH,
+				KNOWN_COMMIT.REACHABLE,
+				KNOWN_COMMIT.TRACKED,
+				KNOWN_COMMIT.AUTHOR,
+				KNOWN_COMMIT.AUTHOR_DATE,
+				KNOWN_COMMIT.COMMITTER,
+				KNOWN_COMMIT.COMMITTER_DATE,
+				KNOWN_COMMIT.MESSAGE,
+				field(exists(select(DSL.one())
+					.from(RUN)
+					.where(RUN.REPO_ID.eq(KNOWN_COMMIT.REPO_ID))
+					.and(RUN.COMMIT_HASH.eq(KNOWN_COMMIT.HASH))
+				))
+			)
+				.from(KNOWN_COMMIT)
 				.where(KNOWN_COMMIT.HASH.contains(queryStr)
 					.or(KNOWN_COMMIT.MESSAGE.contains(queryStr))
 					.or(KNOWN_COMMIT.AUTHOR.contains(queryStr))
@@ -426,7 +450,20 @@ public class CommitReadAccess {
 			return query.orderBy(KNOWN_COMMIT.COMMITTER_DATE.desc())
 				.limit(limit)
 				.stream()
-				.map(CommitReadAccess::knownCommitRecordToCommit)
+				.map(record -> new Pair<>(
+					new Commit(
+						RepoId.fromString(record.value1()),
+						new CommitHash(record.value2()),
+						record.value3(),
+						record.value4(),
+						record.value5(),
+						record.value6(),
+						record.value7(),
+						record.value8(),
+						record.value9()
+					),
+					record.value10()
+				))
 				.collect(toList());
 		}
 	}

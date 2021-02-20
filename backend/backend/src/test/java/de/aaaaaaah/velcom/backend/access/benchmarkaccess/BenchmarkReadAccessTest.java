@@ -23,6 +23,7 @@ import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.Unit;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import de.aaaaaaah.velcom.shared.util.Either;
+import de.aaaaaaah.velcom.shared.util.Pair;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
@@ -368,6 +369,7 @@ class BenchmarkReadAccessTest {
 
 		assertThat(access.searchRuns(100, null, "a")
 			.stream()
+			.map(Pair::getFirst)
 			.map(ShortRunDescription::getId))
 			.containsExactly(RUN7_ID, RUN2_ID, RUN8_ID, RUN4_ID, RUN10_ID, RUN9_ID, RUN3_ID, RUN6_ID,
 				RUN5_ID, RUN1_ID);
@@ -376,11 +378,13 @@ class BenchmarkReadAccessTest {
 
 		assertThat(access.searchRuns(100, REPO1_ID, "a")
 			.stream()
+			.map(Pair::getFirst)
 			.map(ShortRunDescription::getId))
 			.containsExactly(RUN7_ID, RUN8_ID, RUN4_ID, RUN3_ID, RUN6_ID, RUN5_ID);
 
 		assertThat(access.searchRuns(100, REPO2_ID, "a")
 			.stream()
+			.map(Pair::getFirst)
 			.map(ShortRunDescription::getId))
 			.containsExactly(RUN10_ID, RUN9_ID);
 
@@ -388,6 +392,7 @@ class BenchmarkReadAccessTest {
 
 		assertThat(access.searchRuns(100, null, "d9")
 			.stream()
+			.map(Pair::getFirst)
 			.map(ShortRunDescription::getId))
 			.containsExactly(RUN9_ID);
 
@@ -398,6 +403,7 @@ class BenchmarkReadAccessTest {
 
 		assertThat(access.searchRuns(4, null, "a")
 			.stream()
+			.map(Pair::getFirst)
 			.map(ShortRunDescription::getId))
 			.containsExactly(RUN7_ID, RUN2_ID, RUN8_ID, RUN4_ID);
 	}
