@@ -33,6 +33,7 @@ import de.aaaaaaah.velcom.backend.restapi.endpoints.QueueEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.RecentRunsEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.RepoEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.RunEndpoint;
+import de.aaaaaaah.velcom.backend.restapi.endpoints.SearchEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.TestTokenEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.exception.ArgumentParseExceptionMapper;
 import de.aaaaaaah.velcom.backend.restapi.exception.InvalidQueryParamsExceptionMapper;
@@ -69,7 +70,6 @@ import io.micrometer.core.instrument.binder.system.ProcessorMetrics;
 import io.micrometer.core.instrument.binder.system.UptimeMetrics;
 import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.config.MeterFilterReply;
-import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.prometheus.PrometheusConfig;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
 import java.io.IOException;
@@ -207,6 +207,7 @@ public class ServerMain extends Application<GlobalConfig> {
 				listener),
 			new RunEndpoint(benchmarkAccess, commitAccess, dimensionAccess, runCache, latestRunCache,
 				runComparator, significanceFactors, significantRunsCollector),
+			new SearchEndpoint(benchmarkAccess, commitAccess),
 			new TestTokenEndpoint()
 		).forEach(endpoint -> environment.jersey().register(endpoint));
 	}

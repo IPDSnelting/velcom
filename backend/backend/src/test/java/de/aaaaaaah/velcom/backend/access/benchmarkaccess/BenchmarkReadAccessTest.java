@@ -77,16 +77,16 @@ class BenchmarkReadAccessTest {
 	private static final CommitHash COMMIT4_HASH =
 		new CommitHash("2aa75b3d92046e3d9c080ee8397cd3fbafea0021");
 
-	private static final RunId RUN1_ID = new RunId();
-	private static final RunId RUN2_ID = new RunId();
-	private static final RunId RUN3_ID = new RunId();
-	private static final RunId RUN4_ID = new RunId();
-	private static final RunId RUN5_ID = new RunId();
-	private static final RunId RUN6_ID = new RunId();
-	private static final RunId RUN7_ID = new RunId();
-	private static final RunId RUN8_ID = new RunId();
-	private static final RunId RUN9_ID = new RunId();
-	private static final RunId RUN10_ID = new RunId();
+	private static final RunId RUN1_ID = RunId.fromString("99ff038a-cf26-4a5f-8d0f-5bc9673e6e19");
+	private static final RunId RUN2_ID = RunId.fromString("1862ce3a-0eb2-45ee-8793-e017baee0888");
+	private static final RunId RUN3_ID = RunId.fromString("0fca4c5b-97c1-422e-acff-365cb0c9a608");
+	private static final RunId RUN4_ID = RunId.fromString("577a7d6e-e38f-4123-a7c3-e1e5255019af");
+	private static final RunId RUN5_ID = RunId.fromString("5414e886-3196-44ee-b80b-9e3146e9e903");
+	private static final RunId RUN6_ID = RunId.fromString("2de7c555-6327-4b50-a826-6c26ebd8cfc3");
+	private static final RunId RUN7_ID = RunId.fromString("4b5e1f15-770e-4c06-8828-14a7080346d2");
+	private static final RunId RUN8_ID = RunId.fromString("e19a269b-c664-4313-a592-b20de69bccb1");
+	private static final RunId RUN9_ID = RunId.fromString("6726d82b-1012-43e3-b2e1-1a1dd56915d1");
+	private static final RunId RUN10_ID = RunId.fromString("d505ff5f-7591-4208-a491-ee807621ddd7");
 	private static final Instant RUN1_START = Instant.ofEpochSecond(1600010001);
 	private static final Instant RUN5_START = Instant.ofEpochSecond(1600020001);
 	private static final Instant RUN6_START = Instant.ofEpochSecond(1600030001);
@@ -364,97 +364,42 @@ class BenchmarkReadAccessTest {
 
 	@Test
 	void searchRuns() {
-		assertThat(access.searchRuns(false, null, null, null, null, null, null)
-			.stream()
-			.map(ShortRunDescription::getId))
-			.containsExactlyInAnyOrder(RUN1_ID, RUN2_ID, RUN3_ID, RUN4_ID, RUN5_ID, RUN6_ID, RUN7_ID,
-				RUN8_ID, RUN9_ID, RUN10_ID);
+		// Search for all runs ("a" appears in every run's author)
 
-		assertThat(access.searchRuns(true, null, null, null, null, null, null)
-			.stream()
-			.map(ShortRunDescription::getId))
-			.containsExactlyInAnyOrder(RUN1_ID, RUN2_ID, RUN3_ID, RUN4_ID, RUN7_ID, RUN8_ID, RUN9_ID,
-				RUN10_ID);
-
-		// Restricted to repo 1
-
-		assertThat(access.searchRuns(false, null, REPO1_ID, null, null, null, null)
-			.stream()
-			.map(ShortRunDescription::getId))
-			.containsExactlyInAnyOrder(RUN3_ID, RUN4_ID, RUN5_ID, RUN6_ID, RUN7_ID, RUN8_ID);
-
-		assertThat(access.searchRuns(true, null, REPO1_ID, null, null, null, null)
-			.stream()
-			.map(ShortRunDescription::getId))
-			.containsExactlyInAnyOrder(RUN3_ID, RUN4_ID, RUN7_ID, RUN8_ID);
-
-		// Restricted to commit 1
-
-		assertThat(access.searchRuns(false, null, null, COMMIT1_HASH.getHash(), null, null, null)
-			.stream()
-			.map(ShortRunDescription::getId))
-			.containsExactlyInAnyOrder(RUN5_ID, RUN6_ID, RUN7_ID);
-
-		assertThat(access.searchRuns(true, null, null, COMMIT1_HASH.getHash(), null, null, null)
-			.stream()
-			.map(ShortRunDescription::getId))
-			.containsExactlyInAnyOrder(RUN7_ID);
-
-		// With certain description
-
-		assertThat(access.searchRuns(false, null, null, null, "d9", null, null)
-			.stream()
-			.map(ShortRunDescription::getId))
-			.containsExactlyInAnyOrder(RUN5_ID, RUN6_ID, RUN7_ID, RUN9_ID);
-
-		assertThat(access.searchRuns(true, null, null, null, "d9", null, null)
-			.stream()
-			.map(ShortRunDescription::getId))
-			.containsExactlyInAnyOrder(RUN7_ID, RUN9_ID);
-
-		// Ordered by run start time
-
-		assertThat(access.searchRuns(false, null, null, null, null, true, null)
+		assertThat(access.searchRuns(100, null, "a")
 			.stream()
 			.map(ShortRunDescription::getId))
 			.containsExactly(RUN7_ID, RUN2_ID, RUN8_ID, RUN4_ID, RUN10_ID, RUN9_ID, RUN3_ID, RUN6_ID,
 				RUN5_ID, RUN1_ID);
 
-		assertThat(access.searchRuns(false, null, null, null, null, false, null)
+		// Restricted to repos
+
+		assertThat(access.searchRuns(100, REPO1_ID, "a")
 			.stream()
 			.map(ShortRunDescription::getId))
-			.containsExactly(RUN1_ID, RUN5_ID, RUN6_ID, RUN3_ID, RUN9_ID, RUN10_ID, RUN4_ID, RUN8_ID,
-				RUN2_ID, RUN7_ID);
+			.containsExactly(RUN7_ID, RUN8_ID, RUN4_ID, RUN3_ID, RUN6_ID, RUN5_ID);
 
-		assertThat(access.searchRuns(true, null, null, null, null, true, null)
+		assertThat(access.searchRuns(100, REPO2_ID, "a")
 			.stream()
 			.map(ShortRunDescription::getId))
-			.containsExactly(RUN7_ID, RUN2_ID, RUN8_ID, RUN4_ID, RUN10_ID, RUN9_ID, RUN3_ID, RUN1_ID);
+			.containsExactly(RUN10_ID, RUN9_ID);
 
-		assertThat(access.searchRuns(true, null, null, null, null, false, null)
+		// Commit description and hash are ignored
+
+		assertThat(access.searchRuns(100, null, "d9")
 			.stream()
 			.map(ShortRunDescription::getId))
-			.containsExactly(RUN1_ID, RUN3_ID, RUN9_ID, RUN10_ID, RUN4_ID, RUN8_ID, RUN2_ID, RUN7_ID);
+			.containsExactly(RUN9_ID);
 
-		// Ordered by run start time with limit
+		assertThat(access.searchRuns(100, null, COMMIT1_HASH.getHash()))
+			.isEmpty();
 
-		assertThat(access.searchRuns(false, 3, null, null, null, true, null)
+		// Limit is respected
+
+		assertThat(access.searchRuns(4, null, "a")
 			.stream()
 			.map(ShortRunDescription::getId))
-			.containsExactly(RUN7_ID, RUN2_ID, RUN8_ID);
-
-		assertThat(access.searchRuns(true, 4, null, null, null, false, null)
-			.stream()
-			.map(ShortRunDescription::getId))
-			.containsExactly(RUN1_ID, RUN3_ID, RUN9_ID, RUN10_ID);
-
-		assertThat(access.searchRuns(false, 7000, null, null, null, false, null)
-			.stream()
-			.map(ShortRunDescription::getId))
-			.containsExactly(RUN1_ID, RUN5_ID, RUN6_ID, RUN3_ID, RUN9_ID, RUN10_ID, RUN4_ID, RUN8_ID,
-				RUN2_ID, RUN7_ID);
-
-		// TODO: 2020-12-29 Test ordered by committer time
+			.containsExactly(RUN7_ID, RUN2_ID, RUN8_ID, RUN4_ID);
 	}
 
 	@Test

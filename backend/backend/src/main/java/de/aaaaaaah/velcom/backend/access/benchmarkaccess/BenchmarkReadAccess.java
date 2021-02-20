@@ -9,8 +9,6 @@ import static org.jooq.codegen.db.Tables.LATEST_RUN;
 import static org.jooq.codegen.db.Tables.MEASUREMENT;
 import static org.jooq.codegen.db.Tables.MEASUREMENT_VALUE;
 import static org.jooq.codegen.db.Tables.RUN;
-import static org.jooq.impl.DSL.falseCondition;
-import static org.jooq.impl.DSL.trueCondition;
 
 import de.aaaaaaah.velcom.backend.access.AccessUtils;
 import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.Measurement;
@@ -37,9 +35,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
-import org.jooq.Condition;
 import org.jooq.Record4;
-import org.jooq.ResultQuery;
+import org.jooq.SelectConditionStep;
 import org.jooq.codegen.db.tables.records.RunRecord;
 
 /**
@@ -47,7 +44,6 @@ import org.jooq.codegen.db.tables.records.RunRecord;
  */
 public class BenchmarkReadAccess {
 
-	private static final int SEARCH_LIMIT = 500;
 
 	protected final DatabaseStorage databaseStorage;
 
@@ -260,144 +256,35 @@ public class BenchmarkReadAccess {
 		}
 	}
 
-	/**
-	 * Search for runs. The logical connection between the various filtering conditions can be thought
-	 * of as follows:
-	 *
-	 * <p> latestRunsOnly && limit && repoId && (commitHash || description) &&
-	 * oneOf(orderbyRunStartTimeDesc, orderByCommitterTimeDesc)
-	 *
-	 * @param latestRunsOnly if set to true, only the latest runs will be returned for commits with
-	 * 	multiple runs
-	 * @param limit an upper limit on the amount of runs that will be returned. For a maximum amount,
-	 * 	see {@link BenchmarkReadAccess#SEARCH_LIMIT}
-	 * @param repoId id or part of the id of a repo to which the search should be restricted
-	 * @param commitHash hash or part of a hash for which runs should be returned
-	 * @param description description (tar description or commit message) for which runs should be
-	 * 	returned
-	 * @param orderByRunStartTimeDesc order the resulting runs by their start time in descending
-	 * 	order
-	 * @param orderByCommitterTimeDesc order the resulting runs by their commit's committer time in
-	 * 	descending order
-	 * @return a list of {@link ShortRunDescription}s for runs matching the specified criteria
-	 */
-	// TODO: 24.01.21 Add tests for partial commit hash
-	// TODO: 24.01.21 Add tests specifying commit hash and description at the same time
-	public List<ShortRunDescription> searchRuns(
-		boolean latestRunsOnly,
-		@Nullable Integer limit,
-		@Nullable RepoId repoId,
-		@Nullable String commitHash,
-		@Nullable String description,
-		@Nullable Boolean orderByRunStartTimeDesc,
-		@Nullable Boolean orderByCommitterTimeDesc
-	) {
-		limit = limit == null ? SEARCH_LIMIT : Math.min(limit, SEARCH_LIMIT);
+	public List<ShortRunDescription> searchRuns(Integer limit, @Nullable RepoId repoId,
+		String queryStr) {
 
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			if (latestRunsOnly) {
+			SelectConditionStep<Record4<String, String, String, String>> query = db
+				.select(RUN.ID, KNOWN_COMMIT.HASH, KNOWN_COMMIT.MESSAGE, RUN.TAR_DESC)
+				.from(RUN)
+				.leftOuterJoin(KNOWN_COMMIT)
+				.on(KNOWN_COMMIT.HASH.eq(RUN.COMMIT_HASH))
+				.where(RUN.ID.contains(queryStr)
+					.or(RUN.AUTHOR.contains(queryStr))
+					.or(RUN.RUNNER_NAME.contains(queryStr))
+					.or(RUN.RUNNER_INFO.contains(queryStr))
+					.or(RUN.TAR_DESC.contains(queryStr)));
 
-				Condition condition;
-				if (commitHash == null && description == null) {
-					condition = trueCondition();
-				} else {
-					condition = falseCondition();
-					if (commitHash != null) {
-						condition = condition.or(LATEST_RUN.COMMIT_HASH.contains(commitHash));
-					}
-					if (description != null) {
-						condition = condition.or(LATEST_RUN.TAR_DESC.contains(description)
-							.or(KNOWN_COMMIT.MESSAGE.contains(description)));
-					}
-				}
-
-				var query = db
-					.select(LATEST_RUN.ID, LATEST_RUN.COMMIT_HASH, KNOWN_COMMIT.MESSAGE, LATEST_RUN.TAR_DESC)
-					.from(LATEST_RUN)
-					.leftJoin(KNOWN_COMMIT)
-					.on(KNOWN_COMMIT.REPO_ID.eq(LATEST_RUN.REPO_ID))
-					.and(KNOWN_COMMIT.HASH.eq(LATEST_RUN.COMMIT_HASH))
-					.where(condition);
-
-				if (repoId != null) {
-					query = query.and(LATEST_RUN.REPO_ID.eq(repoId.getIdAsString()));
-				}
-
-				final ResultQuery<Record4<String, String, String, String>> resultQuery;
-				if (orderByRunStartTimeDesc != null) {
-					resultQuery = query.orderBy(orderByRunStartTimeDesc
-						? LATEST_RUN.START_TIME.desc()
-						: LATEST_RUN.START_TIME.asc())
-						.limit(limit);
-				} else if (orderByCommitterTimeDesc != null) {
-					resultQuery = query.orderBy(orderByCommitterTimeDesc
-						? KNOWN_COMMIT.COMMITTER_DATE.desc()
-						: KNOWN_COMMIT.COMMITTER_DATE.asc())
-						.limit(limit);
-				} else {
-					resultQuery = query.limit(limit);
-				}
-
-				return resultQuery.stream()
-					.map(record -> new ShortRunDescription(
-						RunId.fromString(record.value1()),
-						record.value2(),
-						record.value3(),
-						record.value4()
-					))
-					.collect(toList());
-			} else {
-
-				Condition condition;
-				if (commitHash == null && description == null) {
-					condition = trueCondition();
-				} else {
-					condition = falseCondition();
-					if (commitHash != null) {
-						condition = condition.or(RUN.COMMIT_HASH.contains(commitHash));
-					}
-					if (description != null) {
-						condition = condition.or(RUN.TAR_DESC.contains(description)
-							.or(KNOWN_COMMIT.MESSAGE.contains(description)));
-					}
-				}
-
-				var query = db
-					.select(RUN.ID, RUN.COMMIT_HASH, KNOWN_COMMIT.MESSAGE, RUN.TAR_DESC)
-					.from(RUN)
-					.leftJoin(KNOWN_COMMIT)
-					.on(KNOWN_COMMIT.REPO_ID.eq(RUN.REPO_ID))
-					.and(KNOWN_COMMIT.HASH.eq(RUN.COMMIT_HASH))
-					.where(condition);
-
-				if (repoId != null) {
-					query = query.and(RUN.REPO_ID.eq(repoId.getIdAsString()));
-				}
-
-				final ResultQuery<Record4<String, String, String, String>> resultQuery;
-				if (orderByRunStartTimeDesc != null) {
-					resultQuery = query.orderBy(orderByRunStartTimeDesc
-						? RUN.START_TIME.desc()
-						: RUN.START_TIME.asc())
-						.limit(limit);
-				} else if (orderByCommitterTimeDesc != null) {
-					resultQuery = query.orderBy(orderByCommitterTimeDesc
-						? KNOWN_COMMIT.COMMITTER_DATE.desc()
-						: KNOWN_COMMIT.COMMITTER_DATE.asc())
-						.limit(limit);
-				} else {
-					resultQuery = query.limit(limit);
-				}
-
-				return resultQuery.stream()
-					.map(record -> new ShortRunDescription(
-						RunId.fromString(record.value1()),
-						record.value2(),
-						record.value3(),
-						record.value4()
-					))
-					.collect(toList());
+			if (repoId != null) {
+				query = query.and(RUN.REPO_ID.eq(repoId.getIdAsString()));
 			}
+
+			return query.orderBy(RUN.START_TIME.desc())
+				.limit(limit)
+				.stream()
+				.map(record -> new ShortRunDescription(
+					RunId.fromString(record.value1()),
+					record.value2(),
+					record.value3(),
+					record.value4()
+				))
+				.collect(toList());
 		}
 	}
 

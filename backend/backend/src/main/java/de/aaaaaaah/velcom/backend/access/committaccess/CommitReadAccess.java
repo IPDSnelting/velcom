@@ -410,4 +410,24 @@ public class CommitReadAccess {
 				.collect(toList());
 		}
 	}
+
+	public List<Commit> searchCommits(int limit, @Nullable RepoId repoId, String queryStr) {
+		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
+			SelectConditionStep<KnownCommitRecord> query = db.selectFrom(KNOWN_COMMIT)
+				.where(KNOWN_COMMIT.HASH.contains(queryStr)
+					.or(KNOWN_COMMIT.MESSAGE.contains(queryStr))
+					.or(KNOWN_COMMIT.AUTHOR.contains(queryStr))
+					.or(KNOWN_COMMIT.COMMITTER.contains(queryStr)));
+
+			if (repoId != null) {
+				query = query.and(KNOWN_COMMIT.REPO_ID.eq(repoId.getIdAsString()));
+			}
+
+			return query.orderBy(KNOWN_COMMIT.COMMITTER_DATE.desc())
+				.limit(limit)
+				.stream()
+				.map(CommitReadAccess::knownCommitRecordToCommit)
+				.collect(toList());
+		}
+	}
 }
