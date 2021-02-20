@@ -190,7 +190,7 @@ public class ServerMain extends Application<GlobalConfig> {
 			new CompareEndpoint(benchmarkAccess, commitAccess, dimensionAccess, runCache, latestRunCache,
 				runComparator, significanceFactors),
 			new DebugEndpoint(benchmarkAccess, dispatcher),
-			new GraphComparisonEndpoint(dimensionAccess, comparison),
+			new GraphComparisonEndpoint(benchmarkAccess, commitAccess, dimensionAccess),
 			new GraphDetailEndpoint(commitAccess, benchmarkAccess, dimensionAccess, repoAccess, runCache,
 				latestRunCache),
 			new ListenerEndpoint(listener),
