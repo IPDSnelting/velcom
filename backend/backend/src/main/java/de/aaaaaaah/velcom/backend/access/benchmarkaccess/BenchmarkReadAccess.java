@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
+import org.jooq.Record1;
 import org.jooq.codegen.db.tables.records.RunRecord;
 
 /**
@@ -201,11 +202,15 @@ public class BenchmarkReadAccess {
 		}
 
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			return db.selectFrom(RUN)
-				.orderBy(RUN.START_TIME.desc())
+			return db.select(RUN.ID)
+				.from(RUN)
+				.join(KNOWN_COMMIT)
+				.on(KNOWN_COMMIT.REPO_ID.eq(RUN.REPO_ID)
+					.and(KNOWN_COMMIT.HASH.eq(RUN.COMMIT_HASH)))
+				.orderBy(KNOWN_COMMIT.COMMITTER_DATE.desc())
 				.limit(skip, amount)
 				.stream()
-				.map(RunRecord::getId)
+				.map(Record1::value1)
 				.map(RunId::fromString)
 				.collect(toList());
 		}
