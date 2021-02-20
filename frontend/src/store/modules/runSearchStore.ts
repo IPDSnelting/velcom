@@ -49,7 +49,7 @@ export class RunSearchStore extends VxModule {
     const response = await axios.get('/search', {
       hideFromSnackbar: true,
       params: {
-        limit: query.limit,
+        limit: query.limit || 100,
         repo_id: query.repoId,
         query: query.query
       }

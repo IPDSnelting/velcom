@@ -1,5 +1,10 @@
 <template>
-  <v-data-iterator :items="displayedItems" item-key="id">
+  <v-data-iterator
+    :items="displayedItems"
+    item-key="id"
+    :items-per-page="50"
+    :footer-props="{ itemsPerPageOptions: [10, 20, 50, 100, -1] }"
+  >
     <template v-slot:default="props">
       <v-row>
         <v-col
@@ -9,6 +14,14 @@
           class="py-1"
         >
           <component :is="item.type" :item="item.item"></component>
+        </v-col>
+      </v-row>
+    </template>
+
+    <template #no-data>
+      <v-row justify="center">
+        <v-col cols="auto">
+          <span>Nothing found or no search term entered</span>
         </v-col>
       </v-row>
     </template>
