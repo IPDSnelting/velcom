@@ -13,7 +13,28 @@
           cols="12"
           class="py-1"
         >
-          <component :is="item.type" :item="item.item"></component>
+          <component :is="item.type" :item="item.item">
+            <template #compare-actions="{ hasRun }">
+              <v-tooltip left>
+                <template #activator="{ on }">
+                  <div v-on="on">
+                    <v-btn
+                      icon
+                      small
+                      :disabled="!hasRun"
+                      @click="$emit('mark-compare', item.item)"
+                    >
+                      <v-icon>{{ compareIcon }}</v-icon>
+                    </v-btn>
+                  </div>
+                </template>
+                <span v-if="hasRun">Mark this run for comparison</span>
+                <span v-else>
+                  Can't compare commits that were never benchmarked
+                </span>
+              </v-tooltip>
+            </template>
+          </component>
         </v-col>
       </v-row>
     </template>
@@ -36,6 +57,7 @@ import { SearchItem, SearchItemCommit } from '@/store/types'
 import SearchResultCommit from '@/components/search/SearchResultCommit.vue'
 import SearchResultTar from '@/components/search/SearchResultTar.vue'
 import SearchResultRun from '@/components/search/SearchResultRun.vue'
+import { mdiScaleBalance } from '@mdi/js'
 
 class DisplayedItem {
   readonly id: string
@@ -69,5 +91,7 @@ export default class SearchResultList extends Vue {
   private get displayedItems(): DisplayedItem[] {
     return this.items.map(it => new DisplayedItem(it))
   }
+
+  private readonly compareIcon = mdiScaleBalance
 }
 </script>

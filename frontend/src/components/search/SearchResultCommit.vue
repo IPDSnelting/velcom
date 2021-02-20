@@ -32,7 +32,9 @@
                   <v-col cols="auto">
                     <commit-chip :commitHash="item.hash"></commit-chip>
                   </v-col>
-                  <span class="pl-3" v-if="hasRun"> I has run </span>
+                  <span class="pl-3">
+                    <slot name="compare-actions" :has-run="hasRun"></slot>
+                  </span>
                 </v-row>
               </v-container>
             </v-col>
@@ -83,7 +85,7 @@ export default class SearchResultCommit extends Vue {
     return formatDateUTC(date)
   }
 
-  private hasRun() {
+  private get hasRun() {
     return this.item.hasRun
   }
 

@@ -22,7 +22,9 @@
                   <v-col cols="auto">
                     <commit-chip :commitHash="item.id"></commit-chip>
                   </v-col>
-                  <span class="pl-3"> I has run </span>
+                  <span class="pl-3">
+                    <slot name="compare-actions" :has-run="true"></slot>
+                  </span>
                 </v-row>
               </v-container>
             </v-col>
