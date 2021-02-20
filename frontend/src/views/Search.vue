@@ -19,26 +19,36 @@
     <v-row justify="center" v-if="compareFirst || compareSecond">
       <v-col class="mx-5" sm="12" md="8">
         <v-card outlined>
-          <v-card-title>Compare two runs</v-card-title>
-          <v-card-text>
-            <v-row no-gutters justify="space-around">
+          <v-card-title class="d-flex justify-center">
+            <div>Compare two runs</div>
+          </v-card-title>
+          <v-card-text class="pb-0">
+            <v-row no-gutters justify="center">
               <v-col cols="5" class="d-flex" style="justify-content: end">
-                <v-chip close @click:close="compareFirst = null">
+                <v-chip
+                  close
+                  @click:close="compareFirst = null"
+                  :outlined="!compareFirst"
+                  :disabled="!compareFirst"
+                >
                   <span v-if="compareFirst">
                     {{ summaryForItem(compareFirst) }}
                   </span>
                   <span v-else class="font-italic">Select another run</span>
                 </v-chip>
               </v-col>
-              <v-spacer></v-spacer>
-              <v-col cols="auto">
+              <v-col cols="auto" class="mx-2">
                 <v-btn icon @click="swapOrder">
                   <v-icon>{{ swapIcon }}</v-icon>
                 </v-btn>
               </v-col>
-              <v-spacer></v-spacer>
               <v-col cols="5" class="d-flex" style="justify-content: start">
-                <v-chip close @click:close="compareSecond = null">
+                <v-chip
+                  close
+                  @click:close="compareSecond = null"
+                  :outlined="!compareSecond"
+                  :disabled="!compareSecond"
+                >
                   <span v-if="compareSecond">
                     {{ summaryForItem(compareSecond) }}
                   </span>
