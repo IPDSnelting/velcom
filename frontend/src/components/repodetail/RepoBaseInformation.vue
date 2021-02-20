@@ -6,8 +6,8 @@
         <span class="ml-5 subtitle-1">{{ repo.id }}</span>
         <v-spacer></v-spacer>
         <v-btn text :to="{ name: 'search', query: { repoId: repo.id } }">
-          Compare Runs
-          <v-icon right size="22">{{ compareRunIcon }}</v-icon>
+          Search and Compare Runs
+          <v-icon right size="22">{{ searchAndCompareIcon }}</v-icon>
         </v-btn>
       </v-toolbar>
     </v-card-title>
@@ -72,7 +72,7 @@ import { Prop } from 'vue-property-decorator'
 import { Repo, RepoBranch } from '@/store/types'
 import { vxm } from '@/store'
 import RepoUpdateDialog from '@/components/dialogs/RepoUpdateDialog.vue'
-import { mdiScaleBalance } from '@mdi/js'
+import { mdiCompassOutline } from '@mdi/js'
 
 @Component({
   components: {
@@ -136,7 +136,7 @@ export default class RepoBaseInformation extends Vue {
   }
 
   // ===== ICONS =====
-  private compareRunIcon = mdiScaleBalance
+  private searchAndCompareIcon = mdiCompassOutline
 }
 </script>
 
