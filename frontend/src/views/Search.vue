@@ -4,12 +4,23 @@
       <v-col>
         <h1>Voogle</h1>
       </v-col>
+    </v-row>
+    <v-row>
+      <v-col class="mx-5">
+        <v-text-field
+          v-model="searchQuery"
+          outlined
+          label="Search query…"
+          placeholder="Enter a commit message, commit hash, run id or tar description"
+          hide-details
+        ></v-text-field>
+      </v-col>
       <v-col cols="auto">
         <v-row no-gutters align="center">
           <v-col cols="auto" class="mr-4">
             <v-checkbox
               v-model="constrainToRepo"
-              label="Limit searches to the following repo"
+              label="Limit searches to"
             ></v-checkbox>
           </v-col>
           <v-col cols="auto">
@@ -22,21 +33,10 @@
         </v-row>
       </v-col>
     </v-row>
-    <v-row>
-      <v-col class="mx-5">
-        <v-text-field
-          v-model="searchQuery"
-          outlined
-          label="Search query…"
-          placeholder="Enter a commit message, commit hash, run id or tar description"
-          hide-details
-        ></v-text-field>
-      </v-col>
-    </v-row>
-    <v-row justify="center" v-if="compareFirst || compareSecond">
+    <v-row justify="center" v-if="compareFirst || compareSecond" class="my-3">
       <v-col class="mx-5" sm="12" md="8">
-        <v-card outlined>
-          <v-card-title class="d-flex justify-center">
+        <v-card flat>
+          <v-card-title class="d-flex justify-center pt-0">
             <div>Compare two runs</div>
           </v-card-title>
           <v-card-text class="pb-0">
