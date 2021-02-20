@@ -15,7 +15,6 @@ import de.aaaaaaah.velcom.backend.access.taskaccess.TaskWriteAccess;
 import de.aaaaaaah.velcom.backend.data.benchrepo.BenchRepo;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.data.recentruns.SignificantRunsCollector;
-import de.aaaaaaah.velcom.backend.data.repocomparison.TimesliceComparison;
 import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparator;
 import de.aaaaaaah.velcom.backend.data.runcomparison.SignificanceFactors;
 import de.aaaaaaah.velcom.backend.listener.Listener;
@@ -159,8 +158,6 @@ public class ServerMain extends Application<GlobalConfig> {
 			configuration.getSignificanceMinStddevAmount()
 		);
 		RunComparator runComparator = new RunComparator(significanceFactors);
-		TimesliceComparison comparison = new TimesliceComparison(benchmarkAccess, commitAccess,
-			dimensionAccess, runCache, latestRunCache);
 		SignificantRunsCollector significantRunsCollector = new SignificantRunsCollector(
 			significanceFactors, benchmarkAccess, commitAccess, dimensionAccess, runCache, latestRunCache,
 			runComparator);
