@@ -45,9 +45,8 @@ import { Prop } from 'vue-property-decorator'
 import { RawLocation } from 'vue-router'
 import CommitChip from '@/components/CommitChip.vue'
 import InlineMinimalRepoDisplay from '@/components/InlineMinimalRepoDisplay.vue'
-import { vxm } from '@/store'
 import { mdiRunFast } from '@mdi/js'
-import { ShortRunDescription } from '@/store/types'
+import { SearchItemRun } from '@/store/types'
 
 @Component({
   components: {
@@ -56,9 +55,8 @@ import { ShortRunDescription } from '@/store/types'
   }
 })
 export default class SearchResultRun extends Vue {
-  // FIXME: Use a custom datatype
   @Prop()
-  private readonly item!: ShortRunDescription
+  private readonly item!: SearchItemRun
 
   private get linkLocation(): RawLocation {
     return {
@@ -67,9 +65,8 @@ export default class SearchResultRun extends Vue {
     }
   }
 
-  // FIXME: Use a proper value here
   private get attachedRepoId() {
-    return vxm.repoModule.allRepos[0].id
+    return this.item.repoId
   }
 
   private readonly runIcon = mdiRunFast

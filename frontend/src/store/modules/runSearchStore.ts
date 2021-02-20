@@ -46,7 +46,7 @@ export class RunSearchStore extends VxModule {
 
   @action
   public async searchRunNew(query: NewRunQuery): Promise<SearchItem[]> {
-    const response = await axios.get('/run/search', {
+    const response = await axios.get('/search', {
       hideFromSnackbar: true,
       params: {
         limit: query.limit,

@@ -571,4 +571,58 @@ export class StreamedRunnerOutput {
   }
 }
 
-export type SearchItem = ShortRunDescription | CommitDescription
+export class SearchItemCommit {
+  readonly repoId: RepoId
+  readonly hash: CommitHash
+  readonly author: string
+  readonly authorDate: Date
+  readonly committer: string
+  readonly committerDate: Date
+  readonly summary: string
+  readonly hasRun: boolean
+
+  // noinspection DuplicatedCode
+  constructor(
+    repoId: RepoId,
+    hash: string,
+    author: string,
+    authorDate: Date,
+    committer: string,
+    committerDate: Date,
+    summary: string,
+    hasRun: boolean
+  ) {
+    this.repoId = repoId
+    this.hash = hash
+    this.author = author
+    this.authorDate = authorDate
+    this.committer = committer
+    this.committerDate = committerDate
+    this.summary = summary
+    this.hasRun = hasRun
+  }
+}
+
+export class SearchItemRun {
+  readonly id: RunId
+  readonly repoId?: RepoId
+  readonly commitHash?: CommitHash
+  readonly commitSummary?: string
+  readonly tarDescription?: string
+
+  constructor(
+    id: RunId,
+    repoId: RepoId,
+    commitHash: CommitHash,
+    commitSummary: string,
+    tarDescription: string
+  ) {
+    this.id = id
+    this.repoId = repoId
+    this.commitHash = commitHash
+    this.commitSummary = commitSummary
+    this.tarDescription = tarDescription
+  }
+}
+
+export type SearchItem = SearchItemCommit | SearchItemRun

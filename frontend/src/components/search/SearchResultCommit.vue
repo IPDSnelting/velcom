@@ -14,8 +14,16 @@
                 </router-link>
               </v-list-item-title>
               <v-list-item-subtitle>
-                <span>{{ item.author }}</span> authored on
-                <span :title="formattedDateUTC">{{ formattedDate }}</span>
+                <span class="author">{{ item.author }}</span> authored on
+                <span :title="formatDateUTC(item.authorDate)">
+                  {{ formatDate(item.authorDate) }}
+                </span>
+                <div v-if="showCommitter">
+                  <span class="author">{{ item.committer }}</span> committed on
+                  <span :title="formatDateUTC(item.committerDate)">
+                    {{ formatDate(item.committerDate) }}
+                  </span>
+                </div>
               </v-list-item-subtitle>
             </v-col>
             <v-col cols="auto">
@@ -39,7 +47,7 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
-import { CommitDescription } from '@/store/types'
+import { SearchItemCommit } from '@/store/types'
 import { RawLocation } from 'vue-router'
 import { formatDate, formatDateUTC } from '@/util/TimeUtil'
 import CommitChip from '@/components/CommitChip.vue'
@@ -54,7 +62,7 @@ import { mdiSourceCommit } from '@mdi/js'
 })
 export default class SearchResultCommit extends Vue {
   @Prop()
-  private readonly item!: CommitDescription
+  private readonly item!: SearchItemCommit
 
   private get commitLinkLocation(): RawLocation {
     return {
@@ -63,16 +71,20 @@ export default class SearchResultCommit extends Vue {
     }
   }
 
-  private get formattedDate() {
-    return formatDate(this.item.authorDate || new Date(0))
+  private get showCommitter() {
+    return this.item.committer !== this.item.author
   }
 
-  private get formattedDateUTC() {
-    return formatDateUTC(this.item.authorDate || new Date(0))
+  private formatDate(date: Date) {
+    return formatDate(date)
+  }
+
+  private formatDateUTC(date: Date) {
+    return formatDateUTC(date)
   }
 
   private hasRun() {
-    return true
+    return this.item.hasRun
   }
 
   private readonly commitIcon = mdiSourceCommit

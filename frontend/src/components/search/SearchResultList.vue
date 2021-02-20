@@ -19,7 +19,7 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
-import { CommitDescription, SearchItem } from '@/store/types'
+import { SearchItem, SearchItemCommit } from '@/store/types'
 import SearchResultCommit from '@/components/search/SearchResultCommit.vue'
 import SearchResultTar from '@/components/search/SearchResultTar.vue'
 import SearchResultRun from '@/components/search/SearchResultRun.vue'
@@ -31,13 +31,13 @@ class DisplayedItem {
 
   constructor(item: SearchItem) {
     this.id =
-      item instanceof CommitDescription ? item.repoId + item.hash : item.id
+      item instanceof SearchItemCommit ? item.repoId + item.hash : item.id
     this.item = item
 
-    if (item instanceof CommitDescription) {
+    if (item instanceof SearchItemCommit) {
       this.type = 'commit'
     } else {
-      this.type = item.tarSummary ? 'tar' : 'run'
+      this.type = item.tarDescription ? 'tar' : 'run'
     }
   }
 }

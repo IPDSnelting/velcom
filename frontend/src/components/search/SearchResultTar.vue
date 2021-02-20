@@ -8,7 +8,7 @@
             <v-col cols="auto" class="flex-shrink-too mr-3">
               <v-list-item-title>
                 <router-link class="concealed-link" :to="linkLocation">
-                  {{ item.tarSummary }}
+                  {{ item.tarDescription }}
                 </router-link>
               </v-list-item-title>
               <v-list-item-subtitle v-if="attachedRepoId">
@@ -40,9 +40,8 @@ import { Prop } from 'vue-property-decorator'
 import { RawLocation } from 'vue-router'
 import CommitChip from '@/components/CommitChip.vue'
 import InlineMinimalRepoDisplay from '@/components/InlineMinimalRepoDisplay.vue'
-import { vxm } from '@/store'
 import { mdiFolderZipOutline } from '@mdi/js'
-import { ShortRunDescription } from '@/store/types'
+import { SearchItemRun } from '@/store/types'
 
 @Component({
   components: {
@@ -51,9 +50,8 @@ import { ShortRunDescription } from '@/store/types'
   }
 })
 export default class SearchResultTar extends Vue {
-  // FIXME: Use a custom type here
   @Prop()
-  private readonly item!: ShortRunDescription
+  private readonly item!: SearchItemRun
 
   private get linkLocation(): RawLocation {
     return {
@@ -62,9 +60,8 @@ export default class SearchResultTar extends Vue {
     }
   }
 
-  // FIXME: Use a proper value here
   private get attachedRepoId() {
-    return Math.random() > 0.5 ? vxm.repoModule.allRepos[0].id : null
+    return this.item.repoId
   }
 
   private readonly tarIcon = mdiFolderZipOutline
