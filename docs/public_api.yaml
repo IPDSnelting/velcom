@@ -677,9 +677,13 @@ paths:
                             properties:
                               hash:
                                 $ref: '#/components/schemas/CommitHash'
+                              parents:
+                                type: array
+                                items:
+                                  $ref: '#/components/schemas/CommitHash'
                               author:
                                 type: string
-                              author_date:
+                              committer_date:
                                 $ref: '#/components/schemas/Time'
                               summary:
                                 type: string
@@ -688,10 +692,10 @@ paths:
                                 description: 'One value for each dimension. For the order, see the `dimensions` field'
                             required:
                               - hash
+                              - parents
                               - author
-                              - author_date
+                              - committer_date
                               - summary
-                              - value
                       required:
                         - repo_id
                         - commits
