@@ -58,11 +58,9 @@ import RepoAddDialog from '../components/dialogs/RepoAddDialog.vue'
 import NotFound404 from './NotFound404.vue'
 import RepoBaseInformation from '@/components/repodetail/RepoBaseInformation.vue'
 import RepoGraphView from '@/views/RepoGraphView.vue'
-import RunSearch from '@/components/search/RunSearch.vue'
 
 @Component({
   components: {
-    'run-search': RunSearch,
     'repo-graph-view': RepoGraphView,
     'repo-base-information': RepoBaseInformation,
     'repo-select': RepoSelectionComponent,

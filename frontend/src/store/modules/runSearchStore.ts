@@ -1,7 +1,10 @@
 import { action, createModule } from 'vuex-class-component'
 import axios from 'axios'
-import { RepoId, RunId, ShortRunDescription } from '@/store/types'
-import { shortRunDescriptionFromJson } from '@/util/RunSearchJsonHelper'
+import { RepoId, RunId, SearchItem, ShortRunDescription } from '@/store/types'
+import {
+  searchItemsFromJson,
+  shortRunDescriptionFromJson
+} from '@/util/RunSearchJsonHelper'
 
 const VxModule = createModule({
   namespaced: 'runSearchModule',
@@ -17,13 +20,18 @@ export type RunQuery = {
   orderBy?: 'run_start_time' | 'committer_date'
 }
 
+export type NewRunQuery = {
+  limit?: number
+  repoId?: RepoId
+  query: string
+}
+
 export class RunSearchStore extends VxModule {
   @action
   public async searchRun(query: RunQuery): Promise<ShortRunDescription[]> {
     const response = await axios.get('/run/search', {
       hideFromSnackbar: true,
       params: {
-        latest_runs_only: query.latestRunsOnly,
         limit: query.limit,
         repo_id: query.repoId,
         commit_hash: query.commitHash,
@@ -34,6 +42,20 @@ export class RunSearchStore extends VxModule {
     })
 
     return response.data.runs.map(shortRunDescriptionFromJson)
+  }
+
+  @action
+  public async searchRunNew(query: NewRunQuery): Promise<SearchItem[]> {
+    const response = await axios.get('/run/search', {
+      hideFromSnackbar: true,
+      params: {
+        limit: query.limit,
+        repo_id: query.repoId,
+        query: query.query
+      }
+    })
+
+    return searchItemsFromJson(response.data)
   }
 
   @action

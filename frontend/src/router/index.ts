@@ -17,6 +17,7 @@ import {
 import { vxm } from '@/store'
 import TaskDetailView from '@/views/TaskDetailView.vue'
 import PrepareRunCompare from '@/views/PrepareCompare.vue'
+import Search from '@/views/Search.vue'
 
 Vue.use(VueRouter)
 
@@ -26,6 +27,7 @@ export type RouteName =
   | 'repo-detail-frame'
   | 'repo-detail'
   | 'queue'
+  | 'search'
   | 'prepare-run-compare'
   | 'run-comparison'
   | 'run-detail'
@@ -109,6 +111,15 @@ const routes: RouteInfo[] = [
     meta: {
       navigable: false,
       label: 'Prepare Run Comparison'
+    }
+  },
+  {
+    path: '/search',
+    name: 'search',
+    component: Search,
+    meta: {
+      navigable: false,
+      label: 'Voogle - Search'
     }
   },
   {

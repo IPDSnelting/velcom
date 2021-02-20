@@ -570,3 +570,5 @@ export class StreamedRunnerOutput {
     this.indexOfFirstLine = lineOffset
   }
 }
+
+export type SearchItem = ShortRunDescription | CommitDescription
