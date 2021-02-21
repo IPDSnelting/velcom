@@ -71,7 +71,11 @@ public class Connection implements WebSocket.Listener, HeartbeatWebsocket {
 
 		serializer.serialize(packet).ifPresentOrElse(
 			str -> socket.sendText(str, true),
-			() -> close(StatusCode.ILLEGAL_PACKET)
+			() -> {
+				LOGGER.warn("Failed to serialize and send packet, closing connection");
+				LOGGER.warn("Packet: {}", packet);
+				close(StatusCode.ILLEGAL_PACKET);
+			}
 		);
 	}
 
