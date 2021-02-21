@@ -183,7 +183,9 @@ public class BenchmarkReadAccess {
 	}
 
 	/**
-	 * Get the ids of the most recent runs ordered by their start time.
+	 * Get the ids of the most recent runs ordered by their commit's committer time. Runs with no
+	 * associated commit are ignored. If a commit has multiple runs, they are ordered from new to
+	 * old.
 	 *
 	 * @param skip how many recent runs to skip
 	 * @param amount how many recent runs to collect
@@ -207,7 +209,7 @@ public class BenchmarkReadAccess {
 				.join(KNOWN_COMMIT)
 				.on(KNOWN_COMMIT.REPO_ID.eq(RUN.REPO_ID)
 					.and(KNOWN_COMMIT.HASH.eq(RUN.COMMIT_HASH)))
-				.orderBy(KNOWN_COMMIT.COMMITTER_DATE.desc())
+				.orderBy(KNOWN_COMMIT.COMMITTER_DATE.desc(), RUN.START_TIME.desc())
 				.limit(skip, amount)
 				.stream()
 				.map(Record1::value1)
