@@ -20,8 +20,8 @@ import de.aaaaaaah.velcom.backend.data.repocomparison.TimesliceComparison;
 import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparator;
 import de.aaaaaaah.velcom.backend.data.runcomparison.SignificanceFactors;
 import de.aaaaaaah.velcom.backend.listener.Listener;
-import de.aaaaaaah.velcom.backend.restapi.authentication.RepoAuthenticator;
-import de.aaaaaaah.velcom.backend.restapi.authentication.RepoUser;
+import de.aaaaaaah.velcom.backend.restapi.authentication.AdminAuthenticator;
+import de.aaaaaaah.velcom.backend.restapi.authentication.Admin;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.AllReposEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.CommitEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.CompareEndpoint;
@@ -186,7 +186,9 @@ public class ServerMain extends Application<GlobalConfig> {
 		RunnerAwareServerFactory.getInstance().setBenchRepo(benchRepo);
 
 		// API
-		configureApi(environment, tokenAccess);
+		configureSerialization(environment);
+		configureExceptionMappers(environment);
+		configureAuthentication(environment, configuration.getWebAdminToken());
 		configureCors(environment);
 
 		// Endpoints
@@ -275,14 +277,14 @@ public class ServerMain extends Application<GlobalConfig> {
 			.addMapping("/prometheusMetrics");
 	}
 
-	private void configureApi(Environment environment, TokenWriteAccess tokenAccess) {
-		// Serialization
+	private void configureSerialization(Environment environment) {
 		// This mapper should be configured the same as the one in SerializingTest.java
 		environment.getObjectMapper()
 			.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE)
 			.setSerializationInclusion(Include.NON_NULL);
+	}
 
-		// Exceptions
+	private void configureExceptionMappers(Environment environment) {
 		environment.jersey().register(new InvalidQueryParamsExceptionMapper());
 		environment.jersey().register(new NoSuchCommitExceptionMapper());
 		environment.jersey().register(new NoSuchDimensionExceptionMapper());
@@ -291,16 +293,17 @@ public class ServerMain extends Application<GlobalConfig> {
 		environment.jersey().register(new NoSuchTaskExceptionMapper());
 		environment.jersey().register(new TaskAlreadyExistsExceptionMapper());
 		environment.jersey().register(new ArgumentParseExceptionMapper());
+	}
 
-		// Authentication
+	private void configureAuthentication(Environment environment, String adminToken) {
 		environment.jersey().register(
 			new AuthDynamicFeature(
-				new BasicCredentialAuthFilter.Builder<RepoUser>()
-					.setAuthenticator(new RepoAuthenticator(tokenAccess))
+				new BasicCredentialAuthFilter.Builder<Admin>()
+					.setAuthenticator(new AdminAuthenticator(adminToken))
 					.buildAuthFilter()
 			)
 		);
-		environment.jersey().register(new AuthValueFactoryProvider.Binder<>(RepoUser.class));
+		environment.jersey().register(new AuthValueFactoryProvider.Binder<>(Admin.class));
 	}
 
 	private void configureCors(Environment environment) {

@@ -17,7 +17,7 @@ import de.aaaaaaah.velcom.backend.access.repoaccess.exceptions.NoSuchRepoExcepti
 import de.aaaaaaah.velcom.backend.access.tokenaccess.TokenWriteAccess;
 import de.aaaaaaah.velcom.backend.access.tokenaccess.entities.AuthToken;
 import de.aaaaaaah.velcom.backend.listener.Listener;
-import de.aaaaaaah.velcom.backend.restapi.authentication.RepoUser;
+import de.aaaaaaah.velcom.backend.restapi.authentication.Admin;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonBranch;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimension;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRepo;
@@ -90,10 +90,8 @@ public class RepoEndpoint {
 
 	@POST
 	@Timed(histogram = true)
-	public PostReply post(@Auth RepoUser user, @NotNull PostRequest request)
+	public PostReply post(@Auth Admin admin, @NotNull PostRequest request)
 		throws FailedToAddRepoException {
-
-		user.guardAdminAccess();
 
 		RemoteUrl remoteUrl = new RemoteUrl(request.getRemoteUrl());
 		Repo repo = repoAccess.addRepo(request.getName(), remoteUrl);
@@ -182,15 +180,13 @@ public class RepoEndpoint {
 	@Path("{repoid}")
 	@Timed(histogram = true)
 	public void patch(
-		@Auth RepoUser user,
+		@Auth Admin admin,
 		@PathParam("repoid") UUID repoUuid,
 		@NotNull PatchRequest request
 	) throws NoSuchRepoException {
-
 		RepoId repoId = new RepoId(repoUuid);
-		user.guardRepoAccess(repoId);
 
-		// Guards whether the repo exists
+		// Guards whether the repo exists (that's why it's so high up in the function)
 		Repo repo = repoAccess.getRepo(repoId);
 
 		repoAccess.updateRepo(
@@ -260,12 +256,10 @@ public class RepoEndpoint {
 	@DELETE
 	@Path("{repoid}")
 	@Timed(histogram = true)
-	public void delete(@Auth RepoUser user, @PathParam("repoid") UUID repoUuid)
+	public void delete(@Auth Admin admin, @PathParam("repoid") UUID repoUuid)
 		throws NoSuchRepoException {
 
 		RepoId repoId = new RepoId(repoUuid);
-		user.guardRepoAccess(repoId);
-
 		repoAccess.guardRepoExists(repoId);
 
 		// Also deletes the repo from all tables in the db that have a foreign key on the repo table
