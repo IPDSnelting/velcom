@@ -15,7 +15,6 @@
   <properties>
     <db.url>jdbc:sqlite:${project.build.directory}/data.db</db.url>
 
-    <argon2.version>2.7</argon2.version>
     <aspectj.version>1.9.6</aspectj.version>
     <caffeine.version>2.8.5</caffeine.version>
     <dropwizard.version>2.0.13</dropwizard.version>
@@ -373,12 +372,6 @@
     </dependency>
 
     <!-- misc dependencies -->
-    <!-- https://mvnrepository.com/artifact/de.mkammerer/argon2-jvm -->
-    <dependency>
-      <artifactId>argon2-jvm</artifactId>
-      <groupId>de.mkammerer</groupId>
-      <version>${argon2.version}</version>
-    </dependency>
     <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-compress -->
     <dependency>
       <artifactId>commons-compress</artifactId>

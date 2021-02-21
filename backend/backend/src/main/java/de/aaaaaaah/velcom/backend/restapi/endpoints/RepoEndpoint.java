@@ -14,8 +14,6 @@ import de.aaaaaaah.velcom.backend.access.repoaccess.entities.Repo;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.repoaccess.exceptions.FailedToAddRepoException;
 import de.aaaaaaah.velcom.backend.access.repoaccess.exceptions.NoSuchRepoException;
-import de.aaaaaaah.velcom.backend.access.tokenaccess.TokenWriteAccess;
-import de.aaaaaaah.velcom.backend.access.tokenaccess.entities.AuthToken;
 import de.aaaaaaah.velcom.backend.listener.Listener;
 import de.aaaaaaah.velcom.backend.restapi.authentication.Admin;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonBranch;
@@ -52,17 +50,14 @@ public class RepoEndpoint {
 
 	private final DimensionReadAccess dimensionAccess;
 	private final RepoWriteAccess repoAccess;
-	private final TokenWriteAccess tokenAccess;
 	private final AvailableDimensionsCache availableDimensionsCache;
 	private final Listener listener;
 
 	public RepoEndpoint(DimensionReadAccess dimensionAccess, RepoWriteAccess repoAccess,
-		TokenWriteAccess tokenAccess, AvailableDimensionsCache availableDimensionsCache,
-		Listener listener) {
+		AvailableDimensionsCache availableDimensionsCache, Listener listener) {
 
 		this.dimensionAccess = dimensionAccess;
 		this.repoAccess = repoAccess;
-		this.tokenAccess = tokenAccess;
 		this.availableDimensionsCache = availableDimensionsCache;
 		this.listener = listener;
 	}
@@ -83,7 +78,6 @@ public class RepoEndpoint {
 			repo.getName(),
 			repo.getRemoteUrlAsString(),
 			branches,
-			tokenAccess.hasToken(repo.getId()),
 			jsonDimensions
 		);
 	}
@@ -95,10 +89,6 @@ public class RepoEndpoint {
 
 		RemoteUrl remoteUrl = new RemoteUrl(request.getRemoteUrl());
 		Repo repo = repoAccess.addRepo(request.getName(), remoteUrl);
-
-		request.getToken()
-			.map(AuthToken::new)
-			.ifPresent(token -> tokenAccess.setToken(repo.getId(), token));
 
 		if (listener.updateRepo(repo)) {
 			return new PostReply(toJsonRepo(repo));
@@ -113,18 +103,14 @@ public class RepoEndpoint {
 
 		private final String name;
 		private final String remoteUrl;
-		@Nullable
-		private final String token;
 
 		@JsonCreator
 		public PostRequest(
 			@JsonProperty(required = true) String name,
-			@JsonProperty(required = true) String remoteUrl,
-			@JsonProperty @Nullable String token
+			@JsonProperty(required = true) String remoteUrl
 		) {
 			this.name = name;
 			this.remoteUrl = remoteUrl;
-			this.token = token;
 		}
 
 		public String getName() {
@@ -133,10 +119,6 @@ public class RepoEndpoint {
 
 		public String getRemoteUrl() {
 			return remoteUrl;
-		}
-
-		public Optional<String> getToken() {
-			return Optional.ofNullable(token);
 		}
 	}
 
@@ -195,14 +177,6 @@ public class RepoEndpoint {
 			request.getRemoteUrl().map(RemoteUrl::new).orElse(null)
 		);
 
-		request.getToken().ifPresent(token -> {
-			if (token.isEmpty()) {
-				tokenAccess.setToken(repoId, null);
-			} else {
-				tokenAccess.setToken(repoId, new AuthToken(token));
-			}
-		});
-
 		request.getTrackedBranches().ifPresent(trackedBranches -> {
 			Set<BranchName> trackedBranchNames = trackedBranches.stream()
 				.map(BranchName::fromName)
@@ -223,17 +197,14 @@ public class RepoEndpoint {
 		private final String remoteUrl;
 		@Nullable
 		private final List<String> trackedBranches;
-		@Nullable
-		private final String token;
 
 		@JsonCreator
 		public PatchRequest(@Nullable String name, @Nullable String remoteUrl,
-			@Nullable List<String> trackedBranches, @Nullable String token) {
+			@Nullable List<String> trackedBranches) {
 
 			this.name = name;
 			this.remoteUrl = remoteUrl;
 			this.trackedBranches = trackedBranches;
-			this.token = token;
 		}
 
 		public Optional<String> getName() {
@@ -246,10 +217,6 @@ public class RepoEndpoint {
 
 		public Optional<List<String>> getTrackedBranches() {
 			return Optional.ofNullable(trackedBranches);
-		}
-
-		public Optional<String> getToken() {
-			return Optional.ofNullable(token);
 		}
 	}
 

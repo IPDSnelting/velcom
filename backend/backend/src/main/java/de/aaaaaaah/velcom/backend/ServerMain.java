@@ -11,8 +11,6 @@ import de.aaaaaaah.velcom.backend.access.committaccess.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.access.dimensionaccess.DimensionReadAccess;
 import de.aaaaaaah.velcom.backend.access.repoaccess.RepoWriteAccess;
 import de.aaaaaaah.velcom.backend.access.taskaccess.TaskWriteAccess;
-import de.aaaaaaah.velcom.backend.access.tokenaccess.TokenWriteAccess;
-import de.aaaaaaah.velcom.backend.access.tokenaccess.entities.AuthToken;
 import de.aaaaaaah.velcom.backend.data.benchrepo.BenchRepo;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.data.recentruns.SignificantRunsCollector;
@@ -20,8 +18,8 @@ import de.aaaaaaah.velcom.backend.data.repocomparison.TimesliceComparison;
 import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparator;
 import de.aaaaaaah.velcom.backend.data.runcomparison.SignificanceFactors;
 import de.aaaaaaah.velcom.backend.listener.Listener;
-import de.aaaaaaah.velcom.backend.restapi.authentication.AdminAuthenticator;
 import de.aaaaaaah.velcom.backend.restapi.authentication.Admin;
+import de.aaaaaaah.velcom.backend.restapi.authentication.AdminAuthenticator;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.AllReposEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.CommitEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.CompareEndpoint;
@@ -108,7 +106,6 @@ public class ServerMain extends Application<GlobalConfig> {
 
 	@Override
 	public void initialize(Bootstrap<GlobalConfig> bootstrap) {
-		bootstrap.addCommand(new FindHashIterationsCommand());
 		bootstrap.addBundle(new MultiPartBundle());
 	}
 
@@ -139,13 +136,6 @@ public class ServerMain extends Application<GlobalConfig> {
 		DimensionReadAccess dimensionAccess = new DimensionReadAccess(databaseStorage);
 		RepoWriteAccess repoAccess = new RepoWriteAccess(databaseStorage, availableDimensionsCache,
 			runCache, latestRunCache);
-		TokenWriteAccess tokenAccess = new TokenWriteAccess(
-			databaseStorage,
-			new AuthToken(configuration.getWebAdminToken()),
-			configuration.getHashIterations(),
-			configuration.getHashMemory(),
-			configuration.getHashParallelism()
-		);
 		ArchiveReadAccess archiveAccess = new ArchiveReadAccess(
 			managedDirs.getArchivesDir(),
 			repoStorage,
@@ -193,7 +183,7 @@ public class ServerMain extends Application<GlobalConfig> {
 
 		// Endpoints
 		Stream.of(
-			new AllReposEndpoint(dimensionAccess, repoAccess, tokenAccess, availableDimensionsCache),
+			new AllReposEndpoint(dimensionAccess, repoAccess, availableDimensionsCache),
 			new CommitEndpoint(benchmarkAccess, commitAccess, runCache),
 			new CompareEndpoint(benchmarkAccess, commitAccess, dimensionAccess, runCache, latestRunCache,
 				runComparator, significanceFactors),
@@ -205,7 +195,7 @@ public class ServerMain extends Application<GlobalConfig> {
 			new QueueEndpoint(commitAccess, repoAccess, queue, dispatcher),
 			new RecentRunsEndpoint(benchmarkAccess, commitAccess, dimensionAccess, runCache,
 				significantRunsCollector),
-			new RepoEndpoint(dimensionAccess, repoAccess, tokenAccess, availableDimensionsCache,
+			new RepoEndpoint(dimensionAccess, repoAccess, availableDimensionsCache,
 				listener),
 			new RunEndpoint(benchmarkAccess, commitAccess, dimensionAccess, runCache, latestRunCache,
 				runComparator, significanceFactors, significantRunsCollector),

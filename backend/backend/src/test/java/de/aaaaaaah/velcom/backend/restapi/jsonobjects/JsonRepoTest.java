@@ -19,7 +19,6 @@ class JsonRepoTest extends SerializingTest {
 				new JsonBranch("untracked", false, "bar"),
 				new JsonBranch("branches", false, "baz")
 			),
-			false,
 			List.of(new JsonDimension("b", "m", "u", Interpretation.NEUTRAL))
 		);
 		String json = "{"
@@ -31,7 +30,6 @@ class JsonRepoTest extends SerializingTest {
 			+ "  {\"name\": \"untracked\", \"tracked\": false, \"latest_commit\": \"bar\"},"
 			+ "  {\"name\": \"branches\", \"tracked\": false, \"latest_commit\": \"baz\"}"
 			+ "],"
-			+ "\"has_token\": false,"
 			+ "\"dimensions\": [{"
 			+ "  \"benchmark\": \"b\","
 			+ "  \"metric\": \"m\","
