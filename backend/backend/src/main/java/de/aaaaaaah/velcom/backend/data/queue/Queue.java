@@ -14,6 +14,7 @@ import de.aaaaaaah.velcom.backend.access.taskaccess.entities.Task;
 import de.aaaaaaah.velcom.backend.access.taskaccess.entities.TaskId;
 import de.aaaaaaah.velcom.backend.access.taskaccess.entities.TaskPriority;
 import de.aaaaaaah.velcom.backend.access.taskaccess.exceptions.NoSuchTaskException;
+import de.aaaaaaah.velcom.backend.access.taskaccess.exceptions.TaskCreationException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -184,10 +185,10 @@ public class Queue {
 	 * @param repoId the id of the repo the tar file should to (or null)
 	 * @param description the tar file's description
 	 * @param inputStream the tar file's contents
-	 * @return the new task or empty if the tar file could not be stored and no task was created
+	 * @return the newly created task
 	 */
-	public Optional<Task> addTar(String author, TaskPriority priority, @Nullable RepoId repoId,
-		String description, InputStream inputStream) {
+	public Task addTar(String author, TaskPriority priority, @Nullable RepoId repoId,
+		String description, InputStream inputStream) throws TaskCreationException {
 
 		return taskAccess.insertTar(author, priority, description, repoId, inputStream);
 	}
