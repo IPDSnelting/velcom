@@ -46,7 +46,7 @@
         </v-row>
       </v-container>
     </v-card-text>
-    <v-card-actions v-if="canEdit">
+    <v-card-actions v-if="isAdmin">
       <v-spacer></v-spacer>
       <repo-update :repoId="repo.id">
         <template #activator="{ on }">
@@ -93,8 +93,8 @@ export default class RepoBaseInformation extends Vue {
       )
   }
 
-  private get canEdit() {
-    return vxm.userModule.authorized(this.repo.id)
+  private get isAdmin() {
+    return vxm.userModule.isAdmin
   }
 
   private deleteRepository() {

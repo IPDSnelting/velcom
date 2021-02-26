@@ -17,6 +17,7 @@
               label="Access token"
               v-model="token"
               @keydown.enter.prevent="login"
+              autofocus
             ></v-text-field>
           </v-form>
         </v-card-text>
@@ -57,11 +58,6 @@ export default class LoginDialog extends Vue {
   private formValid: boolean = false
   private dialogOpen: boolean = false
 
-  @Watch('role')
-  private onRoleChange() {
-    ;(this.$refs.form as any).validate()
-  }
-
   @Watch('dialogOpen')
   private onOpened(opened: boolean) {
     if (!opened) {
@@ -82,10 +78,7 @@ export default class LoginDialog extends Vue {
     this.loading = true
 
     vxm.userModule
-      .logIn({
-        role: 'admin',
-        token: this.token
-      })
+      .logIn(this.token)
       .then(() => (this.dialogOpen = false))
       .finally(() => (this.loading = false))
   }
