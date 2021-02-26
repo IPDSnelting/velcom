@@ -9,7 +9,7 @@
           :dimension="pointDialogDimension"
           @close="pointDialogOpen = false"
         ></datapoint-dialog>
-        <div id="chart-container" @wheel="$emit('wheel', $event)">
+        <div id="chart-container" @wheel.capture="$emit('wheel', $event)">
           <v-chart
             ref="chart"
             :autoresize="true"
@@ -35,22 +35,35 @@ import {
   DimensionId,
   dimensionIdEqual
 } from '@/store/types'
-import { EChartOption } from 'echarts'
 import { Prop, Watch } from 'vue-property-decorator'
 import EChartsComp from 'vue-echarts'
 
-import 'echarts/lib/chart/line'
-import 'echarts/lib/chart/graph'
-import 'echarts/lib/component/polar'
-import 'echarts/lib/component/tooltip'
-import 'echarts/lib/component/legend'
-import 'echarts/lib/component/dataZoomSlider'
-import 'echarts/lib/component/dataZoom'
-import 'echarts/lib/component/dataZoomInside'
-import 'echarts/lib/component/toolbox'
-import 'echarts/lib/component/brush'
-import 'echarts/lib/component/markLine'
-import 'echarts/lib/component/markPoint'
+import {
+  LineChart,
+  LineSeriesOption,
+  GraphChart,
+  GraphSeriesOption
+} from 'echarts/charts'
+import {
+  GridComponent,
+  GridComponentOption,
+  TooltipComponent,
+  TooltipComponentOption,
+  LegendComponent,
+  LegendComponentOption,
+  DataZoomSliderComponent,
+  DataZoomInsideComponent,
+  DataZoomComponentOption,
+  ToolboxComponent,
+  ToolboxComponentOption,
+  BrushComponent,
+  BrushComponentOption,
+  MarkLineComponent,
+  MarkLineComponentOption,
+  MarkPointComponent,
+  MarkPointComponentOption
+} from 'echarts/components'
+import { use, ComposeOption } from 'echarts/core'
 import { vxm } from '@/store'
 import DetailDatapointDialog from '@/components/dialogs/DetailDatapointDialog.vue'
 import { DimensionDetailPoint } from '@/store/modules/detailGraphStore'
@@ -58,7 +71,36 @@ import { formatDate } from '@/util/TimeUtil'
 import { escapeHtml } from '@/util/TextUtils'
 import { CustomKeyEqualsMap } from '@/util/CustomKeyEqualsMap'
 
-type ValidEchartsSeries = EChartOption.SeriesLine | EChartOption.SeriesGraph
+use([
+  LineChart,
+  GraphChart,
+  GridComponent,
+  GridComponent,
+  TooltipComponent,
+  LegendComponent,
+  DataZoomInsideComponent,
+  DataZoomSliderComponent,
+  ToolboxComponent,
+  BrushComponent,
+  MarkLineComponent,
+  MarkPointComponent
+])
+
+// A minimal types for option is useful for checking if any components are missing.
+type ECOption = ComposeOption<
+  | LineSeriesOption
+  | GraphSeriesOption
+  | GridComponentOption
+  | LegendComponentOption
+  | DataZoomComponentOption
+  | ToolboxComponentOption
+  | TooltipComponentOption
+  | BrushComponentOption
+  | MarkLineComponentOption
+  | MarkPointComponentOption
+>
+
+type ValidEchartsSeries = LineSeriesOption | GraphSeriesOption
 type SeriesGenerationFunction = (id: DimensionId) => ValidEchartsSeries
 
 type BenchmarkStatus = 'success' | 'failed' | 'unbenchmarked'
@@ -152,7 +194,7 @@ export default class EchartsDetailGraph extends Vue {
   // <!--</editor-fold>-->
 
   // <!--<editor-fold desc="FIELDS">-->
-  private chartOptions: EChartOption = {}
+  private chartOptions: ECOption = {}
   private seriesGenerator: SeriesGenerationFunction = this.buildLineSeries
 
   // >>>> Datapoint Dialog >>>>
@@ -185,7 +227,14 @@ export default class EchartsDetailGraph extends Vue {
       xAxis: {
         type: 'time',
         min: vxm.detailGraphModule.startTime.getTime(),
-        max: vxm.detailGraphModule.endTime.getTime()
+        max: vxm.detailGraphModule.endTime.getTime(),
+        axisLabel: {
+          formatter: {
+            year: '{MMM}\n{yyyy}',
+            month: '{MMM}\n{yyyy}',
+            day: '{dd}.{MM}.\n{yyyy}'
+          }
+        }
       },
       yAxis: {
         type: 'value',
@@ -249,9 +298,8 @@ export default class EchartsDetailGraph extends Vue {
     this.updateMarkPoints()
   }
 
-  private tooltipFormatter(
-    params: EChartOption.Tooltip.Format | EChartOption.Tooltip.Format[]
-  ) {
+  // The correct type is not exposed sadly
+  private tooltipFormatter(params: any) {
     const values = Array.isArray(params) ? params.slice() : [params]
     // Sort them so the order corresponds to the order of the lines
     values.sort((a, b) => {
@@ -376,7 +424,7 @@ export default class EchartsDetailGraph extends Vue {
     return map
   }
 
-  private buildLineSeries(dimension: DimensionId): EChartOption.SeriesLine {
+  private buildLineSeries(dimension: DimensionId): LineSeriesOption {
     // noinspection JSMismatchedCollectionQueryUpdate
     const echartPoints: EchartsDataPoint[] = this.echartsDataPoints.get(
       dimension
@@ -394,19 +442,17 @@ export default class EchartsDetailGraph extends Vue {
     }
   }
 
-  private buildGraphSeries(dimension: DimensionId): EChartOption.SeriesGraph {
+  private buildGraphSeries(dimension: DimensionId): GraphSeriesOption {
     // noinspection JSMismatchedCollectionQueryUpdate
     const echartPoints: EchartsDataPoint[] = this.echartsDataPoints.get(
       dimension
     )!
-    const links: EChartOption.SeriesGraph.LinkObject[] = this.detailDataPoints.flatMap(
-      point => {
-        return point.parents.map(parent => ({
-          source: point.hash,
-          target: parent
-        }))
-      }
-    )
+    const links = this.detailDataPoints.flatMap(point => {
+      return point.parents.map(parent => ({
+        source: point.hash,
+        target: parent
+      }))
+    })
 
     return {
       type: 'graph',
@@ -520,6 +566,7 @@ export default class EchartsDetailGraph extends Vue {
       },
       label: {
         show: true,
+        color: this.themeColor('error'),
         formatter: (it: any) => {
           return it.name as string
         }
@@ -536,7 +583,7 @@ export default class EchartsDetailGraph extends Vue {
     }
 
     // Adjust padding so the label is not cut off on the right
-    const grid = this.chartOptions.grid as EChartOption.Grid
+    const grid = this.chartOptions.grid as GridComponentOption
     grid.right = hasReferenceLine ? 70 : 20
   }
 
@@ -595,10 +642,9 @@ export default class EchartsDetailGraph extends Vue {
   }
 
   private setZoomOnCorrectAxis(seriesId: string) {
-    const actualOptions: EChartOption = (this.$refs['chart'] as any)
-      .computedOptions
+    const actualOptions: ECOption = (this.$refs['chart'] as any).computedOptions
 
-    const orNull = (zoom: EChartOption.DataZoom, start: 'start' | 'end') => {
+    const orNull = (zoom: DataZoomComponentOption, start: 'start' | 'end') => {
       const value =
         start === 'start'
           ? (zoom.startValue as number | undefined | null)
@@ -607,33 +653,17 @@ export default class EchartsDetailGraph extends Vue {
         return null
       }
 
-      // We are fully zoomed out ==> set that to null
-      const zoomPercent = start === 'start' ? zoom.start : zoom.end
-      if (zoomPercent === 0 || zoomPercent === 100) {
-        return null
-      }
-
       return value
     }
 
+    const dataZooms = actualOptions.dataZoom as DataZoomComponentOption[]
+
     if (seriesId === 'x' || seriesId.includes('xAxis')) {
-      vxm.detailGraphModule.zoomXStartValue = orNull(
-        actualOptions.dataZoom![0],
-        'start'
-      )
-      vxm.detailGraphModule.zoomXEndValue = orNull(
-        actualOptions.dataZoom![0],
-        'end'
-      )
+      vxm.detailGraphModule.zoomXStartValue = orNull(dataZooms[0], 'start')
+      vxm.detailGraphModule.zoomXEndValue = orNull(dataZooms[0], 'end')
     } else {
-      vxm.detailGraphModule.zoomYStartValue = orNull(
-        actualOptions.dataZoom![1],
-        'start'
-      )
-      vxm.detailGraphModule.zoomYEndValue = orNull(
-        actualOptions.dataZoom![1],
-        'end'
-      )
+      vxm.detailGraphModule.zoomYStartValue = orNull(dataZooms[1], 'start')
+      vxm.detailGraphModule.zoomYEndValue = orNull(dataZooms[1], 'end')
     }
   }
 

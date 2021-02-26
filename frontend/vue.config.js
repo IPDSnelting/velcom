@@ -1,5 +1,5 @@
 module.exports = {
-  transpileDependencies: ['vuetify', 'vue-echarts', 'resize-detector'],
+  transpileDependencies: ['vue-echarts', 'resize-detector'],
   publicPath: process.env.BASE_URL,
   chainWebpack: config => {
     config.plugin('define').tap(definitions => {

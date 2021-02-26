@@ -14,45 +14,41 @@
         </v-btn>
       </v-toolbar>
     </v-card-title>
-    <v-expand-transition>
-      <div>
-        <v-card-text>
-          <v-container fluid>
-            <v-row align="center">
-              <v-col cols="3" class="subtitle-2">Remote-URL:</v-col>
-              <v-col cols="9">
-                <a :href="repo.remoteURL">{{ repo.remoteURL }}</a>
-              </v-col>
-            </v-row>
-            <v-row align="center">
-              <v-col cols="3" class="subtitle-2">ID:</v-col>
-              <v-col cols="9">{{ repo.id }}</v-col>
-            </v-row>
-            <v-row align="center">
-              <v-col cols="3" class="subtitle-2">Branches:</v-col>
-              <v-col cols="9">
-                <v-tooltip top v-for="branch in branches" :key="branch.name">
-                  <template v-slot:activator="{ on }">
-                    <v-chip
-                      :class="{
-                        'ma-2': true,
-                        untracked: !branch.tracked
-                      }"
-                      outlined
-                      label
-                      v-on="on"
-                      :color="branch.tracked ? 'success' : undefined"
-                      >{{ branch.name }}</v-chip
-                    >
-                  </template>
-                  {{ branch.tracked ? 'Tracked' : 'Not Tracked' }}
-                </v-tooltip>
-              </v-col>
-            </v-row>
-          </v-container>
-        </v-card-text>
-      </div>
-    </v-expand-transition>
+    <v-card-text>
+      <v-container fluid>
+        <v-row align="center">
+          <v-col cols="3" class="subtitle-2">Remote-URL:</v-col>
+          <v-col cols="9">
+            <a :href="repo.remoteURL">{{ repo.remoteURL }}</a>
+          </v-col>
+        </v-row>
+        <v-row align="center">
+          <v-col cols="3" class="subtitle-2">ID:</v-col>
+          <v-col cols="9">{{ repo.id }}</v-col>
+        </v-row>
+        <v-row align="center">
+          <v-col cols="3" class="subtitle-2">Branches:</v-col>
+          <v-col cols="9">
+            <v-tooltip top v-for="branch in branches" :key="branch.name">
+              <template v-slot:activator="{ on }">
+                <v-chip
+                  :class="{
+                    'ma-2': true,
+                    untracked: !branch.tracked
+                  }"
+                  outlined
+                  label
+                  v-on="on"
+                  :color="branch.tracked ? 'success' : undefined"
+                  >{{ branch.name }}</v-chip
+                >
+              </template>
+              {{ branch.tracked ? 'Tracked' : 'Not Tracked' }}
+            </v-tooltip>
+          </v-col>
+        </v-row>
+      </v-container>
+    </v-card-text>
     <v-card-actions v-if="canEdit">
       <v-spacer></v-spacer>
       <repo-update :repoId="repo.id">
@@ -79,7 +75,7 @@ import { Prop } from 'vue-property-decorator'
 import { Repo, RepoBranch } from '@/store/types'
 import { vxm } from '@/store'
 import RepoUpdateDialog from '@/components/dialogs/RepoUpdateDialog.vue'
-import { mdiChevronUp, mdiChevronDown, mdiScaleBalance } from '@mdi/js'
+import { mdiScaleBalance } from '@mdi/js'
 
 @Component({
   components: {
@@ -89,9 +85,6 @@ import { mdiChevronUp, mdiChevronDown, mdiScaleBalance } from '@mdi/js'
 export default class RepoBaseInformation extends Vue {
   @Prop()
   private repo!: Repo
-
-  private upIcon = mdiChevronUp
-  private downIcon = mdiChevronDown
 
   private get branches() {
     return this.repo.branches

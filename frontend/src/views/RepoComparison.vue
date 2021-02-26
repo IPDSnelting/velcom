@@ -134,29 +134,31 @@
           </v-card-text>
           <v-card-actions>
             <v-row no-gutters justify="center">
-              <v-col cols="auto">
-                <v-btn text color="primary" @click="resetDates()"
-                  >Reset dates</v-btn
-                >
+              <v-col cols="auto" class="mr-2">
+                <v-btn outlined text color="primary" @click="resetDates()">
+                  Reset dates
+                </v-btn>
               </v-col>
-              <v-col cols="auto">
+              <v-col cols="auto" class="mr-2">
                 <v-btn
                   :disabled="!selectedBenchmark || !selectedMetric"
+                  outlined
                   text
                   color="primary"
                   @click="autoZoom()"
-                  >Auto zoom</v-btn
                 >
+                  Auto zoom
+                </v-btn>
               </v-col>
               <v-col>
-                <v-btn text color="primary" @click="zoomToBrush()"
-                  >Zoom to brushed area</v-btn
-                >
+                <v-btn outlined text color="primary" @click="zoomToBrush()">
+                  Zoom to brushed area
+                </v-btn>
               </v-col>
               <v-col cols="auto">
-                <v-btn text color="primary" @click="toggleYScale()">{{
-                  yScaleButtonLabel
-                }}</v-btn>
+                <v-btn outlined text color="primary" @click="toggleYScale()">
+                  {{ yScaleButtonLabel }}
+                </v-btn>
               </v-col>
             </v-row>
           </v-card-actions>

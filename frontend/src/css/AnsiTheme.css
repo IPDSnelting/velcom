@@ -1,0 +1,35 @@
+/* base16-bright : http://chriskempson.com/projects/base16/ */
+.theme--dark .ansi-black-fg { color: #000000; }
+.theme--dark .ansi-red-fg { color: #fb0120; }
+.theme--dark .ansi-green-fg { color: #a1c659; }
+.theme--dark .ansi-yellow-fg { color: #fda331; }
+.theme--dark .ansi-blue-fg { color: #6fb3d2; }
+.theme--dark .ansi-magenta-fg { color: #d381c3; }
+.theme--dark .ansi-cyan-fg { color: #76c7b7; }
+.theme--dark .ansi-white-fg { color: #e0e0e0; }
+.theme--dark .ansi-bright-black-fg { color: #b0b0b0; }
+.theme--dark .ansi-bright-red-fg { color: #fb0120; }
+.theme--dark .ansi-bright-green-fg { color: #a1c659; }
+.theme--dark .ansi-bright-yellow-fg { color: #fda331; }
+.theme--dark .ansi-bright-blue-fg { color: #6fb3d2; }
+.theme--dark .ansi-bright-magenta-fg { color: #d381c3; }
+.theme--dark .ansi-bright-cyan-fg { color: #76c7b7; }
+.theme--dark .ansi-bright-white-fg { color: #ffffff; }
+
+/*base16-one-light: http://chriskempson.com/projects/base16/*/
+.theme--light .ansi-black-fg { color: #fafafa; }
+.theme--light .ansi-red-fg { color: #ca1243; }
+.theme--light .ansi-green-fg { color: #50a14f; }
+.theme--light .ansi-yellow-fg { color: #c18401; }
+.theme--light .ansi-blue-fg { color: #4078f2; }
+.theme--light .ansi-magenta-fg { color: #a626a4; }
+.theme--light .ansi-cyan-fg { color: #0184bc; }
+.theme--light .ansi-white-fg { color: #383a42; }
+.theme--light .ansi-bright-black-fg { color: #383a42; }
+.theme--light .ansi-bright-red-fg { color: #ca1243; }
+.theme--light .ansi-bright-green-fg { color: #50a14f; }
+.theme--light .ansi-bright-yellow-fg { color: #c18401; }
+.theme--light .ansi-bright-blue-fg { color: #4078f2; }
+.theme--light .ansi-bright-magenta-fg { color: #a626a4; }
+.theme--light .ansi-bright-cyan-fg { color: #0184bc; }
+.theme--light .ansi-bright-white-fg { color: #090a0b; }

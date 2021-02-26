@@ -18,9 +18,10 @@
                     ></multiple-run-overview>
                   </v-col>
                 </v-row>
-                <v-row align="baseline" justify="end">
+                <v-row align="baseline" justify="end" class="mt-2">
                   <v-col cols="auto">
                     <v-btn
+                      outlined
                       text
                       color="primary"
                       @click="recentSignificantAmount += 5"
@@ -49,9 +50,14 @@
                     ></multiple-run-overview>
                   </v-col>
                 </v-row>
-                <v-row align="baseline" justify="end">
+                <v-row align="baseline" justify="end" class="mt-2">
                   <v-col cols="auto">
-                    <v-btn text color="primary" @click="recentAmount += 10">
+                    <v-btn
+                      outlined
+                      text
+                      color="primary"
+                      @click="recentAmount += 10"
+                    >
                       load more
                     </v-btn>
                   </v-col>

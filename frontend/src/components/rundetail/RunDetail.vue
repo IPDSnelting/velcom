@@ -1,16 +1,19 @@
 <template>
-  <v-container fluid class="px-0 mx-0 pt-0">
+  <v-container fluid class="pa-0">
     <v-row no-gutters>
       <v-col v-if="error !== undefined">
         <v-card>
           <v-card-title>
             <v-toolbar dark :color="runColor">{{ errorType }} Error</v-toolbar>
           </v-card-title>
-          <v-card-text class="mx-2 error-text" v-html="error"></v-card-text>
+          <v-card-text
+            class="mx-2 error-text overflow-y-auto"
+            v-html="error"
+          ></v-card-text>
         </v-card>
       </v-col>
     </v-row>
-    <v-row no-gutters v-if="measurements !== undefined" class="mt-3">
+    <v-row no-gutters v-if="measurements !== undefined">
       <v-col>
         <v-card>
           <v-card-title>

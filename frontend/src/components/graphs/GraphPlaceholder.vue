@@ -1,6 +1,6 @@
 <template>
   <v-skeleton-loader
-    class="graph-placeholder-loader mt-5"
+    class="graph-placeholder-loader"
     :height="placeholderHeight"
     loading
     type="image"

@@ -433,17 +433,20 @@ export class Worker {
   readonly info: string
   readonly workingOn: string | null
   readonly workingSince: Date | null
+  readonly lostConnection: boolean
 
   constructor(
     name: string,
     info: string,
     workingOn: string | null,
-    workingSince: Date | null
+    workingSince: Date | null,
+    lostConnection: boolean
   ) {
     this.name = name
     this.info = info
     this.workingOn = workingOn
     this.workingSince = workingSince
+    this.lostConnection = lostConnection
   }
 }
 

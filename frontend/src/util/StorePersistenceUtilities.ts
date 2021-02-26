@@ -138,7 +138,8 @@ export function detailGraphStoreToJson(store: DetailGraphStore): string {
     commitToCompare: serializeDimensionDetailPoint(store.commitToCompare),
     beginYScaleAtZero: store.beginYScaleAtZero,
     dayEquidistantGraph: store.dayEquidistantGraph,
-    selectedTab: store.selectedTab
+    selectedTab: store.selectedTab,
+    selectedDimensionSelector: store.selectedDimensionSelector
   })
 }
 // </editor-fold>

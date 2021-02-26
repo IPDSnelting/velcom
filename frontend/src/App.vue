@@ -19,6 +19,7 @@ import { Watch } from 'vue-property-decorator'
 import ThemeSelector from './components/ThemeSelector.vue'
 import { storeToLocalStorage } from './store/persistence'
 import { Route } from 'vue-router'
+import '@/css/AnsiTheme.css'
 
 @Component({
   components: {

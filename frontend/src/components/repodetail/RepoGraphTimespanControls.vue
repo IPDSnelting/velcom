@@ -10,7 +10,7 @@
                   <v-menu
                     :ref="field.ref"
                     v-model="field.opened"
-                    :return-value.sync="field.model"
+                    :return-value.sync="field.value"
                     :close-on-content-click="false"
                     transition="scale-transition"
                     offset-y
@@ -20,7 +20,7 @@
                       <v-text-field
                         class="mr-5 mb-5"
                         hide-details="auto"
-                        :value="field.model"
+                        :value="field.value"
                         :disabled="dateLocked === field.role"
                         :label="field.role + ':'"
                         :prepend-icon="dateIcon"
@@ -39,7 +39,7 @@
                     </template>
                     <v-date-picker
                       hide-details="auto"
-                      v-model="field.model"
+                      v-model="field.value"
                       no-title
                       scrollable
                       :max="today"
@@ -63,7 +63,7 @@
                       <v-btn
                         text
                         color="primary"
-                        @click="field.saveFunction(field, field.model)"
+                        @click="field.saveFunction(field, field.value)"
                       >
                         OK
                       </v-btn>
@@ -98,10 +98,11 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { mdiCalendar, mdiLock, mdiLockOpenVariant } from '@mdi/js'
 import { vxm } from '@/store'
+import { Watch } from 'vue-property-decorator'
 
 type TimeField = {
   ref: string
-  model: string
+  value: string
   role: 'start' | 'end'
   opened: boolean
   saveFunction: (field: TimeField, value: string) => void
@@ -121,7 +122,7 @@ export default class RepoGraphTimespanControls extends Vue {
   private readonly timeFields: TimeField[] = [
     {
       ref: 'startDateMenu',
-      model: this.startTimeString,
+      value: this.startTimeString,
       role: 'start',
       opened: false,
       saveFunction: (field: TimeField, value: string) => {
@@ -136,7 +137,7 @@ export default class RepoGraphTimespanControls extends Vue {
     },
     {
       ref: 'endDateMenu',
-      model: this.endTimeString,
+      value: this.endTimeString,
       role: 'end',
       opened: false,
       saveFunction: (field: TimeField, value: string) => {
@@ -198,6 +199,16 @@ export default class RepoGraphTimespanControls extends Vue {
   // <!--</editor-fold>-->
 
   // <!--<editor-fold desc="Start/Stop time">-->
+  @Watch('startTimeString')
+  private onStartTimeChange() {
+    this.timeFields[0].value = this.startTimeString
+  }
+
+  @Watch('endTimeString')
+  private onEndTimeChange() {
+    this.timeFields[1].value = this.endTimeString
+  }
+
   private get startTimeString(): string {
     return vxm.detailGraphModule.startTime.toISOString().substring(0, 10)
   }

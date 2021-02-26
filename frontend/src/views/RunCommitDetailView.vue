@@ -1,11 +1,11 @@
 <template>
   <v-container>
     <v-row v-if="!show404 && !runWithDifferences && !commit">
-      <v-col>
+      <v-col class="mx-0">
         <v-skeleton-loader type="card"></v-skeleton-loader>
       </v-col>
     </v-row>
-    <v-row v-if="commit" no-gutters>
+    <v-row v-if="commit">
       <v-col>
         <commit-detail
           :commit="commit"
@@ -20,12 +20,12 @@
         </commit-detail>
       </v-col>
     </v-row>
-    <v-row v-if="tarSource" no-gutters justify="center">
+    <v-row v-if="tarSource" justify="center">
       <v-col cols="auto">
         <tar-overview :tar-source="tarSource"></tar-overview>
       </v-col>
     </v-row>
-    <v-row v-if="runWithDifferences" no-gutters>
+    <v-row v-if="runWithDifferences">
       <v-col>
         <run-detail
           @navigate-to-detail-graph="navigateToDetailGraph"

@@ -14,7 +14,8 @@ export function workerFromJson(json: any): Worker {
     json.name,
     json.info,
     json.working_on,
-    json.working_since ? new Date(json.working_since * 1000) : null
+    json.working_since ? new Date(json.working_since * 1000) : null,
+    json.lost_connection
   )
 }
 
