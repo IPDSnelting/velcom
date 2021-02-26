@@ -110,10 +110,14 @@ class BenchmarkReadAccessTest {
 
 		testDb.addRepo(REPO1_ID);
 		testDb.addRepo(REPO2_ID);
-		testDb.addCommit(REPO1_ID, COMMIT1_HASH, true, true, "blad9bla");
-		testDb.addCommit(REPO1_ID, COMMIT2_HASH, true, true, "m2");
-		testDb.addCommit(REPO1_ID, COMMIT3_HASH, true, true, "m3");
-		testDb.addCommit(REPO2_ID, COMMIT4_HASH, true, true, "m4");
+		testDb.addCommit(REPO1_ID, COMMIT1_HASH, true, true, "blad9bla",
+			Instant.ofEpochSecond(1), Instant.ofEpochSecond(1));
+		testDb.addCommit(REPO1_ID, COMMIT2_HASH, true, true, "m2",
+			Instant.ofEpochSecond(2), Instant.ofEpochSecond(2));
+		testDb.addCommit(REPO1_ID, COMMIT3_HASH, true, true, "m3",
+			Instant.ofEpochSecond(3), Instant.ofEpochSecond(3));
+		testDb.addCommit(REPO2_ID, COMMIT4_HASH, true, true, "m4",
+			Instant.ofEpochSecond(4), Instant.ofEpochSecond(4));
 
 		testDb.addRun(RUN1_ID, "a1", "rn1", "ri1", RUN1_START, RUN1_START.plusSeconds(1),
 			Either.ofRight(new TarSource("td1", null)), null);
@@ -172,27 +176,26 @@ class BenchmarkReadAccessTest {
 	void getRecentRuns() {
 		// Run order from old to new: 1, 5, 6, 3, 9, 10, 4, 8, 2, 7
 		// Run order from new to old: 7, 2, 8, 4, 10, 9, 3, 6, 5, 1
+		// Excluding tar runs: 7, 8, 10, 6, 5
+		// Grouped by commits: 10, 8, 7, 6, 5
 
 		assertThat(access.getRecentRunIds(0, 10))
-			.containsExactly(RUN7_ID, RUN2_ID, RUN8_ID, RUN4_ID, RUN10_ID, RUN9_ID, RUN3_ID, RUN6_ID,
-				RUN5_ID, RUN1_ID);
+			.containsExactly(RUN10_ID, RUN8_ID, RUN7_ID, RUN6_ID, RUN5_ID);
 
 		// Get varying amounts at offset 0
 
 		assertThat(access.getRecentRunIds(0, 20))
-			.containsExactly(RUN7_ID, RUN2_ID, RUN8_ID, RUN4_ID, RUN10_ID, RUN9_ID, RUN3_ID, RUN6_ID,
-				RUN5_ID, RUN1_ID);
-		assertThat(access.getRecentRunIds(0, 5))
-			.containsExactly(RUN7_ID, RUN2_ID, RUN8_ID, RUN4_ID, RUN10_ID);
-		assertThat(access.getRecentRunIds(0, 1)).containsExactly(RUN7_ID);
+			.containsExactly(RUN10_ID, RUN8_ID, RUN7_ID, RUN6_ID, RUN5_ID);
+		assertThat(access.getRecentRunIds(0, 3))
+			.containsExactly(RUN10_ID, RUN8_ID, RUN7_ID);
+		assertThat(access.getRecentRunIds(0, 1)).containsExactly(RUN10_ID);
 		assertThat(access.getRecentRunIds(0, 0)).isEmpty();
 
 		// Get varying amounts at varying offsets
 
-		assertThat(access.getRecentRunIds(2, 4)).containsExactly(RUN8_ID, RUN4_ID, RUN10_ID, RUN9_ID);
-		assertThat(access.getRecentRunIds(5, 3)).containsExactly(RUN9_ID, RUN3_ID, RUN6_ID);
-		assertThat(access.getRecentRunIds(8, 8)).containsExactly(RUN5_ID, RUN1_ID);
-		assertThat(access.getRecentRunIds(20, 3)).isEmpty();
+		assertThat(access.getRecentRunIds(2, 4)).containsExactly(RUN7_ID, RUN6_ID, RUN5_ID);
+		assertThat(access.getRecentRunIds(4, 3)).containsExactly(RUN5_ID);
+		assertThat(access.getRecentRunIds(5, 3)).isEmpty();
 
 		// Illegal arguments
 

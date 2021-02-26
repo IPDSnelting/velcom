@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
+import org.jooq.Record1;
 import org.jooq.codegen.db.tables.records.RunRecord;
 
 /**
@@ -182,7 +183,9 @@ public class BenchmarkReadAccess {
 	}
 
 	/**
-	 * Get the ids of the most recent runs ordered by their start time.
+	 * Get the ids of the most recent runs ordered by their commit's committer time. Runs with no
+	 * associated commit are ignored. If a commit has multiple runs, they are ordered from new to
+	 * old.
 	 *
 	 * @param skip how many recent runs to skip
 	 * @param amount how many recent runs to collect
@@ -201,11 +204,15 @@ public class BenchmarkReadAccess {
 		}
 
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			return db.selectFrom(RUN)
-				.orderBy(RUN.START_TIME.desc())
+			return db.select(RUN.ID)
+				.from(RUN)
+				.join(KNOWN_COMMIT)
+				.on(KNOWN_COMMIT.REPO_ID.eq(RUN.REPO_ID)
+					.and(KNOWN_COMMIT.HASH.eq(RUN.COMMIT_HASH)))
+				.orderBy(KNOWN_COMMIT.COMMITTER_DATE.desc(), RUN.START_TIME.desc())
 				.limit(skip, amount)
 				.stream()
-				.map(RunRecord::getId)
+				.map(Record1::value1)
 				.map(RunId::fromString)
 				.collect(toList());
 		}

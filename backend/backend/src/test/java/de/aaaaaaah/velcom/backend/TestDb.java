@@ -136,10 +136,10 @@ public class TestDb {
 	}
 
 	public void addCommit(RepoId repoId, CommitHash commitHash, boolean reachable, boolean tracked,
-		String message) {
+		String message, Instant authorDate, Instant committerDate) {
 
-		addCommit(repoId, commitHash, reachable, tracked, "author", Instant.now(), "committer",
-			Instant.now(), message);
+		addCommit(repoId, commitHash, reachable, tracked, "author", authorDate, "committer",
+			committerDate, message);
 	}
 
 	public void addCommit(RepoId repoId, CommitHash commitHash) {
