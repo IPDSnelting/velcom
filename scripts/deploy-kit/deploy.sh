@@ -3,7 +3,7 @@
 # This script deploys velcom to the installation at speedcenter.informatik.kit.edu/velcom.
 # To do this, it pings a small server running there with the current credentials
 
-wget --ca-certificate=docs/kit-deployment.crt.pem \
+wget --ca-certificate=scripts/deploy-kit/kit-deployment.crt.pem \
      --output-document=- \
      --content-on-error \
      --header "X-Deploy-Secret: ${DEPLOY_SECRET}" \
