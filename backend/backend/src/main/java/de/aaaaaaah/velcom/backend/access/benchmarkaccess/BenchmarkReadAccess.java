@@ -9,6 +9,12 @@ import static org.jooq.codegen.db.Tables.LATEST_RUN;
 import static org.jooq.codegen.db.Tables.MEASUREMENT;
 import static org.jooq.codegen.db.Tables.MEASUREMENT_VALUE;
 import static org.jooq.codegen.db.Tables.RUN;
+import static org.jooq.impl.DSL.count;
+import static org.jooq.impl.DSL.field;
+import static org.jooq.impl.DSL.length;
+import static org.jooq.impl.DSL.not;
+import static org.jooq.impl.DSL.select;
+import static org.jooq.impl.DSL.sum;
 
 import de.aaaaaaah.velcom.backend.access.AccessUtils;
 import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.Measurement;
@@ -36,6 +42,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
+import org.jooq.Field;
 import org.jooq.Record1;
 import org.jooq.codegen.db.tables.records.RunRecord;
 
@@ -313,6 +320,87 @@ public class BenchmarkReadAccess {
 					record.value3()
 				))
 				.orElseThrow(() -> new NoSuchRunException(runId));
+		}
+	}
+
+	public long getAmountOfOutdatedRuns() {
+		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
+			Field<Integer> namedField = field("n", Integer.class);
+			return db.select(sum(namedField))
+				.from(select(count().minus(1).as(namedField))
+					.from(RUN)
+					.where(RUN.COMMIT_HASH.isNotNull())
+					.groupBy(RUN.COMMIT_HASH))
+				.fetchSingle()
+				.value1()
+				.longValue();
+		}
+	}
+
+	public long getAmountOfTarRunsNotAttachedToRepo() {
+		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
+			return db.select(count())
+				.from(RUN)
+				.where(RUN.COMMIT_HASH.isNull())
+				.and(RUN.REPO_ID.isNull())
+				.fetchSingle()
+				.value1();
+		}
+	}
+
+	public long getAmountOfTarRunsAttachedToRepo() {
+		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
+			return db.select(count())
+				.from(RUN)
+				.where(RUN.COMMIT_HASH.isNull())
+				.and(RUN.REPO_ID.isNotNull())
+				.fetchSingle()
+				.value1();
+		}
+	}
+
+	public long getAmountOfFailedRuns() {
+		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
+			return db.select(count())
+				.from(RUN)
+				.where(RUN.ERROR.isNotNull())
+				.fetchSingle()
+				.value1();
+		}
+	}
+
+	public long getAmountOfFailedRunErrorMsgChars() {
+		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
+			return db.select(sum(length(RUN.ERROR)))
+				.from(RUN)
+				.where(RUN.ERROR.isNotNull())
+				.fetchSingle()
+				.value1()
+				.longValue();
+		}
+	}
+
+	public long getAmountOfRunsForUntrackedCommits() {
+		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
+			return db.select(count())
+				.from(RUN)
+				.join(KNOWN_COMMIT)
+				.on(KNOWN_COMMIT.HASH.eq(RUN.COMMIT_HASH))
+				.where(not(KNOWN_COMMIT.TRACKED))
+				.fetchSingle()
+				.value1();
+		}
+	}
+
+	public long getAmountOfRunsForUnreachableCommits() {
+		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
+			return db.select(count())
+				.from(RUN)
+				.join(KNOWN_COMMIT)
+				.on(KNOWN_COMMIT.HASH.eq(RUN.COMMIT_HASH))
+				.where(not(KNOWN_COMMIT.REACHABLE))
+				.fetchSingle()
+				.value1();
 		}
 	}
 }
