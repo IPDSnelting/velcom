@@ -97,6 +97,7 @@ public class TeleBackend {
 			} catch (ExecutionException | InterruptedException e) {
 				LOGGER.warn("{} - Failed to connect, retrying in {}", address,
 					Delays.RECONNECT_AFTER_FAILED_CONNECTION);
+				System.gc();
 				//noinspection BusyWait
 				Thread.sleep(Delays.RECONNECT_AFTER_FAILED_CONNECTION.toMillis());
 			}
