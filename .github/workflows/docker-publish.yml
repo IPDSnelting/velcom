@@ -251,4 +251,4 @@ jobs:
         with:
           name: backend-artifacts
       - name: "Call deploy script"
-        run: "bash docs/deploy-kit.sh"
+        run: "bash scripts/deploy-kit/deploy.sh"
