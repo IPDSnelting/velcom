@@ -15,7 +15,6 @@ export class UserStore extends VxModule {
   @action
   async logIn(payload: {
     role: string
-    asRepoAdmin: boolean
     token: string
   }): Promise<void> {
     const response = await axios.get('/test-token', {
@@ -23,10 +22,7 @@ export class UserStore extends VxModule {
         username: payload.role,
         password: payload.token
       },
-      snackbarTag: 'login',
-      params: {
-        repo_id: payload.asRepoAdmin ? payload.role : undefined
-      }
+      snackbarTag: 'login'
     })
 
     if (response.status === 200 || response.status === 204) {

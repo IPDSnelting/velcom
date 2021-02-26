@@ -10,38 +10,26 @@
           <v-toolbar-title>Login</v-toolbar-title>
         </v-toolbar>
         <v-card-text>
-          <v-form v-model="formValid" ref="form">
-            <v-radio-group v-model="role">
-              <template>
-                <div>Log in as...</div>
-              </template>
-              <v-radio
-                v-for="role in roles"
-                :key="role"
-                :label="role"
-                :value="role"
-              ></v-radio>
-            </v-radio-group>
-            <repo-selection
-              :disabled="!idRequired"
-              :repos="allRepos"
-              :rules="[nonEmptyID]"
-              v-model="repoID"
-            ></repo-selection>
+          <v-form v-model="formValid" ref="form" @submit="login">
             <v-text-field
               type="password"
               :rules="[nonEmptyToken]"
               label="Access token"
               v-model="token"
-              @keyup.enter="login"
+              @keydown.enter.prevent="login"
             ></v-text-field>
           </v-form>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="primary" :disabled="!formValid" @click="login"
-            >Login</v-btn
+          <v-btn
+            color="primary"
+            :disabled="!formValid || loading"
+            :loading="loading"
+            @click="login"
           >
+            Login
+          </v-btn>
           <v-spacer></v-spacer>
           <v-btn color="error" @click="dialogOpen = false">Close</v-btn>
         </v-card-actions>
@@ -53,7 +41,6 @@
 <script lang="ts">
 import Vue from 'vue'
 import { Component, Watch } from 'vue-property-decorator'
-import { Repo } from '@/store/types'
 import { vxm } from '@/store'
 import RepoSelectionComponent from '../RepoSelectionComponent.vue'
 
@@ -63,11 +50,9 @@ import RepoSelectionComponent from '../RepoSelectionComponent.vue'
   }
 })
 export default class LoginDialog extends Vue {
-  private repoID: string = ''
+  private loading: boolean = false
+  private repoId: string = ''
   private token: string = ''
-
-  private roles: string[] = ['Web-Admin', 'Repository-Admin']
-  private role: string = this.roles[0]
 
   private formValid: boolean = false
   private dialogOpen: boolean = false
@@ -81,26 +66,12 @@ export default class LoginDialog extends Vue {
   private onOpened(opened: boolean) {
     if (!opened) {
       this.token = ''
-      this.repoID = ''
+      this.repoId = ''
     }
-  }
-
-  get idRequired(): boolean {
-    return this.role !== 'Web-Admin'
-  }
-
-  private nonEmptyID(input: string): boolean | string {
-    return !this.idRequired || input.trim().length > 0
-      ? true
-      : 'This field must not be empty!'
   }
 
   private nonEmptyToken(input: string): boolean | string {
     return input.length > 0 ? true : 'This field must not be empty!'
-  }
-
-  private get allRepos(): Repo[] {
-    return vxm.repoModule.allRepos
   }
 
   private login() {
@@ -108,28 +79,15 @@ export default class LoginDialog extends Vue {
       return
     }
 
-    let payload: {
-      role: string
-      asRepoAdmin: boolean
-      token: string
-    }
+    this.loading = true
 
-    if (this.role === 'Web-Admin') {
-      payload = {
+    vxm.userModule
+      .logIn({
         role: 'admin',
-        asRepoAdmin: false,
         token: this.token
-      }
-    } else {
-      payload = {
-        role: this.repoID,
-        asRepoAdmin: true,
-        token: this.token
-      }
-    }
-    vxm.userModule.logIn(payload).then(() => (this.dialogOpen = false))
+      })
+      .then(() => (this.dialogOpen = false))
+      .finally(() => (this.loading = false))
   }
 }
 </script>
-
-<style scoped></style>
