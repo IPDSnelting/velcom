@@ -77,9 +77,9 @@ export default class TarTaskOverview extends Vue {
 
   private get compareRunLocation() {
     return {
-      name: 'prepare-run-compare',
+      name: 'search',
       params: {
-        first: this.id
+        runId: this.id
       }
     }
   }

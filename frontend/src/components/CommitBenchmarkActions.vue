@@ -117,9 +117,9 @@ export default class CommitBenchmarkActions extends Vue {
       return null
     }
     return {
-      name: 'prepare-run-compare',
+      name: 'search',
       params: {
-        first: this.runId
+        runId: this.runId
       }
     }
   }

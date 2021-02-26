@@ -15,7 +15,6 @@ import de.aaaaaaah.velcom.backend.access.committaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.dimensionaccess.DimensionReadAccess;
 import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.Dimension;
 import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.DimensionInfo;
-import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.data.recentruns.SignificantRun;
 import de.aaaaaaah.velcom.backend.data.recentruns.SignificantRunsCollector;
 import de.aaaaaaah.velcom.backend.data.runcomparison.DimensionDifference;
@@ -179,44 +178,5 @@ public class RunEndpoint {
 			this.run = run;
 		}
 	}
-
-	@GET
-	@Path("search")
-	@Timed(histogram = true)
-	public SearchGetReply searchGet(
-		@QueryParam("latest_runs_only") @Nullable Boolean latestRunsOnlyBool,
-		@QueryParam("limit") @Nullable Integer limit,
-		@QueryParam("repo_id") @Nullable UUID repoUuid,
-		@QueryParam("commit_hash") @Nullable String commitHash,
-		@QueryParam("description") @Nullable String description,
-		@QueryParam("order_by_run_start_time") @Nullable Boolean orderByRunStartTime,
-		@QueryParam("order_by_committer_time") @Nullable Boolean orderByCommitterTime
-	) {
-		boolean latestRunsOnly = latestRunsOnlyBool != null && latestRunsOnlyBool;
-		Optional<RepoId> repoId = Optional.ofNullable(repoUuid).map(RepoId::new);
-
-		List<JsonShortRunDescription> runs = benchmarkAccess.searchRuns(
-			latestRunsOnly,
-			limit,
-			repoId.orElse(null),
-			commitHash,
-			description,
-			orderByRunStartTime,
-			orderByCommitterTime
-		)
-			.stream()
-			.map(JsonShortRunDescription::fromShortRunDescription)
-			.collect(toList());
-
-		return new SearchGetReply(runs);
-	}
-
-	private static class SearchGetReply {
-
-		public final List<JsonShortRunDescription> runs;
-
-		public SearchGetReply(List<JsonShortRunDescription> runs) {
-			this.runs = runs;
-		}
-	}
 }
+
