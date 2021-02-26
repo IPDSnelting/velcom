@@ -47,4 +47,12 @@ public class ServerBoundPacket {
 	public int hashCode() {
 		return Objects.hash(type, data);
 	}
+
+	@Override
+	public String toString() {
+		return "ServerBoundPacket{" +
+			"type=" + type +
+			", data=" + data +
+			'}';
+	}
 }

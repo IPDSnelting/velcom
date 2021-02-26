@@ -47,4 +47,12 @@ public enum ServerBoundPacketType {
 	public Class<?> getDataClass() {
 		return dataClass;
 	}
+
+	@Override
+	public String toString() {
+		return "ServerBoundPacketType{" +
+			"type='" + type + '\'' +
+			", dataClass=" + dataClass +
+			'}';
+	}
 }

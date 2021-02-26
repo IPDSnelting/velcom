@@ -95,7 +95,8 @@ public class TeleBackend {
 				conn.getClosedFuture().get();
 				LOGGER.info("{} - Disconnected, reconnecting immediately", address);
 			} catch (ExecutionException | InterruptedException e) {
-				LOGGER.warn("{} - Failed to connect, retrying soon", address);
+				LOGGER.warn("{} - Failed to connect, retrying in {}", address,
+					Delays.RECONNECT_AFTER_FAILED_CONNECTION);
 				//noinspection BusyWait
 				Thread.sleep(Delays.RECONNECT_AFTER_FAILED_CONNECTION.toMillis());
 			}
@@ -298,6 +299,7 @@ public class TeleBackend {
 		getBenchmarker().ifPresent(benchmarker -> {
 			globalStatus.set(Status.ABORT);
 			benchmarker.abort();
+			LOGGER.warn("The current run was aborted");
 		});
 	}
 

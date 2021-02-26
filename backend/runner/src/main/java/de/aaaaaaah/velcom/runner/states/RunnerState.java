@@ -53,6 +53,8 @@ public abstract class RunnerState implements State {
 		// If a packet has been received that could not be deserialized or handled, that is invalid
 		// behaviour.
 		if (newState.isEmpty()) {
+			LOGGER.warn("Received invalid packet, closing connection");
+			LOGGER.warn("Packet: {}", text);
 			connection.close(StatusCode.ILLEGAL_PACKET);
 		}
 
