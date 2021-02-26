@@ -11,7 +11,7 @@ run-backend: build-backend
 	java  -jar backend.jar server ../backend/backend/src/main/resources/example_config.yml
 
 build-frontend:
-	make -C ../frontend/ mode=development
+	(cd .. && ./scripts/build-frontend --env development)
 
 run-frontend:
 	python Frontend_Server.py ../frontend/dist 8080
