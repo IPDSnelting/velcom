@@ -12,6 +12,7 @@ import de.aaaaaaah.velcom.backend.access.taskaccess.entities.Task;
 import de.aaaaaaah.velcom.backend.access.taskaccess.entities.TaskId;
 import de.aaaaaaah.velcom.backend.access.taskaccess.entities.TaskPriority;
 import de.aaaaaaah.velcom.backend.access.taskaccess.exceptions.NoSuchTaskException;
+import de.aaaaaaah.velcom.backend.access.taskaccess.exceptions.TaskCreationException;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.restapi.authentication.RepoUser;
 import de.aaaaaaah.velcom.backend.restapi.exception.TaskAlreadyExistsException;
@@ -257,7 +258,7 @@ public class QueueEndpoint {
 				: inputStream;
 
 		try (uncompressedInput) {
-			Optional<Task> task = queue.addTar(
+			Task task = queue.addTar(
 				AUTHOR_NAME_ADMIN,
 				TaskPriority.MANUAL,
 				repoId.orElse(null),
@@ -265,13 +266,10 @@ public class QueueEndpoint {
 				uncompressedInput
 			);
 
-			if (task.isEmpty()) {
-				// The task is empty if the tar could not be stored in the data dir, which should not happen
-				// during normal operation.
-				throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
-			}
-
-			return new UploadTarReply(JsonTask.fromTask(task.get(), commitReadAccess));
+			return new UploadTarReply(JsonTask.fromTask(task, commitReadAccess));
+		} catch (TaskCreationException e) {
+			Status status = e.isOurFault() ? Status.INTERNAL_SERVER_ERROR : Status.BAD_REQUEST;
+			throw new WebApplicationException(e.getMessage(), status);
 		}
 	}
 

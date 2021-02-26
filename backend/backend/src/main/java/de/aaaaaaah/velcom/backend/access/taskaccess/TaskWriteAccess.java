@@ -10,6 +10,7 @@ import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.taskaccess.entities.Task;
 import de.aaaaaaah.velcom.backend.access.taskaccess.entities.TaskId;
 import de.aaaaaaah.velcom.backend.access.taskaccess.entities.TaskPriority;
+import de.aaaaaaah.velcom.backend.access.taskaccess.exceptions.TaskCreationException;
 import de.aaaaaaah.velcom.backend.storage.db.DBReadAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DBWriteAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
@@ -26,6 +27,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.jooq.codegen.db.tables.records.TaskRecord;
+import org.jooq.exception.DataAccessException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -124,30 +126,32 @@ public class TaskWriteAccess extends TaskReadAccess {
 	 * @param description the tar file's description
 	 * @param repoId the associated repo id, if any
 	 * @param inputStream the tar file contents
-	 * @return the newly created task or empty if the tar file could not be stored for some reason and
-	 * 	no task was created
+	 * @return the newly created task
 	 */
-	public Optional<Task> insertTar(String author, TaskPriority priority, String description,
-		@Nullable RepoId repoId, InputStream inputStream) {
+	public Task insertTar(String author, TaskPriority priority, String description,
+		@Nullable RepoId repoId, InputStream inputStream) throws TaskCreationException {
 
 		TarSource source = new TarSource(description, repoId);
 		Task task = new Task(author, priority, Either.ofRight(source));
-
-		try {
-			tarFileStorage.storeTarFile(task.getIdAsString(), inputStream);
-		} catch (IOException ignore) {
-			LOGGER.warn("Failed to store tar file for {}, task was not created", task);
-			return Optional.empty(); // We can't store tar files for some reason?
-		}
 
 		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
 			TaskRecord record = taskToTaskRecord(task);
 			// I think this shouldn't throw an exception if it couldn't insert the task and just silently
 			// fail (failure signalled via return value), but I'm not entirely sure.
 			db.dsl().batchInsert(record).execute();
+		} catch (DataAccessException e) {
+			// Probably a foreign key constraint indicating that the repo does not exist.
+			throw new TaskCreationException("Failed to create task, repo does not exist", false);
 		}
 
-		return Optional.of(task);
+		try {
+			tarFileStorage.storeTarFile(task.getIdAsString(), inputStream);
+		} catch (IOException ignore) {
+			LOGGER.warn("Failed to store tar file for {}, task was not created", task);
+			throw new TaskCreationException("Failed to store tar file", true);
+		}
+
+		return task;
 	}
 
 	/**
