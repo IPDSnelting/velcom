@@ -201,7 +201,7 @@ jobs:
 
       # BUILDING
       - name: "Build image"
-        run: "./scripts/docker/build-docker --uid $UID CI"
+        run: "./scripts/docker/build-docker --uid $UID --no-metrics CI"
 
       - name: "Log into registry"
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
