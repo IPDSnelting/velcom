@@ -16,6 +16,7 @@ import de.aaaaaaah.velcom.shared.util.compression.TarHelper;
 import de.aaaaaaah.velcom.shared.util.systeminfo.LinuxSystemInfo;
 import java.io.IOException;
 import java.net.URI;
+import java.net.http.HttpClient;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Optional;
@@ -85,11 +86,20 @@ public class TeleBackend {
 	 * @throws InterruptedException if the thread is interrupted
 	 */
 	public void run() throws InterruptedException {
+		// Shared HttpClient to prevent FDs leaking based on GC
+		//
+		// A HttpClient initially creates/opens a few file descriptors. It only frees those file
+		// descriptors once no more references to the HttpClient exist. This usually requires garbage
+		// collection to take place. If a new HttpClient is created for each connection attempt but
+		// garbage collection only happens infrequently, file descriptors are "leaked". This can easily
+		// be prevented by using a single HttpClient instance for all connection attempts.
+		HttpClient httpClient = HttpClient.newHttpClient();
+
 		//noinspection InfiniteLoopStatement
 		while (true) {
 			try {
 				LOGGER.info("{} - Connecting", address);
-				Connection conn = new Connection(this, address, name, token);
+				Connection conn = new Connection(this, httpClient, address, name, token);
 				LOGGER.info("{} - Connected", address);
 				connection = conn;
 				conn.getClosedFuture().get();
@@ -97,7 +107,6 @@ public class TeleBackend {
 			} catch (ExecutionException | InterruptedException e) {
 				LOGGER.warn("{} - Failed to connect, retrying in {}", address,
 					Delays.RECONNECT_AFTER_FAILED_CONNECTION);
-				System.gc();
 				//noinspection BusyWait
 				Thread.sleep(Delays.RECONNECT_AFTER_FAILED_CONNECTION.toMillis());
 			}

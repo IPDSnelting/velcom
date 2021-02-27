@@ -38,8 +38,8 @@ public class Connection implements WebSocket.Listener, HeartbeatWebsocket {
 	private WebSocket socket;
 	private HeartbeatHandler heartbeatHandler;
 
-	public Connection(TeleBackend teleBackend, URI address, String name, String token)
-		throws ExecutionException, InterruptedException {
+	public Connection(TeleBackend teleBackend, HttpClient httpClient, URI address, String name,
+		String token) throws ExecutionException, InterruptedException {
 
 		stateMachine = new StateMachine<>(new Idle(teleBackend, this));
 		serializer = new Serializer();
@@ -48,8 +48,7 @@ public class Connection implements WebSocket.Listener, HeartbeatWebsocket {
 		closed = false;
 
 		LOGGER.debug("Opening connection to {}", address);
-		HttpClient.newHttpClient()
-			.newWebSocketBuilder()
+		httpClient.newWebSocketBuilder()
 			.header(RunnerConnectionHeader.CONNECT_RUNNER_NAME.getName(), name)
 			.header(RunnerConnectionHeader.CONNECT_RUNNER_TOKEN.getName(), token)
 			.buildAsync(address, this)
