@@ -11,8 +11,6 @@ import de.aaaaaaah.velcom.backend.access.committaccess.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.access.dimensionaccess.DimensionReadAccess;
 import de.aaaaaaah.velcom.backend.access.repoaccess.RepoWriteAccess;
 import de.aaaaaaah.velcom.backend.access.taskaccess.TaskWriteAccess;
-import de.aaaaaaah.velcom.backend.access.tokenaccess.TokenWriteAccess;
-import de.aaaaaaah.velcom.backend.access.tokenaccess.entities.AuthToken;
 import de.aaaaaaah.velcom.backend.data.benchrepo.BenchRepo;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.data.recentruns.SignificantRunsCollector;
@@ -20,8 +18,8 @@ import de.aaaaaaah.velcom.backend.data.repocomparison.TimesliceComparison;
 import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparator;
 import de.aaaaaaah.velcom.backend.data.runcomparison.SignificanceFactors;
 import de.aaaaaaah.velcom.backend.listener.Listener;
-import de.aaaaaaah.velcom.backend.restapi.authentication.RepoAuthenticator;
-import de.aaaaaaah.velcom.backend.restapi.authentication.RepoUser;
+import de.aaaaaaah.velcom.backend.restapi.authentication.Admin;
+import de.aaaaaaah.velcom.backend.restapi.authentication.AdminAuthenticator;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.AllReposEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.CommitEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.CompareEndpoint;
@@ -108,7 +106,6 @@ public class ServerMain extends Application<GlobalConfig> {
 
 	@Override
 	public void initialize(Bootstrap<GlobalConfig> bootstrap) {
-		bootstrap.addCommand(new FindHashIterationsCommand());
 		bootstrap.addBundle(new MultiPartBundle());
 	}
 
@@ -139,13 +136,6 @@ public class ServerMain extends Application<GlobalConfig> {
 		DimensionReadAccess dimensionAccess = new DimensionReadAccess(databaseStorage);
 		RepoWriteAccess repoAccess = new RepoWriteAccess(databaseStorage, availableDimensionsCache,
 			runCache, latestRunCache);
-		TokenWriteAccess tokenAccess = new TokenWriteAccess(
-			databaseStorage,
-			new AuthToken(configuration.getWebAdminToken()),
-			configuration.getHashIterations(),
-			configuration.getHashMemory(),
-			configuration.getHashParallelism()
-		);
 		ArchiveReadAccess archiveAccess = new ArchiveReadAccess(
 			managedDirs.getArchivesDir(),
 			repoStorage,
@@ -186,12 +176,14 @@ public class ServerMain extends Application<GlobalConfig> {
 		RunnerAwareServerFactory.getInstance().setBenchRepo(benchRepo);
 
 		// API
-		configureApi(environment, tokenAccess);
+		configureSerialization(environment);
+		configureExceptionMappers(environment);
+		configureAuthentication(environment, configuration.getWebAdminToken());
 		configureCors(environment);
 
 		// Endpoints
 		Stream.of(
-			new AllReposEndpoint(dimensionAccess, repoAccess, tokenAccess, availableDimensionsCache),
+			new AllReposEndpoint(dimensionAccess, repoAccess, availableDimensionsCache),
 			new CommitEndpoint(benchmarkAccess, commitAccess, runCache),
 			new CompareEndpoint(benchmarkAccess, commitAccess, dimensionAccess, runCache, latestRunCache,
 				runComparator, significanceFactors),
@@ -203,7 +195,7 @@ public class ServerMain extends Application<GlobalConfig> {
 			new QueueEndpoint(commitAccess, repoAccess, queue, dispatcher),
 			new RecentRunsEndpoint(benchmarkAccess, commitAccess, dimensionAccess, runCache,
 				significantRunsCollector),
-			new RepoEndpoint(dimensionAccess, repoAccess, tokenAccess, availableDimensionsCache,
+			new RepoEndpoint(dimensionAccess, repoAccess, availableDimensionsCache,
 				listener),
 			new RunEndpoint(benchmarkAccess, commitAccess, dimensionAccess, runCache, latestRunCache,
 				runComparator, significanceFactors, significantRunsCollector),
@@ -275,14 +267,14 @@ public class ServerMain extends Application<GlobalConfig> {
 			.addMapping("/prometheusMetrics");
 	}
 
-	private void configureApi(Environment environment, TokenWriteAccess tokenAccess) {
-		// Serialization
+	private void configureSerialization(Environment environment) {
 		// This mapper should be configured the same as the one in SerializingTest.java
 		environment.getObjectMapper()
 			.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE)
 			.setSerializationInclusion(Include.NON_NULL);
+	}
 
-		// Exceptions
+	private void configureExceptionMappers(Environment environment) {
 		environment.jersey().register(new InvalidQueryParamsExceptionMapper());
 		environment.jersey().register(new NoSuchCommitExceptionMapper());
 		environment.jersey().register(new NoSuchDimensionExceptionMapper());
@@ -291,16 +283,17 @@ public class ServerMain extends Application<GlobalConfig> {
 		environment.jersey().register(new NoSuchTaskExceptionMapper());
 		environment.jersey().register(new TaskAlreadyExistsExceptionMapper());
 		environment.jersey().register(new ArgumentParseExceptionMapper());
+	}
 
-		// Authentication
+	private void configureAuthentication(Environment environment, String adminToken) {
 		environment.jersey().register(
 			new AuthDynamicFeature(
-				new BasicCredentialAuthFilter.Builder<RepoUser>()
-					.setAuthenticator(new RepoAuthenticator(tokenAccess))
+				new BasicCredentialAuthFilter.Builder<Admin>()
+					.setAuthenticator(new AdminAuthenticator(adminToken))
 					.buildAuthFilter()
 			)
 		);
-		environment.jersey().register(new AuthValueFactoryProvider.Binder<>(RepoUser.class));
+		environment.jersey().register(new AuthValueFactoryProvider.Binder<>(Admin.class));
 	}
 
 	private void configureCors(Environment environment) {

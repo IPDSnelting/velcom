@@ -9,7 +9,6 @@ import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.DimensionInfo;
 import de.aaaaaaah.velcom.backend.access.repoaccess.RepoReadAccess;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.Repo;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RepoId;
-import de.aaaaaaah.velcom.backend.access.tokenaccess.TokenReadAccess;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonBranch;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimension;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRepo;
@@ -33,15 +32,13 @@ public class AllReposEndpoint {
 
 	private final DimensionReadAccess dimensionAccess;
 	private final RepoReadAccess repoAccess;
-	private final TokenReadAccess tokenAccess;
 	private final AvailableDimensionsCache availableDimensionsCache;
 
 	public AllReposEndpoint(DimensionReadAccess dimensionAccess, RepoReadAccess repoAccess,
-		TokenReadAccess tokenAccess, AvailableDimensionsCache availableDimensionsCache) {
+		AvailableDimensionsCache availableDimensionsCache) {
 
 		this.dimensionAccess = dimensionAccess;
 		this.repoAccess = repoAccess;
-		this.tokenAccess = tokenAccess;
 		this.availableDimensionsCache = availableDimensionsCache;
 	}
 
@@ -75,7 +72,6 @@ public class AllReposEndpoint {
 					repo.getName(),
 					repo.getRemoteUrl().getUrl(),
 					branches,
-					tokenAccess.hasToken(repoId),
 					dimensions
 				);
 			})

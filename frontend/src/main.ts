@@ -35,9 +35,9 @@ const vue = new Vue({
 })
 
 axios.interceptors.request.use(config => {
-  if (vxm.userModule.loggedIn) {
+  if (vxm.userModule.isAdmin) {
     config.auth = {
-      username: vxm.userModule.role!,
+      username: 'admin',
       password: vxm.userModule.token!
     }
   }

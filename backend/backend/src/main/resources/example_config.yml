@@ -82,23 +82,6 @@ benchmarkRepoRemoteUrl: "https://github.com/IPDSnelting/velcom-unibench.git"
 #tmpDir: "tmp/"
 
 
-#############
-## Hashing ##
-#############
-
-##
-## VelCom uses argon2-jvm (https://github.com/phxql/argon2-jvm) for storing authentication tokens.
-## See https://raw.githubusercontent.com/P-H-C/phc-winner-argon2/master/argon2-specs.pdf for
-## recommended parameters (h = hashParallelism, m = hashMemory).
-##
-## The amount of iterations can be determined by the "findHashIterations" command:
-## $ java -jar backend.jar findHashIterations
-##
-hashIterations: 50
-hashMemory: 5120 # KiB
-hashParallelism: 1 # Amount of threads
-
-
 ############
 ## Runner ##
 ############

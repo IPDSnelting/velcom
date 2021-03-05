@@ -14,7 +14,7 @@ import de.aaaaaaah.velcom.backend.access.taskaccess.entities.TaskPriority;
 import de.aaaaaaah.velcom.backend.access.taskaccess.exceptions.NoSuchTaskException;
 import de.aaaaaaah.velcom.backend.access.taskaccess.exceptions.TaskCreationException;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
-import de.aaaaaaah.velcom.backend.restapi.authentication.RepoUser;
+import de.aaaaaaah.velcom.backend.restapi.authentication.Admin;
 import de.aaaaaaah.velcom.backend.restapi.exception.TaskAlreadyExistsException;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRunner;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonSource;
@@ -56,7 +56,6 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 public class QueueEndpoint {
 
 	private static final String AUTHOR_NAME_ADMIN = "Admin";
-	private static final String AUTHOR_NAME_REPO_ADMIN = "Repo-Admin";
 
 	private final CommitReadAccess commitReadAccess;
 	private final RepoReadAccess repoReadAccess;
@@ -70,12 +69,6 @@ public class QueueEndpoint {
 		this.repoReadAccess = repoReadAccess;
 		this.queue = queue;
 		this.dispatcher = dispatcher;
-	}
-
-	private static String getAuthor(boolean isAdmin) {
-		// There's no need to include the repo name or ID since that info is already included in the
-		// task's source.
-		return isAdmin ? AUTHOR_NAME_ADMIN : AUTHOR_NAME_REPO_ADMIN;
 	}
 
 	@GET
@@ -127,65 +120,42 @@ public class QueueEndpoint {
 
 	@DELETE
 	@Timed(histogram = true)
-	public void emptyQueue(@Auth RepoUser user) throws NoSuchTaskException {
-		if (user.getRepoId().isEmpty()) {
-			user.guardAdminAccess();
-			queue.deleteAllTasks();
-			return;
-		}
-
-		RepoId repoId = user.getRepoId().get();
-
-		List<TaskId> tasksToDelete = queue.getAllTasksInOrder()
-			.stream()
-			// Exclude tasks without a repo or with another id
-			.filter(it -> it.getRepoId().map(repoId::equals).orElse(false))
-			.map(Task::getId)
-			.collect(Collectors.toList());
-
-		queue.deleteTasks(tasksToDelete);
+	public void emptyQueue(@Auth Admin admin) throws NoSuchTaskException {
+		queue.deleteAllTasks();
 	}
 
 	@DELETE
 	@Path("{taskid}")
 	@Timed(histogram = true)
-	public void deleteTask(@Auth RepoUser user, @PathParam("taskid") UUID taskId)
+	public void deleteTask(@Auth Admin admin, @PathParam("taskid") UUID taskUuid)
 		throws NoSuchTaskException {
-		Task task = queue.getTask(new TaskId(taskId));
-		if (task.getRepoId().isEmpty()) {
-			user.guardAdminAccess();
-		} else {
-			user.guardRepoAccess(task.getRepoId().get());
-		}
 
-		queue.deleteTasks(List.of(new TaskId(taskId)));
+		TaskId taskId = new TaskId(taskUuid);
+		queue.guardTaskExists(taskId);
+		queue.deleteTasks(List.of(taskId));
 	}
 
 	@PATCH
 	@Path("{taskid}")
 	@Timed(histogram = true)
-	public void patchTask(@Auth RepoUser user, @PathParam("taskid") UUID taskId)
+	public void patchTask(@Auth Admin admin, @PathParam("taskid") UUID taskUuid)
 		throws NoSuchTaskException {
-		user.guardAdminAccess();
 
-		// Throws an exception if the task does not exist! This is needed.
-		Task task = queue.getTask(new TaskId(taskId));
-
-		queue.prioritizeTask(task.getId(), TaskPriority.MANUAL);
+		TaskId taskId = new TaskId(taskUuid);
+		queue.guardTaskExists(taskId);
+		queue.prioritizeTask(taskId, TaskPriority.MANUAL);
 	}
 
 	@POST
 	@Path("commit/{repoid}/{hash}")
 	@Timed(histogram = true)
 	public PostCommitReply addCommit(
-		@Auth RepoUser user,
+		@Auth Admin admin,
 		@PathParam("repoid") UUID repoUuid,
 		@PathParam("hash") String commitHashString
 	) throws NoSuchRepoException {
 		RepoId repoId = new RepoId(repoUuid);
 		CommitHash commitHash = new CommitHash(commitHashString);
-
-		user.guardRepoAccess(repoId);
 
 		repoReadAccess.guardRepoExists(repoId);
 		commitReadAccess.guardCommitExists(repoId, commitHash);
@@ -194,11 +164,9 @@ public class QueueEndpoint {
 		// of that happening is low enough that putting in the effort to perform the checks in an atomic
 		// way is not worth it.
 
-		String author = getAuthor(user.isAdmin());
-
 		// TODO: Really don't tell them the id of the existing task?
 		final Optional<Task> insertedTask = queue
-			.addCommit(author, repoId, commitHash, TaskPriority.MANUAL);
+			.addCommit(AUTHOR_NAME_ADMIN, repoId, commitHash, TaskPriority.MANUAL);
 
 		if (insertedTask.isEmpty()) {
 			throw new TaskAlreadyExistsException(commitHash, repoId);
@@ -212,20 +180,18 @@ public class QueueEndpoint {
 	@Path("commit/{repoid}/{hash}/one-up")
 	@Timed(histogram = true)
 	public PostOneUpReply PostOneUpReply(
-		@Auth RepoUser user,
+		@Auth Admin admin,
 		@PathParam("repoid") UUID repoUuid,
 		@PathParam("hash") String commitHashString
 	) throws NoSuchRepoException {
 		RepoId repoId = new RepoId(repoUuid);
 		CommitHash rootHash = new CommitHash(commitHashString);
 
-		user.guardRepoAccess(repoId);
 		commitReadAccess.guardCommitExists(repoId, rootHash);
 
 		List<CommitHash> hashes = commitReadAccess.getDescendantCommits(repoId, rootHash);
 
-		String author = getAuthor(user.isAdmin());
-		queue.addCommits(author, repoId, hashes, TaskPriority.MANUAL);
+		queue.addCommits(AUTHOR_NAME_ADMIN, repoId, hashes, TaskPriority.MANUAL);
 
 		List<JsonTask> tasks = queue.getAllTasksInOrder().stream()
 			.filter(it -> it.getRepoId().map(repoId::equals).orElse(false))
@@ -242,14 +208,12 @@ public class QueueEndpoint {
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	@Timed(histogram = true)
 	public UploadTarReply uploadTar(
-		@Auth RepoUser user,
+		@Auth Admin admin,
 		@NotNull @FormDataParam("description") String description,
 		@Nullable @FormDataParam("repo_id") UUID repoUuid,
 		@NotNull @FormDataParam("file") InputStream inputStream,
 		@NotNull @FormDataParam("file") FormDataContentDisposition fileDisposition
 	) throws IOException {
-		user.guardAdminAccess();
-
 		Optional<RepoId> repoId = Optional.ofNullable(repoUuid).map(RepoId::new);
 
 		final InputStream uncompressedInput =
@@ -323,105 +287,64 @@ public class QueueEndpoint {
 
 	private static class PostOneUpReply {
 
-		private final List<JsonTask> tasks;
+		public final List<JsonTask> tasks;
 
 		public PostOneUpReply(List<JsonTask> tasks) {
 			this.tasks = tasks;
-		}
-
-		public List<JsonTask> getTasks() {
-			return tasks;
 		}
 	}
 
 	private static class PostCommitReply {
 
-		private final JsonTask task;
+		public final JsonTask task;
 
-		private PostCommitReply(JsonTask task) {
+		public PostCommitReply(JsonTask task) {
 			this.task = task;
-		}
-
-		public JsonTask getTask() {
-			return task;
 		}
 	}
 
 	private static class UploadTarReply {
 
-		private final JsonTask task;
+		public final JsonTask task;
 
-		private UploadTarReply(JsonTask task) {
+		public UploadTarReply(JsonTask task) {
 			this.task = task;
-		}
-
-		public JsonTask getTask() {
-			return task;
 		}
 	}
 
 	private static class GetQueueReply {
 
-		private final List<JsonTask> tasks;
-		private final List<JsonRunner> runners;
+		public final List<JsonTask> tasks;
+		public final List<JsonRunner> runners;
 
 		public GetQueueReply(List<JsonTask> tasks, List<JsonRunner> runners) {
 			this.tasks = tasks;
 			this.runners = runners;
 		}
-
-		public List<JsonTask> getTasks() {
-			return tasks;
-		}
-
-		public List<JsonRunner> getRunners() {
-			return runners;
-		}
 	}
 
 	private static class GetTaskOutputReply {
 
-		private final List<String> output;
-		private final int indexOfFirstLine;
+		public final List<String> output;
+		public final int indexOfFirstLine;
 
-		private GetTaskOutputReply(List<String> output, int indexOfFirstLine) {
+		public GetTaskOutputReply(List<String> output, int indexOfFirstLine) {
 			this.output = output;
 			this.indexOfFirstLine = indexOfFirstLine;
-		}
-
-		public List<String> getOutput() {
-			return output;
-		}
-
-		public int getIndexOfFirstLine() {
-			return indexOfFirstLine;
 		}
 	}
 
 	private static class GetTaskInfoReply {
 
-		private final JsonTask task;
-		private final int position;
+		public final JsonTask task;
+		public final int position;
 		@Nullable
-		private final Long runningSince;
+		public final Long runningSince;
 
 		public GetTaskInfoReply(JsonTask task, int position, @Nullable Long runningSince) {
 			this.task = task;
 			this.position = position;
 			this.runningSince = runningSince;
-		}
-
-		public JsonTask getTask() {
-			return task;
-		}
-
-		public int getPosition() {
-			return position;
-		}
-
-		@Nullable
-		public Long getRunningSince() {
-			return runningSince;
 		}
 	}
 }

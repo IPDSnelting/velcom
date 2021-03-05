@@ -7,43 +7,28 @@ const VxModule = createModule({
 })
 
 export class UserStore extends VxModule {
-  private _role: string | null = null
   private _token: string | null = null
 
   private _darkThemeSelected: boolean | undefined = undefined
 
   @action
-  async logIn(payload: {
-    role: string
-    asRepoAdmin: boolean
-    token: string
-  }): Promise<void> {
+  async logIn(token: string): Promise<void> {
     const response = await axios.get('/test-token', {
       auth: {
-        username: payload.role,
-        password: payload.token
+        username: 'admin',
+        password: token
       },
-      snackbarTag: 'login',
-      params: {
-        repo_id: payload.asRepoAdmin ? payload.role : undefined
-      }
+      snackbarTag: 'login'
     })
 
     if (response.status === 200 || response.status === 204) {
-      this.setRole(payload.role)
-      this.setToken(payload.token)
+      this.setToken(token)
     }
   }
 
   @action
   async logOut(): Promise<void> {
-    this.setRole(null)
     this.setToken(null)
-  }
-
-  @mutation
-  setRole(payload: string | null): void {
-    this._role = payload
   }
 
   @mutation
@@ -55,24 +40,8 @@ export class UserStore extends VxModule {
     return this._token
   }
 
-  get role(): string | null {
-    return this._role
-  }
-
-  /**
-   * Returns whether the user is logged in. True if `getRole` and `getToken` return a string.
-   *
-   * @readonly
-   * @type {boolean} true if the user is logged in
-   * @memberof UserStore
-   */
-  get loggedIn(): boolean {
-    return (
-      this.role !== null &&
-      this.role.length > 0 &&
-      this.token !== null &&
-      this.token.length > 0
-    )
+  get isAdmin(): boolean {
+    return this.token !== null && this.token.length > 0
   }
 
   get darkThemeSelected(): boolean {
@@ -92,13 +61,5 @@ export class UserStore extends VxModule {
 
   get usesBrowsersThemePreferences(): boolean {
     return this._darkThemeSelected === undefined
-  }
-
-  get isAdmin(): boolean {
-    return this._role === 'admin'
-  }
-
-  get authorized(): (payload: string) => boolean {
-    return (payload: string) => this._role === 'admin' || this._role === payload
   }
 }

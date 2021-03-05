@@ -59,6 +59,10 @@ public class Queue {
 		return taskAccess.getTask(taskId);
 	}
 
+	public void guardTaskExists(TaskId taskId) throws NoSuchTaskException {
+		taskAccess.getTask(taskId);
+	}
+
 	/**
 	 * @return all tasks currently in the queue. First come the tasks which are currently in progress,
 	 * 	in no particular order. Then come the tasks which are currently not in progress, in the order

@@ -157,7 +157,7 @@ export default class NavigationBar extends Vue {
   }
 
   get loggedIn(): boolean {
-    return vxm.userModule.loggedIn
+    return vxm.userModule.isAdmin
   }
 
   private logout(): void {

@@ -14,10 +14,8 @@ import de.aaaaaaah.velcom.backend.access.repoaccess.entities.Repo;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.repoaccess.exceptions.FailedToAddRepoException;
 import de.aaaaaaah.velcom.backend.access.repoaccess.exceptions.NoSuchRepoException;
-import de.aaaaaaah.velcom.backend.access.tokenaccess.TokenWriteAccess;
-import de.aaaaaaah.velcom.backend.access.tokenaccess.entities.AuthToken;
 import de.aaaaaaah.velcom.backend.listener.Listener;
-import de.aaaaaaah.velcom.backend.restapi.authentication.RepoUser;
+import de.aaaaaaah.velcom.backend.restapi.authentication.Admin;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonBranch;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimension;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRepo;
@@ -52,17 +50,14 @@ public class RepoEndpoint {
 
 	private final DimensionReadAccess dimensionAccess;
 	private final RepoWriteAccess repoAccess;
-	private final TokenWriteAccess tokenAccess;
 	private final AvailableDimensionsCache availableDimensionsCache;
 	private final Listener listener;
 
 	public RepoEndpoint(DimensionReadAccess dimensionAccess, RepoWriteAccess repoAccess,
-		TokenWriteAccess tokenAccess, AvailableDimensionsCache availableDimensionsCache,
-		Listener listener) {
+		AvailableDimensionsCache availableDimensionsCache, Listener listener) {
 
 		this.dimensionAccess = dimensionAccess;
 		this.repoAccess = repoAccess;
-		this.tokenAccess = tokenAccess;
 		this.availableDimensionsCache = availableDimensionsCache;
 		this.listener = listener;
 	}
@@ -83,24 +78,17 @@ public class RepoEndpoint {
 			repo.getName(),
 			repo.getRemoteUrlAsString(),
 			branches,
-			tokenAccess.hasToken(repo.getId()),
 			jsonDimensions
 		);
 	}
 
 	@POST
 	@Timed(histogram = true)
-	public PostReply post(@Auth RepoUser user, @NotNull PostRequest request)
+	public PostReply post(@Auth Admin admin, @NotNull PostRequest request)
 		throws FailedToAddRepoException {
-
-		user.guardAdminAccess();
 
 		RemoteUrl remoteUrl = new RemoteUrl(request.getRemoteUrl());
 		Repo repo = repoAccess.addRepo(request.getName(), remoteUrl);
-
-		request.getToken()
-			.map(AuthToken::new)
-			.ifPresent(token -> tokenAccess.setToken(repo.getId(), token));
 
 		if (listener.updateRepo(repo)) {
 			return new PostReply(toJsonRepo(repo));
@@ -115,18 +103,14 @@ public class RepoEndpoint {
 
 		private final String name;
 		private final String remoteUrl;
-		@Nullable
-		private final String token;
 
 		@JsonCreator
 		public PostRequest(
 			@JsonProperty(required = true) String name,
-			@JsonProperty(required = true) String remoteUrl,
-			@JsonProperty @Nullable String token
+			@JsonProperty(required = true) String remoteUrl
 		) {
 			this.name = name;
 			this.remoteUrl = remoteUrl;
-			this.token = token;
 		}
 
 		public String getName() {
@@ -135,10 +119,6 @@ public class RepoEndpoint {
 
 		public String getRemoteUrl() {
 			return remoteUrl;
-		}
-
-		public Optional<String> getToken() {
-			return Optional.ofNullable(token);
 		}
 	}
 
@@ -182,15 +162,13 @@ public class RepoEndpoint {
 	@Path("{repoid}")
 	@Timed(histogram = true)
 	public void patch(
-		@Auth RepoUser user,
+		@Auth Admin admin,
 		@PathParam("repoid") UUID repoUuid,
 		@NotNull PatchRequest request
 	) throws NoSuchRepoException {
-
 		RepoId repoId = new RepoId(repoUuid);
-		user.guardRepoAccess(repoId);
 
-		// Guards whether the repo exists
+		// Guards whether the repo exists (that's why it's so high up in the function)
 		Repo repo = repoAccess.getRepo(repoId);
 
 		repoAccess.updateRepo(
@@ -198,14 +176,6 @@ public class RepoEndpoint {
 			request.getName().orElse(null),
 			request.getRemoteUrl().map(RemoteUrl::new).orElse(null)
 		);
-
-		request.getToken().ifPresent(token -> {
-			if (token.isEmpty()) {
-				tokenAccess.setToken(repoId, null);
-			} else {
-				tokenAccess.setToken(repoId, new AuthToken(token));
-			}
-		});
 
 		request.getTrackedBranches().ifPresent(trackedBranches -> {
 			Set<BranchName> trackedBranchNames = trackedBranches.stream()
@@ -227,17 +197,14 @@ public class RepoEndpoint {
 		private final String remoteUrl;
 		@Nullable
 		private final List<String> trackedBranches;
-		@Nullable
-		private final String token;
 
 		@JsonCreator
 		public PatchRequest(@Nullable String name, @Nullable String remoteUrl,
-			@Nullable List<String> trackedBranches, @Nullable String token) {
+			@Nullable List<String> trackedBranches) {
 
 			this.name = name;
 			this.remoteUrl = remoteUrl;
 			this.trackedBranches = trackedBranches;
-			this.token = token;
 		}
 
 		public Optional<String> getName() {
@@ -251,21 +218,15 @@ public class RepoEndpoint {
 		public Optional<List<String>> getTrackedBranches() {
 			return Optional.ofNullable(trackedBranches);
 		}
-
-		public Optional<String> getToken() {
-			return Optional.ofNullable(token);
-		}
 	}
 
 	@DELETE
 	@Path("{repoid}")
 	@Timed(histogram = true)
-	public void delete(@Auth RepoUser user, @PathParam("repoid") UUID repoUuid)
+	public void delete(@Auth Admin admin, @PathParam("repoid") UUID repoUuid)
 		throws NoSuchRepoException {
 
 		RepoId repoId = new RepoId(repoUuid);
-		user.guardRepoAccess(repoId);
-
 		repoAccess.guardRepoExists(repoId);
 
 		// Also deletes the repo from all tables in the db that have a foreign key on the repo table

@@ -32,17 +32,6 @@ public class GlobalConfig extends Configuration {
 	private Path cacheDir = Path.of("cache");
 	private Path tmpDir = Path.of("tmp");
 
-	/////////////
-	// Hashing //
-	/////////////
-
-	@Min(1)
-	private int hashIterations;
-	@Min(1)
-	private int hashMemory;
-	@Min(1)
-	private int hashParallelism;
-
 	////////////
 	// Runner //
 	////////////
@@ -142,34 +131,6 @@ public class GlobalConfig extends Configuration {
 
 	public void setTmpDir(@Nullable Path tmpDir) {
 		this.tmpDir = tmpDir;
-	}
-
-	/////////////
-	// Hashing //
-	/////////////
-
-	public int getHashIterations() {
-		return hashIterations;
-	}
-
-	public void setHashIterations(int hashIterations) {
-		this.hashIterations = hashIterations;
-	}
-
-	public int getHashMemory() {
-		return hashMemory;
-	}
-
-	public void setHashMemory(int hashMemory) {
-		this.hashMemory = hashMemory;
-	}
-
-	public int getHashParallelism() {
-		return hashParallelism;
-	}
-
-	public void setHashParallelism(int hashParallelism) {
-		this.hashParallelism = hashParallelism;
 	}
 
 	////////////

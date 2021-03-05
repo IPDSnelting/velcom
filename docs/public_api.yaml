@@ -27,7 +27,7 @@ paths:
           description: Not Found
       operationId: delete-queue-taskid
       security:
-        - repo_admin_credentials: []
+        - admin_credentials: []
       description: 'Delete a task from the queue. If the task is currently being benchmarked, this also tries to abort the task.'
     patch:
       summary: prioritize task
@@ -332,7 +332,7 @@ paths:
       tags:
         - queue
       security:
-        - repo_admin_credentials: []
+        - admin_credentials: []
     parameters:
       - schema:
           type: string
@@ -383,7 +383,7 @@ paths:
         '404':
           description: Not Found
       security:
-        - repo_admin_credentials: []
+        - admin_credentials: []
       description: Delete an entire repository and its associated measurements.
       tags:
         - repo
@@ -396,7 +396,7 @@ paths:
         '404':
           description: Not Found
       security:
-        - repo_admin_credentials: []
+        - admin_credentials: []
       requestBody:
         content:
           application/json:
@@ -417,9 +417,6 @@ paths:
                   items:
                     type: string
                     minLength: 1
-                token:
-                  type: string
-                  description: 'Set a new auth token, replacing the old one. If this is the empty string, auth tokens are disabled for this repo.'
       tags:
         - repo
       description: Modify some parts of an existing repo.
@@ -453,9 +450,6 @@ paths:
                   description: A human-readable name. This name must not be unique.
                 remote_url:
                   $ref: '#/components/schemas/RemoteUrl'
-                token:
-                  type: string
-                  description: 'If the token is the empty string or no token is specified, auth tokens are disabled for this repo.'
               required:
                 - name
                 - remote_url
@@ -494,20 +488,10 @@ paths:
         '401':
           description: Unauthorized
       operationId: get-test-token
-      description: |-
-        Test whether an auth token is valid.
-
-        If a repo id is specified, checks whether the auth token allows access to that repo.
-        If no repo id is specified, checks whether the auth token is valid as admin auth token.
+      description: Test whether an auth token is valid as admin auth token.
       security:
-        - repo_admin_credentials: []
-      parameters:
-        - schema:
-            type: string
-            format: uuid
-          in: query
-          name: repo_id
-          description: Repo id
+        - admin_credentials: []
+      parameters: []
   '/graph/detail/{repoid}':
     parameters:
       - schema:
@@ -879,7 +863,7 @@ paths:
           description: Commit Not Found
       description: Benchmarks the given commit and all tracked descendants.
       security:
-        - repo_admin_credentials: []
+        - admin_credentials: []
   /search:
     get:
       summary: search runs and commits
@@ -1314,9 +1298,6 @@ components:
           uniqueItems: true
           items:
             $ref: '#/components/schemas/Branch'
-        has_token:
-          type: boolean
-          description: Whether the repo has an individual authentication token
         dimensions:
           type: array
           description: All types of measurements where at least one value exists for this repo
@@ -1327,7 +1308,6 @@ components:
         - name
         - remote_url
         - branches
-        - has_token
         - dimensions
     RemoteUrl:
       type: string
@@ -1425,8 +1405,5 @@ components:
         - latest_commit
   securitySchemes:
     admin_credentials:
-      type: http
-      scheme: basic
-    repo_admin_credentials:
       type: http
       scheme: basic

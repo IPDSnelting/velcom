@@ -30,7 +30,7 @@
             <v-card-text>
               <v-container fluid class="ma-0 pa-0">
                 <v-row justify="end" no-gutters>
-                  <v-col cols="auto" class="mb-5" v-if="isWebsiteAdmin">
+                  <v-col cols="auto" class="mb-5" v-if="isAdmin">
                     <upload-tar-dialog
                       v-model="uploadTarDialogOpen"
                     ></upload-tar-dialog>
@@ -44,7 +44,7 @@
                     </v-btn>
                   </v-col>
                   <v-spacer></v-spacer>
-                  <v-col cols="auto" class="mb-5" v-if="isWebsiteAdmin">
+                  <v-col cols="auto" class="mb-5" v-if="isAdmin">
                     <v-tooltip bottom>
                       <template #activator="{ on }">
                         <v-btn
@@ -64,7 +64,7 @@
                       seconds to complete.
                     </v-tooltip>
                   </v-col>
-                  <v-col cols="auto" class="mb-5" v-if="isLoggedIn">
+                  <v-col cols="auto" class="mb-5" v-if="isAdmin">
                     <v-tooltip left>
                       <template #activator="{ on }">
                         <v-btn
@@ -74,7 +74,7 @@
                           outlined
                           @click="cancelAllTasks()"
                         >
-                          {{ cancelAllText }}
+                          Cancel all tasks
                         </v-btn>
                       </template>
                       Cancels
@@ -117,29 +117,12 @@ export default class Queue extends Vue {
     return vxm.queueModule.workers
   }
 
-  private get isLoggedIn() {
-    return vxm.userModule.loggedIn
-  }
-
-  private get isWebsiteAdmin() {
+  private get isAdmin() {
     return vxm.userModule.isAdmin
   }
 
-  private get cancelAllText() {
-    if (this.isWebsiteAdmin) {
-      return 'Cancel all tasks'
-    }
-    const loggedInRepoId = vxm.userModule.role
-    const loggedInRepo = vxm.repoModule.allRepos.find(
-      it => it.id === loggedInRepoId
-    )
-    const loggedInRepoName = loggedInRepo ? loggedInRepo.name : 'N/A'
-
-    return `Cancel all tasks for <${loggedInRepoName}>`
-  }
-
   private async cancelAllTasks() {
-    if (!window.confirm(`Do you really want to ${this.cancelAllText}?`)) {
+    if (!window.confirm(`Do you really want to cancel all tasks?`)) {
       return
     }
 
@@ -148,7 +131,7 @@ export default class Queue extends Vue {
   }
 
   private async refetchRepos() {
-    if (!this.isWebsiteAdmin) {
+    if (!this.isAdmin) {
       return
     }
     await vxm.repoModule.triggerListenerFetch()
