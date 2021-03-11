@@ -41,7 +41,6 @@
                   v-if="overlayText"
                   absolute
                   class="ma-0 pa-0"
-                  z-index="20"
                   color="black"
                 >
                   <span class="text-h6">{{ overlayText }}</span>
