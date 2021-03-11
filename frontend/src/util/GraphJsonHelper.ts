@@ -1,8 +1,6 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 import {
   DetailDataPoint,
-  ComparisonDataPoint,
-  RepoId,
   DimensionId,
   DetailDataPointValue,
   dimensionIdEqual
@@ -58,26 +56,4 @@ function detailDataPointValueFromJson(
       return 'MEASUREMENT_FAILED'
   }
   throw new Error(`Illegal type received: ${jsonValue}`)
-}
-
-/**
- * Parses a comparison graph data point json to a DataPoint object.
- *
- * @export
- * @param {*} json the json object
- * @param repoId the id of the repo the datapoint is from
- * @returns {ComparisonDataPoint} the data point object
- */
-export function comparisonDataPointFromJson(
-  json: any,
-  repoId: RepoId
-): ComparisonDataPoint {
-  return new ComparisonDataPoint(
-    json.hash,
-    json.author,
-    new Date(json.author_date * 1000),
-    json.summary,
-    json.value,
-    repoId
-  )
 }

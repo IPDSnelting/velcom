@@ -3,8 +3,6 @@ import { ColorStore } from './modules/colorStore'
 import { RootState, vxm } from './index'
 import VuexPersistence from 'vuex-persist'
 import {
-  comparisonGraphStoreFromJson,
-  comparisonGraphStoreToJson,
   detailGraphStoreFromJson,
   detailGraphStoreToJson,
   repoStoreFromJson,
@@ -78,9 +76,6 @@ export const persistenceSessionStorage = new VuexPersistence<
     const state = rawState as RootState
 
     const persistable: SessionStoragePersisted = {
-      comparisonGraphModule: comparisonGraphStoreToJson(
-        state.comparisonGraphModule
-      ),
       detailGraphModule: detailGraphStoreToJson(state.detailGraphModule)
     }
 
@@ -96,9 +91,6 @@ export const persistenceSessionStorage = new VuexPersistence<
     const parsed = JSON.parse(data) as SessionStoragePersisted
 
     return {
-      comparisonGraphModule: comparisonGraphStoreFromJson(
-        parsed.comparisonGraphModule
-      ),
       detailGraphModule: detailGraphStoreFromJson(parsed.detailGraphModule)
     }
   }

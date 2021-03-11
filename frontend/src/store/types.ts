@@ -369,39 +369,6 @@ export class RunDescription {
   }
 }
 
-export class ShortRunDescription {
-  readonly id: RunId
-  readonly commitSummary?: string
-  readonly tarSummary?: string
-  readonly commitHash?: CommitHash
-
-  constructor(
-    id: RunId,
-    commitSummary?: string,
-    tarSummary?: string,
-    commitHash?: CommitHash
-  ) {
-    this.id = id
-    this.commitSummary = commitSummary
-    this.tarSummary = tarSummary
-    this.commitHash = commitHash
-  }
-
-  get summary(): string {
-    if (this.commitSummary) {
-      return this.commitSummary
-    }
-    if (this.tarSummary) {
-      return this.tarSummary
-    }
-    return this.id
-  }
-
-  get type(): 'tar' | 'commit' {
-    return this.commitSummary !== undefined ? 'commit' : 'tar'
-  }
-}
-
 export class RunWithDifferences {
   readonly run: Run
   readonly differences?: DimensionDifference[]
@@ -501,6 +468,7 @@ export class DetailDataPoint {
   // TODO: Figure out if the map wastes too much memory
   readonly values: CustomKeyEqualsMap<DimensionId, DetailDataPointValue>
 
+  // noinspection DuplicatedCode
   constructor(
     hash: CommitHash,
     parents: CommitHash[],
@@ -531,30 +499,6 @@ export class DetailDataPoint {
   public failed(dimension: DimensionId): boolean {
     const value = this.values.get(dimension)
     return value === 'MEASUREMENT_FAILED' || value === 'RUN_FAILED'
-  }
-}
-export class ComparisonDataPoint {
-  readonly hash: CommitHash
-  readonly author: string
-  readonly authorDate: Date
-  readonly summary: string
-  readonly value: number
-  readonly repoId: RepoId
-
-  constructor(
-    hash: CommitHash,
-    author: string,
-    authorDate: Date,
-    summary: string,
-    value: number,
-    repoId: RepoId
-  ) {
-    this.hash = hash
-    this.author = author
-    this.authorDate = authorDate
-    this.summary = summary
-    this.value = value
-    this.repoId = repoId
   }
 }
 
