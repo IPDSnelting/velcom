@@ -197,12 +197,7 @@
         </v-row>
       </v-col>
       <v-col style="flex: 1 1 50%; min-width: 600px">
-        <v-card>
-          <comparison-graph
-            ref="graph"
-            :beginYAtZero="this.yScaleBeginsAtZero"
-          ></comparison-graph>
-        </v-card>
+        <v-card> I AM GRAPH </v-card>
       </v-col>
     </v-row>
   </v-container>
@@ -219,14 +214,12 @@ import { Repo, DimensionId } from '@/store/types'
 import { mdiCalendar } from '@mdi/js'
 import { Route, RawLocation } from 'vue-router'
 import { Dictionary } from 'vue-router/types/router'
-import ComparisonGraph from '../components/graphs/ComparisonGraph.vue'
 import CommitChip from '../components/CommitChip.vue'
 
 @Component({
   components: {
     'repo-add': RepoAddDialog,
     'repo-selector': RepoSelector,
-    'comparison-graph': ComparisonGraph,
     'commit-chip': CommitChip
   }
 })
@@ -447,12 +440,7 @@ export default class RepoComparison extends Vue {
   }
 
   private zoomToBrush() {
-    const brushedArea: number[] = (this.$refs
-      .graph as ComparisonGraph).brushedArea()
-    this.updateTimeframe(
-      new Date(brushedArea[0]),
-      new Date(brushedArea[1] - 60 * 60 * 24)
-    )
+    // FIXME: Delete me
   }
 
   @Watch('selectedMetric')
