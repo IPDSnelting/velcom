@@ -49,4 +49,12 @@ export class ComparisonGraphStore extends VxModule {
   get selectedBranchesForRepo(): (repoId: RepoId) => string[] {
     return repoId => this._selectedBranches[repoId] || []
   }
+
+  get selectedBranches(): Map<RepoId, string[]> {
+    const map: Map<RepoId, string[]> = new Map()
+    Object.keys(this._selectedBranches).forEach(repoId => {
+      map.set(repoId, this._selectedBranches[repoId] || [])
+    })
+    return map
+  }
 }
