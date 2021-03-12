@@ -7,8 +7,23 @@ const VxModule = createModule({
   strict: false
 })
 
+function defaultStartDate() {
+  // One week in the past
+  return new Date(
+    new Date(new Date().setDate(new Date().getDate() - 7)).setHours(0, 0, 0, 0)
+  )
+}
+
+function defaultEndDate() {
+  // Today at midnight / start of tomorrow
+  return new Date(new Date().setHours(24, 0, 0, 0))
+}
+
 export class ComparisonGraphStore extends VxModule {
   private _selectedBranches: { [id: string]: string[] } = {}
+
+  startTime: Date = defaultStartDate()
+  endTime: Date = defaultEndDate()
 
   @mutation
   setSelectedBranchesForRepo(payload: {
