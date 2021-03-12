@@ -12,6 +12,8 @@ import org.flywaydb.core.Flyway;
 import org.jooq.DSLContext;
 import org.jooq.SQLDialect;
 import org.jooq.impl.DSL;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.sqlite.SQLiteConfig;
 import org.sqlite.SQLiteConfig.JournalMode;
 import org.sqlite.SQLiteDataSource;
@@ -20,6 +22,8 @@ import org.sqlite.SQLiteDataSource;
  * Provides access to a database.
  */
 public class DatabaseStorage {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseStorage.class);
 
 	private final DSLContext context;
 	private final Lock writeLock = new ReentrantLock();
@@ -37,6 +41,7 @@ public class DatabaseStorage {
 		SQLiteConfig sqliteConfig = new SQLiteConfig();
 		sqliteConfig.enforceForeignKeys(true);
 		sqliteConfig.setJournalMode(JournalMode.WAL);
+		sqliteConfig.setJounalSizeLimit(1024 * 1024 * 8); // 8 MiB
 
 		SQLiteDataSource sqLiteDataSource = new SQLiteDataSource(sqliteConfig);
 		sqLiteDataSource.setUrl(jdbcUrl);
@@ -48,7 +53,11 @@ public class DatabaseStorage {
 
 		HikariDataSource hikariDataSource = new HikariDataSource(hikariConfig);
 
-		this.context = DSL.using(hikariDataSource, SQLDialect.SQLITE);
+		context = DSL.using(hikariDataSource, SQLDialect.SQLITE);
+
+		LOGGER.info("Vacuuming database...");
+		context.execute("VACUUM");
+		LOGGER.info("Vacuuming completed.");
 	}
 
 	/**
