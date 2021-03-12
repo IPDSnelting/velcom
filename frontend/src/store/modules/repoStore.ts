@@ -24,6 +24,7 @@ export class RepoStore extends VxModule {
     })
 
     const repos: Repo[] = response.data.repos.map(repoFromJson)
+    repos.sort((a, b) => a.id.localeCompare(b.id))
 
     this.setRepos(repos)
     return repos
