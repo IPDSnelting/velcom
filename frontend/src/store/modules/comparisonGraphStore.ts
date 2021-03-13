@@ -1,5 +1,10 @@
 import { action, createModule, mutation } from 'vuex-class-component'
-import { ComparisonDataPoint, Dimension, RepoId } from '@/store/types'
+import {
+  AttributedDatapoint,
+  ComparisonDataPoint,
+  Dimension,
+  RepoId
+} from '@/store/types'
 import Vue from 'vue'
 import axios from 'axios'
 import { comparisonDatapointFromJson } from '@/util/GraphJsonHelper'
@@ -58,6 +63,9 @@ export class ComparisonGraphStore extends VxModule {
   zoomXEnd: Date | null = null
   zoomYStart: Date | null = null
   zoomYEnd: Date | null = null
+
+  commitToCompare: AttributedDatapoint | null = null
+  referenceDatapoint: AttributedDatapoint | null = null
 
   @action
   async fetchComparisonGraph(): Promise<ComparisonDataPoint[]> {

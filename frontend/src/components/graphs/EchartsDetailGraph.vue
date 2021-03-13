@@ -8,7 +8,7 @@
           :dialog-open="pointDialogOpen"
           :selected-datapoint="pointDialogDatapoint"
           :series-information="pointDialogSeries"
-          @close="pointDialogOpen = false"
+          :closeDialog="() => (pointDialogOpen = false)"
         ></slot>
         <div id="chart-container" @wheel.capture="$emit('wheel', $event)">
           <v-chart
@@ -30,7 +30,12 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { GraphDataPoint, SeriesId, SeriesInformation } from '@/store/types'
+import {
+  AttributedDatapoint,
+  GraphDataPoint,
+  SeriesId,
+  SeriesInformation
+} from '@/store/types'
 import { Prop, Watch } from 'vue-property-decorator'
 import EChartsComp from 'vue-echarts'
 
@@ -122,11 +127,6 @@ We need some shared state with 2-way binding for the dialog and graph that shoul
   - Comparison datapoint (series key, name)
   - Zoom levels (X / Y axis)
  */
-
-export type AttributedDatapoint = {
-  datapoint: GraphDataPoint
-  seriesId: SeriesId
-}
 
 class EchartsDataPoint {
   // convenience methods for accessing the value

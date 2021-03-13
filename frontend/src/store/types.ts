@@ -533,6 +533,11 @@ export abstract class GraphDataPoint {
   }
 }
 
+export type AttributedDatapoint = {
+  datapoint: GraphDataPoint
+  seriesId: SeriesId
+}
+
 export class ComparisonDataPoint extends GraphDataPoint {
   readonly time: Date
   readonly hash: string
