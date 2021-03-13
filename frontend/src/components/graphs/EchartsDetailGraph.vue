@@ -757,9 +757,7 @@ export default class EchartsDetailGraph extends Vue {
         }
       },
       axisLabel: {
-        textStyle: {
-          color: 'currentColor'
-        }
+        color: 'currentColor'
       },
       splitLine: {
         lineStyle: {
@@ -783,9 +781,7 @@ export default class EchartsDetailGraph extends Vue {
       },
       toolbox: {
         iconStyle: {
-          normal: {
-            borderColor: 'currentColor'
-          }
+          borderColor: 'currentColor'
         }
       }
     }
