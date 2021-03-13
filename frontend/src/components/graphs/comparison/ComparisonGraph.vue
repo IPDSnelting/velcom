@@ -34,6 +34,7 @@ import { escapeHtml } from '@/util/TextUtils'
 export default class ComparisonGraph extends Vue {
   private comparisonDatapoints: ComparisonDataPoint[] = []
 
+  // <!--<editor-fold desc="Getters">-->
   private get seriesInformation(): SeriesInformation[] {
     return Array.from(vxm.comparisonGraphModule.selectedBranches.keys()).map(
       repoId => ({
@@ -54,6 +55,7 @@ export default class ComparisonGraph extends Vue {
     return vxm.comparisonGraphModule.endTime
   }
 
+  // <!--<editor-fold desc="Zoom boilerplate">-->
   private get zoomXStartValue(): Date | null {
     return vxm.comparisonGraphModule.zoomXStart
   }
@@ -89,6 +91,7 @@ export default class ComparisonGraph extends Vue {
   private set zoomYEndValue(value: Date | null) {
     vxm.comparisonGraphModule.zoomYEnd = value
   }
+  // <!--</editor-fold>-->
 
   private get visiblePointCount() {
     const startValue = this.zoomXStartValue
@@ -108,6 +111,7 @@ export default class ComparisonGraph extends Vue {
     }
     return visibleDataPoints
   }
+  // <!--</editor-fold>-->
 
   private pointFormatter(point: ComparisonDataPoint) {
     const time = formatDate(point.time)
