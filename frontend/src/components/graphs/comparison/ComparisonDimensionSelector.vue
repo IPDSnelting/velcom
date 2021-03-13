@@ -1,15 +1,22 @@
 <template>
-  <v-card>
-    <v-card-text>
-      <v-row align="center">
-        <v-col cols="auto">Dimension to compare</v-col>
+  <v-card
+    :outlined="selectedItem === null"
+    :class="{ 'warning-outline': possibleDimensions.length !== 0 }"
+  >
+    <v-card-text :class="{ disabled: disabled }">
+      <v-row style="min-height: 86px">
+        <v-col cols="auto" class="d-flex align-center">
+          <div>Dimension to compare</div>
+        </v-col>
         <v-col>
           <v-autocomplete
             :value="selectedItem"
             :items="items"
+            :disabled="disabled"
             @input="selectDimension"
             label="Enter a dimension..."
             return-object
+            hide-details
             no-data-text="No repo(s) selected or no common dimensions"
           >
           </v-autocomplete>
@@ -23,7 +30,7 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Dimension } from '@/store/types'
-import { Model, Prop } from 'vue-property-decorator'
+import { Model, Prop, Watch } from 'vue-property-decorator'
 
 class Item {
   readonly text: string
@@ -39,24 +46,45 @@ class Item {
 
 @Component
 export default class ComparisonDimensionSelector extends Vue {
-  private selectedItem: Item | null = null
-
   @Prop()
   private readonly possibleDimensions: Dimension[]
 
   @Model('input')
   private readonly selectedDimension: Dimension
 
+  @Prop()
+  private readonly disabled: boolean
+
   private get items() {
     return this.possibleDimensions.map(dimension => new Item(dimension))
   }
 
-  private selectDimension() {
-    if (!this.selectedItem) {
+  private get selectedItem() {
+    if (!this.selectedDimension) {
+      return null
+    }
+    if (!this.possibleDimensions.includes(this.selectedDimension)) {
+      return null
+    }
+    return (
+      this.items.find(it => it.dimension.equals(this.selectedDimension)) || null
+    )
+  }
+
+  private selectDimension(value: Item) {
+    if (!value) {
       this.$emit('input', null)
     } else {
-      this.$emit('input', this.selectedItem.dimension)
+      this.$emit('input', value.dimension)
     }
   }
 }
 </script>
+
+<!--suppress CssUnresolvedCustomProperty -->
+<style>
+/*noinspection CssUnusedSymbol*/
+.warning-outline {
+  border-color: var(--v-warning-base) !important;
+}
+</style>
