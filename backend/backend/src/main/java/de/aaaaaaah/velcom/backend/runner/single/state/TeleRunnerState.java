@@ -41,7 +41,7 @@ public class TeleRunnerState implements State {
 		if (newState.isEmpty()) {
 			LOGGER.info(
 				"Runner send a package I couldn't handle in {}. Content: '{}'",
-				getClass().getSimpleName(), text.substring(0, Math.min(text.length(), 100))
+				getClass().getSimpleName(), text
 			);
 			connection.close(StatusCode.ILLEGAL_PACKET);
 		}

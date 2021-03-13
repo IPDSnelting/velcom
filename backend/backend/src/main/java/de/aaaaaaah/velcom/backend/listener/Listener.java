@@ -51,10 +51,6 @@ public class Listener {
 	private final BenchRepo benchRepo;
 	private final Queue queue;
 
-	private final Duration pollInterval;
-
-	private final ScheduledExecutorService executor;
-
 	/**
 	 * Constructs a new listener instance.
 	 *
@@ -75,9 +71,7 @@ public class Listener {
 		this.benchRepo = benchRepo;
 		this.queue = queue;
 
-		this.pollInterval = pollInterval;
-
-		executor = Executors.newSingleThreadScheduledExecutor();
+		ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 		executor.scheduleWithFixedDelay(
 			this::onUpdate,
 			0,
@@ -101,7 +95,7 @@ public class Listener {
 	 */
 	@Timed(histogram = true)
 	public synchronized void updateAllRepos() {
-		LOGGER.debug("Updating all repos");
+		LOGGER.info("Updating repos");
 
 		// Update the bench repo
 		LOGGER.debug("Updating bench repo");
@@ -223,7 +217,7 @@ public class Listener {
 	private synchronized boolean updateRepoVia(String repoName, String repoDirName,
 		String targetRemoteUrl, Consumer<Repository> jgitRepoAction) {
 
-		LOGGER.info("Updating repo {}", repoName);
+		LOGGER.debug("Updating repo {}", repoName);
 
 		boolean reclone = false;
 

@@ -20,9 +20,6 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * The dispatcher interface.
- */
 public class Dispatcher implements IDispatcher {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(Dispatcher.class);
