@@ -1,6 +1,8 @@
-import { createModule, mutation } from 'vuex-class-component'
-import { RepoId } from '@/store/types'
+import { action, createModule, mutation } from 'vuex-class-component'
+import { ComparisonDataPoint, Dimension, RepoId } from '@/store/types'
 import Vue from 'vue'
+import axios from 'axios'
+import { comparisonDatapointFromJson } from '@/util/GraphJsonHelper'
 
 const VxModule = createModule({
   namespaced: 'comparisonGraphModule',
@@ -8,9 +10,10 @@ const VxModule = createModule({
 })
 
 function defaultStartDate() {
+  // FIXME: 7 not 14
   // One week in the past
   return new Date(
-    new Date(new Date().setDate(new Date().getDate() - 7)).setHours(0, 0, 0, 0)
+    new Date(new Date().setDate(new Date().getDate() - 14)).setHours(0, 0, 0, 0)
   )
 }
 
@@ -19,11 +22,64 @@ function defaultEndDate() {
   return new Date(new Date().setHours(24, 0, 0, 0))
 }
 
+function roundDateUp(date: Date): Date {
+  const copy = new Date(date)
+  if (!(date.getHours() !== 0)) {
+    copy.setHours(24, 0, 0, 0) // next midnight
+  }
+  return copy
+}
+
+function roundDateDown(date: Date): Date {
+  const copy = new Date(date)
+  if (!(date.getHours() !== 0)) {
+    copy.setHours(0, 0, 0, 0) // this midnight
+  }
+  return copy
+}
+
+function formatRepos(repos: Map<RepoId, string[]>): string {
+  return Array.from(repos.entries())
+    .filter(([, branches]) => branches.length > 0)
+    .map(([repoId, branches]) => {
+      return repoId + ':' + branches.join(':')
+    })
+    .join('::')
+}
+
 export class ComparisonGraphStore extends VxModule {
   private _selectedBranches: { [id: string]: string[] } = {}
 
   startTime: Date = defaultStartDate()
   endTime: Date = defaultEndDate()
+
+  selectedDimension: Dimension | null = null
+
+  @action
+  async fetchComparisonGraph(): Promise<ComparisonDataPoint[]> {
+    if (!this.selectedDimension) {
+      throw new Error('No dimension selected!')
+    }
+
+    const adjustedStartDate = roundDateDown(this.startTime).getTime() / 1000
+    const adjustedEndDate = roundDateUp(this.endTime).getTime() / 1000
+
+    const response = await axios.get('/graph/comparison', {
+      params: {
+        start_time: adjustedStartDate,
+        end_time: adjustedEndDate,
+        dimension:
+          this.selectedDimension.benchmark +
+          ':' +
+          this.selectedDimension.metric,
+        repos: formatRepos(this.selectedBranches)
+      }
+    })
+
+    return response.data.repos.flatMap((repo: any) =>
+      comparisonDatapointFromJson(this.selectedDimension!, repo)
+    )
+  }
 
   @mutation
   setSelectedBranchesForRepo(payload: {
