@@ -32,7 +32,7 @@ import Crosshair from 'dygraphs/src/extras/crosshair.js'
 import { escapeHtml } from '@/util/TextUtils'
 import { formatDate } from '@/util/TimeUtil'
 import { debounce, defaultWaitTime } from '@/util/Debouncer.ts'
-import DetailDatapointDialog from '@/components/dialogs/DetailDatapointDialog.vue'
+import GraphDatapointDialog from '@/components/dialogs/GraphDatapointDialog.vue'
 
 // eslint-disable-next-line no-undef
 type RealOptions = dygraphs.Options & {
@@ -42,7 +42,7 @@ type RealOptions = dygraphs.Options & {
 
 @Component({
   components: {
-    'datapoint-dialog': DetailDatapointDialog
+    'datapoint-dialog': GraphDatapointDialog
   }
 })
 export default class DytailGraph extends Vue {
