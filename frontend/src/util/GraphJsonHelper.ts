@@ -2,8 +2,11 @@
 import {
   DetailDataPoint,
   DimensionId,
-  DetailDataPointValue,
-  dimensionIdEqual
+  GraphDataPointValue,
+  dimensionIdEqual,
+  RepoId,
+  ComparisonDataPoint,
+  Dimension
 } from '@/store/types'
 import { CustomKeyEqualsMap } from '@/util/CustomKeyEqualsMap'
 
@@ -21,10 +24,10 @@ export function detailDataPointFromJson(
 ): DetailDataPoint {
   const map: CustomKeyEqualsMap<
     DimensionId,
-    DetailDataPointValue
+    GraphDataPointValue
   > = new CustomKeyEqualsMap([], dimensionIdEqual)
   for (let i = 0; i < dimensions.length; i++) {
-    map.set(dimensions[i], detailDataPointValueFromJson(json.values[i]))
+    map.set(dimensions[i], graphDataPointValueFromJson(json.values[i]))
   }
 
   const committerDate = new Date(json.committer_date * 1000)
@@ -39,9 +42,9 @@ export function detailDataPointFromJson(
   )
 }
 
-function detailDataPointValueFromJson(
+function graphDataPointValueFromJson(
   jsonValue: string | number
-): DetailDataPointValue {
+): GraphDataPointValue {
   if (typeof jsonValue === 'number') {
     return jsonValue
   }
@@ -56,4 +59,25 @@ function detailDataPointValueFromJson(
       return 'MEASUREMENT_FAILED'
   }
   throw new Error(`Illegal type received: ${jsonValue}`)
+}
+
+export function comparisonDatapointFromJson(
+  dimension: Dimension,
+  json: any
+): ComparisonDataPoint[] {
+  const repoId: RepoId = json.repo_id
+
+  return json.commits.map((commit: any) => {
+    const valueMap = new Map()
+    valueMap.set(repoId, graphDataPointValueFromJson(commit.value))
+    return new ComparisonDataPoint(
+      new Date(commit.committer_date * 1000),
+      commit.hash,
+      repoId,
+      valueMap,
+      commit.parents.map((hash: string) => repoId + hash),
+      commit.summary,
+      commit.author
+    )
+  })
 }

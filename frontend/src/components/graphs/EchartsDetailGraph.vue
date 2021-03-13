@@ -705,21 +705,28 @@ export default class EchartsDetailGraph extends Vue {
     if (e.data === undefined) {
       return
     }
-
     const echartsPoint = e.data as EchartsDataPoint
-
+    const datapoint = this.datapoints.find(it => it.uid === echartsPoint.name)!
     if ((e as any).event && (e as any).event.event) {
       const event = (e as any).event.event as MouseEvent
-      this.$emit('click', {
-        datapoint: this.datapoints.find(it => it.uid === echartsPoint.name),
-        ctrl: event.ctrlKey
-      })
-      return
+      if (event.ctrlKey) {
+        const routeData = this.$router.resolve({
+          name: 'run-detail',
+          params: {
+            first: datapoint.repoId,
+            second: datapoint.hash
+          }
+        })
+        window.open(routeData.href, '_blank')
+        return
+      }
     }
-
-    this.$emit('click', {
-      datapoint: this.datapoints.find(it => it.uid === echartsPoint.name),
-      ctrl: false
+    this.$router.push({
+      name: 'run-detail',
+      params: {
+        first: datapoint.repoId,
+        second: datapoint.hash
+      }
     })
   }
   // <!--</editor-fold>-->

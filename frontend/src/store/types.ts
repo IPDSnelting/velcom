@@ -513,6 +513,8 @@ export type SeriesInformation = {
 export abstract class GraphDataPoint {
   abstract readonly time: Date
   abstract readonly uid: string
+  abstract readonly hash: string
+  abstract readonly repoId: RepoId
   abstract readonly values: Map<SeriesId, GraphDataPointValue>
   abstract readonly parentUids: string[]
 
@@ -533,8 +535,8 @@ export abstract class GraphDataPoint {
 
 export class ComparisonDataPoint extends GraphDataPoint {
   readonly time: Date
-  readonly uid: string
   readonly hash: string
+  readonly repoId: RepoId
   readonly values: Map<SeriesId, GraphDataPointValue>
   readonly parentUids: string[]
   readonly summary: string
@@ -542,8 +544,8 @@ export class ComparisonDataPoint extends GraphDataPoint {
 
   constructor(
     time: Date,
-    uid: string,
     hash: string,
+    repoId: string,
     values: Map<SeriesId, GraphDataPointValue>,
     parentUids: string[],
     summary: string,
@@ -551,12 +553,16 @@ export class ComparisonDataPoint extends GraphDataPoint {
   ) {
     super()
     this.time = time
-    this.uid = uid
+    this.repoId = repoId
     this.hash = hash
     this.values = values
     this.parentUids = parentUids
     this.summary = summary
     this.author = author
+  }
+
+  get uid(): string {
+    return this.repoId + this.hash
   }
 }
 
