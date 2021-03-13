@@ -22,10 +22,10 @@ import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.utils.EndpointUtils;
 import de.aaaaaaah.velcom.backend.restapi.exception.InvalidQueryParamsException;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimension;
-import de.aaaaaaah.velcom.shared.util.Either;
 import de.aaaaaaah.velcom.shared.util.Pair;
 import io.micrometer.core.annotation.Timed;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -46,6 +46,11 @@ import javax.ws.rs.core.MediaType;
 @Path("/graph/comparison")
 @Produces(MediaType.APPLICATION_JSON)
 public class GraphComparisonEndpoint {
+
+	private static final String NO_RUN_FOUND = "N";
+	private static final String NO_MEASUREMENT_FOUND = "O";
+	private static final String RUN_FAILED = "R";
+	private static final String MEASUREMENT_FAILED = "M";
 
 	private final BenchmarkReadAccess benchmarkAccess;
 	private final CommitReadAccess commitAccess;
@@ -120,17 +125,7 @@ public class GraphComparisonEndpoint {
 						commit.getAuthor(),
 						commit.getCommitterDate().getEpochSecond(),
 						commit.getSummary(),
-						// Retrieve the value corresponding to our dimension
-						Optional.ofNullable(runs.get(commit.getHash()))
-							.map(Run::getResult)
-							.flatMap(Either::getRight)
-							.flatMap(measurements -> measurements.stream()
-								.filter(measurement -> measurement.getDimension().equals(dimension))
-								.findFirst())
-							.map(Measurement::getContent)
-							.flatMap(Either::getRight)
-							.map(MeasurementValues::getAverageValue)
-							.orElse(null)
+						getValueOfCommit(commit, dimension, runs)
 					))
 					.collect(toList());
 
@@ -143,6 +138,34 @@ public class GraphComparisonEndpoint {
 		JsonDimension jsonDimension = JsonDimension.fromDimensionInfo(dimensionInfo);
 
 		return new GetReply(jsonDimension, repos);
+	}
+
+	private static Object getValueOfCommit(Commit commit, Dimension dimension,
+		Map<CommitHash, Run> runs) {
+
+		Run run = runs.get(commit.getHash());
+		if (run == null) {
+			return NO_RUN_FOUND;
+		}
+
+		Optional<Collection<Measurement>> result = run.getResult().getRight();
+		if (result.isEmpty()) {
+			return RUN_FAILED;
+		}
+
+		Optional<Measurement> measurement = result.get().stream()
+			.filter(it -> it.getDimension().equals(dimension))
+			.findFirst();
+		if (measurement.isEmpty()) {
+			return NO_MEASUREMENT_FOUND;
+		}
+
+		Optional<MeasurementValues> values = measurement.get().getContent().getRight();
+		if (values.isEmpty()) {
+			return MEASUREMENT_FAILED;
+		}
+
+		return values.get().getAverageValue();
 	}
 
 	private static class GetReply {
@@ -174,11 +197,10 @@ public class GraphComparisonEndpoint {
 		public final String author;
 		public final long committerDate;
 		public final String summary;
-		@Nullable
-		public final Double value;
+		public final Object value;
 
 		public JsonGraphCommit(String hash, List<String> parents, String author, long committerDate,
-			String summary, @Nullable Double value) {
+			String summary, Object value) {
 
 			this.hash = hash;
 			this.parents = parents;
