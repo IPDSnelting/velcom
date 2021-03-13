@@ -502,24 +502,36 @@ export class DetailDataPoint {
   }
 }
 
-export interface GraphDataPoint {
-  time: Date
-  uid: string
-  values: Map<SeriesId, GraphDataPointValue>
-  parentUids: string[]
-
-  successful(series: SeriesId): boolean
-  failed(series: SeriesId): boolean
-  unbenchmarked(series: SeriesId): boolean
-}
 export type SeriesId = string
+
 export type SeriesInformation = {
   id: SeriesId
   displayName: string
   color: string
 }
 
-export class ComparisonDataPoint implements GraphDataPoint {
+export abstract class GraphDataPoint {
+  abstract readonly time: Date
+  abstract readonly uid: string
+  abstract readonly values: Map<SeriesId, GraphDataPointValue>
+  abstract readonly parentUids: string[]
+
+  public successful(series: SeriesId): boolean {
+    return typeof this.values.get(series) === 'number'
+  }
+
+  public unbenchmarked(series: SeriesId): boolean {
+    const value = this.values.get(series)
+    return value === 'NO_RUN' || value === 'NO_MEASUREMENT'
+  }
+
+  public failed(series: SeriesId): boolean {
+    const value = this.values.get(series)
+    return value === 'MEASUREMENT_FAILED' || value === 'RUN_FAILED'
+  }
+}
+
+export class ComparisonDataPoint extends GraphDataPoint {
   readonly time: Date
   readonly uid: string
   readonly hash: string
@@ -537,6 +549,7 @@ export class ComparisonDataPoint implements GraphDataPoint {
     summary: string,
     author: string
   ) {
+    super()
     this.time = time
     this.uid = uid
     this.hash = hash
@@ -544,20 +557,6 @@ export class ComparisonDataPoint implements GraphDataPoint {
     this.parentUids = parentUids
     this.summary = summary
     this.author = author
-  }
-
-  public successful(series: SeriesId): boolean {
-    return typeof this.values.get(series) === 'number'
-  }
-
-  public unbenchmarked(series: SeriesId): boolean {
-    const value = this.values.get(series)
-    return value === 'NO_RUN' || value === 'NO_MEASUREMENT'
-  }
-
-  public failed(series: SeriesId): boolean {
-    const value = this.values.get(series)
-    return value === 'MEASUREMENT_FAILED' || value === 'RUN_FAILED'
   }
 }
 
