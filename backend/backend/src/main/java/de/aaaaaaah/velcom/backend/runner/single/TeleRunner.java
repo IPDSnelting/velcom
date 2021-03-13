@@ -17,7 +17,6 @@ import de.aaaaaaah.velcom.backend.runner.Dispatcher;
 import de.aaaaaaah.velcom.backend.runner.KnownRunner;
 import de.aaaaaaah.velcom.backend.runner.KnownRunner.CompletedTask;
 import de.aaaaaaah.velcom.backend.runner.single.state.AwaitAbortRunReply;
-import de.aaaaaaah.velcom.backend.runner.single.state.AwaitSendWorkEnd;
 import de.aaaaaaah.velcom.shared.protocol.StatusCode;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Result;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Result.Benchmark;
@@ -48,7 +47,7 @@ public class TeleRunner {
 	/**
 	 * Completed tasks are cached so we can continue to show output lines in the frontend even if the
 	 * task has finished. This variable controls *how many* are ached.
- 	 */
+	 */
 	private static final int MAX_CACHED_COMPLETED_TASKS = 2;
 
 	private final AtomicReference<GetStatusReply> runnerInformation;
@@ -341,15 +340,8 @@ public class TeleRunner {
 
 	/**
 	 * Sends a {@link RequestRunReply} and any needed TARs.
-	 *
-	 * @param endState the state to transition to after the work was sent
 	 */
-	public void sendAvailableWork(AwaitSendWorkEnd endState) {
-		prepareAndSendWork();
-		connection.getStateMachine().changeCurrentState(teleRunnerState -> endState.getBefore());
-	}
-
-	private void prepareAndSendWork() {
+	public void prepareAndSendWork() {
 		LOGGER.debug("Runner {} asks for work", getRunnerName());
 
 		Optional<String> benchRepoHash = benchRepo.getCurrentHash().map(CommitHash::getHash);
