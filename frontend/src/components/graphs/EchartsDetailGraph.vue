@@ -245,7 +245,6 @@ export default class EchartsDetailGraph extends Vue {
 
   // <!--<editor-fold desc="ECHARTS GRAPH OPTIONS">-->
   @Watch('datapoints')
-  @Watch('seriesInformation')
   @Watch('beginYAtZero')
   @Watch('dataRangeMin')
   @Watch('dataRangeMax')
