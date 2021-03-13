@@ -24,7 +24,6 @@ import de.aaaaaaah.velcom.backend.data.benchrepo.BenchRepo;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.runner.Dispatcher;
 import de.aaaaaaah.velcom.backend.runner.KnownRunner;
-import de.aaaaaaah.velcom.backend.runner.single.state.AwaitSendWorkEnd;
 import de.aaaaaaah.velcom.backend.runner.single.state.TeleRunnerState;
 import de.aaaaaaah.velcom.shared.protocol.StatusCode;
 import de.aaaaaaah.velcom.shared.protocol.serialization.Result;
@@ -208,7 +207,7 @@ class TeleRunnerTest {
 		));
 		when(benchRepo.getCurrentHash()).thenReturn(Optional.of(new CommitHash("otherHash")));
 
-		runner.sendAvailableWork(mock(AwaitSendWorkEnd.class));
+		runner.prepareAndSendWork();
 		verify(connection, times(2)).createBinaryOutputStream();
 		verify(connection)
 			.send(argThat(argument -> argument.getType() == ClientBoundPacketType.REQUEST_RUN_REPLY));
