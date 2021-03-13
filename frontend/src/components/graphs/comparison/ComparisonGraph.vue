@@ -50,6 +50,7 @@ import { vxm } from '@/store'
 import { formatDate } from '@/util/TimeUtil'
 import { escapeHtml } from '@/util/TextUtils'
 import GraphDatapointDialog from '@/components/dialogs/GraphDatapointDialog.vue'
+import { Prop } from 'vue-property-decorator'
 
 @Component({
   components: {
@@ -58,7 +59,8 @@ import GraphDatapointDialog from '@/components/dialogs/GraphDatapointDialog.vue'
   }
 })
 export default class ComparisonGraph extends Vue {
-  private comparisonDatapoints: ComparisonDataPoint[] = []
+  @Prop()
+  private comparisonDatapoints!: ComparisonDataPoint[]
 
   // <!--<editor-fold desc="Getters">-->
   private get seriesInformation(): SeriesInformation[] {
@@ -85,6 +87,7 @@ export default class ComparisonGraph extends Vue {
     return vxm.comparisonGraphModule.commitToCompare
   }
 
+  // noinspection JSUnusedLocalSymbols
   private set commitToCompare(commit: AttributedDatapoint | null) {
     vxm.comparisonGraphModule.commitToCompare = commit
   }
@@ -93,6 +96,7 @@ export default class ComparisonGraph extends Vue {
     return vxm.comparisonGraphModule.referenceDatapoint
   }
 
+  // noinspection JSUnusedLocalSymbols
   private set referenceDatapoint(datapoint: AttributedDatapoint | null) {
     vxm.comparisonGraphModule.referenceDatapoint = datapoint
   }
@@ -173,19 +177,6 @@ export default class ComparisonGraph extends Vue {
               </td>
             </tr>
             `
-  }
-
-  private async mounted() {
-    vxm.comparisonGraphModule.toggleRepoBranch({
-      repoId: '44bb5c8d-b20d-4bef-bdad-c92767dfa489',
-      branch: 'main'
-    })
-    vxm.comparisonGraphModule.selectedDimension = vxm.repoModule
-      .repoById('44bb5c8d-b20d-4bef-bdad-c92767dfa489')!
-      .dimensions.find(
-        it => it.benchmark === 'backend' && it.metric === 'build_time'
-      )!
-    this.comparisonDatapoints = await vxm.comparisonGraphModule.fetchComparisonGraph()
   }
 }
 </script>
