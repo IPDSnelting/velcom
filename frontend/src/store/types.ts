@@ -451,7 +451,7 @@ export class RunComparison {
   }
 }
 
-export type DetailDataPointValue =
+export type GraphDataPointValue =
   | number
   | 'NO_RUN'
   | 'NO_MEASUREMENT'
@@ -466,7 +466,7 @@ export class DetailDataPoint {
   readonly positionDate: Date // to alter position in day equidistant graphs
   readonly summary: string
   // TODO: Figure out if the map wastes too much memory
-  readonly values: CustomKeyEqualsMap<DimensionId, DetailDataPointValue>
+  readonly values: CustomKeyEqualsMap<DimensionId, GraphDataPointValue>
 
   // noinspection DuplicatedCode
   constructor(
@@ -476,7 +476,7 @@ export class DetailDataPoint {
     committerDate: Date,
     positionDate: Date,
     summary: string,
-    values: CustomKeyEqualsMap<DimensionId, DetailDataPointValue>
+    values: CustomKeyEqualsMap<DimensionId, GraphDataPointValue>
   ) {
     this.hash = hash
     this.parents = parents
@@ -498,6 +498,65 @@ export class DetailDataPoint {
 
   public failed(dimension: DimensionId): boolean {
     const value = this.values.get(dimension)
+    return value === 'MEASUREMENT_FAILED' || value === 'RUN_FAILED'
+  }
+}
+
+export interface GraphDataPoint {
+  time: Date
+  uid: string
+  values: Map<SeriesId, GraphDataPointValue>
+  parentUids: string[]
+
+  successful(series: SeriesId): boolean
+  failed(series: SeriesId): boolean
+  unbenchmarked(series: SeriesId): boolean
+}
+export type SeriesId = string
+export type SeriesInformation = {
+  id: SeriesId
+  displayName: string
+  color: string
+}
+
+export class ComparisonDataPoint implements GraphDataPoint {
+  readonly time: Date
+  readonly uid: string
+  readonly hash: string
+  readonly values: Map<SeriesId, GraphDataPointValue>
+  readonly parentUids: string[]
+  readonly summary: string
+  readonly author: string
+
+  constructor(
+    time: Date,
+    uid: string,
+    hash: string,
+    values: Map<SeriesId, GraphDataPointValue>,
+    parentUids: string[],
+    summary: string,
+    author: string
+  ) {
+    this.time = time
+    this.uid = uid
+    this.hash = hash
+    this.values = values
+    this.parentUids = parentUids
+    this.summary = summary
+    this.author = author
+  }
+
+  public successful(series: SeriesId): boolean {
+    return typeof this.values.get(series) === 'number'
+  }
+
+  public unbenchmarked(series: SeriesId): boolean {
+    const value = this.values.get(series)
+    return value === 'NO_RUN' || value === 'NO_MEASUREMENT'
+  }
+
+  public failed(series: SeriesId): boolean {
+    const value = this.values.get(series)
     return value === 'MEASUREMENT_FAILED' || value === 'RUN_FAILED'
   }
 }
