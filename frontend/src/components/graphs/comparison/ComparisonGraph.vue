@@ -2,10 +2,10 @@
   <v-card>
     <v-card-text>
       <echarts-detail-graph
-        :zoom-x-start-value="zoomXStartValue"
-        :zoom-x-end-value="zoomXEndValue"
-        :zoom-y-start-value="zoomYStartValue"
-        :zoom-y-end-value="zoomYEndValue"
+        :zoom-x-start-value.sync="zoomXStartValue"
+        :zoom-x-end-value.sync="zoomXEndValue"
+        :zoom-y-start-value.sync="zoomYStartValue"
+        :zoom-y-end-value.sync="zoomYEndValue"
         :datapoints="comparisonDatapoints"
         :data-range-min="dataRangeMin"
         :data-range-max="dataRangeMax"
@@ -55,35 +55,39 @@ export default class ComparisonGraph extends Vue {
   }
 
   private get zoomXStartValue(): Date | null {
-    return this.dataRangeMin
+    return vxm.comparisonGraphModule.zoomXStart
   }
 
+  // noinspection JSUnusedLocalSymbols
   private set zoomXStartValue(value: Date | null) {
-    // pass
+    vxm.comparisonGraphModule.zoomXStart = value
   }
 
   private get zoomXEndValue(): Date | null {
-    return this.dataRangeMax
+    return vxm.comparisonGraphModule.zoomXEnd
   }
 
+  // noinspection JSUnusedLocalSymbols
   private set zoomXEndValue(value: Date | null) {
-    // pass
+    vxm.comparisonGraphModule.zoomXEnd = value
   }
 
   private get zoomYStartValue(): Date | null {
-    return null
+    return vxm.comparisonGraphModule.zoomYStart
   }
 
+  // noinspection JSUnusedLocalSymbols
   private set zoomYStartValue(value: Date | null) {
-    // pass
+    vxm.comparisonGraphModule.zoomYStart = value
   }
 
   private get zoomYEndValue(): Date | null {
-    return null
+    return vxm.comparisonGraphModule.zoomYEnd
   }
 
+  // noinspection JSUnusedLocalSymbols
   private set zoomYEndValue(value: Date | null) {
-    // pass
+    vxm.comparisonGraphModule.zoomYEnd = value
   }
 
   private get visiblePointCount() {

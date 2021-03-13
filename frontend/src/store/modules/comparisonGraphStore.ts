@@ -54,6 +54,10 @@ export class ComparisonGraphStore extends VxModule {
   endTime: Date = defaultEndDate()
 
   selectedDimension: Dimension | null = null
+  zoomXStart: Date | null = null
+  zoomXEnd: Date | null = null
+  zoomYStart: Date | null = null
+  zoomYEnd: Date | null = null
 
   @action
   async fetchComparisonGraph(): Promise<ComparisonDataPoint[]> {
