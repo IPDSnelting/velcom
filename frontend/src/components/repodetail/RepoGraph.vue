@@ -34,7 +34,6 @@
                   :is="selectedGraphComponent"
                   :dimensions="selectedDimensions"
                   :beginYAtZero="yStartsAtZero"
-                  :dayEquidistant="dayEquidistantGraphSelected"
                   @wheel="overscrollToZoom.scrolled($event)"
                 ></component>
                 <v-overlay
@@ -112,10 +111,6 @@ export default class RepoGraphs extends Vue {
 
   private get availableGraphComponents() {
     return availableGraphComponents
-  }
-
-  private get dayEquidistantGraphSelected() {
-    return vxm.detailGraphModule.dayEquidistantGraph
   }
 
   private get yStartsAtZero() {
