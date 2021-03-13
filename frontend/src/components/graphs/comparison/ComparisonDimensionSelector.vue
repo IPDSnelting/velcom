@@ -3,16 +3,21 @@
     :outlined="selectedItem === null"
     :class="{ 'warning-outline': possibleDimensions.length !== 0 }"
   >
-    <v-card-text :class="{ disabled: disabled }">
+    <v-card-text :class="{ disabled: errorMessage !== null }">
       <v-row style="min-height: 86px">
         <v-col cols="auto" class="d-flex align-center">
           <div>Dimension to compare</div>
         </v-col>
-        <v-col>
+        <v-col
+          v-if="errorMessage !== null"
+          class="d-flex align-center text-warning"
+        >
+          {{ errorMessage }}
+        </v-col>
+        <v-col v-if="errorMessage === null">
           <v-autocomplete
             :value="selectedItem"
             :items="items"
-            :disabled="disabled"
             @input="selectDimension"
             label="Enter a dimension..."
             return-object
@@ -30,7 +35,7 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Dimension } from '@/store/types'
-import { Model, Prop, Watch } from 'vue-property-decorator'
+import { Model, Prop } from 'vue-property-decorator'
 
 class Item {
   readonly text: string
@@ -47,13 +52,13 @@ class Item {
 @Component
 export default class ComparisonDimensionSelector extends Vue {
   @Prop()
-  private readonly possibleDimensions: Dimension[]
+  private readonly possibleDimensions!: Dimension[]
 
   @Model('input')
-  private readonly selectedDimension: Dimension
+  private readonly selectedDimension!: Dimension
 
   @Prop()
-  private readonly disabled: boolean
+  private readonly errorMessage!: string | null
 
   private get items() {
     return this.possibleDimensions.map(dimension => new Item(dimension))
@@ -80,6 +85,13 @@ export default class ComparisonDimensionSelector extends Vue {
   }
 }
 </script>
+
+<!--suppress CssUnresolvedCustomProperty -->
+<style scoped>
+.text-warning {
+  color: var(--v-warning-base) !important;
+}
+</style>
 
 <!--suppress CssUnresolvedCustomProperty -->
 <style>
