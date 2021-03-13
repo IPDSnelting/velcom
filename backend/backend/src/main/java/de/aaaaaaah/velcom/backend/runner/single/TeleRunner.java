@@ -127,7 +127,7 @@ public class TeleRunner {
 	 */
 	public void setRunnerInformation(GetStatusReply reply) {
 		if (runnerInformation.get() == null) {
-			LOGGER.info("Passed runner '{}' on to dispatcher!", getRunnerName());
+			LOGGER.debug("Passing runner '{}' on to dispatcher", getRunnerName());
 			dispatcher.addRunner(this);
 		}
 		runnerInformation.set(reply);
