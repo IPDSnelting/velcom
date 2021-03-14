@@ -91,8 +91,6 @@ import MatrixDimensionSelection from '@/components/graphs/MatrixDimensionSelecti
 import DimensionSelection from '@/components/graphs/DimensionSelection.vue'
 import ShareGraphLinkDialog from '@/views/ShareGraphLinkDialog.vue'
 import { vxm } from '@/store'
-import EchartsDetailGraph from '@/components/graphs/EchartsDetailGraph.vue'
-import DytailGraph from '@/components/graphs/DytailGraph.vue'
 import OverscrollToZoom from '@/components/graphs/OverscrollToZoom'
 import GraphPlaceholder from '@/components/graphs/GraphPlaceholder.vue'
 import {
@@ -111,28 +109,10 @@ import {
   roundDateUp
 } from '@/store/modules/comparisonGraphStore'
 import GraphDatapointDialog from '@/components/dialogs/GraphDatapointDialog.vue'
-
-const availableGraphComponents = [
-  {
-    predicate: () => {
-      // Do not care about zooming, only use echarts when he have only a handful of data points
-      const points =
-        vxm.detailGraphModule.detailGraph.length *
-        vxm.detailGraphModule.selectedDimensions.length
-      return points < 30_000
-    },
-    component: EchartsDetailGraph,
-    name: 'Fancy'
-  },
-  {
-    predicate: () => {
-      // matches from first to last. this one is the fallback
-      return true
-    },
-    component: DytailGraph,
-    name: 'Fast'
-  }
-]
+import {
+  availableGraphComponents,
+  selectGraphVariant
+} from '@/util/GraphVariantSelection'
 
 @Component({
   components: {
@@ -188,8 +168,9 @@ export default class RepoGraphs extends Vue {
     }
 
     await vxm.detailGraphModule.fetchDetailGraph()
-    const correctSeries = this.availableGraphComponents.find(it =>
-      it.predicate()
+    const correctSeries = selectGraphVariant(
+      vxm.detailGraphModule.visiblePoints *
+        vxm.detailGraphModule.selectedDimensions.length
     )
     if (correctSeries) {
       this.selectedGraphComponent = correctSeries.component

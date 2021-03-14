@@ -1,7 +1,8 @@
 <template>
   <v-card>
     <v-card-text>
-      <echarts-detail-graph
+      <component
+        :is="graphComponent"
         :zoom-x-start-value.sync="zoomXStartValue"
         :zoom-x-end-value.sync="zoomXEndValue"
         :zoom-y-start-value.sync="zoomYStartValue"
@@ -13,6 +14,7 @@
         :visible-point-count="visiblePointCount"
         :reference-datapoint="referenceDatapoint"
         :commit-to-compare="commitToCompare"
+        :begin-y-at-zero="beginYAtZero"
       >
         <template
           #dialog="{
@@ -31,7 +33,7 @@
             @close="closeDialog()"
           ></graph-datapoint-dialog>
         </template>
-      </echarts-detail-graph>
+      </component>
     </v-card-text>
   </v-card>
 </template>
@@ -40,6 +42,7 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import EchartsDetailGraph from '@/components/graphs//EchartsDetailGraph.vue'
+import DytailGraph from '@/components/graphs/DytailGraph.vue'
 import {
   AttributedDatapoint,
   ComparisonDataPoint,
@@ -57,13 +60,20 @@ import {
 @Component({
   components: {
     GraphDatapointDialog,
-    EchartsDetailGraph
+    EchartsDetailGraph,
+    DytailGraph
   }
 })
 export default class ComparisonGraph extends Vue {
   // noinspection JSMismatchedCollectionQueryUpdate
   @Prop()
   private comparisonDatapoints!: ComparisonDataPoint[]
+
+  @Prop()
+  private graphComponent!: typeof Vue
+
+  @Prop()
+  private beginYAtZero!: boolean
 
   // <!--<editor-fold desc="Getters">-->
   private get seriesInformation(): SeriesInformation[] {

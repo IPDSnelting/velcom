@@ -489,6 +489,8 @@ export abstract class GraphDataPoint {
     const value = this.values.get(series)
     return value === 'MEASUREMENT_FAILED' || value === 'RUN_FAILED'
   }
+
+  public abstract positionedAt(positionTime: Date): GraphDataPoint
 }
 
 export type AttributedDatapoint = {
@@ -530,6 +532,19 @@ export class DetailDataPoint extends GraphDataPoint {
     this.summary = summary
     this.values = values
   }
+
+  positionedAt(positionTime: Date): DetailDataPoint {
+    return new DetailDataPoint(
+      this.repoId,
+      this.hash,
+      this.parentUids,
+      this.author,
+      this.committerTime,
+      positionTime,
+      this.summary,
+      this.values
+    )
+  }
 }
 
 export class ComparisonDataPoint extends GraphDataPoint {
@@ -541,6 +556,7 @@ export class ComparisonDataPoint extends GraphDataPoint {
   readonly parentUids: string[]
   readonly summary: string
   readonly author: string
+  readonly uid: string
 
   constructor(
     committerTime: Date,
@@ -561,10 +577,20 @@ export class ComparisonDataPoint extends GraphDataPoint {
     this.parentUids = parentUids
     this.summary = summary
     this.author = author
+    this.uid = this.repoId + this.hash
   }
 
-  get uid(): string {
-    return this.repoId + this.hash
+  positionedAt(positionTime: Date): ComparisonDataPoint {
+    return new ComparisonDataPoint(
+      this.committerTime,
+      positionTime,
+      this.hash,
+      this.repoId,
+      this.values,
+      this.parentUids,
+      this.summary,
+      this.author
+    )
   }
 }
 

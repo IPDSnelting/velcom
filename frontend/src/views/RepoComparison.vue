@@ -30,7 +30,18 @@
           <v-col>
             <comparison-graph
               :comparison-datapoints="comparisonDatapoints"
+              :begin-y-at-zero="beginYAtZero"
+              :graph-component="graphComponent"
             ></comparison-graph>
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col class="pt-0">
+            <comparison-graph-settings
+              :begin-y-at-zero.sync="beginYAtZero"
+              :graph-component.sync="graphComponent"
+              :day-equidistant-graph-selected.sync="dayEquidistantGraphSelected"
+            ></comparison-graph-settings>
           </v-col>
         </v-row>
       </v-col>
@@ -48,9 +59,13 @@ import ComparisonDimensionSelector from '@/components/graphs/comparison/Comparis
 import { ComparisonDataPoint, Dimension, Repo } from '@/store/types'
 import ComparisonGraph from '@/components/graphs/comparison/ComparisonGraph.vue'
 import { Watch } from 'vue-property-decorator'
+import ComparisonGraphSettings from '@/components/graphs/comparison/ComparisonGraphSettings.vue'
+import { spaceDayEquidistant } from '@/util/DayEquidistantUtil'
+import { availableGraphComponents } from '@/util/GraphVariantSelection'
 
 @Component({
   components: {
+    ComparisonGraphSettings,
     ComparisonGraph,
     ComparisonDimensionSelector,
     GraphTimespanControls,
@@ -59,6 +74,11 @@ import { Watch } from 'vue-property-decorator'
 })
 export default class RepoComparison extends Vue {
   private comparisonDatapoints: ComparisonDataPoint[] = []
+  private beginYAtZero: boolean = false
+  private graphComponent: typeof Vue | null =
+    availableGraphComponents[0].component
+
+  private dayEquidistantGraphSelected: boolean = true
 
   private get startTime(): Date {
     return vxm.comparisonGraphModule.startTime
@@ -126,6 +146,12 @@ export default class RepoComparison extends Vue {
       .map(([key]) => vxm.repoModule.repoById(key)!)
   }
 
+  private applyDatapointTransformations(datapoints: ComparisonDataPoint[]) {
+    return this.dayEquidistantGraphSelected
+      ? spaceDayEquidistant(datapoints)
+      : datapoints.map(it => it.positionedAt(it.committerTime))
+  }
+
   @Watch('selectedRepos')
   private async onSelectedRepoChange() {
     if (this.selectedRepos.length > 0) {
@@ -133,6 +159,13 @@ export default class RepoComparison extends Vue {
     } else {
       this.comparisonDatapoints = []
     }
+  }
+
+  @Watch('dayEquidistantGraphSelected')
+  private onDayEquidistantChanged() {
+    this.comparisonDatapoints = this.applyDatapointTransformations(
+      this.comparisonDatapoints
+    )
   }
 
   @Watch('selectedDimension')
@@ -143,7 +176,9 @@ export default class RepoComparison extends Vue {
       this.comparisonDatapoints = []
       return
     }
-    this.comparisonDatapoints = await vxm.comparisonGraphModule.fetchComparisonGraph()
+    this.comparisonDatapoints = this.applyDatapointTransformations(
+      await vxm.comparisonGraphModule.fetchComparisonGraph()
+    )
   }
 }
 </script>
