@@ -29,7 +29,6 @@ import { vxm } from '@/store'
 import 'dygraphs/css/dygraph.css'
 import Crosshair from 'dygraphs/src/extras/crosshair.js'
 import { escapeHtml } from '@/util/TextUtils'
-import { debounce, defaultWaitTime } from '@/util/Debouncer.ts'
 import GraphDatapointDialog from '@/components/dialogs/GraphDatapointDialog.vue'
 
 // eslint-disable-next-line no-undef
@@ -523,19 +522,12 @@ export default class DytailGraph extends Vue {
    * @private
    */
   private dygraphsPanned() {
-    // FIXME: Don't marry it to this!
     if (this.dataRangeMax.getTime() < this.graph.xAxisRange()[1]) {
-      debounce(() => {
-        vxm.detailGraphModule.fetchDetailGraph()
-        vxm.detailGraphModule.endTime = new Date(this.graph.xAxisRange()[1])
-        vxm.detailGraphModule.zoomXEndValue = this.graph.xAxisRange()[1]
-      }, defaultWaitTime)()
+      this.$emit('update:dataRangeMax', new Date(this.graph.xAxisRange()[1]))
+      this.$emit('update:zoomXEndValue', this.graph.xAxisRange()[1])
     } else if (this.dataRangeMin.getTime() > this.graph.xAxisRange()[0]) {
-      debounce(() => {
-        vxm.detailGraphModule.fetchDetailGraph()
-        vxm.detailGraphModule.startTime = new Date(this.graph.xAxisRange()[0])
-        vxm.detailGraphModule.zoomXStartValue = this.graph.xAxisRange()[0]
-      }, defaultWaitTime)()
+      this.$emit('update:dataRangeMin', new Date(this.graph.xAxisRange()[0]))
+      this.$emit('update:zoomXStartValue', this.graph.xAxisRange()[0])
     }
   }
 

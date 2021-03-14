@@ -27,7 +27,7 @@ function defaultEndDate() {
   return new Date(new Date().setHours(24, 0, 0, 0))
 }
 
-function roundDateUp(date: Date): Date {
+export function roundDateUp(date: Date): Date {
   const copy = new Date(date)
   if (!(date.getHours() !== 0)) {
     copy.setHours(24, 0, 0, 0) // next midnight
@@ -35,7 +35,7 @@ function roundDateUp(date: Date): Date {
   return copy
 }
 
-function roundDateDown(date: Date): Date {
+export function roundDateDown(date: Date): Date {
   const copy = new Date(date)
   if (!(date.getHours() !== 0)) {
     copy.setHours(0, 0, 0, 0) // this midnight

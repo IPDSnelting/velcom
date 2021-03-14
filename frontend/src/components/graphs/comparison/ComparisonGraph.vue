@@ -7,8 +7,8 @@
         :zoom-y-start-value.sync="zoomYStartValue"
         :zoom-y-end-value.sync="zoomYEndValue"
         :datapoints="comparisonDatapoints"
-        :data-range-min="dataRangeMin"
-        :data-range-max="dataRangeMax"
+        :data-range-min.sync="dataRangeMin"
+        :data-range-max.sync="dataRangeMax"
         :series-information="seriesInformation"
         :visible-point-count="visiblePointCount"
         :point-table-formatter="pointFormatter"
@@ -44,6 +44,7 @@ import EchartsDetailGraph from '@/components/graphs//EchartsDetailGraph.vue'
 import {
   AttributedDatapoint,
   ComparisonDataPoint,
+  SeriesId,
   SeriesInformation
 } from '@/store/types'
 import { vxm } from '@/store'
@@ -51,6 +52,10 @@ import { formatDate } from '@/util/TimeUtil'
 import { escapeHtml } from '@/util/TextUtils'
 import GraphDatapointDialog from '@/components/dialogs/GraphDatapointDialog.vue'
 import { Prop } from 'vue-property-decorator'
+import {
+  roundDateDown,
+  roundDateUp
+} from '@/store/modules/comparisonGraphStore'
 
 @Component({
   components: {
@@ -59,6 +64,7 @@ import { Prop } from 'vue-property-decorator'
   }
 })
 export default class ComparisonGraph extends Vue {
+  // noinspection JSMismatchedCollectionQueryUpdate
   @Prop()
   private comparisonDatapoints!: ComparisonDataPoint[]
 
@@ -66,7 +72,7 @@ export default class ComparisonGraph extends Vue {
   private get seriesInformation(): SeriesInformation[] {
     return Array.from(vxm.comparisonGraphModule.selectedBranches.keys()).map(
       repoId => ({
-        id: repoId,
+        id: repoId as SeriesId,
         color: vxm.colorModule.colorByIndex(
           vxm.repoModule.allRepos.findIndex(it => it.id === repoId)
         ),
@@ -79,8 +85,20 @@ export default class ComparisonGraph extends Vue {
     return vxm.comparisonGraphModule.startTime
   }
 
+  // noinspection JSUnusedLocalSymbols
+  private set dataRangeMin(date: Date) {
+    vxm.comparisonGraphModule.startTime = roundDateDown(date)
+    vxm.comparisonGraphModule.fetchComparisonGraph()
+  }
+
   private get dataRangeMax() {
     return vxm.comparisonGraphModule.endTime
+  }
+
+  // noinspection JSUnusedLocalSymbols
+  private set dataRangeMax(date: Date) {
+    vxm.comparisonGraphModule.endTime = roundDateUp(date)
+    vxm.comparisonGraphModule.fetchComparisonGraph()
   }
 
   private get commitToCompare(): AttributedDatapoint | null {

@@ -37,8 +37,8 @@
                   :zoom-y-start-value.sync="zoomYStartValue"
                   :zoom-y-end-value.sync="zoomYEndValue"
                   :datapoints="datapoints"
-                  :data-range-min="dataRangeMin"
-                  :data-range-max="dataRangeMax"
+                  :data-range-min.sync="dataRangeMin"
+                  :data-range-max.sync="dataRangeMax"
                   :series-information="seriesInformation"
                   :visible-point-count="visiblePointCount"
                   :point-table-formatter="pointFormatter"
@@ -88,6 +88,10 @@ import { Prop, Watch } from 'vue-property-decorator'
 import { getInnerHeight } from '@/util/MeasurementUtils'
 import { escapeHtml } from '@/util/TextUtils'
 import { formatDate } from '@/util/TimeUtil'
+import {
+  roundDateDown,
+  roundDateUp
+} from '@/store/modules/comparisonGraphStore'
 
 const availableGraphComponents = [
   {
@@ -231,8 +235,20 @@ export default class RepoGraphs extends Vue {
     return vxm.detailGraphModule.startTime
   }
 
+  // noinspection JSUnusedLocalSymbols
+  private set dataRangeMin(date: Date) {
+    vxm.detailGraphModule.startTime = roundDateDown(date)
+    vxm.detailGraphModule.fetchDetailGraph()
+  }
+
   private get dataRangeMax() {
     return vxm.detailGraphModule.endTime
+  }
+
+  // noinspection JSUnusedLocalSymbols
+  private set dataRangeMax(date: Date) {
+    vxm.detailGraphModule.endTime = roundDateUp(date)
+    vxm.detailGraphModule.fetchDetailGraph()
   }
 
   private get commitToCompare(): AttributedDatapoint | null {
