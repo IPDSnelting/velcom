@@ -1,5 +1,4 @@
 import { Flavor } from '@/util/FlavorTypes'
-import { CustomKeyEqualsMap } from '@/util/CustomKeyEqualsMap'
 
 export class RepoBranch {
   readonly name: string
@@ -451,64 +450,20 @@ export class RunComparison {
   }
 }
 
-export type GraphDataPointValue =
-  | number
-  | 'NO_RUN'
-  | 'NO_MEASUREMENT'
-  | 'RUN_FAILED'
-  | 'MEASUREMENT_FAILED'
-
-export class DetailDataPoint {
-  readonly hash: CommitHash
-  readonly parents: CommitHash[]
-  readonly author: string
-  readonly committerDate: Date
-  readonly positionDate: Date // to alter position in day equidistant graphs
-  readonly summary: string
-  // TODO: Figure out if the map wastes too much memory
-  readonly values: CustomKeyEqualsMap<DimensionId, GraphDataPointValue>
-
-  // noinspection DuplicatedCode
-  constructor(
-    hash: CommitHash,
-    parents: CommitHash[],
-    author: string,
-    committerDate: Date,
-    positionDate: Date,
-    summary: string,
-    values: CustomKeyEqualsMap<DimensionId, GraphDataPointValue>
-  ) {
-    this.hash = hash
-    this.parents = parents
-    this.author = author
-    this.committerDate = committerDate
-    this.positionDate = positionDate
-    this.summary = summary
-    this.values = values
-  }
-
-  public successful(dimension: DimensionId): boolean {
-    return typeof this.values.get(dimension) === 'number'
-  }
-
-  public unbenchmarked(dimension: DimensionId): boolean {
-    const value = this.values.get(dimension)
-    return value === 'NO_RUN' || value === 'NO_MEASUREMENT'
-  }
-
-  public failed(dimension: DimensionId): boolean {
-    const value = this.values.get(dimension)
-    return value === 'MEASUREMENT_FAILED' || value === 'RUN_FAILED'
-  }
-}
-
-export type SeriesId = string
+export type SeriesId = Flavor<string, 'series_id'>
 
 export type SeriesInformation = {
   id: SeriesId
   displayName: string
   color: string
 }
+
+export type GraphDataPointValue =
+  | number
+  | 'NO_RUN'
+  | 'NO_MEASUREMENT'
+  | 'RUN_FAILED'
+  | 'MEASUREMENT_FAILED'
 
 export abstract class GraphDataPoint {
   abstract readonly time: Date
@@ -536,6 +491,42 @@ export abstract class GraphDataPoint {
 export type AttributedDatapoint = {
   datapoint: GraphDataPoint
   seriesId: SeriesId
+}
+
+export class DetailDataPoint extends GraphDataPoint {
+  readonly hash: CommitHash
+  readonly repoId: RepoId
+  readonly uid: string
+  readonly parentUids: string[]
+  readonly author: string
+  readonly committerDate: Date
+  readonly time: Date // to alter position in day equidistant graphs
+  readonly summary: string
+  // TODO: Figure out if the map wastes too much memory
+  readonly values: Map<SeriesId, GraphDataPointValue>
+
+  // noinspection DuplicatedCode
+  constructor(
+    repoId: RepoId,
+    hash: CommitHash,
+    parentUids: string[],
+    author: string,
+    committerDate: Date,
+    positionDate: Date,
+    summary: string,
+    values: Map<SeriesId, GraphDataPointValue>
+  ) {
+    super()
+    this.repoId = repoId
+    this.hash = hash
+    this.uid = repoId + hash
+    this.parentUids = parentUids
+    this.author = author
+    this.committerDate = committerDate
+    this.time = positionDate
+    this.summary = summary
+    this.values = values
+  }
 }
 
 export class ComparisonDataPoint extends GraphDataPoint {

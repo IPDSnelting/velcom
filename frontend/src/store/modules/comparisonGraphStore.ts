@@ -3,13 +3,11 @@ import {
   AttributedDatapoint,
   ComparisonDataPoint,
   Dimension,
-  Repo,
   RepoId
 } from '@/store/types'
 import Vue from 'vue'
 import axios from 'axios'
 import { comparisonDatapointFromJson } from '@/util/GraphJsonHelper'
-import { vxm } from '@/store'
 
 const VxModule = createModule({
   namespaced: 'comparisonGraphModule',

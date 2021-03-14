@@ -1,39 +1,37 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 import {
   DetailDataPoint,
-  DimensionId,
   GraphDataPointValue,
-  dimensionIdEqual,
   RepoId,
   ComparisonDataPoint,
-  Dimension
+  Dimension,
+  SeriesId
 } from '@/store/types'
-import { CustomKeyEqualsMap } from '@/util/CustomKeyEqualsMap'
 
 /**
  * Parses a data point json to a DataPoint object.
  *
  * @export
- * @param {*} json the json object
- * @param {*} dimensions the requested dimensions in the same order they appear in the values array of the datapoint
+ * @param json the json object
+ * @param seriesIds the requested series ids in the same order they appear in the values array of the datapoint
+ * @param repoId the id of the repo the point belongs to
  * @returns {DetailDataPoint} the data point object
  */
 export function detailDataPointFromJson(
   json: any,
-  dimensions: DimensionId[]
+  seriesIds: SeriesId[],
+  repoId: RepoId
 ): DetailDataPoint {
-  const map: CustomKeyEqualsMap<
-    DimensionId,
-    GraphDataPointValue
-  > = new CustomKeyEqualsMap([], dimensionIdEqual)
-  for (let i = 0; i < dimensions.length; i++) {
-    map.set(dimensions[i], graphDataPointValueFromJson(json.values[i]))
+  const map: Map<SeriesId, GraphDataPointValue> = new Map()
+  for (let i = 0; i < seriesIds.length; i++) {
+    map.set(seriesIds[i], graphDataPointValueFromJson(json.values[i]))
   }
 
   const committerDate = new Date(json.committer_date * 1000)
   return new DetailDataPoint(
+    repoId,
     json.hash,
-    json.parents,
+    json.parents.map((hash: any) => repoId + hash),
     json.author,
     committerDate,
     committerDate,

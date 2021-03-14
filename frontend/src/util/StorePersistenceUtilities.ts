@@ -1,4 +1,5 @@
 import {
+  AttributedDatapoint,
   DetailDataPoint,
   Dimension,
   DimensionId,
@@ -7,10 +8,7 @@ import {
   RepoBranch
 } from '@/store/types'
 import { CustomKeyEqualsMap } from '@/util/CustomKeyEqualsMap'
-import {
-  DetailGraphStore,
-  DimensionDetailPoint
-} from '@/store/modules/detailGraphStore'
+import { DetailGraphStore } from '@/store/modules/detailGraphStore'
 import { RepoStore } from '@/store/modules/repoStore'
 
 // <editor-fold desc="DIMENSION">
@@ -45,27 +43,27 @@ function hydrateRepo(repo: Repo) {
 // </editor-fold>
 
 // <editor-fold desc="DIMENSION DETAIL POINT">
-function serializeDimensionDetailPoint(point: DimensionDetailPoint | null) {
+function serializeDimensionDetailPoint(point: AttributedDatapoint | null) {
   if (!point) {
     return null
   }
-  const persistablePoint: any = Object.assign({}, point.dataPoint)
+  const persistablePoint: any = Object.assign({}, point.datapoint)
   persistablePoint.values = Array.from(persistablePoint.values.entries())
   return {
-    dataPoint: persistablePoint,
-    dimension: point.dimension
-  }
+    datapoint: persistablePoint,
+    seriesId: point.seriesId
+  } as AttributedDatapoint
 }
 
 function deserializeDimensionDetailPoint(
-  point: DimensionDetailPoint | null
-): DimensionDetailPoint | null {
+  point: AttributedDatapoint | null
+): AttributedDatapoint | null {
   if (!point) {
     return null
   }
   return {
-    dimension: hydrateDimension(point.dimension),
-    dataPoint: hydrateDetailPoint(point.dataPoint)
+    seriesId: point.seriesId,
+    datapoint: hydrateDetailPoint(point.datapoint as DetailDataPoint)
   }
 }
 // </editor-fold>
@@ -73,17 +71,14 @@ function deserializeDimensionDetailPoint(
 // <editor-fold desc="DETAIL DATA POINT">
 function hydrateDetailPoint(it: DetailDataPoint) {
   return new DetailDataPoint(
+    it.repoId,
     it.hash,
-    it.parents,
+    it.parentUids,
     it.author,
     new Date(it.committerDate),
     new Date(it.committerDate),
     it.summary,
-    new CustomKeyEqualsMap(
-      it.values,
-      (first, second) =>
-        first.benchmark === second.benchmark && first.metric === second.metric
-    )
+    new Map(it.values.entries())
   )
 }
 // </editor-fold>

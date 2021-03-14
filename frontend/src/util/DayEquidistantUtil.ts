@@ -32,8 +32,9 @@ export function spaceDayEquidistant(
 
     return points.map((point, index) => {
       return new DetailDataPoint(
+        point.repoId,
         point.hash,
-        point.parents,
+        point.parentUids,
         point.author,
         point.committerDate,
         new Date(day + spacingBetweenElementsMillis * index),
