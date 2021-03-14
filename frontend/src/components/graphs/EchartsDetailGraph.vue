@@ -131,7 +131,7 @@ We need some shared state with 2-way binding for the dialog and graph that shoul
 
 class EchartsDataPoint {
   // convenience methods for accessing the value
-  readonly time: Date
+  readonly positionTime: Date
   readonly dataValue: number
 
   // Used to display the symbol
@@ -160,16 +160,16 @@ class EchartsDataPoint {
   readonly benchmarkStatus: BenchmarkStatus
 
   constructor(
-    time: Date,
+    positionTime: Date,
     dataValue: number,
     benchmarkStatus: BenchmarkStatus,
     name: string,
     color: string,
     borderColor: string
   ) {
-    this.time = time
+    this.positionTime = positionTime
     this.dataValue = dataValue
-    this.value = [this.time, this.dataValue]
+    this.value = [this.positionTime, this.dataValue]
     this.benchmarkStatus = benchmarkStatus
     this.name = name
     this.itemStyle = {
@@ -382,8 +382,7 @@ export default class EchartsDetailGraph extends Vue {
       return 'No point found :/'
     }
 
-    // FIXME: use real date
-    const committerDate = formatDate(point.time)
+    const committerDate = formatDate(point.committerTime)
     return `
            <table class="echarts-tooltip-table">
              <tr>
@@ -443,7 +442,7 @@ export default class EchartsDetailGraph extends Vue {
       }
 
       return new EchartsDataPoint(
-        point.time,
+        point.positionTime,
         pointValue,
         benchmarkStatus,
         point.uid,
@@ -581,7 +580,7 @@ export default class EchartsDetailGraph extends Vue {
 
       if (displayedPoint) {
         markLineData.push({
-          xAxis: displayedPoint.time,
+          xAxis: displayedPoint.positionTime,
           name: 'Comparing…'
         })
       }
@@ -632,7 +631,7 @@ export default class EchartsDetailGraph extends Vue {
 
       markPointData.push({
         coord: [
-          displayedPoint!.time,
+          displayedPoint!.positionTime,
           point.values.get(this.referenceDatapoint!.seriesId)
         ],
         label: {

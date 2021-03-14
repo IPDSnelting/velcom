@@ -210,7 +210,7 @@ export default class RepoGraphs extends Vue {
   }
 
   private pointFormatter(point: DetailDataPoint) {
-    const committerDate = formatDate(point.committerDate)
+    const committerDate = formatDate(point.committerTime)
     return `
             <tr>
               <td>Hash</td>

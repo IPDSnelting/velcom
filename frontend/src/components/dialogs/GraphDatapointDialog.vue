@@ -142,7 +142,7 @@ export default class GraphDatapointDialog extends Vue {
       this.selectedDatapoint.repoId,
       this.selectedDatapoint.hash,
       this.selectedDatapoint.author,
-      this.selectedDatapoint.time,
+      this.selectedDatapoint.committerTime,
       this.selectedDatapoint.summary
     )
   }

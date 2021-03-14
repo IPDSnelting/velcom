@@ -110,7 +110,7 @@ export default class DytailGraph extends Vue {
     authorDate: number
   ): DetailDataPoint | undefined {
     return this.datapoints.find(
-      point => point.time.getTime() === authorDate
+      point => point.positionTime.getTime() === authorDate
     ) as DetailDataPoint | undefined
   }
 
@@ -213,7 +213,7 @@ export default class DytailGraph extends Vue {
     // One array entry = #dimensions data points per commit
     // each array entry has the form [x-val, dim1, dim2, ...]
     for (let i = 0; i < this.datapoints.length; i++) {
-      data[i] = [this.datapoints[i].time.getTime()]
+      data[i] = [this.datapoints[i].positionTime.getTime()]
     }
 
     for (const series of this.seriesInformation) {
@@ -340,7 +340,7 @@ export default class DytailGraph extends Vue {
                     <td>Author</td>
                     <td>
                       ${escapeHtml(datapoint.author)} at
-                      ${formatDate(datapoint.committerDate)}
+                      ${formatDate(datapoint.committerTime)}
                     </td>
                   </tr>
                  ${seriesRows.join('\n')}
@@ -455,8 +455,7 @@ export default class DytailGraph extends Vue {
       const { seriesId, datapoint } = vxm.detailGraphModule.referenceDatapoint
       annotations.push({
         series: seriesId,
-        // FIXME: time or committer time
-        x: datapoint.time.getTime(),
+        x: datapoint.positionTime.getTime(),
         shortText: 'R',
         text: 'Reference datapoint',
         width: 20,

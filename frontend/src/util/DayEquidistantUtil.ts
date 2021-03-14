@@ -24,7 +24,7 @@ export function spaceDayEquidistant(
     detailGraph,
     key =>
       // round to day
-      Math.floor(key.committerDate.getTime() / millisPerDay) * millisPerDay
+      Math.floor(key.committerTime.getTime() / millisPerDay) * millisPerDay
   )
 
   return Array.from(dayGroups.entries()).flatMap(([day, points]) => {
@@ -36,7 +36,7 @@ export function spaceDayEquidistant(
         point.hash,
         point.parentUids,
         point.author,
-        point.committerDate,
+        point.committerTime,
         new Date(day + spacingBetweenElementsMillis * index),
         point.summary,
         point.values

@@ -126,8 +126,8 @@ export default class ComparisonGraph extends Vue {
     let visibleDataPoints = 0
     for (const point of this.comparisonDatapoints) {
       if (
-        (startValue === null || point.time >= startValue) &&
-        (endValue === null || point.time <= endValue)
+        (startValue === null || point.positionTime >= startValue) &&
+        (endValue === null || point.positionTime <= endValue)
       ) {
         visibleDataPoints++
       }

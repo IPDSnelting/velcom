@@ -466,7 +466,8 @@ export type GraphDataPointValue =
   | 'MEASUREMENT_FAILED'
 
 export abstract class GraphDataPoint {
-  abstract readonly time: Date
+  abstract readonly positionTime: Date
+  abstract readonly committerTime: Date
   abstract readonly uid: string
   abstract readonly hash: string
   abstract readonly repoId: RepoId
@@ -501,8 +502,8 @@ export class DetailDataPoint extends GraphDataPoint {
   readonly uid: string
   readonly parentUids: string[]
   readonly author: string
-  readonly committerDate: Date
-  readonly time: Date // to alter position in day equidistant graphs
+  readonly committerTime: Date
+  readonly positionTime: Date // to alter position in day equidistant graphs
   readonly summary: string
   // TODO: Figure out if the map wastes too much memory
   readonly values: Map<SeriesId, GraphDataPointValue>
@@ -524,15 +525,16 @@ export class DetailDataPoint extends GraphDataPoint {
     this.uid = repoId + hash
     this.parentUids = parentUids
     this.author = author
-    this.committerDate = committerDate
-    this.time = positionDate
+    this.committerTime = committerDate
+    this.positionTime = positionDate
     this.summary = summary
     this.values = values
   }
 }
 
 export class ComparisonDataPoint extends GraphDataPoint {
-  readonly time: Date
+  readonly positionTime: Date
+  readonly committerTime: Date
   readonly hash: string
   readonly repoId: RepoId
   readonly values: Map<SeriesId, GraphDataPointValue>
@@ -541,7 +543,8 @@ export class ComparisonDataPoint extends GraphDataPoint {
   readonly author: string
 
   constructor(
-    time: Date,
+    committerTime: Date,
+    positionTime: Date,
     hash: string,
     repoId: string,
     values: Map<SeriesId, GraphDataPointValue>,
@@ -550,7 +553,8 @@ export class ComparisonDataPoint extends GraphDataPoint {
     author: string
   ) {
     super()
-    this.time = time
+    this.positionTime = positionTime
+    this.committerTime = committerTime
     this.repoId = repoId
     this.hash = hash
     this.values = values

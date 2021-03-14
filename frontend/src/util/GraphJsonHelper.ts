@@ -70,6 +70,7 @@ export function comparisonDatapointFromJson(
     valueMap.set(repoId, graphDataPointValueFromJson(commit.value))
     return new ComparisonDataPoint(
       new Date(commit.committer_date * 1000),
+      new Date(commit.committer_date * 1000),
       commit.hash,
       repoId,
       valueMap,

@@ -361,8 +361,8 @@ export class DetailGraphStore extends VxModule {
   get detailGraph(): DetailDataPoint[] {
     const unbufferedGraph = this._detailGraph.filter(
       (datapoint: DetailDataPoint) =>
-        datapoint.committerDate >= this.startTime &&
-        datapoint.committerDate <= this.endTime
+        datapoint.committerTime >= this.startTime &&
+        datapoint.committerTime <= this.endTime
     )
 
     return this.dayEquidistantGraph
@@ -383,8 +383,8 @@ export class DetailGraphStore extends VxModule {
     let visibleDataPoints = 0
     for (const point of this._detailGraph) {
       if (
-        (startValue === null || point.committerDate.getTime() >= startValue) &&
-        (endValue === null || point.committerDate.getTime() <= endValue)
+        (startValue === null || point.committerTime.getTime() >= startValue) &&
+        (endValue === null || point.committerTime.getTime() <= endValue)
       ) {
         visibleDataPoints += this._selectedDimensions.length
       }
