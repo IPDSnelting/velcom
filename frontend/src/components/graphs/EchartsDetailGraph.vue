@@ -19,7 +19,7 @@
             @datazoom="echartsZoomed"
             @contextmenu="echartsOpenContextMenu"
             @click="echartsClicked"
-            @restore="echartsZoomReset"
+            @restore="$emit('reset-zoom')"
           />
         </div>
       </v-col>
@@ -230,6 +230,9 @@ export default class EchartsDetailGraph extends Vue {
 
   @Prop()
   private pointTableFormatter!: (point: GraphDataPoint) => string
+
+  @Prop({ default: 0 })
+  private refreshKey!: number
   // <!--</editor-fold>-->
 
   // <!--<editor-fold desc="FIELDS">-->
@@ -248,6 +251,7 @@ export default class EchartsDetailGraph extends Vue {
   @Watch('beginYAtZero')
   @Watch('dataRangeMin')
   @Watch('dataRangeMax')
+  @Watch('refreshKey')
   @Watch('graphFailedOrUnbenchmarkedColor') // DataPoints need adjusting, they store the color
   private updateGraph() {
     console.log('Echarts updated')
@@ -332,6 +336,13 @@ export default class EchartsDetailGraph extends Vue {
 
     this.updateReferenceDatapoint()
     this.updateMarkPoints()
+  }
+
+  @Watch('visibleDataPoints')
+  private onVisibleDatapointsChange() {
+    if (this.selectAppropriateSeries() === 're-render') {
+      this.updateGraph()
+    }
   }
 
   // The correct type is not exposed sadly
@@ -664,17 +675,12 @@ export default class EchartsDetailGraph extends Vue {
     const dataZooms = actualOptions.dataZoom as DataZoomComponentOption[]
 
     if (seriesId === 'x' || seriesId.includes('xAxis')) {
-      this.$emit('update:zoomXStart', orNull(dataZooms[0], 'start'))
-      this.$emit('update:zoomXEnd', orNull(dataZooms[0], 'end'))
+      this.$emit('update:zoomXStartValue', orNull(dataZooms[0], 'start'))
+      this.$emit('update:zoomXEndValue', orNull(dataZooms[0], 'end'))
     } else {
-      this.$emit('update:zoomYStart', orNull(dataZooms[1], 'start'))
-      this.$emit('update:zoomYEnd', orNull(dataZooms[1], 'end'))
+      this.$emit('update:zoomYStartValue', orNull(dataZooms[1], 'start'))
+      this.$emit('update:zoomYEndValue', orNull(dataZooms[1], 'end'))
     }
-  }
-
-  private echartsZoomReset() {
-    this.$emit('resetZoom')
-    this.updateGraph()
   }
 
   private echartsOpenContextMenu(e: any) {
