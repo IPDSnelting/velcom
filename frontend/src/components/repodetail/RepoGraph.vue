@@ -48,7 +48,25 @@
                   :refresh-key="graphRefreshKey"
                   @wheel="overscrollToZoom.scrolled($event)"
                   @reset-zoom="resetZoom"
-                ></component>
+                >
+                  <template
+                    #dialog="{
+                      dialogOpen,
+                      selectedDatapoint,
+                      seriesInformation,
+                      closeDialog
+                    }"
+                  >
+                    <graph-datapoint-dialog
+                      :dialog-open="dialogOpen"
+                      :selected-datapoint="selectedDatapoint"
+                      :series-id="seriesInformation.id"
+                      :commit-to-compare.sync="commitToCompare"
+                      :reference-datapoint.sync="referenceDatapoint"
+                      @close="closeDialog()"
+                    ></graph-datapoint-dialog>
+                  </template>
+                </component>
                 <v-overlay
                   v-if="overlayText"
                   absolute
@@ -92,6 +110,7 @@ import {
   roundDateDown,
   roundDateUp
 } from '@/store/modules/comparisonGraphStore'
+import GraphDatapointDialog from '@/components/dialogs/GraphDatapointDialog.vue'
 
 const availableGraphComponents = [
   {
@@ -117,6 +136,7 @@ const availableGraphComponents = [
 
 @Component({
   components: {
+    GraphDatapointDialog,
     'share-graph-link-dialog': ShareGraphLinkDialog,
     'matrix-dimension-selection': MatrixDimensionSelection,
     'normal-dimension-selection': DimensionSelection
