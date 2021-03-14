@@ -472,6 +472,8 @@ export abstract class GraphDataPoint {
   abstract readonly repoId: RepoId
   abstract readonly values: Map<SeriesId, GraphDataPointValue>
   abstract readonly parentUids: string[]
+  abstract readonly summary: string
+  abstract readonly author: string
 
   public successful(series: SeriesId): boolean {
     return typeof this.values.get(series) === 'number'

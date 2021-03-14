@@ -30,6 +30,7 @@ import 'dygraphs/css/dygraph.css'
 import Crosshair from 'dygraphs/src/extras/crosshair.js'
 import { escapeHtml } from '@/util/TextUtils'
 import GraphDatapointDialog from '@/components/dialogs/GraphDatapointDialog.vue'
+import { formatDate } from '@/util/TimeUtil'
 
 // eslint-disable-next-line no-undef
 type RealOptions = dygraphs.Options & {
@@ -79,9 +80,6 @@ export default class DytailGraph extends Vue {
 
   @Prop({ default: null })
   private referenceDatapoint!: AttributedDatapoint | null
-
-  @Prop()
-  private pointTableFormatter!: (point: GraphDataPoint) => string
 
   @Prop({ default: 0 })
   private refreshKey!: number
@@ -329,10 +327,22 @@ export default class DytailGraph extends Vue {
                 `
       })
 
-      const formattedPoint = this.pointTableFormatter(datapoint!)
-
       return `<table class="dygraphs-tooltip-table">
-                 ${formattedPoint}
+                  <tr>
+                    <td>Hash</td>
+                    <td>${escapeHtml(datapoint.hash)}</td>
+                  </tr>
+                  </tr>
+                    <td>Message</td>
+                    <td>${escapeHtml(datapoint.summary)}</td>
+                  </tr>
+                  <tr>
+                    <td>Author</td>
+                    <td>
+                      ${escapeHtml(datapoint.author)} at
+                      ${formatDate(datapoint.committerDate)}
+                    </td>
+                  </tr>
                  ${seriesRows.join('\n')}
               </table>
             `

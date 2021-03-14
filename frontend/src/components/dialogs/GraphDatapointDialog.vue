@@ -141,9 +141,9 @@ export default class GraphDatapointDialog extends Vue {
     return new CommitDescription(
       this.selectedDatapoint.repoId,
       this.selectedDatapoint.hash,
-      "Author",
+      this.selectedDatapoint.author,
       this.selectedDatapoint.time,
-      "Summnary"
+      this.selectedDatapoint.summary
     )
   }
 

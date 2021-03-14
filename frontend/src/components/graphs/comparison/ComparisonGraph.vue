@@ -11,7 +11,6 @@
         :data-range-max.sync="dataRangeMax"
         :series-information="seriesInformation"
         :visible-point-count="visiblePointCount"
-        :point-table-formatter="pointFormatter"
         :reference-datapoint="referenceDatapoint"
         :commit-to-compare="commitToCompare"
       >
@@ -48,8 +47,6 @@ import {
   SeriesInformation
 } from '@/store/types'
 import { vxm } from '@/store'
-import { formatDate } from '@/util/TimeUtil'
-import { escapeHtml } from '@/util/TextUtils'
 import GraphDatapointDialog from '@/components/dialogs/GraphDatapointDialog.vue'
 import { Prop } from 'vue-property-decorator'
 import {
@@ -176,25 +173,5 @@ export default class ComparisonGraph extends Vue {
   }
   // <!--</editor-fold>-->
   // <!--</editor-fold>-->
-
-  private pointFormatter(point: ComparisonDataPoint) {
-    const time = formatDate(point.time)
-    return `
-            <tr>
-              <td>Hash</td>
-              <td>${escapeHtml(point.hash)}</td>
-            </tr>
-            </tr>
-              <td>Message</td>
-              <td>${escapeHtml(point.summary)}</td>
-            </tr>
-            <tr>
-              <td>Author</td>
-              <td>
-                ${escapeHtml(point.author)} at ${time}
-              </td>
-            </tr>
-            `
-  }
 }
 </script>

@@ -66,6 +66,7 @@ import {
 } from 'echarts/components'
 import { use, ComposeOption } from 'echarts/core'
 import { escapeHtml } from '@/util/TextUtils'
+import { formatDate } from '@/util/TimeUtil'
 
 use([
   LineChart,
@@ -228,9 +229,6 @@ export default class EchartsDetailGraph extends Vue {
   @Prop({ default: null })
   private referenceDatapoint!: AttributedDatapoint | null
 
-  @Prop()
-  private pointTableFormatter!: (point: GraphDataPoint) => string
-
   @Prop({ default: 0 })
   private refreshKey!: number
   // <!--</editor-fold>-->
@@ -354,7 +352,7 @@ export default class EchartsDetailGraph extends Vue {
       const second = b.data as EchartsDataPoint
       return second.dataValue - first.dataValue
     })
-    const dimensionRows = values.map(val => {
+    const seriesRows = values.map(val => {
       const seriesInformation = this.seriesInformation[val.seriesIndex || 0]
       const color = seriesInformation.color
       const datapoint = val.data as EchartsDataPoint
@@ -378,15 +376,32 @@ export default class EchartsDetailGraph extends Vue {
                 `
     })
     const samplePoint = values[0].data as EchartsDataPoint
-    const graphDataPoint = this.datapoints.find(
-      it => it.uid === samplePoint.name
-    )
-    const formattedPoint = this.pointTableFormatter(graphDataPoint!)
+    const point = this.datapoints.find(it => it.uid === samplePoint.name)
+
+    if (!point) {
+      return 'No point found :/'
+    }
+
+    // FIXME: use real date
+    const committerDate = formatDate(point.time)
     return `
-                <table class="echarts-tooltip-table">
-                  ${formattedPoint}
-                  ${dimensionRows.join('\n')}
-                </table>
+           <table class="echarts-tooltip-table">
+             <tr>
+               <td>Hash</td>
+               <td>${escapeHtml(point.hash)}</td>
+             </tr>
+             </tr>
+               <td>Message</td>
+               <td>${escapeHtml(point.summary)}</td>
+             </tr>
+             <tr>
+               <td>Author</td>
+               <td>
+                 ${escapeHtml(point.author)} at ${committerDate}
+               </td>
+             </tr>
+             ${seriesRows.join('\n')}
+           </table>
             `
   }
   // <!--</editor-fold>-->
