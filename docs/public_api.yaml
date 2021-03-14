@@ -518,6 +518,7 @@ paths:
                       $ref: '#/components/schemas/Dimension'
                   commits:
                     type: array
+                    description: 'Ordered from old to new. If multiple commits have the same committer time (e. g. because of a rebase), they are ordered topologically from parent to child.'
                     items:
                       type: object
                       properties:
@@ -672,6 +673,7 @@ paths:
                           $ref: '#/components/schemas/RepoId'
                         commits:
                           type: array
+                          description: 'Ordered from old to new. If multiple commits have the same committer time (e. g. because of a rebase), they are ordered topologically from parent to child.'
                           items:
                             type: object
                             properties:
