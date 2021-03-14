@@ -2,7 +2,6 @@ package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
-import static java.util.stream.Collectors.toSet;
 
 import de.aaaaaaah.velcom.backend.access.benchmarkaccess.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.Measurement;
@@ -26,6 +25,7 @@ import de.aaaaaaah.velcom.shared.util.Pair;
 import io.micrometer.core.annotation.Timed;
 import java.time.Instant;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -106,11 +106,15 @@ public class GraphComparisonEndpoint {
 				// Find the commits that will later be displayed in the graph
 				List<Commit> commits = commitAccess.getCommitsBetween(repoId, branches, startTime, endTime);
 				List<FullCommit> fullCommits = commitAccess.promoteCommits(commits);
-				Set<CommitHash> commitHashes = commits.stream().map(Commit::getHash).collect(toSet());
+				Map<CommitHash, FullCommit> fullCommitsByHash = fullCommits.stream()
+					.collect(toMap(Commit::getHash, it -> it));
+
+				fullCommits = EndpointUtils.topologicalSort(fullCommits, fullCommitsByHash);
+				fullCommits.sort(Comparator.comparing(Commit::getCommitterDate));
 
 				// Find the latest run belonging to each commit
 				Set<RunId> latestRunIds = new HashSet<>(
-					benchmarkAccess.getLatestRunIds(repoId, commitHashes).values());
+					benchmarkAccess.getLatestRunIds(repoId, fullCommitsByHash.keySet()).values());
 				Map<CommitHash, Run> runs = benchmarkAccess.getRuns(latestRunIds).stream()
 					.collect(toMap(
 						run -> run.getSource().getLeft().map(CommitSource::getHash).orElse(null),

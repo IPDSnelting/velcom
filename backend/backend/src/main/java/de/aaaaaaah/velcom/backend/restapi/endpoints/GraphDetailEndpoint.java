@@ -1,6 +1,5 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
-import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toMap;
 
 import de.aaaaaaah.velcom.backend.access.benchmarkaccess.BenchmarkReadAccess;
@@ -25,16 +24,11 @@ import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimension;
 import de.aaaaaaah.velcom.shared.util.Pair;
 import io.micrometer.core.annotation.Timed;
 import java.time.Instant;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Queue;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -108,29 +102,24 @@ public class GraphDetailEndpoint {
 			throw new InvalidQueryParamsException("start time must be earlier than end time");
 		}
 
-		// Figure out which commits we'll need to show
-		List<FullCommit> commits = new ArrayList<>(commitAccess.promoteCommits(
-			commitAccess.getTrackedCommitsBetween(repoId, startTime, endTime)
-		));
+		// Find the commits that will later be displayed in the graph
+		List<Commit> commits = commitAccess.getTrackedCommitsBetween(repoId, startTime, endTime);
+		List<FullCommit> fullCommits = commitAccess.promoteCommits(commits);
+		Map<CommitHash, FullCommit> fullCommitsByHash = fullCommits.stream()
+			.collect(toMap(Commit::getHash, it -> it));
 
-		Map<CommitHash, FullCommit> hashes = commits.stream()
-			.collect(toMap(
-				Commit::getHash,
-				it -> it
-			));
-
-		commits = topologicalSort(commits, hashes);
-		commits.sort(Comparator.comparing(Commit::getCommitterDate));
+		fullCommits = EndpointUtils.topologicalSort(fullCommits, fullCommitsByHash);
+		fullCommits.sort(Comparator.comparing(Commit::getCommitterDate));
 
 		// Obtain the relevant runs
 		Map<CommitHash, Run> runs = latestRunCache
-			.getLatestRuns(benchmarkAccess, runCache, repoId, hashes.keySet());
+			.getLatestRuns(benchmarkAccess, runCache, repoId, fullCommitsByHash.keySet());
 
 		// Finally, put everything together.
 		List<JsonDimension> jsonDimensions = existingDimensions.stream()
 			.map(JsonDimension::fromDimensionInfo)
 			.collect(Collectors.toList());
-		List<JsonGraphCommit> jsonGraphCommits = commits.stream()
+		List<JsonGraphCommit> jsonGraphCommits = fullCommits.stream()
 			.map(commit -> new JsonGraphCommit(
 				commit.getHash().getHash(),
 				commit.getParentHashes().stream().map(CommitHash::getHash).collect(Collectors.toList()),
@@ -142,73 +131,6 @@ public class GraphDetailEndpoint {
 			.collect(Collectors.toList());
 
 		return new GetReply(jsonDimensions, jsonGraphCommits);
-	}
-
-	/**
-	 * @param commits the commits to sort
-	 * @param hashes a map from hash to commit <em>for <strong>exactly</strong> the commits in the
-	 * 	commits list</em>
-	 * @return a mutable list containing a topological ordering of the input commits
-	 */
-	private List<FullCommit> topologicalSort(List<FullCommit> commits,
-		Map<CommitHash, FullCommit> hashes) {
-
-		// Based on Khan's Algorithm
-		// https://en.wikipedia.org/wiki/Topological_sorting#Kahn's_algorithm
-
-		List<FullCommit> topologicallySorted = new ArrayList<>();
-
-		Queue<FullCommit> leaves = commits.stream()
-			// Only consider commits in our commits list. Throw away all children *not* in the list, as
-			// we are focusing on a small part of the graph and trying to sort only this part
-			// topologically.
-			// If we do not throw them away, we will find children outside the range, leading to too few
-			// found leaf nodes
-			.filter(it -> it.getChildHashes().stream().noneMatch(hashes::containsKey))
-			.collect(toCollection(ArrayDeque::new));
-
-		// We can not modify the actual children or remove edges. This is one of the pre-requisites for
-		// Khan's Algorithm though, as it deletes all explored edges starting with the leaves.
-		// Furthermore, not all children should be considered - only those that we know are in the
-		// commits list. All other children are outside the time range and irrelevant, as they should
-		// not appear in the graph.
-		// If we do not exclude those here, we will have too many children and won't always end up with
-		// *zero* leftover children, causing the Commit to not be recognized as a new leaf.
-		Map<FullCommit, Set<CommitHash>> parentChildMap = commits.stream()
-			.collect(toMap(
-				it -> it,
-				it -> it.getChildHashes().stream()
-					.filter(hashes::containsKey)
-					.collect(toCollection(HashSet::new))
-			));
-
-		while (!leaves.isEmpty()) {
-			FullCommit commit = leaves.poll();
-			topologicallySorted.add(commit);
-
-			for (CommitHash parentHash : commit.getParentHashes()) {
-				FullCommit parentCommit = hashes.get(parentHash);
-
-				// outside of our time bound (i.e. commits i.e. hashes)
-				if (parentCommit == null) {
-					continue;
-				}
-
-				Set<CommitHash> existingchildren = parentChildMap.get(parentCommit);
-				existingchildren.remove(commit.getHash());
-
-				// This commit has no other children in our time window -> it is now a leaf!
-				if (existingchildren.isEmpty()) {
-					leaves.add(parentCommit);
-				}
-			}
-		}
-
-		// We appended to the end, so we now need to reverse it. Our leaves are the first entries
-		// currently, but they should be the last.
-		Collections.reverse(topologicallySorted);
-
-		return topologicallySorted;
 	}
 
 	private static List<Object> extractValuesFromCommit(List<DimensionInfo> dimensions,
