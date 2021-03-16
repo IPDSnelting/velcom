@@ -25,9 +25,9 @@
               </v-col>
             </v-row>
           </v-card-title>
-          <v-card-text>
-            <v-row no-gutters>
-              <v-col style="position: relative">
+          <v-card-text style="height: 70vh">
+            <v-row no-gutters style="height: 100%">
+              <v-col style="position: relative; height: 100%">
                 <component
                   ref="graphComponent"
                   :placeholderHeight="graphPlaceholderHeight"
