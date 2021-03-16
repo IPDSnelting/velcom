@@ -1,6 +1,6 @@
 <template>
-  <v-card>
-    <v-card-text>
+  <v-card :style="{ height: height }">
+    <v-card-text style="height: 100%" class="py-0 my-0">
       <component
         :is="graphComponent"
         :zoom-x-start-value.sync="zoomXStartValue"
@@ -67,13 +67,16 @@ import {
 export default class ComparisonGraph extends Vue {
   // noinspection JSMismatchedCollectionQueryUpdate
   @Prop()
-  private comparisonDatapoints!: ComparisonDataPoint[]
+  private readonly comparisonDatapoints!: ComparisonDataPoint[]
 
   @Prop()
-  private graphComponent!: typeof Vue
+  private readonly graphComponent!: typeof Vue
 
   @Prop()
-  private beginYAtZero!: boolean
+  private readonly beginYAtZero!: boolean
+
+  @Prop({ default: '80vh' })
+  private readonly height!: string
 
   // <!--<editor-fold desc="Getters">-->
   private get seriesInformation(): SeriesInformation[] {

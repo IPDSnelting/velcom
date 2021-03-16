@@ -17,7 +17,7 @@
           </v-col>
         </v-row>
       </v-col>
-      <v-col cols="9">
+      <v-col cols="9" ref="graphColumn">
         <v-row>
           <v-col>
             <graph-timespan-controls
@@ -32,6 +32,7 @@
               :comparison-datapoints="comparisonDatapoints"
               :begin-y-at-zero="beginYAtZero"
               :graph-component="graphComponent"
+              :height="graphHeight + 'px'"
             ></comparison-graph>
           </v-col>
         </v-row>
@@ -78,6 +79,7 @@ export default class RepoComparison extends Vue {
   private graphComponent: typeof Vue | null =
     availableGraphComponents[0].component
 
+  private graphHeight: number = window.innerHeight
   private dayEquidistantGraphSelected: boolean = true
 
   private get startTime(): Date {
@@ -179,6 +181,39 @@ export default class RepoComparison extends Vue {
     this.comparisonDatapoints = this.applyDatapointTransformations(
       await vxm.comparisonGraphModule.fetchComparisonGraph()
     )
+  }
+
+  private adjustGraphHeight() {
+    const graphColumn = this.$refs['graphColumn'] as HTMLElement
+    const app = document.querySelector('#app') as HTMLElement
+
+    const hasScrollBar = app.scrollHeight > window.innerHeight
+    const causedByGraph = graphColumn.scrollHeight >= window.innerHeight
+    if (hasScrollBar && causedByGraph) {
+      this.graphHeight -= app.scrollHeight - window.innerHeight
+    }
+  }
+
+  private onResized() {
+    // Set the graph height to always cause a scroll bar. This simplifies the further calculations as we can assume we
+    // need to shrink the graph, but never grow it.
+    this.graphHeight = window.innerHeight
+
+    // Wait for the browser to reflow the page after the above update, then shrink the graph
+    window.requestAnimationFrame(() => {
+      this.adjustGraphHeight()
+    })
+  }
+
+  // noinspection JSUnusedLocalSymbols
+  private mounted() {
+    this.onResized()
+    window.addEventListener('resize', this.onResized)
+  }
+
+  // noinspection JSUnusedLocalSymbols
+  private beforeDestroy() {
+    window.removeEventListener('resize', this.onResized)
   }
 }
 </script>

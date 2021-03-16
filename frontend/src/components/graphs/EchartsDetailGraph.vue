@@ -1,7 +1,7 @@
 <template>
-  <v-container fluid class="mt-0 pt-0">
-    <v-row align="center" justify="center">
-      <v-col>
+  <v-container fluid class="mt-0 pt-0 full-height">
+    <v-row align="center" justify="center" class="full-height" no-gutters>
+      <v-col class="full-height">
         <slot
           name="dialog"
           v-if="pointDialogDatapoint"
@@ -10,7 +10,11 @@
           :series-information="pointDialogSeries"
           :closeDialog="() => (pointDialogOpen = false)"
         ></slot>
-        <div id="chart-container" @wheel.capture="$emit('wheel', $event)">
+        <div
+          id="chart-container"
+          @wheel.capture="$emit('wheel', $event)"
+          class="full-height"
+        >
           <v-chart
             ref="chart"
             :autoresize="true"
@@ -194,43 +198,43 @@ class EchartsDataPoint {
 export default class EchartsDetailGraph extends Vue {
   // <!--<editor-fold desc="PROPS">-->
   @Prop({ default: false })
-  private beginYAtZero!: boolean
+  private readonly beginYAtZero!: boolean
 
   @Prop()
-  private zoomXStartValue!: number | null
+  private readonly zoomXStartValue!: number | null
 
   @Prop()
-  private zoomXEndValue!: number | null
+  private readonly zoomXEndValue!: number | null
 
   @Prop()
-  private zoomYStartValue!: number | null
+  private readonly zoomYStartValue!: number | null
 
   @Prop()
-  private zoomYEndValue!: number | null
+  private readonly zoomYEndValue!: number | null
 
   @Prop()
-  private dataRangeMin!: Date
+  private readonly dataRangeMin!: Date
 
   @Prop()
-  private dataRangeMax!: Date
+  private readonly dataRangeMax!: Date
 
   @Prop()
-  private datapoints!: GraphDataPoint[]
+  private readonly datapoints!: GraphDataPoint[]
 
   @Prop()
-  private seriesInformation!: SeriesInformation[]
+  private readonly seriesInformation!: SeriesInformation[]
 
   @Prop()
-  private visiblePointCount!: number
+  private readonly visiblePointCount!: number
 
   @Prop({ default: null })
-  private commitToCompare!: AttributedDatapoint | null
+  private readonly commitToCompare!: AttributedDatapoint | null
 
   @Prop({ default: null })
-  private referenceDatapoint!: AttributedDatapoint | null
+  private readonly referenceDatapoint!: AttributedDatapoint | null
 
   @Prop({ default: 0 })
-  private refreshKey!: number
+  private readonly refreshKey!: number
   // <!--</editor-fold>-->
 
   // <!--<editor-fold desc="FIELDS">-->
@@ -821,7 +825,9 @@ export default class EchartsDetailGraph extends Vue {
 <style scoped>
 #chart-container {
   position: relative;
-  height: 80vh;
+}
+.full-height {
+  height: 100%;
 }
 </style>
 
