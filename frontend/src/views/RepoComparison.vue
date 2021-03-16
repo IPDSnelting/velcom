@@ -75,12 +75,10 @@ import { availableGraphComponents } from '@/util/GraphVariantSelection'
 })
 export default class RepoComparison extends Vue {
   private comparisonDatapoints: ComparisonDataPoint[] = []
-  private beginYAtZero: boolean = false
   private graphComponent: typeof Vue | null =
     availableGraphComponents[0].component
 
   private graphHeight: number = window.innerHeight
-  private dayEquidistantGraphSelected: boolean = true
 
   private get startTime(): Date {
     return vxm.comparisonGraphModule.startTime
@@ -107,6 +105,24 @@ export default class RepoComparison extends Vue {
   // noinspection JSUnusedLocalSymbols
   private set selectedDimension(dimension: Dimension | null) {
     vxm.comparisonGraphModule.selectedDimension = dimension
+  }
+
+  private get dayEquidistantGraphSelected() {
+    return vxm.comparisonGraphModule.dayEquidistantGraphSelected
+  }
+
+  // noinspection JSUnusedLocalSymbols
+  private set dayEquidistantGraphSelected(selected: boolean) {
+    vxm.comparisonGraphModule.dayEquidistantGraphSelected = selected
+  }
+
+  private get beginYAtZero() {
+    return vxm.comparisonGraphModule.beginYAtZero
+  }
+
+  // noinspection JSUnusedLocalSymbols
+  private set beginYAtZero(beginYAtZero: boolean) {
+    vxm.comparisonGraphModule.beginYAtZero = beginYAtZero
   }
 
   private get possibleDimensions() {

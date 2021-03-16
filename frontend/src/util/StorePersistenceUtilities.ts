@@ -13,7 +13,6 @@ import { CustomKeyEqualsMap } from '@/util/CustomKeyEqualsMap'
 import { DetailGraphStore } from '@/store/modules/detailGraphStore'
 import { RepoStore } from '@/store/modules/repoStore'
 import { ComparisonGraphStore } from '@/store/modules/comparisonGraphStore'
-import { dimensionFromJson } from '@/util/RepoJsonHelper'
 
 // <editor-fold desc="DIMENSION">
 function hydrateDimension(it: Dimension) {
@@ -141,7 +140,9 @@ export function comparisonGraphStoreToJson(
     zoomYStart: store.zoomYStart,
     zoomYEnd: store.zoomYEnd,
     commitToCompare: serializeGraphDataPoint(store.commitToCompare),
-    referenceDatapoint: serializeGraphDataPoint(store.referenceDatapoint)
+    referenceDatapoint: serializeGraphDataPoint(store.referenceDatapoint),
+    beginYAtZero: store.beginYAtZero,
+    dayEquidistantGraphSelected: store.dayEquidistantGraphSelected
   })
 }
 

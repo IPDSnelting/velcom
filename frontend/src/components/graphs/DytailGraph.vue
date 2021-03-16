@@ -208,7 +208,7 @@ export default class DytailGraph extends Vue {
     this.update()
   }
 
-  beforeDestroy() {
+  private beforeDestroy() {
     window.removeEventListener('resize', this.onResize)
   }
 

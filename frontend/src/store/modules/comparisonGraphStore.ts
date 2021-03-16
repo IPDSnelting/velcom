@@ -59,6 +59,9 @@ export class ComparisonGraphStore extends VxModule {
   endTime: Date = defaultEndDate()
 
   selectedDimension: Dimension | null = null
+  dayEquidistantGraphSelected: boolean = true
+  beginYAtZero: boolean = false
+
   zoomXStart: Date | null = null
   zoomXEnd: Date | null = null
   zoomYStart: Date | null = null
