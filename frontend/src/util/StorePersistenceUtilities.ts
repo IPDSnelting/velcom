@@ -1,15 +1,19 @@
 import {
   AttributedDatapoint,
+  ComparisonDataPoint,
   DetailDataPoint,
   Dimension,
   DimensionId,
   dimensionIdEqual,
+  GraphDataPoint,
   Repo,
   RepoBranch
 } from '@/store/types'
 import { CustomKeyEqualsMap } from '@/util/CustomKeyEqualsMap'
 import { DetailGraphStore } from '@/store/modules/detailGraphStore'
 import { RepoStore } from '@/store/modules/repoStore'
+import { ComparisonGraphStore } from '@/store/modules/comparisonGraphStore'
+import { dimensionFromJson } from '@/util/RepoJsonHelper'
 
 // <editor-fold desc="DIMENSION">
 function hydrateDimension(it: Dimension) {
@@ -43,7 +47,7 @@ function hydrateRepo(repo: Repo) {
 // </editor-fold>
 
 // <editor-fold desc="DIMENSION DETAIL POINT">
-function serializeDimensionDetailPoint(point: AttributedDatapoint | null) {
+function serializeGraphDataPoint(point: AttributedDatapoint | null) {
   if (!point) {
     return null
   }
@@ -55,15 +59,16 @@ function serializeDimensionDetailPoint(point: AttributedDatapoint | null) {
   } as AttributedDatapoint
 }
 
-function deserializeDimensionDetailPoint(
-  point: AttributedDatapoint | null
+function deserializeGraphDataPoint<T extends GraphDataPoint>(
+  point: AttributedDatapoint | null,
+  pointHydrator: (point: T) => T
 ): AttributedDatapoint | null {
   if (!point) {
     return null
   }
   return {
     seriesId: point.seriesId,
-    datapoint: hydrateDetailPoint(point.datapoint as DetailDataPoint)
+    datapoint: pointHydrator((point.datapoint as any) as T)
   }
 }
 // </editor-fold>
@@ -83,6 +88,65 @@ function hydrateDetailPoint(it: DetailDataPoint) {
 }
 // </editor-fold>
 
+// <editor-fold desc="COMPARISON DATA POINT">
+function hydrateComparisonDataPoint(it: ComparisonDataPoint) {
+  return new ComparisonDataPoint(
+    new Date(it.committerTime),
+    new Date(it.committerTime),
+    it.hash,
+    it.repoId,
+    new Map(it.values.entries()),
+    it.parentUids,
+    it.summary,
+    it.author
+  )
+}
+// </editor-fold>
+
+// <editor-fold desc="COMPARISON STORE">
+export function comparisonGraphStoreFromJson(json?: string): any {
+  if (!json) {
+    return {}
+  }
+
+  const parsedUnsafe = JSON.parse(json)
+  const parsed: ComparisonGraphStore = parsedUnsafe as ComparisonGraphStore
+  // Convert flat json to real object
+  parsed.startTime = new Date(parsed.startTime)
+  parsed.endTime = new Date(parsed.endTime)
+  parsed.selectedDimension = parsed.selectedDimension
+    ? hydrateDimension(parsed.selectedDimension)
+    : null
+  parsed.commitToCompare = deserializeGraphDataPoint(
+    parsed.commitToCompare,
+    hydrateComparisonDataPoint
+  )
+  parsed.referenceDatapoint = deserializeGraphDataPoint(
+    parsed.referenceDatapoint,
+    hydrateComparisonDataPoint
+  )
+
+  return parsed
+}
+export function comparisonGraphStoreToJson(
+  store: ComparisonGraphStore
+): string {
+  return JSON.stringify({
+    _selectedBranches: (store as any)._selectedBranches,
+    startTime: store.startTime.getTime(),
+    endTime: store.endTime.getTime(),
+    selectedDimension: store.selectedDimension,
+    zoomXStart: store.zoomXStart,
+    zoomXEnd: store.zoomXEnd,
+    zoomYStart: store.zoomYStart,
+    zoomYEnd: store.zoomYEnd,
+    commitToCompare: serializeGraphDataPoint(store.commitToCompare),
+    referenceDatapoint: serializeGraphDataPoint(store.referenceDatapoint)
+  })
+}
+
+// </editor-fold>
+
 // <editor-fold desc="DETAIL GRAPH">
 export function detailGraphStoreFromJson(json?: string): any {
   if (!json) {
@@ -95,11 +159,13 @@ export function detailGraphStoreFromJson(json?: string): any {
   parsedUnsafe._selectedDimensions = parsedUnsafe._selectedDimensions.map(
     hydrateDimension
   )
-  parsed.referenceDatapoint = deserializeDimensionDetailPoint(
-    parsed.referenceDatapoint
+  parsed.referenceDatapoint = deserializeGraphDataPoint(
+    parsed.referenceDatapoint,
+    hydrateDetailPoint
   )
-  parsed.commitToCompare = deserializeDimensionDetailPoint(
-    parsed.commitToCompare
+  parsed.commitToCompare = deserializeGraphDataPoint(
+    parsed.commitToCompare,
+    hydrateDetailPoint
   )
   parsedUnsafe._startTime = new Date(parsedUnsafe._startTime)
   parsedUnsafe._endTime = new Date(parsedUnsafe._endTime)
@@ -118,7 +184,7 @@ export function detailGraphStoreToJson(store: DetailGraphStore): string {
   return JSON.stringify({
     _selectedRepoId: (store as any)._selectedRepoId,
     _selectedDimensions: (store as any)._selectedDimensions,
-    referenceDatapoint: serializeDimensionDetailPoint(store.referenceDatapoint),
+    referenceDatapoint: serializeGraphDataPoint(store.referenceDatapoint),
     _startTime: (store as any)._startTime.getTime(),
     _endTime: (store as any)._endTime.getTime(),
     zoomXStartValue: store.zoomXStartValue,
@@ -127,7 +193,7 @@ export function detailGraphStoreToJson(store: DetailGraphStore): string {
     zoomYEndValue: store.zoomYEndValue,
     firstFreeColorIndex: (store as any).firstFreeColorIndex,
     colorIndexMap: Array.from((store as any).colorIndexMap.entries()),
-    commitToCompare: serializeDimensionDetailPoint(store.commitToCompare),
+    commitToCompare: serializeGraphDataPoint(store.commitToCompare),
     beginYScaleAtZero: store.beginYScaleAtZero,
     dayEquidistantGraph: store.dayEquidistantGraph,
     selectedTab: store.selectedTab,
