@@ -101,8 +101,8 @@ export function detailGraphStoreFromJson(json?: string): any {
   parsed.commitToCompare = deserializeDimensionDetailPoint(
     parsed.commitToCompare
   )
-  parsed.startTime = new Date(parsed.startTime)
-  parsed.endTime = new Date(parsed.endTime)
+  parsedUnsafe._startTime = new Date(parsedUnsafe._startTime)
+  parsedUnsafe._endTime = new Date(parsedUnsafe._endTime)
   parsedUnsafe.colorIndexMap = new CustomKeyEqualsMap(
     parsedUnsafe.colorIndexMap.map((entry: [DimensionId, number]) => [
       hydrateDimensionId(entry[0]),
@@ -119,9 +119,8 @@ export function detailGraphStoreToJson(store: DetailGraphStore): string {
     _selectedRepoId: (store as any)._selectedRepoId,
     _selectedDimensions: (store as any)._selectedDimensions,
     referenceDatapoint: serializeDimensionDetailPoint(store.referenceDatapoint),
-    startTime: store.startTime,
-    endTime: store.endTime,
-    duration: store.duration,
+    _startTime: (store as any)._startTime.getTime(),
+    _endTime: (store as any)._endTime.getTime(),
     zoomXStartValue: store.zoomXStartValue,
     zoomXEndValue: store.zoomXEndValue,
     zoomYStartValue: store.zoomYStartValue,
