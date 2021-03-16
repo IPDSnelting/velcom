@@ -68,7 +68,9 @@ export default class ComparisonDimensionSelector extends Vue {
     if (!this.selectedDimension) {
       return null
     }
-    if (!this.possibleDimensions.includes(this.selectedDimension)) {
+    if (
+      !this.possibleDimensions.find(it => it.equals(this.selectedDimension))
+    ) {
       return null
     }
     return (
