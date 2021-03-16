@@ -1,13 +1,18 @@
 <template>
-  <v-container fluid>
-    <v-row align="center" justify="center">
-      <v-col>
+  <v-container fluid style="height: 100%" class="mx-0 px-0">
+    <v-row
+      align="center"
+      justify="center"
+      style="height: 100%"
+      class="mx-0 px-0"
+    >
+      <v-col style="height: 100%" class="mx-0 px-0">
         <div
           id="chart"
-          :style="{ height: '500px' }"
           @wheel="$emit('wheel', $event)"
+          style="height: 100%; width: 100%"
         ></div>
-        <div id="ranger" :style="{ height: '500px', height: '30px' }"></div>
+        <div id="ranger" :style="{ height: '30px' }"></div>
       </v-col>
     </v-row>
   </v-container>
@@ -87,7 +92,6 @@ export default class DytailGraph extends Vue {
 
   // <!--<editor-fold desc="FIELDS">-->
   private graph!: Dygraph
-  private height: number = 500
 
   // >>>> Datapoint Dialog >>>>
   private pointDialogDatapoint: DetailDataPoint | null = null
@@ -128,7 +132,7 @@ export default class DytailGraph extends Vue {
         return value
       }
     }
-    return this.height / 2
+    return 0
   }
 
   //  <!--</editor-fold>-->
@@ -138,6 +142,8 @@ export default class DytailGraph extends Vue {
    * initialize graph with all options, but without data
    */
   mounted(): void {
+    window.addEventListener('resize', this.onResize)
+
     // empty string because div is not expected to be NULL
     const chartDiv = document.getElementById('chart') || ''
 
@@ -200,6 +206,16 @@ export default class DytailGraph extends Vue {
     )
 
     this.update()
+  }
+
+  beforeDestroy() {
+    window.removeEventListener('resize', this.onResize)
+  }
+
+  private onResize() {
+    window.requestAnimationFrame(() => {
+      this.graph.resize()
+    })
   }
 
   @Watch('datapoints')
