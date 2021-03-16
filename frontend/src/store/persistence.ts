@@ -12,7 +12,7 @@ import {
 } from '@/util/StorePersistenceUtilities'
 
 const STORAGE_VERSION_KEY = 'VELCOM_STORAGE_VERSION'
-const STORAGE_VERSION_CURRENT = '1'
+const STORAGE_VERSION_CURRENT = '2'
 
 /**
  * Deletes old stored data which does not conform to what the store expects to
