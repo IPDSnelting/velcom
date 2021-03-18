@@ -3,7 +3,7 @@
     <v-row>
       <v-col cols="3">
         <v-row>
-          <v-col>
+          <v-col :style="{ 'min-height': 80 + 12 * 2 + 'px' }">
             <comparison-dimension-selector
               :possible-dimensions="possibleDimensions"
               :error-message="dimensionSelectorErrorMessage"
@@ -11,7 +11,7 @@
             ></comparison-dimension-selector>
           </v-col>
         </v-row>
-        <v-row>
+        <v-row class="mt-0">
           <v-col>
             <repo-branch-selector></repo-branch-selector>
           </v-col>
@@ -20,13 +20,14 @@
       <v-col cols="9" ref="graphColumn">
         <v-row>
           <v-col>
-            <graph-timespan-controls
-              :end-time.sync="endTime"
-              :start-time.sync="startTime"
-            ></graph-timespan-controls>
+            <comparison-graph-settings
+              :begin-y-at-zero.sync="beginYAtZero"
+              :graph-component.sync="graphComponent"
+              :day-equidistant-graph-selected.sync="dayEquidistantGraphSelected"
+            ></comparison-graph-settings>
           </v-col>
         </v-row>
-        <v-row>
+        <v-row class="mt-0">
           <v-col>
             <comparison-graph
               :comparison-datapoints="comparisonDatapoints"
@@ -36,13 +37,12 @@
             ></comparison-graph>
           </v-col>
         </v-row>
-        <v-row>
+        <v-row class="pt-0">
           <v-col class="pt-0">
-            <comparison-graph-settings
-              :begin-y-at-zero.sync="beginYAtZero"
-              :graph-component.sync="graphComponent"
-              :day-equidistant-graph-selected.sync="dayEquidistantGraphSelected"
-            ></comparison-graph-settings>
+            <graph-timespan-controls
+              :end-time.sync="endTime"
+              :start-time.sync="startTime"
+            ></graph-timespan-controls>
           </v-col>
         </v-row>
       </v-col>

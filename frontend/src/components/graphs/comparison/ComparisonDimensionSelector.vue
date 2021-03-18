@@ -2,24 +2,26 @@
   <v-card
     :outlined="selectedItem === null"
     :class="{ 'warning-outline': possibleDimensions.length !== 0 }"
+    style="height: 100%"
   >
-    <v-card-text :class="{ disabled: errorMessage !== null }">
-      <v-row style="min-height: 86px">
-        <v-col cols="auto" class="d-flex align-center">
-          <div>Dimension to compare</div>
-        </v-col>
+    <v-card-text
+      :class="{ disabled: errorMessage !== null }"
+      style="height: 100%"
+    >
+      <v-row class="my-0" align="center" style="height: 100%">
         <v-col
           v-if="errorMessage !== null"
-          class="d-flex align-center text-warning"
+          class="d-flex align-center text-warning py-0"
         >
           {{ errorMessage }}
         </v-col>
-        <v-col v-if="errorMessage === null">
+        <v-col v-if="errorMessage === null" class="py-0">
           <v-autocomplete
             :value="selectedItem"
             :items="items"
             @input="selectDimension"
-            label="Enter a dimension..."
+            class="py-0"
+            label="Dimension to compare…"
             return-object
             hide-details
             no-data-text="No repo(s) selected or no common dimensions"
