@@ -730,8 +730,20 @@ export default class EchartsDetailGraph extends Vue {
     if (e.data === undefined) {
       return
     }
+
+    // Was a *link* (i.e. the arrow between two datapoints) and no datapoint
+    if (e.data.name === undefined) {
+      return
+    }
+
     const echartsPoint = e.data as EchartsDataPoint
-    const datapoint = this.datapoints.find(it => it.uid === echartsPoint.name)!
+    const datapoint = this.datapoints.find(it => it.uid === echartsPoint.name)
+
+    // Should not happen, but better be safe than sorry
+    if (!datapoint) {
+      return
+    }
+
     if ((e as any).event && (e as any).event.event) {
       const event = (e as any).event.event as MouseEvent
       if (event.ctrlKey) {
