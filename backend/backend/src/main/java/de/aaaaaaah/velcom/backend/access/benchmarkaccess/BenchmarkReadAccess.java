@@ -69,7 +69,8 @@ public class BenchmarkReadAccess {
 			.collect(toSet());
 
 		// 1. Load measurement values (key: measurement id)
-		Map<String, List<Double>> values = db.select(MEASUREMENT.ID, MEASUREMENT_VALUE.VALUE)
+		Map<String, List<Double>> values = db.dsl()
+			.select(MEASUREMENT.ID, MEASUREMENT_VALUE.VALUE)
 			.from(MEASUREMENT)
 			.join(MEASUREMENT_VALUE)
 			.on(MEASUREMENT_VALUE.MEASUREMENT_ID.eq(MEASUREMENT.ID))
@@ -78,7 +79,8 @@ public class BenchmarkReadAccess {
 			.fetchGroups(MEASUREMENT.ID, MEASUREMENT_VALUE.VALUE);
 
 		// 2. Load measurements
-		Map<RunId, List<Measurement>> measurements = db.selectFrom(MEASUREMENT)
+		Map<RunId, List<Measurement>> measurements = db.dsl()
+			.selectFrom(MEASUREMENT)
 			.where(MEASUREMENT.RUN_ID.in(runIds))
 			.stream()
 			.map(record -> {
@@ -160,7 +162,8 @@ public class BenchmarkReadAccess {
 			.collect(toSet());
 
 		return databaseStorage.acquireReadTransaction(db -> {
-			List<RunRecord> runRecords = db.selectFrom(RUN)
+			List<RunRecord> runRecords = db.dsl()
+				.selectFrom(RUN)
 				.where(RUN.ID.in(runIdStrings))
 				.stream()
 				.collect(toList());
@@ -178,7 +181,8 @@ public class BenchmarkReadAccess {
 	 */
 	public List<RunId> getAllRunIds(RepoId repoId, CommitHash commitHash) {
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			return db.selectFrom(RUN)
+			return db.dsl()
+				.selectFrom(RUN)
 				.where(RUN.REPO_ID.eq(repoId.getIdAsString()))
 				.and(RUN.COMMIT_HASH.eq(commitHash.getHash()))
 				.orderBy(RUN.START_TIME.desc())
@@ -211,7 +215,8 @@ public class BenchmarkReadAccess {
 		}
 
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			return db.select(RUN.ID)
+			return db.dsl()
+				.select(RUN.ID)
 				.from(RUN)
 				.join(KNOWN_COMMIT)
 				.on(KNOWN_COMMIT.REPO_ID.eq(RUN.REPO_ID)
@@ -234,7 +239,8 @@ public class BenchmarkReadAccess {
 	 */
 	public Optional<RunId> getLatestRunId(RepoId repoId, CommitHash commitHash) {
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			return db.selectFrom(LATEST_RUN)
+			return db.dsl()
+				.selectFrom(LATEST_RUN)
 				.where(LATEST_RUN.REPO_ID.eq(repoId.getIdAsString()))
 				.and(LATEST_RUN.COMMIT_HASH.eq(commitHash.getHash()))
 				.fetchOptional()
@@ -258,7 +264,8 @@ public class BenchmarkReadAccess {
 			.collect(toSet());
 
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			return db.selectFrom(LATEST_RUN)
+			return db.dsl()
+				.selectFrom(LATEST_RUN)
 				.where(LATEST_RUN.REPO_ID.eq(repoId.getIdAsString()))
 				.and(LATEST_RUN.COMMIT_HASH.in(hashStrings))
 				.stream()
@@ -273,7 +280,7 @@ public class BenchmarkReadAccess {
 		@Nullable RepoId repoId, String queryStr) {
 
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			var query = db
+			var query = db.dsl()
 				.select(RUN.ID, KNOWN_COMMIT.HASH, KNOWN_COMMIT.MESSAGE, RUN.TAR_DESC, RUN.REPO_ID)
 				.from(RUN)
 				.leftOuterJoin(KNOWN_COMMIT)
@@ -306,7 +313,8 @@ public class BenchmarkReadAccess {
 
 	public ShortRunDescription getShortRunDescription(RunId runId) throws NoSuchRunException {
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			return db.select(RUN.COMMIT_HASH, KNOWN_COMMIT.MESSAGE, RUN.TAR_DESC)
+			return db.dsl()
+				.select(RUN.COMMIT_HASH, KNOWN_COMMIT.MESSAGE, RUN.TAR_DESC)
 				.from(RUN)
 				.leftJoin(KNOWN_COMMIT)
 				.on(KNOWN_COMMIT.REPO_ID.eq(RUN.REPO_ID))
@@ -326,7 +334,8 @@ public class BenchmarkReadAccess {
 	public long getAmountOfOutdatedRuns() {
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
 			Field<Integer> namedField = field("n", Integer.class);
-			return db.select(sum(namedField))
+			return db.dsl()
+				.select(sum(namedField))
 				.from(select(count().minus(1).as(namedField))
 					.from(RUN)
 					.where(RUN.COMMIT_HASH.isNotNull())
@@ -339,7 +348,8 @@ public class BenchmarkReadAccess {
 
 	public long getAmountOfTarRunsNotAttachedToRepo() {
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			return db.select(count())
+			return db.dsl()
+				.select(count())
 				.from(RUN)
 				.where(RUN.COMMIT_HASH.isNull())
 				.and(RUN.REPO_ID.isNull())
@@ -350,7 +360,8 @@ public class BenchmarkReadAccess {
 
 	public long getAmountOfTarRunsAttachedToRepo() {
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			return db.select(count())
+			return db.dsl()
+				.select(count())
 				.from(RUN)
 				.where(RUN.COMMIT_HASH.isNull())
 				.and(RUN.REPO_ID.isNotNull())
@@ -361,7 +372,8 @@ public class BenchmarkReadAccess {
 
 	public long getAmountOfFailedRuns() {
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			return db.select(count())
+			return db.dsl()
+				.select(count())
 				.from(RUN)
 				.where(RUN.ERROR.isNotNull())
 				.fetchSingle()
@@ -371,7 +383,8 @@ public class BenchmarkReadAccess {
 
 	public long getAmountOfFailedRunErrorMsgChars() {
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			return db.select(sum(length(RUN.ERROR)))
+			return db.dsl()
+				.select(sum(length(RUN.ERROR)))
 				.from(RUN)
 				.where(RUN.ERROR.isNotNull())
 				.fetchSingle()
@@ -382,7 +395,8 @@ public class BenchmarkReadAccess {
 
 	public long getAmountOfRunsForUntrackedCommits() {
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			return db.select(count())
+			return db.dsl()
+				.select(count())
 				.from(RUN)
 				.join(KNOWN_COMMIT)
 				.on(KNOWN_COMMIT.HASH.eq(RUN.COMMIT_HASH))
@@ -394,7 +408,8 @@ public class BenchmarkReadAccess {
 
 	public long getAmountOfRunsForUnreachableCommits() {
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			return db.select(count())
+			return db.dsl()
+				.select(count())
 				.from(RUN)
 				.join(KNOWN_COMMIT)
 				.on(KNOWN_COMMIT.HASH.eq(RUN.COMMIT_HASH))

@@ -69,13 +69,15 @@ public class BenchmarkWriteAccess extends BenchmarkReadAccess {
 	}
 
 	private void deleteTask(DBWriteAccess db, TaskId taskId) {
-		db.deleteFrom(TASK)
+		db.dsl()
+			.deleteFrom(TASK)
 			.where(TASK.ID.eq(taskId.getIdAsString()))
 			.execute();
 	}
 
 	private void updateDimensions(DBWriteAccess db, NewRun newRun) {
-		Map<Dimension, DimensionRecord> dimensions = db.selectFrom(DIMENSION)
+		Map<Dimension, DimensionRecord> dimensions = db.dsl()
+			.selectFrom(DIMENSION)
 			.stream()
 			.collect(toMap(
 				record -> new Dimension(record.getBenchmark(), record.getMetric()),

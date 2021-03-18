@@ -151,7 +151,8 @@ class RepoWriteAccessTest {
 		assertThat(access.getAllBranches(REPO2_ID)).isEmpty();
 
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			Result<KnownCommitRecord> repo2Commits = db.selectFrom(KNOWN_COMMIT)
+			Result<KnownCommitRecord> repo2Commits = db.dsl()
+				.selectFrom(KNOWN_COMMIT)
 				.where(KNOWN_COMMIT.REPO_ID.eq(REPO2_ID.getIdAsString()))
 				.fetch();
 

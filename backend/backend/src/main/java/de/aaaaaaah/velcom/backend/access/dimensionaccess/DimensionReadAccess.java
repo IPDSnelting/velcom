@@ -75,7 +75,8 @@ public class DimensionReadAccess {
 	 */
 	public void guardDimensionExists(Dimension dimension) throws NoSuchDimensionException {
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			db.selectFrom(DIMENSION)
+			db.dsl()
+				.selectFrom(DIMENSION)
 				.where(DIMENSION.BENCHMARK.eq(dimension.getBenchmark()))
 				.and(DIMENSION.METRIC.eq(dimension.getMetric()))
 				.fetchSingle();
@@ -93,7 +94,8 @@ public class DimensionReadAccess {
 	 */
 	public DimensionInfo getDimensionInfo(Dimension dimension) {
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			return db.selectFrom(DIMENSION)
+			return db.dsl()
+				.selectFrom(DIMENSION)
 				.where(DIMENSION.BENCHMARK.eq(dimension.getBenchmark()))
 				.and(DIMENSION.METRIC.eq(dimension.getMetric()))
 				.fetchOptional()
@@ -115,7 +117,8 @@ public class DimensionReadAccess {
 		final Set<DimensionInfo> infos;
 
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			infos = db.selectFrom(DIMENSION)
+			infos = db.dsl()
+				.selectFrom(DIMENSION)
 				.stream() // This is efficient enough, we don't have that many dimensions
 				.map(DimensionReadAccess::dimRecordToDimInfo)
 				.filter(info -> dimensions.contains(info.getDimension()))
@@ -145,7 +148,8 @@ public class DimensionReadAccess {
 	 */
 	public Set<DimensionInfo> getAllDimensions() {
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			return db.selectFrom(DIMENSION)
+			return db.dsl()
+				.selectFrom(DIMENSION)
 				.stream()
 				.map(DimensionReadAccess::dimRecordToDimInfo)
 				.collect(toSet());
@@ -154,7 +158,8 @@ public class DimensionReadAccess {
 
 	public Set<Dimension> getSignificantDimensions() {
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			return db.selectFrom(DIMENSION)
+			return db.dsl()
+				.selectFrom(DIMENSION)
 				.where(DIMENSION.SIGNIFICANT)
 				.stream()
 				.map(DimensionReadAccess::dimRecordToDim)
@@ -171,7 +176,8 @@ public class DimensionReadAccess {
 	 */
 	public Set<Dimension> getAvailableDimensions(RepoId repoId) {
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			return db.selectDistinct(MEASUREMENT.BENCHMARK, MEASUREMENT.METRIC)
+			return db.dsl()
+				.selectDistinct(MEASUREMENT.BENCHMARK, MEASUREMENT.METRIC)
 				.from(RUN)
 				.join(MEASUREMENT).on(MEASUREMENT.RUN_ID.eq(RUN.ID))
 				.where(RUN.REPO_ID.eq(repoId.getIdAsString()))
@@ -199,7 +205,7 @@ public class DimensionReadAccess {
 		final HashMap<RepoId, Set<Dimension>> availableDimensions;
 
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			availableDimensions = db
+			availableDimensions = db.dsl()
 				.selectDistinct(RUN.REPO_ID, MEASUREMENT.BENCHMARK, MEASUREMENT.METRIC)
 				.from(RUN)
 				.join(MEASUREMENT).on(MEASUREMENT.RUN_ID.eq(RUN.ID))

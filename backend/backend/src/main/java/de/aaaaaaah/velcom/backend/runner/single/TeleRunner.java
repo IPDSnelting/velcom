@@ -48,7 +48,7 @@ public class TeleRunner {
 	/**
 	 * Completed tasks are cached so we can continue to show output lines in the frontend even if the
 	 * task has finished. This variable controls *how many* are ached.
- 	 */
+	 */
 	private static final int MAX_CACHED_COMPLETED_TASKS = 2;
 
 	private final AtomicReference<GetStatusReply> runnerInformation;
