@@ -58,6 +58,11 @@ benchmarkRepoRemoteUrl: "https://github.com/IPDSnelting/velcom-unibench.git"
 ##
 #pollInterval: 120 # seconds
 
+##
+## The period in which the sqlite database is VACUUMed (i. e. cleaned up and compacted).
+##
+#vacuumInterval: 90000 # seconds (25 hours)
+
 
 #################
 ## Directories ##
