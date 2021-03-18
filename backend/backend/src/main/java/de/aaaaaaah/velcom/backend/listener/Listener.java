@@ -55,6 +55,11 @@ public class Listener {
 	private final Duration vacuumInterval;
 	private Instant lastVacuum;
 
+	// An explicit reference to the executor is kept to ensure it will never accidentally be garbage
+	// collected. This might not be strictly necessary, but it doesn't hurt either.
+	@SuppressWarnings("FieldCanBeLocal")
+	private final ScheduledExecutorService executor;
+
 	/**
 	 * Constructs a new listener instance.
 	 *
@@ -79,7 +84,7 @@ public class Listener {
 		this.vacuumInterval = vacuumInterval;
 		this.lastVacuum = Instant.now();
 
-		ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+		executor = Executors.newSingleThreadScheduledExecutor();
 		executor.scheduleWithFixedDelay(
 			this::onUpdate,
 			0,
