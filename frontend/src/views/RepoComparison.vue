@@ -3,7 +3,7 @@
     <v-row>
       <v-col cols="3">
         <v-row>
-          <v-col :style="{ 'min-height': 80 + 12 * 2 + 'px' }">
+          <v-col :style="{ 'min-height': 68 + 12 * 2 + 'px' }">
             <comparison-dimension-selector
               :possible-dimensions="possibleDimensions"
               :error-message="dimensionSelectorErrorMessage"

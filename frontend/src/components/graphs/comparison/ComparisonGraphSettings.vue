@@ -3,7 +3,7 @@
     <v-card-text>
       <v-row align="center">
         <v-col cols="auto">
-          <v-btn-toggle v-model="selectedGraphVariant" mandatory>
+          <v-btn-toggle v-model="selectedGraphVariant" mandatory dense>
             <v-btn
               v-for="{ component, name } in availableGraphComponents"
               :key="name"
