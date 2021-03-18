@@ -186,11 +186,21 @@ export default class RepoComparison extends Vue {
     )
   }
 
+  private get shouldNotShowResults() {
+    if (this.possibleDimensions.length === 0) {
+      return true
+    }
+    const possibleDimension = this.possibleDimensions.find(dim =>
+      dim.equals(this.selectedDimension)
+    )
+    return possibleDimension === undefined
+  }
+
   @Watch('selectedDimension')
   @Watch('startTime')
   @Watch('endTime')
   private async refetchData() {
-    if (this.possibleDimensions.length === 0) {
+    if (this.shouldNotShowResults) {
       this.comparisonDatapoints = []
       return
     }

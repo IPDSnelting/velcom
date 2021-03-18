@@ -101,7 +101,10 @@ export class Dimension {
    * @param {DimensionId} other the other dimension
    * @returns true if the two have the same benchmark and metric
    */
-  equals(other: DimensionId): boolean {
+  equals(other: DimensionId | null): boolean {
+    if (other === null) {
+      return false
+    }
     return other.benchmark === this.benchmark && other.metric === this.metric
   }
 }
