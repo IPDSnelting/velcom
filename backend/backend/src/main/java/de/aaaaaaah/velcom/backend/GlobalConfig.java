@@ -22,7 +22,7 @@ public class GlobalConfig extends Configuration {
 	private String webAdminToken;
 	@NotEmpty
 	private String benchmarkRepoRemoteUrl;
-	private long pollInterval = 120;
+	private long pollInterval = 10 * 60;
 	private long vacuumInterval = 25 * 60 * 60;
 
 	/////////////////
