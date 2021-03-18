@@ -37,6 +37,7 @@ public class DatabaseStorage {
 		SQLiteConfig sqliteConfig = new SQLiteConfig();
 		sqliteConfig.enforceForeignKeys(true);
 		sqliteConfig.setJournalMode(JournalMode.WAL);
+		sqliteConfig.setJounalSizeLimit(1024 * 1024 * 8); // 8 MiB
 
 		SQLiteDataSource sqLiteDataSource = new SQLiteDataSource(sqliteConfig);
 		sqLiteDataSource.setUrl(jdbcUrl);
@@ -48,7 +49,7 @@ public class DatabaseStorage {
 
 		HikariDataSource hikariDataSource = new HikariDataSource(hikariConfig);
 
-		this.context = DSL.using(hikariDataSource, SQLDialect.SQLITE);
+		context = DSL.using(hikariDataSource, SQLDialect.SQLITE);
 	}
 
 	/**

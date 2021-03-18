@@ -50,7 +50,7 @@ public class TaskReadAccess {
 	 */
 	public Task getTask(TaskId taskId) throws NoSuchTaskException {
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			TaskRecord record = db.fetchSingle(TASK, TASK.ID.eq(taskId.getIdAsString()));
+			TaskRecord record = db.dsl().fetchSingle(TASK, TASK.ID.eq(taskId.getIdAsString()));
 			return taskRecordToTask(record);
 		} catch (DataAccessException e) {
 			throw new NoSuchTaskException(e, taskId);
@@ -65,7 +65,8 @@ public class TaskReadAccess {
 	 */
 	public Optional<Boolean> isTaskInProgress(TaskId taskId) {
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			Boolean inProcess = db.selectFrom(TASK)
+			Boolean inProcess = db.dsl()
+				.selectFrom(TASK)
 				.where(TASK.ID.eq(taskId.getIdAsString()))
 				.fetchOne(TASK.IN_PROCESS);
 			return Optional.ofNullable(inProcess);
@@ -77,7 +78,8 @@ public class TaskReadAccess {
 	 */
 	public List<Task> getAllTasks() {
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			return db.selectFrom(TASK)
+			return db.dsl()
+				.selectFrom(TASK)
 				.stream()
 				.map(TaskReadAccess::taskRecordToTask)
 				.collect(Collectors.toList());

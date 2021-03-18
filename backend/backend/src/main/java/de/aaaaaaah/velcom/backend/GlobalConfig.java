@@ -22,7 +22,8 @@ public class GlobalConfig extends Configuration {
 	private String webAdminToken;
 	@NotEmpty
 	private String benchmarkRepoRemoteUrl;
-	private long pollInterval = 120;
+	private long pollInterval = 10 * 60;
+	private long vacuumInterval = 25 * 60 * 60;
 
 	/////////////////
 	// Directories //
@@ -100,6 +101,14 @@ public class GlobalConfig extends Configuration {
 
 	public void setPollInterval(long pollInterval) {
 		this.pollInterval = pollInterval;
+	}
+
+	public Duration getVacuumInterval() {
+		return Duration.ofSeconds(vacuumInterval);
+	}
+
+	public void setVacuumInterval(long vacuumInterval) {
+		this.vacuumInterval = vacuumInterval;
 	}
 
 	/////////////////

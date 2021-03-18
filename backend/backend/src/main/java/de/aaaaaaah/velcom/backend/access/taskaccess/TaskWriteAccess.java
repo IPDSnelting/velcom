@@ -70,7 +70,8 @@ public class TaskWriteAccess extends TaskReadAccess {
 		CommitHash hash) {
 
 		return databaseStorage.acquireWriteTransaction(db -> {
-			boolean taskAlreadyExists = db.selectFrom(TASK)
+			boolean taskAlreadyExists = db.dsl()
+				.selectFrom(TASK)
 				.where(TASK.REPO_ID.eq(repoId.getIdAsString()))
 				.and(TASK.COMMIT_HASH.eq(hash.getHash()))
 				.fetchAny() != null;
@@ -102,7 +103,8 @@ public class TaskWriteAccess extends TaskReadAccess {
 			.collect(Collectors.toSet());
 
 		databaseStorage.acquireWriteTransaction(db -> {
-			Set<String> hashesAlreadyInQueue = db.selectFrom(TASK)
+			Set<String> hashesAlreadyInQueue = db.dsl()
+				.selectFrom(TASK)
 				.where(TASK.REPO_ID.eq(repoId.getIdAsString()))
 				.and(TASK.COMMIT_HASH.in(hashesAsStrings))
 				.fetchSet(TASK.COMMIT_HASH);
@@ -165,7 +167,8 @@ public class TaskWriteAccess extends TaskReadAccess {
 	 */
 	public Optional<Task> startTask(Function<List<Task>, Optional<TaskId>> selector) {
 		return databaseStorage.acquireWriteTransaction(db -> {
-			List<Task> allTasks = db.selectFrom(TASK)
+			List<Task> allTasks = db.dsl()
+				.selectFrom(TASK)
 				.where(not(TASK.IN_PROCESS))
 				.stream()
 				.map(TaskReadAccess::taskRecordToTask)
@@ -188,12 +191,14 @@ public class TaskWriteAccess extends TaskReadAccess {
 			// The selector has returned a valid task
 
 			String taskIdAsString = taskToStart.get().getIdAsString();
-			db.update(TASK)
+			db.dsl()
+				.update(TASK)
 				.set(TASK.IN_PROCESS, true)
 				.where(TASK.ID.eq(taskIdAsString))
 				.execute();
 
-			TaskRecord record = db.selectFrom(TASK)
+			TaskRecord record = db.dsl()
+				.selectFrom(TASK)
 				.where(TASK.ID.eq(taskIdAsString))
 				.fetchOne();
 			return Optional.of(taskRecordToTask(record));
@@ -211,7 +216,8 @@ public class TaskWriteAccess extends TaskReadAccess {
 			.collect(Collectors.toSet());
 
 		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
-			db.deleteFrom(TASK)
+			db.dsl()
+				.deleteFrom(TASK)
 				.where(TASK.ID.in(taskIds))
 				.execute();
 		}
@@ -231,7 +237,7 @@ public class TaskWriteAccess extends TaskReadAccess {
 	 */
 	public void deleteAllTasks() {
 		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
-			db.deleteFrom(TASK).execute();
+			db.dsl().deleteFrom(TASK).execute();
 		}
 
 		try {
@@ -251,7 +257,8 @@ public class TaskWriteAccess extends TaskReadAccess {
 	 */
 	public void setTaskPriority(TaskId taskId, TaskPriority newPriority) {
 		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
-			db.update(TASK)
+			db.dsl()
+				.update(TASK)
 				.set(TASK.PRIORITY, newPriority.asInt())
 				.set(TASK.UPDATE_TIME, Instant.now())
 				.where(TASK.ID.eq(taskId.getIdAsString()))
@@ -268,7 +275,8 @@ public class TaskWriteAccess extends TaskReadAccess {
 	 */
 	public void setTaskInProgress(TaskId taskId, boolean inProcess) {
 		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
-			db.update(TASK)
+			db.dsl()
+				.update(TASK)
 				.set(TASK.IN_PROCESS, inProcess)
 				.where(TASK.ID.eq(taskId.getIdAsString()))
 				.execute();
@@ -280,7 +288,8 @@ public class TaskWriteAccess extends TaskReadAccess {
 	 */
 	public void resetAllTaskStatuses() {
 		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
-			db.update(TASK)
+			db.dsl()
+				.update(TASK)
 				.set(TASK.IN_PROCESS, false)
 				.execute();
 		}
@@ -294,7 +303,8 @@ public class TaskWriteAccess extends TaskReadAccess {
 	public void cleanUpTarFiles() throws IOException {
 		Set<String> tarTaskIds;
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			tarTaskIds = db.selectFrom(TASK)
+			tarTaskIds = db.dsl()
+				.selectFrom(TASK)
 				.where(TASK.COMMIT_HASH.isNull())
 				.stream()
 				.map(TaskRecord::getId)

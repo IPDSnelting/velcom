@@ -22,6 +22,7 @@ import io.micrometer.core.annotation.Timed;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -51,8 +52,12 @@ public class Listener {
 	private final BenchRepo benchRepo;
 	private final Queue queue;
 
-	private final Duration pollInterval;
+	private final Duration vacuumInterval;
+	private Instant lastVacuum;
 
+	// An explicit reference to the executor is kept to ensure it will never accidentally be garbage
+	// collected. This might not be strictly necessary, but it doesn't hurt either.
+	@SuppressWarnings("FieldCanBeLocal")
 	private final ScheduledExecutorService executor;
 
 	/**
@@ -66,7 +71,8 @@ public class Listener {
 	 * @param pollInterval the time the listener waits between updating its repos
 	 */
 	public Listener(DatabaseStorage databaseStorage, RepoStorage repoStorage,
-		RepoWriteAccess repoAccess, BenchRepo benchRepo, Queue queue, Duration pollInterval) {
+		RepoWriteAccess repoAccess, BenchRepo benchRepo, Queue queue, Duration pollInterval,
+		Duration vacuumInterval) {
 
 		this.databaseStorage = databaseStorage;
 		this.repoStorage = repoStorage;
@@ -75,7 +81,8 @@ public class Listener {
 		this.benchRepo = benchRepo;
 		this.queue = queue;
 
-		this.pollInterval = pollInterval;
+		this.vacuumInterval = vacuumInterval;
+		this.lastVacuum = Instant.now();
 
 		executor = Executors.newSingleThreadScheduledExecutor();
 		executor.scheduleWithFixedDelay(
@@ -92,6 +99,7 @@ public class Listener {
 	private void onUpdate() {
 		updateAllRepos();
 		runAnalyze();
+		vacuumIfNecessary();
 	}
 
 	/**
@@ -142,19 +150,6 @@ public class Listener {
 			} catch (Exception e) {
 				LOGGER.warn("Failed to update repo {}", repo.getId(), e);
 			}
-		}
-	}
-
-	/**
-	 * Run the ANALYZE command. It's relatively quick, so it should be fine to just run it everytime
-	 * the listener runs.
-	 */
-	@Timed(histogram = true)
-	private void runAnalyze() {
-		LOGGER.debug("Running ANALYZE");
-
-		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
-			db.dsl().execute("ANALYZE");
 		}
 	}
 
@@ -294,6 +289,34 @@ public class Listener {
 			// The commits are ordered from old to new, which means that the new commits will be
 			// benchmarked first.
 			queue.addCommits(QUEUE_AUTHOR, repo.getId(), toBeQueued, TASK_PRIORITY);
+		}
+	}
+
+	/**
+	 * Run the ANALYZE command. It's relatively quick, so it should be fine to just run it everytime
+	 * the listener runs.
+	 */
+	@Timed(histogram = true)
+	private void runAnalyze() {
+		LOGGER.debug("Running ANALYZE");
+
+		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
+			db.dsl().execute("ANALYZE");
+		}
+	}
+
+	@Timed(histogram = true)
+	private void vacuumIfNecessary() {
+		Instant now = Instant.now();
+
+		Duration timeSinceLastVacuum = Duration.between(lastVacuum, now);
+		if (timeSinceLastVacuum.compareTo(vacuumInterval) >= 0) {
+			LOGGER.debug("Running VACUUM");
+
+			try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
+				db.vacuum();
+				lastVacuum = now;
+			}
 		}
 	}
 }

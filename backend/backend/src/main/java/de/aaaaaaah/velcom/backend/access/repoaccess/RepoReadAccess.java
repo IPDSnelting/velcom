@@ -48,7 +48,8 @@ public class RepoReadAccess {
 
 	public List<Repo> getAllRepos() {
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			return db.fetch(REPO).stream()
+			return db.dsl()
+				.fetch(REPO).stream()
 				.map(RepoReadAccess::repoRecordToRepo)
 				.collect(Collectors.toList());
 		}
@@ -56,7 +57,7 @@ public class RepoReadAccess {
 
 	public Repo getRepo(RepoId repoId) throws NoSuchRepoException {
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			RepoRecord repoRecord = db.fetchSingle(REPO, REPO.ID.eq(repoId.getIdAsString()));
+			RepoRecord repoRecord = db.dsl().fetchSingle(REPO, REPO.ID.eq(repoId.getIdAsString()));
 			return repoRecordToRepo(repoRecord);
 		} catch (DataAccessException e) {
 			throw new NoSuchRepoException(e, repoId);
@@ -81,10 +82,11 @@ public class RepoReadAccess {
 	 */
 	public List<Branch> getAllBranches(RepoId repoId) {
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			return db.fetch(
-				BRANCH,
-				BRANCH.REPO_ID.eq(repoId.getIdAsString())
-			)
+			return db.dsl()
+				.fetch(
+					BRANCH,
+					BRANCH.REPO_ID.eq(repoId.getIdAsString())
+				)
 				.stream()
 				.map(RepoReadAccess::branchRecordToBranch)
 				.collect(Collectors.toList());

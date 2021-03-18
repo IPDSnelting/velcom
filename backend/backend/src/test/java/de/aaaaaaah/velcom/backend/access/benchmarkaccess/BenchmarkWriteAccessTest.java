@@ -224,7 +224,9 @@ class BenchmarkWriteAccessTest {
 		access.insertRun(newRun);
 
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			Map<Dimension, DimensionRecord> dimMap = db.selectFrom(DIMENSION).stream()
+			Map<Dimension, DimensionRecord> dimMap = db.dsl()
+				.selectFrom(DIMENSION)
+				.stream()
 				.collect(toMap(
 					it -> new Dimension(it.getBenchmark(), it.getMetric()),
 					it -> it

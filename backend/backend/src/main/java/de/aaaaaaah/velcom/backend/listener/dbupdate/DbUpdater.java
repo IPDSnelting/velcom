@@ -110,7 +110,8 @@ public class DbUpdater {
 	}
 
 	private boolean anyCommits() {
-		return db.selectFrom(KNOWN_COMMIT)
+		return db.dsl()
+			.selectFrom(KNOWN_COMMIT)
 			.where(KNOWN_COMMIT.REPO_ID.eq(repoIdStr))
 			.limit(1)
 			.fetchOptional()
@@ -128,7 +129,8 @@ public class DbUpdater {
 		LOGGER.debug("Inserting all unknown commits");
 
 		// See comment in #insertNewCommits()
-		Set<String> knownCommits = db.selectFrom(KNOWN_COMMIT)
+		Set<String> knownCommits = db.dsl()
+			.selectFrom(KNOWN_COMMIT)
 			.where(KNOWN_COMMIT.REPO_ID.eq(repoIdStr))
 			.fetchSet(KNOWN_COMMIT.HASH);
 
@@ -217,7 +219,8 @@ public class DbUpdater {
 	private void updateBranches() throws GitAPIException {
 		LOGGER.debug("Updating branches");
 
-		Set<BranchName> trackedBranchNames = db.selectFrom(BRANCH)
+		Set<BranchName> trackedBranchNames = db.dsl()
+			.selectFrom(BRANCH)
 			.where(BRANCH.REPO_ID.eq(repoIdStr))
 			.and(BRANCH.TRACKED)
 			.stream()
@@ -238,7 +241,7 @@ public class DbUpdater {
 			})
 			.collect(toList());
 
-		db.deleteFrom(BRANCH).where(BRANCH.REPO_ID.eq(repoIdStr)).execute();
+		db.dsl().deleteFrom(BRANCH).where(BRANCH.REPO_ID.eq(repoIdStr)).execute();
 		db.dsl().batchInsert(branchRecords).execute();
 	}
 
@@ -303,7 +306,8 @@ public class DbUpdater {
 			+ "ORDER BY known_commit.committer_date ASC, known_commit.author_date ASC\n"
 			+ "";
 
-		return db.dsl().fetchLazy(query, repoIdStr, repoIdStr, repoIdStr, repoIdStr)
+		return db.dsl()
+			.fetchLazy(query, repoIdStr, repoIdStr, repoIdStr, repoIdStr)
 			.stream()
 			.map(record -> (String) record.getValue(0))
 			.map(CommitHash::new)
@@ -318,7 +322,8 @@ public class DbUpdater {
 	 */
 	private List<CommitHash> useHeadsOfTrackedBranchesAsTasks() {
 		// Similar to #findNewTasks(), this function won't ever find unreachable commits.
-		return db.selectFrom(BRANCH)
+		return db.dsl()
+			.selectFrom(BRANCH)
 			.where(BRANCH.REPO_ID.eq(repoIdStr))
 			.and(BRANCH.TRACKED)
 			.stream()

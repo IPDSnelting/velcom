@@ -70,7 +70,8 @@ public class RepoWriteAccess extends RepoReadAccess {
 	 */
 	public void deleteRepo(RepoId repoId) {
 		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
-			db.deleteFrom(REPO)
+			db.dsl()
+				.deleteFrom(REPO)
 				.where(REPO.ID.eq(repoId.getIdAsString()))
 				.execute();
 		}
@@ -100,18 +101,21 @@ public class RepoWriteAccess extends RepoReadAccess {
 
 		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
 			if (name != null && remoteUrl != null) {
-				db.update(REPO)
+				db.dsl()
+					.update(REPO)
 					.set(REPO.NAME, name)
 					.set(REPO.REMOTE_URL, remoteUrl.getUrl())
 					.where(REPO.ID.eq(repoId.getIdAsString()))
 					.execute();
 			} else if (name != null) {
-				db.update(REPO)
+				db.dsl()
+					.update(REPO)
 					.set(REPO.NAME, name)
 					.where(REPO.ID.eq(repoId.getIdAsString()))
 					.execute();
 			} else {
-				db.update(REPO)
+				db.dsl()
+					.update(REPO)
 					.set(REPO.REMOTE_URL, remoteUrl.getUrl())
 					.where(REPO.ID.eq(repoId.getIdAsString()))
 					.execute();
@@ -132,7 +136,8 @@ public class RepoWriteAccess extends RepoReadAccess {
 			.collect(Collectors.toSet());
 
 		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
-			db.update(BRANCH)
+			db.dsl()
+				.update(BRANCH)
 				.set(BRANCH.TRACKED, field(BRANCH.NAME.in(trackedNames)))
 				.where(BRANCH.REPO_ID.eq(repoId.getIdAsString()))
 				.execute();

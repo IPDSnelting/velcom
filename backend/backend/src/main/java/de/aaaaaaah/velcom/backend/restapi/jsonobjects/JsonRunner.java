@@ -1,7 +1,6 @@
 package de.aaaaaaah.velcom.backend.restapi.jsonobjects;
 
 import de.aaaaaaah.velcom.backend.runner.KnownRunner;
-import de.aaaaaaah.velcom.shared.protocol.serialization.Status;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;

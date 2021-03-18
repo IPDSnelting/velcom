@@ -100,11 +100,12 @@ public class CommitReadAccess {
 
 	public Commit getCommit(RepoId repoId, CommitHash commitHash) throws NoSuchCommitException {
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			KnownCommitRecord record = db.fetchSingle(
-				KNOWN_COMMIT,
-				KNOWN_COMMIT.REPO_ID.eq(repoId.getIdAsString())
-					.and(KNOWN_COMMIT.HASH.eq(commitHash.getHash()))
-			);
+			KnownCommitRecord record = db.dsl()
+				.fetchSingle(
+					KNOWN_COMMIT,
+					KNOWN_COMMIT.REPO_ID.eq(repoId.getIdAsString())
+						.and(KNOWN_COMMIT.HASH.eq(commitHash.getHash()))
+				);
 			return knownCommitRecordToCommit(record);
 		} catch (DataAccessException e) {
 			throw new NoSuchCommitException(e, repoId, commitHash);
@@ -138,7 +139,8 @@ public class CommitReadAccess {
 			.collect(toSet());
 
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			return db.selectFrom(KNOWN_COMMIT)
+			return db.dsl()
+				.selectFrom(KNOWN_COMMIT)
 				.where(KNOWN_COMMIT.REPO_ID.eq(repoId.getIdAsString()))
 				.and(KNOWN_COMMIT.HASH.in(hashes))
 				.stream()
@@ -151,13 +153,15 @@ public class CommitReadAccess {
 		throws NoSuchCommitException {
 
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			KnownCommitRecord record = db.fetchSingle(
-				KNOWN_COMMIT,
-				KNOWN_COMMIT.REPO_ID.eq(repoId.getIdAsString())
-					.and(KNOWN_COMMIT.HASH.eq(commitHash.getHash()))
-			);
+			KnownCommitRecord record = db.dsl()
+				.fetchSingle(
+					KNOWN_COMMIT,
+					KNOWN_COMMIT.REPO_ID.eq(repoId.getIdAsString())
+						.and(KNOWN_COMMIT.HASH.eq(commitHash.getHash()))
+				);
 
-			Set<CommitHash> parentHashes = db.select(COMMIT_RELATIONSHIP.PARENT_HASH)
+			Set<CommitHash> parentHashes = db.dsl()
+				.select(COMMIT_RELATIONSHIP.PARENT_HASH)
 				.from(COMMIT_RELATIONSHIP)
 				.where(COMMIT_RELATIONSHIP.REPO_ID.eq(repoId.getIdAsString()))
 				.and(COMMIT_RELATIONSHIP.CHILD_HASH.eq(commitHash.getHash()))
@@ -166,7 +170,8 @@ public class CommitReadAccess {
 				.map(CommitHash::new)
 				.collect(toSet());
 
-			Set<CommitHash> childHashes = db.select(COMMIT_RELATIONSHIP.CHILD_HASH)
+			Set<CommitHash> childHashes = db.dsl()
+				.select(COMMIT_RELATIONSHIP.CHILD_HASH)
 				.from(COMMIT_RELATIONSHIP)
 				.where(COMMIT_RELATIONSHIP.REPO_ID.eq(repoId.getIdAsString()))
 				.and(COMMIT_RELATIONSHIP.PARENT_HASH.eq(commitHash.getHash()))
@@ -183,7 +188,8 @@ public class CommitReadAccess {
 
 	public Set<CommitHash> getParentHashes(RepoId repoId, CommitHash commitHash) {
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			return db.select(COMMIT_RELATIONSHIP.PARENT_HASH)
+			return db.dsl()
+				.select(COMMIT_RELATIONSHIP.PARENT_HASH)
 				.from(COMMIT_RELATIONSHIP)
 				.where(COMMIT_RELATIONSHIP.REPO_ID.eq(repoId.getIdAsString()))
 				.and(COMMIT_RELATIONSHIP.CHILD_HASH.eq(commitHash.getHash()))
@@ -196,7 +202,8 @@ public class CommitReadAccess {
 
 	public Set<CommitHash> getChildHashes(RepoId repoId, CommitHash commitHash) {
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			return db.select(COMMIT_RELATIONSHIP.CHILD_HASH)
+			return db.dsl()
+				.select(COMMIT_RELATIONSHIP.CHILD_HASH)
 				.from(COMMIT_RELATIONSHIP)
 				.where(COMMIT_RELATIONSHIP.REPO_ID.eq(repoId.getIdAsString()))
 				.and(COMMIT_RELATIONSHIP.PARENT_HASH.eq(commitHash.getHash()))
@@ -227,7 +234,8 @@ public class CommitReadAccess {
 					.map(CommitHash::getHash)
 					.collect(toSet());
 
-				Map<String, Set<CommitHash>> allParentHashes = db.selectFrom(COMMIT_RELATIONSHIP)
+				Map<String, Set<CommitHash>> allParentHashes = db.dsl()
+					.selectFrom(COMMIT_RELATIONSHIP)
 					.where(COMMIT_RELATIONSHIP.REPO_ID.eq(entry.getKey().getIdAsString()))
 					.and(COMMIT_RELATIONSHIP.CHILD_HASH.in(hashes))
 					.stream()
@@ -236,7 +244,8 @@ public class CommitReadAccess {
 						mapping(it -> new CommitHash(it.getParentHash()), toSet())
 					));
 
-				Map<String, Set<CommitHash>> allChildHashes = db.selectFrom(COMMIT_RELATIONSHIP)
+				Map<String, Set<CommitHash>> allChildHashes = db.dsl()
+					.selectFrom(COMMIT_RELATIONSHIP)
 					.where(COMMIT_RELATIONSHIP.REPO_ID.eq(entry.getKey().getIdAsString()))
 					.and(COMMIT_RELATIONSHIP.PARENT_HASH.in(hashes))
 					.stream()
@@ -272,7 +281,8 @@ public class CommitReadAccess {
 		@Nullable Instant stopTime) {
 
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			SelectConditionStep<KnownCommitRecord> query = db.selectFrom(KNOWN_COMMIT)
+			SelectConditionStep<KnownCommitRecord> query = db.dsl()
+				.selectFrom(KNOWN_COMMIT)
 				.where(KNOWN_COMMIT.REPO_ID.eq(repoId.getIdAsString()))
 				.and(KNOWN_COMMIT.TRACKED);
 
@@ -389,7 +399,9 @@ public class CommitReadAccess {
 		bindings.add(repoId.getIdAsString());
 
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			Set<String> reachableHashes = db.dsl().fetch(queryStr, bindings.toArray()).stream()
+			Set<String> reachableHashes = db.dsl()
+				.fetch(queryStr, bindings.toArray())
+				.stream()
 				.map(record -> record.get(0, String.class))
 				.collect(toSet());
 
@@ -400,7 +412,8 @@ public class CommitReadAccess {
 			// recursive query because when we tried to do that, jdbc/jOOQ failed to correctly parse the
 			// timestamps for the author/committer dates for some reason.
 
-			SelectConditionStep<KnownCommitRecord> query = db.selectFrom(KNOWN_COMMIT)
+			SelectConditionStep<KnownCommitRecord> query = db.dsl()
+				.selectFrom(KNOWN_COMMIT)
 				.where(KNOWN_COMMIT.REPO_ID.eq(repoId.getIdAsString()))
 				.and(KNOWN_COMMIT.HASH.in(reachableHashes));
 
@@ -421,22 +434,23 @@ public class CommitReadAccess {
 		String queryStr) {
 
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			var query = db.select(
-				KNOWN_COMMIT.REPO_ID,
-				KNOWN_COMMIT.HASH,
-				KNOWN_COMMIT.REACHABLE,
-				KNOWN_COMMIT.TRACKED,
-				KNOWN_COMMIT.AUTHOR,
-				KNOWN_COMMIT.AUTHOR_DATE,
-				KNOWN_COMMIT.COMMITTER,
-				KNOWN_COMMIT.COMMITTER_DATE,
-				KNOWN_COMMIT.MESSAGE,
-				field(exists(select(DSL.one())
-					.from(RUN)
-					.where(RUN.REPO_ID.eq(KNOWN_COMMIT.REPO_ID))
-					.and(RUN.COMMIT_HASH.eq(KNOWN_COMMIT.HASH))
-				))
-			)
+			var query = db.dsl()
+				.select(
+					KNOWN_COMMIT.REPO_ID,
+					KNOWN_COMMIT.HASH,
+					KNOWN_COMMIT.REACHABLE,
+					KNOWN_COMMIT.TRACKED,
+					KNOWN_COMMIT.AUTHOR,
+					KNOWN_COMMIT.AUTHOR_DATE,
+					KNOWN_COMMIT.COMMITTER,
+					KNOWN_COMMIT.COMMITTER_DATE,
+					KNOWN_COMMIT.MESSAGE,
+					field(exists(select(DSL.one())
+						.from(RUN)
+						.where(RUN.REPO_ID.eq(KNOWN_COMMIT.REPO_ID))
+						.and(RUN.COMMIT_HASH.eq(KNOWN_COMMIT.HASH))
+					))
+				)
 				.from(KNOWN_COMMIT)
 				.where(KNOWN_COMMIT.HASH.contains(queryStr)
 					.or(KNOWN_COMMIT.MESSAGE.contains(queryStr))

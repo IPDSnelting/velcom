@@ -33,7 +33,7 @@ class DatabaseStorageTest {
 
 		// Read without explicit transaction
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			RepoRecord record = db.selectFrom(REPO).fetchSingle();
+			RepoRecord record = db.dsl().selectFrom(REPO).fetchSingle();
 			assertThat(record.getId()).isEqualTo(repoId);
 			assertThat(record.getName()).isEqualTo(repoName);
 			assertThat(record.getRemoteUrl()).isEqualTo(repoRemoteUrl);
@@ -41,7 +41,7 @@ class DatabaseStorageTest {
 
 		// Read transaction, no return value
 		databaseStorage.acquireReadTransaction(db -> {
-			RepoRecord record = db.selectFrom(REPO).fetchSingle();
+			RepoRecord record = db.dsl().selectFrom(REPO).fetchSingle();
 			assertThat(record.getId()).isEqualTo(repoId);
 			assertThat(record.getName()).isEqualTo(repoName);
 			assertThat(record.getRemoteUrl()).isEqualTo(repoRemoteUrl);
@@ -49,7 +49,7 @@ class DatabaseStorageTest {
 
 		// Read transaction with return value
 		RepoRecord record = databaseStorage.acquireReadTransaction(db -> {
-			return db.selectFrom(REPO).fetchSingle();
+			return db.dsl().selectFrom(REPO).fetchSingle();
 		});
 		assertThat(record.getId()).isEqualTo(repoId);
 		assertThat(record.getName()).isEqualTo(repoName);
@@ -87,7 +87,9 @@ class DatabaseStorageTest {
 
 		// Check if all three repos have been added correctly
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			Map<String, RepoRecord> records = db.selectFrom(REPO).stream()
+			Map<String, RepoRecord> records = db.dsl()
+				.selectFrom(REPO)
+				.stream()
 				.collect(toMap(RepoRecord::getId, it -> it));
 
 			assertThat(records).containsOnlyKeys(repoId1, repoId2, repoId3);

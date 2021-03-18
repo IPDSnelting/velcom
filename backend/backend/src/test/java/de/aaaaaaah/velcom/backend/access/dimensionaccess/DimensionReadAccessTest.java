@@ -206,7 +206,8 @@ class DimensionReadAccessTest {
 
 		// Change run3's source to a tar source
 		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
-			db.update(RUN)
+			db.dsl()
+				.update(RUN)
 				.set(RUN.COMMIT_HASH, (String) null)
 				.set(RUN.TAR_DESC, "tarDesc")
 				.where(RUN.ID.eq(RUN3_ID.getIdAsString()))

@@ -1,5 +1,6 @@
 package de.aaaaaaah.velcom.backend;
 
+import com.codahale.metrics.health.HealthCheck;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import de.aaaaaaah.velcom.backend.access.archiveaccess.ArchiveReadAccess;
@@ -112,6 +113,7 @@ public class ServerMain extends Application<GlobalConfig> {
 	@Override
 	public void run(GlobalConfig configuration, Environment environment) throws Exception {
 		configureMetrics(environment);
+		configureDummyHealthCheck(environment);
 
 		// Storage layer
 		ManagedDirs managedDirs = new ManagedDirs(
@@ -165,7 +167,7 @@ public class ServerMain extends Application<GlobalConfig> {
 
 		// Listener
 		Listener listener = new Listener(databaseStorage, repoStorage, repoAccess, benchRepo, queue,
-			configuration.getPollInterval());
+			configuration.getPollInterval(), configuration.getVacuumInterval());
 
 		// Dispatcher
 		Dispatcher dispatcher = new Dispatcher(
@@ -265,6 +267,19 @@ public class ServerMain extends Application<GlobalConfig> {
 				}
 			})
 			.addMapping("/prometheusMetrics");
+	}
+
+	/**
+	 * Since we've never used and don't plan on using health checks any time soon, this function
+	 * disables the big scary warning dropwizard shows on startup.
+	 */
+	private void configureDummyHealthCheck(Environment environment) {
+		environment.healthChecks().register("dummy", new HealthCheck() {
+			@Override
+			protected Result check() {
+				return Result.healthy();
+			}
+		});
 	}
 
 	private void configureSerialization(Environment environment) {

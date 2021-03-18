@@ -56,7 +56,12 @@ benchmarkRepoRemoteUrl: "https://github.com/IPDSnelting/velcom-unibench.git"
 ## The period in which the tracked repos and bench repo is checked for updates. When new commits are
 ## found, they are added to the queue.
 ##
-#pollInterval: 120 # seconds
+#pollInterval: 600 # seconds (10 minutes)
+
+##
+## The period in which the sqlite database is VACUUMed (i. e. cleaned up and compacted).
+##
+#vacuumInterval: 90000 # seconds (25 hours)
 
 
 #################
