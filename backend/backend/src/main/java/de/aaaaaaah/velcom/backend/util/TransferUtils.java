@@ -51,8 +51,6 @@ public class TransferUtils {
 		CommitHash hash)
 		throws RepositoryAcquisitionException, CloneException, IOException {
 
-		long start = System.currentTimeMillis();
-
 		try (Repository repository = repoStorage.acquireRepository(dirName)) {
 			// Make sure that the commit actually exists before doing anything else
 			ObjectId commitId = repository.resolve(hash.getHash());
@@ -82,9 +80,6 @@ public class TransferUtils {
 			}
 
 			throw e;
-		} finally {
-			long end = System.currentTimeMillis();
-			LOGGER.info("Clone operation took {} ms... ({})", end - start, dirName);
 		}
 	}
 
@@ -99,8 +94,6 @@ public class TransferUtils {
 	 * @throws IOException if some io error occurred
 	 */
 	public static void tarRepo(Path repoDir, OutputStream out) throws IOException {
-		long start = System.currentTimeMillis();
-
 		try (out) {
 			var tarOut = new TarArchiveOutputStream(out);
 
@@ -125,9 +118,6 @@ public class TransferUtils {
 
 					tarOut.closeArchiveEntry();
 				}));
-		} finally {
-			long end = System.currentTimeMillis();
-			LOGGER.info("Tar operation took {} ms... ({})", end - start, repoDir);
 		}
 	}
 

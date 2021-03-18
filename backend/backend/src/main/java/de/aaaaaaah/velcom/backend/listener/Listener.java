@@ -109,7 +109,7 @@ public class Listener {
 	 */
 	@Timed(histogram = true)
 	public synchronized void updateAllRepos() {
-		LOGGER.debug("Updating all repos");
+		LOGGER.info("Updating repos");
 
 		// Update the bench repo
 		LOGGER.debug("Updating bench repo");
@@ -218,7 +218,7 @@ public class Listener {
 	private synchronized boolean updateRepoVia(String repoName, String repoDirName,
 		String targetRemoteUrl, Consumer<Repository> jgitRepoAction) {
 
-		LOGGER.info("Updating repo {}", repoName);
+		LOGGER.debug("Updating repo {}", repoName);
 
 		boolean reclone = false;
 

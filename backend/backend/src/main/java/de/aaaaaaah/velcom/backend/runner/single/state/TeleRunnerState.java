@@ -41,7 +41,7 @@ public class TeleRunnerState implements State {
 		if (newState.isEmpty()) {
 			LOGGER.info(
 				"Runner send a package I couldn't handle in {}. Content: '{}'",
-				getClass().getSimpleName(), text.substring(0, Math.min(text.length(), 100))
+				getClass().getSimpleName(), text
 			);
 			connection.close(StatusCode.ILLEGAL_PACKET);
 		}
@@ -57,9 +57,9 @@ public class TeleRunnerState implements State {
 	 * @return whether this function call handled the packet
 	 */
 	protected Optional<TeleRunnerState> onPacket(ServerBoundPacket packet) {
-		// Stay in the current state but prepare some work!
 		if (packet.getType() == ServerBoundPacketType.REQUEST_RUN) {
-			return Optional.of(new AwaitSendWorkEnd(runner, connection, this));
+			runner.prepareAndSendWork();
+			return Optional.of(this);
 		}
 
 		return Optional.empty();
