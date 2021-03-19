@@ -106,7 +106,7 @@ type SeriesGenerationFunction = (
   seriesInformation: SeriesInformation
 ) => ValidEchartsSeries
 
-type BenchmarkStatus = 'success' | 'failed' | 'unbenchmarked'
+type BenchmarkStatus = 'success' | 'failed' | 'no-such-metric' | 'unbenchmarked'
 
 const crossIcon =
   'path://M24 20.188l-8.315-8.209 8.2-8.282-3.697-3.697-8.212 8.318-8.31-8.203-3.666 3.666 8.321 8.24-8.206 8.313 3.666 3.666 8.237-8.318 8.285 8.203z'
@@ -182,10 +182,10 @@ class EchartsDataPoint {
       borderWidth: 2
     }
 
-    if (benchmarkStatus === 'success' || benchmarkStatus === 'unbenchmarked') {
-      this.symbol = 'circle'
-    } else {
+    if (benchmarkStatus === 'failed') {
       this.symbol = crossIcon
+    } else {
+      this.symbol = 'circle'
     }
   }
 }
@@ -365,7 +365,9 @@ export default class EchartsDetailGraph extends Vue {
       if (datapoint.benchmarkStatus === 'success') {
         value = this.numberFormat.format(datapoint.dataValue)
       } else if (datapoint.benchmarkStatus === 'unbenchmarked') {
-        value = 'Unbenchmarked'
+        value = 'Commit was not benchmarked'
+      } else if (datapoint.benchmarkStatus === 'no-such-metric') {
+        value = 'Metric not measured for commit'
       } else {
         value = 'Failed'
       }
@@ -439,7 +441,9 @@ export default class EchartsDetailGraph extends Vue {
         color = this.graphFailedOrUnbenchmarkedColor
         borderColor = color
       } else if (point.unbenchmarked(seriesId)) {
-        benchmarkStatus = 'unbenchmarked'
+        benchmarkStatus = point.commitUnbenchmarked(seriesId)
+          ? 'unbenchmarked'
+          : 'no-such-metric'
         // empty circle with outline
         color = this.graphBackgroundColor
         borderColor = this.graphFailedOrUnbenchmarkedColor

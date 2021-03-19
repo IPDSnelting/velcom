@@ -329,8 +329,10 @@ export default class DytailGraph extends Vue {
         }
 
         let value: string = this.numberFormat.format(val.y)
-        if (series && datapoint.unbenchmarked(series.id)) {
-          value = 'Unbenchmarked'
+        if (series && datapoint.commitUnbenchmarked(series.id)) {
+          value = 'Commit was not benchmarked'
+        } else if (series && datapoint.metricNotBenchmarked(series.id)) {
+          value = 'Metric not measured for commit'
         } else if (series && !datapoint.successful(series.id)) {
           value = 'Failed'
         }

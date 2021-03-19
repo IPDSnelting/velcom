@@ -1,5 +1,3 @@
-import { debounce } from '@/util/Debouncer'
-
 export type OverscrollStore = {
   zoomXStartValue: number | null
   zoomXEndValue: number | null

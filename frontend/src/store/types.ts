@@ -483,9 +483,23 @@ export abstract class GraphDataPoint {
     return typeof this.values.get(series) === 'number'
   }
 
-  public unbenchmarked(series: SeriesId): boolean {
+  public metricNotBenchmarked(series: SeriesId): boolean {
     const value = this.values.get(series)
-    return value === 'NO_RUN' || value === 'NO_MEASUREMENT'
+    return value === 'NO_MEASUREMENT'
+  }
+
+  public commitUnbenchmarked(series: SeriesId): boolean {
+    const value = this.values.get(series)
+    return value === 'NO_RUN'
+  }
+
+  /**
+   * Either there is no run for this commit or the given metric was not
+   * measured for it
+   * @param series the series to check
+   */
+  public unbenchmarked(series: SeriesId): boolean {
+    return this.commitUnbenchmarked(series) || this.metricNotBenchmarked(series)
   }
 
   public failed(series: SeriesId): boolean {
