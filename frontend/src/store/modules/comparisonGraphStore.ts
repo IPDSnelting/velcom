@@ -62,10 +62,10 @@ export class ComparisonGraphStore extends VxModule {
   dayEquidistantGraphSelected: boolean = true
   beginYAtZero: boolean = false
 
-  zoomXStart: Date | null = null
-  zoomXEnd: Date | null = null
-  zoomYStart: Date | null = null
-  zoomYEnd: Date | null = null
+  zoomXStartValue: number | null = null
+  zoomXEndValue: number | null = null
+  zoomYStartValue: number | null = null
+  zoomYEndValue: number | null = null
 
   commitToCompare: AttributedDatapoint | null = null
   referenceDatapoint: AttributedDatapoint | null = null

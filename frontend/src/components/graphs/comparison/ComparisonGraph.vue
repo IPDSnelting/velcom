@@ -139,8 +139,8 @@ export default class ComparisonGraph extends Vue {
     let visibleDataPoints = 0
     for (const point of this.comparisonDatapoints) {
       if (
-        (startValue === null || point.positionTime >= startValue) &&
-        (endValue === null || point.positionTime <= endValue)
+        (startValue === null || point.positionTime.getTime() >= startValue) &&
+        (endValue === null || point.positionTime.getTime() <= endValue)
       ) {
         visibleDataPoints++
       }
@@ -149,40 +149,40 @@ export default class ComparisonGraph extends Vue {
   }
 
   // <!--<editor-fold desc="Zoom boilerplate">-->
-  private get zoomXStartValue(): Date | null {
-    return vxm.comparisonGraphModule.zoomXStart
+  private get zoomXStartValue(): number | null {
+    return vxm.comparisonGraphModule.zoomXStartValue
   }
 
   // noinspection JSUnusedLocalSymbols
-  private set zoomXStartValue(value: Date | null) {
-    vxm.comparisonGraphModule.zoomXStart = value
+  private set zoomXStartValue(value: number | null) {
+    vxm.comparisonGraphModule.zoomXStartValue = value
   }
 
-  private get zoomXEndValue(): Date | null {
-    return vxm.comparisonGraphModule.zoomXEnd
-  }
-
-  // noinspection JSUnusedLocalSymbols
-  private set zoomXEndValue(value: Date | null) {
-    vxm.comparisonGraphModule.zoomXEnd = value
-  }
-
-  private get zoomYStartValue(): Date | null {
-    return vxm.comparisonGraphModule.zoomYStart
+  private get zoomXEndValue(): number | null {
+    return vxm.comparisonGraphModule.zoomXEndValue
   }
 
   // noinspection JSUnusedLocalSymbols
-  private set zoomYStartValue(value: Date | null) {
-    vxm.comparisonGraphModule.zoomYStart = value
+  private set zoomXEndValue(value: number | null) {
+    vxm.comparisonGraphModule.zoomXEndValue = value
   }
 
-  private get zoomYEndValue(): Date | null {
-    return vxm.comparisonGraphModule.zoomYEnd
+  private get zoomYStartValue(): number | null {
+    return vxm.comparisonGraphModule.zoomYStartValue
   }
 
   // noinspection JSUnusedLocalSymbols
-  private set zoomYEndValue(value: Date | null) {
-    vxm.comparisonGraphModule.zoomYEnd = value
+  private set zoomYStartValue(value: number | null) {
+    vxm.comparisonGraphModule.zoomYStartValue = value
+  }
+
+  private get zoomYEndValue(): number | null {
+    return vxm.comparisonGraphModule.zoomYEndValue
+  }
+
+  // noinspection JSUnusedLocalSymbols
+  private set zoomYEndValue(value: number | null) {
+    vxm.comparisonGraphModule.zoomYEndValue = value
   }
   // <!--</editor-fold>-->
   // <!--</editor-fold>-->
