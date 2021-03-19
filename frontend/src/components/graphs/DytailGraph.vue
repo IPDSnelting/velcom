@@ -319,11 +319,14 @@ export default class DytailGraph extends Vue {
       data.sort((a, b) => b.y - a.y)
 
       const seriesRows = data.map(val => {
-        const safeSeriesId = escapeHtml(val.labelHTML)
         const color = val.color
         const series = this.seriesInformation.find(
           it => escapeHtml(it.id.toString()) === val.labelHTML
         )
+        let safeSeriesId = 'N/A'
+        if (series !== undefined) {
+          safeSeriesId = escapeHtml(series.displayName)
+        }
 
         let value: string = this.numberFormat.format(val.y)
         if (series && datapoint.unbenchmarked(series.id)) {

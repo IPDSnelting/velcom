@@ -12,12 +12,10 @@ export default class OverscrollToZoom {
   private scrollToZoomInProgress = false
   private readonly refreshFunction: () => Promise<unknown>
   private readonly store: OverscrollStore
-  private readonly debouncedScrolled: () => void
 
   constructor(refreshFunction: () => Promise<unknown>, store: OverscrollStore) {
     this.refreshFunction = refreshFunction
     this.store = store
-    this.debouncedScrolled = debounce(() => this.scrolledImpl(), 300)
   }
 
   private isZoomedOut(): boolean {
@@ -51,10 +49,6 @@ export default class OverscrollToZoom {
     // Prevent scrolling
     e.preventDefault()
 
-    this.debouncedScrolled()
-  }
-
-  private scrolledImpl() {
     if (this.scrollToZoomInProgress) {
       return
     }
