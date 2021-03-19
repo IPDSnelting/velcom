@@ -32,7 +32,7 @@
           </v-row>
         </v-container>
 
-        <span v-if="repo.trackedBranches.length === 0" class="text-end">
+        <span v-if="repo.trackedBranches.length === 0" class="text-end ml-3">
           No tracked branches
         </span>
       </v-expansion-panel-header>
