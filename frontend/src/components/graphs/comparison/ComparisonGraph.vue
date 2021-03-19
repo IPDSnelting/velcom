@@ -15,6 +15,9 @@
         :reference-datapoint="referenceDatapoint"
         :commit-to-compare="commitToCompare"
         :begin-y-at-zero="beginYAtZero"
+        :refresh-key="graphRefreshKey"
+        @wheel="overscrollToZoom.scrolled($event)"
+        @reset-zoom="resetZoom"
       >
         <template
           #dialog="{
@@ -56,6 +59,7 @@ import {
   roundDateDown,
   roundDateUp
 } from '@/store/modules/comparisonGraphStore'
+import OverscrollToZoom from '@/components/graphs/OverscrollToZoom'
 
 @Component({
   components: {
@@ -65,6 +69,8 @@ import {
   }
 })
 export default class ComparisonGraph extends Vue {
+  private graphRefreshKey: number = 0
+
   // noinspection JSMismatchedCollectionQueryUpdate
   @Prop()
   private readonly comparisonDatapoints!: ComparisonDataPoint[]
@@ -79,6 +85,14 @@ export default class ComparisonGraph extends Vue {
   private readonly height!: string
 
   // <!--<editor-fold desc="Getters">-->
+  private get overscrollToZoom() {
+    return new OverscrollToZoom(() => {
+      // Not needed as the RepoComparison will handle refresh
+      // FIXME: Also move repo detail refreshes to parent component and remove this parameter
+      return Promise.resolve()
+    }, vxm.comparisonGraphModule)
+  }
+
   private get seriesInformation(): SeriesInformation[] {
     return Array.from(vxm.comparisonGraphModule.selectedBranches.keys()).map(
       repoId => ({
@@ -98,7 +112,6 @@ export default class ComparisonGraph extends Vue {
   // noinspection JSUnusedLocalSymbols
   private set dataRangeMin(date: Date) {
     vxm.comparisonGraphModule.startTime = roundDateDown(date)
-    vxm.comparisonGraphModule.fetchComparisonGraph()
   }
 
   private get dataRangeMax() {
@@ -108,7 +121,6 @@ export default class ComparisonGraph extends Vue {
   // noinspection JSUnusedLocalSymbols
   private set dataRangeMax(date: Date) {
     vxm.comparisonGraphModule.endTime = roundDateUp(date)
-    vxm.comparisonGraphModule.fetchComparisonGraph()
   }
 
   private get commitToCompare(): AttributedDatapoint | null {
@@ -186,5 +198,13 @@ export default class ComparisonGraph extends Vue {
   }
   // <!--</editor-fold>-->
   // <!--</editor-fold>-->
+
+  private resetZoom() {
+    this.zoomYStartValue = null
+    this.zoomYEndValue = null
+    this.zoomXStartValue = this.dataRangeMin.getTime()
+    this.zoomXEndValue = this.dataRangeMax.getTime()
+    this.graphRefreshKey++
+  }
 }
 </script>

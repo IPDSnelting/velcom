@@ -32,6 +32,7 @@ export function roundDateUp(date: Date): Date {
   if (!(date.getHours() !== 0)) {
     copy.setHours(24, 0, 0, 0) // next midnight
   }
+  copy.setMinutes(0, 0, 0)
   return copy
 }
 
@@ -40,6 +41,7 @@ export function roundDateDown(date: Date): Date {
   if (!(date.getHours() !== 0)) {
     copy.setHours(0, 0, 0, 0) // this midnight
   }
+  copy.setMinutes(0, 0, 0)
   return copy
 }
 

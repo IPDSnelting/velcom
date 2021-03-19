@@ -63,6 +63,7 @@ import { Watch } from 'vue-property-decorator'
 import ComparisonGraphSettings from '@/components/graphs/comparison/ComparisonGraphSettings.vue'
 import { spaceDayEquidistant } from '@/util/DayEquidistantUtil'
 import { availableGraphComponents } from '@/util/GraphVariantSelection'
+import { debounce } from '@/util/Debouncer'
 
 @Component({
   components: {
@@ -79,6 +80,7 @@ export default class RepoComparison extends Vue {
     availableGraphComponents[0].component
 
   private graphHeight: number = window.innerHeight
+  private debouncedUpdate: () => void = debounce(() => this.refetchData(), 100)
 
   private get startTime(): Date {
     return vxm.comparisonGraphModule.startTime
@@ -173,7 +175,7 @@ export default class RepoComparison extends Vue {
   @Watch('selectedRepos')
   private async onSelectedRepoChange() {
     if (this.selectedRepos.length > 0) {
-      await this.refetchData()
+      await this.debouncedUpdate()
     } else {
       this.comparisonDatapoints = []
     }
@@ -199,6 +201,10 @@ export default class RepoComparison extends Vue {
   @Watch('selectedDimension')
   @Watch('startTime')
   @Watch('endTime')
+  private async onGraphInformationChanged() {
+    await this.debouncedUpdate()
+  }
+
   private async refetchData() {
     if (this.shouldNotShowResults) {
       this.comparisonDatapoints = []
