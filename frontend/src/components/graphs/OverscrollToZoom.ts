@@ -1,21 +1,32 @@
-import { vxm } from '@/store'
+export type OverscrollStore = {
+  zoomXStartValue: number | null
+  zoomXEndValue: number | null
+
+  startTime: Date
+  endTime: Date
+}
 
 export default class OverscrollToZoom {
   private scrollToZoomInProgress = false
+  private readonly refreshFunction: () => Promise<unknown>
+  private readonly store: OverscrollStore
+
+  constructor(refreshFunction: () => Promise<unknown>, store: OverscrollStore) {
+    this.refreshFunction = refreshFunction
+    this.store = store
+  }
 
   private isZoomedOut(): boolean {
     if (
-      vxm.detailGraphModule.zoomXStartValue == null &&
-      vxm.detailGraphModule.zoomXEndValue == null
+      this.store.zoomXStartValue == null &&
+      this.store.zoomXEndValue == null
     ) {
       return true
     }
 
     return (
-      vxm.detailGraphModule.zoomXStartValue ===
-        vxm.detailGraphModule.startTime.getTime() &&
-      vxm.detailGraphModule.zoomXEndValue ===
-        vxm.detailGraphModule.endTime.getTime()
+      this.store.zoomXStartValue === this.store.startTime.getTime() &&
+      this.store.zoomXEndValue === this.store.endTime.getTime()
     )
   }
 
@@ -41,16 +52,15 @@ export default class OverscrollToZoom {
     }
     this.scrollToZoomInProgress = true
 
-    vxm.detailGraphModule.startTime = new Date(
-      vxm.detailGraphModule.startTime.getTime() - 7 * 1000 * 60 * 60 * 24
+    this.store.startTime = new Date(
+      this.store.startTime.getTime() - 7 * 1000 * 60 * 60 * 24
     )
 
     const clamp = (a: number) => Math.min(a, new Date().getTime())
-    vxm.detailGraphModule.endTime = new Date(
-      clamp(vxm.detailGraphModule.endTime.getTime() + 7 * 1000 * 60 * 60 * 24)
+    this.store.endTime = new Date(
+      clamp(this.store.endTime.getTime() + 7 * 1000 * 60 * 60 * 24)
     )
-    vxm.detailGraphModule
-      .fetchDetailGraph()
-      .finally(() => (this.scrollToZoomInProgress = false))
+
+    this.refreshFunction().finally(() => (this.scrollToZoomInProgress = false))
   }
 }

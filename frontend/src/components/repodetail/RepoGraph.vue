@@ -125,7 +125,6 @@ import {
 export default class RepoGraphs extends Vue {
   private graphPlaceholderHeight: number = 100
   private selectedGraphComponent: typeof Vue | null = GraphPlaceholder
-  private overscrollToZoom = new OverscrollToZoom()
   private graphRefreshKey = 0
 
   @Prop()
@@ -141,6 +140,13 @@ export default class RepoGraphs extends Vue {
 
   private get yStartsAtZero() {
     return vxm.detailGraphModule.beginYScaleAtZero
+  }
+
+  private get overscrollToZoom() {
+    return new OverscrollToZoom(
+      () => vxm.detailGraphModule.fetchDetailGraph(),
+      vxm.detailGraphModule
+    )
   }
 
   private setSelectedGraphComponent(component: typeof Vue) {
