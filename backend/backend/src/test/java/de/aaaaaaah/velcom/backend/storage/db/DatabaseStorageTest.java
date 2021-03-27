@@ -28,7 +28,7 @@ class DatabaseStorageTest {
 		String repoName = "test repo";
 		String repoRemoteUrl = "https://github.com/IPDSnelting/velcom.git";
 
-		testDb.db().batchInsert(new RepoRecord(repoId, repoName, repoRemoteUrl)).execute();
+		testDb.db().batchInsert(new RepoRecord(repoId, repoName, repoRemoteUrl, null, null)).execute();
 		DatabaseStorage databaseStorage = new DatabaseStorage(testDb.closeAndGetJdbcUrl());
 
 		// Read without explicit transaction
@@ -71,17 +71,17 @@ class DatabaseStorageTest {
 
 		// Write without explicit transaction
 		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
-			db.dsl().batchInsert(new RepoRecord(repoId1, repoName1, repoRemoteUrl)).execute();
+			db.dsl().batchInsert(new RepoRecord(repoId1, repoName1, repoRemoteUrl, null, null)).execute();
 		}
 
 		// Write transaction, no return value
 		databaseStorage.acquireWriteTransaction(db -> {
-			db.dsl().batchInsert(new RepoRecord(repoId2, repoName2, repoRemoteUrl)).execute();
+			db.dsl().batchInsert(new RepoRecord(repoId2, repoName2, repoRemoteUrl, null, null)).execute();
 		});
 
 		// Write transaction with return value
 		databaseStorage.acquireWriteTransaction(db -> {
-			db.dsl().batchInsert(new RepoRecord(repoId3, repoName3, repoRemoteUrl)).execute();
+			db.dsl().batchInsert(new RepoRecord(repoId3, repoName3, repoRemoteUrl, null, null)).execute();
 			return true;
 		});
 

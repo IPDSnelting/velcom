@@ -33,7 +33,9 @@ public class RepoReadAccess {
 		return new Repo(
 			RepoId.fromString(record.getId()),
 			record.getName(),
-			new RemoteUrl(record.getRemoteUrl())
+			new RemoteUrl(record.getRemoteUrl()),
+			record.getGithubAuthToken(),
+			record.getGithubLastKnownComment()
 		);
 	}
 

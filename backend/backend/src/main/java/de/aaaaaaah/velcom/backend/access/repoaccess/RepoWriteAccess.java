@@ -52,7 +52,7 @@ public class RepoWriteAccess extends RepoReadAccess {
 	 */
 	public Repo addRepo(String name, RemoteUrl remoteUrl) throws FailedToAddRepoException {
 		UUID id = UUID.randomUUID();
-		RepoRecord record = new RepoRecord(id.toString(), name, remoteUrl.getUrl());
+		RepoRecord record = new RepoRecord(id.toString(), name, remoteUrl.getUrl(), null, null);
 
 		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
 			db.dsl().batchInsert(record).execute();
@@ -60,7 +60,7 @@ public class RepoWriteAccess extends RepoReadAccess {
 			throw new FailedToAddRepoException(e, name, remoteUrl);
 		}
 
-		return new Repo(new RepoId(id), name, remoteUrl);
+		return new Repo(new RepoId(id), name, remoteUrl, null, null);
 	}
 
 	/**
