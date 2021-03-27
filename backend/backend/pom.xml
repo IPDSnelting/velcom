@@ -19,6 +19,7 @@
     <caffeine.version>2.8.5</caffeine.version>
     <dropwizard.version>2.0.13</dropwizard.version>
     <flyway.version>6.5.5</flyway.version>
+    <github-api.version>1.124</github-api.version>
     <hikaricp.version>3.4.5</hikaricp.version>
     <jakarta.xml.version>2.3.3</jakarta.xml.version>
     <jetty.version>9.4.31.v20200723</jetty.version>
@@ -260,7 +261,12 @@
       <version>${metainf-services.version}</version>
       <scope>provided</scope>
     </dependency>
-
+    <!-- https://mvnrepository.com/artifact/org.kohsuke/github-api -->
+    <dependency>
+      <groupId>org.kohsuke</groupId>
+      <artifactId>github-api</artifactId>
+      <version>${github-api.version}</version>
+    </dependency>
 
     <!--NEEDED FOR DROPWIZARD (NO LONGER INCLUDED IN THE JDK)-->
     <dependency>
