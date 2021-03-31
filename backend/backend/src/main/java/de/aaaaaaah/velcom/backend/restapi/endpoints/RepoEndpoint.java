@@ -15,6 +15,7 @@ import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.repoaccess.exceptions.FailedToAddRepoException;
 import de.aaaaaaah.velcom.backend.access.repoaccess.exceptions.NoSuchRepoException;
 import de.aaaaaaah.velcom.backend.listener.Listener;
+import de.aaaaaaah.velcom.backend.listener.SynchronizeCommitsException;
 import de.aaaaaaah.velcom.backend.restapi.authentication.Admin;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonBranch;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimension;
@@ -90,9 +91,10 @@ public class RepoEndpoint {
 		RemoteUrl remoteUrl = new RemoteUrl(request.getRemoteUrl());
 		Repo repo = repoAccess.addRepo(request.getName(), remoteUrl);
 
-		if (listener.updateRepo(repo)) {
+		try {
+			listener.synchronizeCommitsForRepo(repo);
 			return new PostReply(toJsonRepo(repo));
-		} else {
+		} catch (SynchronizeCommitsException e) {
 			repoAccess.deleteRepo(repo.getId());
 			throw new WebApplicationException("Repo could not be cloned, invalid remote url",
 				Status.BAD_REQUEST);
@@ -183,7 +185,9 @@ public class RepoEndpoint {
 				.collect(Collectors.toSet());
 			repoAccess.setTrackedBranches(repoId, trackedBranchNames);
 
-			if (!listener.updateRepo(repo)) {
+			try {
+				listener.synchronizeCommitsForRepo(repo);
+			} catch (SynchronizeCommitsException e) {
 				LOGGER.warn("Failed to update repo {} successfully", repoId);
 			}
 		});
