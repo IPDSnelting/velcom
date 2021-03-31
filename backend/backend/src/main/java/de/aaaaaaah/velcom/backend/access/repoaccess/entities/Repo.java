@@ -17,16 +17,16 @@ public class Repo {
 	@Nullable
 	private final String ghAccessToken;
 	@Nullable
-	private final Instant ghLastKnownComment;
+	private final Instant ghActivationTime;
 
 	public Repo(RepoId id, String name, RemoteUrl remoteUrl, @Nullable String ghAccessToken,
-		@Nullable Instant ghLastKnownComment) {
+		@Nullable Instant ghActivationTime) {
 
 		this.id = id;
 		this.name = name;
 		this.remoteUrl = remoteUrl;
 		this.ghAccessToken = ghAccessToken;
-		this.ghLastKnownComment = ghLastKnownComment;
+		this.ghActivationTime = ghActivationTime;
 	}
 
 	public RepoId getId() {
@@ -57,8 +57,8 @@ public class Repo {
 		return Optional.ofNullable(ghAccessToken);
 	}
 
-	public Optional<Instant> getGhLastKnownComment() {
-		return Optional.ofNullable(ghLastKnownComment);
+	public Optional<Instant> getGhActivationTime() {
+		return Optional.ofNullable(ghActivationTime);
 	}
 
 	@Override
@@ -84,7 +84,7 @@ public class Repo {
 			"id=" + id.getIdAsString() +
 			", name='" + name + '\'' +
 			", remoteUrl='" + remoteUrl.getUrl() + '\'' +
-			", ghLastKnownComment=" + ghLastKnownComment +
+			", ghActivationTime=" + ghActivationTime +
 			'}';
 	}
 }

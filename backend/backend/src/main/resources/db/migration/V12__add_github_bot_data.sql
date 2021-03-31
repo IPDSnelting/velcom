@@ -1,13 +1,68 @@
-ALTER TABLE repo
-ADD COLUMN github_auth_token TEXT;
+-----------------------------------
+-- Renaming to-be-deleted tables --
+-----------------------------------
 
-ALTER TABLE repo
-ADD COLUMN github_last_known_comment TIMESTAMP;
+ALTER TABLE repo RENAME TO repo_old;
 
-CREATE TABLE github_open_commands (
-  repo_id     CHAR(36) NOT NULL,
-  commit_hash CHAR(40) NOT NULL,
-  pr_number   INT      NOT NULL,
+-------------------------
+-- Creating new tables --
+-------------------------
 
+CREATE TABLE repo (
+  id                     CHAR(36) PRIMARY KEY  NOT NULL,
+  name                   TEXT                  NOT NULL,
+  remote_url             TEXT                  NOT NULL,
+  github_auth_token      TEXT,
+  github_activation_time TIMESTAMP,
+
+  CHECK ((github_auth_token IS NULL) == (github_activation_time IS NULL))
+);
+
+CREATE TABLE github_prs (
+  repo_id      CHAR(36) NOT NULL,
+  pr           INT      NOT NULL,
+  last_comment INT      NOT NULL,
+
+  PRIMARY KEY (repo_id, pr),
   FOREIGN KEY (repo_id) REFERENCES repo(id)
 );
+
+CREATE TABLE github_commands (
+  repo_id     CHAR(36) NOT NULL,
+  pr          INT      NOT NULL,
+  comment     INT      NOT NULL,
+  commit_hash CHAR(40) NOT NULL,
+  state       TEXT     NOT NULL DEFAULT "NEW",
+  tries_left  INT      NOT NULL,
+
+  PRIMARY KEY (repo_id, comment),
+  FOREIGN KEY (repo_id) REFERENCES repo(id),
+  -- No foreign key for the commit because VelCom might not yet have the commit synchronized when a
+  -- new row is added to this table.
+
+  CHECK (state in ("NEW", "MARKED_SEEN", "QUEUED", "RESPONDED", "ERROR"))
+);
+
+------------------------
+-- Filling new tables --
+------------------------
+
+INSERT INTO repo
+SELECT id, name, remote_url, NULL, NULL
+FROM repo_old;
+
+-------------------------
+-- Deleting old tables --
+-------------------------
+
+DROP TABLE repo_old;
+
+-- A little dance to capture all foreign key constraints previously pointing to repo
+ALTER TABLE repo RENAME TO repo_old;
+ALTER TABLE repo_old RENAME TO repo;
+
+-----------------------------------
+-- Ensure foreign keys are valid --
+-----------------------------------
+
+PRAGMA foreign_key_check;
