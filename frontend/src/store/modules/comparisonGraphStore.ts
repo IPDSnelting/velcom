@@ -1,272 +1,136 @@
-import { createModule, mutation, action } from 'vuex-class-component'
-import { ComparisonDataPoint, Dimension, Repo } from '@/store/types'
+import { action, createModule, mutation } from 'vuex-class-component'
+import {
+  AttributedDatapoint,
+  ComparisonDataPoint,
+  Dimension,
+  RepoId
+} from '@/store/types'
 import Vue from 'vue'
 import axios from 'axios'
-import { vxm } from '..'
-import { comparisonDataPointFromJson } from '@/util/GraphJsonHelper'
-import { dimensionFromJson } from '@/util/RepoJsonHelper'
+import { comparisonDatapointFromJson } from '@/util/GraphJsonHelper'
 
 const VxModule = createModule({
   namespaced: 'comparisonGraphModule',
   strict: false
 })
 
-/**
- * Builds a string out of the requested repos and branches
- *
- * @returns {string}
- */
-function formatRepos(repos: { repoId: string; branches: string[] }[]): string {
-  return (
-    repos
-      // ignore repos without branches, as we later assume it has at least one
-      .filter(it => it.branches.length > 0)
-      .map(({ repoId, branches }) => repoId + ':' + branches.join(':'))
-      .join('::')
+function defaultStartDate() {
+  // FIXME: 7 not 14
+  // One week in the past
+  return new Date(
+    new Date(new Date().setDate(new Date().getDate() - 14)).setHours(0, 0, 0, 0)
   )
 }
 
+function defaultEndDate() {
+  // Today at midnight / start of tomorrow
+  return new Date(new Date().setHours(24, 0, 0, 0))
+}
+
+export function roundDateUp(date: Date): Date {
+  const copy = new Date(date)
+  if (!(date.getHours() !== 0)) {
+    copy.setHours(24, 0, 0, 0) // next midnight
+  }
+  copy.setMinutes(0, 0, 0)
+  return copy
+}
+
+export function roundDateDown(date: Date): Date {
+  const copy = new Date(date)
+  if (!(date.getHours() !== 0)) {
+    copy.setHours(0, 0, 0, 0) // this midnight
+  }
+  copy.setMinutes(0, 0, 0)
+  return copy
+}
+
+function formatRepos(repos: Map<RepoId, string[]>): string {
+  return Array.from(repos.entries())
+    .filter(([, branches]) => branches.length > 0)
+    .map(([repoId, branches]) => {
+      return repoId + ':' + branches.join(':')
+    })
+    .join('::')
+}
+
 export class ComparisonGraphStore extends VxModule {
-  private _selectedRepos: string[] = []
-  private _selectedBranchesByRepoId: { [key: string]: string[] } = {}
-  private _datapointsByRepoId: {
-    [key: string]: ComparisonDataPoint[]
-  } = {}
+  private _selectedBranches: { [id: string]: string[] } = {}
 
-  referenceCommit: ComparisonDataPoint | null = null
+  startTime: Date = defaultStartDate()
+  endTime: Date = defaultEndDate()
 
-  selectedBenchmark: string = ''
-  selectedMetric: string = ''
   selectedDimension: Dimension | null = null
+  dayEquidistantGraphSelected: boolean = true
+  beginYAtZero: boolean = false
 
-  // One week in the past
-  private _defaultStartTime: string = new Date(
-    new Date().setDate(new Date().getDate() - 7)
-  )
-    .toISOString()
-    .substring(0, 10)
+  zoomXStartValue: number | null = null
+  zoomXEndValue: number | null = null
+  zoomYStartValue: number | null = null
+  zoomYEndValue: number | null = null
 
-  private _defaultStopTime: string = new Date().toISOString().substring(0, 10)
+  commitToCompare: AttributedDatapoint | null = null
+  referenceDatapoint: AttributedDatapoint | null = null
 
-  private startTime: string = this._defaultStartTime
-  private stopTime: string = this._defaultStopTime
-
-  /**
-   * Fetches the data neccessary to display the data points
-   * of the comparison graph in given time frame.
-   *
-   * @param {({
-   *     benchmark: string
-   *     metric: string
-   *     startTime?: string | null
-   *     endTime?: string | null
-   *   })} payload
-   * @returns {Promise<{ [key: string]: DataPoint[] }>}
-   * @memberof ComparisonGraphStore
-   */
   @action
-  async fetchComparisonGraph(payload: {
-    benchmark: string
-    metric: string
-    startTime?: string | null
-    endTime?: string | null
-  }): Promise<{ [key: string]: ComparisonDataPoint[] }> {
-    this.cleanupSelectedBranches()
-
-    let effectiveStartTime: number | undefined
-    if (payload.startTime) {
-      effectiveStartTime = new Date(payload.startTime).getTime()
-    } else if (payload.startTime === null) {
-      effectiveStartTime = undefined
-    } else {
-      effectiveStartTime = this.startDate.getTime() / 1000
+  async fetchComparisonGraph(): Promise<ComparisonDataPoint[]> {
+    if (this.selectedDimension === null) {
+      return []
     }
 
-    let effectiveEndTime: number | undefined
-    if (payload.endTime) {
-      effectiveEndTime = new Date(payload.endTime).getTime()
-    } else if (payload.startTime === null) {
-      effectiveEndTime = undefined
-    } else {
-      effectiveEndTime = this.stopDate.getTime() / 1000 + 60 * 60 * 24
-    }
-
-    if (this.selectedReposWithBranches.length === 0) {
-      this.setDatapoints({})
-      return {}
-    }
+    const adjustedStartDate = roundDateDown(this.startTime).getTime() / 1000
+    const adjustedEndDate = roundDateUp(this.endTime).getTime() / 1000
 
     const response = await axios.get('/graph/comparison', {
       params: {
-        repos: formatRepos(this.selectedReposWithBranches),
-        start_time: effectiveStartTime,
-        stop_time: effectiveEndTime,
-        dimension: `${payload.benchmark}:${payload.metric}`
-      },
-      snackbarTag: 'repo-comparison'
-    })
-
-    const datapoints: { [key: string]: ComparisonDataPoint[] } = {}
-    const jsonRepos: any[] = response.data.repos
-
-    jsonRepos.forEach((item: any) => {
-      datapoints[item.repo_id] = item.commits.map((datapoint: any) =>
-        comparisonDataPointFromJson(datapoint, item.repo_id)
-      )
-    })
-
-    this.setDatapoints(datapoints)
-    this.selectedDimension = dimensionFromJson(response.data.dimension)
-
-    return this.allDatapoints
-  }
-
-  /**
-   * Deletes all selected repositories that are no longer found in repoModule.allRepos.
-   *
-   * @memberof RepoComparisonStore
-   */
-  @mutation
-  cleanupSelectedBranches(): void {
-    // cleanup selected branches
-    const allRepos = vxm.repoModule.allRepos
-    const keysToRemove = Object.keys(this._selectedBranchesByRepoId)
-    allRepos.forEach(repo => {
-      const index = keysToRemove.findIndex(it => it === repo.id)
-      if (index >= 0) {
-        keysToRemove.splice(index, 1)
+        start_time: adjustedStartDate,
+        end_time: adjustedEndDate,
+        dimension:
+          this.selectedDimension.benchmark +
+          ':' +
+          this.selectedDimension.metric,
+        repos: formatRepos(this.selectedBranches)
       }
     })
-    keysToRemove.forEach(key => {
-      Vue.delete(this._selectedBranchesByRepoId, key)
-    })
+
+    return response.data.repos.flatMap((repo: any) =>
+      comparisonDatapointFromJson(this.selectedDimension!, repo)
+    )
   }
 
   @mutation
   setSelectedBranchesForRepo(payload: {
-    repoId: string
-    selectedBranches: string[]
+    repoId: RepoId
+    branches: string[]
   }): void {
-    Vue.set(
-      this._selectedBranchesByRepoId,
-      payload.repoId,
-      payload.selectedBranches
-    )
+    Vue.set(this._selectedBranches, payload.repoId, payload.branches)
   }
 
-  /**
-   * Sets all data points.
-   *
-   * @param payload the payload to set it with
-   * @memberof RepoComparisonStore
-   */
   @mutation
-  setDatapoints(payload: { [key: string]: ComparisonDataPoint[] }): void {
-    // TODO: Is this reactive?
-    this._datapointsByRepoId = {} // reset it
-    Array.from(Object.keys(payload)).forEach(key => {
-      Vue.set(this._datapointsByRepoId, key, payload[key])
-    })
-  }
+  toggleRepoBranch(payload: { repoId: RepoId; branch: string }): void {
+    let branches: string[] = this._selectedBranches[payload.repoId] || []
 
-  get startDate(): Date {
-    return new Date(this.startTime)
-  }
-
-  set startDate(start: Date) {
-    this.startTime = start.toISOString().substring(0, 10)
-  }
-
-  get stopDate(): Date {
-    return new Date(this.stopTime)
-  }
-
-  set stopDate(stop: Date) {
-    this.stopTime = stop.toISOString().substring(0, 10)
-  }
-
-  get referenceDatapoint(): ComparisonDataPoint | undefined {
-    if (
-      this.referenceCommit === null ||
-      this._datapointsByRepoId[this.referenceCommit.repoId] === undefined
-    ) {
-      return undefined
+    if (branches.includes(payload.branch)) {
+      branches = branches.filter(it => it !== payload.branch)
+    } else {
+      branches.push(payload.branch)
     }
 
-    return this._datapointsByRepoId[this.referenceCommit.repoId].find(it => {
-      return (
-        this.referenceCommit !== null && it.hash === this.referenceCommit.hash
-      )
-    })
+    Vue.set(this._selectedBranches, payload.repoId, branches)
   }
 
-  /**
-   * Returns all known runs.
-   *
-   * @readonly
-   * @type {{ [key: string]: Run[] }}
-   * @memberof RepoComparisonStore
-   */
-  get allDatapoints(): { [key: string]: ComparisonDataPoint[] } {
-    return this._datapointsByRepoId
+  get selectedBranchesForRepo(): (repoId: RepoId) => string[] {
+    return repoId => this._selectedBranches[repoId] || []
   }
 
-  get runsByRepoId(): (repoId: string) => ComparisonDataPoint[] {
-    return (repoId: string) => this._datapointsByRepoId[repoId]
-  }
-
-  get selectedRepos(): string[] {
-    return this._selectedRepos
-  }
-
-  set selectedRepos(selectedRepos: string[]) {
-    this._selectedRepos = selectedRepos
-  }
-
-  get selectedBranchesByRepoId(): { [key: string]: string[] } {
-    const repoBranches: (repo: Repo) => string[] = repo => {
-      if (this._selectedBranchesByRepoId[repo.id]) {
-        return this._selectedBranchesByRepoId[repo.id]
-      }
-      // all branches are selected if the user has never selected any manually
-      return repo.branches.filter(b => b.tracked).map(b => b.name)
-    }
-
-    return (
-      vxm.repoModule.allRepos
-        .map(repo => ({
-          id: repo.id,
-          branches: repoBranches(repo)
-        }))
-        // reduce list above to required object structure
-        .reduce((accumulated, repoBranch) => {
-          Vue.set(accumulated, repoBranch.id, repoBranch.branches)
-          return accumulated
-        }, {})
-    )
-  }
-
-  get selectedReposWithBranches(): { repoId: string; branches: string[] }[] {
-    const repos: { repoId: string; branches: string[] }[] = []
-    Object.keys(this.selectedBranchesByRepoId).forEach(repoId => {
-      if (
-        this.selectedRepos.includes(repoId) &&
-        this.selectedBranchesByRepoId[repoId].length !== 0
-      ) {
-        repos.push({
-          repoId: repoId,
-          branches: this.selectedBranchesByRepoId[repoId]
-        })
+  get selectedBranches(): Map<RepoId, string[]> {
+    const map: Map<RepoId, string[]> = new Map()
+    Object.keys(this._selectedBranches).forEach(repoId => {
+      const branches = this._selectedBranches[repoId]
+      if (branches && branches.length > 0) {
+        map.set(repoId, branches)
       }
     })
-    return repos
-  }
-
-  get defaultStartTime(): string {
-    return this._defaultStartTime
-  }
-
-  get defaultStopTime(): string {
-    return this._defaultStopTime
+    return map
   }
 }

@@ -1,38 +1,37 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 import {
   DetailDataPoint,
-  ComparisonDataPoint,
+  GraphDataPointValue,
   RepoId,
-  DimensionId,
-  DetailDataPointValue,
-  dimensionIdEqual
+  ComparisonDataPoint,
+  Dimension,
+  SeriesId
 } from '@/store/types'
-import { CustomKeyEqualsMap } from '@/util/CustomKeyEqualsMap'
 
 /**
  * Parses a data point json to a DataPoint object.
  *
  * @export
- * @param {*} json the json object
- * @param {*} dimensions the requested dimensions in the same order they appear in the values array of the datapoint
+ * @param json the json object
+ * @param seriesIds the requested series ids in the same order they appear in the values array of the datapoint
+ * @param repoId the id of the repo the point belongs to
  * @returns {DetailDataPoint} the data point object
  */
 export function detailDataPointFromJson(
   json: any,
-  dimensions: DimensionId[]
+  seriesIds: SeriesId[],
+  repoId: RepoId
 ): DetailDataPoint {
-  const map: CustomKeyEqualsMap<
-    DimensionId,
-    DetailDataPointValue
-  > = new CustomKeyEqualsMap([], dimensionIdEqual)
-  for (let i = 0; i < dimensions.length; i++) {
-    map.set(dimensions[i], detailDataPointValueFromJson(json.values[i]))
+  const map: Map<SeriesId, GraphDataPointValue> = new Map()
+  for (let i = 0; i < seriesIds.length; i++) {
+    map.set(seriesIds[i], graphDataPointValueFromJson(json.values[i]))
   }
 
   const committerDate = new Date(json.committer_date * 1000)
   return new DetailDataPoint(
+    repoId,
     json.hash,
-    json.parents,
+    json.parents.map((hash: any) => repoId + hash),
     json.author,
     committerDate,
     committerDate,
@@ -41,9 +40,9 @@ export function detailDataPointFromJson(
   )
 }
 
-function detailDataPointValueFromJson(
+function graphDataPointValueFromJson(
   jsonValue: string | number
-): DetailDataPointValue {
+): GraphDataPointValue {
   if (typeof jsonValue === 'number') {
     return jsonValue
   }
@@ -60,24 +59,24 @@ function detailDataPointValueFromJson(
   throw new Error(`Illegal type received: ${jsonValue}`)
 }
 
-/**
- * Parses a comparison graph data point json to a DataPoint object.
- *
- * @export
- * @param {*} json the json object
- * @param repoId the id of the repo the datapoint is from
- * @returns {ComparisonDataPoint} the data point object
- */
-export function comparisonDataPointFromJson(
-  json: any,
-  repoId: RepoId
-): ComparisonDataPoint {
-  return new ComparisonDataPoint(
-    json.hash,
-    json.author,
-    new Date(json.author_date * 1000),
-    json.summary,
-    json.value,
-    repoId
-  )
+export function comparisonDatapointFromJson(
+  dimension: Dimension,
+  json: any
+): ComparisonDataPoint[] {
+  const repoId: RepoId = json.repo_id
+
+  return json.commits.map((commit: any) => {
+    const valueMap = new Map()
+    valueMap.set(repoId, graphDataPointValueFromJson(commit.value))
+    return new ComparisonDataPoint(
+      new Date(commit.committer_date * 1000),
+      new Date(commit.committer_date * 1000),
+      commit.hash,
+      repoId,
+      valueMap,
+      commit.parents.map((hash: string) => repoId + hash),
+      commit.summary,
+      commit.author
+    )
+  })
 }

@@ -97,8 +97,7 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { mdiCalendar, mdiLock, mdiLockOpenVariant } from '@mdi/js'
-import { vxm } from '@/store'
-import { Watch } from 'vue-property-decorator'
+import { Prop, Watch } from 'vue-property-decorator'
 
 type TimeField = {
   ref: string
@@ -111,7 +110,7 @@ type TimeField = {
 }
 
 @Component
-export default class RepoGraphTimespanControls extends Vue {
+export default class GraphTimespanControls extends Vue {
   // <!--<editor-fold desc="Fields">-->
   /**
    * The value of the "duration" input field. Not applied until saveDuration is called.
@@ -127,11 +126,11 @@ export default class RepoGraphTimespanControls extends Vue {
       opened: false,
       saveFunction: (field: TimeField, value: string) => {
         this.saveMenu(field.ref, value)
-        vxm.detailGraphModule.startTime = new Date(value)
+        this.$emit('update:startTime', new Date(value))
         this.$emit('reload-graph-data')
       },
       allowedDates: (value: string) => {
-        return new Date(value) <= vxm.detailGraphModule.endTime
+        return new Date(value) <= this.endTime
       },
       rules: []
     },
@@ -142,15 +141,23 @@ export default class RepoGraphTimespanControls extends Vue {
       opened: false,
       saveFunction: (field: TimeField, value: string) => {
         this.saveMenu(field.ref, value)
-        vxm.detailGraphModule.endTime = new Date(value)
+        this.$emit('update:endTime', new Date(value))
         this.$emit('reload-graph-data')
       },
       allowedDates: (value: string) => {
-        return new Date(value) >= vxm.detailGraphModule.startTime
+        return new Date(value) >= this.startTime
       },
       rules: [this.ruleStopAfterStart]
     }
   ]
+  // <!--</editor-fold>-->
+
+  // <!--<editor-fold desc="Props">-->
+  @Prop()
+  private readonly endTime!: Date
+
+  @Prop()
+  private readonly startTime!: Date
   // <!--</editor-fold>-->
 
   private saveMenu(ref: string, value: string) {
@@ -167,7 +174,9 @@ export default class RepoGraphTimespanControls extends Vue {
 
   // <!--<editor-fold desc="Duration">-->
   private get duration(): number {
-    return vxm.detailGraphModule.duration
+    const timeDiff = this.endTime.getTime() - this.startTime.getTime()
+
+    return Math.ceil(timeDiff / (1000 * 3600 * 24)) // round up to days
   }
 
   private saveDuration() {
@@ -185,12 +194,14 @@ export default class RepoGraphTimespanControls extends Vue {
     const durationAsMillis = duration * 1000 * 60 * 60 * 24 // ms * minutes * hours * days
 
     if (this.dateLocked === 'start') {
-      vxm.detailGraphModule.endTime = new Date(
-        vxm.detailGraphModule.startTime.getTime() + durationAsMillis
+      this.$emit(
+        'update:endTime',
+        new Date(this.startTime.getTime() + durationAsMillis)
       )
     } else {
-      vxm.detailGraphModule.startTime = new Date(
-        vxm.detailGraphModule.endTime.getTime() - durationAsMillis
+      this.$emit(
+        'update:startTime',
+        new Date(this.endTime.getTime() - durationAsMillis)
       )
     }
 
@@ -210,11 +221,11 @@ export default class RepoGraphTimespanControls extends Vue {
   }
 
   private get startTimeString(): string {
-    return vxm.detailGraphModule.startTime.toISOString().substring(0, 10)
+    return this.startTime.toISOString().substring(0, 10)
   }
 
   private get endTimeString(): string {
-    return vxm.detailGraphModule.endTime.toISOString().substring(0, 10)
+    return this.endTime.toISOString().substring(0, 10)
   }
   // <!--</editor-fold>-->
 
@@ -230,7 +241,7 @@ export default class RepoGraphTimespanControls extends Vue {
 
   // <!--<editor-fold desc="Rules">-->
   private ruleStopAfterStart(input: string): boolean | string {
-    return vxm.detailGraphModule.startTime <= new Date(input)
+    return this.startTime <= new Date(input)
       ? true
       : 'You have to select a date after the first one!'
   }

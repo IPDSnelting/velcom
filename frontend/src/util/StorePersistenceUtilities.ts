@@ -1,19 +1,18 @@
 import {
+  AttributedDatapoint,
   ComparisonDataPoint,
   DetailDataPoint,
   Dimension,
   DimensionId,
   dimensionIdEqual,
+  GraphDataPoint,
   Repo,
   RepoBranch
 } from '@/store/types'
 import { CustomKeyEqualsMap } from '@/util/CustomKeyEqualsMap'
-import {
-  DetailGraphStore,
-  DimensionDetailPoint
-} from '@/store/modules/detailGraphStore'
-import { ComparisonGraphStore } from '@/store/modules/comparisonGraphStore'
+import { DetailGraphStore } from '@/store/modules/detailGraphStore'
 import { RepoStore } from '@/store/modules/repoStore'
+import { ComparisonGraphStore } from '@/store/modules/comparisonGraphStore'
 
 // <editor-fold desc="DIMENSION">
 function hydrateDimension(it: Dimension) {
@@ -47,27 +46,28 @@ function hydrateRepo(repo: Repo) {
 // </editor-fold>
 
 // <editor-fold desc="DIMENSION DETAIL POINT">
-function serializeDimensionDetailPoint(point: DimensionDetailPoint | null) {
+function serializeGraphDataPoint(point: AttributedDatapoint | null) {
   if (!point) {
     return null
   }
-  const persistablePoint: any = Object.assign({}, point.dataPoint)
+  const persistablePoint: any = Object.assign({}, point.datapoint)
   persistablePoint.values = Array.from(persistablePoint.values.entries())
   return {
-    dataPoint: persistablePoint,
-    dimension: point.dimension
-  }
+    datapoint: persistablePoint,
+    seriesId: point.seriesId
+  } as AttributedDatapoint
 }
 
-function deserializeDimensionDetailPoint(
-  point: DimensionDetailPoint | null
-): DimensionDetailPoint | null {
+function deserializeGraphDataPoint<T extends GraphDataPoint>(
+  point: AttributedDatapoint | null,
+  pointHydrator: (point: T) => T
+): AttributedDatapoint | null {
   if (!point) {
     return null
   }
   return {
-    dimension: hydrateDimension(point.dimension),
-    dataPoint: hydrateDetailPoint(point.dataPoint)
+    seriesId: point.seriesId,
+    datapoint: pointHydrator((point.datapoint as any) as T)
   }
 }
 // </editor-fold>
@@ -75,19 +75,77 @@ function deserializeDimensionDetailPoint(
 // <editor-fold desc="DETAIL DATA POINT">
 function hydrateDetailPoint(it: DetailDataPoint) {
   return new DetailDataPoint(
+    it.repoId,
     it.hash,
-    it.parents,
+    it.parentUids,
     it.author,
-    new Date(it.committerDate),
-    new Date(it.committerDate),
+    new Date(it.committerTime),
+    new Date(it.committerTime),
     it.summary,
-    new CustomKeyEqualsMap(
-      it.values,
-      (first, second) =>
-        first.benchmark === second.benchmark && first.metric === second.metric
-    )
+    new Map(it.values.entries())
   )
 }
+// </editor-fold>
+
+// <editor-fold desc="COMPARISON DATA POINT">
+function hydrateComparisonDataPoint(it: ComparisonDataPoint) {
+  return new ComparisonDataPoint(
+    new Date(it.committerTime),
+    new Date(it.committerTime),
+    it.hash,
+    it.repoId,
+    new Map(it.values.entries()),
+    it.parentUids,
+    it.summary,
+    it.author
+  )
+}
+// </editor-fold>
+
+// <editor-fold desc="COMPARISON STORE">
+export function comparisonGraphStoreFromJson(json?: string): any {
+  if (!json) {
+    return {}
+  }
+
+  const parsedUnsafe = JSON.parse(json)
+  const parsed: ComparisonGraphStore = parsedUnsafe as ComparisonGraphStore
+  // Convert flat json to real object
+  parsed.startTime = new Date(parsed.startTime)
+  parsed.endTime = new Date(parsed.endTime)
+  parsed.selectedDimension = parsed.selectedDimension
+    ? hydrateDimension(parsed.selectedDimension)
+    : null
+  parsed.commitToCompare = deserializeGraphDataPoint(
+    parsed.commitToCompare,
+    hydrateComparisonDataPoint
+  )
+  parsed.referenceDatapoint = deserializeGraphDataPoint(
+    parsed.referenceDatapoint,
+    hydrateComparisonDataPoint
+  )
+
+  return parsed
+}
+export function comparisonGraphStoreToJson(
+  store: ComparisonGraphStore
+): string {
+  return JSON.stringify({
+    _selectedBranches: (store as any)._selectedBranches,
+    startTime: store.startTime.getTime(),
+    endTime: store.endTime.getTime(),
+    selectedDimension: store.selectedDimension,
+    zoomXStartValue: store.zoomXStartValue,
+    zoomXEndValue: store.zoomXEndValue,
+    zoomYStartValue: store.zoomYStartValue,
+    zoomYEndValue: store.zoomYEndValue,
+    commitToCompare: serializeGraphDataPoint(store.commitToCompare),
+    referenceDatapoint: serializeGraphDataPoint(store.referenceDatapoint),
+    beginYAtZero: store.beginYAtZero,
+    dayEquidistantGraphSelected: store.dayEquidistantGraphSelected
+  })
+}
+
 // </editor-fold>
 
 // <editor-fold desc="DETAIL GRAPH">
@@ -102,14 +160,16 @@ export function detailGraphStoreFromJson(json?: string): any {
   parsedUnsafe._selectedDimensions = parsedUnsafe._selectedDimensions.map(
     hydrateDimension
   )
-  parsed.referenceDatapoint = deserializeDimensionDetailPoint(
-    parsed.referenceDatapoint
+  parsed.referenceDatapoint = deserializeGraphDataPoint(
+    parsed.referenceDatapoint,
+    hydrateDetailPoint
   )
-  parsed.commitToCompare = deserializeDimensionDetailPoint(
-    parsed.commitToCompare
+  parsed.commitToCompare = deserializeGraphDataPoint(
+    parsed.commitToCompare,
+    hydrateDetailPoint
   )
-  parsed.startTime = new Date(parsed.startTime)
-  parsed.endTime = new Date(parsed.endTime)
+  parsedUnsafe._startTime = new Date(parsedUnsafe._startTime)
+  parsedUnsafe._endTime = new Date(parsedUnsafe._endTime)
   parsedUnsafe.colorIndexMap = new CustomKeyEqualsMap(
     parsedUnsafe.colorIndexMap.map((entry: [DimensionId, number]) => [
       hydrateDimensionId(entry[0]),
@@ -125,70 +185,20 @@ export function detailGraphStoreToJson(store: DetailGraphStore): string {
   return JSON.stringify({
     _selectedRepoId: (store as any)._selectedRepoId,
     _selectedDimensions: (store as any)._selectedDimensions,
-    referenceDatapoint: serializeDimensionDetailPoint(store.referenceDatapoint),
-    startTime: store.startTime,
-    endTime: store.endTime,
-    duration: store.duration,
+    referenceDatapoint: serializeGraphDataPoint(store.referenceDatapoint),
+    _startTime: (store as any)._startTime.getTime(),
+    _endTime: (store as any)._endTime.getTime(),
     zoomXStartValue: store.zoomXStartValue,
     zoomXEndValue: store.zoomXEndValue,
     zoomYStartValue: store.zoomYStartValue,
     zoomYEndValue: store.zoomYEndValue,
     firstFreeColorIndex: (store as any).firstFreeColorIndex,
     colorIndexMap: Array.from((store as any).colorIndexMap.entries()),
-    commitToCompare: serializeDimensionDetailPoint(store.commitToCompare),
+    commitToCompare: serializeGraphDataPoint(store.commitToCompare),
     beginYScaleAtZero: store.beginYScaleAtZero,
     dayEquidistantGraph: store.dayEquidistantGraph,
     selectedTab: store.selectedTab,
     selectedDimensionSelector: store.selectedDimensionSelector
-  })
-}
-// </editor-fold>
-
-// <editor-fold desc="COMPARISON DATA POINT">
-function comparisonDataPointToJson(point: ComparisonDataPoint | null) {
-  if (!point) {
-    return undefined
-  }
-  return JSON.stringify(point)
-}
-
-function hydrateComparisonDataPoint(point: ComparisonDataPoint) {
-  return new ComparisonDataPoint(
-    point.hash,
-    point.author,
-    new Date(point.authorDate),
-    point.summary,
-    point.value,
-    point.repoId
-  )
-}
-// </editor-fold>
-
-// <editor-fold desc="COMPARISON GRAPH">
-export function comparisonGraphStoreFromJson(json?: string): any {
-  if (!json) {
-    return {}
-  }
-  const parsed = JSON.parse(json)
-
-  if (parsed.referenceCommit) {
-    parsed.referenceCommit = hydrateComparisonDataPoint(parsed.referenceCommit)
-  }
-
-  return parsed
-}
-
-export function comparisonGraphStoreToJson(
-  store: ComparisonGraphStore
-): string {
-  return JSON.stringify({
-    _selectedRepos: (store as any)._selectedRepos,
-    _selectedBranchesByRepoId: (store as any)._selectedBranchesByRepoId,
-    startTime: (store as any).startTime,
-    stopTime: (store as any).stopTime,
-    selectedMetric: store.selectedMetric,
-    selectedBenchmark: store.selectedBenchmark,
-    referenceCommit: comparisonDataPointToJson(store.referenceCommit)
   })
 }
 // </editor-fold>

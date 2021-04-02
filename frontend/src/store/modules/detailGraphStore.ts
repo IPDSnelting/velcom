@@ -1,5 +1,6 @@
 import { action, createModule, mutation } from 'vuex-class-component'
 import {
+  AttributedDatapoint,
   DetailDataPoint,
   Dimension,
   DimensionId,
@@ -21,11 +22,6 @@ const VxModule = createModule({
   strict: false
 })
 
-export type DimensionDetailPoint = {
-  dataPoint: DetailDataPoint
-  dimension: Dimension
-}
-
 export type PermanentLinkOptions = Partial<{
   includeXZoom: boolean
   includeYZoom: boolean
@@ -45,8 +41,8 @@ export class DetailGraphStore extends VxModule {
 
   private firstFreeColorIndex: number = 0
 
-  referenceDatapoint: DimensionDetailPoint | null = null
-  commitToCompare: DimensionDetailPoint | null = null
+  referenceDatapoint: AttributedDatapoint | null = null
+  commitToCompare: AttributedDatapoint | null = null
 
   // One week in the past, as elegant as ever
   private _startTime: Date = new Date(
@@ -109,7 +105,7 @@ export class DetailGraphStore extends VxModule {
       }
     })
 
-    const dimensions = response.data.dimensions
+    const seriesIds = response.data.dimensions
       .map(dimensionFromJson)
       // This map is not needed as hopefully the CustomKeyEqualsMap should be used
       // but it increases performance [O(n) => O(1)]
@@ -118,9 +114,11 @@ export class DetailGraphStore extends VxModule {
           savedDimension.equals(dim)
         )
       )
+      .map((it: Dimension) => it.toString())
 
-    const dataPoints: DetailDataPoint[] = response.data.commits.map((it: any) =>
-      detailDataPointFromJson(it, dimensions)
+    const dataPoints: DetailDataPoint[] = response.data.commits.map(
+      (json: any) =>
+        detailDataPointFromJson(json, seriesIds, this.selectedRepoId)
     )
 
     this.setDetailGraph(dataPoints)
@@ -262,7 +260,7 @@ export class DetailGraphStore extends VxModule {
    * @type {startTime: Date, endTime: Date}
    */
   get bufferedTimespan(): { startTime: Date; endTime: Date } {
-    let buffer: number = 0
+    let buffer: number
     if (this.duration <= this.minToBuffer) {
       buffer = this.minBuffer
     } else if (this.duration >= this.maxToBuffer) {
@@ -363,8 +361,8 @@ export class DetailGraphStore extends VxModule {
   get detailGraph(): DetailDataPoint[] {
     const unbufferedGraph = this._detailGraph.filter(
       (datapoint: DetailDataPoint) =>
-        datapoint.committerDate >= this.startTime &&
-        datapoint.committerDate <= this.endTime
+        datapoint.committerTime >= this.startTime &&
+        datapoint.committerTime <= this.endTime
     )
 
     return this.dayEquidistantGraph
@@ -385,8 +383,8 @@ export class DetailGraphStore extends VxModule {
     let visibleDataPoints = 0
     for (const point of this._detailGraph) {
       if (
-        (startValue === null || point.committerDate.getTime() >= startValue) &&
-        (endValue === null || point.committerDate.getTime() <= endValue)
+        (startValue === null || point.committerTime.getTime() >= startValue) &&
+        (endValue === null || point.committerTime.getTime() <= endValue)
       ) {
         visibleDataPoints += this._selectedDimensions.length
       }

@@ -1,21 +1,35 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 
+import de.aaaaaaah.velcom.backend.access.benchmarkaccess.BenchmarkReadAccess;
+import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.Measurement;
+import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.MeasurementValues;
+import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.Run;
+import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.RunId;
+import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.sources.CommitSource;
+import de.aaaaaaah.velcom.backend.access.committaccess.CommitReadAccess;
+import de.aaaaaaah.velcom.backend.access.committaccess.entities.Commit;
+import de.aaaaaaah.velcom.backend.access.committaccess.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.access.committaccess.entities.FullCommit;
 import de.aaaaaaah.velcom.backend.access.dimensionaccess.DimensionReadAccess;
 import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.Dimension;
+import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.DimensionInfo;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.BranchName;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RepoId;
-import de.aaaaaaah.velcom.backend.data.repocomparison.RepoComparison;
-import de.aaaaaaah.velcom.backend.data.repocomparison.RepoComparisonGraph;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.utils.EndpointUtils;
 import de.aaaaaaah.velcom.backend.restapi.exception.InvalidQueryParamsException;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimension;
 import de.aaaaaaah.velcom.shared.util.Pair;
 import io.micrometer.core.annotation.Timed;
 import java.time.Instant;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -33,12 +47,21 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 public class GraphComparisonEndpoint {
 
-	private final DimensionReadAccess dimensionAccess;
-	private final RepoComparison comparison;
+	private static final String NO_RUN_FOUND = "N";
+	private static final String NO_MEASUREMENT_FOUND = "O";
+	private static final String RUN_FAILED = "R";
+	private static final String MEASUREMENT_FAILED = "M";
 
-	public GraphComparisonEndpoint(DimensionReadAccess dimensionAccess, RepoComparison comparison) {
+	private final BenchmarkReadAccess benchmarkAccess;
+	private final CommitReadAccess commitAccess;
+	private final DimensionReadAccess dimensionAccess;
+
+	public GraphComparisonEndpoint(BenchmarkReadAccess benchmarkAccess, CommitReadAccess commitAccess,
+		DimensionReadAccess dimensionAccess) {
+
+		this.benchmarkAccess = benchmarkAccess;
+		this.commitAccess = commitAccess;
 		this.dimensionAccess = dimensionAccess;
-		this.comparison = comparison;
 	}
 
 	@GET
@@ -68,99 +91,127 @@ public class GraphComparisonEndpoint {
 			throw new InvalidQueryParamsException("start time must be earlier than end time");
 		}
 
-		final Map<RepoId, Set<BranchName>> repos = EndpointUtils.parseRepos(reposStr);
-		RepoComparisonGraph result = comparison.generateGraph(dimension, repos, startTime, endTime);
-		JsonDimension jsonDimension = JsonDimension.fromDimensionInfo(result.getDimensionInfo());
+		// Retrieve the graph information.
+		//
+		// You are standing in front of a dense forest. The forest is full of streams. If you venture
+		// any further, you might slip. Do you want to continue? [Y/n]
+		List<JsonGraphRepo> repos = EndpointUtils.parseRepos(reposStr)
+			.entrySet()
+			.stream()
+			.map(entry -> {
+				// Iterating over all repos (and associated branches) from the request...
+				RepoId repoId = entry.getKey();
+				Set<BranchName> branches = entry.getValue();
 
-		final List<JsonGraphRepo> repoResults = result.getData().stream()
-			.map(data -> new JsonGraphRepo(
-				data.getRepoId().getId(),
-				data.getEntries().stream().map(graphEntry -> new JsonGraphCommit(
-					graphEntry.getHash().getHash(),
-					graphEntry.getAuthor(),
-					graphEntry.getAuthorDate().getEpochSecond(),
-					graphEntry.getSummary(),
-					graphEntry.getValue()
-				)).collect(toList())
-			)).collect(toList());
+				// Find the commits that will later be displayed in the graph
+				List<Commit> commits = commitAccess.getCommitsBetween(repoId, branches, startTime, endTime);
+				List<FullCommit> fullCommits = commitAccess.promoteCommits(commits);
+				Map<CommitHash, FullCommit> fullCommitsByHash = fullCommits.stream()
+					.collect(toMap(Commit::getHash, it -> it));
 
-		return new GetReply(jsonDimension, repoResults);
+				fullCommits = EndpointUtils.topologicalSort(fullCommits, fullCommitsByHash);
+				fullCommits.sort(Comparator.comparing(Commit::getCommitterDate));
+
+				// Find the latest run belonging to each commit
+				Set<RunId> latestRunIds = new HashSet<>(
+					benchmarkAccess.getLatestRunIds(repoId, fullCommitsByHash.keySet()).values());
+				Map<CommitHash, Run> runs = benchmarkAccess.getRuns(latestRunIds).stream()
+					.collect(toMap(
+						run -> run.getSource().getLeft().map(CommitSource::getHash).orElse(null),
+						run -> run
+					));
+
+				// Collect the commit and run information as JsonGraphCommits
+				List<JsonGraphCommit> graphCommits = fullCommits.stream()
+					.map(commit -> new JsonGraphCommit(
+						commit.getHashAsString(),
+						commit.getParentHashes().stream().map(CommitHash::getHash).collect(toList()),
+						commit.getAuthor(),
+						commit.getCommitterDate().getEpochSecond(),
+						commit.getSummary(),
+						getValueOfCommit(commit, dimension, runs)
+					))
+					.collect(toList());
+
+				// We've now collected all information required for this particular repository
+				return new JsonGraphRepo(repoId.getId(), graphCommits);
+			})
+			.collect(toList());
+
+		DimensionInfo dimensionInfo = dimensionAccess.getDimensionInfo(dimension);
+		JsonDimension jsonDimension = JsonDimension.fromDimensionInfo(dimensionInfo);
+
+		return new GetReply(jsonDimension, repos);
+	}
+
+	private static Object getValueOfCommit(Commit commit, Dimension dimension,
+		Map<CommitHash, Run> runs) {
+
+		Run run = runs.get(commit.getHash());
+		if (run == null) {
+			return NO_RUN_FOUND;
+		}
+
+		Optional<Collection<Measurement>> result = run.getResult().getRight();
+		if (result.isEmpty()) {
+			return RUN_FAILED;
+		}
+
+		Optional<Measurement> measurement = result.get().stream()
+			.filter(it -> it.getDimension().equals(dimension))
+			.findFirst();
+		if (measurement.isEmpty()) {
+			return NO_MEASUREMENT_FOUND;
+		}
+
+		Optional<MeasurementValues> values = measurement.get().getContent().getRight();
+		if (values.isEmpty()) {
+			return MEASUREMENT_FAILED;
+		}
+
+		return values.get().getAverageValue();
 	}
 
 	private static class GetReply {
 
-		private final JsonDimension dimension;
-		private final List<JsonGraphRepo> repos;
+		public final JsonDimension dimension;
+		public final List<JsonGraphRepo> repos;
 
 		public GetReply(JsonDimension dimension, List<JsonGraphRepo> repos) {
 			this.dimension = dimension;
 			this.repos = repos;
 		}
-
-		public JsonDimension getDimension() {
-			return dimension;
-		}
-
-		public List<JsonGraphRepo> getRepos() {
-			return repos;
-		}
 	}
 
 	private static class JsonGraphRepo {
 
-		private final UUID repoId;
-		private final List<JsonGraphCommit> commits;
+		public final UUID repoId;
+		public final List<JsonGraphCommit> commits;
 
 		public JsonGraphRepo(UUID repoId, List<JsonGraphCommit> commits) {
 			this.repoId = repoId;
 			this.commits = commits;
 		}
-
-		public UUID getRepoId() {
-			return repoId;
-		}
-
-		public List<JsonGraphCommit> getCommits() {
-			return commits;
-		}
 	}
 
 	private static class JsonGraphCommit {
 
-		private final String hash;
-		private final String author;
-		private final long authorDate;
-		private final String summary;
-		private final double value;
+		public final String hash;
+		public final List<String> parents;
+		public final String author;
+		public final long committerDate;
+		public final String summary;
+		public final Object value;
 
-		public JsonGraphCommit(String hash, String author, long authorDate, String summary,
-			double value) {
+		public JsonGraphCommit(String hash, List<String> parents, String author, long committerDate,
+			String summary, Object value) {
 
 			this.hash = hash;
+			this.parents = parents;
 			this.author = author;
-			this.authorDate = authorDate;
+			this.committerDate = committerDate;
 			this.summary = summary;
 			this.value = value;
-		}
-
-		public String getHash() {
-			return hash;
-		}
-
-		public String getAuthor() {
-			return author;
-		}
-
-		public long getAuthorDate() {
-			return authorDate;
-		}
-
-		public String getSummary() {
-			return summary;
-		}
-
-		public double getValue() {
-			return value;
 		}
 	}
 }

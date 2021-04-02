@@ -1,5 +1,4 @@
 import { Flavor } from '@/util/FlavorTypes'
-import { CustomKeyEqualsMap } from '@/util/CustomKeyEqualsMap'
 
 export class RepoBranch {
   readonly name: string
@@ -102,7 +101,10 @@ export class Dimension {
    * @param {DimensionId} other the other dimension
    * @returns true if the two have the same benchmark and metric
    */
-  equals(other: DimensionId): boolean {
+  equals(other: DimensionId | null): boolean {
+    if (other === null) {
+      return false
+    }
     return other.benchmark === this.benchmark && other.metric === this.metric
   }
 }
@@ -369,39 +371,6 @@ export class RunDescription {
   }
 }
 
-export class ShortRunDescription {
-  readonly id: RunId
-  readonly commitSummary?: string
-  readonly tarSummary?: string
-  readonly commitHash?: CommitHash
-
-  constructor(
-    id: RunId,
-    commitSummary?: string,
-    tarSummary?: string,
-    commitHash?: CommitHash
-  ) {
-    this.id = id
-    this.commitSummary = commitSummary
-    this.tarSummary = tarSummary
-    this.commitHash = commitHash
-  }
-
-  get summary(): string {
-    if (this.commitSummary) {
-      return this.commitSummary
-    }
-    if (this.tarSummary) {
-      return this.tarSummary
-    }
-    return this.id
-  }
-
-  get type(): 'tar' | 'commit' {
-    return this.commitSummary !== undefined ? 'commit' : 'tar'
-  }
-}
-
 export class RunWithDifferences {
   readonly run: Run
   readonly differences?: DimensionDifference[]
@@ -484,77 +453,161 @@ export class RunComparison {
   }
 }
 
-export type DetailDataPointValue =
+export type SeriesId = Flavor<string, 'series_id'>
+
+export type SeriesInformation = {
+  id: SeriesId
+  displayName: string
+  color: string
+}
+
+export type GraphDataPointValue =
   | number
   | 'NO_RUN'
   | 'NO_MEASUREMENT'
   | 'RUN_FAILED'
   | 'MEASUREMENT_FAILED'
 
-export class DetailDataPoint {
+export abstract class GraphDataPoint {
+  abstract readonly positionTime: Date
+  abstract readonly committerTime: Date
+  abstract readonly uid: string
+  abstract readonly hash: string
+  abstract readonly repoId: RepoId
+  abstract readonly values: Map<SeriesId, GraphDataPointValue>
+  abstract readonly parentUids: string[]
+  abstract readonly summary: string
+  abstract readonly author: string
+
+  public successful(series: SeriesId): boolean {
+    return typeof this.values.get(series) === 'number'
+  }
+
+  public metricNotBenchmarked(series: SeriesId): boolean {
+    const value = this.values.get(series)
+    return value === 'NO_MEASUREMENT'
+  }
+
+  public commitUnbenchmarked(series: SeriesId): boolean {
+    const value = this.values.get(series)
+    return value === 'NO_RUN'
+  }
+
+  /**
+   * Either there is no run for this commit or the given metric was not
+   * measured for it
+   * @param series the series to check
+   */
+  public unbenchmarked(series: SeriesId): boolean {
+    return this.commitUnbenchmarked(series) || this.metricNotBenchmarked(series)
+  }
+
+  public failed(series: SeriesId): boolean {
+    const value = this.values.get(series)
+    return value === 'MEASUREMENT_FAILED' || value === 'RUN_FAILED'
+  }
+
+  public abstract positionedAt(positionTime: Date): GraphDataPoint
+}
+
+export type AttributedDatapoint = {
+  datapoint: GraphDataPoint
+  seriesId: SeriesId
+}
+
+export class DetailDataPoint extends GraphDataPoint {
   readonly hash: CommitHash
-  readonly parents: CommitHash[]
+  readonly repoId: RepoId
+  readonly uid: string
+  readonly parentUids: string[]
   readonly author: string
-  readonly committerDate: Date
-  readonly positionDate: Date // to alter position in day equidistant graphs
+  readonly committerTime: Date
+  readonly positionTime: Date // to alter position in day equidistant graphs
   readonly summary: string
   // TODO: Figure out if the map wastes too much memory
-  readonly values: CustomKeyEqualsMap<DimensionId, DetailDataPointValue>
+  readonly values: Map<SeriesId, GraphDataPointValue>
 
+  // noinspection DuplicatedCode
   constructor(
+    repoId: RepoId,
     hash: CommitHash,
-    parents: CommitHash[],
+    parentUids: string[],
     author: string,
     committerDate: Date,
     positionDate: Date,
     summary: string,
-    values: CustomKeyEqualsMap<DimensionId, DetailDataPointValue>
+    values: Map<SeriesId, GraphDataPointValue>
   ) {
+    super()
+    this.repoId = repoId
     this.hash = hash
-    this.parents = parents
+    this.uid = repoId + hash
+    this.parentUids = parentUids
     this.author = author
-    this.committerDate = committerDate
-    this.positionDate = positionDate
+    this.committerTime = committerDate
+    this.positionTime = positionDate
     this.summary = summary
     this.values = values
   }
 
-  public successful(dimension: DimensionId): boolean {
-    return typeof this.values.get(dimension) === 'number'
-  }
-
-  public unbenchmarked(dimension: DimensionId): boolean {
-    const value = this.values.get(dimension)
-    return value === 'NO_RUN' || value === 'NO_MEASUREMENT'
-  }
-
-  public failed(dimension: DimensionId): boolean {
-    const value = this.values.get(dimension)
-    return value === 'MEASUREMENT_FAILED' || value === 'RUN_FAILED'
+  positionedAt(positionTime: Date): DetailDataPoint {
+    return new DetailDataPoint(
+      this.repoId,
+      this.hash,
+      this.parentUids,
+      this.author,
+      this.committerTime,
+      positionTime,
+      this.summary,
+      this.values
+    )
   }
 }
-export class ComparisonDataPoint {
-  readonly hash: CommitHash
-  readonly author: string
-  readonly authorDate: Date
-  readonly summary: string
-  readonly value: number
+
+export class ComparisonDataPoint extends GraphDataPoint {
+  readonly positionTime: Date
+  readonly committerTime: Date
+  readonly hash: string
   readonly repoId: RepoId
+  readonly values: Map<SeriesId, GraphDataPointValue>
+  readonly parentUids: string[]
+  readonly summary: string
+  readonly author: string
+  readonly uid: string
 
   constructor(
-    hash: CommitHash,
-    author: string,
-    authorDate: Date,
+    committerTime: Date,
+    positionTime: Date,
+    hash: string,
+    repoId: string,
+    values: Map<SeriesId, GraphDataPointValue>,
+    parentUids: string[],
     summary: string,
-    value: number,
-    repoId: RepoId
+    author: string
   ) {
-    this.hash = hash
-    this.author = author
-    this.authorDate = authorDate
-    this.summary = summary
-    this.value = value
+    super()
+    this.positionTime = positionTime
+    this.committerTime = committerTime
     this.repoId = repoId
+    this.hash = hash
+    this.values = values
+    this.parentUids = parentUids
+    this.summary = summary
+    this.author = author
+    this.uid = this.repoId + this.hash
+  }
+
+  positionedAt(positionTime: Date): ComparisonDataPoint {
+    return new ComparisonDataPoint(
+      this.committerTime,
+      positionTime,
+      this.hash,
+      this.repoId,
+      this.values,
+      this.parentUids,
+      this.summary,
+      this.author
+    )
   }
 }
 

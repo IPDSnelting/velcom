@@ -1,15 +1,20 @@
 <template>
-  <v-container fluid class="mt-0 pt-0">
-    <v-row align="center" justify="center">
-      <v-col>
-        <datapoint-dialog
+  <v-container fluid class="mt-0 pt-0 full-height">
+    <v-row align="center" justify="center" class="full-height" no-gutters>
+      <v-col class="full-height">
+        <slot
+          name="dialog"
           v-if="pointDialogDatapoint"
-          :dialogOpen="pointDialogOpen"
-          :selectedDatapoint="pointDialogDatapoint"
-          :dimension="pointDialogDimension"
-          @close="pointDialogOpen = false"
-        ></datapoint-dialog>
-        <div id="chart-container" @wheel.capture="$emit('wheel', $event)">
+          :dialog-open="pointDialogOpen"
+          :selected-datapoint="pointDialogDatapoint"
+          :series-information="pointDialogSeries"
+          :closeDialog="() => (pointDialogOpen = false)"
+        ></slot>
+        <div
+          id="chart-container"
+          @wheel.capture="$emit('wheel', $event)"
+          class="full-height"
+        >
           <v-chart
             ref="chart"
             :autoresize="true"
@@ -18,7 +23,7 @@
             @datazoom="echartsZoomed"
             @contextmenu="echartsOpenContextMenu"
             @click="echartsClicked"
-            @restore="echartsZoomReset"
+            @restore="$emit('reset-zoom')"
           />
         </div>
       </v-col>
@@ -30,10 +35,10 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import {
-  DetailDataPoint,
-  Dimension,
-  DimensionId,
-  dimensionIdEqual
+  AttributedDatapoint,
+  GraphDataPoint,
+  SeriesId,
+  SeriesInformation
 } from '@/store/types'
 import { Prop, Watch } from 'vue-property-decorator'
 import EChartsComp from 'vue-echarts'
@@ -64,12 +69,8 @@ import {
   MarkPointComponentOption
 } from 'echarts/components'
 import { use, ComposeOption } from 'echarts/core'
-import { vxm } from '@/store'
-import DetailDatapointDialog from '@/components/dialogs/DetailDatapointDialog.vue'
-import { DimensionDetailPoint } from '@/store/modules/detailGraphStore'
-import { formatDate } from '@/util/TimeUtil'
 import { escapeHtml } from '@/util/TextUtils'
-import { CustomKeyEqualsMap } from '@/util/CustomKeyEqualsMap'
+import { formatDate } from '@/util/TimeUtil'
 
 use([
   LineChart,
@@ -101,17 +102,40 @@ type ECOption = ComposeOption<
 >
 
 type ValidEchartsSeries = LineSeriesOption | GraphSeriesOption
-type SeriesGenerationFunction = (id: DimensionId) => ValidEchartsSeries
+type SeriesGenerationFunction = (
+  seriesInformation: SeriesInformation
+) => ValidEchartsSeries
 
-type BenchmarkStatus = 'success' | 'failed' | 'unbenchmarked'
+type BenchmarkStatus = 'success' | 'failed' | 'no-such-metric' | 'unbenchmarked'
 
 const crossIcon =
   'path://M24 20.188l-8.315-8.209 8.2-8.282-3.697-3.697-8.212 8.318-8.31-8.203-3.666 3.666 8.321 8.24-8.206 8.313 3.666 3.666 8.237-8.318 8.285 8.203z'
 
+/*
+FIXME: Delete this
+Echarts needs:
+  1. X-axis value (time)
+  2. **Y-axis value** (based on the *series*)
+  3. A symbol / benchmark status
+  4. A unique name used by the graph series
+  5. A color
+  6. Enough for a **tooltip** (author / summary right now)
+
+Echarts datapoints are grouped by dimension. We could introduce a more general "Series[Key]" type for that.
+
+That could then also tell you how to extract a y value and color.
+
+Tooltips are too custom, they'd need to be done differently. Inject a tooltip formatter as property?
+
+We need some shared state with 2-way binding for the dialog and graph that should be persisted:
+  - Reference datapoint (series key, value)
+  - Comparison datapoint (series key, name)
+  - Zoom levels (X / Y axis)
+ */
+
 class EchartsDataPoint {
   // convenience methods for accessing the value
-  readonly time: Date
-  readonly committerDate: Date
+  readonly positionTime: Date
   readonly dataValue: number
 
   // Used to display the symbol
@@ -137,25 +161,19 @@ class EchartsDataPoint {
     borderWidth: number
   }
 
-  readonly summary: string
-  readonly author: string
   readonly benchmarkStatus: BenchmarkStatus
 
   constructor(
-    time: Date,
-    committerDate: Date,
+    positionTime: Date,
     dataValue: number,
     benchmarkStatus: BenchmarkStatus,
     name: string,
     color: string,
-    borderColor: string,
-    summary: string,
-    author: string
+    borderColor: string
   ) {
-    this.time = time
-    this.committerDate = committerDate
+    this.positionTime = positionTime
     this.dataValue = dataValue
-    this.value = [this.time, this.dataValue]
+    this.value = [this.positionTime, this.dataValue]
     this.benchmarkStatus = benchmarkStatus
     this.name = name
     this.itemStyle = {
@@ -163,34 +181,60 @@ class EchartsDataPoint {
       borderColor: borderColor,
       borderWidth: 2
     }
-    this.summary = summary
-    this.author = author
 
-    if (benchmarkStatus === 'success' || benchmarkStatus === 'unbenchmarked') {
-      this.symbol = 'circle'
-    } else {
+    if (benchmarkStatus === 'failed') {
       this.symbol = crossIcon
+    } else {
+      this.symbol = 'circle'
     }
   }
 }
 
 @Component({
   components: {
-    'datapoint-dialog': DetailDatapointDialog,
     'v-chart': EChartsComp
   }
 })
 export default class EchartsDetailGraph extends Vue {
   // <!--<editor-fold desc="PROPS">-->
-  // noinspection JSMismatchedCollectionQueryUpdate
-  @Prop()
-  private dimensions!: Dimension[]
-
   @Prop({ default: false })
-  private beginYAtZero!: boolean
+  private readonly beginYAtZero!: boolean
 
-  @Prop({ default: true })
-  private dayEquidistant!: boolean
+  @Prop()
+  private readonly zoomXStartValue!: number | null
+
+  @Prop()
+  private readonly zoomXEndValue!: number | null
+
+  @Prop()
+  private readonly zoomYStartValue!: number | null
+
+  @Prop()
+  private readonly zoomYEndValue!: number | null
+
+  @Prop()
+  private readonly dataRangeMin!: Date
+
+  @Prop()
+  private readonly dataRangeMax!: Date
+
+  @Prop()
+  private readonly datapoints!: GraphDataPoint[]
+
+  @Prop()
+  private readonly seriesInformation!: SeriesInformation[]
+
+  @Prop()
+  private readonly visiblePointCount!: number
+
+  @Prop({ default: null })
+  private readonly commitToCompare!: AttributedDatapoint | null
+
+  @Prop({ default: null })
+  private readonly referenceDatapoint!: AttributedDatapoint | null
+
+  @Prop({ default: 0 })
+  private readonly refreshKey!: number
   // <!--</editor-fold>-->
 
   // <!--<editor-fold desc="FIELDS">-->
@@ -199,19 +243,17 @@ export default class EchartsDetailGraph extends Vue {
 
   // >>>> Datapoint Dialog >>>>
   private pointDialogOpen: boolean = false
-  private pointDialogDatapoint: DetailDataPoint | null = null
-  private pointDialogDimension: Dimension | null = null
+  private pointDialogDatapoint: GraphDataPoint | null = null
+  private pointDialogSeries: SeriesInformation | null = null
   // <<<< Datapoint Dialog <<<<
   //  <!--</editor-fold>-->
 
-  private get detailDataPoints(): DetailDataPoint[] {
-    return vxm.detailGraphModule.detailGraph
-  }
-
   // <!--<editor-fold desc="ECHARTS GRAPH OPTIONS">-->
-  @Watch('detailDataPoints')
+  @Watch('datapoints')
   @Watch('beginYAtZero')
-  @Watch('dayEquidistant')
+  @Watch('dataRangeMin')
+  @Watch('dataRangeMax')
+  @Watch('refreshKey')
   @Watch('graphFailedOrUnbenchmarkedColor') // DataPoints need adjusting, they store the color
   private updateGraph() {
     console.log('Echarts updated')
@@ -226,8 +268,8 @@ export default class EchartsDetailGraph extends Vue {
       },
       xAxis: {
         type: 'time',
-        min: vxm.detailGraphModule.startTime.getTime(),
-        max: vxm.detailGraphModule.endTime.getTime(),
+        min: this.dataRangeMin.getTime(),
+        max: this.dataRangeMax.getTime(),
         axisLabel: {
           formatter: {
             year: '{MMM}\n{yyyy}',
@@ -265,23 +307,23 @@ export default class EchartsDetailGraph extends Vue {
           xAxisIndex: [0],
           type: 'inside',
           // Start at the correct place when changing the series type
-          startValue: vxm.detailGraphModule.zoomXStartValue || undefined,
-          endValue: vxm.detailGraphModule.zoomXEndValue || undefined
+          startValue: this.zoomXStartValue || undefined,
+          endValue: this.zoomXEndValue || undefined
         },
         {
           id: 'y',
           type: 'inside',
           yAxisIndex: [0],
-          startValue: vxm.detailGraphModule.zoomYStartValue || undefined,
-          endValue: vxm.detailGraphModule.zoomYEndValue || undefined,
+          startValue: this.zoomYStartValue || undefined,
+          endValue: this.zoomYEndValue || undefined,
           zoomOnMouseWheel: false
         },
         {
           id: 'xAxis',
           type: 'slider',
           // Start at the correct place when changing the series type
-          startValue: vxm.detailGraphModule.zoomXStartValue || undefined,
-          endValue: vxm.detailGraphModule.zoomXEndValue || undefined
+          startValue: this.zoomXStartValue || undefined,
+          endValue: this.zoomXEndValue || undefined
         }
       ],
       tooltip: {
@@ -291,11 +333,18 @@ export default class EchartsDetailGraph extends Vue {
         formatter: this.tooltipFormatter,
         confine: true
       },
-      series: this.dimensions.map(this.seriesGenerator)
+      series: this.seriesInformation.map(this.seriesGenerator)
     }
 
     this.updateReferenceDatapoint()
     this.updateMarkPoints()
+  }
+
+  @Watch('visibleDataPoints')
+  private onVisibleDatapointsChange() {
+    if (this.selectAppropriateSeries() === 're-render') {
+      this.updateGraph()
+    }
   }
 
   // The correct type is not exposed sadly
@@ -305,129 +354,126 @@ export default class EchartsDetailGraph extends Vue {
     values.sort((a, b) => {
       const first = a.data as EchartsDataPoint
       const second = b.data as EchartsDataPoint
-
       return second.dataValue - first.dataValue
     })
-
-    const dimensionRows = values.map(val => {
-      const dimension = this.dimensions[val.seriesIndex || 0]
-      const color = this.dimensionColor(dimension)
+    const seriesRows = values.map(val => {
+      const seriesInformation = this.seriesInformation[val.seriesIndex || 0]
+      const color = seriesInformation.color
       const datapoint = val.data as EchartsDataPoint
-      const safeBenchmark = escapeHtml(dimension.benchmark)
-      const safeMetric = escapeHtml(dimension.metric)
-
+      const safeDisplayName = escapeHtml(seriesInformation.displayName)
       let value: string
       if (datapoint.benchmarkStatus === 'success') {
         value = this.numberFormat.format(datapoint.dataValue)
       } else if (datapoint.benchmarkStatus === 'unbenchmarked') {
-        value = 'Unbenchmarked'
+        value = 'Commit was not benchmarked'
+      } else if (datapoint.benchmarkStatus === 'no-such-metric') {
+        value = 'Metric not measured for commit'
       } else {
         value = 'Failed'
       }
-
       return `
                 <tr>
                   <td>
                     <span class="color-preview" style="background-color: ${color}"></span>
-                    ${safeBenchmark} - ${safeMetric}
+                    ${safeDisplayName}
                   </td>
                   <td>${value}</td>
                 </tr>
                 `
     })
-
     const samplePoint = values[0].data as EchartsDataPoint
+    const point = this.datapoints.find(it => it.uid === samplePoint.name)
 
-    const committerDate = formatDate(samplePoint.committerDate)
+    if (!point) {
+      return 'No point found :/'
+    }
+
+    const committerDate = formatDate(point.committerTime)
     return `
-                <table class="echarts-tooltip-table">
-                  <tr>
-                    <td>Hash</td>
-                    <td>${escapeHtml(samplePoint.name)}</td>
-                  </tr>
-                  </tr>
-                    <td>Message</td>
-                    <td>${escapeHtml(samplePoint.summary)}</td>
-                  </tr>
-                  <tr>
-                    <td>Author</td>
-                    <td>
-                      ${escapeHtml(samplePoint.author)} at ${committerDate}
-                    </td>
-                  </tr>
-                  ${dimensionRows.join('\n')}
-                </table>
+           <table class="echarts-tooltip-table">
+             <tr>
+               <td>Hash</td>
+               <td>${escapeHtml(point.hash)}</td>
+             </tr>
+             </tr>
+               <td>Message</td>
+               <td>${escapeHtml(point.summary)}</td>
+             </tr>
+             <tr>
+               <td>Author</td>
+               <td>
+                 ${escapeHtml(point.author)} at ${committerDate}
+               </td>
+             </tr>
+             ${seriesRows.join('\n')}
+           </table>
             `
   }
-
   // <!--</editor-fold>-->
 
   // <!--<editor-fold desc="SERIES GENERATION">-->
-  private findFirstSuccessful = (dimension: DimensionId) => {
-    const point = this.detailDataPoints.find(it => it.successful(dimension))
+  private findFirstSuccessful = (seriesId: SeriesId) => {
+    const point = this.datapoints.find(it => it.successful(seriesId))
 
     if (point) {
-      return point.values.get(dimension) as number
+      return point.values.get(seriesId) as number
     }
     return 0
   }
 
-  private buildPointsForSingleDimension(dimension: DimensionId) {
-    let lastSuccessfulValue: number = this.findFirstSuccessful(dimension)
-    return this.detailDataPoints.map(point => {
+  private buildPointsForSeries(seriesInformation: SeriesInformation) {
+    const seriesId = seriesInformation.id
+    let lastSuccessfulValue: number = this.findFirstSuccessful(seriesId)
+    return this.datapoints.map(point => {
       let benchmarkStatus: BenchmarkStatus = 'success'
-      let color = this.dimensionColor(dimension)
+      let color = seriesInformation.color
       let borderColor = color
 
-      let pointValue = point.values.get(dimension)
+      let pointValue = point.values.get(seriesId)
       if (typeof pointValue !== 'number') {
         pointValue = lastSuccessfulValue
       }
       lastSuccessfulValue = pointValue
 
-      if (point.failed(dimension)) {
+      if (point.failed(seriesId)) {
         // grey circle
         benchmarkStatus = 'failed'
         color = this.graphFailedOrUnbenchmarkedColor
         borderColor = color
-      } else if (point.unbenchmarked(dimension)) {
-        benchmarkStatus = 'unbenchmarked'
+      } else if (point.unbenchmarked(seriesId)) {
+        benchmarkStatus = point.commitUnbenchmarked(seriesId)
+          ? 'unbenchmarked'
+          : 'no-such-metric'
         // empty circle with outline
         color = this.graphBackgroundColor
         borderColor = this.graphFailedOrUnbenchmarkedColor
       }
 
       return new EchartsDataPoint(
-        point.positionDate,
-        point.committerDate,
+        point.positionTime,
         pointValue,
         benchmarkStatus,
-        point.hash,
+        point.uid,
         color,
-        borderColor,
-        point.summary,
-        point.author
+        borderColor
       )
     })
   }
 
-  private get echartsDataPoints(): Map<DimensionId, EchartsDataPoint[]> {
-    const map: Map<DimensionId, EchartsDataPoint[]> = new CustomKeyEqualsMap(
-      [],
-      dimensionIdEqual
-    )
+  private get echartsDataPoints(): Map<SeriesId, EchartsDataPoint[]> {
+    const map: Map<SeriesId, EchartsDataPoint[]> = new Map([])
 
-    this.dimensions.forEach(dimension => {
-      map.set(dimension, this.buildPointsForSingleDimension(dimension))
+    this.seriesInformation.forEach(series => {
+      map.set(series.id, this.buildPointsForSeries(series))
     })
 
     return map
   }
 
-  private buildLineSeries(dimension: DimensionId): LineSeriesOption {
+  private buildLineSeries(series: SeriesInformation): LineSeriesOption {
     // noinspection JSMismatchedCollectionQueryUpdate
     const echartPoints: EchartsDataPoint[] = this.echartsDataPoints.get(
-      dimension
+      series.id
     )!
 
     return {
@@ -436,21 +482,21 @@ export default class EchartsDetailGraph extends Vue {
       symbol: ((value: EchartsDataPoint) => value.symbol) as any,
       symbolSize: 6,
       lineStyle: {
-        color: this.dimensionColor(dimension)
+        color: series.color
       },
       data: echartPoints as any
     }
   }
 
-  private buildGraphSeries(dimension: DimensionId): GraphSeriesOption {
+  private buildGraphSeries(series: SeriesInformation): GraphSeriesOption {
     // noinspection JSMismatchedCollectionQueryUpdate
     const echartPoints: EchartsDataPoint[] = this.echartsDataPoints.get(
-      dimension
+      series.id
     )!
-    const links = this.detailDataPoints.flatMap(point => {
-      return point.parents.map(parent => ({
-        source: point.hash,
-        target: parent
+    const links = this.datapoints.flatMap(point => {
+      return point.parentUids.map(parentUid => ({
+        source: point.uid,
+        target: parentUid
       }))
     })
 
@@ -470,7 +516,7 @@ export default class EchartsDetailGraph extends Vue {
       symbol: ((value: EchartsDataPoint) => value.symbol) as any,
       symbolSize: 6,
       lineStyle: {
-        color: this.dimensionColor(dimension)
+        color: series.color
       },
       links: links,
       data: echartPoints as any
@@ -483,7 +529,7 @@ export default class EchartsDetailGraph extends Vue {
    * If the number is manageable, the graph type will be selected.
    */
   private selectAppropriateSeries(): 're-render' | 'unchanged' {
-    const visibleDataPoints = vxm.detailGraphModule.visiblePoints
+    const visibleDataPoints = this.visiblePointCount
     const newGenerator: SeriesGenerationFunction =
       visibleDataPoints > 200 ? this.buildLineSeries : this.buildGraphSeries
 
@@ -502,30 +548,22 @@ export default class EchartsDetailGraph extends Vue {
   // <!--</editor-fold>-->
 
   // <!--<editor-fold desc="REFERENCE LINE, COMPARE">-->
-  private get commitToCompare(): DimensionDetailPoint | null {
-    return vxm.detailGraphModule.commitToCompare
-  }
-
-  private get referenceDatapoint() {
-    return vxm.detailGraphModule.referenceDatapoint
-  }
-
   private get showReferenceMarkers() {
     if (!this.referenceDatapoint) {
       return false
     }
-    const dimensions = this.referenceDatapoint.dimension
+    const seriesId = this.referenceDatapoint.seriesId
 
-    return this.dimensions.find(it => it.equals(dimensions))
+    return this.seriesInformation.find(it => it.id === seriesId)
   }
 
   private get showCommitToCompareMarker() {
     if (!this.commitToCompare) {
       return false
     }
-    const dimensions = this.commitToCompare.dimension
+    const seriesId = this.commitToCompare.seriesId
 
-    return this.dimensions.find(it => it.equals(dimensions))
+    return this.seriesInformation.find(it => it.id === seriesId)
   }
 
   @Watch('referenceDatapoint')
@@ -537,7 +575,7 @@ export default class EchartsDetailGraph extends Vue {
     const markLineData: any[] = []
     if (this.showReferenceMarkers) {
       const reference = this.referenceDatapoint!
-      const referenceValue = reference.dataPoint.values.get(reference.dimension)
+      const referenceValue = reference.datapoint.values.get(reference.seriesId)
       if (typeof referenceValue === 'number') {
         markLineData.push({ yAxis: referenceValue, name: 'Reference' })
       }
@@ -545,12 +583,12 @@ export default class EchartsDetailGraph extends Vue {
     if (this.showCommitToCompareMarker) {
       // Day equidistant points might move the point and its author date
       const displayedPoint = this.echartsDataPoints
-        .get(this.commitToCompare!.dimension)!
-        .find(it => it.name === this.commitToCompare!.dataPoint.hash)
+        .get(this.commitToCompare!.seriesId)!
+        .find(it => it.name === this.commitToCompare!.datapoint.uid)
 
       if (displayedPoint) {
         markLineData.push({
-          xAxis: displayedPoint.time,
+          xAxis: displayedPoint.positionTime,
           name: 'Comparing…'
         })
       }
@@ -594,15 +632,15 @@ export default class EchartsDetailGraph extends Vue {
     const markPointData: any[] = []
 
     if (this.showReferenceMarkers) {
-      const point = this.referenceDatapoint!.dataPoint
+      const point = this.referenceDatapoint!.datapoint
       const displayedPoint = this.echartsDataPoints
-        .get(this.referenceDatapoint!.dimension)!
-        .find(it => it.name === point.hash)
+        .get(this.referenceDatapoint!.seriesId)!
+        .find(it => it.name === point.uid)
 
       markPointData.push({
         coord: [
-          displayedPoint!.time,
-          point.values.get(this.referenceDatapoint!.dimension)
+          displayedPoint!.positionTime,
+          point.values.get(this.referenceDatapoint!.seriesId)
         ],
         label: {
           show: true,
@@ -659,20 +697,12 @@ export default class EchartsDetailGraph extends Vue {
     const dataZooms = actualOptions.dataZoom as DataZoomComponentOption[]
 
     if (seriesId === 'x' || seriesId.includes('xAxis')) {
-      vxm.detailGraphModule.zoomXStartValue = orNull(dataZooms[0], 'start')
-      vxm.detailGraphModule.zoomXEndValue = orNull(dataZooms[0], 'end')
+      this.$emit('update:zoomXStartValue', orNull(dataZooms[0], 'start'))
+      this.$emit('update:zoomXEndValue', orNull(dataZooms[0], 'end'))
     } else {
-      vxm.detailGraphModule.zoomYStartValue = orNull(dataZooms[1], 'start')
-      vxm.detailGraphModule.zoomYEndValue = orNull(dataZooms[1], 'end')
+      this.$emit('update:zoomYStartValue', orNull(dataZooms[1], 'start'))
+      this.$emit('update:zoomYEndValue', orNull(dataZooms[1], 'end'))
     }
-  }
-
-  private echartsZoomReset() {
-    vxm.detailGraphModule.zoomXStartValue = vxm.detailGraphModule.startTime.getTime()
-    vxm.detailGraphModule.zoomXEndValue = vxm.detailGraphModule.endTime.getTime()
-    vxm.detailGraphModule.zoomYStartValue = null
-    vxm.detailGraphModule.zoomYEndValue = null
-    this.updateGraph()
   }
 
   private echartsOpenContextMenu(e: any) {
@@ -682,12 +712,10 @@ export default class EchartsDetailGraph extends Vue {
 
     const echartsPoint = e.data as EchartsDataPoint
 
-    const detailPoint = this.detailDataPoints.find(
-      it => it.hash === echartsPoint.name
-    )
-    const dimension = this.dimensions[e.seriesIndex]
+    const datapoint = this.datapoints.find(it => it.uid === echartsPoint.name)
+    const seriesInformation = this.seriesInformation[e.seriesIndex]
 
-    if (!detailPoint || !dimension) {
+    if (!datapoint || !seriesInformation) {
       return
     }
 
@@ -697,8 +725,8 @@ export default class EchartsDetailGraph extends Vue {
       event.preventDefault()
     }
 
-    this.pointDialogDatapoint = detailPoint
-    this.pointDialogDimension = dimension
+    this.pointDialogDatapoint = datapoint
+    this.pointDialogSeries = seriesInformation
     this.pointDialogOpen = true
   }
 
@@ -707,7 +735,18 @@ export default class EchartsDetailGraph extends Vue {
       return
     }
 
+    // Was a *link* (i.e. the arrow between two datapoints) and no datapoint
+    if (e.data.name === undefined) {
+      return
+    }
+
     const echartsPoint = e.data as EchartsDataPoint
+    const datapoint = this.datapoints.find(it => it.uid === echartsPoint.name)
+
+    // Should not happen, but better be safe than sorry
+    if (!datapoint) {
+      return
+    }
 
     if ((e as any).event && (e as any).event.event) {
       const event = (e as any).event.event as MouseEvent
@@ -715,20 +754,19 @@ export default class EchartsDetailGraph extends Vue {
         const routeData = this.$router.resolve({
           name: 'run-detail',
           params: {
-            first: vxm.detailGraphModule.selectedRepoId,
-            second: echartsPoint.name
+            first: datapoint.repoId,
+            second: datapoint.hash
           }
         })
         window.open(routeData.href, '_blank')
         return
       }
     }
-
     this.$router.push({
       name: 'run-detail',
       params: {
-        first: vxm.detailGraphModule.selectedRepoId,
-        second: echartsPoint.name
+        first: datapoint.repoId,
+        second: datapoint.hash
       }
     })
   }
@@ -744,12 +782,6 @@ export default class EchartsDetailGraph extends Vue {
 
   private get graphBackgroundColor() {
     return this.$vuetify.theme.currentTheme.graphBackground as string
-  }
-
-  private dimensionColor(dimension: DimensionId) {
-    return vxm.colorModule.colorByIndex(
-      vxm.detailGraphModule.colorIndex(dimension)!
-    )
   }
 
   private get graphFailedOrUnbenchmarkedColor() {
@@ -773,9 +805,7 @@ export default class EchartsDetailGraph extends Vue {
         }
       },
       axisLabel: {
-        textStyle: {
-          color: 'currentColor'
-        }
+        color: 'currentColor'
       },
       splitLine: {
         lineStyle: {
@@ -799,9 +829,7 @@ export default class EchartsDetailGraph extends Vue {
       },
       toolbox: {
         iconStyle: {
-          normal: {
-            borderColor: 'currentColor'
-          }
+          borderColor: 'currentColor'
         }
       }
     }
@@ -813,7 +841,9 @@ export default class EchartsDetailGraph extends Vue {
 <style scoped>
 #chart-container {
   position: relative;
-  height: 80vh;
+}
+.full-height {
+  height: 100%;
 }
 </style>
 

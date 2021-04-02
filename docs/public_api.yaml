@@ -518,6 +518,7 @@ paths:
                       $ref: '#/components/schemas/Dimension'
                   commits:
                     type: array
+                    description: 'Ordered from old to new. If multiple commits have the same committer time (e. g. because of a rebase), they are ordered topologically from parent to child.'
                     items:
                       type: object
                       properties:
@@ -538,7 +539,7 @@ paths:
                           description: |-
                             One value for each dimension. For the order, see the `dimensions` field.
 
-                            If there is no value for any reason, the array contains a string as placeholder describing why there is no value. `"N"` means that the commit has no correspondin run. `"O"` means that the run has no corresponding measurement. `"R"` means that the entire run has failed. `"M"` means that only the measurement itself has failed.
+                            If there is no value for any reason, the array contains a string as placeholder describing why there is no value. `"N"` means that the commit has no corresponding run. `"O"` means that the run has no corresponding measurement. `"R"` means that the entire run has failed. `"M"` means that only the measurement itself has failed.
                           items:
                             type:
                               - number
@@ -672,24 +673,38 @@ paths:
                           $ref: '#/components/schemas/RepoId'
                         commits:
                           type: array
+                          description: 'Ordered from old to new. If multiple commits have the same committer time (e. g. because of a rebase), they are ordered topologically from parent to child.'
                           items:
                             type: object
                             properties:
                               hash:
                                 $ref: '#/components/schemas/CommitHash'
+                              parents:
+                                type: array
+                                items:
+                                  $ref: '#/components/schemas/CommitHash'
                               author:
                                 type: string
-                              author_date:
+                              committer_date:
                                 $ref: '#/components/schemas/Time'
                               summary:
                                 type: string
                               value:
-                                type: number
-                                description: 'One value for each dimension. For the order, see the `dimensions` field'
+                                type:
+                                  - number
+                                  - string
+                                description: |-
+                                  One value for each dimension. For the order, see the `dimensions` field.
+
+                                  If there is no value for any reason, the array contains a string as placeholder describing why there is no value. `"N"` means that the commit has no corresponding run. `"O"` means that the run has no corresponding measurement. `"R"` means that the entire run has failed. `"M"` means that only the measurement itself has failed.
+                                pattern: '^[NORM]$'
+                                minLength: 1
+                                maxLength: 1
                             required:
                               - hash
+                              - parents
                               - author
-                              - author_date
+                              - committer_date
                               - summary
                               - value
                       required:

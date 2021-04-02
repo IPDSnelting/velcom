@@ -16,9 +16,11 @@
     </v-row>
     <v-row align="baseline" justify="center" class="mt-2" no-gutters>
       <v-col>
-        <repo-graph-timespan-controls
+        <graph-timespan-controls
           @reload-graph-data="reloadGraphDataCounter++"
-        ></repo-graph-timespan-controls>
+          :end-time.sync="endTime"
+          :start-time.sync="startTime"
+        ></graph-timespan-controls>
       </v-col>
     </v-row>
   </v-container>
@@ -31,11 +33,11 @@ import RepoBaseInformation from '@/components/repodetail/RepoBaseInformation.vue
 import { vxm } from '@/store'
 import RepoGraph from '@/components/repodetail/RepoGraph.vue'
 import RepoGraphControls from '@/components/repodetail/RepoGraphControls.vue'
-import RepoGraphTimespanControls from '@/components/repodetail/RepoGraphTimespanControls.vue'
+import GraphTimespanControls from '@/components/graphs/GraphTimespanControls.vue'
 
 @Component({
   components: {
-    RepoGraphTimespanControls,
+    GraphTimespanControls,
     RepoGraphControls,
     RepoGraph,
     RepoBaseInformation
@@ -43,6 +45,24 @@ import RepoGraphTimespanControls from '@/components/repodetail/RepoGraphTimespan
 })
 export default class RepoGraphView extends Vue {
   private reloadGraphDataCounter = 0
+
+  private get endTime(): Date {
+    return vxm.detailGraphModule.endTime
+  }
+
+  // noinspection JSUnusedLocalSymbols
+  private set endTime(date: Date) {
+    vxm.detailGraphModule.endTime = date
+  }
+
+  private get startTime(): Date {
+    return vxm.detailGraphModule.startTime
+  }
+
+  // noinspection JSUnusedLocalSymbols
+  private set startTime(date: Date) {
+    vxm.detailGraphModule.startTime = date
+  }
 
   private get repoId() {
     return vxm.detailGraphModule.selectedRepoId

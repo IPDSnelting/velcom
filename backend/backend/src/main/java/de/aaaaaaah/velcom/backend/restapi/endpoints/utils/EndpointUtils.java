@@ -1,5 +1,8 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints.utils;
 
+import static java.util.stream.Collectors.toCollection;
+import static java.util.stream.Collectors.toMap;
+
 import de.aaaaaaah.velcom.backend.access.benchmarkaccess.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.Run;
 import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.RunId;
@@ -8,6 +11,7 @@ import de.aaaaaaah.velcom.backend.access.caches.LatestRunCache;
 import de.aaaaaaah.velcom.backend.access.caches.RunCache;
 import de.aaaaaaah.velcom.backend.access.committaccess.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.access.committaccess.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.access.committaccess.entities.FullCommit;
 import de.aaaaaaah.velcom.backend.access.dimensionaccess.DimensionReadAccess;
 import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.Dimension;
 import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.DimensionInfo;
@@ -21,9 +25,14 @@ import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonSource;
 import de.aaaaaaah.velcom.shared.util.Pair;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -196,5 +205,72 @@ public class EndpointUtils {
 		}
 
 		return new Pair<>(startTime, endTime);
+	}
+
+	/**
+	 * @param commits the commits to sort
+	 * @param hashes a map from hash to commit <em>for <strong>exactly</strong> the commits in the
+	 * 	commits list</em>
+	 * @return a mutable list containing a topological ordering of the input commits
+	 */
+	public static List<FullCommit> topologicalSort(List<FullCommit> commits,
+		Map<CommitHash, FullCommit> hashes) {
+
+		// Based on Khan's Algorithm
+		// https://en.wikipedia.org/wiki/Topological_sorting#Kahn's_algorithm
+
+		List<FullCommit> topologicallySorted = new ArrayList<>();
+
+		Queue<FullCommit> leaves = commits.stream()
+			// Only consider commits in our commits list. Throw away all children *not* in the list, as
+			// we are focusing on a small part of the graph and trying to sort only this part
+			// topologically.
+			// If we do not throw them away, we will find children outside the range, leading to too few
+			// found leaf nodes
+			.filter(it -> it.getChildHashes().stream().noneMatch(hashes::containsKey))
+			.collect(toCollection(ArrayDeque::new));
+
+		// We can not modify the actual children or remove edges. This is one of the pre-requisites for
+		// Khan's Algorithm though, as it deletes all explored edges starting with the leaves.
+		// Furthermore, not all children should be considered - only those that we know are in the
+		// commits list. All other children are outside the time range and irrelevant, as they should
+		// not appear in the graph.
+		// If we do not exclude those here, we will have too many children and won't always end up with
+		// *zero* leftover children, causing the Commit to not be recognized as a new leaf.
+		Map<FullCommit, Set<CommitHash>> parentChildMap = commits.stream()
+			.collect(toMap(
+				it -> it,
+				it -> it.getChildHashes().stream()
+					.filter(hashes::containsKey)
+					.collect(toCollection(HashSet::new))
+			));
+
+		while (!leaves.isEmpty()) {
+			FullCommit commit = leaves.poll();
+			topologicallySorted.add(commit);
+
+			for (CommitHash parentHash : commit.getParentHashes()) {
+				FullCommit parentCommit = hashes.get(parentHash);
+
+				// outside of our time bound (i.e. commits i.e. hashes)
+				if (parentCommit == null) {
+					continue;
+				}
+
+				Set<CommitHash> existingchildren = parentChildMap.get(parentCommit);
+				existingchildren.remove(commit.getHash());
+
+				// This commit has no other children in our time window -> it is now a leaf!
+				if (existingchildren.isEmpty()) {
+					leaves.add(parentCommit);
+				}
+			}
+		}
+
+		// We appended to the end, so we now need to reverse it. Our leaves are the first entries
+		// currently, but they should be the last.
+		Collections.reverse(topologicallySorted);
+
+		return topologicallySorted;
 	}
 }

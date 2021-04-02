@@ -1,4 +1,4 @@
-import { DetailDataPoint } from '@/store/types'
+import { GraphDataPoint } from '@/store/types'
 
 const millisPerDay: number = 1000 * 60 * 60 * 24
 
@@ -17,29 +17,26 @@ function groupBy<K, V>(list: K[], keyGetter: (key: K) => V) {
   return map
 }
 
-export function spaceDayEquidistant(
-  detailGraph: DetailDataPoint[]
-): DetailDataPoint[] {
-  const dayGroups: Map<number, DetailDataPoint[]> = groupBy(
+export function spaceDayEquidistant<T extends GraphDataPoint>(
+  detailGraph: T[]
+): T[] {
+  const dayGroups: Map<number, GraphDataPoint[]> = groupBy(
     detailGraph,
     key =>
       // round to day
-      Math.floor(key.committerDate.getTime() / millisPerDay) * millisPerDay
+      Math.floor(key.committerTime.getTime() / millisPerDay) * millisPerDay
   )
 
-  return Array.from(dayGroups.entries()).flatMap(([day, points]) => {
+  const groupEntries = Array.from(dayGroups.entries())
+  groupEntries.sort((a, b) => a[0] - b[0])
+
+  return groupEntries.flatMap(([day, points]) => {
     const spacingBetweenElementsMillis = millisPerDay / points.length
 
     return points.map((point, index) => {
-      return new DetailDataPoint(
-        point.hash,
-        point.parents,
-        point.author,
-        point.committerDate,
-        new Date(day + spacingBetweenElementsMillis * index),
-        point.summary,
-        point.values
-      )
+      return point.positionedAt(
+        new Date(day + spacingBetweenElementsMillis * index)
+      ) as T
     })
   })
 }

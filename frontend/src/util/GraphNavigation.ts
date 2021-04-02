@@ -32,8 +32,8 @@ export async function showCommitInDetailGraph(
 
   if (detailPoint) {
     vxm.detailGraphModule.referenceDatapoint = {
-      dataPoint: detailPoint,
-      dimension: dimension
+      datapoint: detailPoint,
+      seriesId: dimension.toString()
     }
   }
 

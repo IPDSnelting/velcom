@@ -11,8 +11,9 @@
               text
               outlined
               @click="setAsReference"
-              >Use datapoint as reference</v-btn
             >
+              Use datapoint as reference
+            </v-btn>
           </v-col>
         </v-row>
         <v-row dense>
@@ -24,8 +25,9 @@
               text
               outlined
               @click="removeReferenceLine"
-              >remove reference line</v-btn
             >
+              Remove reference line
+            </v-btn>
           </v-col>
         </v-row>
         <v-row v-if="allowSelectCompare" class="mt-4" dense>
@@ -36,8 +38,9 @@
               text
               outlined
               @click="setAsCompare"
-              >Select this commit to compare</v-btn
             >
+              Select this commit to compare
+            </v-btn>
           </v-col>
         </v-row>
         <v-row v-if="allowSelectCompare && commitToCompare" dense>
@@ -49,8 +52,9 @@
               outlined
               class="reflow-button py-2"
               @click="compareCommits"
-              >{{ compareLabel }}</v-btn
             >
+              {{ compareLabel }}
+            </v-btn>
           </v-col>
         </v-row>
         <v-row v-if="commitToCompare" dense>
@@ -62,8 +66,9 @@
               outlined
               class="reflow-button py-2"
               @click="removeCompare"
-              >Reset comparison</v-btn
             >
+              Reset comparison
+            </v-btn>
           </v-col>
         </v-row>
       </v-card-text>
@@ -83,9 +88,12 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
-import { CommitDescription, DetailDataPoint, Dimension } from '@/store/types'
-import { vxm } from '@/store'
-import { DimensionDetailPoint } from '@/store/modules/detailGraphStore'
+import {
+  AttributedDatapoint,
+  CommitDescription,
+  GraphDataPoint,
+  SeriesId
+} from '@/store/types'
 import CommitBenchmarkActions from '@/components/CommitBenchmarkActions.vue'
 
 @Component({
@@ -93,22 +101,28 @@ import CommitBenchmarkActions from '@/components/CommitBenchmarkActions.vue'
     'benchmark-actions': CommitBenchmarkActions
   }
 })
-export default class DetailDatapointDialog extends Vue {
+export default class GraphDatapointDialog extends Vue {
   @Prop({ default: false })
-  dialogOpen!: boolean
+  private readonly dialogOpen!: boolean
 
   @Prop()
-  selectedDatapoint!: DetailDataPoint
+  private readonly selectedDatapoint!: GraphDataPoint
 
   @Prop()
-  dimension!: Dimension
+  private readonly seriesId!: SeriesId
+
+  @Prop({ default: null })
+  private readonly commitToCompare!: AttributedDatapoint | null
+
+  @Prop({ default: null })
+  private readonly referenceDatapoint!: AttributedDatapoint | null
 
   private get commitHasValue() {
-    return this.selectedDatapoint.successful(this.dimension)
+    return this.selectedDatapoint.successful(this.seriesId)
   }
 
   private get commitHasRun() {
-    return !this.selectedDatapoint.unbenchmarked(this.dimension)
+    return !this.selectedDatapoint.unbenchmarked(this.seriesId)
   }
 
   private get allowSelectAsReference(): boolean {
@@ -119,53 +133,49 @@ export default class DetailDatapointDialog extends Vue {
     return this.commitHasValue
   }
 
-  private get commitToCompare(): DimensionDetailPoint | null {
-    return vxm.detailGraphModule.commitToCompare
-  }
-
   private get hasReferenceLine() {
-    return vxm.detailGraphModule.referenceDatapoint !== null
+    return this.referenceDatapoint !== null
   }
 
   private get selectedDatapointAsCommitDescription() {
     return new CommitDescription(
-      vxm.detailGraphModule.selectedRepoId,
+      this.selectedDatapoint.repoId,
       this.selectedDatapoint.hash,
       this.selectedDatapoint.author,
-      this.selectedDatapoint.committerDate,
+      this.selectedDatapoint.committerTime,
       this.selectedDatapoint.summary
     )
   }
 
   private get compareLabel(): string {
     return this.commitToCompare
-      ? 'Compare this commit to commit ' + this.commitToCompare.dataPoint.hash
+      ? 'Compare this commit to commit ' + this.commitToCompare.datapoint.hash
       : ''
   }
 
   private setAsReference() {
-    vxm.detailGraphModule.referenceDatapoint = {
-      dataPoint: this.selectedDatapoint,
-      dimension: this.dimension
-    }
+    this.$emit('update:referenceDatapoint', {
+      datapoint: this.selectedDatapoint,
+      seriesId: this.seriesId
+    } as AttributedDatapoint)
     this.$emit('close')
   }
 
   private removeReferenceLine() {
-    vxm.detailGraphModule.referenceDatapoint = null
+    this.$emit('update:referenceDatapoint', null)
     this.$emit('close')
   }
 
   private setAsCompare() {
-    vxm.detailGraphModule.commitToCompare = {
-      dimension: this.dimension,
-      dataPoint: this.selectedDatapoint
-    }
+    this.$emit('update:commitToCompare', {
+      datapoint: this.selectedDatapoint,
+      seriesId: this.seriesId
+    } as AttributedDatapoint)
     this.$emit('close')
   }
 
   private removeCompare() {
-    vxm.detailGraphModule.commitToCompare = null
+    this.$emit('update:commitToCompare', null)
     this.$emit('close')
   }
 
@@ -175,11 +185,11 @@ export default class DetailDatapointDialog extends Vue {
   }
 
   private pointDialogExecuteCompare() {
-    if (!vxm.detailGraphModule.commitToCompare || !this.selectedDatapoint) {
+    if (!this.commitToCompare || !this.selectedDatapoint) {
       return
     }
-    const repoId = vxm.detailGraphModule.selectedRepoId
-    const hashFrom = vxm.detailGraphModule.commitToCompare.dataPoint.hash
+    const repoId = this.commitToCompare.datapoint.repoId
+    const hashFrom = this.commitToCompare.datapoint.hash
     const hashTo = this.selectedDatapoint.hash
 
     this.$router.push({

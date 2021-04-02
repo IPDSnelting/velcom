@@ -12,7 +12,7 @@ import {
 } from '@/util/StorePersistenceUtilities'
 
 const STORAGE_VERSION_KEY = 'VELCOM_STORAGE_VERSION'
-const STORAGE_VERSION_CURRENT = '1'
+const STORAGE_VERSION_CURRENT = '2'
 
 /**
  * Deletes old stored data which does not conform to what the store expects to
@@ -78,10 +78,10 @@ export const persistenceSessionStorage = new VuexPersistence<
     const state = rawState as RootState
 
     const persistable: SessionStoragePersisted = {
+      detailGraphModule: detailGraphStoreToJson(state.detailGraphModule),
       comparisonGraphModule: comparisonGraphStoreToJson(
         state.comparisonGraphModule
-      ),
-      detailGraphModule: detailGraphStoreToJson(state.detailGraphModule)
+      )
     }
 
     storage!.setItem(key, JSON.stringify(persistable))
@@ -96,10 +96,10 @@ export const persistenceSessionStorage = new VuexPersistence<
     const parsed = JSON.parse(data) as SessionStoragePersisted
 
     return {
+      detailGraphModule: detailGraphStoreFromJson(parsed.detailGraphModule),
       comparisonGraphModule: comparisonGraphStoreFromJson(
         parsed.comparisonGraphModule
-      ),
-      detailGraphModule: detailGraphStoreFromJson(parsed.detailGraphModule)
+      )
     }
   }
 })
