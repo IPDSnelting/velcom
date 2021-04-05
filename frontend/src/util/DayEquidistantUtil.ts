@@ -3,7 +3,10 @@ import { GraphDataPoint } from '@/store/types'
 const millisPerDay: number = 1000 * 60 * 60 * 24
 
 // https://stackoverflow.com/questions/14446511/most-efficient-method-to-groupby-on-an-array-of-objects
-function groupBy<K, V>(list: K[], keyGetter: (key: K) => V) {
+export function groupBy<K, V>(
+  list: V[],
+  keyGetter: (value: V) => K
+): Map<K, V[]> {
   const map = new Map()
   list.forEach(item => {
     const key = keyGetter(item)

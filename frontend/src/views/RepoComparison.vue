@@ -61,7 +61,7 @@ import { ComparisonDataPoint, Dimension, Repo } from '@/store/types'
 import ComparisonGraph from '@/components/graphs/comparison/ComparisonGraph.vue'
 import { Watch } from 'vue-property-decorator'
 import ComparisonGraphSettings from '@/components/graphs/comparison/ComparisonGraphSettings.vue'
-import { spaceDayEquidistant } from '@/util/DayEquidistantUtil'
+import { groupBy, spaceDayEquidistant } from '@/util/DayEquidistantUtil'
 import { availableGraphComponents } from '@/util/GraphVariantSelection'
 import { debounce } from '@/util/Debouncer'
 

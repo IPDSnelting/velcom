@@ -424,40 +424,42 @@ export default class EchartsDetailGraph extends Vue {
   private buildPointsForSeries(seriesInformation: SeriesInformation) {
     const seriesId = seriesInformation.id
     let lastSuccessfulValue: number = this.findFirstSuccessful(seriesId)
-    return this.datapoints.map(point => {
-      let benchmarkStatus: BenchmarkStatus = 'success'
-      let color = seriesInformation.color
-      let borderColor = color
+    return this.datapoints
+      .filter(it => it.values.has(seriesId))
+      .map(point => {
+        let benchmarkStatus: BenchmarkStatus = 'success'
+        let color = seriesInformation.color
+        let borderColor = color
 
-      let pointValue = point.values.get(seriesId)
-      if (typeof pointValue !== 'number') {
-        pointValue = lastSuccessfulValue
-      }
-      lastSuccessfulValue = pointValue
+        let pointValue = point.values.get(seriesId)
+        if (typeof pointValue !== 'number') {
+          pointValue = lastSuccessfulValue
+        }
+        lastSuccessfulValue = pointValue
 
-      if (point.failed(seriesId)) {
-        // grey circle
-        benchmarkStatus = 'failed'
-        color = this.graphFailedOrUnbenchmarkedColor
-        borderColor = color
-      } else if (point.unbenchmarked(seriesId)) {
-        benchmarkStatus = point.commitUnbenchmarked(seriesId)
-          ? 'unbenchmarked'
-          : 'no-such-metric'
-        // empty circle with outline
-        color = this.graphBackgroundColor
-        borderColor = this.graphFailedOrUnbenchmarkedColor
-      }
+        if (point.failed(seriesId)) {
+          // grey circle
+          benchmarkStatus = 'failed'
+          color = this.graphFailedOrUnbenchmarkedColor
+          borderColor = color
+        } else if (point.unbenchmarked(seriesId)) {
+          benchmarkStatus = point.commitUnbenchmarked(seriesId)
+            ? 'unbenchmarked'
+            : 'no-such-metric'
+          // empty circle with outline
+          color = this.graphBackgroundColor
+          borderColor = this.graphFailedOrUnbenchmarkedColor
+        }
 
-      return new EchartsDataPoint(
-        point.positionTime,
-        pointValue,
-        benchmarkStatus,
-        point.uid,
-        color,
-        borderColor
-      )
-    })
+        return new EchartsDataPoint(
+          point.positionTime,
+          pointValue,
+          benchmarkStatus,
+          point.uid,
+          color,
+          borderColor
+        )
+      })
   }
 
   private get echartsDataPoints(): Map<SeriesId, EchartsDataPoint[]> {
