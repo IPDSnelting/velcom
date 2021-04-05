@@ -611,7 +611,7 @@ export class ComparisonDataPoint extends GraphDataPoint {
     if (this.values.size !== 1 || !this.values.has(repoId)) {
       throw new Error(
         "Graph datapoint didn't received the values it expected (" +
-          this.values +
+          Array.from(this.values.entries()) +
           ') for repo' +
           this.repoId
       )

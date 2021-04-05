@@ -94,7 +94,7 @@ function hydrateComparisonDataPoint(it: ComparisonDataPoint) {
     new Date(it.committerTime),
     it.hash,
     it.repoId,
-    new Map(it.values.entries()),
+    new Map(it.values),
     it.parentUids,
     it.summary,
     it.author
