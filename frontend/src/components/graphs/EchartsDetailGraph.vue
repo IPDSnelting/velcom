@@ -639,17 +639,19 @@ export default class EchartsDetailGraph extends Vue {
         .get(this.referenceDatapoint!.seriesId)!
         .find(it => it.name === point.uid)
 
-      markPointData.push({
-        coord: [
-          displayedPoint!.positionTime,
-          point.values.get(this.referenceDatapoint!.seriesId)
-        ],
-        label: {
-          show: true,
-          position: 'inside',
-          formatter: () => 'R'
-        }
-      })
+      if (displayedPoint) {
+        markPointData.push({
+          coord: [
+            displayedPoint.positionTime,
+            point.values.get(this.referenceDatapoint!.seriesId)
+          ],
+          label: {
+            show: true,
+            position: 'inside',
+            formatter: () => 'R'
+          }
+        })
+      }
     }
 
     const markPointJson = {
