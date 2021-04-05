@@ -69,7 +69,6 @@ export class ComparisonGraphStore extends VxModule {
   zoomYStartValue: number | null = null
   zoomYEndValue: number | null = null
 
-  commitToCompare: AttributedDatapoint | null = null
   referenceDatapoint: AttributedDatapoint | null = null
 
   @action
