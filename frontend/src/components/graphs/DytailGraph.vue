@@ -103,18 +103,18 @@ export default class DytailGraph extends Vue {
   // <!--<editor-fold desc="DATA POINTS">-->
   /**
    * The only possibility one has to find the (abstract) data point for a given
-   * point in the graph is to go by x axis position ( = the committer date).
+   * point in the graph is to go by x axis position.
    * This is not guaranteed to give the correct data point, but it's accurate
    * enough to display a fitting tooltip
    *
-   * @param authorDate: date on which to search for a data point
+   * @param positionDate: date on which to search for a data point
    * @private
    */
   private datapointByPositionDate(
-    authorDate: number
+    positionDate: number
   ): DetailDataPoint | undefined {
     return this.datapoints.find(
-      point => point.positionTime.getTime() === authorDate
+      point => point.positionTime.getTime() === positionDate
     ) as DetailDataPoint | undefined
   }
 
@@ -234,15 +234,17 @@ export default class DytailGraph extends Vue {
 
     for (const series of this.seriesInformation) {
       let lastValue = this.firstSuccessful(series.id)
-      this.datapoints.forEach((point, index) => {
-        let pointValue = point.values.get(series.id)
-        if (typeof pointValue !== 'number') {
-          pointValue = lastValue
-        }
-        lastValue = pointValue
+      this.datapoints
+        .filter(it => it.values.has(series.id))
+        .forEach((point, index) => {
+          let pointValue = point.values.get(series.id)
+          if (typeof pointValue !== 'number') {
+            pointValue = lastValue
+          }
+          lastValue = pointValue
 
-        data[index].push(pointValue)
-      })
+          data[index].push(pointValue)
+        })
     }
 
     this.graph.updateOptions({
