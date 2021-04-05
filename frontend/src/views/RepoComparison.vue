@@ -167,9 +167,14 @@ export default class RepoComparison extends Vue {
   }
 
   private applyDatapointTransformations(datapoints: ComparisonDataPoint[]) {
-    return this.dayEquidistantGraphSelected
-      ? spaceDayEquidistant(datapoints)
-      : datapoints.map(it => it.positionedAt(it.committerTime))
+    if (!this.dayEquidistantGraphSelected) {
+      return datapoints.map(it => it.positionedAt(it.committerTime))
+    }
+
+    const byRepo = groupBy(datapoints, it => it.repoId)
+    return Array.from(byRepo.entries())
+      .map(([, points]) => spaceDayEquidistant(points))
+      .reduce((a, b) => a.concat(b))
   }
 
   @Watch('selectedRepos')
