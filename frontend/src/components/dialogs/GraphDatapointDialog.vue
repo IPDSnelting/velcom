@@ -117,6 +117,9 @@ export default class GraphDatapointDialog extends Vue {
   @Prop({ default: null })
   private readonly referenceDatapoint!: AttributedDatapoint | null
 
+  @Prop({ default: false })
+  private readonly noCompare!: boolean
+
   private get commitHasValue() {
     return this.selectedDatapoint.successful(this.seriesId)
   }
@@ -130,7 +133,7 @@ export default class GraphDatapointDialog extends Vue {
   }
 
   private get allowSelectCompare(): boolean {
-    return this.commitHasValue
+    return !this.noCompare && this.commitHasValue
   }
 
   private get hasReferenceLine() {

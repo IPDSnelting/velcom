@@ -94,7 +94,7 @@ function hydrateComparisonDataPoint(it: ComparisonDataPoint) {
     new Date(it.committerTime),
     it.hash,
     it.repoId,
-    new Map(it.values.entries()),
+    new Map(it.values),
     it.parentUids,
     it.summary,
     it.author
@@ -116,10 +116,6 @@ export function comparisonGraphStoreFromJson(json?: string): any {
   parsed.selectedDimension = parsed.selectedDimension
     ? hydrateDimension(parsed.selectedDimension)
     : null
-  parsed.commitToCompare = deserializeGraphDataPoint(
-    parsed.commitToCompare,
-    hydrateComparisonDataPoint
-  )
   parsed.referenceDatapoint = deserializeGraphDataPoint(
     parsed.referenceDatapoint,
     hydrateComparisonDataPoint
@@ -139,7 +135,6 @@ export function comparisonGraphStoreToJson(
     zoomXEndValue: store.zoomXEndValue,
     zoomYStartValue: store.zoomYStartValue,
     zoomYEndValue: store.zoomYEndValue,
-    commitToCompare: serializeGraphDataPoint(store.commitToCompare),
     referenceDatapoint: serializeGraphDataPoint(store.referenceDatapoint),
     beginYAtZero: store.beginYAtZero,
     dayEquidistantGraphSelected: store.dayEquidistantGraphSelected

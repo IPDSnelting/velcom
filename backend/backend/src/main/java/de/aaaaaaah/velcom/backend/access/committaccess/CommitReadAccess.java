@@ -345,7 +345,7 @@ public class CommitReadAccess {
 	}
 
 	/**
-	 * Gets all commits - tracked and untracked - whose <em>author</em> date is between the given
+	 * Gets all commits - tracked and untracked - whose <em>committer</em> date is between the given
 	 * start and end time.
 	 *
 	 * @param repoId the id of the repo
@@ -418,10 +418,10 @@ public class CommitReadAccess {
 				.and(KNOWN_COMMIT.HASH.in(reachableHashes));
 
 			if (startTime != null) {
-				query = query.and(KNOWN_COMMIT.AUTHOR_DATE.ge(startTime));
+				query = query.and(KNOWN_COMMIT.COMMITTER_DATE.ge(startTime));
 			}
 			if (stopTime != null) {
-				query = query.and(KNOWN_COMMIT.AUTHOR_DATE.le(stopTime));
+				query = query.and(KNOWN_COMMIT.COMMITTER_DATE.le(stopTime));
 			}
 
 			return query.stream()

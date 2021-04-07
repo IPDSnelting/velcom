@@ -448,18 +448,22 @@ class CommitReadAccessTest {
 			.containsExactlyInAnyOrder(COMM_B_HASH, COMM_C_HASH, COMM_D_HASH, COMM_E_HASH, COMM_F_HASH,
 				COMM_G_HASH);
 
-		// Check off-by-one errors and that author and not committer time is used
+		// Check off-by-one errors and that committer and not author time is used
 
 		commits = access.getCommitsBetween(REPO_ID, List.of(BranchName.fromName("T")),
 			Instant.ofEpochSecond(1600040002), Instant.ofEpochSecond(1600050001));
 		assertThat(commits.stream()
 			.map(Commit::getHash))
-			.containsExactlyInAnyOrder(COMM_E_HASH);
+			.containsExactlyInAnyOrder(COMM_D_HASH);
 
 		commits = access.getCommitsBetween(REPO_ID, List.of(BranchName.fromName("T")),
-			Instant.ofEpochSecond(1600040001), Instant.ofEpochSecond(1600050000));
+			Instant.ofEpochSecond(1600040001), Instant.ofEpochSecond(1600050002));
 		assertThat(commits.stream()
 			.map(Commit::getHash))
-			.containsExactlyInAnyOrder(COMM_D_HASH);
+			.containsExactlyInAnyOrder(COMM_D_HASH, COMM_E_HASH);
+
+		commits = access.getCommitsBetween(REPO_ID, List.of(BranchName.fromName("T")),
+			Instant.ofEpochSecond(1600040003), Instant.ofEpochSecond(1600050000));
+		assertThat(commits).isEmpty();
 	}
 }

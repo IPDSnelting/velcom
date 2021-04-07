@@ -61,11 +61,11 @@ function graphDataPointValueFromJson(
 
 export function comparisonDatapointFromJson(
   dimension: Dimension,
-  json: any
+  repoJson: any
 ): ComparisonDataPoint[] {
-  const repoId: RepoId = json.repo_id
+  const repoId: RepoId = repoJson.repo_id
 
-  return json.commits.map((commit: any) => {
+  return repoJson.commits.map((commit: any) => {
     const valueMap = new Map()
     valueMap.set(repoId, graphDataPointValueFromJson(commit.value))
     return new ComparisonDataPoint(

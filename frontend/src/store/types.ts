@@ -575,6 +575,18 @@ export class ComparisonDataPoint extends GraphDataPoint {
   readonly author: string
   readonly uid: string
 
+  /**
+   * Creates a new comparison data point.
+   *
+   * @param committerTime the time the commit was comitted at
+   * @param positionTime the time the commit is displayed at in the graph
+   * @param hash the hash of the commit
+   * @param repoId the id of the repo it is in
+   * @param values the *value* (singular) of this commit. Has a single entry with the repoId -> value
+   * @param parentUids the UID of the parent commits
+   * @param summary the commit message summary (first line)
+   * @param author the author of the commit
+   */
   constructor(
     committerTime: Date,
     positionTime: Date,
@@ -595,6 +607,15 @@ export class ComparisonDataPoint extends GraphDataPoint {
     this.summary = summary
     this.author = author
     this.uid = this.repoId + this.hash
+
+    if (this.values.size !== 1 || !this.values.has(repoId)) {
+      throw new Error(
+        "Graph datapoint didn't received the values it expected (" +
+          Array.from(this.values.entries()) +
+          ') for repo' +
+          this.repoId
+      )
+    }
   }
 
   positionedAt(positionTime: Date): ComparisonDataPoint {

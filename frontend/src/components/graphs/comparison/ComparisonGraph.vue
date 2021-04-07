@@ -13,7 +13,6 @@
         :series-information="seriesInformation"
         :visible-point-count="visiblePointCount"
         :reference-datapoint="referenceDatapoint"
-        :commit-to-compare="commitToCompare"
         :begin-y-at-zero="beginYAtZero"
         :refresh-key="graphRefreshKey"
         @wheel="overscrollToZoom.scrolled($event)"
@@ -31,8 +30,8 @@
             :dialog-open="dialogOpen"
             :selected-datapoint="selectedDatapoint"
             :series-id="seriesInformation.id"
-            :commit-to-compare.sync="commitToCompare"
             :reference-datapoint.sync="referenceDatapoint"
+            :no-compare="true"
             @close="closeDialog()"
           ></graph-datapoint-dialog>
         </template>
@@ -121,15 +120,6 @@ export default class ComparisonGraph extends Vue {
   // noinspection JSUnusedLocalSymbols
   private set dataRangeMax(date: Date) {
     vxm.comparisonGraphModule.endTime = roundDateUp(date)
-  }
-
-  private get commitToCompare(): AttributedDatapoint | null {
-    return vxm.comparisonGraphModule.commitToCompare
-  }
-
-  // noinspection JSUnusedLocalSymbols
-  private set commitToCompare(commit: AttributedDatapoint | null) {
-    vxm.comparisonGraphModule.commitToCompare = commit
   }
 
   private get referenceDatapoint(): AttributedDatapoint | null {
