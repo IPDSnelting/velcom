@@ -10,6 +10,7 @@ import de.aaaaaaah.velcom.backend.access.taskaccess.entities.TaskPriority;
 import de.aaaaaaah.velcom.backend.data.benchrepo.BenchRepo;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.listener.commits.DbUpdater;
+import de.aaaaaaah.velcom.backend.listener.github.GithubPrInteractor;
 import de.aaaaaaah.velcom.backend.storage.db.DBWriteAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import de.aaaaaaah.velcom.backend.storage.repo.GuickCloning;
@@ -23,6 +24,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -175,9 +177,23 @@ public class Listener {
 		}
 	}
 
-	private void updateRepo(Repo repo) throws SynchronizeCommitsException {
-		// TODO: 31.03.21 If repo is GitHub repo and has GitHub info configured, then do PR stuff
-		synchronizeCommitsForRepo(repo);
+	private void updateRepo(Repo repo) throws SynchronizeCommitsException, IOException {
+		Optional<GithubPrInteractor> ghIntOpt = GithubPrInteractor.fromRepo(repo, databaseStorage);
+		if (ghIntOpt.isPresent()) {
+			GithubPrInteractor ghInteractor = ghIntOpt.get();
+
+			ghInteractor.searchForNewPrCommands();
+
+			synchronizeCommitsForRepo(repo);
+
+			ghInteractor.markNewPrCommandsAsSeen();
+			ghInteractor.addNewPrCommandsToQueue();
+			ghInteractor.replyToFinishedPrCommands();
+			ghInteractor.markFinishedPrCommandsAsComplete();
+			ghInteractor.replyToErroredPrCommands();
+		} else {
+			synchronizeCommitsForRepo(repo);
+		}
 	}
 
 	/**

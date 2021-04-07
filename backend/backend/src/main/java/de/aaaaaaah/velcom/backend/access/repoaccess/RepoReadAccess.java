@@ -35,7 +35,7 @@ public class RepoReadAccess {
 			record.getName(),
 			new RemoteUrl(record.getRemoteUrl()),
 			record.getGithubAuthToken(),
-			record.getGithubActivationTime()
+			record.getGithubCommentCutoff()
 		);
 	}
 

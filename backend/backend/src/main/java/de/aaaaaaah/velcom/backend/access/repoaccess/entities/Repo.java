@@ -19,21 +19,21 @@ public class Repo {
 	@Nullable
 	private final String githubAccessToken;
 	@Nullable
-	private final Instant githubActivationTime;
+	private final Instant githubCommentCutoff;
 
 	public Repo(RepoId id, String name, RemoteUrl remoteUrl, @Nullable String githubAccessToken,
-		@Nullable Instant githubActivationTime) {
+		@Nullable Instant githubCommentCutoff) {
 
-		if ((githubAccessToken == null) != (githubActivationTime == null)) {
+		if ((githubAccessToken == null) != (githubCommentCutoff == null)) {
 			throw new IllegalArgumentException(
-				"ghAccessToken and ghActivationTime must either both be present or both be null");
+				"githubAccessToken and githubCommentCutoff must either both be present or both be null");
 		}
 
 		this.id = id;
 		this.name = name;
 		this.remoteUrl = remoteUrl;
 		this.githubAccessToken = githubAccessToken;
-		this.githubActivationTime = githubActivationTime;
+		this.githubCommentCutoff = githubCommentCutoff;
 	}
 
 	public RepoId getId() {
@@ -73,8 +73,8 @@ public class Repo {
 
 	public Optional<GithubInfo> getGithubInfo() {
 		Optional<String> repoName = getGithubRepoName();
-		if (repoName.isPresent() && githubAccessToken != null && githubActivationTime != null) {
-			return Optional.of(new GithubInfo(repoName.get(), githubAccessToken, githubActivationTime));
+		if (repoName.isPresent() && githubAccessToken != null && githubCommentCutoff != null) {
+			return Optional.of(new GithubInfo(repoName.get(), githubAccessToken, githubCommentCutoff));
 		} else {
 			return Optional.empty();
 		}
@@ -103,7 +103,7 @@ public class Repo {
 			"id=" + id.getIdAsString() +
 			", name='" + name + '\'' +
 			", remoteUrl='" + remoteUrl.getUrl() + '\'' +
-			", githubActivationTime=" + githubActivationTime +
+			", githubCommentCutoff=" + githubCommentCutoff +
 			'}';
 	}
 
@@ -111,12 +111,12 @@ public class Repo {
 
 		private final String repoName;
 		private final String accessToken;
-		private final Instant activationTime;
+		private final Instant commentCutoff;
 
-		public GithubInfo(String repoName, String accessToken, Instant activationTime) {
+		public GithubInfo(String repoName, String accessToken, Instant commentCutoff) {
 			this.repoName = repoName;
 			this.accessToken = accessToken;
-			this.activationTime = activationTime;
+			this.commentCutoff = commentCutoff;
 		}
 
 		public String getRepoName() {
@@ -127,12 +127,8 @@ public class Repo {
 			return accessToken;
 		}
 
-		/**
-		 * @return the time when the github access token was set. Pull requests and commands from before
-		 * 	this time should be ignored.
-		 */
-		public Instant getActivationTime() {
-			return activationTime;
+		public Instant getCommentCutoff() {
+			return commentCutoff;
 		}
 
 		@Override
@@ -146,19 +142,19 @@ public class Repo {
 			GithubInfo that = (GithubInfo) o;
 			return Objects.equals(repoName, that.repoName) && Objects
 				.equals(accessToken, that.accessToken) && Objects
-				.equals(activationTime, that.activationTime);
+				.equals(commentCutoff, that.commentCutoff);
 		}
 
 		@Override
 		public int hashCode() {
-			return Objects.hash(repoName, accessToken, activationTime);
+			return Objects.hash(repoName, accessToken, commentCutoff);
 		}
 
 		@Override
 		public String toString() {
 			return "GithubInfo{" +
 				"repoName='" + repoName + '\'' +
-				", activationTime=" + activationTime +
+				", commentCutoff=" + commentCutoff +
 				'}';
 		}
 	}
