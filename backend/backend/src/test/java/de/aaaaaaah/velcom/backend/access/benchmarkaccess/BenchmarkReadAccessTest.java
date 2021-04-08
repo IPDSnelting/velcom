@@ -110,13 +110,13 @@ class BenchmarkReadAccessTest {
 
 		testDb.addRepo(REPO1_ID);
 		testDb.addRepo(REPO2_ID);
-		testDb.addCommit(REPO1_ID, COMMIT1_HASH, true, true, "blad9bla",
+		testDb.addCommit(REPO1_ID, COMMIT1_HASH, true, true, true, "blad9bla",
 			Instant.ofEpochSecond(1), Instant.ofEpochSecond(1));
-		testDb.addCommit(REPO1_ID, COMMIT2_HASH, true, true, "m2",
+		testDb.addCommit(REPO1_ID, COMMIT2_HASH, true, true, true, "m2",
 			Instant.ofEpochSecond(2), Instant.ofEpochSecond(2));
-		testDb.addCommit(REPO1_ID, COMMIT3_HASH, true, true, "m3",
+		testDb.addCommit(REPO1_ID, COMMIT3_HASH, true, true, true, "m3",
 			Instant.ofEpochSecond(3), Instant.ofEpochSecond(3));
-		testDb.addCommit(REPO2_ID, COMMIT4_HASH, true, true, "m4",
+		testDb.addCommit(REPO2_ID, COMMIT4_HASH, true, true, true, "m4",
 			Instant.ofEpochSecond(4), Instant.ofEpochSecond(4));
 
 		testDb.addRun(RUN1_ID, "a1", "rn1", "ri1", RUN1_START, RUN1_START.plusSeconds(1),

@@ -95,6 +95,7 @@ public class DbUpdater {
 			jgitCommit.getHashAsString(),
 			false,
 			false,
+			false,
 			jgitCommit.getAuthor(),
 			jgitCommit.getAuthorDate(),
 			jgitCommit.getCommitter(),
