@@ -68,23 +68,23 @@ class CommitReadAccessTest {
 		TestDb testDb = new TestDb(tempDir);
 
 		testDb.addRepo(REPO_ID);
-		testDb.addCommit(REPO_ID, COMM_A_HASH, true, true,
+		testDb.addCommit(REPO_ID, COMM_A_HASH, true, true, true,
 			"aA", Instant.ofEpochSecond(1600010001), "cA", Instant.ofEpochSecond(1600010002), "A");
-		testDb.addCommit(REPO_ID, COMM_B_HASH, true, true,
+		testDb.addCommit(REPO_ID, COMM_B_HASH, true, true, true,
 			"aB", Instant.ofEpochSecond(1600020001), "cB", Instant.ofEpochSecond(1600020002), "B");
-		testDb.addCommit(REPO_ID, COMM_C_HASH, true, true,
+		testDb.addCommit(REPO_ID, COMM_C_HASH, true, true, true,
 			"aC", Instant.ofEpochSecond(1600030001), "cC", Instant.ofEpochSecond(1600030002), "C");
-		testDb.addCommit(REPO_ID, COMM_D_HASH, true, true,
+		testDb.addCommit(REPO_ID, COMM_D_HASH, true, true, true,
 			"aD", Instant.ofEpochSecond(1600040001), "cD", Instant.ofEpochSecond(1600040002), "D");
-		testDb.addCommit(REPO_ID, COMM_E_HASH, true, true,
+		testDb.addCommit(REPO_ID, COMM_E_HASH, true, true, true,
 			"aE", Instant.ofEpochSecond(1600050001), "cE", Instant.ofEpochSecond(1600050002), "E");
-		testDb.addCommit(REPO_ID, COMM_F_HASH, true, false,
+		testDb.addCommit(REPO_ID, COMM_F_HASH, true, false, true,
 			"aF", Instant.ofEpochSecond(1600060001), "cF", Instant.ofEpochSecond(1600060002), "F");
-		testDb.addCommit(REPO_ID, COMM_G_HASH, true, false,
+		testDb.addCommit(REPO_ID, COMM_G_HASH, true, false, true,
 			"aG", Instant.ofEpochSecond(1600070001), "cG", Instant.ofEpochSecond(1600070002), "G");
-		testDb.addCommit(REPO_ID, COMM_H_HASH, false, false,
+		testDb.addCommit(REPO_ID, COMM_H_HASH, false, false, true,
 			"aH", Instant.ofEpochSecond(1600080001), "cH", Instant.ofEpochSecond(1600080002), "H");
-		testDb.addCommit(REPO_ID, COMM_I_HASH, false, false,
+		testDb.addCommit(REPO_ID, COMM_I_HASH, false, false, true,
 			"aI", Instant.ofEpochSecond(1600090001), "cI", Instant.ofEpochSecond(1600090002), "I");
 		testDb.addCommitRel(REPO_ID, COMM_A_HASH, COMM_B_HASH);
 		testDb.addCommitRel(REPO_ID, COMM_B_HASH, COMM_C_HASH);

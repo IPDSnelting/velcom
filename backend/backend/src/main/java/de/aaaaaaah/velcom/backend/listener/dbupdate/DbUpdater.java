@@ -95,6 +95,7 @@ public class DbUpdater {
 			jgitCommit.getHashAsString(),
 			false,
 			false,
+			false,
 			jgitCommit.getAuthor(),
 			jgitCommit.getAuthorDate(),
 			jgitCommit.getCommitter(),
@@ -210,7 +211,9 @@ public class DbUpdater {
 			+ ")\n"
 			+ "\n"
 			+ "UPDATE known_commit\n"
-			+ "SET tracked = (known_commit.hash IN rec)\n"
+			+ "SET\n"
+			+ "  tracked = (known_commit.hash IN rec),\n"
+			+ "  ever_tracked = ever_tracked OR (known_commit.hash IN rec)\n"
 			+ "WHERE known_commit.repo_id = ?\n" // <-- Binding #2
 			+ "";
 
@@ -254,6 +257,19 @@ public class DbUpdater {
 	/**
 	 * Find all commits that should be tracked (via a recursive query) and add them to the queue (if
 	 * they haven't already been benchmarked yet).
+	 * <p>
+	 * This query only considers commits with the "ever_tracked" flag set to false. It starts at the
+	 * tips of the tracked branches and then finds all connected commits. It always moves from child
+	 * to parent, never from parent to child.
+	 * <p>
+	 * In other words, consider a directed graph of all commits with "ever_tracked" set to false. The
+	 * edges are child-parent relationships (arrows pointing from child to parent). This query finds
+	 * all nodes (i. e. commits) that are reachable from the tips of the tracked branches (should they
+	 * be present in the graph).
+	 * <p>
+	 * The "ever_tracked" flag is used instead of the "tracked" flag to avoid filling the queue with
+	 * old commits when marking a branch tracked in a repo with no tracked branches but lots of
+	 * commits.
 	 *
 	 * @return the hashes of all commits that need to be entered into the queue, sorted by committer
 	 * 	date (or author date in case of ties) in ascending order. These may include commits that are
@@ -275,7 +291,7 @@ public class DbUpdater {
 			+ "    AND known_commit.hash = branch.latest_commit_hash\n"
 			+ "  WHERE branch.repo_id = ?\n" // <-- Binding #1
 			+ "  AND branch.tracked\n"
-			+ "  AND NOT known_commit.tracked\n"
+			+ "  AND NOT known_commit.ever_tracked\n"
 			+ "  \n"
 			+ "  UNION\n"
 			+ "  \n"
@@ -286,7 +302,7 @@ public class DbUpdater {
 			+ "  JOIN untracked\n"
 			+ "    ON untracked.hash = commit_relationship.child_hash\n"
 			+ "  WHERE known_commit.repo_id = ?\n" // <-- Binding #2
-			+ "  AND NOT known_commit.tracked\n"
+			+ "  AND NOT known_commit.ever_tracked\n"
 			+ "),\n"
 			+ "\n"
 			+ "has_result(hash) AS (\n"

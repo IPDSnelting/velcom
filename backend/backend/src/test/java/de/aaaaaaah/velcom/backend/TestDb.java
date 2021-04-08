@@ -120,13 +120,15 @@ public class TestDb {
 	}
 
 	public void addCommit(RepoId repoId, CommitHash commitHash, boolean reachable, boolean tracked,
-		String author, Instant authorDate, String committer, Instant committerDate, String message) {
+		boolean everTracked, String author, Instant authorDate, String committer, Instant committerDate,
+		String message) {
 
 		dslContext.batchInsert(new KnownCommitRecord(
 			repoId.getIdAsString(),
 			commitHash.getHash(),
 			reachable,
 			tracked,
+			everTracked,
 			author,
 			authorDate,
 			committer,
@@ -136,16 +138,16 @@ public class TestDb {
 	}
 
 	public void addCommit(RepoId repoId, CommitHash commitHash, boolean reachable, boolean tracked,
-		String message, Instant authorDate, Instant committerDate) {
+		boolean everTracked, String message, Instant authorDate, Instant committerDate) {
 
-		addCommit(repoId, commitHash, reachable, tracked, "author", authorDate, "committer",
-			committerDate, message);
+		addCommit(repoId, commitHash, reachable, tracked, everTracked, "author", authorDate,
+			"committer", committerDate, message);
 	}
 
 	public void addCommit(RepoId repoId, CommitHash commitHash) {
 
-		addCommit(repoId, commitHash, true, true, "author", Instant.now(), "committer", Instant.now(),
-			"message");
+		addCommit(repoId, commitHash, true, true, true, "author", Instant.now(), "committer",
+			Instant.now(), "message");
 	}
 
 	public void addCommitRel(RepoId repoId, CommitHash parent, CommitHash child) {
