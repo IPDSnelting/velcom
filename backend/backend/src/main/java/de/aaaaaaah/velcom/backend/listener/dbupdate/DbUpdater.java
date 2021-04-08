@@ -15,6 +15,7 @@ import de.aaaaaaah.velcom.backend.storage.db.DBWriteAccess;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -47,7 +48,11 @@ public class DbUpdater {
 	}
 
 	/**
-	 * Perform the update (see class level javadoc).
+	 * Update the DB to reflect the current state of the jgit repo. If the db contains no commits, the
+	 * repo is considered to be new. (This leads to an edge case where a known but empty repo is also
+	 * considered new. However, the worst thing that happens is hat the repo just skips a few of the
+	 * first commits that appear. There are situations where this is good and situations where it is
+	 * slightly annoying, but it's not bad per se.)
 	 *
 	 * @return the hashes of all commits that need to be entered into the queue, sorted by committer
 	 * 	date (or author date in case of ties) in ascending order (except when this is the repo's first
@@ -72,7 +77,8 @@ public class DbUpdater {
 				toBeQueued = findNewTasks();
 			} else {
 				LOGGER.debug("Detected empty (i. e. new) repository");
-				toBeQueued = useHeadsOfTrackedBranchesAsTasks();
+				trackMainBranch();
+				toBeQueued = getHeadsOfTrackedBranches();
 			}
 
 			updateTrackedFlags();
@@ -315,12 +321,26 @@ public class DbUpdater {
 	}
 
 	/**
+	 * Track the repo's main branch (if one exists).
+	 */
+	private void trackMainBranch() throws IOException {
+		Optional.ofNullable(jgitRepo.getFullBranch())
+			.map(BranchName::fromFullName)
+			.ifPresent(branchName -> db.dsl()
+				.update(BRANCH)
+				.set(BRANCH.TRACKED, true)
+				.where(BRANCH.REPO_ID.eq(repoIdStr))
+				.and(BRANCH.NAME.eq(branchName.getName()))
+				.execute());
+	}
+
+	/**
 	 * @return the hashes of all commits that need to be entered into the queue, in no particular
 	 * 	order. In theory, these may include commits that are already in the queue and even commits
 	 * 	that have already been benchmarked. In practice, this function should only be called for new
 	 * 	repos, so the queue should not yet contain any of the repo's commits.
 	 */
-	private List<CommitHash> useHeadsOfTrackedBranchesAsTasks() {
+	private List<CommitHash> getHeadsOfTrackedBranches() {
 		// Similar to #findNewTasks(), this function won't ever find unreachable commits.
 		return db.dsl()
 			.selectFrom(BRANCH)
