@@ -45,12 +45,10 @@ export class RepoStore extends VxModule {
   async addRepo(payload: {
     repoName: string
     remoteUrl: string
-    repoToken: string | undefined
   }): Promise<Repo> {
     const response = await axios.post('/repo', {
       name: payload.repoName,
-      remote_url: payload.remoteUrl,
-      token: payload.repoToken
+      remote_url: payload.remoteUrl
     })
 
     const repo: Repo = repoFromJson(response.data.repo)
