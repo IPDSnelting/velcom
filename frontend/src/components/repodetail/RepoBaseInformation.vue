@@ -97,17 +97,16 @@ export default class RepoBaseInformation extends Vue {
     return vxm.userModule.isAdmin
   }
 
-  private deleteRepository() {
+  private async deleteRepository() {
     const confirmed = window.confirm(
       `Do you really want to delete ${this.repo.name} (${this.repo.id})?`
     )
     if (!confirmed) {
       return
     }
-    vxm.repoModule.deleteRepo(this.repo.id).then(() => {
-      vxm.detailGraphModule.selectedRepoId = ''
-      this.$router.replace({ name: 'repo-detail-frame', params: { id: '' } })
-    })
+    await vxm.repoModule.deleteRepo(this.repo.id)
+    vxm.detailGraphModule.selectedRepoId = ''
+    await this.$router.replace({ name: 'repo-detail', params: { id: '' } })
   }
 
   private comparatorTrackStatus(branchA: RepoBranch, branchB: RepoBranch) {
