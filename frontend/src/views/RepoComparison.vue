@@ -161,9 +161,14 @@ export default class RepoComparison extends Vue {
   }
 
   private get selectedRepos(): Repo[] {
-    return Array.from(vxm.comparisonGraphModule.selectedBranches.entries())
-      .filter(([, value]) => value.length > 0)
-      .map(([key]) => vxm.repoModule.repoById(key)!)
+    return (
+      Array.from(vxm.comparisonGraphModule.selectedBranches.entries())
+        .filter(([, value]) => value.length > 0)
+        .map(([key]) => vxm.repoModule.repoById(key))
+        // Repos might not exist anymore, as the selected branches are persisted
+        .filter(it => it !== undefined)
+        .map(it => it!)
+    )
   }
 
   private applyDatapointTransformations(datapoints: ComparisonDataPoint[]) {
