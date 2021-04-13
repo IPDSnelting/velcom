@@ -19,15 +19,13 @@ export class Repo {
   branches: RepoBranch[]
   dimensions: Dimension[]
   remoteURL: string
-  hasToken: boolean
 
   constructor(
     id: RepoId,
     name: string,
     branches: RepoBranch[],
     dimensions: Dimension[],
-    remoteURL: string,
-    hasToken: boolean
+    remoteURL: string
   ) {
     this.id = id
     this.name = name
@@ -36,7 +34,6 @@ export class Repo {
     this.branches = branches.sort((a, b) =>
       a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
     )
-    this.hasToken = hasToken
   }
 
   /**

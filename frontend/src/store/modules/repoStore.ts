@@ -114,7 +114,6 @@ export class RepoStore extends VxModule {
       existing.name = payload.name
       existing.remoteURL = payload.remoteURL
       existing.dimensions = payload.dimensions.slice()
-      existing.hasToken = payload.hasToken
     } else {
       Vue.set(this.repos, payload.id, payload)
       vxm.repoModule.setIndexForRepo(payload.id)

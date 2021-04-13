@@ -14,8 +14,7 @@ export function repoFromJson(json: any): Repo {
     json.name,
     json.branches.map(repoBranchFromJson),
     json.dimensions.map((it: any) => dimensionFromJson(it)),
-    json.remote_url,
-    json.has_token
+    json.remote_url
   )
 }
 
