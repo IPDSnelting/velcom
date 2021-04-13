@@ -62,7 +62,7 @@
                 :key="index"
                 justify="space-between"
                 no-gutters
-                class="py-1"
+                class="py-1 my-0"
               >
                 <v-col cols="6" class="pr-4">
                   <div v-if="parent" class="d-flex justify-start">
