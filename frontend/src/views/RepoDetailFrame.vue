@@ -23,14 +23,11 @@
           </repo-add>
         </v-col>
       </v-row>
-      <v-row no-gutters>
+      <v-row no-gutters v-if="repo">
         <v-col cols="12">
           <v-tabs-items v-model="selectedTab">
             <v-tab-item class="pa-1">
-              <repo-base-information
-                v-if="repo"
-                :repo="repo"
-              ></repo-base-information>
+              <repo-base-information :repo="repo"></repo-base-information>
             </v-tab-item>
             <v-tab-item class="pa-1">
               <repo-graph-view></repo-graph-view>
@@ -112,7 +109,7 @@ export default class RepoDetailFrame extends Vue {
   }
 
   get repoSelected(): boolean {
-    return this.selectedRepo !== null
+    return this.selectedRepo !== null && this.repo !== undefined
   }
 
   mounted(): void {
