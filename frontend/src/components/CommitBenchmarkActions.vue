@@ -89,7 +89,7 @@ export default class CommitBenchmarkActions extends Vue {
         icon: this.commitRemoteIcon,
         tooltip: `View this commit on <strong>${this.getRemoteHostname}</strong>`,
         external: true,
-        show: true
+        show: !!this.getRemoteHostname
       }
     ].filter(it => it.show)
   }
