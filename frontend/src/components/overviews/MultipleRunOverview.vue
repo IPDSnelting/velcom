@@ -1,31 +1,16 @@
 <template>
-  <v-data-iterator
-    class="full-width"
-    :items="runs"
-    :hide-default-footer="runs.length < defaultItemsPerPage"
-    :items-per-page="defaultItemsPerPage"
-    :footer-props="{ itemsPerPageOptions: itemsPerPageOptions }"
-  >
-    <template v-slot:default="props">
-      <v-row>
-        <v-col
-          cols="12"
-          class="my-1 py-0"
-          v-for="(item, index) in props.items"
-          :key="index"
-        >
-          <run-overview :run="run(item)">
-            <template #content v-if="differences(item)">
-              <run-significance-chips
-                :differences="differences(item)"
-                :run-id="run(item).runId"
-              ></run-significance-chips>
-            </template>
-          </run-overview>
-        </v-col>
-      </v-row>
-    </template>
-  </v-data-iterator>
+  <v-list>
+    <v-list-item v-for="item in runs" :key="run(item).runId" class="my-2">
+      <run-overview :run="run(item)" class="full-width">
+        <template #content v-if="differences(item)">
+          <run-significance-chips
+            :differences="differences(item)"
+            :run-id="run(item).runId"
+          ></run-significance-chips>
+        </template>
+      </run-overview>
+    </v-list-item>
+  </v-list>
 </template>
 
 <script lang="ts">
@@ -52,10 +37,6 @@ export default class MultipleRunOverview extends Vue {
 
   @Prop({ default: 3 })
   private numberOfChanges!: number
-
-  // noinspection JSMismatchedCollectionQueryUpdate
-  private itemsPerPageOptions: number[] = [10, 20, 50, 100, 200, -1]
-  private defaultItemsPerPage: number = 20
 
   private run(
     run: RunDescription | RunDescriptionWithDifferences

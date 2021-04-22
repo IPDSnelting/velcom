@@ -18,7 +18,7 @@
                     ></multiple-run-overview>
                   </v-col>
                 </v-row>
-                <v-row align="baseline" justify="end" class="mt-2">
+                <v-row align="baseline" justify="center" class="mt-2">
                   <v-col cols="auto">
                     <v-btn
                       outlined
@@ -50,7 +50,7 @@
                     ></multiple-run-overview>
                   </v-col>
                 </v-row>
-                <v-row align="baseline" justify="end" class="mt-2">
+                <v-row align="baseline" justify="center" class="mt-2">
                   <v-col cols="auto">
                     <v-btn
                       outlined
