@@ -91,6 +91,9 @@ export default class ShareGraphLinkDialog extends Vue {
   @Prop()
   private linkGenerator!: (options: PermanentLinkOptions) => string
 
+  @Prop()
+  private dataRestrictionLabel!: string
+
   private get selectableOptions() {
     return [
       {
@@ -108,10 +111,10 @@ export default class ShareGraphLinkDialog extends Vue {
         key: 'includeYZoom'
       },
       {
-        label: 'Include dimensions',
+        label: this.dataRestrictionLabel,
         selectable: vxm.detailGraphModule.selectedDimensions.length > 0,
         unselectableMessage: "You haven't selected any dimensions",
-        key: 'includeDimensions'
+        key: 'includeDataRestrictions'
       }
     ]
   }

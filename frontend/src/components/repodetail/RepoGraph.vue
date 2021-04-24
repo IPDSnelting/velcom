@@ -21,7 +21,10 @@
                 </v-btn-toggle>
               </v-col>
               <v-col cols="auto">
-                <share-graph-link-dialog :link-generator="getShareLink" />
+                <share-graph-link-dialog
+                  :link-generator="getShareLink"
+                  data-restriction-label="Include dimensions"
+                />
               </v-col>
             </v-row>
           </v-card-title>
