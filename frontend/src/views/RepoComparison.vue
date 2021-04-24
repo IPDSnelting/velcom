@@ -24,7 +24,11 @@
               :begin-y-at-zero.sync="beginYAtZero"
               :graph-component.sync="graphComponent"
               :day-equidistant-graph-selected.sync="dayEquidistantGraphSelected"
-            ></comparison-graph-settings>
+            >
+              <v-col cols="auto">
+                <share-graph-link-dialog :link-generator="getShareLink" />
+              </v-col>
+            </comparison-graph-settings>
           </v-col>
         </v-row>
         <v-row class="mt-0">
@@ -64,9 +68,12 @@ import ComparisonGraphSettings from '@/components/graphs/comparison/ComparisonGr
 import { groupBy, spaceDayEquidistant } from '@/util/DayEquidistantUtil'
 import { availableGraphComponents } from '@/util/GraphVariantSelection'
 import { debounce } from '@/util/Debouncer'
+import ShareGraphLinkDialog from '@/views/ShareGraphLinkDialog.vue'
+import { PermanentLinkOptions } from '@/store/modules/detailGraphStore'
 
 @Component({
   components: {
+    ShareGraphLinkDialog,
     ComparisonGraphSettings,
     ComparisonGraph,
     ComparisonDimensionSelector,
@@ -169,6 +176,10 @@ export default class RepoComparison extends Vue {
         .filter(it => it !== undefined)
         .map(it => it!)
     )
+  }
+
+  private getShareLink(options: PermanentLinkOptions) {
+    return vxm.comparisonGraphModule.permanentLink(options)
   }
 
   private applyDatapointTransformations(datapoints: ComparisonDataPoint[]) {

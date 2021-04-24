@@ -76,7 +76,8 @@ import { vxm } from '@/store'
 import { mdiLinkVariantPlus } from '@mdi/js'
 import { copyToClipboard } from '@/util/ClipboardUtils'
 import { PermanentLinkOptions } from '@/store/modules/detailGraphStore'
-import { Watch } from 'vue-property-decorator'
+import { Prop, Watch } from 'vue-property-decorator'
+import { RawLocation } from 'vue-router'
 
 @Component
 export default class ShareGraphLinkDialog extends Vue {
@@ -87,6 +88,9 @@ export default class ShareGraphLinkDialog extends Vue {
     includeXZoom: true,
     includeDimensions: true
   }
+
+  @Prop()
+  private linkGenerator!: (options: PermanentLinkOptions) => RawLocation
 
   private get selectableOptions() {
     return [
@@ -114,7 +118,7 @@ export default class ShareGraphLinkDialog extends Vue {
   }
 
   private get permanentLinkUrl() {
-    return vxm.detailGraphModule.permanentLink(this.options)
+    return this.linkGenerator(this.options)
   }
 
   private copyPermanentLink() {

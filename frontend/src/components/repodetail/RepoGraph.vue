@@ -21,7 +21,7 @@
                 </v-btn-toggle>
               </v-col>
               <v-col cols="auto">
-                <share-graph-link-dialog />
+                <share-graph-link-dialog :link-generator="getShareLink" />
               </v-col>
             </v-row>
           </v-card-title>
@@ -113,6 +113,7 @@ import {
   availableGraphComponents,
   selectGraphVariant
 } from '@/util/GraphVariantSelection'
+import { PermanentLinkOptions } from '@/store/modules/detailGraphStore'
 
 @Component({
   components: {
@@ -162,6 +163,10 @@ export default class RepoGraphs extends Vue {
     }
     // We do not show an overlay if we have no datapoints as you can load more by zooming out
     return null
+  }
+
+  private getShareLink(options: PermanentLinkOptions) {
+    return vxm.detailGraphModule.permanentLink(options)
   }
 
   @Watch('reloadGraphDataCounter')

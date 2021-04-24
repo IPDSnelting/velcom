@@ -16,6 +16,7 @@ import router from '@/router'
 import { Route } from 'vue-router'
 import { dateFromRelative } from '@/util/TimeUtil'
 import { spaceDayEquidistant } from '@/util/DayEquidistantUtil'
+import { orElse, orUndefined, respectOptions } from '@/util/LinkUtils'
 
 const VxModule = createModule({
   namespaced: 'detailGraphModule',
@@ -445,27 +446,17 @@ export class DetailGraphStore extends VxModule {
    */
   get permanentLink(): (options?: PermanentLinkOptions) => string {
     return options => {
-      const orUndefined = (it: any) => (it ? '' + it : undefined)
-      const orElse = (it: any, subst: any) => (it ? '' + it : '' + subst)
-      function respectOptions<T>(
-        name: keyof PermanentLinkOptions,
-        value: T
-      ): T | undefined {
-        if (!options || options[name]) {
-          return value
-        }
-        return undefined
-      }
-
       const route = router.resolve({
         name: 'repo-detail',
         params: { id: this.selectedRepoId },
         query: {
           zoomYStart: respectOptions(
+            options,
             'includeYZoom',
             orUndefined(this.zoomYStartValue)
           ),
           zoomYEnd: respectOptions(
+            options,
             'includeYZoom',
             orUndefined(this.zoomYEndValue)
           ),
@@ -477,7 +468,11 @@ export class DetailGraphStore extends VxModule {
             options && options.includeXZoom
               ? orElse(this.zoomXEndValue, this.endTime.getTime())
               : orUndefined(this.endTime.getTime()),
-          dimensions: respectOptions('includeDimensions', this.dimensionString),
+          dimensions: respectOptions(
+            options,
+            'includeDimensions',
+            this.dimensionString
+          ),
           dayEquidistant: this.dayEquidistantGraph ? 'true' : undefined
         }
       })

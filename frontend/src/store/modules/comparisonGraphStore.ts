@@ -9,6 +9,9 @@ import Vue from 'vue'
 import axios from 'axios'
 import { comparisonDatapointFromJson } from '@/util/GraphJsonHelper'
 import { vxm } from '@/store'
+import router from '@/router'
+import { PermanentLinkOptions } from '@/store/modules/detailGraphStore'
+import { orElse, orUndefined, respectOptions } from '@/util/LinkUtils'
 
 const VxModule = createModule({
   namespaced: 'comparisonGraphModule',
@@ -117,6 +120,45 @@ export class ComparisonGraphStore extends VxModule {
     }
 
     Vue.set(this._selectedBranches, payload.repoId, branches)
+  }
+
+  /**
+   * Returns a permanent link to the current detail graph state
+   */
+  get permanentLink(): (options?: PermanentLinkOptions) => string {
+    return options => {
+      const route = router.resolve({
+        name: 'repo-comparison',
+        query: {
+          zoomYStart: respectOptions(
+            options,
+            'includeYZoom',
+            orUndefined(this.zoomYStartValue)
+          ),
+          zoomYEnd: respectOptions(
+            options,
+            'includeYZoom',
+            orUndefined(this.zoomYEndValue)
+          ),
+          zoomXStart:
+            options && options.includeXZoom
+              ? orElse(this.zoomXStartValue, this.startTime.getTime())
+              : orUndefined(this.startTime.getTime()),
+          zoomXEnd:
+            options && options.includeXZoom
+              ? orElse(this.zoomXEndValue, this.endTime.getTime())
+              : orUndefined(this.endTime.getTime()),
+          repos: respectOptions(
+            options,
+            'includeDimensions',
+            formatRepos(this.selectedBranches)
+          ),
+          dayEquidistant: this.dayEquidistantGraphSelected ? 'true' : undefined
+        }
+      })
+
+      return location.origin + route.href
+    }
   }
 
   get selectedBranchesForRepo(): (repoId: RepoId) => string[] {
