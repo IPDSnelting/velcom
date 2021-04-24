@@ -21,6 +21,7 @@ import {
   parseAndSetZoomAndDateRange,
   respectOptions
 } from '@/util/LinkUtils'
+import { roundDateDown, roundDateUp } from '@/util/TimeUtil'
 
 const VxModule = createModule({
   namespaced: 'detailGraphModule',
@@ -146,8 +147,6 @@ export class DetailGraphStore extends VxModule {
       vxm.repoModule.repoById(repoId) ||
       (await vxm.repoModule.fetchRepoById(repoId))
 
-    parseAndSetZoomAndDateRange(link, this)
-
     if (link.query.dayEquidistant === 'true') {
       this.dayEquidistantGraph = true
     }
@@ -163,6 +162,8 @@ export class DetailGraphStore extends VxModule {
         )
       })
     }
+
+    parseAndSetZoomAndDateRange(link, vxm.detailGraphModule)
   }
   //  <!--</editor-fold>-->
 
@@ -180,10 +181,7 @@ export class DetailGraphStore extends VxModule {
   }
 
   set startTime(time: Date) {
-    if (!(time.getHours() !== 0)) {
-      time.setHours(0, 0, 0, 0) // last midnight
-    }
-    this._startTime = time
+    this._startTime = roundDateDown(time)
   }
 
   get endTime(): Date {
@@ -191,10 +189,7 @@ export class DetailGraphStore extends VxModule {
   }
 
   set endTime(time: Date) {
-    if (!(time.getHours() !== 0)) {
-      time.setHours(24, 0, 0, 0) // next midnight
-    }
-    this._endTime = time
+    this._endTime = roundDateUp(time)
   }
 
   get duration(): number {

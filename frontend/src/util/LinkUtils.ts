@@ -1,11 +1,7 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 import { PermanentLinkOptions } from '@/store/modules/detailGraphStore'
-import { dateFromRelative } from '@/util/TimeUtil'
+import { dateFromRelative, roundDateDown, roundDateUp } from '@/util/TimeUtil'
 import { Route } from 'vue-router'
-import {
-  roundDateDown,
-  roundDateUp
-} from '@/store/modules/comparisonGraphStore'
 
 /**
  * Converts something to a string or undefined, if it was falsy or undefined.

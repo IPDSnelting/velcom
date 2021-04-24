@@ -107,10 +107,6 @@ import { Prop, Watch } from 'vue-property-decorator'
 import { getInnerHeight } from '@/util/MeasurementUtils'
 import { escapeHtml } from '@/util/TextUtils'
 import { formatDate } from '@/util/TimeUtil'
-import {
-  roundDateDown,
-  roundDateUp
-} from '@/store/modules/comparisonGraphStore'
 import GraphDatapointDialog from '@/components/dialogs/GraphDatapointDialog.vue'
 import {
   availableGraphComponents,
@@ -252,7 +248,7 @@ export default class RepoGraphs extends Vue {
 
   // noinspection JSUnusedLocalSymbols
   private set dataRangeMin(date: Date) {
-    vxm.detailGraphModule.startTime = roundDateDown(date)
+    vxm.detailGraphModule.startTime = date
     vxm.detailGraphModule.fetchDetailGraph()
   }
 
@@ -262,7 +258,7 @@ export default class RepoGraphs extends Vue {
 
   // noinspection JSUnusedLocalSymbols
   private set dataRangeMax(date: Date) {
-    vxm.detailGraphModule.endTime = roundDateUp(date)
+    vxm.detailGraphModule.endTime = date
     vxm.detailGraphModule.fetchDetailGraph()
   }
 

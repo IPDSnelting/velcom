@@ -5,6 +5,7 @@
  * @param {Date} start the start date
  * @param {Date} end the end date
  */
+
 export function formatDurationHuman(start: Date, end: Date): string {
   const [hours, minutes, seconds] = durationToParts(start, end)
   let result = ''
@@ -157,4 +158,38 @@ function leftZeroPad(length: number, input: number) {
     asString = '0' + asString
   }
   return asString
+}
+
+/**
+ * Rounds a date down to midnight (00:00:00:00).
+ *
+ * @param date the date to round down
+ */
+export function roundDateDown(date: Date): Date {
+  const copy = new Date(date)
+  copy.setHours(0, 0, 0, 0) // this midnight
+  return copy
+}
+
+/**
+ * Rounds a date up to the next midnight, iff it is not already at midnight.
+ * This allows you to repeatedly apply the function without any change in output:
+ * "roundDateUp(date) == roundDateUp(roundDateUp(date))"
+ *
+ * @param date the date to round up
+ */
+export function roundDateUp(date: Date): Date {
+  // Do not lift midnight to the next day as roundDateUp calls should be
+  // chainable:
+  // roundDateUp(date) == roundDateUp(roundDateUp(date))
+  if (
+    date.getHours() === 0 &&
+    date.getMinutes() === 0 &&
+    date.getSeconds() === 0
+  ) {
+    return date
+  }
+  const copy = new Date(date)
+  copy.setDate(copy.getDate() + 1)
+  return roundDateDown(copy)
 }

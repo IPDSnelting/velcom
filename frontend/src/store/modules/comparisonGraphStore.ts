@@ -18,6 +18,7 @@ import {
   respectOptions
 } from '@/util/LinkUtils'
 import { Route } from 'vue-router'
+import { roundDateDown, roundDateUp } from '@/util/TimeUtil'
 
 const VxModule = createModule({
   namespaced: 'comparisonGraphModule',
@@ -35,24 +36,6 @@ function defaultStartDate() {
 function defaultEndDate() {
   // Today at midnight / start of tomorrow
   return new Date(new Date().setHours(24, 0, 0, 0))
-}
-
-export function roundDateUp(date: Date): Date {
-  const copy = new Date(date)
-  if (!(date.getHours() !== 0)) {
-    copy.setHours(24, 0, 0, 0) // next midnight
-  }
-  copy.setMinutes(0, 0, 0)
-  return copy
-}
-
-export function roundDateDown(date: Date): Date {
-  const copy = new Date(date)
-  if (!(date.getHours() !== 0)) {
-    copy.setHours(0, 0, 0, 0) // this midnight
-  }
-  copy.setMinutes(0, 0, 0)
-  return copy
 }
 
 function formatRepos(repos: Map<RepoId, string[]>): string {

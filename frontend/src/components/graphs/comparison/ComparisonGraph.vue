@@ -54,11 +54,8 @@ import {
 import { vxm } from '@/store'
 import GraphDatapointDialog from '@/components/dialogs/GraphDatapointDialog.vue'
 import { Prop } from 'vue-property-decorator'
-import {
-  roundDateDown,
-  roundDateUp
-} from '@/store/modules/comparisonGraphStore'
 import OverscrollToZoom from '@/components/graphs/OverscrollToZoom'
+import { roundDateDown, roundDateUp } from '@/util/TimeUtil'
 
 @Component({
   components: {
