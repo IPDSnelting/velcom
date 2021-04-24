@@ -12,15 +12,12 @@ import { vxm } from '@/store'
 import router from '@/router'
 import { PermanentLinkOptions } from '@/store/modules/detailGraphStore'
 import {
-  extractDateFromQuery,
-  extractFloatFromQuery,
   orElse,
   orUndefined,
   parseAndSetZoomAndDateRange,
   respectOptions
 } from '@/util/LinkUtils'
 import { Route } from 'vue-router'
-import { dateFromRelative } from '@/util/TimeUtil'
 
 const VxModule = createModule({
   namespaced: 'comparisonGraphModule',

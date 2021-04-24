@@ -2,7 +2,6 @@
 import { PermanentLinkOptions } from '@/store/modules/detailGraphStore'
 import { dateFromRelative } from '@/util/TimeUtil'
 import { Route } from 'vue-router'
-import { vxm } from '@/store'
 import {
   roundDateDown,
   roundDateUp
