@@ -77,7 +77,6 @@ import { mdiLinkVariantPlus } from '@mdi/js'
 import { copyToClipboard } from '@/util/ClipboardUtils'
 import { PermanentLinkOptions } from '@/store/modules/detailGraphStore'
 import { Prop, Watch } from 'vue-property-decorator'
-import { RawLocation } from 'vue-router'
 
 @Component
 export default class ShareGraphLinkDialog extends Vue {
@@ -86,11 +85,11 @@ export default class ShareGraphLinkDialog extends Vue {
   private options: PermanentLinkOptions = {
     includeYZoom: true,
     includeXZoom: true,
-    includeDimensions: true
+    includeDataRestrictions: true
   }
 
   @Prop()
-  private linkGenerator!: (options: PermanentLinkOptions) => RawLocation
+  private linkGenerator!: (options: PermanentLinkOptions) => string
 
   private get selectableOptions() {
     return [
@@ -129,7 +128,7 @@ export default class ShareGraphLinkDialog extends Vue {
   private onDialogVisibilityChange() {
     if (this.dialogOpen) {
       this.options = {
-        includeDimensions: true,
+        includeDataRestrictions: true,
         includeXZoom: true,
         includeYZoom: true
       }

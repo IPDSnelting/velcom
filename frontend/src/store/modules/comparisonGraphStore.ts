@@ -150,7 +150,7 @@ export class ComparisonGraphStore extends VxModule {
               : orUndefined(this.endTime.getTime()),
           repos: respectOptions(
             options,
-            'includeDimensions',
+            'includeDataRestrictions',
             formatRepos(this.selectedBranches)
           ),
           dayEquidistant: this.dayEquidistantGraphSelected ? 'true' : undefined

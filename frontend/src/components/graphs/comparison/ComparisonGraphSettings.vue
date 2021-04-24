@@ -14,7 +14,7 @@
           </v-btn-toggle>
         </v-col>
         <v-spacer></v-spacer>
-        <v-col cols="auto" >
+        <v-col cols="auto">
           <v-btn
             @click="$emit('update:beginYAtZero', !beginYAtZero)"
             color="primary"

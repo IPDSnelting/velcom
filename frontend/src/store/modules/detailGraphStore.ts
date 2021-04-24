@@ -26,7 +26,7 @@ const VxModule = createModule({
 export type PermanentLinkOptions = Partial<{
   includeXZoom: boolean
   includeYZoom: boolean
-  includeDimensions: boolean
+  includeDataRestrictions: boolean
 }>
 
 export class DetailGraphStore extends VxModule {
@@ -470,7 +470,7 @@ export class DetailGraphStore extends VxModule {
               : orUndefined(this.endTime.getTime()),
           dimensions: respectOptions(
             options,
-            'includeDimensions',
+            'includeDataRestrictions',
             this.dimensionString
           ),
           dayEquidistant: this.dayEquidistantGraph ? 'true' : undefined
