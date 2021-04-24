@@ -53,11 +53,12 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
-import { SearchItem, SearchItemCommit } from '@/store/types'
+import { SearchItem, SearchItemCommit, SearchItemRun } from '@/store/types'
 import SearchResultCommit from '@/components/search/SearchResultCommit.vue'
 import SearchResultTar from '@/components/search/SearchResultTar.vue'
 import SearchResultRun from '@/components/search/SearchResultRun.vue'
 import { mdiScaleBalance } from '@mdi/js'
+import SearchResultBranch from '@/components/search/SearchResultBranch.vue'
 
 class DisplayedItem {
   readonly id: string
@@ -65,14 +66,17 @@ class DisplayedItem {
   readonly item: SearchItem
 
   constructor(item: SearchItem) {
-    this.id =
-      item instanceof SearchItemCommit ? item.repoId + item.hash : item.id
     this.item = item
 
     if (item instanceof SearchItemCommit) {
       this.type = 'commit'
-    } else {
+      this.id = item.repoId + item.hash
+    } else if (item instanceof SearchItemRun) {
       this.type = item.tarDescription ? 'tar' : 'run'
+      this.id = item.id
+    } else {
+      this.type = 'branch'
+      this.id = item.repoId + item.hash
     }
   }
 }
@@ -80,6 +84,7 @@ class DisplayedItem {
 @Component({
   components: {
     commit: SearchResultCommit,
+    branch: SearchResultBranch,
     tar: SearchResultTar,
     run: SearchResultRun
   }

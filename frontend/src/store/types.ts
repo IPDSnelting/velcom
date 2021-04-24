@@ -696,4 +696,26 @@ export class SearchItemRun {
   }
 }
 
-export type SearchItem = SearchItemCommit | SearchItemRun
+export class SearchItemBranch {
+  readonly repoId: RepoId
+  readonly name: string
+  readonly hash: CommitHash
+  runId?: RunId
+  commitSummary?: string
+
+  constructor(
+    repoId: RepoId,
+    name: string,
+    hash: CommitHash,
+    commitSummary?: string,
+    runId?: RunId
+  ) {
+    this.repoId = repoId
+    this.name = name
+    this.hash = hash
+    this.commitSummary = commitSummary
+    this.runId = runId
+  }
+}
+
+export type SearchItem = SearchItemCommit | SearchItemRun | SearchItemBranch
