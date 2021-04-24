@@ -14,9 +14,13 @@ import { CustomKeyEqualsMap } from '@/util/CustomKeyEqualsMap'
 import { vxm } from '@/store'
 import router from '@/router'
 import { Route } from 'vue-router'
-import { dateFromRelative } from '@/util/TimeUtil'
 import { spaceDayEquidistant } from '@/util/DayEquidistantUtil'
-import { orElse, orUndefined, respectOptions } from '@/util/LinkUtils'
+import {
+  orElse,
+  orUndefined,
+  parseAndSetZoomAndDateRange,
+  respectOptions
+} from '@/util/LinkUtils'
 
 const VxModule = createModule({
   namespaced: 'detailGraphModule',
@@ -142,60 +146,7 @@ export class DetailGraphStore extends VxModule {
       vxm.repoModule.repoById(repoId) ||
       (await vxm.repoModule.fetchRepoById(repoId))
 
-    const extractFloat: (
-      name: string,
-      action: (value: number) => void
-    ) => void = (name, action) => {
-      const queryValue = link.query[name]
-      if (queryValue && typeof queryValue === 'string') {
-        if (!isNaN(parseFloat(queryValue))) {
-          action(parseFloat(queryValue))
-        }
-      }
-    }
-
-    const extractDate: (
-      name: string,
-      relative: Date,
-      action: (value: number) => void
-    ) => void = (name, relative, action) => {
-      const queryValue = link.query[name]
-      if (queryValue && typeof queryValue === 'string') {
-        if (queryValue.match(/^([+-])?(\d|\.)+$/)) {
-          action(parseFloat(queryValue))
-          return
-        }
-        const relativeDate = dateFromRelative(queryValue, relative)
-        if (relativeDate) {
-          action(relativeDate.getTime())
-        }
-      }
-    }
-
-    // Anchors to the current date
-    extractDate('zoomXEnd', new Date(), value => {
-      this.zoomXEndValue = value
-      const asDate = new Date(value)
-      asDate.setDate(asDate.getDate() + 1)
-      vxm.detailGraphModule.endTime = asDate
-    })
-    // Anchors to the end date (or the current one if not specified)
-    extractDate(
-      'zoomXStart',
-      new Date(this.zoomXEndValue || new Date().getTime()),
-      value => {
-        this.zoomXStartValue = value
-        const asDate = new Date(value)
-        asDate.setDate(asDate.getDate() - 1)
-        vxm.detailGraphModule.startTime = asDate
-      }
-    )
-    extractFloat('zoomYStart', value => {
-      this.zoomYStartValue = value
-    })
-    extractFloat('zoomYEnd', value => {
-      this.zoomYEndValue = value
-    })
+    parseAndSetZoomAndDateRange(link, this)
 
     if (link.query.dayEquidistant === 'true') {
       this.dayEquidistantGraph = true

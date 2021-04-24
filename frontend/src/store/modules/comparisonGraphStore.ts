@@ -11,7 +11,16 @@ import { comparisonDatapointFromJson } from '@/util/GraphJsonHelper'
 import { vxm } from '@/store'
 import router from '@/router'
 import { PermanentLinkOptions } from '@/store/modules/detailGraphStore'
-import { orElse, orUndefined, respectOptions } from '@/util/LinkUtils'
+import {
+  extractDateFromQuery,
+  extractFloatFromQuery,
+  orElse,
+  orUndefined,
+  parseAndSetZoomAndDateRange,
+  respectOptions
+} from '@/util/LinkUtils'
+import { Route } from 'vue-router'
+import { dateFromRelative } from '@/util/TimeUtil'
 
 const VxModule = createModule({
   namespaced: 'comparisonGraphModule',
@@ -101,6 +110,40 @@ export class ComparisonGraphStore extends VxModule {
     )
   }
 
+  /**
+   * Adjusts this store to the values defined in the permanent link.
+   *
+   * @param link the link to adjust to
+   */
+  @action
+  async adjustToPermanentLink(link: Route): Promise<void> {
+    parseAndSetZoomAndDateRange(link, this)
+
+    if (link.query.dayEquidistant === 'true') {
+      this.dayEquidistantGraphSelected = true
+    }
+
+    if (link.query.dimension && typeof link.query.dimension === 'string') {
+      const [benchmark, metric] = link.query.dimension.split(':')
+      const possibleDimensions = vxm.repoModule.allRepos
+        .flatMap(it => it.dimensions)
+        .filter(it => it.benchmark === benchmark && it.metric === metric)
+
+      if (possibleDimensions.length > 0) {
+        this.selectedDimension = possibleDimensions[0]
+      }
+    }
+
+    if (link.query.repos && typeof link.query.repos === 'string') {
+      const fullString = link.query.repos
+      const repoParts = fullString.split('::')
+      repoParts.forEach(repoPart => {
+        const [repoId, ...branches] = repoPart.split(':')
+        this.setSelectedBranchesForRepo({ repoId, branches })
+      })
+    }
+  }
+
   @mutation
   setSelectedBranchesForRepo(payload: {
     repoId: RepoId
@@ -152,6 +195,15 @@ export class ComparisonGraphStore extends VxModule {
             options,
             'includeDataRestrictions',
             formatRepos(this.selectedBranches)
+          ),
+          dimension: respectOptions(
+            options,
+            'includeDataRestrictions',
+            this.selectedDimension
+              ? this.selectedDimension.benchmark +
+                  ':' +
+                  this.selectedDimension.metric
+              : undefined
           ),
           dayEquidistant: this.dayEquidistantGraphSelected ? 'true' : undefined
         }
