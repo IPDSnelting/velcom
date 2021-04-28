@@ -28,17 +28,14 @@
               :reload-graph-data-counter="reloadGraphDataCounter"
             ></repo-graph>
           </v-col>
+          <v-col cols="12" class="pt-1">
+            <graph-timespan-controls
+              @reload-graph-data="reloadGraphDataCounter++"
+              :end-time.sync="endTime"
+              :start-time.sync="startTime"
+            ></graph-timespan-controls>
+          </v-col>
         </v-row>
-      </v-col>
-    </v-row>
-
-    <v-row align="baseline" justify="center" class="mt-2" no-gutters>
-      <v-col>
-        <graph-timespan-controls
-          @reload-graph-data="reloadGraphDataCounter++"
-          :end-time.sync="endTime"
-          :start-time.sync="startTime"
-        ></graph-timespan-controls>
       </v-col>
     </v-row>
   </v-container>
@@ -108,7 +105,7 @@ export default class RepoGraphView extends Vue {
   }
 
   private getShareLink(options: PermanentLinkOptions) {
-    return vxm.comparisonGraphModule.permanentLink(options)
+    return vxm.detailGraphModule.permanentLink(options)
   }
 
   private get dayEquidistantGraphSelected() {
