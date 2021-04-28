@@ -1,65 +1,59 @@
 <template>
-  <v-container fluid class="pa-0 ma-0">
-    <v-row align="baseline" justify="center" no-gutters>
-      <v-col class="ma-0 pa-0">
-        <v-card>
-          <v-card-text style="height: 70vh">
-            <v-row no-gutters style="height: 100%">
-              <v-col style="position: relative; height: 100%">
-                <component
-                  ref="graphComponent"
-                  :placeholderHeight="graphPlaceholderHeight"
-                  :is="selectedGraphComponent"
-                  :zoom-x-start-value.sync="zoomXStartValue"
-                  :zoom-x-end-value.sync="zoomXEndValue"
-                  :zoom-y-start-value.sync="zoomYStartValue"
-                  :zoom-y-end-value.sync="zoomYEndValue"
-                  :datapoints="datapoints"
-                  :data-range-min.sync="dataRangeMin"
-                  :data-range-max.sync="dataRangeMax"
-                  :series-information="seriesInformation"
-                  :visible-point-count="visiblePointCount"
-                  :point-table-formatter="pointFormatter"
-                  :reference-datapoint="referenceDatapoint"
-                  :commit-to-compare="commitToCompare"
-                  :begin-y-at-zero="yStartsAtZero"
-                  :refresh-key="graphRefreshKey"
-                  @wheel="overscrollToZoom.scrolled($event)"
-                  @reset-zoom="resetZoom"
-                >
-                  <template
-                    #dialog="{
-                      dialogOpen,
-                      selectedDatapoint,
-                      seriesInformation,
-                      closeDialog
-                    }"
-                  >
-                    <graph-datapoint-dialog
-                      :dialog-open="dialogOpen"
-                      :selected-datapoint="selectedDatapoint"
-                      :series-id="seriesInformation.id"
-                      :commit-to-compare.sync="commitToCompare"
-                      :reference-datapoint.sync="referenceDatapoint"
-                      @close="closeDialog()"
-                    ></graph-datapoint-dialog>
-                  </template>
-                </component>
-                <v-overlay
-                  v-if="overlayText"
-                  absolute
-                  class="ma-0 pa-0"
-                  color="black"
-                >
-                  <span class="text-h6">{{ overlayText }}</span>
-                </v-overlay>
-              </v-col>
-            </v-row>
-          </v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
-  </v-container>
+  <v-card>
+    <v-card-text style="height: 70vh">
+      <v-row no-gutters style="height: 100%">
+        <v-col style="position: relative; height: 100%">
+          <component
+            ref="graphComponent"
+            :placeholderHeight="graphPlaceholderHeight"
+            :is="selectedGraphComponent"
+            :zoom-x-start-value.sync="zoomXStartValue"
+            :zoom-x-end-value.sync="zoomXEndValue"
+            :zoom-y-start-value.sync="zoomYStartValue"
+            :zoom-y-end-value.sync="zoomYEndValue"
+            :datapoints="datapoints"
+            :data-range-min.sync="dataRangeMin"
+            :data-range-max.sync="dataRangeMax"
+            :series-information="seriesInformation"
+            :visible-point-count="visiblePointCount"
+            :point-table-formatter="pointFormatter"
+            :reference-datapoint="referenceDatapoint"
+            :commit-to-compare="commitToCompare"
+            :begin-y-at-zero="yStartsAtZero"
+            :refresh-key="graphRefreshKey"
+            @wheel="overscrollToZoom.scrolled($event)"
+            @reset-zoom="resetZoom"
+          >
+            <template
+              #dialog="{
+                dialogOpen,
+                selectedDatapoint,
+                seriesInformation,
+                closeDialog
+              }"
+            >
+              <graph-datapoint-dialog
+                :dialog-open="dialogOpen"
+                :selected-datapoint="selectedDatapoint"
+                :series-id="seriesInformation.id"
+                :commit-to-compare.sync="commitToCompare"
+                :reference-datapoint.sync="referenceDatapoint"
+                @close="closeDialog()"
+              ></graph-datapoint-dialog>
+            </template>
+          </component>
+          <v-overlay
+            v-if="overlayText"
+            absolute
+            class="ma-0 pa-0"
+            color="black"
+          >
+            <span class="text-h6">{{ overlayText }}</span>
+          </v-overlay>
+        </v-col>
+      </v-row>
+    </v-card-text>
+  </v-card>
 </template>
 
 <script lang="ts">

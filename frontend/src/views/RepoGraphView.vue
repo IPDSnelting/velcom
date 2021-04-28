@@ -1,7 +1,8 @@
 <template>
-  <v-container v-if="repo" class="ma-0 pa-0">
+  <v-container v-if="repo" class="ma-0 pa-0" fluid>
     <v-row>
-      <v-col>
+      <v-col cols="0" lg="3"> </v-col>
+      <v-col cols="12" lg="9">
         <comparison-graph-settings
           :begin-y-at-zero.sync="beginYAtZero"
           :graph-component.sync="graphComponent"
@@ -16,19 +17,20 @@
         </comparison-graph-settings>
       </v-col>
     </v-row>
-    <v-row align="baseline" justify="center" no-gutters>
-      <v-col class="ma-0 pa-0">
+    <v-row
+      class="pt-0 mt-0"
+      :class="{ 'flex-column-reverse': $vuetify.breakpoint.mdAndDown }"
+    >
+      <v-col cols="12" lg="3">
+        <detail-graph-dimension-selector
+          @reload-graph-data="reloadGraphDataCounter++"
+        ></detail-graph-dimension-selector>
+      </v-col>
+      <v-col cols="12" lg="9">
         <repo-graph
           :selected-graph-component.sync="graphComponent"
           :reload-graph-data-counter="reloadGraphDataCounter"
         ></repo-graph>
-      </v-col>
-    </v-row>
-    <v-row align="baseline" justify="center" class="mt-2" no-gutters>
-      <v-col>
-        <repo-graph-controls
-          @reload-graph-data="reloadGraphDataCounter++"
-        ></repo-graph-controls>
       </v-col>
     </v-row>
     <v-row align="baseline" justify="center" class="mt-2" no-gutters>
@@ -49,7 +51,7 @@ import Component from 'vue-class-component'
 import RepoBaseInformation from '@/components/repodetail/RepoBaseInformation.vue'
 import { vxm } from '@/store'
 import RepoGraph from '@/components/repodetail/RepoGraph.vue'
-import RepoGraphControls from '@/components/repodetail/RepoGraphControls.vue'
+import DetailGraphDimensionSelector from '@/components/repodetail/DetailGraphDimensionSelector.vue'
 import GraphTimespanControls from '@/components/graphs/GraphTimespanControls.vue'
 import ShareGraphLinkDialog from '@/views/ShareGraphLinkDialog.vue'
 import ComparisonGraphSettings from '@/components/graphs/comparison/ComparisonGraphSettings.vue'
@@ -58,10 +60,10 @@ import { availableGraphComponents } from '@/util/GraphVariantSelection'
 
 @Component({
   components: {
+    DetailGraphDimensionSelector,
     ComparisonGraphSettings,
     ShareGraphLinkDialog,
     GraphTimespanControls,
-    RepoGraphControls,
     RepoGraph,
     RepoBaseInformation
   }
