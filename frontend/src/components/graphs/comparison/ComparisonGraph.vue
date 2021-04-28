@@ -36,6 +36,9 @@
           ></graph-datapoint-dialog>
         </template>
       </component>
+      <v-overlay v-if="overlayText" absolute class="ma-0 pa-0" color="black">
+        <span class="text-h6">{{ overlayText }}</span>
+      </v-overlay>
     </v-card-text>
   </v-card>
 </template>
@@ -145,6 +148,16 @@ export default class ComparisonGraph extends Vue {
       }
     }
     return visibleDataPoints
+  }
+
+  private get overlayText() {
+    if (this.seriesInformation.length === 0) {
+      return 'Please select a repo / branch on the left'
+    }
+    if (!vxm.comparisonGraphModule.selectedDimension) {
+      return 'Please select a dimension in the top left'
+    }
+    return null
   }
 
   // <!--<editor-fold desc="Zoom boilerplate">-->
