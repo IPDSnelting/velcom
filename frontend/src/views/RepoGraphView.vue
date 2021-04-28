@@ -1,38 +1,37 @@
 <template>
   <v-container v-if="repo" class="ma-0 pa-0" fluid>
-    <v-row>
-      <v-col cols="0" lg="3"> </v-col>
-      <v-col cols="12" lg="9">
-        <comparison-graph-settings
-          :begin-y-at-zero.sync="beginYAtZero"
-          :graph-component.sync="graphComponent"
-          :day-equidistant-graph-selected.sync="dayEquidistantGraphSelected"
-        >
-          <v-col cols="auto">
-            <share-graph-link-dialog
-              :link-generator="getShareLink"
-              data-restriction-label="Include repos and branches"
-            />
-          </v-col>
-        </comparison-graph-settings>
-      </v-col>
-    </v-row>
-    <v-row
-      class="pt-0 mt-0"
-      :class="{ 'flex-column-reverse': $vuetify.breakpoint.mdAndDown }"
-    >
+    <v-row :class="{ 'flex-column-reverse': $vuetify.breakpoint.mdAndDown }">
       <v-col cols="12" lg="3">
         <detail-graph-dimension-selector
           @reload-graph-data="reloadGraphDataCounter++"
         ></detail-graph-dimension-selector>
       </v-col>
-      <v-col cols="12" lg="9">
-        <repo-graph
-          :selected-graph-component.sync="graphComponent"
-          :reload-graph-data-counter="reloadGraphDataCounter"
-        ></repo-graph>
+      <v-col cols="12" lg="9" class="pl-1">
+        <v-row>
+          <v-col cols="12">
+            <comparison-graph-settings
+              :begin-y-at-zero.sync="beginYAtZero"
+              :graph-component.sync="graphComponent"
+              :day-equidistant-graph-selected.sync="dayEquidistantGraphSelected"
+            >
+              <v-col cols="auto">
+                <share-graph-link-dialog
+                  :link-generator="getShareLink"
+                  data-restriction-label="Include repos and branches"
+                />
+              </v-col>
+            </comparison-graph-settings>
+          </v-col>
+          <v-col cols="12" class="pt-0">
+            <repo-graph
+              :selected-graph-component.sync="graphComponent"
+              :reload-graph-data-counter="reloadGraphDataCounter"
+            ></repo-graph>
+          </v-col>
+        </v-row>
       </v-col>
     </v-row>
+
     <v-row align="baseline" justify="center" class="mt-2" no-gutters>
       <v-col>
         <graph-timespan-controls

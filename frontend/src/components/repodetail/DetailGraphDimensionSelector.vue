@@ -6,6 +6,7 @@
         color="primary"
         outlined
         text
+        style="display: block; margin: auto"
       >
         <span v-if="useMatrixSelector">Use tree selector</span>
         <span v-if="!useMatrixSelector">Use matrix selector</span>
