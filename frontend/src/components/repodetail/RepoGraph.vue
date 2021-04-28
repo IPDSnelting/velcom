@@ -3,31 +3,6 @@
     <v-row align="baseline" justify="center" no-gutters>
       <v-col class="ma-0 pa-0">
         <v-card>
-          <v-card-title class="mb-0 pb-0">
-            <v-row no-gutters align="center" justify="space-between">
-              <v-col class="ma-0 pa-0">
-                <v-btn-toggle
-                  :value="selectedGraphComponent"
-                  @change="setSelectedGraphComponent"
-                  mandatory
-                >
-                  <v-btn
-                    v-for="{ component, name } in availableGraphComponents"
-                    :key="name"
-                    :value="component"
-                  >
-                    {{ name }}
-                  </v-btn>
-                </v-btn-toggle>
-              </v-col>
-              <v-col cols="auto">
-                <share-graph-link-dialog
-                  :link-generator="getShareLink"
-                  data-restriction-label="Include dimensions"
-                />
-              </v-col>
-            </v-row>
-          </v-card-title>
           <v-card-text style="height: 70vh">
             <v-row no-gutters style="height: 100%">
               <v-col style="position: relative; height: 100%">
@@ -92,10 +67,8 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import MatrixDimensionSelection from '@/components/graphs/MatrixDimensionSelection.vue'
 import DimensionSelection from '@/components/graphs/DimensionSelection.vue'
-import ShareGraphLinkDialog from '@/views/ShareGraphLinkDialog.vue'
 import { vxm } from '@/store'
 import OverscrollToZoom from '@/components/graphs/OverscrollToZoom'
-import GraphPlaceholder from '@/components/graphs/GraphPlaceholder.vue'
 import {
   AttributedDatapoint,
   DetailDataPoint,
@@ -108,34 +81,27 @@ import { getInnerHeight } from '@/util/MeasurementUtils'
 import { escapeHtml } from '@/util/TextUtils'
 import { formatDate } from '@/util/TimeUtil'
 import GraphDatapointDialog from '@/components/dialogs/GraphDatapointDialog.vue'
-import {
-  availableGraphComponents,
-  selectGraphVariant
-} from '@/util/GraphVariantSelection'
-import { PermanentLinkOptions } from '@/store/modules/detailGraphStore'
+import { selectGraphVariant } from '@/util/GraphVariantSelection'
 
 @Component({
   components: {
     GraphDatapointDialog,
-    'share-graph-link-dialog': ShareGraphLinkDialog,
     'matrix-dimension-selection': MatrixDimensionSelection,
     'normal-dimension-selection': DimensionSelection
   }
 })
 export default class RepoGraphs extends Vue {
   private graphPlaceholderHeight: number = 100
-  private selectedGraphComponent: typeof Vue | null = GraphPlaceholder
   private graphRefreshKey = 0
 
   @Prop()
   private readonly reloadGraphDataCounter!: number
 
+  @Prop()
+  private readonly selectedGraphComponent!: typeof Vue
+
   private get selectedDimensions(): Dimension[] {
     return vxm.detailGraphModule.selectedDimensions
-  }
-
-  private get availableGraphComponents() {
-    return availableGraphComponents
   }
 
   private get yStartsAtZero() {
@@ -149,13 +115,6 @@ export default class RepoGraphs extends Vue {
     )
   }
 
-  private setSelectedGraphComponent(component: typeof Vue) {
-    if (this.selectedGraphComponent === GraphPlaceholder) {
-      return
-    }
-    this.selectedGraphComponent = component
-  }
-
   private get overlayText() {
     if (this.selectedDimensions.length === 0) {
       return 'Please select a benchmark and metric below.'
@@ -164,14 +123,8 @@ export default class RepoGraphs extends Vue {
     return null
   }
 
-  private getShareLink(options: PermanentLinkOptions) {
-    return vxm.detailGraphModule.permanentLink(options)
-  }
-
   @Watch('reloadGraphDataCounter')
   private async retrieveGraphData(): Promise<void> {
-    this.selectedGraphComponent = GraphPlaceholder
-
     if (this.$refs.graphComponent) {
       const element = (this.$refs.graphComponent as Vue).$el as HTMLElement
       this.graphPlaceholderHeight = getInnerHeight(element)
@@ -183,7 +136,7 @@ export default class RepoGraphs extends Vue {
         vxm.detailGraphModule.selectedDimensions.length
     )
     if (correctSeries) {
-      this.selectedGraphComponent = correctSeries.component
+      this.$emit('selectedGraphComponent', correctSeries.component)
     }
   }
 

@@ -1,8 +1,25 @@
 <template>
   <v-container v-if="repo" class="ma-0 pa-0">
+    <v-row>
+      <v-col>
+        <comparison-graph-settings
+          :begin-y-at-zero.sync="beginYAtZero"
+          :graph-component.sync="graphComponent"
+          :day-equidistant-graph-selected.sync="dayEquidistantGraphSelected"
+        >
+          <v-col cols="auto">
+            <share-graph-link-dialog
+              :link-generator="getShareLink"
+              data-restriction-label="Include repos and branches"
+            />
+          </v-col>
+        </comparison-graph-settings>
+      </v-col>
+    </v-row>
     <v-row align="baseline" justify="center" no-gutters>
       <v-col class="ma-0 pa-0">
         <repo-graph
+          :selected-graph-component.sync="graphComponent"
           :reload-graph-data-counter="reloadGraphDataCounter"
         ></repo-graph>
       </v-col>
@@ -34,9 +51,15 @@ import { vxm } from '@/store'
 import RepoGraph from '@/components/repodetail/RepoGraph.vue'
 import RepoGraphControls from '@/components/repodetail/RepoGraphControls.vue'
 import GraphTimespanControls from '@/components/graphs/GraphTimespanControls.vue'
+import ShareGraphLinkDialog from '@/views/ShareGraphLinkDialog.vue'
+import ComparisonGraphSettings from '@/components/graphs/comparison/ComparisonGraphSettings.vue'
+import { PermanentLinkOptions } from '@/store/modules/detailGraphStore'
+import { availableGraphComponents } from '@/util/GraphVariantSelection'
 
 @Component({
   components: {
+    ComparisonGraphSettings,
+    ShareGraphLinkDialog,
     GraphTimespanControls,
     RepoGraphControls,
     RepoGraph,
@@ -45,6 +68,8 @@ import GraphTimespanControls from '@/components/graphs/GraphTimespanControls.vue
 })
 export default class RepoGraphView extends Vue {
   private reloadGraphDataCounter = 0
+  private graphComponent: typeof Vue | null =
+    availableGraphComponents[0].component
 
   private get endTime(): Date {
     return vxm.detailGraphModule.endTime
@@ -70,6 +95,28 @@ export default class RepoGraphView extends Vue {
 
   private get repo() {
     return vxm.repoModule.repoById(this.repoId)
+  }
+
+  private get beginYAtZero() {
+    return vxm.detailGraphModule.beginYScaleAtZero
+  }
+
+  // noinspection JSUnusedLocalSymbols
+  private set beginYAtZero(beginYAtZero: boolean) {
+    vxm.detailGraphModule.beginYScaleAtZero = beginYAtZero
+  }
+
+  private getShareLink(options: PermanentLinkOptions) {
+    return vxm.comparisonGraphModule.permanentLink(options)
+  }
+
+  private get dayEquidistantGraphSelected() {
+    return vxm.detailGraphModule.dayEquidistantGraph
+  }
+
+  // noinspection JSUnusedLocalSymbols
+  private set dayEquidistantGraphSelected(selected: boolean) {
+    vxm.detailGraphModule.dayEquidistantGraph = selected
   }
 }
 </script>

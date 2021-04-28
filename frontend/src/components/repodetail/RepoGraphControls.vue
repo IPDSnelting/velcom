@@ -28,33 +28,6 @@
                   >
                   </tree-dimension-selection>
                 </v-col>
-                <v-col class="d-flex justify-end">
-                  <v-btn
-                    color="primary"
-                    outlined
-                    text
-                    class="mr-4"
-                    @click="
-                      dayEquidistantGraphSelected = !dayEquidistantGraphSelected
-                    "
-                  >
-                    <span v-if="dayEquidistantGraphSelected">
-                      Disable Day-Equidistant Graph
-                    </span>
-                    <span v-else>Enable Day-Equidistant Graph</span>
-                  </v-btn>
-                  <v-btn
-                    @click="yStartsAtZero = !yStartsAtZero"
-                    color="primary"
-                    outlined
-                    text
-                  >
-                    <span v-if="yStartsAtZero">
-                      Begin Y-Axis at minimum value
-                    </span>
-                    <span v-else>Begin Y-Axis at zero</span>
-                  </v-btn>
-                </v-col>
               </v-row>
             </v-container>
           </v-card-text>
@@ -104,22 +77,6 @@ export default class RepoGraphControls extends Vue {
 
   private get selectedDimensions(): Dimension[] {
     return vxm.detailGraphModule.selectedDimensions
-  }
-
-  private get yStartsAtZero(): boolean {
-    return vxm.detailGraphModule.beginYScaleAtZero
-  }
-
-  private set yStartsAtZero(startsAtZero: boolean) {
-    vxm.detailGraphModule.beginYScaleAtZero = startsAtZero
-  }
-
-  private get dayEquidistantGraphSelected() {
-    return vxm.detailGraphModule.dayEquidistantGraph
-  }
-
-  private set dayEquidistantGraphSelected(selected: boolean) {
-    vxm.detailGraphModule.dayEquidistantGraph = selected
   }
 }
 </script>
