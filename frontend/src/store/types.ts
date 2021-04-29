@@ -19,15 +19,13 @@ export class Repo {
   branches: RepoBranch[]
   dimensions: Dimension[]
   remoteURL: string
-  hasToken: boolean
 
   constructor(
     id: RepoId,
     name: string,
     branches: RepoBranch[],
     dimensions: Dimension[],
-    remoteURL: string,
-    hasToken: boolean
+    remoteURL: string
   ) {
     this.id = id
     this.name = name
@@ -36,7 +34,6 @@ export class Repo {
     this.branches = branches.sort((a, b) =>
       a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
     )
-    this.hasToken = hasToken
   }
 
   /**
@@ -699,4 +696,26 @@ export class SearchItemRun {
   }
 }
 
-export type SearchItem = SearchItemCommit | SearchItemRun
+export class SearchItemBranch {
+  readonly repoId: RepoId
+  readonly name: string
+  readonly hash: CommitHash
+  runId?: RunId
+  commitSummary?: string
+
+  constructor(
+    repoId: RepoId,
+    name: string,
+    hash: CommitHash,
+    commitSummary?: string,
+    runId?: RunId
+  ) {
+    this.repoId = repoId
+    this.name = name
+    this.hash = hash
+    this.commitSummary = commitSummary
+    this.runId = runId
+  }
+}
+
+export type SearchItem = SearchItemCommit | SearchItemRun | SearchItemBranch

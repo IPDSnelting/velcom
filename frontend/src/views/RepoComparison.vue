@@ -24,7 +24,14 @@
               :begin-y-at-zero.sync="beginYAtZero"
               :graph-component.sync="graphComponent"
               :day-equidistant-graph-selected.sync="dayEquidistantGraphSelected"
-            ></comparison-graph-settings>
+            >
+              <v-col cols="auto">
+                <share-graph-link-dialog
+                  :link-generator="getShareLink"
+                  data-restriction-label="Include repos and branches"
+                />
+              </v-col>
+            </comparison-graph-settings>
           </v-col>
         </v-row>
         <v-row class="mt-0">
@@ -64,9 +71,12 @@ import ComparisonGraphSettings from '@/components/graphs/comparison/ComparisonGr
 import { groupBy, spaceDayEquidistant } from '@/util/DayEquidistantUtil'
 import { availableGraphComponents } from '@/util/GraphVariantSelection'
 import { debounce } from '@/util/Debouncer'
+import ShareGraphLinkDialog from '@/views/ShareGraphLinkDialog.vue'
+import { PermanentLinkOptions } from '@/store/modules/detailGraphStore'
 
 @Component({
   components: {
+    ShareGraphLinkDialog,
     ComparisonGraphSettings,
     ComparisonGraph,
     ComparisonDimensionSelector,
@@ -161,9 +171,18 @@ export default class RepoComparison extends Vue {
   }
 
   private get selectedRepos(): Repo[] {
-    return Array.from(vxm.comparisonGraphModule.selectedBranches.entries())
-      .filter(([, value]) => value.length > 0)
-      .map(([key]) => vxm.repoModule.repoById(key)!)
+    return (
+      Array.from(vxm.comparisonGraphModule.selectedBranches.entries())
+        .filter(([, value]) => value.length > 0)
+        .map(([key]) => vxm.repoModule.repoById(key))
+        // Repos might not exist anymore, as the selected branches are persisted
+        .filter(it => it !== undefined)
+        .map(it => it!)
+    )
+  }
+
+  private getShareLink(options: PermanentLinkOptions) {
+    return vxm.comparisonGraphModule.permanentLink(options)
   }
 
   private applyDatapointTransformations(datapoints: ComparisonDataPoint[]) {
@@ -243,9 +262,16 @@ export default class RepoComparison extends Vue {
   }
 
   // noinspection JSUnusedLocalSymbols
-  private mounted() {
+  private async mounted() {
     this.onResized()
     window.addEventListener('resize', this.onResized)
+
+    // They will be fetched on page load anyways, but we *need* to make sure they are already loaded!
+    // Otherwise we might not find our selected dimension
+    if (vxm.repoModule.allRepos.length === 0) {
+      await vxm.repoModule.fetchRepos()
+    }
+    await vxm.comparisonGraphModule.adjustToPermanentLink(this.$route)
   }
 
   // noinspection JSUnusedLocalSymbols

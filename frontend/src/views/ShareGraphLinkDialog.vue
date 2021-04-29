@@ -76,7 +76,7 @@ import { vxm } from '@/store'
 import { mdiLinkVariantPlus } from '@mdi/js'
 import { copyToClipboard } from '@/util/ClipboardUtils'
 import { PermanentLinkOptions } from '@/store/modules/detailGraphStore'
-import { Watch } from 'vue-property-decorator'
+import { Prop, Watch } from 'vue-property-decorator'
 
 @Component
 export default class ShareGraphLinkDialog extends Vue {
@@ -85,8 +85,14 @@ export default class ShareGraphLinkDialog extends Vue {
   private options: PermanentLinkOptions = {
     includeYZoom: true,
     includeXZoom: true,
-    includeDimensions: true
+    includeDataRestrictions: true
   }
+
+  @Prop()
+  private linkGenerator!: (options: PermanentLinkOptions) => string
+
+  @Prop()
+  private dataRestrictionLabel!: string
 
   private get selectableOptions() {
     return [
@@ -105,16 +111,16 @@ export default class ShareGraphLinkDialog extends Vue {
         key: 'includeYZoom'
       },
       {
-        label: 'Include dimensions',
+        label: this.dataRestrictionLabel,
         selectable: vxm.detailGraphModule.selectedDimensions.length > 0,
         unselectableMessage: "You haven't selected any dimensions",
-        key: 'includeDimensions'
+        key: 'includeDataRestrictions'
       }
     ]
   }
 
   private get permanentLinkUrl() {
-    return vxm.detailGraphModule.permanentLink(this.options)
+    return this.linkGenerator(this.options)
   }
 
   private copyPermanentLink() {
@@ -125,7 +131,7 @@ export default class ShareGraphLinkDialog extends Vue {
   private onDialogVisibilityChange() {
     if (this.dialogOpen) {
       this.options = {
-        includeDimensions: true,
+        includeDataRestrictions: true,
         includeXZoom: true,
         includeYZoom: true
       }

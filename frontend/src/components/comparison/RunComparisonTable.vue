@@ -8,9 +8,20 @@
     class="compare-table"
   >
     <template #[`item.difference`]="{ item, value }">
-      <span :style="{ color: item.changeColor }">{{
-        item.formatNumber(value)
-      }}</span>
+      <span :style="{ color: item.changeColor }">
+        {{ item.formatNumber(value) }}
+      </span>
+      <span
+        :style="{
+          color: item.changeColor,
+          width: '6em',
+          opacity: 0.9,
+          'font-size': '0.8rem'
+        }"
+        class="d-inline-block"
+      >
+        {{ item.formatNumber(item.differencePercent * 100) }} %
+      </span>
     </template>
 
     <template
@@ -21,7 +32,9 @@
     </template>
 
     <template #[`header.difference`]="{}">
-      <span class="change-arrow">→</span>
+      <div class="d-flex justify-center">
+        <span class="change-arrow">→</span>
+      </div>
     </template>
   </v-data-table>
 </template>
@@ -50,6 +63,7 @@ class TableItem {
   readonly unit: string
   readonly valueFirst?: number
   readonly difference?: number
+  readonly differencePercent?: number
   readonly valueSecond?: number
   readonly changeColor: string
 
@@ -60,6 +74,7 @@ class TableItem {
     interpretation: DimensionInterpretation,
     valueFirst?: number,
     difference?: number,
+    differencePercent?: number,
     valueSecond?: number
   ) {
     this.benchmark = benchmark
@@ -67,6 +82,7 @@ class TableItem {
     this.unit = unit
     this.valueFirst = valueFirst
     this.difference = difference
+    this.differencePercent = differencePercent
     this.valueSecond = valueSecond
     this.changeColor = this.computeChangeColor(interpretation, difference)
   }
@@ -129,7 +145,7 @@ export default class RunComparisonTable extends Vue {
         value: 'difference',
         sortable: false,
         filterable: false,
-        align: 'center'
+        align: 'end'
       },
       { text: this.second.id, value: 'valueSecond', align: 'left' }
     ]
@@ -156,6 +172,7 @@ export default class RunComparisonTable extends Vue {
           dimension.interpretation,
           this.getValue(this.first, dimension),
           this.getDifference(dimension),
+          this.getDifferencePercent(dimension),
           this.getValue(this.second, dimension)
         )
     )
@@ -174,6 +191,16 @@ export default class RunComparisonTable extends Vue {
     )
     if (difference) {
       return difference.absDiff
+    }
+    return undefined
+  }
+
+  private getDifferencePercent(dimension: Dimension): number | undefined {
+    const difference = this.differences.find(it =>
+      it.dimension.equals(dimension)
+    )
+    if (difference) {
+      return difference.relDiff
     }
     return undefined
   }

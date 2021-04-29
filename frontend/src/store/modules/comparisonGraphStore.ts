@@ -8,6 +8,17 @@ import {
 import Vue from 'vue'
 import axios from 'axios'
 import { comparisonDatapointFromJson } from '@/util/GraphJsonHelper'
+import { vxm } from '@/store'
+import router from '@/router'
+import { PermanentLinkOptions } from '@/store/modules/detailGraphStore'
+import {
+  orElse,
+  orUndefined,
+  parseAndSetZoomAndDateRange,
+  respectOptions
+} from '@/util/LinkUtils'
+import { Route } from 'vue-router'
+import { roundDateDown, roundDateUp } from '@/util/TimeUtil'
 
 const VxModule = createModule({
   namespaced: 'comparisonGraphModule',
@@ -25,24 +36,6 @@ function defaultStartDate() {
 function defaultEndDate() {
   // Today at midnight / start of tomorrow
   return new Date(new Date().setHours(24, 0, 0, 0))
-}
-
-export function roundDateUp(date: Date): Date {
-  const copy = new Date(date)
-  if (!(date.getHours() !== 0)) {
-    copy.setHours(24, 0, 0, 0) // next midnight
-  }
-  copy.setMinutes(0, 0, 0)
-  return copy
-}
-
-export function roundDateDown(date: Date): Date {
-  const copy = new Date(date)
-  if (!(date.getHours() !== 0)) {
-    copy.setHours(0, 0, 0, 0) // this midnight
-  }
-  copy.setMinutes(0, 0, 0)
-  return copy
 }
 
 function formatRepos(repos: Map<RepoId, string[]>): string {
@@ -97,6 +90,40 @@ export class ComparisonGraphStore extends VxModule {
     )
   }
 
+  /**
+   * Adjusts this store to the values defined in the permanent link.
+   *
+   * @param link the link to adjust to
+   */
+  @action
+  async adjustToPermanentLink(link: Route): Promise<void> {
+    parseAndSetZoomAndDateRange(link, this)
+
+    if (link.query.dayEquidistant === 'true') {
+      this.dayEquidistantGraphSelected = true
+    }
+
+    if (link.query.dimension && typeof link.query.dimension === 'string') {
+      const [benchmark, metric] = link.query.dimension.split(':')
+      const possibleDimensions = vxm.repoModule.allRepos
+        .flatMap(it => it.dimensions)
+        .filter(it => it.benchmark === benchmark && it.metric === metric)
+
+      if (possibleDimensions.length > 0) {
+        this.selectedDimension = possibleDimensions[0]
+      }
+    }
+
+    if (link.query.repos && typeof link.query.repos === 'string') {
+      const fullString = link.query.repos
+      const repoParts = fullString.split('::')
+      repoParts.forEach(repoPart => {
+        const [repoId, ...branches] = repoPart.split(':')
+        this.setSelectedBranchesForRepo({ repoId, branches })
+      })
+    }
+  }
+
   @mutation
   setSelectedBranchesForRepo(payload: {
     repoId: RepoId
@@ -118,18 +145,69 @@ export class ComparisonGraphStore extends VxModule {
     Vue.set(this._selectedBranches, payload.repoId, branches)
   }
 
+  /**
+   * Returns a permanent link to the current detail graph state
+   */
+  get permanentLink(): (options?: PermanentLinkOptions) => string {
+    return options => {
+      const route = router.resolve({
+        name: 'repo-comparison',
+        query: {
+          zoomYStart: respectOptions(
+            options,
+            'includeYZoom',
+            orUndefined(this.zoomYStartValue)
+          ),
+          zoomYEnd: respectOptions(
+            options,
+            'includeYZoom',
+            orUndefined(this.zoomYEndValue)
+          ),
+          zoomXStart:
+            options && options.includeXZoom
+              ? orElse(this.zoomXStartValue, this.startTime.getTime())
+              : orUndefined(this.startTime.getTime()),
+          zoomXEnd:
+            options && options.includeXZoom
+              ? orElse(this.zoomXEndValue, this.endTime.getTime())
+              : orUndefined(this.endTime.getTime()),
+          repos: respectOptions(
+            options,
+            'includeDataRestrictions',
+            formatRepos(this.selectedBranches)
+          ),
+          dimension: respectOptions(
+            options,
+            'includeDataRestrictions',
+            this.selectedDimension
+              ? this.selectedDimension.benchmark +
+                  ':' +
+                  this.selectedDimension.metric
+              : undefined
+          ),
+          dayEquidistant: this.dayEquidistantGraphSelected ? 'true' : undefined
+        }
+      })
+
+      return location.origin + route.href
+    }
+  }
+
   get selectedBranchesForRepo(): (repoId: RepoId) => string[] {
     return repoId => this._selectedBranches[repoId] || []
   }
 
   get selectedBranches(): Map<RepoId, string[]> {
     const map: Map<RepoId, string[]> = new Map()
-    Object.keys(this._selectedBranches).forEach(repoId => {
-      const branches = this._selectedBranches[repoId]
-      if (branches && branches.length > 0) {
-        map.set(repoId, branches)
-      }
-    })
+    Object.keys(this._selectedBranches)
+      // Repos might not exist anymore, as the selected branches are persisted
+      .filter(id => vxm.repoModule.repoById(id) !== undefined)
+      .forEach(repoId => {
+        const branches = this._selectedBranches[repoId]
+        if (branches && branches.length > 0) {
+          map.set(repoId, branches)
+        }
+      })
     return map
   }
 }

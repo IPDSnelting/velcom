@@ -22,7 +22,10 @@
     </v-row>
     <v-row v-if="tarSource" justify="center">
       <v-col cols="auto">
-        <tar-overview :tar-source="tarSource"></tar-overview>
+        <tar-overview
+          :tar-source="tarSource"
+          :run-id="runWithDifferences.run.id"
+        ></tar-overview>
       </v-col>
     </v-row>
     <v-row v-if="runWithDifferences">

@@ -39,8 +39,7 @@ function hydrateRepo(repo: Repo) {
     repo.name,
     repo.branches.map(hydrateRepoBranch),
     repo.dimensions.map(hydrateDimension),
-    repo.remoteURL,
-    repo.hasToken
+    repo.remoteURL
   )
 }
 // </editor-fold>

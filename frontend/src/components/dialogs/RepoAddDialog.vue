@@ -21,10 +21,6 @@
               label="*Repository name"
               v-model="repoName"
             ></v-text-field>
-            <v-text-field
-              label="Repository access token"
-              v-model="repoToken"
-            ></v-text-field>
           </v-form>
         </v-card-text>
         <v-card-actions>
@@ -34,8 +30,9 @@
             :loading="addInProgress"
             :disabled="!formValid || addInProgress"
             @click="addRepository"
-            >Add Repository</v-btn
           >
+            Add Repository
+          </v-btn>
           <v-spacer></v-spacer>
           <v-btn color="error" @click="dialogOpen = false">Close</v-btn>
         </v-card-actions>
@@ -53,7 +50,6 @@ import { vxm } from '@/store'
 export default class RepoAddDialog extends Vue {
   private remoteUrl: string = ''
   private repoName: string = ''
-  private repoToken: string = ''
 
   private formValid: boolean = false
   private dialogOpen: boolean = false
@@ -68,7 +64,6 @@ export default class RepoAddDialog extends Vue {
     if (opened) {
       this.remoteUrl = ''
       this.repoName = ''
-      this.repoToken = ''
     }
   }
 
@@ -77,8 +72,7 @@ export default class RepoAddDialog extends Vue {
     vxm.repoModule
       .addRepo({
         repoName: this.repoName,
-        remoteUrl: this.remoteUrl,
-        repoToken: this.repoToken.length === 0 ? undefined : this.repoToken
+        remoteUrl: this.remoteUrl
       })
       .then(it => {
         this.$emit('value', it)

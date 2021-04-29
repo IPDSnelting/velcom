@@ -14,8 +14,14 @@ import { CustomKeyEqualsMap } from '@/util/CustomKeyEqualsMap'
 import { vxm } from '@/store'
 import router from '@/router'
 import { Route } from 'vue-router'
-import { dateFromRelative } from '@/util/TimeUtil'
 import { spaceDayEquidistant } from '@/util/DayEquidistantUtil'
+import {
+  orElse,
+  orUndefined,
+  parseAndSetZoomAndDateRange,
+  respectOptions
+} from '@/util/LinkUtils'
+import { roundDateDown, roundDateUp } from '@/util/TimeUtil'
 
 const VxModule = createModule({
   namespaced: 'detailGraphModule',
@@ -25,7 +31,7 @@ const VxModule = createModule({
 export type PermanentLinkOptions = Partial<{
   includeXZoom: boolean
   includeYZoom: boolean
-  includeDimensions: boolean
+  includeDataRestrictions: boolean
 }>
 
 export class DetailGraphStore extends VxModule {
@@ -141,61 +147,6 @@ export class DetailGraphStore extends VxModule {
       vxm.repoModule.repoById(repoId) ||
       (await vxm.repoModule.fetchRepoById(repoId))
 
-    const extractFloat: (
-      name: string,
-      action: (value: number) => void
-    ) => void = (name, action) => {
-      const queryValue = link.query[name]
-      if (queryValue && typeof queryValue === 'string') {
-        if (!isNaN(parseFloat(queryValue))) {
-          action(parseFloat(queryValue))
-        }
-      }
-    }
-
-    const extractDate: (
-      name: string,
-      relative: Date,
-      action: (value: number) => void
-    ) => void = (name, relative, action) => {
-      const queryValue = link.query[name]
-      if (queryValue && typeof queryValue === 'string') {
-        if (queryValue.match(/^([+-])?(\d|\.)+$/)) {
-          action(parseFloat(queryValue))
-          return
-        }
-        const relativeDate = dateFromRelative(queryValue, relative)
-        if (relativeDate) {
-          action(relativeDate.getTime())
-        }
-      }
-    }
-
-    // Anchors to the current date
-    extractDate('zoomXEnd', new Date(), value => {
-      this.zoomXEndValue = value
-      const asDate = new Date(value)
-      asDate.setDate(asDate.getDate() + 1)
-      vxm.detailGraphModule.endTime = asDate
-    })
-    // Anchors to the end date (or the current one if not specified)
-    extractDate(
-      'zoomXStart',
-      new Date(this.zoomXEndValue || new Date().getTime()),
-      value => {
-        this.zoomXStartValue = value
-        const asDate = new Date(value)
-        asDate.setDate(asDate.getDate() - 1)
-        vxm.detailGraphModule.startTime = asDate
-      }
-    )
-    extractFloat('zoomYStart', value => {
-      this.zoomYStartValue = value
-    })
-    extractFloat('zoomYEnd', value => {
-      this.zoomYEndValue = value
-    })
-
     if (link.query.dayEquidistant === 'true') {
       this.dayEquidistantGraph = true
     }
@@ -211,6 +162,8 @@ export class DetailGraphStore extends VxModule {
         )
       })
     }
+
+    parseAndSetZoomAndDateRange(link, vxm.detailGraphModule)
   }
   //  <!--</editor-fold>-->
 
@@ -228,10 +181,7 @@ export class DetailGraphStore extends VxModule {
   }
 
   set startTime(time: Date) {
-    if (!(time.getHours() !== 0)) {
-      time.setHours(0, 0, 0, 0) // last midnight
-    }
-    this._startTime = time
+    this._startTime = roundDateDown(time)
   }
 
   get endTime(): Date {
@@ -239,10 +189,7 @@ export class DetailGraphStore extends VxModule {
   }
 
   set endTime(time: Date) {
-    if (!(time.getHours() !== 0)) {
-      time.setHours(24, 0, 0, 0) // next midnight
-    }
-    this._endTime = time
+    this._endTime = roundDateUp(time)
   }
 
   get duration(): number {
@@ -445,27 +392,17 @@ export class DetailGraphStore extends VxModule {
    */
   get permanentLink(): (options?: PermanentLinkOptions) => string {
     return options => {
-      const orUndefined = (it: any) => (it ? '' + it : undefined)
-      const orElse = (it: any, subst: any) => (it ? '' + it : '' + subst)
-      function respectOptions<T>(
-        name: keyof PermanentLinkOptions,
-        value: T
-      ): T | undefined {
-        if (!options || options[name]) {
-          return value
-        }
-        return undefined
-      }
-
       const route = router.resolve({
         name: 'repo-detail',
         params: { id: this.selectedRepoId },
         query: {
           zoomYStart: respectOptions(
+            options,
             'includeYZoom',
             orUndefined(this.zoomYStartValue)
           ),
           zoomYEnd: respectOptions(
+            options,
             'includeYZoom',
             orUndefined(this.zoomYEndValue)
           ),
@@ -477,7 +414,11 @@ export class DetailGraphStore extends VxModule {
             options && options.includeXZoom
               ? orElse(this.zoomXEndValue, this.endTime.getTime())
               : orUndefined(this.endTime.getTime()),
-          dimensions: respectOptions('includeDimensions', this.dimensionString),
+          dimensions: respectOptions(
+            options,
+            'includeDataRestrictions',
+            this.dimensionString
+          ),
           dayEquidistant: this.dayEquidistantGraph ? 'true' : undefined
         }
       })

@@ -23,7 +23,6 @@ Vue.use(VueRouter)
 export type RouteName =
   | 'home'
   | 'repo-comparison'
-  | 'repo-detail-frame'
   | 'repo-detail'
   | 'queue'
   | 'search'
@@ -192,7 +191,7 @@ router.beforeEach((to, from, next) => {
 })
 
 router.beforeEach((to, from, next) => {
-  if (to.name === 'repo-detail-frame' && !to.params['id']) {
+  if (to.name === 'repo-detail' && !to.params['id']) {
     const saved = vxm.detailGraphModule.selectedRepoId
     if (saved) {
       next({ name: 'repo-detail', params: { id: saved } })

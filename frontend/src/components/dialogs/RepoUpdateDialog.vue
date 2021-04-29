@@ -23,61 +23,7 @@
               label="*Repository name"
               v-model="repoName"
             ></v-text-field>
-            <v-container class="pa-0" fluid>
-              <v-row no-gutters align="center">
-                <transition name="fade">
-                  <span
-                    v-if="tokenState === 'delete'"
-                    class="section-header mr-4"
-                    >TOKEN WILL BE DELETED</span
-                  >
-                </transition>
-                <transition name="fade">
-                  <span>
-                    <v-btn
-                      v-if="tokenState === 'unchanged'"
-                      @click="tokenState = 'modify'"
-                      text
-                      outlined
-                      class="mr-2"
-                      color="primary"
-                      >Change token</v-btn
-                    >
-                    <v-btn
-                      v-if="tokenState === 'unchanged'"
-                      @click="tokenState = 'delete'"
-                      text
-                      outlined
-                      class="mr-2"
-                      color="error"
-                      >Delete token</v-btn
-                    >
-                    <v-btn
-                      v-if="tokenState === 'modify' || tokenState === 'delete'"
-                      @click="tokenState = 'unchanged'"
-                      text
-                      outlined
-                      color="error"
-                      >{{
-                        tokenState === 'modify' ? 'KEEP OLD TOKEN' : 'UNDO'
-                      }}</v-btn
-                    >
-                  </span>
-                </transition>
-                <transition name="fade">
-                  <v-text-field
-                    v-if="tokenState === 'modify'"
-                    :rules="[notEmpty]"
-                    label="*New token"
-                    v-model="newToken"
-                    dense
-                    hide-details="auto"
-                    class="ml-4 mt-0 pt-0"
-                  ></v-text-field>
-                </transition>
-              </v-row>
-            </v-container>
-            <div class="section-header mt-8 mb-2">BRANCHES</div>
+            <div class="section-header mb-2">BRANCHES</div>
             <v-data-iterator
               :custom-filter="filterName"
               :search="searchValue"
@@ -157,9 +103,7 @@ export default class RepoUpdateDialog extends Vue {
 
   private remoteUrl: string = ''
   private repoName: string = ''
-  private newToken: string = ''
 
-  private tokenState: 'delete' | 'modify' | 'unchanged' = 'unchanged'
   private itemsPerPage: number = 30
   private itemsPerPageOptions: number[] = [1, 10, 20, 30, 50, 100, -1]
 
@@ -197,8 +141,6 @@ export default class RepoUpdateDialog extends Vue {
   private watchIdUpdates() {
     this.remoteUrl = this.repo.remoteURL
     this.repoName = this.repo.name
-    this.tokenState = 'unchanged'
-    this.newToken = ''
     this.searchValue = ''
 
     this.newTrackedBranches = this.repo.branches
@@ -218,16 +160,8 @@ export default class RepoUpdateDialog extends Vue {
   }
 
   private updateRepo() {
-    let newToken: string | null | undefined
-    if (this.tokenState === 'modify') {
-      newToken = this.newToken
-    } else if (this.tokenState === 'delete') {
-      newToken = null
-    }
-
     vxm.repoModule
       .updateRepo({
-        repoToken: newToken,
         id: this.repoId,
         name: this.repoName,
         remoteUrl: this.remoteUrl,

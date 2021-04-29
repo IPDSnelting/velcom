@@ -21,7 +21,10 @@
                 </v-btn-toggle>
               </v-col>
               <v-col cols="auto">
-                <share-graph-link-dialog />
+                <share-graph-link-dialog
+                  :link-generator="getShareLink"
+                  data-restriction-label="Include dimensions"
+                />
               </v-col>
             </v-row>
           </v-card-title>
@@ -104,15 +107,12 @@ import { Prop, Watch } from 'vue-property-decorator'
 import { getInnerHeight } from '@/util/MeasurementUtils'
 import { escapeHtml } from '@/util/TextUtils'
 import { formatDate } from '@/util/TimeUtil'
-import {
-  roundDateDown,
-  roundDateUp
-} from '@/store/modules/comparisonGraphStore'
 import GraphDatapointDialog from '@/components/dialogs/GraphDatapointDialog.vue'
 import {
   availableGraphComponents,
   selectGraphVariant
 } from '@/util/GraphVariantSelection'
+import { PermanentLinkOptions } from '@/store/modules/detailGraphStore'
 
 @Component({
   components: {
@@ -162,6 +162,10 @@ export default class RepoGraphs extends Vue {
     }
     // We do not show an overlay if we have no datapoints as you can load more by zooming out
     return null
+  }
+
+  private getShareLink(options: PermanentLinkOptions) {
+    return vxm.detailGraphModule.permanentLink(options)
   }
 
   @Watch('reloadGraphDataCounter')
@@ -244,7 +248,7 @@ export default class RepoGraphs extends Vue {
 
   // noinspection JSUnusedLocalSymbols
   private set dataRangeMin(date: Date) {
-    vxm.detailGraphModule.startTime = roundDateDown(date)
+    vxm.detailGraphModule.startTime = date
     vxm.detailGraphModule.fetchDetailGraph()
   }
 
@@ -254,7 +258,7 @@ export default class RepoGraphs extends Vue {
 
   // noinspection JSUnusedLocalSymbols
   private set dataRangeMax(date: Date) {
-    vxm.detailGraphModule.endTime = roundDateUp(date)
+    vxm.detailGraphModule.endTime = date
     vxm.detailGraphModule.fetchDetailGraph()
   }
 

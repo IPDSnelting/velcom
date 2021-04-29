@@ -10,7 +10,7 @@
               </v-toolbar>
             </v-card-title>
             <v-card-text>
-              <v-container fluid>
+              <v-container fluid class="mt-0 pt-0">
                 <v-row align="baseline" justify="center">
                   <v-col class="mx-0 px-0">
                     <multiple-run-overview
@@ -18,7 +18,7 @@
                     ></multiple-run-overview>
                   </v-col>
                 </v-row>
-                <v-row align="baseline" justify="end" class="mt-2">
+                <v-row align="baseline" justify="center" class="mt-2">
                   <v-col cols="auto">
                     <v-btn
                       outlined
@@ -42,7 +42,7 @@
               <v-toolbar color="toolbarColor" dark>Recent Runs</v-toolbar>
             </v-card-title>
             <v-card-text>
-              <v-container fluid>
+              <v-container fluid class="mt-0 pt-0">
                 <v-row align="baseline" justify="center">
                   <v-col class="mx-0 px-0">
                     <multiple-run-overview
@@ -50,7 +50,7 @@
                     ></multiple-run-overview>
                   </v-col>
                 </v-row>
-                <v-row align="baseline" justify="end" class="mt-2">
+                <v-row align="baseline" justify="center" class="mt-2">
                   <v-col cols="auto">
                     <v-btn
                       outlined

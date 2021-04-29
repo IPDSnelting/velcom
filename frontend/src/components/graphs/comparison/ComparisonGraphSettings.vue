@@ -30,7 +30,6 @@
             color="primary"
             outlined
             text
-            class="mr-4"
             @click="
               $emit(
                 'update:dayEquidistantGraphSelected',
@@ -44,6 +43,7 @@
             <span v-else>Enable Day-Equidistant Graph</span>
           </v-btn>
         </v-col>
+        <slot></slot>
       </v-row>
     </v-card-text>
   </v-card>
