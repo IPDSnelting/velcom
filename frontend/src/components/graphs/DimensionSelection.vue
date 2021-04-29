@@ -169,7 +169,6 @@ export default class DimensionSelection extends Vue {
 
 <style scoped>
 .wrapper {
-  max-height: 100%;
   overflow: auto;
 }
 .name {

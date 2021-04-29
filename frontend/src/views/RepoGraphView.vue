@@ -2,8 +2,24 @@
   <v-container v-if="repo" class="ma-0 pa-0" fluid>
     <v-row :class="{ 'flex-column-reverse': $vuetify.breakpoint.mdAndDown }">
       <v-col cols="12" lg="3">
+        <v-dialog
+          fullscreen
+          scrollable
+          v-model="dimensionSelectionInFullscreen"
+          style="margin-top: 64px !important"
+          transition="dialog-transition"
+        >
+          <detail-graph-dimension-selector
+            @reload-graph-data="reloadGraphDataCounter++"
+            @shrink="dimensionSelectionInFullscreen = false"
+            :is-fullscreen="true"
+          >
+          </detail-graph-dimension-selector>
+        </v-dialog>
         <detail-graph-dimension-selector
+          @expand="dimensionSelectionInFullscreen = true"
           @reload-graph-data="reloadGraphDataCounter++"
+          :is-fullscreen="false"
         ></detail-graph-dimension-selector>
       </v-col>
       <v-col cols="12" lg="9" class="pl-1">
@@ -65,6 +81,7 @@ import { availableGraphComponents } from '@/util/GraphVariantSelection'
   }
 })
 export default class RepoGraphView extends Vue {
+  private dimensionSelectionInFullscreen = false
   private reloadGraphDataCounter = 0
   private graphComponent: typeof Vue | null =
     availableGraphComponents[0].component
