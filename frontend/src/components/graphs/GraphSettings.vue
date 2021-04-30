@@ -56,7 +56,7 @@ import { availableGraphComponents } from '@/util/GraphVariantSelection'
 import { Prop } from 'vue-property-decorator'
 
 @Component
-export default class ComparisonGraphSettings extends Vue {
+export default class GraphSettings extends Vue {
   @Prop()
   private graphComponent!: typeof Vue
 

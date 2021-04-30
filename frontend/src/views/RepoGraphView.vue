@@ -66,14 +66,14 @@ import RepoGraph from '@/components/repodetail/RepoGraph.vue'
 import DetailGraphDimensionSelector from '@/components/repodetail/DetailGraphDimensionSelector.vue'
 import GraphTimespanControls from '@/components/graphs/GraphTimespanControls.vue'
 import ShareGraphLinkDialog from '@/views/ShareGraphLinkDialog.vue'
-import ComparisonGraphSettings from '@/components/graphs/comparison/ComparisonGraphSettings.vue'
+import GraphSettings from '@/components/graphs/GraphSettings.vue'
 import { PermanentLinkOptions } from '@/store/modules/detailGraphStore'
 import { availableGraphComponents } from '@/util/GraphVariantSelection'
 
 @Component({
   components: {
     DetailGraphDimensionSelector,
-    ComparisonGraphSettings,
+    ComparisonGraphSettings: GraphSettings,
     ShareGraphLinkDialog,
     GraphTimespanControls,
     RepoGraph,
