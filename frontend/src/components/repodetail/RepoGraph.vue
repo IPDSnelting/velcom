@@ -111,7 +111,7 @@ export default class RepoGraphs extends Vue {
 
   private get overlayText() {
     if (this.selectedDimensions.length === 0) {
-      return 'Please select a benchmark and metric below.'
+      return 'Please select a benchmark and metric on the left.'
     }
     // We do not show an overlay if we have no datapoints as you can load more by zooming out
     return null
