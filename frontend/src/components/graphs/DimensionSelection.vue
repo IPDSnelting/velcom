@@ -1,19 +1,12 @@
 <template>
-  <v-container fluid class="ma-0 pa-0 wrapper">
+  <v-container fluid class="ma-0 pa-0 wrapper fill-height">
     <v-row no-gutters align="center" justify="start">
-      <v-col cols="12" sm="7" class="mr-4">
-        <v-text-field label="Search" v-model="search"></v-text-field>
-      </v-col>
-      <v-col cols="auto mr-4 mb-2">
-        <v-btn
-          outlined
-          text
-          color="primary"
-          @click="changed([])"
-          :disabled="selectedDimensions.length === 0"
-        >
-          Deselect all metrics
-        </v-btn>
+      <v-col>
+        <v-text-field
+          hide-details
+          label="Search"
+          v-model="search"
+        ></v-text-field>
       </v-col>
     </v-row>
     <v-row no-gutters>
@@ -176,7 +169,6 @@ export default class DimensionSelection extends Vue {
 
 <style scoped>
 .wrapper {
-  max-height: 300px;
   overflow: auto;
 }
 .name {

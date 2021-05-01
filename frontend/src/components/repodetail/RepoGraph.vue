@@ -1,90 +1,59 @@
 <template>
-  <v-container fluid class="pa-0 ma-0">
-    <v-row align="baseline" justify="center" no-gutters>
-      <v-col class="ma-0 pa-0">
-        <v-card>
-          <v-card-title class="mb-0 pb-0">
-            <v-row no-gutters align="center" justify="space-between">
-              <v-col class="ma-0 pa-0">
-                <v-btn-toggle
-                  :value="selectedGraphComponent"
-                  @change="setSelectedGraphComponent"
-                  mandatory
-                >
-                  <v-btn
-                    v-for="{ component, name } in availableGraphComponents"
-                    :key="name"
-                    :value="component"
-                  >
-                    {{ name }}
-                  </v-btn>
-                </v-btn-toggle>
-              </v-col>
-              <v-col cols="auto">
-                <share-graph-link-dialog
-                  :link-generator="getShareLink"
-                  data-restriction-label="Include dimensions"
-                />
-              </v-col>
-            </v-row>
-          </v-card-title>
-          <v-card-text style="height: 70vh">
-            <v-row no-gutters style="height: 100%">
-              <v-col style="position: relative; height: 100%">
-                <component
-                  ref="graphComponent"
-                  :placeholderHeight="graphPlaceholderHeight"
-                  :is="selectedGraphComponent"
-                  :zoom-x-start-value.sync="zoomXStartValue"
-                  :zoom-x-end-value.sync="zoomXEndValue"
-                  :zoom-y-start-value.sync="zoomYStartValue"
-                  :zoom-y-end-value.sync="zoomYEndValue"
-                  :datapoints="datapoints"
-                  :data-range-min.sync="dataRangeMin"
-                  :data-range-max.sync="dataRangeMax"
-                  :series-information="seriesInformation"
-                  :visible-point-count="visiblePointCount"
-                  :point-table-formatter="pointFormatter"
-                  :reference-datapoint="referenceDatapoint"
-                  :commit-to-compare="commitToCompare"
-                  :begin-y-at-zero="yStartsAtZero"
-                  :refresh-key="graphRefreshKey"
-                  @wheel="overscrollToZoom.scrolled($event)"
-                  @reset-zoom="resetZoom"
-                >
-                  <template
-                    #dialog="{
-                      dialogOpen,
-                      selectedDatapoint,
-                      seriesInformation,
-                      closeDialog
-                    }"
-                  >
-                    <graph-datapoint-dialog
-                      :dialog-open="dialogOpen"
-                      :selected-datapoint="selectedDatapoint"
-                      :series-id="seriesInformation.id"
-                      :commit-to-compare.sync="commitToCompare"
-                      :reference-datapoint.sync="referenceDatapoint"
-                      @close="closeDialog()"
-                    ></graph-datapoint-dialog>
-                  </template>
-                </component>
-                <v-overlay
-                  v-if="overlayText"
-                  absolute
-                  class="ma-0 pa-0"
-                  color="black"
-                >
-                  <span class="text-h6">{{ overlayText }}</span>
-                </v-overlay>
-              </v-col>
-            </v-row>
-          </v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
-  </v-container>
+  <v-card>
+    <v-card-text style="height: 70vh">
+      <v-row no-gutters style="height: 100%">
+        <v-col style="position: relative; height: 100%">
+          <component
+            ref="graphComponent"
+            :placeholderHeight="graphPlaceholderHeight"
+            :is="selectedGraphComponent"
+            :zoom-x-start-value.sync="zoomXStartValue"
+            :zoom-x-end-value.sync="zoomXEndValue"
+            :zoom-y-start-value.sync="zoomYStartValue"
+            :zoom-y-end-value.sync="zoomYEndValue"
+            :datapoints="datapoints"
+            :data-range-min.sync="dataRangeMin"
+            :data-range-max.sync="dataRangeMax"
+            :series-information="seriesInformation"
+            :visible-point-count="visiblePointCount"
+            :point-table-formatter="pointFormatter"
+            :reference-datapoint="referenceDatapoint"
+            :commit-to-compare="commitToCompare"
+            :begin-y-at-zero="yStartsAtZero"
+            :refresh-key="graphRefreshKey"
+            @wheel="overscrollToZoom.scrolled($event)"
+            @reset-zoom="resetZoom"
+          >
+            <template
+              #dialog="{
+                dialogOpen,
+                selectedDatapoint,
+                seriesInformation,
+                closeDialog
+              }"
+            >
+              <graph-datapoint-dialog
+                :dialog-open="dialogOpen"
+                :selected-datapoint="selectedDatapoint"
+                :series-id="seriesInformation.id"
+                :commit-to-compare.sync="commitToCompare"
+                :reference-datapoint.sync="referenceDatapoint"
+                @close="closeDialog()"
+              ></graph-datapoint-dialog>
+            </template>
+          </component>
+          <v-overlay
+            v-if="overlayText"
+            absolute
+            class="ma-0 pa-0"
+            color="black"
+          >
+            <span class="text-h6">{{ overlayText }}</span>
+          </v-overlay>
+        </v-col>
+      </v-row>
+    </v-card-text>
+  </v-card>
 </template>
 
 <script lang="ts">
@@ -92,10 +61,8 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import MatrixDimensionSelection from '@/components/graphs/MatrixDimensionSelection.vue'
 import DimensionSelection from '@/components/graphs/DimensionSelection.vue'
-import ShareGraphLinkDialog from '@/views/ShareGraphLinkDialog.vue'
 import { vxm } from '@/store'
 import OverscrollToZoom from '@/components/graphs/OverscrollToZoom'
-import GraphPlaceholder from '@/components/graphs/GraphPlaceholder.vue'
 import {
   AttributedDatapoint,
   DetailDataPoint,
@@ -108,34 +75,27 @@ import { getInnerHeight } from '@/util/MeasurementUtils'
 import { escapeHtml } from '@/util/TextUtils'
 import { formatDate } from '@/util/TimeUtil'
 import GraphDatapointDialog from '@/components/dialogs/GraphDatapointDialog.vue'
-import {
-  availableGraphComponents,
-  selectGraphVariant
-} from '@/util/GraphVariantSelection'
-import { PermanentLinkOptions } from '@/store/modules/detailGraphStore'
+import { selectGraphVariant } from '@/util/GraphVariantSelection'
 
 @Component({
   components: {
     GraphDatapointDialog,
-    'share-graph-link-dialog': ShareGraphLinkDialog,
     'matrix-dimension-selection': MatrixDimensionSelection,
     'normal-dimension-selection': DimensionSelection
   }
 })
 export default class RepoGraphs extends Vue {
   private graphPlaceholderHeight: number = 100
-  private selectedGraphComponent: typeof Vue | null = GraphPlaceholder
   private graphRefreshKey = 0
 
   @Prop()
   private readonly reloadGraphDataCounter!: number
 
+  @Prop()
+  private readonly selectedGraphComponent!: typeof Vue
+
   private get selectedDimensions(): Dimension[] {
     return vxm.detailGraphModule.selectedDimensions
-  }
-
-  private get availableGraphComponents() {
-    return availableGraphComponents
   }
 
   private get yStartsAtZero() {
@@ -149,29 +109,16 @@ export default class RepoGraphs extends Vue {
     )
   }
 
-  private setSelectedGraphComponent(component: typeof Vue) {
-    if (this.selectedGraphComponent === GraphPlaceholder) {
-      return
-    }
-    this.selectedGraphComponent = component
-  }
-
   private get overlayText() {
     if (this.selectedDimensions.length === 0) {
-      return 'Please select a benchmark and metric below.'
+      return 'Please select a benchmark and metric on the left.'
     }
     // We do not show an overlay if we have no datapoints as you can load more by zooming out
     return null
   }
 
-  private getShareLink(options: PermanentLinkOptions) {
-    return vxm.detailGraphModule.permanentLink(options)
-  }
-
   @Watch('reloadGraphDataCounter')
   private async retrieveGraphData(): Promise<void> {
-    this.selectedGraphComponent = GraphPlaceholder
-
     if (this.$refs.graphComponent) {
       const element = (this.$refs.graphComponent as Vue).$el as HTMLElement
       this.graphPlaceholderHeight = getInnerHeight(element)
@@ -183,7 +130,7 @@ export default class RepoGraphs extends Vue {
         vxm.detailGraphModule.selectedDimensions.length
     )
     if (correctSeries) {
-      this.selectedGraphComponent = correctSeries.component
+      this.$emit('selectedGraphComponent', correctSeries.component)
     }
   }
 
