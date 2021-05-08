@@ -1,6 +1,8 @@
 package de.aaaaaaah.velcom.backend.listener.github;
 
-import static org.jooq.codegen.db.tables.GithubPrs.GITHUB_PRS;
+import static java.util.stream.Collectors.toList;
+import static org.jooq.codegen.db.tables.GithubPr.GITHUB_PR;
+import static org.jooq.codegen.db.tables.Repo.REPO;
 
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.Repo;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.Repo.GithubInfo;
@@ -8,10 +10,14 @@ import de.aaaaaaah.velcom.backend.storage.db.DBReadAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import java.io.IOException;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import org.jooq.codegen.db.tables.records.GithubPrsRecord;
+import javax.annotation.Nullable;
+import org.jooq.codegen.db.tables.records.GithubCommandRecord;
+import org.jooq.codegen.db.tables.records.GithubPrRecord;
+import org.jooq.codegen.db.tables.records.RepoRecord;
 import org.kohsuke.github.GHDirection;
 import org.kohsuke.github.GHIssueComment;
 import org.kohsuke.github.GHIssueState;
@@ -22,7 +28,27 @@ import org.kohsuke.github.GitHub;
 import org.kohsuke.github.GitHubBuilder;
 import org.kohsuke.github.PagedIterable;
 
+/**
+ * Interact with the GitHub API to find new !bench commands and respond to existing ones.
+ * <p>
+ * Since the kohsuke GitHub API doesn't seem to support GitHub's issue comment endpoint [1], we fall
+ * back to a more complicated solution.
+ * <p>
+ * First of all, every repo with an auth token also stores a value named "github_comment_cutoff".
+ * All comments created before this point in time should be ignored. Initially, this value is set to
+ * the time when the auth token was initially set. However, to avoid unnecessary API calls, it is
+ * also advanced whenever we're certain that we've already seen all older comments.
+ * <p>
+ * For every known PR, another value named "last_comment" is stored. It is the ID of the PR's latest
+ * known comment. While "github_comment_cutoff" is used mainly for optimization purposes, this value
+ * is essential to avoid replying to the same comment multiple times. If new commands are found in a
+ * PR and added to the DB, this "last_comment" value should be updated in the same transaction.
+ * <p>
+ * [1]: https://docs.github.com/en/rest/reference/issues#list-issue-comments-for-a-repository
+ */
 public class GithubPrInteractor {
+
+	private static final int TRIES = 5;
 
 	private final Repo repo;
 	private final GithubInfo ghInfo;
@@ -63,34 +89,116 @@ public class GithubPrInteractor {
 			.direction(GHDirection.DESC)
 			.list();
 
-		Map<Long, GithubPrsRecord> knownPrRecords;
+		Map<Long, GithubPrRecord> knownPrRecords;
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
 			knownPrRecords = db.dsl()
-				.selectFrom(GITHUB_PRS)
-				.where(GITHUB_PRS.REPO_ID.eq(repo.getIdAsString()))
-				.fetchMap(GITHUB_PRS.PR);
+				.selectFrom(GITHUB_PR)
+				.where(GITHUB_PR.REPO_ID.eq(repo.getIdAsString()))
+				.fetchMap(GITHUB_PR.PR);
 		}
 
-		Optional<Instant> latestUpdateTime = Optional.empty();
+		Instant commentCutoff = ghInfo.getCommentCutoff();
+		Optional<Instant> newCommentCutoff = Optional.empty();
 
 		for (GHPullRequest pullRequest : pullRequests) {
-			if (pullRequest.getUpdatedAt().toInstant().isBefore(ghInfo.getCommentCutoff())) {
+			Instant updatedAt = pullRequest.getUpdatedAt().toInstant();
+
+			if (updatedAt.isBefore(commentCutoff)) {
+				// We've reached a PR that was last updated before our comment cutoff and thus can't contain
+				// any newer commands. Since we sort the PRs by their updated time in descending order, all
+				// following PRs will also not have any newer commands.
 				break;
 			}
 
-			if (latestUpdateTime.isEmpty()) {
-				latestUpdateTime = Optional.of(pullRequest.getUpdatedAt().toInstant());
+			if (newCommentCutoff.isEmpty()) {
+				// The new comment cutoff should be the updated time of the first PR we look at. If we
+				// manage to get through this and all following PRs, we know that we've seen all comments
+				// before this point in time. This still holds true if any PR gains new commands while we
+				// are still searching ("last_comment" will prevent us from looking at those twice).
+				newCommentCutoff = Optional.of(updatedAt);
 			}
 
-			List<GHIssueComment> comments = pullRequest.getComments();
-			if (comments.isEmpty()) {
+			GithubPrRecord record = knownPrRecords.get(pullRequest.getId());
+			findAndMarkNewCommands(pullRequest, record);
+		}
+
+		if (newCommentCutoff.isEmpty()) {
+			return;
+		}
+		Instant newCommentCutoffInstant = newCommentCutoff.get();
+
+		databaseStorage.acquireWriteTransaction(db -> {
+			RepoRecord repoRecord = db.dsl()
+				.selectFrom(REPO)
+				.where(REPO.ID.eq(repo.getIdAsString()))
+				.fetchSingle();
+
+			if (repoRecord.getGithubCommentCutoff() == null) {
+				return;
+			}
+
+			repoRecord.setGithubCommentCutoff(newCommentCutoffInstant);
+			repoRecord.update(REPO.GITHUB_COMMENT_CUTOFF);
+		});
+	}
+
+	private void findAndMarkNewCommands(GHPullRequest pr, @Nullable GithubPrRecord record)
+		throws IOException {
+
+		Optional<Long> lastComment = Optional.ofNullable(record).map(GithubPrRecord::getLastComment);
+		Optional<Long> newLastComment = Optional.empty();
+		List<Long> newCommands = new ArrayList<>();
+
+		// This loop does not assume that the comments are ordered. The GitHub API probably returns
+		// commits in some order however, meaning that this code can likely be optimized a bit.
+		for (GHIssueComment comment : pr.getComments()) {
+			long id = comment.getId();
+			if (lastComment.isPresent() && id <= lastComment.get()) {
 				continue;
 			}
-
-
-
-			// TODO: 31.03.21 Check with DB and potentially update it
+			if (newLastComment.isEmpty() || id > newLastComment.get()) {
+				newLastComment = Optional.of(id);
+			}
+			if (comment.getBody().strip().equals("!bench")) {
+				newCommands.add(id);
+			}
 		}
+
+		if (newLastComment.isEmpty()) {
+			// If newLastComment is empty, newCommands is guaranteed to be empty as well.
+			return;
+		}
+
+		Long newLastCommentId = newLastComment.get();
+		String commitHash = pr.getHead().getSha();
+
+		databaseStorage.acquireWriteTransaction(db -> {
+			// Update the "last_comment" value
+			GithubPrRecord prRecord = db.dsl()
+				.selectFrom(GITHUB_PR)
+				.where(GITHUB_PR.REPO_ID.eq(repo.getIdAsString()))
+				.and(GITHUB_PR.PR.eq(pr.getId()))
+				.fetchOne();
+			if (prRecord == null) {
+				prRecord = new GithubPrRecord(repo.getIdAsString(), pr.getId(), newLastCommentId);
+			} else {
+				prRecord.setLastComment(newLastCommentId);
+			}
+			prRecord.update();
+
+			// And add all newly found commands
+			List<GithubCommandRecord> newCommandRecords = newCommands.stream()
+				.map(commentId -> new GithubCommandRecord(
+					repo.getIdAsString(),
+					pr.getId(),
+					commentId,
+					commitHash,
+					CommandState.NEW.getTextualRepresentation(),
+					TRIES
+				))
+				.collect(toList());
+			db.dsl().batchInsert(newCommandRecords).execute();
+		});
 	}
 
 	public void markNewPrCommandsAsSeen() {
