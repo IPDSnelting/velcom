@@ -19,6 +19,7 @@ import de.aaaaaaah.velcom.backend.access.taskaccess.entities.TaskPriority;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.storage.db.DBWriteAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
+import de.aaaaaaah.velcom.shared.util.Pair;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -355,6 +356,26 @@ public class GithubPrInteractor {
 		});
 	}
 
+	private HttpResponse<String> createPrComment(long pr, String body)
+		throws IOException, InterruptedException {
+
+		ObjectNode requestBody = new ObjectMapper().createObjectNode()
+			.put("body", body);
+		URI uri = UriBuilder.fromUri("https://api.github.com/")
+			.path("repos")
+			.path(ghInfo.getRepoName())
+			.path("issues")
+			.path(Long.toString(pr))
+			.path("comments")
+			.build();
+		HttpRequest request = HttpRequest.newBuilder(uri)
+			.POST(BodyPublishers.ofString(requestBody.toString()))
+			.header(HttpHeaders.AUTHORIZATION, basicAuthHeader)
+			.header(HttpHeaders.ACCEPT, "application/vnd.github.v3+json")
+			.build();
+		return client.send(request, BodyHandlers.ofString());
+	}
+
 	public void replyToFinishedPrCommands() throws IOException, InterruptedException {
 		LOGGER.debug("Replying to finished commands");
 		String repoId = repo.getIdAsString();
@@ -380,27 +401,13 @@ public class GithubPrInteractor {
 			LOGGER
 				.debug("Replying to PR #{} and hash {}", reply.getPr(), reply.getCommitHash().getHash());
 
-			String requestBodyText = "Benchmark of commit "
+			String body = "Benchmark of commit "
 				+ reply.getCommitHash().getHash()
 				+ " complete.\n\n"
 				+ frontendUrl
 				+ "run-detail/"
 				+ reply.getRunId().getIdAsString();
-			ObjectNode requestBody = new ObjectMapper().createObjectNode()
-				.put("body", requestBodyText);
-			URI uri = UriBuilder.fromUri("https://api.github.com/")
-				.path("repos")
-				.path(ghInfo.getRepoName())
-				.path("issues")
-				.path(Long.toString(reply.getPr()))
-				.path("comments")
-				.build();
-			HttpRequest request = HttpRequest.newBuilder(uri)
-				.POST(BodyPublishers.ofString(requestBody.toString()))
-				.header(HttpHeaders.AUTHORIZATION, basicAuthHeader)
-				.header(HttpHeaders.ACCEPT, "application/vnd.github.v3+json")
-				.build();
-			HttpResponse<String> response = client.send(request, BodyHandlers.ofString());
+			HttpResponse<String> response = createPrComment(reply.getPr(), body);
 
 			if (response.statusCode() >= 200 && response.statusCode() < 300) {
 				databaseStorage.acquireWriteTransaction(db -> {
@@ -417,7 +424,43 @@ public class GithubPrInteractor {
 		}
 	}
 
-	public void replyToErroredPrCommands() {
-		// TODO: 31.03.21 Implement
+	public void replyToErroredPrCommands() throws IOException, InterruptedException {
+		LOGGER.debug("Replying to errored commands");
+		String repoId = repo.getIdAsString();
+
+		List<Pair<Long, CommitHash>> replies = databaseStorage.acquireReadTransaction(db -> {
+			return db.dsl()
+				.selectDistinct(GITHUB_COMMAND.PR, GITHUB_COMMAND.COMMIT_HASH)
+				.from(GITHUB_COMMAND)
+				.where(GITHUB_COMMAND.STATE.eq(GithubCommandState.ERROR.getTextualRepresentation()))
+				.stream()
+				.map(record -> new Pair<>(
+					record.value1(),
+					new CommitHash(record.value2())
+				))
+				.collect(toList());
+		});
+
+		for (Pair<Long, CommitHash> reply : replies) {
+			LOGGER.debug("Replying to PR #{} and hash {}", reply.getFirst(), reply.getSecond().getHash());
+
+			String body = "Failed to benchmark commit "
+				+ reply.getSecond().getHash()
+				+ " after multiple tries.";
+			HttpResponse<String> response = createPrComment(reply.getFirst(), body);
+
+			if (response.statusCode() >= 200 && response.statusCode() < 300) {
+				databaseStorage.acquireWriteTransaction(db -> {
+					db.dsl()
+						.deleteFrom(GITHUB_COMMAND)
+						.where(GITHUB_COMMAND.REPO_ID.eq(repoId))
+						.and(GITHUB_COMMAND.PR.eq(reply.getFirst()))
+						.and(GITHUB_COMMAND.COMMIT_HASH.eq(reply.getSecond().getHash()))
+						.execute();
+				});
+			} else {
+				LOGGER.debug("Failed to reply: {}", response.body());
+			}
+		}
 	}
 }
