@@ -1,19 +1,23 @@
 package de.aaaaaaah.velcom.backend.listener.github;
 
 import static java.util.stream.Collectors.toList;
+import static org.jooq.codegen.db.tables.GithubCommand.GITHUB_COMMAND;
 import static org.jooq.codegen.db.tables.Repo.REPO;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import de.aaaaaaah.velcom.backend.access.committaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.Repo;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.Repo.GithubInfo;
+import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
+import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse;
+import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -62,6 +66,17 @@ public class GithubPrInteractor {
 	public static Optional<GithubPrInteractor> fromRepo(Repo repo, DatabaseStorage databaseStorage) {
 		Optional<GithubInfo> ghInfoOpt = repo.getGithubInfo();
 		return ghInfoOpt.map(githubInfo -> new GithubPrInteractor(repo, githubInfo, databaseStorage));
+	}
+
+	private static GithubCommand commandRecordToCommand(GithubCommandRecord record) {
+		return new GithubCommand(
+			RepoId.fromString(record.getRepoId()),
+			record.getPr(),
+			record.getComment(),
+			new CommitHash(record.getCommitHash()),
+			GithubCommandState.fromTextualRepresentation(record.getState()),
+			record.getTriesLeft()
+		);
 	}
 
 	private JsonNode getResourceFromUrl(String issueUrl)
@@ -192,8 +207,49 @@ public class GithubPrInteractor {
 		});
 	}
 
-	public void markNewPrCommandsAsSeen() {
-		// TODO: 31.03.21 Implement
+	public void markNewPrCommandsAsSeen() throws IOException, InterruptedException {
+		LOGGER.debug("Marking new commands as seen");
+
+		List<GithubCommand> newCommands = databaseStorage.acquireReadTransaction(db -> {
+			return db.dsl()
+				.selectFrom(GITHUB_COMMAND)
+				.where(GITHUB_COMMAND.REPO_ID.eq(repo.getIdAsString()))
+				.and(GITHUB_COMMAND.STATE.eq(GithubCommandState.NEW.getTextualRepresentation()))
+				.stream()
+				.map(GithubPrInteractor::commandRecordToCommand)
+				.collect(toList());
+		});
+
+		for (GithubCommand command : newCommands) {
+			LOGGER.debug("Marking command {} in pr #{}", command.getComment(), command.getPr());
+
+			URI uri = UriBuilder.fromUri("https://api.github.com/")
+				.path("repos")
+				.path(ghInfo.getRepoName())
+				.path("issues/comments")
+				.path(Long.toString(command.getComment()))
+				.path("reactions")
+				.build();
+			HttpRequest request = HttpRequest.newBuilder(uri)
+				.POST(BodyPublishers.ofString("{\"content\": \"+1\"}"))
+				.header(HttpHeaders.AUTHORIZATION, basicAuthHeader)
+				.header(HttpHeaders.ACCEPT, "application/vnd.github.squirrel-girl-preview")
+				.build();
+			HttpResponse<String> response = client.send(request, BodyHandlers.ofString());
+
+			if (response.statusCode() == 200 || response.statusCode() == 201) {
+				databaseStorage.acquireWriteTransaction(db -> {
+					db.dsl()
+						.update(GITHUB_COMMAND)
+						.set(GITHUB_COMMAND.STATE, GithubCommandState.MARKED_SEEN.getTextualRepresentation())
+						.where(GITHUB_COMMAND.REPO_ID.eq(repo.getIdAsString()))
+						.and(GITHUB_COMMAND.COMMENT.eq(command.getComment()))
+						.execute();
+				});
+			} else {
+				LOGGER.debug("Failed to mark: {}", response.body());
+			}
+		}
 	}
 
 	public void addNewPrCommandsToQueue() {
