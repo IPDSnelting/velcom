@@ -356,22 +356,17 @@ public class GithubPrInteractor {
 	}
 
 	public void replyToFinishedPrCommands() throws IOException, InterruptedException {
+		LOGGER.debug("Replying to finished commands");
+		String repoId = repo.getIdAsString();
+
 		List<FinishedGithubCommand> replies = databaseStorage.acquireReadTransaction(db -> {
-
-//			CommonTableExpression<Record2<Long, String>> commitsPerPr = name("commits_per_pr")
-//				.fields("pr", "commit_hash")
-//				.as(selectDistinct(GITHUB_COMMAND.PR, GITHUB_COMMAND.COMMIT_HASH)
-//					.from(GITHUB_COMMAND)
-//					.where(GITHUB_COMMAND.REPO_ID.eq(repoId))
-//					.and(GITHUB_COMMAND.STATE.eq(GithubCommandState.QUEUED.getTextualRepresentation())));
-
 			return db.dsl()
 				.selectDistinct(GITHUB_COMMAND.PR, GITHUB_COMMAND.COMMIT_HASH, RUN.ID)
 				.from(GITHUB_COMMAND)
 				.join(RUN)
 				.on(RUN.COMMIT_HASH.eq(GITHUB_COMMAND.COMMIT_HASH))
-				.where(GITHUB_COMMAND.REPO_ID.eq(repo.getIdAsString()))
-				.and(RUN.REPO_ID.eq(repo.getIdAsString()))
+				.where(GITHUB_COMMAND.REPO_ID.eq(repoId))
+				.and(RUN.REPO_ID.eq(repoId))
 				.stream()
 				.map(record -> new FinishedGithubCommand(
 					record.value1(),
@@ -411,7 +406,7 @@ public class GithubPrInteractor {
 				databaseStorage.acquireWriteTransaction(db -> {
 					db.dsl()
 						.deleteFrom(GITHUB_COMMAND)
-						.where(GITHUB_COMMAND.REPO_ID.eq(repo.getIdAsString()))
+						.where(GITHUB_COMMAND.REPO_ID.eq(repoId))
 						.and(GITHUB_COMMAND.PR.eq(reply.getPr()))
 						.and(GITHUB_COMMAND.COMMIT_HASH.eq(reply.getCommitHash().getHash()))
 						.execute();
