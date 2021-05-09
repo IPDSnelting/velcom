@@ -118,8 +118,9 @@ public class GithubPrInteractor {
 			for (JsonNode comment : comments) {
 				Instant createdAt = Instant.parse(comment.get("created_at").asText());
 				if (createdAt.isBefore(commentCutoff) || createdAt.equals(commentCutoff)) {
-					// The "since" query parameter only cuts off comments who were updated before the comment
-					// cutoff. However, we don't want to look at comments created before the cutoff either.
+					// The "since" query parameter only cuts off comments that were updated before the
+					// specified cutoff. However, we don't want to look at any comments *created* before the
+					// cutoff, so we need to do a bit of extra filtering.
 					LOGGER.debug("Ignoring comment created before comment cutoff");
 					continue;
 				}
