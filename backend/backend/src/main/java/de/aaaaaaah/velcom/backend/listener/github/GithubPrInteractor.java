@@ -1,6 +1,7 @@
 package de.aaaaaaah.velcom.backend.listener.github;
 
 import static java.util.stream.Collectors.toList;
+import static org.jooq.codegen.db.tables.Repo.REPO;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import de.aaaaaaah.velcom.backend.access.committaccess.entities.CommitHash;
@@ -24,6 +25,7 @@ import java.util.Set;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.UriBuilder;
 import org.jooq.codegen.db.tables.records.GithubCommandRecord;
+import org.jooq.codegen.db.tables.records.RepoRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -106,8 +108,10 @@ public class GithubPrInteractor {
 		Optional<Instant> newCommentCutoff = Optional.empty();
 
 		for (int page = 1; true; page++) {
+			LOGGER.debug("Looking at comment page {}", page);
 			JsonNode comments = getCommentPage(page);
 			if (comments.isEmpty()) {
+				LOGGER.debug("Page {} is empty", page);
 				break; // We've hit the last page
 			}
 
@@ -116,6 +120,7 @@ public class GithubPrInteractor {
 				if (createdAt.isBefore(commentCutoff) || createdAt.equals(commentCutoff)) {
 					// The "since" query parameter only cuts off comments who were updated before the comment
 					// cutoff. However, we don't want to look at comments created before the cutoff either.
+					LOGGER.debug("Ignoring comment created before comment cutoff");
 					continue;
 				}
 
@@ -130,16 +135,20 @@ public class GithubPrInteractor {
 				if (seen.contains(commentId)) {
 					// New comments may have appeared since we requested the previous page, leading to
 					// comments we've already seen being pushed to this (next) page.
+					LOGGER.debug("Ignoring comment we've already seen");
 					continue;
 				}
 				seen.add(commentId);
 
-				if (!comment.get("body").asText().strip().equals("!bench")) {
+				String commentBody = comment.get("body").asText();
+				if (!commentBody.strip().equals("!bench")) {
+					LOGGER.debug("Ignoring comment without command ({})", commentBody);
 					continue; // Not a command, just a normal comment
 				}
 
 				JsonNode issue = getResourceFromUrl(comment.get("issue_url").asText());
 				if (!issue.has("pull_request")) {
+					LOGGER.debug("Ignoring issue comment ({})", commentBody);
 					continue; // Not a PR, just a normal issue
 				}
 
@@ -148,21 +157,37 @@ public class GithubPrInteractor {
 				long prNumber = pr.get("number").asLong();
 				CommitHash commitHash = new CommitHash(pr.get("head").get("sha").asText());
 				commands.add(new GithubCommand(repo.getId(), prNumber, commentId, commitHash));
+				LOGGER.debug("Found command for pr #{} ({})", prNumber, commentBody);
 			}
 		}
 
-		List<GithubCommandRecord> commandRecords = commands.stream()
-			.map(command -> new GithubCommandRecord(
-				command.getRepoId().getIdAsString(),
-				command.getPr(),
-				command.getComment(),
-				command.getCommitHash().getHash(),
-				command.getState().getTextualRepresentation(),
-				command.getTriesLeft()
-			))
-			.collect(toList());
+		if (newCommentCutoff.isEmpty()) {
+			return; // We definitely haven't found any new commands either
+		}
+		Instant newCommentCutoffValue = newCommentCutoff.get();
+
 		databaseStorage.acquireWriteTransaction(db -> {
-			db.dsl().batchInsert(commandRecords);
+			RepoRecord repoRecord = db.dsl()
+				.selectFrom(REPO)
+				.where(REPO.ID.eq(repo.getIdAsString()))
+				.fetchSingle();
+			if (repoRecord.getGithubCommentCutoff() == null) {
+				return; // While we were crawling, GitHub integration has been turned off
+			}
+			repoRecord.setGithubCommentCutoff(newCommentCutoffValue);
+			db.dsl().batchUpdate(repoRecord).execute();
+
+			List<GithubCommandRecord> commandRecords = commands.stream()
+				.map(command -> new GithubCommandRecord(
+					command.getRepoId().getIdAsString(),
+					command.getPr(),
+					command.getComment(),
+					command.getCommitHash().getHash(),
+					command.getState().getTextualRepresentation(),
+					command.getTriesLeft()
+				))
+				.collect(toList());
+			db.dsl().batchInsert(commandRecords).execute();
 		});
 	}
 
