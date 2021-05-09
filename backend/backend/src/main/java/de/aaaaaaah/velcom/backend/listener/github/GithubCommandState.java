@@ -6,7 +6,6 @@ public enum GithubCommandState {
 	NEW("NEW"),
 	MARKED_SEEN("MARKED_SEEN"),
 	QUEUED("QUEUED"),
-	RESPONDED("RESPONDED"),
 	ERROR("ERROR");
 
 	private final String textualRepresentation;
@@ -18,7 +17,7 @@ public enum GithubCommandState {
 	public static GithubCommandState fromTextualRepresentation(String representation)
 		throws IllegalArgumentException {
 
-		for (GithubCommandState state : List.of(NEW, MARKED_SEEN, QUEUED, RESPONDED, ERROR)) {
+		for (GithubCommandState state : List.of(NEW, MARKED_SEEN, QUEUED, ERROR)) {
 			if (state.getTextualRepresentation().equals(representation)) {
 				return state;
 			}

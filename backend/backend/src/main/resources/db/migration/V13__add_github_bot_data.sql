@@ -31,7 +31,7 @@ CREATE TABLE github_command (
   -- No foreign key for the commit because VelCom might not yet have the commit synchronized when a
   -- new row is added to this table.
 
-  CHECK (state in ("NEW", "MARKED_SEEN", "QUEUED", "RESPONDED", "ERROR")),
+  CHECK (state in ("NEW", "MARKED_SEEN", "QUEUED", "ERROR")),
   CHECK (tries_left > 0)
 );
 
