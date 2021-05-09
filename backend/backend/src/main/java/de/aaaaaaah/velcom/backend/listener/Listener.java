@@ -20,6 +20,7 @@ import de.aaaaaaah.velcom.backend.storage.repo.exception.NoSuchRepositoryExcepti
 import de.aaaaaaah.velcom.backend.storage.repo.exception.RepositoryAcquisitionException;
 import io.micrometer.core.annotation.Timed;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
@@ -177,7 +178,9 @@ public class Listener {
 		}
 	}
 
-	private void updateRepo(Repo repo) throws SynchronizeCommitsException, IOException {
+	private void updateRepo(Repo repo)
+		throws SynchronizeCommitsException, IOException, InterruptedException, URISyntaxException {
+
 		Optional<GithubPrInteractor> ghIntOpt = GithubPrInteractor.fromRepo(repo, databaseStorage);
 		if (ghIntOpt.isPresent()) {
 			GithubPrInteractor ghInteractor = ghIntOpt.get();

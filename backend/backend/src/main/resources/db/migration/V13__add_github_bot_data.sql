@@ -18,15 +18,6 @@ CREATE TABLE repo (
   CHECK ((github_auth_token IS NULL) == (github_comment_cutoff IS NULL))
 );
 
-CREATE TABLE github_pr (
-  repo_id      CHAR(36) NOT NULL,
-  pr           BIGINT   NOT NULL,
-  last_comment BIGINT   NOT NULL,
-
-  PRIMARY KEY (repo_id, pr),
-  FOREIGN KEY (repo_id) REFERENCES repo(id)
-);
-
 CREATE TABLE github_command (
   repo_id     CHAR(36) NOT NULL,
   pr          BIGINT   NOT NULL,

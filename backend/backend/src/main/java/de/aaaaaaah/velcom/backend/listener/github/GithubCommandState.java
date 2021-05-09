@@ -2,7 +2,7 @@ package de.aaaaaaah.velcom.backend.listener.github;
 
 import java.util.List;
 
-public enum CommandState {
+public enum GithubCommandState {
 	NEW("NEW"),
 	MARKED_SEEN("MARKED_SEEN"),
 	QUEUED("QUEUED"),
@@ -11,14 +11,14 @@ public enum CommandState {
 
 	private final String textualRepresentation;
 
-	CommandState(String textualRepresentation) {
+	GithubCommandState(String textualRepresentation) {
 		this.textualRepresentation = textualRepresentation;
 	}
 
-	public static CommandState fromTextualRepresentation(String representation)
+	public static GithubCommandState fromTextualRepresentation(String representation)
 		throws IllegalArgumentException {
 
-		for (CommandState state : List.of(NEW, MARKED_SEEN, QUEUED, RESPONDED, ERROR)) {
+		for (GithubCommandState state : List.of(NEW, MARKED_SEEN, QUEUED, RESPONDED, ERROR)) {
 			if (state.getTextualRepresentation().equals(representation)) {
 				return state;
 			}
