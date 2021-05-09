@@ -27,6 +27,8 @@ import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GitHub;
 import org.kohsuke.github.GitHubBuilder;
 import org.kohsuke.github.PagedIterable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Interact with the GitHub API to find new !bench commands and respond to existing ones.
@@ -48,6 +50,7 @@ import org.kohsuke.github.PagedIterable;
  */
 public class GithubPrInteractor {
 
+	private static final Logger LOGGER = LoggerFactory.getLogger(GithubPrInteractor.class);
 	private static final int TRIES = 5;
 
 	private final Repo repo;
@@ -83,6 +86,8 @@ public class GithubPrInteractor {
 	}
 
 	public void searchForNewPrCommands() throws IOException {
+		LOGGER.debug("Searching for new PR commands");
+
 		PagedIterable<GHPullRequest> pullRequests = ghRepo.queryPullRequests()
 			.state(GHIssueState.ALL)
 			.sort(Sort.UPDATED)
@@ -103,10 +108,11 @@ public class GithubPrInteractor {
 		for (GHPullRequest pullRequest : pullRequests) {
 			Instant updatedAt = pullRequest.getUpdatedAt().toInstant();
 
-			if (updatedAt.isBefore(commentCutoff)) {
+			if (updatedAt.isBefore(commentCutoff) || updatedAt.equals(commentCutoff)) {
 				// We've reached a PR that was last updated before our comment cutoff and thus can't contain
 				// any newer commands. Since we sort the PRs by their updated time in descending order, all
 				// following PRs will also not have any newer commands.
+				LOGGER.debug("PR {} is before comment cutoff, breaking", pullRequest.getId());
 				break;
 			}
 
@@ -123,6 +129,7 @@ public class GithubPrInteractor {
 		}
 
 		if (newCommentCutoff.isEmpty()) {
+			LOGGER.debug("Nothing new across all PRs");
 			return;
 		}
 		Instant newCommentCutoffInstant = newCommentCutoff.get();
@@ -145,6 +152,8 @@ public class GithubPrInteractor {
 	private void findAndMarkNewCommands(GHPullRequest pr, @Nullable GithubPrRecord record)
 		throws IOException {
 
+		LOGGER.debug("Looking at PR {}", pr.getId());
+
 		Optional<Long> lastComment = Optional.ofNullable(record).map(GithubPrRecord::getLastComment);
 		Optional<Long> newLastComment = Optional.empty();
 		List<Long> newCommands = new ArrayList<>();
@@ -159,7 +168,9 @@ public class GithubPrInteractor {
 			if (newLastComment.isEmpty() || id > newLastComment.get()) {
 				newLastComment = Optional.of(id);
 			}
+			LOGGER.debug("Comment {} might be a command", comment.getId());
 			if (comment.getBody().strip().equals("!bench")) {
+				LOGGER.debug("New command found!");
 				newCommands.add(id);
 			}
 		}
@@ -184,7 +195,7 @@ public class GithubPrInteractor {
 			} else {
 				prRecord.setLastComment(newLastCommentId);
 			}
-			prRecord.update();
+			db.dsl().batchUpdate(prRecord);
 
 			// And add all newly found commands
 			List<GithubCommandRecord> newCommandRecords = newCommands.stream()
