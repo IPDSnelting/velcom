@@ -305,10 +305,12 @@ public class GithubPrInteractor {
 		// 1. Advance all commands for which a task or run exists to QUEUED
 		List<CommitHash> toBeQueued = databaseStorage.acquireWriteTransaction(db -> {
 			markCommandsAsQueued(db);
+
 			return db.dsl()
 				.selectDistinct(GITHUB_COMMAND.COMMIT_HASH)
 				.from(GITHUB_COMMAND)
 				.where(GITHUB_COMMAND.REPO_ID.eq(repo.getIdAsString()))
+				.and(GITHUB_COMMAND.STATE.eq(GithubCommandState.MARKED_SEEN.getTextualRepresentation()))
 				.stream()
 				.map(record -> new CommitHash(record.value1()))
 				.collect(toList());
