@@ -181,7 +181,9 @@ public class Listener {
 	private void updateRepo(Repo repo)
 		throws SynchronizeCommitsException, IOException, InterruptedException, URISyntaxException {
 
-		Optional<GithubPrInteractor> ghIntOpt = GithubPrInteractor.fromRepo(repo, databaseStorage);
+		Optional<GithubPrInteractor> ghIntOpt = GithubPrInteractor
+			.fromRepo(repo, databaseStorage, queue);
+
 		if (ghIntOpt.isPresent()) {
 			GithubPrInteractor ghInteractor = ghIntOpt.get();
 
@@ -192,7 +194,6 @@ public class Listener {
 			ghInteractor.markNewPrCommandsAsSeen();
 			ghInteractor.addNewPrCommandsToQueue();
 			ghInteractor.replyToFinishedPrCommands();
-			ghInteractor.markFinishedPrCommandsAsComplete();
 			ghInteractor.replyToErroredPrCommands();
 		} else {
 			synchronizeCommitsForRepo(repo);

@@ -8,6 +8,8 @@ import static org.jooq.codegen.db.tables.Task.TASK;
 import static org.jooq.impl.DSL.select;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import de.aaaaaaah.velcom.backend.access.committaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.Repo;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.Repo.GithubInfo;
@@ -16,6 +18,7 @@ import de.aaaaaaah.velcom.backend.access.taskaccess.entities.TaskPriority;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.storage.db.DBWriteAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
+import de.aaaaaaah.velcom.shared.util.Pair;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -239,6 +242,8 @@ public class GithubPrInteractor {
 		for (GithubCommand command : newCommands) {
 			LOGGER.debug("Marking command {} in pr #{}", command.getComment(), command.getPr());
 
+			ObjectNode requestBody = new ObjectMapper().createObjectNode()
+				.put("content", "+1");
 			URI uri = UriBuilder.fromUri("https://api.github.com/")
 				.path("repos")
 				.path(ghInfo.getRepoName())
@@ -247,7 +252,7 @@ public class GithubPrInteractor {
 				.path("reactions")
 				.build();
 			HttpRequest request = HttpRequest.newBuilder(uri)
-				.POST(BodyPublishers.ofString("{\"content\": \"+1\"}"))
+				.POST(BodyPublishers.ofString(requestBody.toString()))
 				.header(HttpHeaders.AUTHORIZATION, basicAuthHeader)
 				.header(HttpHeaders.ACCEPT, "application/vnd.github.squirrel-girl-preview")
 				.build();
@@ -290,6 +295,8 @@ public class GithubPrInteractor {
 	}
 
 	public void addNewPrCommandsToQueue() {
+		LOGGER.debug("Adding commits for new commands to queue");
+
 		// 1. Advance all commands for which a task or run exists to QUEUED
 		List<CommitHash> toBeQueued = databaseStorage.acquireWriteTransaction(db -> {
 			markCommandsAsQueued(db);
@@ -301,6 +308,10 @@ public class GithubPrInteractor {
 				.map(record -> new CommitHash(record.value1()))
 				.collect(toList());
 		});
+
+		for (CommitHash commitHash : toBeQueued) {
+			LOGGER.debug("Commit {} will be queued", commitHash.getHash());
+		}
 
 		// 2. Try to queue all left-over commands
 		queue.addCommits("GitHub PR command", repo.getId(), toBeQueued, TaskPriority.USER_CREATED);
@@ -337,12 +348,64 @@ public class GithubPrInteractor {
 		});
 	}
 
-	public void replyToFinishedPrCommands() {
-		// TODO: 31.03.21 Implement
-	}
+	public void replyToFinishedPrCommands() throws IOException, InterruptedException {
+		List<Pair<Long, CommitHash>> replies = databaseStorage.acquireReadTransaction(db -> {
 
-	public void markFinishedPrCommandsAsComplete() {
-		// TODO: 31.03.21 Implement
+//			CommonTableExpression<Record2<Long, String>> commitsPerPr = name("commits_per_pr")
+//				.fields("pr", "commit_hash")
+//				.as(selectDistinct(GITHUB_COMMAND.PR, GITHUB_COMMAND.COMMIT_HASH)
+//					.from(GITHUB_COMMAND)
+//					.where(GITHUB_COMMAND.REPO_ID.eq(repoId))
+//					.and(GITHUB_COMMAND.STATE.eq(GithubCommandState.QUEUED.getTextualRepresentation())));
+
+			return db.dsl()
+				.selectDistinct(GITHUB_COMMAND.PR, GITHUB_COMMAND.COMMIT_HASH)
+				.from(GITHUB_COMMAND)
+				.join(RUN)
+				.on(RUN.COMMIT_HASH.eq(GITHUB_COMMAND.COMMIT_HASH))
+				.where(GITHUB_COMMAND.REPO_ID.eq(repo.getIdAsString()))
+				.and(RUN.REPO_ID.eq(repo.getIdAsString()))
+				.stream()
+				.map(record -> new Pair<>(
+					record.value1(),
+					new CommitHash(record.value2())
+				))
+				.collect(toList());
+		});
+
+		for (Pair<Long, CommitHash> reply : replies) {
+			LOGGER.debug("Replying to PR #{} and hash {}", reply.getFirst(), reply.getSecond().getHash());
+
+			String requestBodyText = "Not yet implemented";
+			ObjectNode requestBody = new ObjectMapper().createObjectNode()
+				.put("body", requestBodyText);
+			URI uri = UriBuilder.fromUri("https://api.github.com/")
+				.path("repos")
+				.path(ghInfo.getRepoName())
+				.path("issues")
+				.path(Long.toString(reply.getFirst()))
+				.path("comments")
+				.build();
+			HttpRequest request = HttpRequest.newBuilder(uri)
+				.POST(BodyPublishers.ofString(requestBody.toString()))
+				.header(HttpHeaders.AUTHORIZATION, basicAuthHeader)
+				.header(HttpHeaders.ACCEPT, "application/vnd.github.v3+json")
+				.build();
+			HttpResponse<String> response = client.send(request, BodyHandlers.ofString());
+
+			if (response.statusCode() >= 200 && response.statusCode() < 300) {
+				databaseStorage.acquireWriteTransaction(db -> {
+					db.dsl()
+						.deleteFrom(GITHUB_COMMAND)
+						.where(GITHUB_COMMAND.REPO_ID.eq(repo.getIdAsString()))
+						.and(GITHUB_COMMAND.PR.eq(reply.getFirst()))
+						.and(GITHUB_COMMAND.COMMIT_HASH.eq(reply.getSecond().getHash()))
+						.execute();
+				});
+			} else {
+				LOGGER.debug("Failed to reply: {}", response.body());
+			}
+		}
 	}
 
 	public void replyToErroredPrCommands() {
