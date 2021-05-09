@@ -8,16 +8,17 @@ import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandler;
 import java.net.http.HttpResponse.BodySubscriber;
 import java.net.http.HttpResponse.ResponseInfo;
+import java.nio.charset.StandardCharsets;
 
 public class JsonBodyHandler implements BodyHandler<JsonNode> {
 
 	@Override
 	public BodySubscriber<JsonNode> apply(ResponseInfo responseInfo) {
 		return HttpResponse.BodySubscribers.mapping(
-			HttpResponse.BodySubscribers.ofInputStream(),
-			in -> {
+			HttpResponse.BodySubscribers.ofString(StandardCharsets.UTF_8),
+			s -> {
 				try {
-					return Jackson.newObjectMapper().readTree(in);
+					return Jackson.newObjectMapper().readTree(s);
 				} catch (IOException e) {
 					throw new UncheckedIOException(e);
 				}
