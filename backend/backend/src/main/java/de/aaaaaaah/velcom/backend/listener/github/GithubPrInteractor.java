@@ -10,6 +10,7 @@ import static org.jooq.impl.DSL.select;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.RunId;
 import de.aaaaaaah.velcom.backend.access.committaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.Repo;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.Repo.GithubInfo;
@@ -18,7 +19,6 @@ import de.aaaaaaah.velcom.backend.access.taskaccess.entities.TaskPriority;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.storage.db.DBWriteAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
-import de.aaaaaaah.velcom.shared.util.Pair;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -54,17 +54,21 @@ public class GithubPrInteractor {
 	private final DatabaseStorage databaseStorage;
 	private final Queue queue;
 
+	private final String frontendUrl;
+
 	private final HttpClient client;
 	private final JsonBodyHandler jsonBodyHandler;
 	private final String basicAuthHeader;
 
 	private GithubPrInteractor(Repo repo, GithubInfo ghInfo, DatabaseStorage databaseStorage,
-		Queue queue) {
+		Queue queue, String frontendUrl) {
 
 		this.repo = repo;
 		this.ghInfo = ghInfo;
 		this.databaseStorage = databaseStorage;
 		this.queue = queue;
+
+		this.frontendUrl = frontendUrl;
 
 		client = HttpClient.newHttpClient();
 		jsonBodyHandler = new JsonBodyHandler();
@@ -76,14 +80,15 @@ public class GithubPrInteractor {
 	}
 
 	public static Optional<GithubPrInteractor> fromRepo(Repo repo, DatabaseStorage databaseStorage,
-		Queue queue) {
+		Queue queue, String frontendUrl) {
 
 		Optional<GithubInfo> ghInfoOpt = repo.getGithubInfo();
 		return ghInfoOpt.map(githubInfo -> new GithubPrInteractor(
 			repo,
 			githubInfo,
 			databaseStorage,
-			queue
+			queue,
+			frontendUrl
 		));
 	}
 
@@ -349,7 +354,7 @@ public class GithubPrInteractor {
 	}
 
 	public void replyToFinishedPrCommands() throws IOException, InterruptedException {
-		List<Pair<Long, CommitHash>> replies = databaseStorage.acquireReadTransaction(db -> {
+		List<FinishedGithubCommand> replies = databaseStorage.acquireReadTransaction(db -> {
 
 //			CommonTableExpression<Record2<Long, String>> commitsPerPr = name("commits_per_pr")
 //				.fields("pr", "commit_hash")
@@ -359,31 +364,38 @@ public class GithubPrInteractor {
 //					.and(GITHUB_COMMAND.STATE.eq(GithubCommandState.QUEUED.getTextualRepresentation())));
 
 			return db.dsl()
-				.selectDistinct(GITHUB_COMMAND.PR, GITHUB_COMMAND.COMMIT_HASH)
+				.selectDistinct(GITHUB_COMMAND.PR, GITHUB_COMMAND.COMMIT_HASH, RUN.ID)
 				.from(GITHUB_COMMAND)
 				.join(RUN)
 				.on(RUN.COMMIT_HASH.eq(GITHUB_COMMAND.COMMIT_HASH))
 				.where(GITHUB_COMMAND.REPO_ID.eq(repo.getIdAsString()))
 				.and(RUN.REPO_ID.eq(repo.getIdAsString()))
 				.stream()
-				.map(record -> new Pair<>(
+				.map(record -> new FinishedGithubCommand(
 					record.value1(),
-					new CommitHash(record.value2())
+					new CommitHash(record.value2()),
+					RunId.fromString(record.value3())
 				))
 				.collect(toList());
 		});
 
-		for (Pair<Long, CommitHash> reply : replies) {
-			LOGGER.debug("Replying to PR #{} and hash {}", reply.getFirst(), reply.getSecond().getHash());
+		for (FinishedGithubCommand reply : replies) {
+			LOGGER
+				.debug("Replying to PR #{} and hash {}", reply.getPr(), reply.getCommitHash().getHash());
 
-			String requestBodyText = "Not yet implemented";
+			String requestBodyText = "Benchmark of commit "
+				+ reply.getCommitHash().getHash()
+				+ " complete.\n\n"
+				+ frontendUrl
+				+ "run-detail/"
+				+ reply.getRunId().getIdAsString();
 			ObjectNode requestBody = new ObjectMapper().createObjectNode()
 				.put("body", requestBodyText);
 			URI uri = UriBuilder.fromUri("https://api.github.com/")
 				.path("repos")
 				.path(ghInfo.getRepoName())
 				.path("issues")
-				.path(Long.toString(reply.getFirst()))
+				.path(Long.toString(reply.getPr()))
 				.path("comments")
 				.build();
 			HttpRequest request = HttpRequest.newBuilder(uri)
@@ -398,8 +410,8 @@ public class GithubPrInteractor {
 					db.dsl()
 						.deleteFrom(GITHUB_COMMAND)
 						.where(GITHUB_COMMAND.REPO_ID.eq(repo.getIdAsString()))
-						.and(GITHUB_COMMAND.PR.eq(reply.getFirst()))
-						.and(GITHUB_COMMAND.COMMIT_HASH.eq(reply.getSecond().getHash()))
+						.and(GITHUB_COMMAND.PR.eq(reply.getPr()))
+						.and(GITHUB_COMMAND.COMMIT_HASH.eq(reply.getCommitHash().getHash()))
 						.execute();
 				});
 			} else {

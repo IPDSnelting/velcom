@@ -56,6 +56,8 @@ public class Listener {
 	private final Duration vacuumInterval;
 	private Instant lastVacuum;
 
+	private final String frontendUrl;
+
 	// An explicit reference to the executor is kept to ensure it will never accidentally be garbage
 	// collected. This might not be strictly necessary, but it doesn't hurt either.
 	@SuppressWarnings("FieldCanBeLocal")
@@ -73,7 +75,7 @@ public class Listener {
 	 */
 	public Listener(DatabaseStorage databaseStorage, RepoStorage repoStorage,
 		RepoWriteAccess repoAccess, BenchRepo benchRepo, Queue queue, Duration pollInterval,
-		Duration vacuumInterval) {
+		Duration vacuumInterval, String frontendUrl) {
 
 		this.databaseStorage = databaseStorage;
 		this.repoStorage = repoStorage;
@@ -84,6 +86,8 @@ public class Listener {
 
 		this.vacuumInterval = vacuumInterval;
 		this.lastVacuum = Instant.now();
+
+		this.frontendUrl = frontendUrl;
 
 		executor = Executors.newSingleThreadScheduledExecutor();
 		executor.scheduleWithFixedDelay(
@@ -182,7 +186,7 @@ public class Listener {
 		throws SynchronizeCommitsException, IOException, InterruptedException, URISyntaxException {
 
 		Optional<GithubPrInteractor> ghIntOpt = GithubPrInteractor
-			.fromRepo(repo, databaseStorage, queue);
+			.fromRepo(repo, databaseStorage, queue, frontendUrl);
 
 		if (ghIntOpt.isPresent()) {
 			GithubPrInteractor ghInteractor = ghIntOpt.get();
