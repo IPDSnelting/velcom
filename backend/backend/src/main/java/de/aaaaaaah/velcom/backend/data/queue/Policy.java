@@ -45,7 +45,7 @@ class Policy {
 
 		// Tar tasks need to be reversed since they need a FIFO order, not FILO
 		ArrayList<Task> tarTasksTmp = tasksInOrder.stream()
-			.filter(task -> task.getPriority().equals(TaskPriority.TAR))
+			.filter(task -> task.getPriority().equals(TaskPriority.USER_CREATED))
 			.collect(toCollection(ArrayList::new));
 		Collections.reverse(tarTasksTmp);
 		tarTasks = new ArrayDeque<>(tarTasksTmp);

@@ -10,9 +10,10 @@ public enum TaskPriority {
 	 */
 	MANUAL(0),
 	/**
-	 * The task represents an uploaded tar file.
+	 * The task has been created by a user (e. g. from an uploaded tar file or a GitHub command), but
+	 * should not have priority over manually prioritized tasks.
 	 */
-	TAR(1),
+	USER_CREATED(1),
 	/**
 	 * The task represents a commit that has been automatically added to the queue by the listener.
 	 */
@@ -35,7 +36,7 @@ public enum TaskPriority {
 		if (priority <= 0) {
 			return MANUAL;
 		} else if (priority == 1) {
-			return TAR;
+			return USER_CREATED;
 		} else {
 			return LISTENER;
 		}

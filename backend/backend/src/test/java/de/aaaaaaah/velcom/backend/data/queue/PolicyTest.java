@@ -87,10 +87,10 @@ class PolicyTest {
 
 	@Test
 	void tarTasksInFifoOrder() {
-		Task task1 = tarTask("task1", TaskPriority.TAR, repo1);
-		Task task2 = tarTask("task2", TaskPriority.TAR, null);
-		Task task3 = tarTask("task3", TaskPriority.TAR, repo2);
-		Task task4 = tarTask("task4", TaskPriority.TAR, repo1);
+		Task task1 = tarTask("task1", TaskPriority.USER_CREATED, repo1);
+		Task task2 = tarTask("task2", TaskPriority.USER_CREATED, null);
+		Task task3 = tarTask("task3", TaskPriority.USER_CREATED, repo2);
+		Task task4 = tarTask("task4", TaskPriority.USER_CREATED, repo1);
 
 		List<Task> tasks = List.of(task3, task2, task4, task1);
 		List<Task> expected = List.of(task1, task2, task3, task4);
@@ -138,8 +138,8 @@ class PolicyTest {
 		Task m1 = comTask("m1", TaskPriority.MANUAL, repo1);
 		Task m2 = tarTask("m2", TaskPriority.MANUAL, null);
 
-		Task t1 = tarTask("t1", TaskPriority.TAR, repo2);
-		Task t2 = tarTask("t2", TaskPriority.TAR, null);
+		Task t1 = tarTask("t1", TaskPriority.USER_CREATED, repo2);
+		Task t2 = tarTask("t2", TaskPriority.USER_CREATED, null);
 
 		Task l1 = comTask("l1", TaskPriority.LISTENER, repo1);
 		Task l2 = comTask("l2", TaskPriority.LISTENER, repo2);

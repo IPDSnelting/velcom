@@ -3,12 +3,18 @@ package de.aaaaaaah.velcom.backend.listener.github;
 import static java.util.stream.Collectors.toList;
 import static org.jooq.codegen.db.tables.GithubCommand.GITHUB_COMMAND;
 import static org.jooq.codegen.db.tables.Repo.REPO;
+import static org.jooq.codegen.db.tables.Run.RUN;
+import static org.jooq.codegen.db.tables.Task.TASK;
+import static org.jooq.impl.DSL.select;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import de.aaaaaaah.velcom.backend.access.committaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.Repo;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.Repo.GithubInfo;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RepoId;
+import de.aaaaaaah.velcom.backend.access.taskaccess.entities.TaskPriority;
+import de.aaaaaaah.velcom.backend.data.queue.Queue;
+import de.aaaaaaah.velcom.backend.storage.db.DBWriteAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import java.io.IOException;
 import java.net.URI;
@@ -39,20 +45,23 @@ import org.slf4j.LoggerFactory;
 public class GithubPrInteractor {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(GithubPrInteractor.class);
-	private static final int TRIES = 5;
 
 	private final Repo repo;
 	private final GithubInfo ghInfo;
 	private final DatabaseStorage databaseStorage;
+	private final Queue queue;
 
 	private final HttpClient client;
 	private final JsonBodyHandler jsonBodyHandler;
 	private final String basicAuthHeader;
 
-	private GithubPrInteractor(Repo repo, GithubInfo ghInfo, DatabaseStorage databaseStorage) {
+	private GithubPrInteractor(Repo repo, GithubInfo ghInfo, DatabaseStorage databaseStorage,
+		Queue queue) {
+
 		this.repo = repo;
 		this.ghInfo = ghInfo;
 		this.databaseStorage = databaseStorage;
+		this.queue = queue;
 
 		client = HttpClient.newHttpClient();
 		jsonBodyHandler = new JsonBodyHandler();
@@ -63,9 +72,16 @@ public class GithubPrInteractor {
 		basicAuthHeader = "Basic " + authInfoBase64;
 	}
 
-	public static Optional<GithubPrInteractor> fromRepo(Repo repo, DatabaseStorage databaseStorage) {
+	public static Optional<GithubPrInteractor> fromRepo(Repo repo, DatabaseStorage databaseStorage,
+		Queue queue) {
+
 		Optional<GithubInfo> ghInfoOpt = repo.getGithubInfo();
-		return ghInfoOpt.map(githubInfo -> new GithubPrInteractor(repo, githubInfo, databaseStorage));
+		return ghInfoOpt.map(githubInfo -> new GithubPrInteractor(
+			repo,
+			githubInfo,
+			databaseStorage,
+			queue
+		));
 	}
 
 	private static GithubCommand commandRecordToCommand(GithubCommandRecord record) {
@@ -252,8 +268,73 @@ public class GithubPrInteractor {
 		}
 	}
 
+	private void markCommandsAsQueued(DBWriteAccess db) {
+		String repoId = repo.getIdAsString();
+		db.dsl()
+			.update(GITHUB_COMMAND)
+			.set(GITHUB_COMMAND.STATE, GithubCommandState.QUEUED.getTextualRepresentation())
+			.where(GITHUB_COMMAND.REPO_ID.eq(repoId))
+			.and(GITHUB_COMMAND.COMMIT_HASH.in(
+				select(TASK.COMMIT_HASH)
+					.from(TASK)
+					.where(TASK.REPO_ID.eq(repoId))
+					.and(TASK.COMMIT_HASH.isNotNull())
+				).or(GITHUB_COMMAND.COMMIT_HASH.in(
+				select(RUN.COMMIT_HASH)
+					.from(RUN)
+					.where(RUN.REPO_ID.eq(repoId))
+					.and(RUN.COMMIT_HASH.isNotNull())
+				))
+			)
+			.execute();
+	}
+
 	public void addNewPrCommandsToQueue() {
-		// TODO: 31.03.21 Implement
+		// 1. Advance all commands for which a task or run exists to QUEUED
+		List<CommitHash> toBeQueued = databaseStorage.acquireWriteTransaction(db -> {
+			markCommandsAsQueued(db);
+			return db.dsl()
+				.selectDistinct(GITHUB_COMMAND.COMMIT_HASH)
+				.from(GITHUB_COMMAND)
+				.where(GITHUB_COMMAND.REPO_ID.eq(repo.getIdAsString()))
+				.stream()
+				.map(record -> new CommitHash(record.value1()))
+				.collect(toList());
+		});
+
+		// 2. Try to queue all left-over commands
+		queue.addCommits("GitHub PR command", repo.getId(), toBeQueued, TaskPriority.USER_CREATED);
+
+		// In theory, new commands might be added between steps 1 and 2 or between steps 2 and 3. In
+		// practice however, the only way that might happen is through the listener. Since the listener
+		// ensures that only one update process is running at a time, this should never happen.
+		//
+		// Should the code ever be changed such that this is possible, the worst that could happen is
+		// that new commands' tries are decremented once. That shouldn't really matter since they'll
+		// still have some tries left over. The tries are meant to absorb various kinds of small
+		// failures, which is exactly what would happen.
+
+		databaseStorage.acquireWriteTransaction(db -> {
+			// 3. Same as 1.
+			markCommandsAsQueued(db);
+
+			// 4. Cancel all left-over commands with only 1 try left
+			db.dsl()
+				.update(GITHUB_COMMAND)
+				.set(GITHUB_COMMAND.STATE, GithubCommandState.ERROR.getTextualRepresentation())
+				.where(GITHUB_COMMAND.REPO_ID.eq(repo.getIdAsString()))
+				.and(GITHUB_COMMAND.STATE.eq(GithubCommandState.MARKED_SEEN.getTextualRepresentation()))
+				.and(GITHUB_COMMAND.TRIES_LEFT.le(1))
+				.execute();
+
+			// 5. Subtract 1 from the tries of all left-over commands
+			db.dsl()
+				.update(GITHUB_COMMAND)
+				.set(GITHUB_COMMAND.TRIES_LEFT, GITHUB_COMMAND.TRIES_LEFT.minus(1))
+				.where(GITHUB_COMMAND.REPO_ID.eq(repo.getIdAsString()))
+				.and(GITHUB_COMMAND.STATE.eq(GithubCommandState.MARKED_SEEN.getTextualRepresentation()))
+				.execute();
+		});
 	}
 
 	public void replyToFinishedPrCommands() {
