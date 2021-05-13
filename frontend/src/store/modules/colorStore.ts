@@ -103,4 +103,16 @@ export class ColorStore extends VxModule {
         : this.mutedColors[index]
     }
   }
+
+  /**
+   * Converts a given store to a pure object that can be serialized.
+   *
+   * @param store the store to convert
+   */
+  static toPlainObject(store: ColorStore): unknown {
+    return {
+      mutedColors: store.mutedColors,
+      pastelColors: store.pastelColors
+    }
+  }
 }

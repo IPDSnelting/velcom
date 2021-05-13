@@ -2,17 +2,13 @@ import { UserStore } from './modules/userStore'
 import { ColorStore } from './modules/colorStore'
 import { RootState, vxm } from './index'
 import VuexPersistence from 'vuex-persist'
-import {
-  comparisonGraphStoreFromJson,
-  comparisonGraphStoreToJson,
-  detailGraphStoreFromJson,
-  detailGraphStoreToJson,
-  repoStoreFromJson,
-  repoStoreToJson
-} from '@/util/StorePersistenceUtilities'
+import { fromJson, toJson } from '@/util/StorePersistenceUtilities'
+import { RepoStore } from '@/store/modules/repoStore'
+import { DetailGraphStore } from '@/store/modules/detailGraphStore'
+import { ComparisonGraphStore } from '@/store/modules/comparisonGraphStore'
 
 const STORAGE_VERSION_KEY = 'VELCOM_STORAGE_VERSION'
-const STORAGE_VERSION_CURRENT = '2'
+const STORAGE_VERSION_CURRENT = '3'
 
 /**
  * Deletes old stored data which does not conform to what the store expects to
@@ -28,23 +24,17 @@ export function deletedOutdatedLocalData(): void {
   }
 }
 
-interface LocalStoragePersisted {
-  userModule?: UserStore
-  colorModule?: ColorStore
-  repoModule?: string
-}
-
 export const persistenceLocalStorage = new VuexPersistence<Partial<RootState>>({
   storage: window.localStorage,
   saveState: (key, rawState, storage) => {
     const state = rawState as RootState
 
-    const persistable: LocalStoragePersisted = {
-      userModule: state.userModule,
-      colorModule: state.colorModule,
-      repoModule: repoStoreToJson(state.repoModule)
+    const persistable = {
+      userModule: UserStore.toPlainObject(state.userModule),
+      colorModule: ColorStore.toPlainObject(state.colorModule),
+      repoModule: RepoStore.toPlainObject(state.repoModule)
     }
-    storage!.setItem(key, JSON.stringify(persistable))
+    storage!.setItem(key, toJson(persistable))
 
     storage!.setItem(STORAGE_VERSION_KEY, STORAGE_VERSION_CURRENT)
   },
@@ -55,20 +45,9 @@ export const persistenceLocalStorage = new VuexPersistence<Partial<RootState>>({
       return {}
     }
 
-    const parsed = JSON.parse(data) as LocalStoragePersisted
-
-    return {
-      userModule: parsed.userModule,
-      colorModule: parsed.colorModule,
-      repoModule: repoStoreFromJson(parsed.repoModule)
-    }
+    return fromJson(data)
   }
 })
-
-interface SessionStoragePersisted {
-  comparisonGraphModule?: string
-  detailGraphModule?: string
-}
 
 export const persistenceSessionStorage = new VuexPersistence<
   Partial<RootState>
@@ -77,14 +56,16 @@ export const persistenceSessionStorage = new VuexPersistence<
   saveState: (key, rawState, storage) => {
     const state = rawState as RootState
 
-    const persistable: SessionStoragePersisted = {
-      detailGraphModule: detailGraphStoreToJson(state.detailGraphModule),
-      comparisonGraphModule: comparisonGraphStoreToJson(
+    const persistable = {
+      detailGraphModule: DetailGraphStore.toPlainObject(
+        state.detailGraphModule
+      ),
+      comparisonGraphModule: ComparisonGraphStore.toPlainObject(
         state.comparisonGraphModule
       )
     }
 
-    storage!.setItem(key, JSON.stringify(persistable))
+    storage!.setItem(key, toJson(persistable))
     storage!.setItem(STORAGE_VERSION_KEY, STORAGE_VERSION_CURRENT)
   },
   restoreState: (key, storage) => {
@@ -93,14 +74,7 @@ export const persistenceSessionStorage = new VuexPersistence<
       return {}
     }
 
-    const parsed = JSON.parse(data) as SessionStoragePersisted
-
-    return {
-      detailGraphModule: detailGraphStoreFromJson(parsed.detailGraphModule),
-      comparisonGraphModule: comparisonGraphStoreFromJson(
-        parsed.comparisonGraphModule
-      )
-    }
+    return fromJson(data)
   }
 })
 

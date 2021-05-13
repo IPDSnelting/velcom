@@ -210,4 +210,25 @@ export class ComparisonGraphStore extends VxModule {
       })
     return map
   }
+
+  /**
+   * Converts a given store to a pure object that can be serialized.
+   *
+   * @param store the store to convert
+   */
+  static toPlainObject(store: ComparisonGraphStore): unknown {
+    return {
+      _selectedBranches: store._selectedBranches,
+      startTime: store.startTime,
+      endTime: store.endTime,
+      selectedDimension: store.selectedDimension,
+      zoomXStartValue: store.zoomXStartValue,
+      zoomXEndValue: store.zoomXEndValue,
+      zoomYStartValue: store.zoomYStartValue,
+      zoomYEndValue: store.zoomYEndValue,
+      referenceDatapoint: store.referenceDatapoint,
+      beginYAtZero: store.beginYAtZero,
+      dayEquidistantGraphSelected: store.dayEquidistantGraphSelected
+    }
+  }
 }

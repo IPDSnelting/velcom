@@ -40,10 +40,8 @@ export class DetailGraphStore extends VxModule {
   private _selectedRepoId: RepoId = ''
   private _selectedDimensions: Dimension[] = []
 
-  private colorIndexMap: CustomKeyEqualsMap<
-    DimensionId,
-    number
-  > = new CustomKeyEqualsMap([], dimensionIdEqual)
+  private colorIndexMap: CustomKeyEqualsMap<DimensionId, number> =
+    new CustomKeyEqualsMap([], dimensionIdEqual)
 
   private firstFreeColorIndex: number = 0
 
@@ -371,9 +369,8 @@ export class DetailGraphStore extends VxModule {
         repo.dimensions.find(it => it.equals(dimension)) !== undefined
 
       // we need to trigger the setter
-      vxm.detailGraphModule.selectedDimensions = this._selectedDimensions.filter(
-        isInRepo
-      )
+      vxm.detailGraphModule.selectedDimensions =
+        this._selectedDimensions.filter(isInRepo)
     } else {
       // we need to trigger the setter
       vxm.detailGraphModule.selectedDimensions = []
@@ -427,4 +424,30 @@ export class DetailGraphStore extends VxModule {
     }
   }
   //  <!--</editor-fold>-->
+
+  /**
+   * Converts a given store to a pure object that can be serialized.
+   *
+   * @param store the store to convert
+   */
+  static toPlainObject(store: DetailGraphStore): unknown {
+    return {
+      _selectedRepoId: store._selectedRepoId,
+      _selectedDimensions: store._selectedDimensions,
+      referenceDatapoint: store.referenceDatapoint,
+      _startTime: store._startTime,
+      _endTime: store._endTime,
+      zoomXStartValue: store.zoomXStartValue,
+      zoomXEndValue: store.zoomXEndValue,
+      zoomYStartValue: store.zoomYStartValue,
+      zoomYEndValue: store.zoomYEndValue,
+      firstFreeColorIndex: store.firstFreeColorIndex,
+      colorIndexMap: store.colorIndexMap,
+      commitToCompare: store.commitToCompare,
+      beginYScaleAtZero: store.beginYScaleAtZero,
+      dayEquidistantGraph: store.dayEquidistantGraph,
+      selectedTab: store.selectedTab,
+      selectedDimensionSelector: store.selectedDimensionSelector
+    }
+  }
 }

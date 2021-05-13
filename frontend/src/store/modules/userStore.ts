@@ -62,4 +62,16 @@ export class UserStore extends VxModule {
   get usesBrowsersThemePreferences(): boolean {
     return this._darkThemeSelected === undefined
   }
+
+  /**
+   * Converts a given store to a pure object that can be serialized.
+   *
+   * @param store the store to convert
+   */
+  static toPlainObject(store: UserStore): unknown {
+    return {
+      _token: store._token,
+      _darkThemeSelected: store._darkThemeSelected
+    }
+  }
 }
