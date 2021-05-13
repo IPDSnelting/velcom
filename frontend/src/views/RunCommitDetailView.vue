@@ -182,9 +182,10 @@ export default class RunCommitDetailView extends Vue {
         commitHash: this.secondComponent
       })
       if (this.commit.runs.length > 0) {
-        this.runWithDifferences = await vxm.commitDetailComparisonModule.fetchRun(
-          this.commit.runs[0].runId
-        )
+        this.runWithDifferences =
+          await vxm.commitDetailComparisonModule.fetchRun(
+            this.commit.runs[0].runId
+          )
       }
     } else {
       // We got weird things
