@@ -51,8 +51,8 @@ import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 import { formatDate, formatDateUTC } from '@/util/TimeUtil'
 import { CommitDescription } from '@/store/types'
-import InlineMinimalRepoNameDisplay from '../InlineMinimalRepoDisplay.vue'
-import CommitChip from '../CommitChip.vue'
+import InlineMinimalRepoNameDisplay from '../misc/InlineMinimalRepoDisplay.vue'
+import CommitChip from '../runs/CommitChip.vue'
 import { RawLocation } from 'vue-router'
 
 @Component({

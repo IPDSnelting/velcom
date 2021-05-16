@@ -47,8 +47,8 @@ import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 import { SearchItemBranch } from '@/store/types'
 import { RawLocation } from 'vue-router'
-import CommitChip from '@/components/CommitChip.vue'
-import InlineMinimalRepoDisplay from '@/components/InlineMinimalRepoDisplay.vue'
+import CommitChip from '@/components/runs/CommitChip.vue'
+import InlineMinimalRepoDisplay from '@/components/misc/InlineMinimalRepoDisplay.vue'
 import { mdiSourceBranch } from '@mdi/js'
 
 @Component({

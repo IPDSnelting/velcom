@@ -46,8 +46,7 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import EchartsDetailGraph from '@/components/graphs//EchartsDetailGraph.vue'
-import DytailGraph from '@/components/graphs/DytailGraph.vue'
+import DytailGraph from '@/components/graphs/graph/DytailGraph.vue'
 import {
   AttributedDatapoint,
   ComparisonDataPoint,
@@ -55,10 +54,11 @@ import {
   SeriesInformation
 } from '@/store/types'
 import { vxm } from '@/store'
-import GraphDatapointDialog from '@/components/dialogs/GraphDatapointDialog.vue'
+import GraphDatapointDialog from '@/components/graphs/helper/GraphDatapointDialog.vue'
 import { Prop } from 'vue-property-decorator'
-import OverscrollToZoom from '@/components/graphs/OverscrollToZoom'
+import OverscrollToZoom from '@/components/graphs/helper/OverscrollToZoom'
 import { roundDateDown, roundDateUp } from '@/util/TimeUtil'
+import EchartsDetailGraph from '@/components/graphs/graph/EchartsDetailGraph.vue'
 
 @Component({
   components: {

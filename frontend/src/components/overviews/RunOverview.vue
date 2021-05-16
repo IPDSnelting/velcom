@@ -58,7 +58,7 @@ import {
   mdiCloseCircleOutline,
   mdiAlertCircleCheckOutline
 } from '@mdi/js'
-import CommitBenchmarkActions from '../CommitBenchmarkActions.vue'
+import CommitBenchmarkActions from '../runs/CommitBenchmarkActions.vue'
 import CommitOverviewBase from './CommitOverviewBase.vue'
 import TarTaskOverview from './TarTaskOverview.vue'
 import { RawLocation } from 'vue-router'

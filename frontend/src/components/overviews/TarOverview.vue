@@ -30,7 +30,7 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 import { RunId, TarTaskSource } from '@/store/types'
-import InlineMinimalRepoNameDisplay from '@/components/InlineMinimalRepoDisplay.vue'
+import InlineMinimalRepoNameDisplay from '@/components/misc/InlineMinimalRepoDisplay.vue'
 import { mdiScaleBalance } from '@mdi/js'
 
 @Component({

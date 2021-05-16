@@ -1,6 +1,6 @@
 import Vue from 'vue'
-import EchartsDetailGraph from '@/components/graphs/EchartsDetailGraph.vue'
-import DytailGraph from '@/components/graphs/DytailGraph.vue'
+import EchartsDetailGraph from '@/components/graphs/graph/EchartsDetailGraph.vue'
+import DytailGraph from '@/components/graphs/graph/DytailGraph.vue'
 
 export type GraphVariant = {
   component: typeof Vue

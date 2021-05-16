@@ -23,7 +23,7 @@ import {
   RunDescriptionWithDifferences
 } from '@/store/types'
 import RunOverview from './RunOverview.vue'
-import RunSignificanceChips from '@/components/RunSignificanceChips.vue'
+import RunSignificanceChips from '@/components/runs/RunSignificanceChips.vue'
 
 @Component({
   components: {

@@ -58,9 +58,9 @@
 <script lang="ts">
 import Vue from 'vue'
 import { Component, Model, Watch } from 'vue-property-decorator'
-import RepoSelectionComponent from '@/components/RepoSelectionComponent.vue'
+import RepoSelectionComponent from '@/components/misc/RepoSelectionComponent.vue'
 import { vxm } from '@/store'
-import FileSelectComponent from '@/components/FileSelectComponent.vue'
+import FileSelectComponent from '@/components/misc/FileSelectComponent.vue'
 
 @Component({
   components: { FileSelectComponent, RepoSelectionComponent }

@@ -94,7 +94,7 @@ import {
   GraphDataPoint,
   SeriesId
 } from '@/store/types'
-import CommitBenchmarkActions from '@/components/CommitBenchmarkActions.vue'
+import CommitBenchmarkActions from '@/components/runs/CommitBenchmarkActions.vue'
 
 @Component({
   components: {

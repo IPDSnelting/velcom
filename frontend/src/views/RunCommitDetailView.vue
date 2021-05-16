@@ -92,7 +92,7 @@ import RunTimeline from '@/components/rundetail/RunTimeline.vue'
 import { NotFoundError } from '@/store/modules/commitDetailComparisonStore'
 import { showCommitInDetailGraph } from '@/util/GraphNavigation'
 import TarOverview from '@/components/overviews/TarOverview.vue'
-import RunSignificanceChips from '@/components/RunSignificanceChips.vue'
+import RunSignificanceChips from '@/components/runs/RunSignificanceChips.vue'
 
 @Component({
   components: {

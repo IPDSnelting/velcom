@@ -52,8 +52,8 @@ import { Prop } from 'vue-property-decorator'
 import { SearchItemCommit } from '@/store/types'
 import { RawLocation } from 'vue-router'
 import { formatDate, formatDateUTC } from '@/util/TimeUtil'
-import CommitChip from '@/components/CommitChip.vue'
-import InlineMinimalRepoDisplay from '@/components/InlineMinimalRepoDisplay.vue'
+import CommitChip from '@/components/runs/CommitChip.vue'
+import InlineMinimalRepoDisplay from '@/components/misc/InlineMinimalRepoDisplay.vue'
 import { mdiSourceCommit } from '@mdi/js'
 
 @Component({

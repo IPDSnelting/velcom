@@ -34,7 +34,7 @@ import { vxm } from '@/store'
 import 'dygraphs/css/dygraph.css'
 import Crosshair from 'dygraphs/src/extras/crosshair.js'
 import { escapeHtml } from '@/util/TextUtils'
-import GraphDatapointDialog from '@/components/dialogs/GraphDatapointDialog.vue'
+import GraphDatapointDialog from '@/components/graphs/helper/GraphDatapointDialog.vue'
 import { formatDate } from '@/util/TimeUtil'
 
 // eslint-disable-next-line no-undef

@@ -43,7 +43,7 @@
 import Vue from 'vue'
 import { Component, Watch } from 'vue-property-decorator'
 import { vxm } from '@/store'
-import RepoSelectionComponent from '../RepoSelectionComponent.vue'
+import RepoSelectionComponent from './RepoSelectionComponent.vue'
 
 @Component({
   components: {

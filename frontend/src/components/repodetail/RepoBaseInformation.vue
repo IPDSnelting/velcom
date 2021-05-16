@@ -71,7 +71,7 @@ import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 import { Repo, RepoBranch } from '@/store/types'
 import { vxm } from '@/store'
-import RepoUpdateDialog from '@/components/dialogs/RepoUpdateDialog.vue'
+import RepoUpdateDialog from '@/components/repodetail/RepoUpdateDialog.vue'
 import { mdiCompassOutline } from '@mdi/js'
 
 @Component({
