@@ -82,7 +82,7 @@
                     </v-tooltip>
                   </v-col>
                 </v-row>
-                <v-row align="center">
+                <v-row align="center" class="mt-0">
                   <queue-overview></queue-overview>
                 </v-row>
               </v-container>
