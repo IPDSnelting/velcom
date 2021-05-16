@@ -21,8 +21,8 @@
             outlined
             text
           >
-            <span v-if="beginYAtZero">Begin Y-Axis at minimum value</span>
-            <span v-else>Begin Y-Axis at zero</span>
+            Start Y-Axis at zero
+            <v-icon class="ml-2" style="margin-right: -6px">{{ beginYAtZero ? iconOn : iconOff }}</v-icon>
           </v-btn>
         </v-col>
         <v-col cols="auto">
@@ -37,10 +37,10 @@
               )
             "
           >
-            <span v-if="dayEquidistantGraphSelected">
-              Disable Day-Equidistant Graph
-            </span>
-            <span v-else>Enable Day-Equidistant Graph</span>
+            Use Day-Equidistant Graph
+            <v-icon class="ml-2" style="margin-right: -6px">
+              {{ dayEquidistantGraphSelected ? iconOn : iconOff }}
+            </v-icon>
           </v-btn>
         </v-col>
         <slot></slot>
@@ -54,6 +54,11 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { availableGraphComponents } from '@/util/GraphVariantSelection'
 import { Prop } from 'vue-property-decorator'
+import {
+  mdiCheckboxBlankOff,
+  mdiCheckboxBlankOutline,
+  mdiCheckboxMarked
+} from '@mdi/js'
 
 @Component
 export default class GraphSettings extends Vue {
@@ -78,5 +83,9 @@ export default class GraphSettings extends Vue {
   private get availableGraphComponents() {
     return availableGraphComponents
   }
+
+  // ICONS
+  private readonly iconOff = mdiCheckboxBlankOutline
+  private readonly iconOn = mdiCheckboxMarked
 }
 </script>
