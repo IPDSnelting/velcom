@@ -20,7 +20,7 @@
               <v-container fluid class="ma-0 pa-0">
                 <v-row no-gutters align="center" justify="space-between">
                   <v-col cols="auto">
-                    <commit-chip :commitHash="item.id"></commit-chip>
+                    <text-chip :text="item.id"></text-chip>
                   </v-col>
                   <span class="pl-3">
                     <slot name="compare-actions" :has-run="true"></slot>
@@ -40,7 +40,7 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 import { RawLocation } from 'vue-router'
-import CommitChip from '@/components/runs/CommitChip.vue'
+import TextChip from '@/components/misc/TextChip.vue'
 import InlineMinimalRepoDisplay from '@/components/misc/InlineMinimalRepoDisplay.vue'
 import { mdiFolderZipOutline } from '@mdi/js'
 import { SearchItemRun } from '@/store/types'
@@ -48,7 +48,7 @@ import { SearchItemRun } from '@/store/types'
 @Component({
   components: {
     'repo-display': InlineMinimalRepoDisplay,
-    CommitChip
+    TextChip: TextChip
   }
 })
 export default class SearchResultTar extends Vue {

@@ -21,7 +21,9 @@
             text
           >
             Start Y-Axis at zero
-            <v-icon class="ml-2" style="margin-right: -6px">{{ beginYAtZero ? iconOn : iconOff }}</v-icon>
+            <v-icon class="ml-2" style="margin-right: -6px">
+              {{ beginYAtZero ? iconOn : iconOff }}
+            </v-icon>
           </v-btn>
           <v-btn
             color="primary"
@@ -51,11 +53,7 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { availableGraphComponents } from '@/util/GraphVariantSelection'
 import { Prop } from 'vue-property-decorator'
-import {
-  mdiCheckboxBlankOff,
-  mdiCheckboxBlankOutline,
-  mdiCheckboxMarked
-} from '@mdi/js'
+import { mdiCheckboxBlankOutline, mdiCheckboxMarked } from '@mdi/js'
 
 @Component
 export default class GraphSettings extends Vue {

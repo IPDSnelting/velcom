@@ -4,11 +4,11 @@
     label
     color="accent"
     class="commit-hash-chip"
-    @click="copyOnClick ? copyToClipboard(commitHash) : undefined"
+    @click="copyOnClick ? copyToClipboard(text) : undefined"
     :to="copyOnClick ? undefined : to"
     v-on="on"
   >
-    {{ commitHash }}
+    {{ text }}
   </v-chip>
 </template>
 
@@ -19,9 +19,9 @@ import { Prop } from 'vue-property-decorator'
 import { copyToClipboard } from '@/util/ClipboardUtils'
 
 @Component
-export default class CommitChip extends Vue {
+export default class TextChip extends Vue {
   @Prop()
-  private commitHash!: string
+  private text!: string
 
   @Prop({ default: true })
   private copyOnClick!: boolean

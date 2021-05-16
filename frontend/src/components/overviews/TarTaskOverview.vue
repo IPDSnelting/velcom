@@ -25,7 +25,7 @@
               <v-container fluid class="ma-0 pa-0">
                 <v-row no-gutters align="center" justify="space-between">
                   <v-col cols="auto">
-                    <commit-chip :commitHash="id"></commit-chip>
+                    <text-chip :text="id"></text-chip>
                   </v-col>
                   <span :class="$scopedSlots['actions'] ? ['pl-3'] : ['']">
                     <slot name="actions"></slot>
@@ -54,7 +54,7 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 import { TarTaskSource, RunId, TaskId } from '@/store/types'
-import CommitChip from '../runs/CommitChip.vue'
+import TextChip from '../misc/TextChip.vue'
 import InlineMinimalRepoNameDisplay from '../misc/InlineMinimalRepoDisplay.vue'
 import { RawLocation } from 'vue-router'
 import { mdiScaleBalance } from '@mdi/js'
@@ -62,7 +62,7 @@ import { mdiScaleBalance } from '@mdi/js'
 @Component({
   components: {
     'repo-display': InlineMinimalRepoNameDisplay,
-    'commit-chip': CommitChip
+    'text-chip': TextChip
   }
 })
 export default class TarTaskOverview extends Vue {

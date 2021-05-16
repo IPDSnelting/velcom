@@ -31,7 +31,7 @@
               <v-container fluid class="ma-0 pa-0">
                 <v-row no-gutters align="center" justify="space-between">
                   <v-col cols="auto">
-                    <commit-chip :commitHash="commit.hash"></commit-chip>
+                    <text-chip :text="commit.hash"></text-chip>
                   </v-col>
                   <span :class="$scopedSlots['actions'] ? ['pl-3'] : ['']">
                     <slot name="actions"></slot>
@@ -52,13 +52,13 @@ import { Prop } from 'vue-property-decorator'
 import { formatDate, formatDateUTC } from '@/util/TimeUtil'
 import { CommitDescription } from '@/store/types'
 import InlineMinimalRepoNameDisplay from '../misc/InlineMinimalRepoDisplay.vue'
-import CommitChip from '../runs/CommitChip.vue'
+import TextChip from '../misc/TextChip.vue'
 import { RawLocation } from 'vue-router'
 
 @Component({
   components: {
     'repo-display': InlineMinimalRepoNameDisplay,
-    'commit-chip': CommitChip
+    'text-chip': TextChip
   }
 })
 export default class CommitOverviewBase extends Vue {
