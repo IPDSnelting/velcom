@@ -7,7 +7,9 @@
     :linkLocation="runLinkLocation"
   >
     <template #avatar>
-      <v-list-item-avatar>
+      <v-list-item-avatar
+        :class="!$vuetify.breakpoint.smAndUp ? ['ml-0', 'mt-0'] : []"
+      >
         <v-tooltip top v-if="isSuccessful">
           <template #activator="{ on }">
             <v-icon v-on="on" size="32px" color="success">

@@ -1,5 +1,5 @@
 <template>
-  <v-row no-gutters class="ma-0">
+  <v-row no-gutters class="ma-0" justify="center" justify-sm="start">
     <v-col
       v-for="relevantChange in relevantChanges"
       :key="
