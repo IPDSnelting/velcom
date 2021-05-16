@@ -152,7 +152,7 @@ export default class ComparisonGraph extends Vue {
 
   private get overlayText() {
     if (this.seriesInformation.length === 0) {
-      return 'Please select a repo / branch on the left'
+      return 'Please select a repo, branch and dimension on the left'
     }
     if (!vxm.comparisonGraphModule.selectedDimension) {
       return 'Please select a dimension in the top left'
