@@ -1,7 +1,7 @@
 <template>
   <v-card>
     <v-card-text>
-      <v-row align="center">
+      <v-row align="center" justify="space-between">
         <v-col cols="auto">
           <v-btn-toggle v-model="selectedGraphVariant" mandatory dense>
             <v-btn
@@ -13,8 +13,7 @@
             </v-btn>
           </v-btn-toggle>
         </v-col>
-        <v-spacer></v-spacer>
-        <v-col cols="auto">
+        <v-col cols="auto" style="gap: 12px" class="d-flex flex-wrap">
           <v-btn
             @click="$emit('update:beginYAtZero', !beginYAtZero)"
             color="primary"
@@ -24,8 +23,6 @@
             Start Y-Axis at zero
             <v-icon class="ml-2" style="margin-right: -6px">{{ beginYAtZero ? iconOn : iconOff }}</v-icon>
           </v-btn>
-        </v-col>
-        <v-col cols="auto">
           <v-btn
             color="primary"
             outlined
@@ -42,8 +39,8 @@
               {{ dayEquidistantGraphSelected ? iconOn : iconOff }}
             </v-icon>
           </v-btn>
+          <slot></slot>
         </v-col>
-        <slot></slot>
       </v-row>
     </v-card-text>
   </v-card>

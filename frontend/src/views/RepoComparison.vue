@@ -25,12 +25,10 @@
               :graph-component.sync="graphComponent"
               :day-equidistant-graph-selected.sync="dayEquidistantGraphSelected"
             >
-              <v-col cols="auto">
-                <share-graph-link-dialog
-                  :link-generator="getShareLink"
-                  data-restriction-label="Include repos and branches"
-                />
-              </v-col>
+              <share-graph-link-dialog
+                :link-generator="getShareLink"
+                data-restriction-label="Include repos and branches"
+              />
             </comparison-graph-settings>
           </v-col>
         </v-row>
