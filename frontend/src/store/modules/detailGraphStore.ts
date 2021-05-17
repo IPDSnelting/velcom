@@ -4,13 +4,12 @@ import {
   DetailDataPoint,
   Dimension,
   DimensionId,
-  dimensionIdEqual,
+  dimensionIdToString,
   RepoId
 } from '@/store/types'
 import axios from 'axios'
 import { detailDataPointFromJson } from '@/util/GraphJsonHelper'
 import { dimensionFromJson } from '@/util/RepoJsonHelper'
-import { CustomKeyEqualsMap } from '@/util/CustomKeyEqualsMap'
 import { vxm } from '@/store'
 import router from '@/router'
 import { Route } from 'vue-router'
@@ -40,8 +39,7 @@ export class DetailGraphStore extends VxModule {
   private _selectedRepoId: RepoId = ''
   private _selectedDimensions: Dimension[] = []
 
-  private colorIndexMap: CustomKeyEqualsMap<DimensionId, number> =
-    new CustomKeyEqualsMap([], dimensionIdEqual)
+  private colorIndexMap: Map<string, number> = new Map()
 
   private firstFreeColorIndex: number = 0
 
@@ -247,8 +245,8 @@ export class DetailGraphStore extends VxModule {
       if (!it) {
         throw new Error('UNDEFINED OR NULL!')
       }
-      if (!this.colorIndexMap.has(it)) {
-        this.colorIndexMap.set(it, this.firstFreeColorIndex++)
+      if (!this.colorIndexMap.has(it.toString())) {
+        this.colorIndexMap.set(it.toString(), this.firstFreeColorIndex++)
       }
     })
     this._selectedDimensions = dimensions
@@ -358,7 +356,7 @@ export class DetailGraphStore extends VxModule {
   set selectedRepoId(selectedRepoId: RepoId) {
     this._selectedRepoId = selectedRepoId
     // reset colors
-    this.colorIndexMap = new CustomKeyEqualsMap([], dimensionIdEqual)
+    this.colorIndexMap = new Map()
     this.firstFreeColorIndex = 0
 
     // rebuild selected dimensions so colors are correct
@@ -378,7 +376,7 @@ export class DetailGraphStore extends VxModule {
   }
 
   get colorIndex(): (dimension: DimensionId) => number | undefined {
-    return dimension => this.colorIndexMap.get(dimension)
+    return dimension => this.colorIndexMap.get(dimensionIdToString(dimension))
   }
   //  <!--</editor-fold>-->
 
