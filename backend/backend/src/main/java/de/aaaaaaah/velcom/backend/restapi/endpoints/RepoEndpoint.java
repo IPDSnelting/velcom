@@ -11,6 +11,7 @@ import de.aaaaaaah.velcom.backend.access.repoaccess.RepoWriteAccess;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.BranchName;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RemoteUrl;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.Repo;
+import de.aaaaaaah.velcom.backend.access.repoaccess.entities.Repo.GithubInfo;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.repoaccess.exceptions.FailedToAddRepoException;
 import de.aaaaaaah.velcom.backend.access.repoaccess.exceptions.NoSuchRepoException;
@@ -23,6 +24,7 @@ import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRepo;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.PATCH;
 import io.micrometer.core.annotation.Timed;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -79,7 +81,12 @@ public class RepoEndpoint {
 			repo.getName(),
 			repo.getRemoteUrlAsString(),
 			branches,
-			jsonDimensions
+			jsonDimensions,
+			repo.getGithubInfo().isPresent(),
+			repo.getGithubInfo()
+				.map(GithubInfo::getCommentCutoff)
+				.map(Instant::getEpochSecond)
+				.orElse(null)
 		);
 	}
 
@@ -191,6 +198,14 @@ public class RepoEndpoint {
 				LOGGER.warn("Failed to update repo {} successfully", repoId);
 			}
 		});
+
+		request.getGithubToken().ifPresent(token -> {
+			if (token.equals("")) {
+				repoAccess.unsetGithubAuthToken(repoId);
+			} else {
+				repoAccess.setGithubAuthToken(repoId, token);
+			}
+		});
 	}
 
 	private static class PatchRequest {
@@ -201,14 +216,17 @@ public class RepoEndpoint {
 		private final String remoteUrl;
 		@Nullable
 		private final List<String> trackedBranches;
+		@Nullable
+		private final String githubToken;
 
 		@JsonCreator
 		public PatchRequest(@Nullable String name, @Nullable String remoteUrl,
-			@Nullable List<String> trackedBranches) {
+			@Nullable List<String> trackedBranches, @Nullable String githubToken) {
 
 			this.name = name;
 			this.remoteUrl = remoteUrl;
 			this.trackedBranches = trackedBranches;
+			this.githubToken = githubToken;
 		}
 
 		public Optional<String> getName() {
@@ -221,6 +239,10 @@ public class RepoEndpoint {
 
 		public Optional<List<String>> getTrackedBranches() {
 			return Optional.ofNullable(trackedBranches);
+		}
+
+		public Optional<String> getGithubToken() {
+			return Optional.ofNullable(githubToken);
 		}
 	}
 
