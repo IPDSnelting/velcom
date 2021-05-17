@@ -417,6 +417,9 @@ paths:
                   items:
                     type: string
                     minLength: 1
+                github_token:
+                  type: string
+                  description: Set a GitHub auth token to enable GitHub bot functionality. Set this to the empty string to delete the token and disable GitHub bot functionality.
       tags:
         - repo
       description: Modify some parts of an existing repo.
@@ -1318,12 +1321,18 @@ components:
           description: All types of measurements where at least one value exists for this repo
           items:
             $ref: '#/components/schemas/Dimension'
+        has_github_token:
+          type: boolean
+          description: 'Whether a GitHub token has been set and GitHub bot functionality enabled for this repo. If this is `true`, `last_github_update` is present.'
+        last_github_update:
+          $ref: '#/components/schemas/Time'
       required:
         - id
         - name
         - remote_url
         - branches
         - dimensions
+        - has_github_token
     RemoteUrl:
       type: string
       title: RemoteUrl
