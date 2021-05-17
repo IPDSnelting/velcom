@@ -66,12 +66,14 @@ import RepoGraphView from '@/views/RepoGraphView.vue'
   }
 })
 export default class RepoDetailFrame extends Vue {
+  private tabMapping: Array<'information' | 'graph'> = ['information', 'graph']
+
   private get selectedTab() {
-    return vxm.detailGraphModule.selectedTab
+    return this.tabMapping.indexOf(vxm.detailGraphModule.selectedTab)
   }
 
   private set selectedTab(selectedTab: number) {
-    vxm.detailGraphModule.selectedTab = selectedTab
+    vxm.detailGraphModule.selectedTab = this.tabMapping[selectedTab]
   }
 
   get selectedRepoId(): string {

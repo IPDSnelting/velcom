@@ -1,6 +1,7 @@
 import { action, createModule, mutation } from 'vuex-class-component'
 import {
   AttributedDatapoint,
+  Commit,
   DetailDataPoint,
   Dimension,
   DimensionId,
@@ -68,7 +69,7 @@ export class DetailGraphStore extends VxModule {
   beginYScaleAtZero: boolean = false
   dayEquidistantGraph: boolean = true
 
-  selectedTab: number = 1
+  selectedTab: 'information' | 'graph' = 'graph'
   selectedDimensionSelector: 'tree' | 'matrix' = 'matrix'
   //  <!--</editor-fold>-->
 
@@ -168,6 +169,25 @@ export class DetailGraphStore extends VxModule {
   setDetailGraph(graph: DetailDataPoint[]): void {
     this._detailGraph = graph
   }
+
+  /**
+   * Centers the graph on the given commit. This involves adjusting the start
+   * and end times as well as setting the repo id and dimension.
+   *
+   * @param payload the commit an dimension to use
+   */
+  @mutation
+  centerOnCommit(payload: { commit: Commit; dimension: Dimension }): void {
+    this.selectedTab = 'graph'
+    this.startTime = new Date(
+      payload.commit.committerDate.getTime() - 1000 * 60 * 60 * 24 * 4
+    )
+    this.endTime = new Date(
+      payload.commit.committerDate.getTime() + 1000 * 60 * 60 * 24 * 4
+    )
+    this.selectedRepoId = payload.commit.repoId
+    this.selectedDimensions = [payload.dimension]
+  }
   //  <!--</editor-fold>-->
 
   // <!--<editor-fold desc="GET / SET TIME">-->
@@ -195,7 +215,7 @@ export class DetailGraphStore extends VxModule {
   }
 
   /**
-   * Returns the boundaries of the buffered timespan that is used when fetchin a
+   * Returns the boundaries of the buffered timespan that is used when fetching a
    * new detail graph. The buffered timespan extends the timespan implied
    * by start and end date to allow for panning a little outside the graph
    * boundaries without having to wait for a new graph to be fetched
