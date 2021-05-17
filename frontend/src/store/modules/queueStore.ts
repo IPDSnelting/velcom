@@ -13,7 +13,7 @@ import {
   streamedRunnerOutputFromJson,
   taskFromJson,
   workerFromJson
-} from '@/util/QueueJsonHelper'
+} from '@/util/json/QueueJsonHelper'
 
 const VxModule = createModule({
   namespaced: 'queueModule',

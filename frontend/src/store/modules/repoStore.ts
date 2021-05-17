@@ -3,7 +3,7 @@ import { Repo, RepoId, Dimension } from '@/store/types'
 import Vue from 'vue'
 import axios from 'axios'
 import { vxm } from '..'
-import { repoFromJson } from '@/util/RepoJsonHelper'
+import { repoFromJson } from '@/util/json/RepoJsonHelper'
 
 const VxModule = createModule({
   namespaced: 'repoModule',

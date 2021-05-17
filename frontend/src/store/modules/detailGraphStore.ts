@@ -8,8 +8,8 @@ import {
   RepoId
 } from '@/store/types'
 import axios from 'axios'
-import { detailDataPointFromJson } from '@/util/GraphJsonHelper'
-import { dimensionFromJson } from '@/util/RepoJsonHelper'
+import { detailDataPointFromJson } from '@/util/json/GraphJsonHelper'
+import { dimensionFromJson } from '@/util/json/RepoJsonHelper'
 import { vxm } from '@/store'
 import router from '@/router'
 import { Route } from 'vue-router'
