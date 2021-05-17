@@ -89,7 +89,7 @@ import { Task, Worker } from '@/store/types'
 import { mdiDelete, mdiRocket } from '@mdi/js'
 import CommitOverviewBase from '../overviews/CommitOverviewBase.vue'
 import TarTaskOverview from '../overviews/TarTaskOverview.vue'
-import { formatDurationHuman } from '@/util/TimeUtil'
+import { formatDurationHuman } from '@/util/Times'
 import { RawLocation } from 'vue-router'
 
 @Component({

@@ -89,7 +89,7 @@ import CommitDetail from '@/components/rundetail/CommitDetail.vue'
 import TaskRunnerOutput from '@/components/queue/TaskRunnerOutput.vue'
 import InlineMinimalRepoDisplay from '@/components/misc/InlineMinimalRepoDisplay.vue'
 import { TaskInfo } from '@/store/modules/queueStore'
-import { formatDurationShort } from '@/util/TimeUtil'
+import { formatDurationShort } from '@/util/Times'
 import TarOverview from '@/components/overviews/TarOverview.vue'
 
 @Component({

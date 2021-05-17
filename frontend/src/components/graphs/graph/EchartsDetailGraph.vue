@@ -69,8 +69,8 @@ import {
   MarkPointComponentOption
 } from 'echarts/components'
 import { use, ComposeOption } from 'echarts/core'
-import { escapeHtml } from '@/util/TextUtils'
-import { formatDate } from '@/util/TimeUtil'
+import { escapeHtml } from '@/util/Texts'
+import { formatDate } from '@/util/Times'
 
 use([
   LineChart,

@@ -79,7 +79,7 @@ import {
   Dimension
 } from '@/store/types'
 import MeasurementValueDisplay from '@/components/rundetail/MeasurementValueDisplay.vue'
-import { safeConvertAnsi } from '@/util/TextUtils'
+import { safeConvertAnsi } from '@/util/Texts'
 import { vxm } from '@/store'
 
 const numberFormat: Intl.NumberFormat = new Intl.NumberFormat(

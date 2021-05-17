@@ -74,7 +74,7 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
-import { formatDate, formatDateUTC } from '@/util/TimeUtil'
+import { formatDate, formatDateUTC } from '@/util/Times'
 import { CommitDescription } from '@/store/types'
 import InlineMinimalRepoNameDisplay from '../misc/InlineMinimalRepoDisplay.vue'
 import TextChip from '../misc/TextChip.vue'

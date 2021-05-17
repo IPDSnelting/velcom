@@ -18,7 +18,7 @@ import {
   respectOptions
 } from '@/util/LinkUtils'
 import { Route } from 'vue-router'
-import { roundDateDown, roundDateUp } from '@/util/TimeUtil'
+import { roundDateDown, roundDateUp } from '@/util/Times'
 
 const VxModule = createModule({
   namespaced: 'comparisonGraphModule',

@@ -74,7 +74,7 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { vxm } from '@/store'
 import { mdiLinkVariantPlus } from '@mdi/js'
-import { copyToClipboard } from '@/util/ClipboardUtils'
+import { copyToClipboard } from '@/util/Clipboards'
 import { PermanentLinkOptions } from '@/store/modules/detailGraphStore'
 import { Prop, Watch } from 'vue-property-decorator'
 

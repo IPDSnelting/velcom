@@ -54,7 +54,7 @@ import Component from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import { StreamedRunnerOutput, TaskId } from '@/store/types'
 import { vxm } from '@/store'
-import { safeConvertAnsi } from '@/util/TextUtils'
+import { safeConvertAnsi } from '@/util/Texts'
 
 @Component
 export default class TaskRunnerOutput extends Vue {

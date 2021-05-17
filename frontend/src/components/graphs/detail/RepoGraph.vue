@@ -71,9 +71,9 @@ import {
   SeriesInformation
 } from '@/store/types'
 import { Prop, Watch } from 'vue-property-decorator'
-import { getInnerHeight } from '@/util/MeasurementUtils'
-import { escapeHtml } from '@/util/TextUtils'
-import { formatDate } from '@/util/TimeUtil'
+import { getInnerHeight } from '@/util/Measurements'
+import { escapeHtml } from '@/util/Texts'
+import { formatDate } from '@/util/Times'
 import GraphDatapointDialog from '@/components/graphs/helper/GraphDatapointDialog.vue'
 import { selectGraphVariant } from '@/util/GraphVariantSelection'
 

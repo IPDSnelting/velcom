@@ -14,14 +14,14 @@ import { dimensionFromJson } from '@/util/json/RepoJsonHelper'
 import { vxm } from '@/store'
 import router from '@/router'
 import { Route } from 'vue-router'
-import { spaceDayEquidistant } from '@/util/DayEquidistantUtil'
+import { spaceDayEquidistant } from '@/util/DayEquidistantUtils'
 import {
   orElse,
   orUndefined,
   parseAndSetZoomAndDateRange,
   respectOptions
 } from '@/util/LinkUtils'
-import { roundDateDown, roundDateUp } from '@/util/TimeUtil'
+import { roundDateDown, roundDateUp } from '@/util/Times'
 
 const VxModule = createModule({
   namespaced: 'detailGraphModule',

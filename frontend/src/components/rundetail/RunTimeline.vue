@@ -37,7 +37,7 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { RunDescription, RunId } from '@/store/types'
 import { Prop } from 'vue-property-decorator'
-import { formatDate } from '@/util/TimeUtil'
+import { formatDate } from '@/util/Times'
 import {
   mdiCheckCircleOutline,
   mdiProgressAlert,

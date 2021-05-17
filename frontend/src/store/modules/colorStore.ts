@@ -1,5 +1,5 @@
 import { createModule, mutation, action } from 'vuex-class-component'
-import { hexToHsl, hslToHex } from '@/util/ColorUtil'
+import { hexToHsl, hslToHex } from '@/util/ColorUtils'
 import { vxm } from '..'
 
 const VxModule = createModule({

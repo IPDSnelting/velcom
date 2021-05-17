@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 import { PermanentLinkOptions } from '@/store/modules/detailGraphStore'
-import { dateFromRelative, roundDateDown, roundDateUp } from '@/util/TimeUtil'
+import { dateFromRelative, roundDateDown, roundDateUp } from '@/util/Times'
 import { Route } from 'vue-router'
 
 /**

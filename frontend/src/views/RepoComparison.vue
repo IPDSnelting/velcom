@@ -65,7 +65,7 @@ import ComparisonDimensionSelector from '@/components/graphs/comparison/Comparis
 import { ComparisonDataPoint, Dimension, Repo } from '@/store/types'
 import { Watch } from 'vue-property-decorator'
 import GraphSettings from '@/components/graphs/helper/GraphSettings.vue'
-import { groupBy, spaceDayEquidistant } from '@/util/DayEquidistantUtil'
+import { groupBy, spaceDayEquidistant } from '@/util/DayEquidistantUtils'
 import { availableGraphComponents } from '@/util/GraphVariantSelection'
 import { debounce } from '@/util/Debouncer'
 import ShareGraphLinkDialog from '@/components/graphs/helper/ShareGraphLinkDialog.vue'

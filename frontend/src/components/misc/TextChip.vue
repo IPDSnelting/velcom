@@ -16,7 +16,7 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
-import { copyToClipboard } from '@/util/ClipboardUtils'
+import { copyToClipboard } from '@/util/Clipboards'
 
 @Component
 export default class TextChip extends Vue {

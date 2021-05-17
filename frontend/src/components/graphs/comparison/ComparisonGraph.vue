@@ -57,7 +57,7 @@ import { vxm } from '@/store'
 import GraphDatapointDialog from '@/components/graphs/helper/GraphDatapointDialog.vue'
 import { Prop } from 'vue-property-decorator'
 import OverscrollToZoom from '@/components/graphs/helper/OverscrollToZoom'
-import { roundDateDown, roundDateUp } from '@/util/TimeUtil'
+import { roundDateDown, roundDateUp } from '@/util/Times'
 import EchartsDetailGraph from '@/components/graphs/graph/EchartsDetailGraph.vue'
 
 @Component({
