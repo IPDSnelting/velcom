@@ -132,7 +132,7 @@ export default class QueueOverview extends Vue {
     }
     this.liftsInProgress.add(task.id)
 
-    let srcElement: HTMLElement = event.srcElement as HTMLElement
+    let srcElement: HTMLElement = event.target as HTMLElement
 
     // No animation possible
     if (!srcElement) {

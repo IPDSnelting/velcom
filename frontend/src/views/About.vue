@@ -84,28 +84,26 @@
                 <v-row align="baseline" justify="center">
                   <div v-if="htmlImpressum" v-html="htmlImpressum"></div>
                   <div v-else class="title">
-                    <strong>
-                      Hey, this is the default impressum. Not much to see here.
-                      <p>
-                        You can change me by providing a file called
-                        "Impressum.html" at the root of this domain (which is
-                        <a :href="impressumLocation">{{ impressumLocation }}</a
-                        >).
-                      </p>
-                      <p>
-                        This should be quite easy, as you can place it into the
-                        "dist" folder this frontend is currently being served
-                        from.
-                      </p>
-                      <p>
-                        You can use
-                        <a
-                          href="https://vuetifyjs.com/en/styles/typography#typography"
-                          >Vuetify html classes</a
-                        >
-                        for formatting me, or just plain HTML with style tags.
-                      </p>
-                    </strong>
+                    Hey, this is the default impressum. Not much to see here.
+                    <p>
+                      You can change me by providing a file called
+                      "Impressum.html" at the root of this domain (which is
+                      <a :href="impressumLocation">{{ impressumLocation }}</a
+                      >).
+                    </p>
+                    <p>
+                      This should be quite easy, as you can place it into the
+                      "dist" folder this frontend is currently being served
+                      from.
+                    </p>
+                    <p>
+                      You can use
+                      <a
+                        href="https://vuetifyjs.com/en/styles/typography#typography"
+                        >Vuetify html classes</a
+                      >
+                      for formatting me, or just plain HTML with style tags.
+                    </p>
                   </div>
                 </v-row>
               </v-container>

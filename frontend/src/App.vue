@@ -33,14 +33,14 @@ export default class App extends Vue {
   private routerViewKey: number = 0
 
   private checkClick(event: Event) {
-    if (!event.srcElement) {
+    if (!event.target) {
       return
     }
-    if (!(event.srcElement instanceof HTMLElement)) {
+    if (!(event.target instanceof HTMLElement)) {
       return
     }
 
-    let tmpElement: HTMLElement | null = event.srcElement
+    let tmpElement: HTMLElement | null = event.target
     while (tmpElement && tmpElement.tagName.toLowerCase() !== 'a') {
       tmpElement = tmpElement.parentElement
     }
