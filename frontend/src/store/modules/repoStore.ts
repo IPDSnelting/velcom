@@ -1,9 +1,9 @@
 import { createModule, mutation, action } from 'vuex-class-component'
-import { Repo, RepoId, Dimension } from '@/store/types'
+import { Repo, RepoId, Dimension, GithubBotCommand } from '@/store/types'
 import Vue from 'vue'
 import axios from 'axios'
 import { vxm } from '..'
-import { repoFromJson } from '@/util/json/RepoJsonHelper'
+import { githubCommandFromJson, repoFromJson } from '@/util/json/RepoJsonHelper'
 
 const VxModule = createModule({
   namespaced: 'repoModule',
@@ -95,6 +95,12 @@ export class RepoStore extends VxModule {
     await axios.post(`/listener/fetch-all`, undefined, {
       snackbarPriority: 2
     })
+  }
+
+  @action
+  async fetchGithubCommands(repoId: string): Promise<GithubBotCommand[]> {
+    const response = await axios.get(`/repo/${repoId}`)
+    return response.data.github_commands.map(githubCommandFromJson)
   }
 
   @mutation

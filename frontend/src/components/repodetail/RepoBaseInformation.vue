@@ -71,7 +71,7 @@
         <v-row>
           <v-col cols="3" class="subtitle-2">Github Bot</v-col>
           <v-col cols="9">
-            <github-bot-pr-chips :prs="prs"></github-bot-pr-chips>
+            <github-bot-pr-chips :prs="githubCommands"></github-bot-pr-chips>
           </v-col>
         </v-row>
       </v-container>
@@ -89,8 +89,9 @@
         outlined
         text
         @click="deleteRepository"
-        >Delete Repository</v-btn
       >
+        Delete Repository
+      </v-btn>
     </v-card-actions>
   </v-card>
 </template>
@@ -112,6 +113,8 @@ import GithubBotPrChips from '@/components/repodetail/GithubBotPrChips.vue'
   }
 })
 export default class RepoBaseInformation extends Vue {
+  private githubCommands: GithubBotCommand[] = []
+
   @Prop()
   private repo!: Repo
 
@@ -129,15 +132,6 @@ export default class RepoBaseInformation extends Vue {
     return vxm.userModule.isAdmin
   }
 
-  private get prs(): GithubBotCommand[] {
-    return [
-      new GithubBotCommand('NEW', 2021, 2),
-      new GithubBotCommand('MARKED_SEEN', 2022, 2),
-      new GithubBotCommand('QUEUED', 787127247, 243),
-      new GithubBotCommand('ERROR', 2023, 2)
-    ]
-  }
-
   private async deleteRepository() {
     const confirmed = window.confirm(
       `Do you really want to delete ${this.repo.name} (${this.repo.id})?`
@@ -148,6 +142,10 @@ export default class RepoBaseInformation extends Vue {
     await vxm.repoModule.deleteRepo(this.repo.id)
     vxm.detailGraphModule.selectedRepoId = ''
     await this.$router.replace({ name: 'repo-detail', params: { id: '' } })
+  }
+
+  private async mounted() {
+    this.githubCommands = await vxm.repoModule.fetchGithubCommands(this.repo.id)
   }
 
   private comparatorTrackStatus(branchA: RepoBranch, branchB: RepoBranch) {

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
-import { RepoBranch, Repo, Dimension } from '@/store/types'
+import { RepoBranch, Repo, Dimension, GithubBotCommand } from '@/store/types'
 
 /**
  * Parses a repo json to a Repo object.
@@ -34,4 +34,8 @@ export function dimensionFromJson(json: any): Dimension {
     json.unit,
     json.interpretation
   )
+}
+
+export function githubCommandFromJson(json: any): GithubBotCommand {
+  return new GithubBotCommand(json.state, json.comment_id, json.pr_number)
 }
