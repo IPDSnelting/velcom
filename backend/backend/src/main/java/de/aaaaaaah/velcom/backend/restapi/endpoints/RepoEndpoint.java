@@ -218,10 +218,11 @@ public class RepoEndpoint {
 		});
 
 		request.getGithubToken().ifPresent(token -> {
-			if (token.equals("")) {
+			String stripped = token.strip();
+			if (stripped.equals("")) {
 				repoAccess.unsetGithubAuthToken(repoId);
 			} else {
-				repoAccess.setGithubAuthToken(repoId, token);
+				repoAccess.setGithubAuthToken(repoId, stripped);
 			}
 		});
 	}
