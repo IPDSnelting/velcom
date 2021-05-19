@@ -6,14 +6,21 @@
       :key="pr.prNumber + '' + pr.sourceCommentId"
     >
       <template v-slot:activator="{ on }">
-        <router-link to="https://duckduckgo.com">
-          <v-chip outlined label v-on="on" :class="{ 'ml-2': index > 0 }">
-            PR #{{ pr.prNumber }}
+        <a :href="commentLink(pr)" rel="noopener nofollow" target="_blank">
+          <v-chip
+            outlined
+            label
+            link
+            v-on="on"
+            :class="{ 'ml-2': index > 0 }"
+            :color="color(pr.state)"
+          >
+            For PR #{{ pr.prNumber }}
             <v-icon right>
               {{ icon(pr.state) }}
             </v-icon>
           </v-chip>
-        </router-link>
+        </a>
       </template>
       {{ description(pr.state) }}
     </v-tooltip>
@@ -24,36 +31,59 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
-import { GithubBotPr, GithubBotPrState } from '@/store/types'
-import { mdiCheck, mdiCheckAll, mdiCircleSlice6 } from '@mdi/js'
+import {
+  mdiAlertCircleOutline,
+  mdiCheck,
+  mdiCheckAll,
+  mdiCircleSlice6
+} from '@mdi/js'
+import { GithubBotCommand, GithubBotCommandState } from '@/store/types'
 
-type StateData = { color: string; icon: string; description: string }
-const stateDate: { [key in GithubBotPrState]: StateData } = {
-  seen: {
+type StateData = {
+  color?: string
+  icon: string
+  description: string
+}
+const stateDate: { [key in GithubBotCommandState]: StateData } = {
+  NEW: {
     icon: mdiCheck,
-    description: 'PR was seen by the Github Bot'
+    description: 'Command was seen by the Github Bot'
   },
-  reacted: {
+  MARKED_SEEN: {
     icon: mdiCheckAll,
-    description: 'PR was acknowledged by the Github Bot'
+    description: 'Command was acknowledged by the Github Bot'
   },
-  queued: {
+  QUEUED: {
+    color: 'success',
     icon: mdiCircleSlice6,
-    description: 'PR is currently in the queue'
+    description: 'Command is currently in the queue'
+  },
+  ERROR: {
+    color: 'error',
+    icon: mdiAlertCircleOutline,
+    description: 'Error processing command'
   }
 }
 
 @Component
 export default class GithubBotPrChips extends Vue {
   @Prop()
-  private readonly prs!: GithubBotPr[]
+  private readonly prs!: GithubBotCommand[]
 
-  private description(state: GithubBotPrState) {
+  private description(state: GithubBotCommandState) {
     return stateDate[state].description
   }
 
-  private icon(state: GithubBotPrState) {
+  private icon(state: GithubBotCommandState) {
     return stateDate[state].icon
+  }
+
+  private color(state: GithubBotCommandState) {
+    return stateDate[state].color
+  }
+
+  private commentLink(command: GithubBotCommand) {
+    return `https://github.com/IPDSnelting/velcom/pull/${command.prNumber}#issuecomment-${command.sourceCommentId}`
   }
 }
 </script>

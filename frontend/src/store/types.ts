@@ -19,13 +19,15 @@ export class Repo {
   branches: RepoBranch[]
   dimensions: Dimension[]
   remoteURL: string
+  lastGithubUpdate: Date | undefined
 
   constructor(
     id: RepoId,
     name: string,
     branches: RepoBranch[],
     dimensions: Dimension[],
-    remoteURL: string
+    remoteURL: string,
+    lastGithubUpdate: Date | undefined
   ) {
     this.id = id
     this.name = name
@@ -34,6 +36,7 @@ export class Repo {
     this.branches = branches.sort((a, b) =>
       a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
     )
+    this.lastGithubUpdate = lastGithubUpdate
   }
 
   /**
@@ -717,15 +720,15 @@ export type SearchItem = SearchItemCommit | SearchItemRun | SearchItemBranch
 
 export type GithubCommentId = Flavor<number, 'github_comment_id'>
 export type GithubPrNumber = Flavor<number, 'github_pr_number'>
-export type GithubBotPrState = 'seen' | 'reacted' | 'queued'
+export type GithubBotCommandState = 'NEW' | 'MARKED_SEEN' | 'QUEUED' | 'ERROR'
 
-export class GithubBotPr {
-  readonly state: GithubBotPrState
+export class GithubBotCommand {
+  readonly state: GithubBotCommandState
   readonly sourceCommentId: GithubCommentId
   readonly prNumber: GithubPrNumber
 
   constructor(
-    state: GithubBotPrState,
+    state: GithubBotCommandState,
     sourceCommentId: GithubCommentId,
     prNumber: GithubPrNumber
   ) {

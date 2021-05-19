@@ -79,7 +79,7 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
-import { GithubBotPr, Repo, RepoBranch } from '@/store/types'
+import { GithubBotCommand, Repo, RepoBranch } from '@/store/types'
 import { vxm } from '@/store'
 import RepoUpdateDialog from '@/components/repodetail/RepoUpdateDialog.vue'
 import { mdiCompassOutline } from '@mdi/js'
@@ -109,11 +109,12 @@ export default class RepoBaseInformation extends Vue {
     return vxm.userModule.isAdmin
   }
 
-  private get prs(): GithubBotPr[] {
+  private get prs(): GithubBotCommand[] {
     return [
-      new GithubBotPr('seen', 2021, 2),
-      new GithubBotPr('reacted', 2022, 2),
-      new GithubBotPr('queued', 2023, 2)
+      new GithubBotCommand('NEW', 2021, 2),
+      new GithubBotCommand('MARKED_SEEN', 2022, 2),
+      new GithubBotCommand('QUEUED', 787127247, 243),
+      new GithubBotCommand('ERROR', 2023, 2)
     ]
   }
 
