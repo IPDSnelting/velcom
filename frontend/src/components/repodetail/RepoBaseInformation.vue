@@ -2,13 +2,33 @@
   <v-card>
     <v-card-title>
       <v-toolbar color="toolbarColor" dark>
-        {{ repo.name }}
-        <span class="ml-5 subtitle-1">{{ repo.id }}</span>
-        <v-spacer></v-spacer>
-        <v-btn text :to="{ name: 'search', query: { repoId: repo.id } }">
-          Search and Compare Runs
-          <v-icon right size="22">{{ searchAndCompareIcon }}</v-icon>
-        </v-btn>
+        <div
+          :class="
+            $vuetify.breakpoint.xs
+              ? ['d-flex', 'flex-wrap', 'justify-center', 'align-center']
+              : ['justify-space-between', 'd-flex', 'align-center']
+          "
+          style="width: 100%"
+        >
+          <span>{{ repo.name }}</span>
+          <span
+            style="flex: 0 0 100%"
+            class="my-1"
+            v-if="$vuetify.breakpoint.xs"
+          ></span>
+          <span class="ml-5 subtitle-1" style="margin-right: auto">
+            {{ repo.id }}
+          </span>
+          <span
+            style="flex: 0 0 100%"
+            class="my-1"
+            v-if="$vuetify.breakpoint.xs"
+          ></span>
+          <v-btn text :to="{ name: 'search', query: { repoId: repo.id } }">
+            Search and Compare Runs
+            <v-icon right size="22">{{ searchAndCompareIcon }}</v-icon>
+          </v-btn>
+        </div>
       </v-toolbar>
     </v-card-title>
     <v-card-text>
