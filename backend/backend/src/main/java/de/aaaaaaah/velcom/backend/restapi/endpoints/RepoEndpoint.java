@@ -82,7 +82,6 @@ public class RepoEndpoint {
 			repo.getRemoteUrlAsString(),
 			branches,
 			jsonDimensions,
-			repo.getGithubInfo().isPresent(),
 			repo.getGithubInfo()
 				.map(GithubInfo::getCommentCutoff)
 				.map(Instant::getEpochSecond)
@@ -150,20 +149,39 @@ public class RepoEndpoint {
 	public GetReply get(@PathParam("repoid") UUID repoUuid) throws NoSuchRepoException {
 		RepoId repoId = new RepoId(repoUuid);
 		Repo repo = repoAccess.getRepo(repoId);
+		List<JsonGithubCommand> commands = repoAccess.getCommands(repoId)
+			.stream()
+			.map(command -> new JsonGithubCommand(
+				command.getPr(),
+				command.getComment(),
+				command.getState().getTextualRepresentation()
+			))
+			.collect(toList());
 
-		return new GetReply(toJsonRepo(repo));
+		return new GetReply(toJsonRepo(repo), commands);
 	}
 
 	private static class GetReply {
 
-		private final JsonRepo repo;
+		public final JsonRepo repo;
+		public final List<JsonGithubCommand> githubCommands;
 
-		public GetReply(JsonRepo repo) {
+		public GetReply(JsonRepo repo, List<JsonGithubCommand> githubCommands) {
 			this.repo = repo;
+			this.githubCommands = githubCommands;
 		}
+	}
 
-		public JsonRepo getRepo() {
-			return repo;
+	private static class JsonGithubCommand {
+
+		public final long prNumber;
+		public final long commentId;
+		public final String status;
+
+		public JsonGithubCommand(long prNumber, long commentId, String status) {
+			this.prNumber = prNumber;
+			this.commentId = commentId;
+			this.status = status;
 		}
 	}
 

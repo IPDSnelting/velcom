@@ -75,7 +75,6 @@ public class AllReposEndpoint {
 					repo.getRemoteUrl().getUrl(),
 					branches,
 					dimensions,
-					repo.getGithubInfo().isPresent(),
 					repo.getGithubInfo()
 						.map(GithubInfo::getCommentCutoff)
 						.map(Instant::getEpochSecond)

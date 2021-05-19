@@ -20,7 +20,6 @@ class JsonRepoTest extends SerializingTest {
 				new JsonBranch("branches", false, "baz")
 			),
 			List.of(new JsonDimension("b", "m", "u", Interpretation.NEUTRAL)),
-			true,
 			1596881630L
 		);
 		String json = "{"
@@ -38,7 +37,6 @@ class JsonRepoTest extends SerializingTest {
 			+ "  \"unit\": \"u\","
 			+ "  \"interpretation\": \"NEUTRAL\""
 			+ "}],"
-			+ "\"has_github_token\": true,"
 			+ "\"last_github_update\": 1596881630"
 			+ "}";
 		serializedEquals(object, json);
