@@ -274,7 +274,7 @@ public class GithubPrInteractor {
 						.execute();
 				});
 			} else {
-				LOGGER.debug("Failed to mark: {}", response.body());
+				LOGGER.warn("Failed to mark: {}", response.body());
 			}
 		}
 	}
@@ -419,7 +419,7 @@ public class GithubPrInteractor {
 						.execute();
 				});
 			} else {
-				LOGGER.debug("Failed to reply: {}", response.body());
+				LOGGER.warn("Failed to reply: {}", response.body());
 			}
 		}
 	}
@@ -459,7 +459,7 @@ public class GithubPrInteractor {
 						.execute();
 				});
 			} else {
-				LOGGER.debug("Failed to reply: {}", response.body());
+				LOGGER.warn("Failed to reply: {}", response.body());
 			}
 		}
 	}
