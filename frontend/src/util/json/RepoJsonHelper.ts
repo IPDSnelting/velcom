@@ -37,5 +37,5 @@ export function dimensionFromJson(json: any): Dimension {
 }
 
 export function githubCommandFromJson(json: any): GithubBotCommand {
-  return new GithubBotCommand(json.state, json.comment_id, json.pr_number)
+  return new GithubBotCommand(json.status, json.comment_id, json.pr_number)
 }
