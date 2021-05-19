@@ -68,20 +68,19 @@
             </v-tooltip>
           </v-col>
         </v-row>
-        <v-row>
+        <v-row v-if="hasActiveBot || isAdmin">
           <v-col cols="3" class="subtitle-2">Github Bot</v-col>
           <v-col cols="9">
             <github-bot-command-chips
               :prs="githubCommands"
               v-if="hasActiveBot"
             ></github-bot-command-chips>
+            <span v-if="hasActiveBot && githubCommands.length === 0">
+              No commands found yet
+            </span>
             <span v-if="!hasActiveBot && isAdmin">
               No Github bot set up. Use the "Update" button to add an access
               token.
-            </span>
-            <span v-else>
-              No Github bot set up. Ask your local administrator if you want to
-              enable this feature.
             </span>
           </v-col>
         </v-row>

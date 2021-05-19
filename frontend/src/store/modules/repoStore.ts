@@ -81,11 +81,13 @@ export class RepoStore extends VxModule {
     name: string | undefined
     remoteUrl: string | undefined
     trackedBranches: string[] | undefined
+    githubToken: string | undefined
   }): Promise<void> {
     await axios.patch(`/repo/${payload.id}`, {
       name: payload.name,
       remote_url: payload.remoteUrl,
-      tracked_branches: payload.trackedBranches
+      tracked_branches: payload.trackedBranches,
+      github_token: payload.githubToken
     })
     await this.fetchRepoById(payload.id)
   }
