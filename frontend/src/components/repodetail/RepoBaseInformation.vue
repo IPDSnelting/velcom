@@ -26,7 +26,11 @@
         <v-row align="center">
           <v-col cols="3" class="subtitle-2">Branches:</v-col>
           <v-col cols="9">
-            <v-tooltip top v-for="(branch, index) in branches" :key="branch.name">
+            <v-tooltip
+              top
+              v-for="(branch, index) in branches"
+              :key="branch.name"
+            >
               <template v-slot:activator="{ on }">
                 <v-chip
                   :class="{
@@ -44,15 +48,21 @@
             </v-tooltip>
           </v-col>
         </v-row>
+        <v-row>
+          <v-col cols="3" class="subtitle-2">Github Bot</v-col>
+          <v-col cols="9">
+            <github-bot-pr-chips :prs="prs"></github-bot-pr-chips>
+          </v-col>
+        </v-row>
       </v-container>
     </v-card-text>
     <v-card-actions v-if="isAdmin">
       <v-spacer></v-spacer>
-      <repo-update :repoId="repo.id">
+      <repo-update-dialog :repoId="repo.id">
         <template #activator="{ on }">
           <v-btn v-on="on" color="primary">update</v-btn>
         </template>
-      </repo-update>
+      </repo-update-dialog>
       <v-btn
         color="error"
         class="mr-5 ml-3"
@@ -69,14 +79,16 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
-import { Repo, RepoBranch } from '@/store/types'
+import { GithubBotPr, Repo, RepoBranch } from '@/store/types'
 import { vxm } from '@/store'
 import RepoUpdateDialog from '@/components/repodetail/RepoUpdateDialog.vue'
 import { mdiCompassOutline } from '@mdi/js'
+import GithubBotPrChips from '@/components/repodetail/GithubBotPrChips.vue'
 
 @Component({
   components: {
-    'repo-update': RepoUpdateDialog
+    GithubBotPrChips,
+    RepoUpdateDialog
   }
 })
 export default class RepoBaseInformation extends Vue {
@@ -95,6 +107,14 @@ export default class RepoBaseInformation extends Vue {
 
   private get isAdmin() {
     return vxm.userModule.isAdmin
+  }
+
+  private get prs(): GithubBotPr[] {
+    return [
+      new GithubBotPr('seen', 2021, 2),
+      new GithubBotPr('reacted', 2022, 2),
+      new GithubBotPr('queued', 2023, 2)
+    ]
   }
 
   private async deleteRepository() {

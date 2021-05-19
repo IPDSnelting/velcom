@@ -714,3 +714,23 @@ export class SearchItemBranch {
 }
 
 export type SearchItem = SearchItemCommit | SearchItemRun | SearchItemBranch
+
+export type GithubCommentId = Flavor<number, 'github_comment_id'>
+export type GithubPrNumber = Flavor<number, 'github_pr_number'>
+export type GithubBotPrState = 'seen' | 'reacted' | 'queued'
+
+export class GithubBotPr {
+  readonly state: GithubBotPrState
+  readonly sourceCommentId: GithubCommentId
+  readonly prNumber: GithubPrNumber
+
+  constructor(
+    state: GithubBotPrState,
+    sourceCommentId: GithubCommentId,
+    prNumber: GithubPrNumber
+  ) {
+    this.state = state
+    this.sourceCommentId = sourceCommentId
+    this.prNumber = prNumber
+  }
+}
