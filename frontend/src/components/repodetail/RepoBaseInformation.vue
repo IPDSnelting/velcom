@@ -71,7 +71,9 @@
         <v-row>
           <v-col cols="3" class="subtitle-2">Github Bot</v-col>
           <v-col cols="9">
-            <github-bot-pr-chips :prs="githubCommands"></github-bot-pr-chips>
+            <github-bot-command-chips
+              :prs="githubCommands"
+            ></github-bot-command-chips>
           </v-col>
         </v-row>
       </v-container>
@@ -104,11 +106,11 @@ import { GithubBotCommand, Repo, RepoBranch } from '@/store/types'
 import { vxm } from '@/store'
 import RepoUpdateDialog from '@/components/repodetail/RepoUpdateDialog.vue'
 import { mdiCompassOutline } from '@mdi/js'
-import GithubBotPrChips from '@/components/repodetail/GithubBotPrChips.vue'
+import GithubBotCommandChips from '@/components/repodetail/GithubBotCommandChips.vue'
 
 @Component({
   components: {
-    GithubBotPrChips,
+    GithubBotCommandChips,
     RepoUpdateDialog
   }
 })

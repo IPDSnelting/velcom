@@ -66,7 +66,7 @@ const stateDate: { [key in GithubBotCommandState]: StateData } = {
 }
 
 @Component
-export default class GithubBotPrChips extends Vue {
+export default class GithubBotCommandChips extends Vue {
   @Prop()
   private readonly prs!: GithubBotCommand[]
 
