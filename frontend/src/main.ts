@@ -5,7 +5,7 @@ import router from './router'
 import { store, vxm } from './store'
 import axios from 'axios'
 import vuetify from './plugins/vuetify'
-import { extractErrorMessage } from './util/ErrorUtils'
+import { extractErrorMessage } from './util/Errors'
 import { restoreFromPassedSession } from './store/persistence'
 
 Vue.config.productionTip = false

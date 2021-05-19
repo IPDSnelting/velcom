@@ -42,7 +42,7 @@ import {
   mdiFlash,
   mdiRobot
 } from '@mdi/js'
-import { formatDate, formatDurationHuman } from '@/util/TimeUtil'
+import { formatDate, formatDurationHuman } from '@/util/Times'
 import { Prop } from 'vue-property-decorator'
 import { Run } from '@/store/types'
 

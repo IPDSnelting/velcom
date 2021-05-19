@@ -1,6 +1,6 @@
 <template>
-  <v-list>
-    <v-list-item v-for="item in runs" :key="run(item).runId" class="my-2">
+  <div>
+    <div v-for="item in runs" :key="run(item).runId" class="my-2">
       <run-overview :run="run(item)" class="full-width">
         <template #content v-if="differences(item)">
           <run-significance-chips
@@ -9,8 +9,8 @@
           ></run-significance-chips>
         </template>
       </run-overview>
-    </v-list-item>
-  </v-list>
+    </div>
+  </div>
 </template>
 
 <script lang="ts">
@@ -23,7 +23,7 @@ import {
   RunDescriptionWithDifferences
 } from '@/store/types'
 import RunOverview from './RunOverview.vue'
-import RunSignificanceChips from '@/components/RunSignificanceChips.vue'
+import RunSignificanceChips from '@/components/runs/RunSignificanceChips.vue'
 
 @Component({
   components: {

@@ -46,8 +46,7 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import EchartsDetailGraph from '@/components/graphs//EchartsDetailGraph.vue'
-import DytailGraph from '@/components/graphs/DytailGraph.vue'
+import DytailGraph from '@/components/graphs/graph/DytailGraph.vue'
 import {
   AttributedDatapoint,
   ComparisonDataPoint,
@@ -55,10 +54,11 @@ import {
   SeriesInformation
 } from '@/store/types'
 import { vxm } from '@/store'
-import GraphDatapointDialog from '@/components/dialogs/GraphDatapointDialog.vue'
+import GraphDatapointDialog from '@/components/graphs/helper/GraphDatapointDialog.vue'
 import { Prop } from 'vue-property-decorator'
-import OverscrollToZoom from '@/components/graphs/OverscrollToZoom'
-import { roundDateDown, roundDateUp } from '@/util/TimeUtil'
+import OverscrollToZoom from '@/components/graphs/helper/OverscrollToZoom'
+import { roundDateDown, roundDateUp } from '@/util/Times'
+import EchartsDetailGraph from '@/components/graphs/graph/EchartsDetailGraph.vue'
 
 @Component({
   components: {
@@ -152,7 +152,7 @@ export default class ComparisonGraph extends Vue {
 
   private get overlayText() {
     if (this.seriesInformation.length === 0) {
-      return 'Please select a repo / branch on the left'
+      return 'Please select a repo, branch and dimension on the left'
     }
     if (!vxm.comparisonGraphModule.selectedDimension) {
       return 'Please select a dimension in the top left'

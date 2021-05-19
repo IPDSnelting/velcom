@@ -12,11 +12,11 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import NavigationBar from './components/NavigationBar.vue'
-import Snackbar from './components/Snackbar.vue'
+import NavigationBar from './components/misc/NavigationBar.vue'
+import Snackbar from './components/misc/Snackbar.vue'
 import { vxm } from './store'
 import { Watch } from 'vue-property-decorator'
-import ThemeSelector from './components/ThemeSelector.vue'
+import ThemeSelector from './components/misc/ThemeSelector.vue'
 import { storeToLocalStorage } from './store/persistence'
 import { Route } from 'vue-router'
 import '@/css/AnsiTheme.css'
@@ -33,14 +33,14 @@ export default class App extends Vue {
   private routerViewKey: number = 0
 
   private checkClick(event: Event) {
-    if (!event.srcElement) {
+    if (!event.target) {
       return
     }
-    if (!(event.srcElement instanceof HTMLElement)) {
+    if (!(event.target instanceof HTMLElement)) {
       return
     }
 
-    let tmpElement: HTMLElement | null = event.srcElement
+    let tmpElement: HTMLElement | null = event.target
     while (tmpElement && tmpElement.tagName.toLowerCase() !== 'a') {
       tmpElement = tmpElement.parentElement
     }

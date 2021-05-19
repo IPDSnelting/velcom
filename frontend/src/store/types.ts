@@ -57,13 +57,8 @@ export type DimensionId = {
   readonly metric: string
 }
 
-export function dimensionIdEqual(
-  dimOne: DimensionId,
-  dimTwo: DimensionId
-): boolean {
-  return (
-    dimOne.benchmark === dimTwo.benchmark && dimOne.metric === dimTwo.metric
-  )
+export function dimensionIdToString(dimensionId: DimensionId): string {
+  return `${dimensionId.benchmark} - ${dimensionId.metric}`
 }
 
 export class Dimension {
@@ -89,7 +84,7 @@ export class Dimension {
    * '{benchmark} - {metric}' without the {}.
    */
   toString(): string {
-    return `${this.benchmark} - ${this.metric}`
+    return dimensionIdToString(this)
   }
 
   /**

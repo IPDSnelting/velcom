@@ -10,17 +10,16 @@
           <router-link class="concealed-link" :to="{ name: 'home' }">
             <img
               @click="refresh('home')"
-              id="logo"
               v-on="on"
               width="45px"
               height="45px"
               src="@/assets/mini-logo.png"
               alt="logo"
-              class="mx-4"
+              class="mx-4 logo"
             />
           </router-link>
         </template>
-        <img src="@/assets/mini-logo.png" alt="logo" class="mx-4" id="logo" />
+        <img src="@/assets/mini-logo.png" alt="logo" class="mx-4 logo" />
       </v-tooltip>
       <router-link class="concealed-link" :to="{ name: 'home' }">
         <v-toolbar-title id="title" @click="refresh('home')">
@@ -98,8 +97,8 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { VuetifyIcon } from 'vuetify/types/services/icons'
 import VueRouterEx from 'vue-router/types/router'
-import router from '../router'
-import LoginDialog from '../components/dialogs/LoginDialog.vue'
+import router from '../../router'
+import LoginDialog from './LoginDialog.vue'
 import { mdiAccountCircleOutline, mdiLogout } from '@mdi/js'
 import { vxm } from '@/store'
 import { Watch } from 'vue-property-decorator'
@@ -185,7 +184,7 @@ export default class NavigationBar extends Vue {
   opacity: 1 !important;
 }
 
-#logo {
+.logo {
   cursor: pointer;
 }
 

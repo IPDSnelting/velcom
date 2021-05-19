@@ -17,8 +17,8 @@ import {
 import {
   commitDescriptionFromJson,
   sourceFromJson
-} from '@/util/QueueJsonHelper'
-import { dimensionFromJson } from '@/util/RepoJsonHelper'
+} from '@/util/json/QueueJsonHelper'
+import { dimensionFromJson } from '@/util/json/RepoJsonHelper'
 
 export function runFromJson(json: any): Run {
   return new Run(

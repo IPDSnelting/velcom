@@ -2,16 +2,38 @@
   <v-card :outlined="outlined">
     <slot name="body_top"></slot>
     <v-list-item>
-      <slot name="avatar"></slot>
+      <slot name="avatar" v-if="$vuetify.breakpoint.smAndUp"></slot>
       <v-list-item-content>
         <v-container fluid class="ma-0 pa-1">
+          <v-row
+            align="center"
+            justify="center"
+            v-if="!$vuetify.breakpoint.smAndUp"
+            class="pa-0 ma-0"
+          >
+            <v-col cols="auto" class="pa-0 ma-0">
+              <slot name="avatar"></slot>
+            </v-col>
+          </v-row>
           <v-row no-gutters align="center" justify="space-between">
-            <v-col cols="auto" class="flex-shrink-too mr-3">
-              <v-list-item-title>
+            <v-col cols="12" sm="auto" class="flex-shrink-too mr-3">
+              <v-list-item-title
+                :class="
+                  $vuetify.breakpoint.xs
+                    ? ['d-flex', 'flex-wrap', 'justify-center']
+                    : []
+                "
+              >
                 <repo-display :repoId="commit.repoId"></repo-display>
-                <span class="mx-2">—</span>
+                <span v-if="$vuetify.breakpoint.smAndUp" class="mx-2">—</span>
+                <span
+                  style="flex: 0 0 100%"
+                  class="my-1"
+                  v-if="$vuetify.breakpoint.xs"
+                ></span>
                 <router-link
                   class="concealed-link"
+                  style="max-width: 100%"
                   :to="linkLocation || commitLinkLocation"
                 >
                   <span class="commit-message">{{ commit.summary }}</span>
@@ -28,10 +50,13 @@
               </v-list-item-content>
             </v-col>
             <v-col cols="auto">
-              <v-container fluid class="ma-0 pa-0">
-                <v-row no-gutters align="center" justify="space-between">
+              <v-container
+                fluid
+                :class="$vuetify.breakpoint.mdAndUp ? ['ma-0', 'pa-0'] : []"
+              >
+                <v-row no-gutters align="center" justify="center">
                   <v-col cols="auto">
-                    <commit-chip :commitHash="commit.hash"></commit-chip>
+                    <text-chip :text="commit.hash"></text-chip>
                   </v-col>
                   <span :class="$scopedSlots['actions'] ? ['pl-3'] : ['']">
                     <slot name="actions"></slot>
@@ -49,16 +74,16 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
-import { formatDate, formatDateUTC } from '@/util/TimeUtil'
+import { formatDate, formatDateUTC } from '@/util/Times'
 import { CommitDescription } from '@/store/types'
-import InlineMinimalRepoNameDisplay from '../InlineMinimalRepoDisplay.vue'
-import CommitChip from '../CommitChip.vue'
+import InlineMinimalRepoNameDisplay from '../misc/InlineMinimalRepoDisplay.vue'
+import TextChip from '../misc/TextChip.vue'
 import { RawLocation } from 'vue-router'
 
 @Component({
   components: {
     'repo-display': InlineMinimalRepoNameDisplay,
-    'commit-chip': CommitChip
+    'text-chip': TextChip
   }
 })
 export default class CommitOverviewBase extends Vue {

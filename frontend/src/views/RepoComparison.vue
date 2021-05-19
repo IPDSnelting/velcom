@@ -25,12 +25,10 @@
               :graph-component.sync="graphComponent"
               :day-equidistant-graph-selected.sync="dayEquidistantGraphSelected"
             >
-              <v-col cols="auto">
-                <share-graph-link-dialog
-                  :link-generator="getShareLink"
-                  data-restriction-label="Include repos and branches"
-                />
-              </v-col>
+              <share-graph-link-dialog
+                :link-generator="getShareLink"
+                data-restriction-label="Include repos and branches"
+              />
             </comparison-graph-settings>
           </v-col>
         </v-row>
@@ -62,17 +60,17 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import RepoBranchSelector from '@/components/graphs/comparison/RepoBranchSelector.vue'
 import { vxm } from '@/store'
-import GraphTimespanControls from '@/components/graphs/GraphTimespanControls.vue'
+import GraphTimespanControls from '@/components/graphs/helper/GraphTimespanControls.vue'
 import ComparisonDimensionSelector from '@/components/graphs/comparison/ComparisonDimensionSelector.vue'
 import { ComparisonDataPoint, Dimension, Repo } from '@/store/types'
-import ComparisonGraph from '@/components/graphs/comparison/ComparisonGraph.vue'
 import { Watch } from 'vue-property-decorator'
-import GraphSettings from '@/components/graphs/GraphSettings.vue'
-import { groupBy, spaceDayEquidistant } from '@/util/DayEquidistantUtil'
+import GraphSettings from '@/components/graphs/helper/GraphSettings.vue'
+import { groupBy, spaceDayEquidistant } from '@/util/DayEquidistantUtils'
 import { availableGraphComponents } from '@/util/GraphVariantSelection'
 import { debounce } from '@/util/Debouncer'
-import ShareGraphLinkDialog from '@/views/ShareGraphLinkDialog.vue'
+import ShareGraphLinkDialog from '@/components/graphs/helper/ShareGraphLinkDialog.vue'
 import { PermanentLinkOptions } from '@/store/modules/detailGraphStore'
+import ComparisonGraph from '@/components/graphs/comparison/ComparisonGraph.vue'
 
 @Component({
   components: {

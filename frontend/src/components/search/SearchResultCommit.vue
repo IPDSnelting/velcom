@@ -30,7 +30,7 @@
               <v-container fluid class="ma-0 pa-0">
                 <v-row no-gutters align="center" justify="space-between">
                   <v-col cols="auto">
-                    <commit-chip :commitHash="item.hash"></commit-chip>
+                    <text-chip :text="item.hash"></text-chip>
                   </v-col>
                   <span class="pl-3">
                     <slot name="compare-actions" :has-run="hasRun"></slot>
@@ -51,15 +51,15 @@ import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 import { SearchItemCommit } from '@/store/types'
 import { RawLocation } from 'vue-router'
-import { formatDate, formatDateUTC } from '@/util/TimeUtil'
-import CommitChip from '@/components/CommitChip.vue'
-import InlineMinimalRepoDisplay from '@/components/InlineMinimalRepoDisplay.vue'
+import { formatDate, formatDateUTC } from '@/util/Times'
+import TextChip from '@/components/misc/TextChip.vue'
+import InlineMinimalRepoDisplay from '@/components/misc/InlineMinimalRepoDisplay.vue'
 import { mdiSourceCommit } from '@mdi/js'
 
 @Component({
   components: {
     'repo-display': InlineMinimalRepoDisplay,
-    CommitChip
+    TextChip: TextChip
   }
 })
 export default class SearchResultCommit extends Vue {

@@ -6,9 +6,12 @@
           <v-card>
             <v-card-title>
               <v-toolbar color="toolbarColor" dark>
-                About VelCom
-                <v-spacer></v-spacer>
-                <span class="text-sm-body-1">Version: {{ gitHash }}</span>
+                <v-row no-gutters align="center" justify="space-between">
+                  <v-col cols="12" md="auto"> About VelCom </v-col>
+                  <v-col cols="auto">
+                    <span class="small-text">Version: {{ gitHash }}</span>
+                  </v-col>
+                </v-row>
               </v-toolbar>
             </v-card-title>
             <v-card-text>
@@ -81,28 +84,26 @@
                 <v-row align="baseline" justify="center">
                   <div v-if="htmlImpressum" v-html="htmlImpressum"></div>
                   <div v-else class="title">
-                    <strong>
-                      Hey, this is the default impressum. Not much to see here.
-                      <p>
-                        You can change me by providing a file called
-                        "Impressum.html" at the root of this domain (which is
-                        <a :href="impressumLocation">{{ impressumLocation }}</a
-                        >).
-                      </p>
-                      <p>
-                        This should be quite easy, as you can place it into the
-                        "dist" folder this frontend is currently being served
-                        from.
-                      </p>
-                      <p>
-                        You can use
-                        <a
-                          href="https://vuetifyjs.com/en/styles/typography#typography"
-                          >Vuetify html classes</a
-                        >
-                        for formatting me, or just plain HTML with style tags.
-                      </p>
-                    </strong>
+                    Hey, this is the default impressum. Not much to see here.
+                    <p>
+                      You can change me by providing a file called
+                      "Impressum.html" at the root of this domain (which is
+                      <a :href="impressumLocation">{{ impressumLocation }}</a
+                      >).
+                    </p>
+                    <p>
+                      This should be quite easy, as you can place it into the
+                      "dist" folder this frontend is currently being served
+                      from.
+                    </p>
+                    <p>
+                      You can use
+                      <a
+                        href="https://vuetifyjs.com/en/styles/typography#typography"
+                        >Vuetify html classes</a
+                      >
+                      for formatting me, or just plain HTML with style tags.
+                    </p>
                   </div>
                 </v-row>
               </v-container>
@@ -129,7 +130,12 @@ export default class About extends Vue {
   }
 
   private get gitHash() {
-    return process.env.__COMMIT_HASH__
+    const fullHash: string = process.env.__COMMIT_HASH__
+    // Only show the first few characters on very small screens - they are probably unique enough
+    if (this.$vuetify.breakpoint.xs) {
+      return fullHash.substr(0, 10)
+    }
+    return fullHash
   }
 
   private get impressumLocation() {
@@ -289,5 +295,12 @@ export default class About extends Vue {
   position: fixed;
   z-index: 100; /* NOTHING is more important! */
   animation-duration: 600ms;
+}
+
+.small-text {
+  font-size: 1rem !important;
+  font-weight: 400 !important;
+  line-height: 1.5rem !important;
+  letter-spacing: 0.03125em !important;
 }
 </style>

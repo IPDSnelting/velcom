@@ -53,7 +53,7 @@ import {
 import { Prop, Watch } from 'vue-property-decorator'
 import MeasurementsDisplay from '@/components/rundetail/MeasurementsDisplay.vue'
 import RunInfo from '@/components/rundetail/RunInfo.vue'
-import { safeConvertAnsi } from '@/util/TextUtils'
+import { safeConvertAnsi } from '@/util/Texts'
 import { vxm } from '@/store'
 
 @Component({

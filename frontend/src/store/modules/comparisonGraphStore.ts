@@ -7,7 +7,7 @@ import {
 } from '@/store/types'
 import Vue from 'vue'
 import axios from 'axios'
-import { comparisonDatapointFromJson } from '@/util/GraphJsonHelper'
+import { comparisonDatapointFromJson } from '@/util/json/GraphJsonHelper'
 import { vxm } from '@/store'
 import router from '@/router'
 import { PermanentLinkOptions } from '@/store/modules/detailGraphStore'
@@ -18,7 +18,7 @@ import {
   respectOptions
 } from '@/util/LinkUtils'
 import { Route } from 'vue-router'
-import { roundDateDown, roundDateUp } from '@/util/TimeUtil'
+import { roundDateDown, roundDateUp } from '@/util/Times'
 
 const VxModule = createModule({
   namespaced: 'comparisonGraphModule',
@@ -209,5 +209,26 @@ export class ComparisonGraphStore extends VxModule {
         }
       })
     return map
+  }
+
+  /**
+   * Converts a given store to a pure object that can be serialized.
+   *
+   * @param store the store to convert
+   */
+  static toPlainObject(store: ComparisonGraphStore): unknown {
+    return {
+      _selectedBranches: store._selectedBranches,
+      startTime: store.startTime,
+      endTime: store.endTime,
+      selectedDimension: store.selectedDimension,
+      zoomXStartValue: store.zoomXStartValue,
+      zoomXEndValue: store.zoomXEndValue,
+      zoomYStartValue: store.zoomYStartValue,
+      zoomYEndValue: store.zoomYEndValue,
+      referenceDatapoint: store.referenceDatapoint,
+      beginYAtZero: store.beginYAtZero,
+      dayEquidistantGraphSelected: store.dayEquidistantGraphSelected
+    }
   }
 }

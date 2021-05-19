@@ -86,10 +86,10 @@ import {
 import { Watch } from 'vue-property-decorator'
 import { vxm } from '@/store'
 import CommitDetail from '@/components/rundetail/CommitDetail.vue'
-import TaskRunnerOutput from '@/components/TaskRunnerOutput.vue'
-import InlineMinimalRepoDisplay from '@/components/InlineMinimalRepoDisplay.vue'
+import TaskRunnerOutput from '@/components/queue/TaskRunnerOutput.vue'
+import InlineMinimalRepoDisplay from '@/components/misc/InlineMinimalRepoDisplay.vue'
 import { TaskInfo } from '@/store/modules/queueStore'
-import { formatDurationShort } from '@/util/TimeUtil'
+import { formatDurationShort } from '@/util/Times'
 import TarOverview from '@/components/overviews/TarOverview.vue'
 
 @Component({

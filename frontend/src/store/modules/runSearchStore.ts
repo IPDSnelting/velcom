@@ -1,7 +1,7 @@
 import { action, createModule } from 'vuex-class-component'
 import axios from 'axios'
 import { RepoId, SearchItem } from '@/store/types'
-import { searchItemsFromJson } from '@/util/RunSearchJsonHelper'
+import { searchItemsFromJson } from '@/util/json/RunSearchJsonHelper'
 
 const VxModule = createModule({
   namespaced: 'runSearchModule',

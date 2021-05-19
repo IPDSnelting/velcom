@@ -82,7 +82,7 @@
                     </v-tooltip>
                   </v-col>
                 </v-row>
-                <v-row align="center">
+                <v-row align="center" class="mt-0">
                   <queue-overview></queue-overview>
                 </v-row>
               </v-container>
@@ -97,11 +97,11 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import WorkerOverview from '../components/overviews/WorkerOverview.vue'
-import QueueOverview from '../components/overviews/QueueOverview.vue'
+import WorkerOverview from '../components/queue/WorkerOverview.vue'
+import QueueOverview from '../components/queue/QueueOverview.vue'
 import { vxm } from '@/store'
 import { Route, RawLocation } from 'vue-router'
-import UploadTarDialog from '@/components/dialogs/UploadTarDialog.vue'
+import UploadTarDialog from '@/components/queue/UploadTarDialog.vue'
 
 @Component({
   components: {

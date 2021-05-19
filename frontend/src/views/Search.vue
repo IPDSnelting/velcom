@@ -117,7 +117,7 @@ import { Watch } from 'vue-property-decorator'
 import { debounce } from '@/util/Debouncer'
 import { mdiSwapHorizontalBold } from '@mdi/js'
 import { RawLocation } from 'vue-router'
-import RepoSelectionComponent from '@/components/RepoSelectionComponent.vue'
+import RepoSelectionComponent from '@/components/misc/RepoSelectionComponent.vue'
 import { Flavor } from '@/util/FlavorTypes'
 
 type CommitIdentifier = Flavor<string, 'repo_identifier'>

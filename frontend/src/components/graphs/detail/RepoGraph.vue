@@ -59,10 +59,10 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import MatrixDimensionSelection from '@/components/graphs/MatrixDimensionSelection.vue'
-import DimensionSelection from '@/components/graphs/DimensionSelection.vue'
+import MatrixDimensionSelection from '@/components/graphs/detail/MatrixDimensionSelection.vue'
+import DimensionSelection from '@/components/graphs/detail/DimensionSelection.vue'
 import { vxm } from '@/store'
-import OverscrollToZoom from '@/components/graphs/OverscrollToZoom'
+import OverscrollToZoom from '@/components/graphs/helper/OverscrollToZoom'
 import {
   AttributedDatapoint,
   DetailDataPoint,
@@ -71,10 +71,10 @@ import {
   SeriesInformation
 } from '@/store/types'
 import { Prop, Watch } from 'vue-property-decorator'
-import { getInnerHeight } from '@/util/MeasurementUtils'
-import { escapeHtml } from '@/util/TextUtils'
-import { formatDate } from '@/util/TimeUtil'
-import GraphDatapointDialog from '@/components/dialogs/GraphDatapointDialog.vue'
+import { getInnerHeight } from '@/util/Measurements'
+import { escapeHtml } from '@/util/Texts'
+import { formatDate } from '@/util/Times'
+import GraphDatapointDialog from '@/components/graphs/helper/GraphDatapointDialog.vue'
 import { selectGraphVariant } from '@/util/GraphVariantSelection'
 
 @Component({

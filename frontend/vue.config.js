@@ -8,9 +8,8 @@ module.exports = {
       const commitHash = require('child_process')
         .execSync('git rev-parse HEAD')
         .toString()
-      definitions[0]['process.env']['__COMMIT_HASH__'] = JSON.stringify(
-        commitHash
-      )
+      definitions[0]['process.env']['__COMMIT_HASH__'] =
+        JSON.stringify(commitHash)
       return definitions
     })
   }

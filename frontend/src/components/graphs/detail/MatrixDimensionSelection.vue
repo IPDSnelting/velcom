@@ -158,17 +158,14 @@ export default class MatrixMeasurementIdSelection extends Vue {
 
   private changed(checked: boolean, benchmark: string, metric: string) {
     if (checked) {
-      const newlyCheckedDimension:
-        | Dimension
-        | undefined = vxm.repoModule
+      const newlyCheckedDimension: Dimension | undefined = vxm.repoModule
         .occuringDimensions([this.repoId])
         .find(it => it.benchmark === benchmark && it.metric === metric)
 
       if (newlyCheckedDimension) {
         // reassigning fires change listener
-        vxm.detailGraphModule.selectedDimensions = vxm.detailGraphModule.selectedDimensions.concat(
-          newlyCheckedDimension
-        )
+        vxm.detailGraphModule.selectedDimensions =
+          vxm.detailGraphModule.selectedDimensions.concat(newlyCheckedDimension)
       }
     } else {
       vxm.detailGraphModule.selectedDimensions = this.selectedDimensions.filter(

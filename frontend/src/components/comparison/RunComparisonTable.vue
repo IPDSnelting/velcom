@@ -20,7 +20,10 @@
         }"
         class="d-inline-block"
       >
-        {{ item.formatNumber(item.differencePercent * 100) }} %
+        <span v-if="Number.isFinite(item.differencePercent)">
+          {{ item.formatNumber(item.differencePercent * 100) }} %
+        </span>
+        <span v-else>-</span>
       </span>
     </template>
 

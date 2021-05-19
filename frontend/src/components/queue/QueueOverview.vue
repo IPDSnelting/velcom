@@ -87,9 +87,9 @@ import Component from 'vue-class-component'
 import { vxm } from '@/store'
 import { Task, Worker } from '@/store/types'
 import { mdiDelete, mdiRocket } from '@mdi/js'
-import CommitOverviewBase from './CommitOverviewBase.vue'
-import TarTaskOverview from './TarTaskOverview.vue'
-import { formatDurationHuman } from '@/util/TimeUtil'
+import CommitOverviewBase from '../overviews/CommitOverviewBase.vue'
+import TarTaskOverview from '../overviews/TarTaskOverview.vue'
+import { formatDurationHuman } from '@/util/Times'
 import { RawLocation } from 'vue-router'
 
 @Component({
@@ -132,7 +132,7 @@ export default class QueueOverview extends Vue {
     }
     this.liftsInProgress.add(task.id)
 
-    let srcElement: HTMLElement = event.srcElement as HTMLElement
+    let srcElement: HTMLElement = event.target as HTMLElement
 
     // No animation possible
     if (!srcElement) {

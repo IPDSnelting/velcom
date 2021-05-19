@@ -40,8 +40,8 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import MatrixDimensionSelection from '@/components/graphs/MatrixDimensionSelection.vue'
-import DimensionSelection from '@/components/graphs/DimensionSelection.vue'
+import MatrixDimensionSelection from '@/components/graphs/detail/MatrixDimensionSelection.vue'
+import DimensionSelection from '@/components/graphs/detail/DimensionSelection.vue'
 import { Dimension } from '@/store/types'
 import { vxm } from '@/store'
 import { Prop, Watch } from 'vue-property-decorator'

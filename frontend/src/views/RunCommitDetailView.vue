@@ -81,18 +81,17 @@ import {
   Commit,
   CommitTaskSource,
   Dimension,
-  TarTaskSource,
   DimensionDifference,
-  RunWithDifferences
+  RunWithDifferences,
+  TarTaskSource
 } from '@/store/types'
 import NotFound404 from './NotFound404.vue'
 import RunDetail from '@/components/rundetail/RunDetail.vue'
 import CommitDetail from '@/components/rundetail/CommitDetail.vue'
 import RunTimeline from '@/components/rundetail/RunTimeline.vue'
 import { NotFoundError } from '@/store/modules/commitDetailComparisonStore'
-import { showCommitInDetailGraph } from '@/util/GraphNavigation'
 import TarOverview from '@/components/overviews/TarOverview.vue'
-import RunSignificanceChips from '@/components/RunSignificanceChips.vue'
+import RunSignificanceChips from '@/components/runs/RunSignificanceChips.vue'
 
 @Component({
   components: {
@@ -130,13 +129,26 @@ export default class RunCommitDetailView extends Vue {
     if (!this.commit) {
       return
     }
-    await showCommitInDetailGraph(
-      dimension,
-      this.commit.repoId,
-      this.commit.hash,
-      this.commit.authorDate,
-      this.$router
-    )
+    const commit = this.commit
+
+    vxm.detailGraphModule.centerOnCommit({ commit, dimension })
+
+    // Find the datapoint so we can set it as reference
+    const allDataPoints = await vxm.detailGraphModule.fetchDetailGraph()
+    const detailPoint = allDataPoints.find(it => it.hash === commit.hash)
+
+    if (detailPoint) {
+      vxm.detailGraphModule.referenceDatapoint = {
+        datapoint: detailPoint,
+        seriesId: dimension.toString()
+      }
+    }
+
+    // And finally navigate away
+    await this.$router.push({
+      name: 'repo-detail',
+      params: { id: this.commit.repoId }
+    })
   }
 
   @Watch('firstComponent')
@@ -182,9 +194,10 @@ export default class RunCommitDetailView extends Vue {
         commitHash: this.secondComponent
       })
       if (this.commit.runs.length > 0) {
-        this.runWithDifferences = await vxm.commitDetailComparisonModule.fetchRun(
-          this.commit.runs[0].runId
-        )
+        this.runWithDifferences =
+          await vxm.commitDetailComparisonModule.fetchRun(
+            this.commit.runs[0].runId
+          )
       }
     } else {
       // We got weird things

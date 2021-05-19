@@ -49,9 +49,9 @@ import Vue from 'vue'
 import { Component } from 'vue-property-decorator'
 import { vxm } from '@/store'
 import { Repo } from '@/store/types'
-import RepoSelectionComponent from '../components/RepoSelectionComponent.vue'
+import RepoSelectionComponent from '../components/misc/RepoSelectionComponent.vue'
 import { mdiPlusCircleOutline } from '@mdi/js'
-import RepoAddDialog from '../components/dialogs/RepoAddDialog.vue'
+import RepoAddDialog from '../components/repodetail/RepoAddDialog.vue'
 import NotFound404 from './NotFound404.vue'
 import RepoBaseInformation from '@/components/repodetail/RepoBaseInformation.vue'
 import RepoGraphView from '@/views/RepoGraphView.vue'
@@ -66,12 +66,14 @@ import RepoGraphView from '@/views/RepoGraphView.vue'
   }
 })
 export default class RepoDetailFrame extends Vue {
+  private tabMapping: Array<'information' | 'graph'> = ['information', 'graph']
+
   private get selectedTab() {
-    return vxm.detailGraphModule.selectedTab
+    return this.tabMapping.indexOf(vxm.detailGraphModule.selectedTab)
   }
 
   private set selectedTab(selectedTab: number) {
-    vxm.detailGraphModule.selectedTab = selectedTab
+    vxm.detailGraphModule.selectedTab = this.tabMapping[selectedTab]
   }
 
   get selectedRepoId(): string {

@@ -30,12 +30,10 @@
               :graph-component.sync="graphComponent"
               :day-equidistant-graph-selected.sync="dayEquidistantGraphSelected"
             >
-              <v-col cols="auto">
-                <share-graph-link-dialog
-                  :link-generator="getShareLink"
-                  data-restriction-label="Include repos and branches"
-                />
-              </v-col>
+              <share-graph-link-dialog
+                :link-generator="getShareLink"
+                data-restriction-label="Include repos and branches"
+              />
             </comparison-graph-settings>
           </v-col>
           <v-col cols="12" class="pt-0">
@@ -62,11 +60,11 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import RepoBaseInformation from '@/components/repodetail/RepoBaseInformation.vue'
 import { vxm } from '@/store'
-import RepoGraph from '@/components/repodetail/RepoGraph.vue'
+import RepoGraph from '@/components/graphs/detail/RepoGraph.vue'
 import DetailGraphDimensionSelector from '@/components/repodetail/DetailGraphDimensionSelector.vue'
-import GraphTimespanControls from '@/components/graphs/GraphTimespanControls.vue'
-import ShareGraphLinkDialog from '@/views/ShareGraphLinkDialog.vue'
-import GraphSettings from '@/components/graphs/GraphSettings.vue'
+import GraphTimespanControls from '@/components/graphs/helper/GraphTimespanControls.vue'
+import ShareGraphLinkDialog from '@/components/graphs/helper/ShareGraphLinkDialog.vue'
+import GraphSettings from '@/components/graphs/helper/GraphSettings.vue'
 import { PermanentLinkOptions } from '@/store/modules/detailGraphStore'
 import { availableGraphComponents } from '@/util/GraphVariantSelection'
 

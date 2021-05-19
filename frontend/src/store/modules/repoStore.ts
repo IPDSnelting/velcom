@@ -3,7 +3,7 @@ import { Repo, RepoId, Dimension } from '@/store/types'
 import Vue from 'vue'
 import axios from 'axios'
 import { vxm } from '..'
-import { repoFromJson } from '@/util/RepoJsonHelper'
+import { repoFromJson } from '@/util/json/RepoJsonHelper'
 
 const VxModule = createModule({
   namespaced: 'repoModule',
@@ -195,6 +195,19 @@ export class RepoStore extends VxModule {
       return Array.from(metrics).sort((a, b) =>
         a.localeCompare(b, undefined, { sensitivity: 'base' })
       )
+    }
+  }
+
+  /**
+   * Converts a given store to a pure object that can be serialized.
+   *
+   * @param store the store to convert
+   */
+  static toPlainObject(store: RepoStore): unknown {
+    return {
+      repos: store.repos,
+      repoIndex: store.currentRepoIndex,
+      repoIndices: store.repoIndices
     }
   }
 }

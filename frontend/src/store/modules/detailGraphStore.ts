@@ -1,27 +1,27 @@
 import { action, createModule, mutation } from 'vuex-class-component'
 import {
   AttributedDatapoint,
+  Commit,
   DetailDataPoint,
   Dimension,
   DimensionId,
-  dimensionIdEqual,
+  dimensionIdToString,
   RepoId
 } from '@/store/types'
 import axios from 'axios'
-import { detailDataPointFromJson } from '@/util/GraphJsonHelper'
-import { dimensionFromJson } from '@/util/RepoJsonHelper'
-import { CustomKeyEqualsMap } from '@/util/CustomKeyEqualsMap'
+import { detailDataPointFromJson } from '@/util/json/GraphJsonHelper'
+import { dimensionFromJson } from '@/util/json/RepoJsonHelper'
 import { vxm } from '@/store'
 import router from '@/router'
 import { Route } from 'vue-router'
-import { spaceDayEquidistant } from '@/util/DayEquidistantUtil'
+import { spaceDayEquidistant } from '@/util/DayEquidistantUtils'
 import {
   orElse,
   orUndefined,
   parseAndSetZoomAndDateRange,
   respectOptions
 } from '@/util/LinkUtils'
-import { roundDateDown, roundDateUp } from '@/util/TimeUtil'
+import { roundDateDown, roundDateUp } from '@/util/Times'
 
 const VxModule = createModule({
   namespaced: 'detailGraphModule',
@@ -40,10 +40,7 @@ export class DetailGraphStore extends VxModule {
   private _selectedRepoId: RepoId = ''
   private _selectedDimensions: Dimension[] = []
 
-  private colorIndexMap: CustomKeyEqualsMap<
-    DimensionId,
-    number
-  > = new CustomKeyEqualsMap([], dimensionIdEqual)
+  private colorIndexMap: Map<string, number> = new Map()
 
   private firstFreeColorIndex: number = 0
 
@@ -72,7 +69,7 @@ export class DetailGraphStore extends VxModule {
   beginYScaleAtZero: boolean = false
   dayEquidistantGraph: boolean = true
 
-  selectedTab: number = 1
+  selectedTab: 'information' | 'graph' = 'graph'
   selectedDimensionSelector: 'tree' | 'matrix' = 'matrix'
   //  <!--</editor-fold>-->
 
@@ -172,6 +169,25 @@ export class DetailGraphStore extends VxModule {
   setDetailGraph(graph: DetailDataPoint[]): void {
     this._detailGraph = graph
   }
+
+  /**
+   * Centers the graph on the given commit. This involves adjusting the start
+   * and end times as well as setting the repo id and dimension.
+   *
+   * @param payload the commit an dimension to use
+   */
+  @mutation
+  centerOnCommit(payload: { commit: Commit; dimension: Dimension }): void {
+    this.selectedTab = 'graph'
+    this.startTime = new Date(
+      payload.commit.committerDate.getTime() - 1000 * 60 * 60 * 24 * 4
+    )
+    this.endTime = new Date(
+      payload.commit.committerDate.getTime() + 1000 * 60 * 60 * 24 * 4
+    )
+    this.selectedRepoId = payload.commit.repoId
+    this.selectedDimensions = [payload.dimension]
+  }
   //  <!--</editor-fold>-->
 
   // <!--<editor-fold desc="GET / SET TIME">-->
@@ -199,7 +215,7 @@ export class DetailGraphStore extends VxModule {
   }
 
   /**
-   * Returns the boundaries of the buffered timespan that is used when fetchin a
+   * Returns the boundaries of the buffered timespan that is used when fetching a
    * new detail graph. The buffered timespan extends the timespan implied
    * by start and end date to allow for panning a little outside the graph
    * boundaries without having to wait for a new graph to be fetched
@@ -249,8 +265,8 @@ export class DetailGraphStore extends VxModule {
       if (!it) {
         throw new Error('UNDEFINED OR NULL!')
       }
-      if (!this.colorIndexMap.has(it)) {
-        this.colorIndexMap.set(it, this.firstFreeColorIndex++)
+      if (!this.colorIndexMap.has(it.toString())) {
+        this.colorIndexMap.set(it.toString(), this.firstFreeColorIndex++)
       }
     })
     this._selectedDimensions = dimensions
@@ -360,7 +376,7 @@ export class DetailGraphStore extends VxModule {
   set selectedRepoId(selectedRepoId: RepoId) {
     this._selectedRepoId = selectedRepoId
     // reset colors
-    this.colorIndexMap = new CustomKeyEqualsMap([], dimensionIdEqual)
+    this.colorIndexMap = new Map()
     this.firstFreeColorIndex = 0
 
     // rebuild selected dimensions so colors are correct
@@ -371,9 +387,8 @@ export class DetailGraphStore extends VxModule {
         repo.dimensions.find(it => it.equals(dimension)) !== undefined
 
       // we need to trigger the setter
-      vxm.detailGraphModule.selectedDimensions = this._selectedDimensions.filter(
-        isInRepo
-      )
+      vxm.detailGraphModule.selectedDimensions =
+        this._selectedDimensions.filter(isInRepo)
     } else {
       // we need to trigger the setter
       vxm.detailGraphModule.selectedDimensions = []
@@ -381,7 +396,7 @@ export class DetailGraphStore extends VxModule {
   }
 
   get colorIndex(): (dimension: DimensionId) => number | undefined {
-    return dimension => this.colorIndexMap.get(dimension)
+    return dimension => this.colorIndexMap.get(dimensionIdToString(dimension))
   }
   //  <!--</editor-fold>-->
 
@@ -427,4 +442,30 @@ export class DetailGraphStore extends VxModule {
     }
   }
   //  <!--</editor-fold>-->
+
+  /**
+   * Converts a given store to a pure object that can be serialized.
+   *
+   * @param store the store to convert
+   */
+  static toPlainObject(store: DetailGraphStore): unknown {
+    return {
+      _selectedRepoId: store._selectedRepoId,
+      _selectedDimensions: store._selectedDimensions,
+      referenceDatapoint: store.referenceDatapoint,
+      _startTime: store._startTime,
+      _endTime: store._endTime,
+      zoomXStartValue: store.zoomXStartValue,
+      zoomXEndValue: store.zoomXEndValue,
+      zoomYStartValue: store.zoomYStartValue,
+      zoomYEndValue: store.zoomYEndValue,
+      firstFreeColorIndex: store.firstFreeColorIndex,
+      colorIndexMap: store.colorIndexMap,
+      commitToCompare: store.commitToCompare,
+      beginYScaleAtZero: store.beginYScaleAtZero,
+      dayEquidistantGraph: store.dayEquidistantGraph,
+      selectedTab: store.selectedTab,
+      selectedDimensionSelector: store.selectedDimensionSelector
+    }
+  }
 }

@@ -13,7 +13,7 @@ import {
   commitFromJson,
   comparisonFromJson,
   differenceFromJson
-} from '@/util/CommitComparisonJsonHelper'
+} from '@/util/json/CommitComparisonJsonHelper'
 
 export class NotFoundError extends Error {}
 

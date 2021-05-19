@@ -1,6 +1,6 @@
 <template>
   <div class="home">
-    <v-container>
+    <v-container :fluid="$vuetify.breakpoint.mdAndDown">
       <v-row>
         <v-col>
           <v-card>

@@ -4,7 +4,7 @@ import axios from 'axios'
 import {
   differenceFromJson,
   runDescriptionFromJson
-} from '@/util/CommitComparisonJsonHelper'
+} from '@/util/json/CommitComparisonJsonHelper'
 
 const VxModule = createModule({
   namespaced: 'newsModule',
