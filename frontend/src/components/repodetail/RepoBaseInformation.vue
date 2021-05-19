@@ -73,7 +73,16 @@
           <v-col cols="9">
             <github-bot-command-chips
               :prs="githubCommands"
+              v-if="hasActiveBot"
             ></github-bot-command-chips>
+            <span v-if="!hasActiveBot && isAdmin">
+              No Github bot set up. Use the "Update" button to add an access
+              token.
+            </span>
+            <span v-else>
+              No Github bot set up. Ask your local administrator if you want to
+              enable this feature.
+            </span>
           </v-col>
         </v-row>
       </v-container>
@@ -134,6 +143,10 @@ export default class RepoBaseInformation extends Vue {
     return vxm.userModule.isAdmin
   }
 
+  private get hasActiveBot() {
+    return this.repo.lastGithubUpdate !== undefined
+  }
+
   private async deleteRepository() {
     const confirmed = window.confirm(
       `Do you really want to delete ${this.repo.name} (${this.repo.id})?`
@@ -147,7 +160,11 @@ export default class RepoBaseInformation extends Vue {
   }
 
   private async mounted() {
-    this.githubCommands = await vxm.repoModule.fetchGithubCommands(this.repo.id)
+    if (this.hasActiveBot) {
+      this.githubCommands = await vxm.repoModule.fetchGithubCommands(
+        this.repo.id
+      )
+    }
   }
 
   private comparatorTrackStatus(branchA: RepoBranch, branchB: RepoBranch) {
