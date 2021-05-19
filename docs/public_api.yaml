@@ -368,8 +368,29 @@ paths:
                 properties:
                   repo:
                     $ref: '#/components/schemas/Repo'
+                  github_commands:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        pr_number:
+                          type: integer
+                        comment_id:
+                          type: integer
+                        status:
+                          type: string
+                          enum:
+                            - NEW
+                            - MARKED_SEEN
+                            - QUEUED
+                            - ERROR
+                      required:
+                        - pr_number
+                        - comment_id
+                        - status
                 required:
                   - repo
+                  - github_commands
         '404':
           description: Not Found
       operationId: get-repo-repoid
@@ -1321,9 +1342,6 @@ components:
           description: All types of measurements where at least one value exists for this repo
           items:
             $ref: '#/components/schemas/Dimension'
-        has_github_token:
-          type: boolean
-          description: 'Whether a GitHub token has been set and GitHub bot functionality enabled for this repo. If this is `true`, `last_github_update` is present.'
         last_github_update:
           $ref: '#/components/schemas/Time'
       required:
@@ -1332,7 +1350,6 @@ components:
         - remote_url
         - branches
         - dimensions
-        - has_github_token
     RemoteUrl:
       type: string
       title: RemoteUrl
