@@ -34,9 +34,15 @@ export const persistenceLocalStorage = new VuexPersistence<Partial<RootState>>({
       colorModule: ColorStore.toPlainObject(state.colorModule),
       repoModule: RepoStore.toPlainObject(state.repoModule)
     }
-    storage!.setItem(key, toJson(persistable))
 
-    storage!.setItem(STORAGE_VERSION_KEY, STORAGE_VERSION_CURRENT)
+    try {
+      storage!.setItem(key, toJson(persistable))
+      storage!.setItem(STORAGE_VERSION_KEY, STORAGE_VERSION_CURRENT)
+    } catch (e) {
+      console.warn('Unable to save session data', e)
+      // Ignore the store on error. This is nicer than displaying a white
+      // page and rendering VelCom unusable.
+    }
   },
   restoreState: (key, storage) => {
     const data = storage!.getItem(key)
@@ -45,7 +51,14 @@ export const persistenceLocalStorage = new VuexPersistence<Partial<RootState>>({
       return {}
     }
 
-    return fromJson(data)
+    try {
+      return fromJson(data)
+    } catch (e) {
+      console.warn('Unable to restore local data', e)
+      // Discard local state on error. This is nicer than displaying a white
+      // page and rendering VelCom unusable.
+      return {}
+    }
   }
 })
 
@@ -65,8 +78,14 @@ export const persistenceSessionStorage = new VuexPersistence<
       )
     }
 
-    storage!.setItem(key, toJson(persistable))
-    storage!.setItem(STORAGE_VERSION_KEY, STORAGE_VERSION_CURRENT)
+    try {
+      storage!.setItem(key, toJson(persistable))
+      storage!.setItem(STORAGE_VERSION_KEY, STORAGE_VERSION_CURRENT)
+    } catch (e) {
+      console.warn('Unable to save session data', e)
+      // Ignore the store on error. This is nicer than displaying a white
+      // page and rendering VelCom unusable.
+    }
   },
   restoreState: (key, storage) => {
     const data = storage!.getItem(key)
@@ -74,7 +93,14 @@ export const persistenceSessionStorage = new VuexPersistence<
       return {}
     }
 
-    return fromJson(data)
+    try {
+      return fromJson(data)
+    } catch (e) {
+      console.warn('Unable to restore session data', e)
+      // Discard local state on error. This is nicer than displaying a white
+      // page and rendering VelCom unusable.
+      return {}
+    }
   }
 })
 
