@@ -246,7 +246,11 @@ export default class DimensionComparisonGraph extends Vue {
       backgroundColor: this.graphBackgroundColor,
       valueAxis: axisSettings(),
       timeAxis: axisSettings(),
-      legend: {},
+      legend: {
+        textStyle: {
+          color: 'currentColor'
+        }
+      },
       dataZoom: {
         textStyle: {
           color: 'currentColor'
