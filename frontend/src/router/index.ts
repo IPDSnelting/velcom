@@ -17,12 +17,14 @@ import {
 import { vxm } from '@/store'
 import TaskDetailView from '@/views/TaskDetailView.vue'
 import Search from '@/views/Search.vue'
+import DimensionComparison from '@/views/DimensionComparison.vue'
 
 Vue.use(VueRouter)
 
 export type RouteName =
   | 'home'
   | 'repo-comparison'
+  | 'repo-dimension-comparison'
   | 'repo-detail'
   | 'queue'
   | 'search'
@@ -70,6 +72,15 @@ const routes: RouteInfo[] = [
       label: 'Repo Comparison',
       navigable: true,
       icon: mdiScaleBalance
+    }
+  },
+  {
+    path: '/repo-dimension-comparison',
+    name: 'repo-dimension-comparison',
+    component: DimensionComparison,
+    meta: {
+      label: 'Repo Dimension Comparison',
+      navigable: false
     }
   },
   {

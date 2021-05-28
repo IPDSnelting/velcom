@@ -656,6 +656,22 @@ export class ComparisonDataPoint extends GraphDataPoint {
   }
 }
 
+export type DimensionComparisonValue = number | 'RUN_FAILED' | 'NO_RUN'
+
+export class DimensionComparisonPoint {
+  readonly repoId: RepoId
+  /**
+   * Key is the result of [dimensionIdToString]. JS maps can't handle complex
+   * keys so we need to serialize it.
+   */
+  readonly data: Map<string, DimensionComparisonValue>
+
+  constructor(repoId: RepoId, data: Map<string, DimensionComparisonValue>) {
+    this.repoId = repoId
+    this.data = data
+  }
+}
+
 export class StreamedRunnerOutput {
   readonly outputLines: string[]
   /**
