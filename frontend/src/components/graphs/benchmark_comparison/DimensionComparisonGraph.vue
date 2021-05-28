@@ -1,5 +1,5 @@
 <template>
-  <v-container fluid class="full-height">
+  <v-container fluid class="full-height mt-0 pt-0">
     <v-row align="center" justify="center" class="full-height" no-gutters>
       <v-col class="full-height">
         <div id="chart-container" class="full-height">
@@ -129,11 +129,14 @@ export default class DimensionComparisonGraph extends Vue {
   @Watch('baselinePoint')
   private init() {
     this.chartOptions = {
-      darkMode: true,
-      legend: {},
+      darkMode: vxm.userModule.darkThemeSelected,
+      legend: {
+        type: 'scroll'
+      },
       grid: {
         left: 20,
         right: 20,
+        bottom: 0,
         containLabel: true
       },
       tooltip: {
@@ -220,16 +223,16 @@ export default class DimensionComparisonGraph extends Vue {
     const axisSettings = () => ({
       axisLine: {
         lineStyle: {
-          color: 'currentColor'
+          color: this.themeColor('graphTextColor')
         }
       },
       axisTick: {
         lineStyle: {
-          color: 'currentColor'
+          color: this.themeColor('graphTextColor')
         }
       },
       axisLabel: {
-        color: 'currentColor'
+        color: this.themeColor('graphTextColor')
       },
       splitLine: {
         lineStyle: {
@@ -248,7 +251,7 @@ export default class DimensionComparisonGraph extends Vue {
       timeAxis: axisSettings(),
       legend: {
         textStyle: {
-          color: 'currentColor'
+          color: this.themeColor('graphTextColor')
         }
       },
       dataZoom: {
