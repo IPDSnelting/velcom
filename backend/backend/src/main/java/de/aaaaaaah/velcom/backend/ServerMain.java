@@ -166,6 +166,7 @@ public class ServerMain extends Application<GlobalConfig> {
 		Listener listener = new Listener(
 			databaseStorage,
 			repoStorage,
+			commitAccess,
 			repoAccess,
 			benchRepo,
 			queue,

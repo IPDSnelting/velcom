@@ -110,6 +110,7 @@ public class RepoReadAccess {
 				.map(record -> new GithubCommand(
 					RepoId.fromString(record.getRepoId()),
 					record.getPr(),
+					BranchName.fromName(record.getTargetBranch()),
 					record.getComment(),
 					new CommitHash(record.getCommitHash()),
 					GithubCommandState.fromTextualRepresentation(record.getState()),

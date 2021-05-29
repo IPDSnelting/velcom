@@ -2,6 +2,7 @@ package de.aaaaaaah.velcom.backend.listener;
 
 import static java.util.stream.Collectors.toSet;
 
+import de.aaaaaaah.velcom.backend.access.committaccess.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.access.committaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.repoaccess.RepoWriteAccess;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.Repo;
@@ -49,6 +50,7 @@ public class Listener {
 	private final DatabaseStorage databaseStorage;
 	private final RepoStorage repoStorage;
 
+	private final CommitReadAccess commitAccess;
 	private final RepoWriteAccess repoAccess;
 	private final BenchRepo benchRepo;
 	private final Queue queue;
@@ -74,12 +76,13 @@ public class Listener {
 	 * @param pollInterval the time the listener waits between updating its repos
 	 */
 	public Listener(DatabaseStorage databaseStorage, RepoStorage repoStorage,
-		RepoWriteAccess repoAccess, BenchRepo benchRepo, Queue queue, Duration pollInterval,
-		Duration vacuumInterval, String frontendUrl) {
+		CommitReadAccess commitAccess, RepoWriteAccess repoAccess, BenchRepo benchRepo, Queue queue,
+		Duration pollInterval, Duration vacuumInterval, String frontendUrl) {
 
 		this.databaseStorage = databaseStorage;
 		this.repoStorage = repoStorage;
 
+		this.commitAccess = commitAccess;
 		this.repoAccess = repoAccess;
 		this.benchRepo = benchRepo;
 		this.queue = queue;
@@ -186,7 +189,7 @@ public class Listener {
 		throws SynchronizeCommitsException, IOException, InterruptedException, URISyntaxException {
 
 		Optional<GithubPrInteractor> ghIntOpt = GithubPrInteractor
-			.fromRepo(repo, databaseStorage, queue, frontendUrl);
+			.fromRepo(repo, databaseStorage, commitAccess, queue, frontendUrl);
 
 		if (ghIntOpt.isPresent()) {
 			GithubPrInteractor ghInteractor = ghIntOpt.get();

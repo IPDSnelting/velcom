@@ -1,6 +1,7 @@
 package de.aaaaaaah.velcom.backend.listener.github;
 
 import de.aaaaaaah.velcom.backend.access.committaccess.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.access.repoaccess.entities.BranchName;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RepoId;
 import java.util.Objects;
 
@@ -10,24 +11,28 @@ public class GithubCommand {
 
 	private final RepoId repoId;
 	private final long pr;
+	private final BranchName targetBranch;
 	private final long comment;
 	private final CommitHash commitHash;
 	private final GithubCommandState state;
 	private final int triesLeft;
 
-	public GithubCommand(RepoId repoId, long pr, long comment, CommitHash commitHash,
-		GithubCommandState state, int triesLeft) {
+	public GithubCommand(RepoId repoId, long pr, BranchName targetBranch, long comment,
+		CommitHash commitHash, GithubCommandState state, int triesLeft) {
 
 		this.repoId = repoId;
 		this.pr = pr;
+		this.targetBranch = targetBranch;
 		this.comment = comment;
 		this.commitHash = commitHash;
 		this.state = state;
 		this.triesLeft = triesLeft;
 	}
 
-	public GithubCommand(RepoId repoId, long pr, long comment, CommitHash commitHash) {
-		this(repoId, pr, comment, commitHash, GithubCommandState.NEW, TRIES);
+	public GithubCommand(RepoId repoId, long pr, BranchName targetBranch, long comment,
+		CommitHash commitHash) {
+
+		this(repoId, pr, targetBranch, comment, commitHash, GithubCommandState.NEW, TRIES);
 	}
 
 	public RepoId getRepoId() {
@@ -36,6 +41,10 @@ public class GithubCommand {
 
 	public long getPr() {
 		return pr;
+	}
+
+	public BranchName getTargetBranch() {
+		return targetBranch;
 	}
 
 	public long getComment() {

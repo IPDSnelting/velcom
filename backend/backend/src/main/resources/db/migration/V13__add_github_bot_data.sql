@@ -19,12 +19,13 @@ CREATE TABLE repo (
 );
 
 CREATE TABLE github_command (
-  repo_id     CHAR(36) NOT NULL,
-  pr          BIGINT   NOT NULL,
-  comment     BIGINT   NOT NULL,
-  commit_hash CHAR(40) NOT NULL,
-  state       TEXT     NOT NULL DEFAULT "NEW",
-  tries_left  INT      NOT NULL,
+  repo_id       CHAR(36) NOT NULL,
+  pr            BIGINT   NOT NULL,
+  target_branch TEXT     NOT NULL, -- Slightly redundant, but easy to work with
+  comment       BIGINT   NOT NULL,
+  commit_hash   CHAR(40) NOT NULL,
+  state         TEXT     NOT NULL DEFAULT "NEW",
+  tries_left    INT      NOT NULL,
 
   PRIMARY KEY (repo_id, comment),
   FOREIGN KEY (repo_id) REFERENCES repo(id),

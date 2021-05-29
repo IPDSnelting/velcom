@@ -12,7 +12,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.RunId;
+import de.aaaaaaah.velcom.backend.access.committaccess.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.access.committaccess.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.access.repoaccess.entities.BranchName;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.Repo;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.Repo.GithubInfo;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RepoId;
@@ -54,6 +56,7 @@ public class GithubPrInteractor {
 	private final Repo repo;
 	private final GithubInfo ghInfo;
 	private final DatabaseStorage databaseStorage;
+	private final CommitReadAccess commitAccess;
 	private final Queue queue;
 
 	private final String frontendUrl;
@@ -63,11 +66,12 @@ public class GithubPrInteractor {
 	private final String basicAuthHeader;
 
 	private GithubPrInteractor(Repo repo, GithubInfo ghInfo, DatabaseStorage databaseStorage,
-		Queue queue, String frontendUrl) {
+		CommitReadAccess commitAccess, Queue queue, String frontendUrl) {
 
 		this.repo = repo;
 		this.ghInfo = ghInfo;
 		this.databaseStorage = databaseStorage;
+		this.commitAccess = commitAccess;
 		this.queue = queue;
 
 		this.frontendUrl = frontendUrl;
@@ -82,13 +86,14 @@ public class GithubPrInteractor {
 	}
 
 	public static Optional<GithubPrInteractor> fromRepo(Repo repo, DatabaseStorage databaseStorage,
-		Queue queue, String frontendUrl) {
+		CommitReadAccess commitAccess, Queue queue, String frontendUrl) {
 
 		Optional<GithubInfo> ghInfoOpt = repo.getGithubInfo();
 		return ghInfoOpt.map(githubInfo -> new GithubPrInteractor(
 			repo,
 			githubInfo,
 			databaseStorage,
+			commitAccess,
 			queue,
 			frontendUrl
 		));
@@ -98,6 +103,7 @@ public class GithubPrInteractor {
 		return new GithubCommand(
 			RepoId.fromString(record.getRepoId()),
 			record.getPr(),
+			BranchName.fromName(record.getTargetBranch()),
 			record.getComment(),
 			new CommitHash(record.getCommitHash()),
 			GithubCommandState.fromTextualRepresentation(record.getState()),
@@ -195,8 +201,10 @@ public class GithubPrInteractor {
 				JsonNode pr = getResourceFromUrl(issue.get("pull_request").get("url").asText());
 
 				long prNumber = pr.get("number").asLong();
+				BranchName targetBranch = BranchName.fromName(pr.get("base").get("ref").asText());
 				CommitHash commitHash = new CommitHash(pr.get("head").get("sha").asText());
-				GithubCommand command = new GithubCommand(repo.getId(), prNumber, commentId, commitHash);
+				GithubCommand command = new GithubCommand(repo.getId(), prNumber, targetBranch, commentId,
+					commitHash);
 				String username = comment.get("user").get("login").asText();
 				commandCandidates.add(new Pair<>(command, username));
 				LOGGER.debug("Found command for pr #{} ({}, by {})", prNumber, commentBody, username);
@@ -276,6 +284,7 @@ public class GithubPrInteractor {
 				.map(command -> new GithubCommandRecord(
 					command.getRepoId().getIdAsString(),
 					command.getPr(),
+					command.getTargetBranch().getName(),
 					command.getComment(),
 					command.getCommitHash().getHash(),
 					command.getState().getTextualRepresentation(),
@@ -436,7 +445,8 @@ public class GithubPrInteractor {
 
 		List<FinishedGithubCommand> replies = databaseStorage.acquireReadTransaction(db -> {
 			return db.dsl()
-				.selectDistinct(GITHUB_COMMAND.PR, GITHUB_COMMAND.COMMIT_HASH, RUN.ID)
+				.selectDistinct(GITHUB_COMMAND.PR, GITHUB_COMMAND.TARGET_BRANCH, GITHUB_COMMAND.COMMIT_HASH,
+					RUN.ID)
 				.from(GITHUB_COMMAND)
 				.join(RUN)
 				.on(RUN.COMMIT_HASH.eq(GITHUB_COMMAND.COMMIT_HASH))
@@ -445,8 +455,9 @@ public class GithubPrInteractor {
 				.stream()
 				.map(record -> new FinishedGithubCommand(
 					record.value1(),
-					new CommitHash(record.value2()),
-					RunId.fromString(record.value3())
+					BranchName.fromName(record.value2()),
+					new CommitHash(record.value3()),
+					RunId.fromString(record.value4())
 				))
 				.collect(toList());
 		});
@@ -455,12 +466,18 @@ public class GithubPrInteractor {
 			LOGGER
 				.debug("Replying to PR #{} and hash {}", reply.getPr(), reply.getCommitHash().getHash());
 
-			String body = "Benchmark of commit "
-				+ reply.getCommitHash().getHash()
-				+ " complete.\n\n"
-				+ frontendUrl
-				+ "run-detail/"
-				+ reply.getRunId().getIdAsString();
+			Optional<CommitHash> compareTo = commitAccess
+				.getFirstParentOfBranch(repo.getId(), reply.getTargetBranch(), reply.getCommitHash());
+
+			final String link;
+			link = compareTo.map(
+				commitHash -> frontendUrl + "compare/" + repoId + "/to/" + reply.getRunId().getIdAsString()
+					+ "?hash1=" + commitHash.getHash())
+				.orElseGet(() -> frontendUrl + "run-detail/" + reply.getRunId().getIdAsString());
+
+			String body = "Benchmark of commit " + reply.getCommitHash().getHash() + " complete.\n\n"
+				+ link;
+
 			HttpResponse<String> response = createPrComment(reply.getPr(), body);
 
 			if (response.statusCode() >= 200 && response.statusCode() < 300) {
