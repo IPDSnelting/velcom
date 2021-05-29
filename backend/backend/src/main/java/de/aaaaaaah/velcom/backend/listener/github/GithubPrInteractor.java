@@ -1,6 +1,7 @@
 package de.aaaaaaah.velcom.backend.listener.github;
 
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
 import static org.jooq.codegen.db.tables.GithubCommand.GITHUB_COMMAND;
 import static org.jooq.codegen.db.tables.Repo.REPO;
 import static org.jooq.codegen.db.tables.Run.RUN;
@@ -137,13 +138,11 @@ public class GithubPrInteractor {
 		return response.body();
 	}
 
-	public void searchForNewPrCommands()
+	private Optional<Instant> findNewCommandCandidates(
+		List<Pair<GithubCommand, String>> commandCandidates)
 		throws IOException, InterruptedException, URISyntaxException {
 
-		LOGGER.debug("Searching for new PR commands");
-
 		Set<Long> seen = new HashSet<>();
-		List<GithubCommand> commands = new ArrayList<>();
 		Instant commentCutoff = ghInfo.getCommentCutoff();
 		Optional<Instant> newCommentCutoff = Optional.empty();
 
@@ -197,13 +196,68 @@ public class GithubPrInteractor {
 
 				long prNumber = pr.get("number").asLong();
 				CommitHash commitHash = new CommitHash(pr.get("head").get("sha").asText());
-				commands.add(new GithubCommand(repo.getId(), prNumber, commentId, commitHash));
-				LOGGER.debug("Found command for pr #{} ({})", prNumber, commentBody);
+				GithubCommand command = new GithubCommand(repo.getId(), prNumber, commentId, commitHash);
+				String username = comment.get("user").get("login").asText();
+				commandCandidates.add(new Pair<>(command, username));
+				LOGGER.debug("Found command for pr #{} ({}, by {})", prNumber, commentBody, username);
 			}
 		}
 
-		if (newCommentCutoff.isEmpty()) {
-			return; // We definitely haven't found any new commands either
+		return newCommentCutoff;
+	}
+
+	private List<GithubCommand> keepOnlyAuthorizedCandidates(
+		List<Pair<GithubCommand, String>> commandCandidates) throws IOException, InterruptedException {
+		Set<String> usernames = commandCandidates.stream()
+			.map(Pair::getSecond)
+			.collect(toSet());
+
+		Set<String> usersWithWritePermission = new HashSet<>();
+		for (String username : usernames) {
+			LOGGER.debug("Checking if {} has write permissions", username);
+			URI url = UriBuilder.fromUri("https://api.github.com/")
+				.path("repos")
+				.path(ghInfo.getRepoName())
+				.path("collaborators")
+				.path(username)
+				.path("permission")
+				.build();
+			HttpRequest request = HttpRequest.newBuilder(url)
+				.header(HttpHeaders.AUTHORIZATION, basicAuthHeader)
+				.header(HttpHeaders.ACCEPT, "application/vnd.github.v3+json")
+				.build();
+			HttpResponse<JsonNode> response = client.send(request, jsonBodyHandler);
+			if (response.statusCode() != 200) {
+				LOGGER.debug("User {} doesn't have write permissions (not a collaborator)", username);
+				continue;
+			}
+			String permission = response.body().get("permission").asText();
+			if (permission.equals("admin") || permission.equals("write")) {
+				LOGGER.debug("User {} has write permissions ({})", username, permission);
+				usersWithWritePermission.add(username);
+			} else {
+				LOGGER.debug("User {} doesn't have write permissions ({})", username, permission);
+			}
+		}
+
+		return commandCandidates.stream()
+			.filter(pair -> usersWithWritePermission.contains(pair.getSecond()))
+			.map(Pair::getFirst)
+			.collect(toList());
+	}
+
+	public void searchForNewPrCommands()
+		throws IOException, InterruptedException, URISyntaxException {
+
+		LOGGER.debug("Searching for new PR commands");
+
+		List<Pair<GithubCommand, String>> commandCandidates = new ArrayList<>();
+		Optional<Instant> newCommentCutoff = findNewCommandCandidates(commandCandidates);
+		List<GithubCommand> commands = keepOnlyAuthorizedCandidates(commandCandidates);
+
+		if (newCommentCutoff.isEmpty() || commands.isEmpty()) {
+			// If we don't have a new cutoff, definitely haven't found any new commands either
+			return;
 		}
 		Instant newCommentCutoffValue = newCommentCutoff.get();
 
