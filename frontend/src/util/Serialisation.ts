@@ -8,7 +8,7 @@ import {
 
 const mappers: { [key: string]: any } = {
   Map: (entries: any[]) => new Map(entries),
-  DetailDataPoint: (rawPoint: DetailDataPoint) =>
+  [DetailDataPoint.SERIALIZED_NAME]: (rawPoint: DetailDataPoint) =>
     new DetailDataPoint(
       rawPoint.repoId,
       rawPoint.hash,
@@ -19,7 +19,7 @@ const mappers: { [key: string]: any } = {
       rawPoint.summary,
       rawPoint.values
     ),
-  ComparisonDataPoint: (rawPoint: ComparisonDataPoint) =>
+  [ComparisonDataPoint.SERIALIZED_NAME]: (rawPoint: ComparisonDataPoint) =>
     new ComparisonDataPoint(
       rawPoint.committerTime,
       rawPoint.positionTime,
@@ -30,16 +30,16 @@ const mappers: { [key: string]: any } = {
       rawPoint.summary,
       rawPoint.author
     ),
-  Dimension: (rawDimension: Dimension) =>
+  [Dimension.SERIALIZED_NAME]: (rawDimension: Dimension) =>
     new Dimension(
       rawDimension.benchmark,
       rawDimension.metric,
       rawDimension.unit,
       rawDimension.interpretation
     ),
-  RepoBranch: (rawBranch: RepoBranch) =>
+  [RepoBranch.SERIALIZED_NAME]: (rawBranch: RepoBranch) =>
     new RepoBranch(rawBranch.name, rawBranch.tracked, rawBranch.lastCommit),
-  Repo: (rawRepo: Repo) =>
+  [Repo.SERIALIZED_NAME]: (rawRepo: Repo) =>
     new Repo(
       rawRepo.id,
       rawRepo.name,
@@ -93,12 +93,19 @@ export function toJson(object: unknown): string {
       return value
     }
 
-    if (value.constructor === Object) {
+    const constructor = value.constructor
+    if (constructor === Object) {
       return value
     }
 
+    if (!Object.prototype.hasOwnProperty.call(constructor, 'SERIALIZED_NAME')) {
+      throw new Error(
+        'Constructor has no SERIALIZED_NAME property: ' + value.constructor.name
+      )
+    }
+
     return {
-      __datatype: value.constructor.name,
+      __datatype: constructor.SERIALIZED_NAME,
       val: Object.assign({}, value)
     }
   })

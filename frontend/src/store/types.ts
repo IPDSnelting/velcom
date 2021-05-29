@@ -1,6 +1,8 @@
 import { Flavor } from '@/util/FlavorTypes'
 
 export class RepoBranch {
+  static readonly SERIALIZED_NAME = 'RepoBranch'
+
   readonly name: string
   readonly tracked: boolean
   readonly lastCommit: CommitHash
@@ -14,6 +16,8 @@ export class RepoBranch {
 
 export type RepoId = Flavor<string, 'repo_id'>
 export class Repo {
+  static readonly SERIALIZED_NAME = 'Repo'
+
   readonly id: RepoId
   name: string
   branches: RepoBranch[]
@@ -62,6 +66,8 @@ export function dimensionIdToString(dimensionId: DimensionId): string {
 }
 
 export class Dimension {
+  static readonly SERIALIZED_NAME = 'Dimension'
+
   readonly benchmark: string
   readonly metric: string
   readonly unit: string
@@ -508,6 +514,8 @@ export type AttributedDatapoint = {
 }
 
 export class DetailDataPoint extends GraphDataPoint {
+  static readonly SERIALIZED_NAME = 'DetailDataPoint'
+
   readonly hash: CommitHash
   readonly repoId: RepoId
   readonly uid: string
@@ -557,6 +565,8 @@ export class DetailDataPoint extends GraphDataPoint {
 }
 
 export class ComparisonDataPoint extends GraphDataPoint {
+  static readonly SERIALIZED_NAME = 'ComparisonDataPoint'
+
   readonly positionTime: Date
   readonly committerTime: Date
   readonly hash: string
