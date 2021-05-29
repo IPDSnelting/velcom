@@ -18,6 +18,7 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -61,6 +62,9 @@ class CommitReadAccessTest {
 	private static final CommitHash COMM_I_HASH =
 		new CommitHash("e9a98785fabfa10307ee4ab637537a67c86f0e67");
 
+	private static final BranchName BRANCH_T = BranchName.fromName("T");
+	private static final BranchName BRANCH_U = BranchName.fromName("U");
+
 	private CommitReadAccess access;
 
 	@BeforeEach
@@ -95,8 +99,8 @@ class CommitReadAccessTest {
 		testDb.addCommitRel(REPO_ID, COMM_D_HASH, COMM_H_HASH);
 		testDb.addCommitRel(REPO_ID, COMM_F_HASH, COMM_G_HASH);
 		testDb.addCommitRel(REPO_ID, COMM_F_HASH, COMM_I_HASH);
-		testDb.addBranch(REPO_ID, BranchName.fromName("T"), COMM_E_HASH, true);
-		testDb.addBranch(REPO_ID, BranchName.fromName("U"), COMM_G_HASH, false);
+		testDb.addBranch(REPO_ID, BRANCH_T, COMM_E_HASH, true);
+		testDb.addBranch(REPO_ID, BRANCH_U, COMM_G_HASH, false);
 
 		DatabaseStorage databaseStorage = new DatabaseStorage(testDb.closeAndGetJdbcUrl());
 		access = new CommitReadAccess(databaseStorage);
@@ -399,6 +403,47 @@ class CommitReadAccessTest {
 		assertThat(commits.stream()
 			.map(Commit::getHash))
 			.containsExactlyInAnyOrder(COMM_D_HASH);
+	}
+
+	@Test
+	void getFirstParentOfBranch() {
+		assertThat(access.getFirstParentOfBranch(REPO_ID, BRANCH_T, COMM_A_HASH))
+			.isEqualTo(Optional.empty());
+		assertThat(access.getFirstParentOfBranch(REPO_ID, BRANCH_T, COMM_B_HASH))
+			.isEqualTo(Optional.empty());
+		assertThat(access.getFirstParentOfBranch(REPO_ID, BRANCH_T, COMM_C_HASH))
+			.isEqualTo(Optional.empty());
+		assertThat(access.getFirstParentOfBranch(REPO_ID, BRANCH_T, COMM_D_HASH))
+			.isEqualTo(Optional.empty());
+		assertThat(access.getFirstParentOfBranch(REPO_ID, BRANCH_T, COMM_E_HASH))
+			.isEqualTo(Optional.empty());
+		assertThat(access.getFirstParentOfBranch(REPO_ID, BRANCH_T, COMM_F_HASH))
+			.isEqualTo(Optional.empty());
+		assertThat(access.getFirstParentOfBranch(REPO_ID, BRANCH_T, COMM_G_HASH))
+			.isEqualTo(Optional.empty());
+		assertThat(access.getFirstParentOfBranch(REPO_ID, BRANCH_T, COMM_H_HASH))
+			.isEqualTo(Optional.of(COMM_D_HASH));
+		assertThat(access.getFirstParentOfBranch(REPO_ID, BRANCH_T, COMM_I_HASH))
+			.isEqualTo(Optional.empty());
+
+		assertThat(access.getFirstParentOfBranch(REPO_ID, BRANCH_U, COMM_A_HASH))
+			.isEqualTo(Optional.empty());
+		assertThat(access.getFirstParentOfBranch(REPO_ID, BRANCH_U, COMM_B_HASH))
+			.isEqualTo(Optional.empty());
+		assertThat(access.getFirstParentOfBranch(REPO_ID, BRANCH_U, COMM_C_HASH))
+			.isEqualTo(Optional.empty());
+		assertThat(access.getFirstParentOfBranch(REPO_ID, BRANCH_U, COMM_D_HASH))
+			.isEqualTo(Optional.empty());
+		assertThat(access.getFirstParentOfBranch(REPO_ID, BRANCH_U, COMM_E_HASH))
+			.isEqualTo(Optional.of(COMM_D_HASH));
+		assertThat(access.getFirstParentOfBranch(REPO_ID, BRANCH_U, COMM_F_HASH))
+			.isEqualTo(Optional.empty());
+		assertThat(access.getFirstParentOfBranch(REPO_ID, BRANCH_U, COMM_G_HASH))
+			.isEqualTo(Optional.empty());
+		assertThat(access.getFirstParentOfBranch(REPO_ID, BRANCH_U, COMM_H_HASH))
+			.isEqualTo(Optional.of(COMM_D_HASH));
+		assertThat(access.getFirstParentOfBranch(REPO_ID, BRANCH_U, COMM_I_HASH))
+			.isEqualTo(Optional.of(COMM_F_HASH));
 	}
 
 	@Test
