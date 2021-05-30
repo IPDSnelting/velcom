@@ -331,7 +331,8 @@ export default class EchartsDetailGraph extends Vue {
         axisPointer: {},
         // TODO: Extract in own helper?
         formatter: this.tooltipFormatter,
-        confine: true
+        confine: false,
+        position: this.tooltipPositioner
       },
       series: this.seriesInformation.map(this.seriesGenerator)
     }
@@ -408,6 +409,146 @@ export default class EchartsDetailGraph extends Vue {
              ${seriesRows.join('\n')}
            </table>
             `
+  }
+
+  private tooltipPositioner(point: [number, number], _: unknown, el: unknown) {
+    if (!(el instanceof HTMLDivElement)) {
+      // We use HTML tooltips so this code path is not reached.
+      throw new Error(
+        'Only HTML tooltips are supported in our custom tooltip position!'
+      )
+    }
+
+    // The mouse X and Y position in "point" is relative to the chart. We approximate the chart position using
+    // the chart-container, so convert the relative mouse X and Y to screen coordinates.
+    // This is needed as our later processing steps try to position the tooltip *on the screen* (and not just
+    // inside the chart), and therefore need to be able to refer to the actual screen corners
+    const containerRect = document
+      .getElementById('chart-container')!
+      .getBoundingClientRect()
+
+    // Placement is based on the size of the tooltip
+    const tooltipRect = el.getBoundingClientRect()
+    const tooltipWidth = tooltipRect.width
+    const tooltipHeight = tooltipRect.height
+
+    type Point = { x: number; y: number }
+    const dist = (a: Point, b: Point) =>
+      Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2)
+
+    // We use an adapted version of
+    // https://www.fabiofranchino.com/blog/efficient-tooltip-positioning-in-d3js-chart/
+    // To do this we need the four corners that frame the area our tooltip can be placed in.
+    // We choose to use the following
+    //
+    //                    Screen
+    //          +-------------------------+
+    //          |                         |
+    //          |         Graph           |
+    // Top left X      -------------      X  Top Right
+    //          |      -------------      |
+    //          |      -------------      |
+    //          |                         |
+    // Bot left X-------------------------X Bot right
+
+    const mouseScreenPosition = {
+      x: point[0] + containerRect.x,
+      y: point[1] + containerRect.y
+    }
+    const topLeft = { x: 0, y: containerRect.y }
+    const topRight = { x: window.innerWidth, y: containerRect.y }
+    const bottomLeft = { x: 0, y: window.innerHeight }
+    const bottomRight = { x: window.innerWidth, y: window.innerHeight }
+
+    const distanceTopLeft = dist(mouseScreenPosition, topLeft)
+    const distanceTopRight = dist(mouseScreenPosition, topRight)
+    const distanceBottomLeft = dist(mouseScreenPosition, bottomLeft)
+    const distanceBottomRight = dist(mouseScreenPosition, bottomRight)
+
+    // The algorithm works by selecting the corner that is *the furthest* away from the current mouse position
+    //
+    //           Allowed tooltip positions
+    //          +--------------------------+  Would Pick this corner, as it is the furthest away
+    //          |        -----------------/|
+    //          |       /                  |
+    //          |  ---x------------------\ |
+    //          | /                       \|
+    //          +--------------------------+
+    //
+    // And then it tries to position the tooltip along the line connecting the point to the corner.
+    const maxDist = Math.max(
+      distanceTopLeft,
+      distanceTopRight,
+      distanceBottomLeft,
+      distanceBottomRight
+    )
+
+    let finalX
+    let finalY
+    const padding = 15
+
+    //
+    // +-----------=----------+
+    // |         / = XXX-\    |  M is mouse, X is a possible tooltip location, line is a graph
+    // |  /--\  /  = XXX M\   |  Only horizontal position is relevant here
+    // | -    --   = XXX   \- |
+    // +-----------=----------+
+    //             ^
+    // If we are on the right, we try to place the tooltip on the left, so the user can freely see the data on the
+    // right.
+    if (maxDist === distanceTopLeft || maxDist === distanceBottomLeft) {
+      finalX = point[0] - padding - tooltipWidth
+    } else {
+      finalX = point[0] + padding
+    }
+
+    // If we are in the top half, we just try to place the tooltip below us. This will likely be fine, as there
+    // are some controls under the graph and we can more easily overflow at the bottom:
+    //   The data is sorted by value in the tooltip, so if the users hover somewhere at the top of the graph, we
+    //   do want to show the top of the tooltip - cutting off the bottom is likely okay, as the users mouse is far
+    //   away from any relevant data.
+    if (!(maxDist === distanceTopLeft || maxDist === distanceTopRight)) {
+      finalY = point[1] + padding
+    } else {
+      // If we are in the bottom half, we try to do the same. Place the tooltip below us. This prevents the
+      // tooltip from jumping around, if we move through the graph.
+      finalY = point[1] + padding
+
+      // However, if we place the tooltip below and hover at the bottom, it might go offscreen - even when there
+      // is plenty space above!
+      // If we detect that the tooltip is at least partially hidden, we instead try to place the tooltip
+      // *ABOVE* the mouse cursor.
+
+      // Does the tooltip at least partially go off-screen (i.e. is larger than the bottom y)?
+      if (finalY + containerRect.y + tooltipHeight > bottomLeft.y) {
+        // It did go off-screen, so we try to lift it above instead.
+
+        // Does the tooltip fit above our mouse cursor?
+        // finalY + containerRect.y translates our planned top left corner to screen coordinates. We then
+        // subtract the tooltipHeight (as we want to place the *bottom* corner) at mouse position.
+        // If this is smaller than the top y, we clipped outside our top border and there isn't enough space.
+        // The padding is deliberately ignored in the calculation, as there are some controls above the chart
+        // (toolbox) and the tooltip has some information at the top we are willing to sacrifice. Ignoring the
+        // padding here just makes it a bit more likely that the tooltip fits above, while not harming readability
+        // too much.
+        if (finalY + containerRect.y - tooltipHeight >= topLeft.y) {
+          // It fit above! We now adjust the finalY to place the bottom of the tooltip <padding> above our mouse's
+          // y position.
+          finalY = point[1] - padding - tooltipHeight
+        } else {
+          // It didn't fit above. The tooltip is apparently too tall and we can't place it *anywhere* without
+          // clipping it. This is sad, but we will at least try to salvage it a bit.
+          // One of our priorities was clearing the horizontal line of your mouse cursor, so you can easily click
+          // on points and their neighbours. This property is nice, but not essential.
+          // Therefore, we give it up and instead place the tooltip below the mouse cursor - but lifted up
+          // enough to be fully visible. It might now extend below and above the mouse y position, but as it is
+          // also offset in the x-direction, clicking datapoints is still possible.
+          finalY -= finalY + containerRect.y + tooltipHeight - bottomLeft.y
+        }
+      }
+    }
+
+    return [finalX, finalY]
   }
   // <!--</editor-fold>-->
 
