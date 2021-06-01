@@ -68,6 +68,13 @@ export function dimensionIdToString(dimensionId: DimensionId): string {
   return `${dimensionId.benchmark} - ${dimensionId.metric}`
 }
 
+export function dimensionIdEquals(
+  first: DimensionId,
+  second: DimensionId
+): boolean {
+  return first.benchmark === second.benchmark && first.metric === second.metric
+}
+
 export class Dimension {
   static readonly SERIALIZED_NAME = 'Dimension'
 
@@ -314,6 +321,12 @@ export class RunResultSuccess {
 
   constructor(measurements: Measurement[]) {
     this.measurements = measurements
+  }
+
+  public resultForDimension(dimension: DimensionId): Measurement | undefined {
+    return this.measurements.find(measurement => {
+      return dimensionIdEquals(measurement.dimension, dimension)
+    })
   }
 }
 export type RunResult =
@@ -656,19 +669,15 @@ export class ComparisonDataPoint extends GraphDataPoint {
   }
 }
 
-export type DimensionComparisonValue = number | 'RUN_FAILED' | 'NO_RUN'
-
-export class DimensionComparisonPoint {
+export class StatusComparisonPoint {
   readonly repoId: RepoId
-  /**
-   * Key is the result of [dimensionIdToString]. JS maps can't handle complex
-   * keys so we need to serialize it.
-   */
-  readonly data: Map<string, DimensionComparisonValue>
+  readonly run: Run
+  readonly commitHash: CommitHash
 
-  constructor(repoId: RepoId, data: Map<string, DimensionComparisonValue>) {
+  constructor(repoId: RepoId, run: Run, commitHash: CommitHash) {
     this.repoId = repoId
-    this.data = data
+    this.run = run
+    this.commitHash = commitHash
   }
 }
 

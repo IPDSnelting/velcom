@@ -19,29 +19,36 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import {
-  DimensionComparisonValue,
-  DimensionComparisonPoint,
-  RepoId
+  DimensionId,
+  dimensionIdToString,
+  MeasurementError,
+  MeasurementSuccess,
+  RepoId,
+  Run,
+  RunResultScriptError,
+  RunResultSuccess,
+  RunResultVelcomError,
+  StatusComparisonPoint
 } from '@/store/types'
 import { ComposeOption, use } from 'echarts/core'
 import { BarChart, BarSeriesOption } from 'echarts/charts'
 import {
-  GridComponent,
-  GridComponentOption,
-  LegendComponent,
-  LegendComponentOption,
-  TooltipComponent,
-  TooltipComponentOption,
   AriaComponent,
   AriaComponentOption,
+  BrushComponent,
+  BrushComponentOption,
   DataZoomComponent,
   DataZoomComponentOption,
   DataZoomInsideComponent,
   DataZoomSliderComponent,
-  BrushComponent,
-  BrushComponentOption,
+  GridComponent,
+  GridComponentOption,
+  LegendComponent,
+  LegendComponentOption,
   ToolboxComponent,
-  ToolboxComponentOption
+  ToolboxComponentOption,
+  TooltipComponent,
+  TooltipComponentOption
 } from 'echarts/components'
 import EChartsComp from 'vue-echarts'
 import { Prop, Watch } from 'vue-property-decorator'
@@ -73,8 +80,53 @@ type ECOption = ComposeOption<
   | ToolboxComponentOption
 >
 
-type SeriesEntry = [string, DimensionComparisonValue]
-type RepoValue = SeriesEntry[]
+class DatapointValue {
+  readonly dimension: DimensionId
+  readonly repoId: RepoId
+  /**
+   * Used by Echarts, matched based on the name!
+   */
+  readonly value: [string, number]
+
+  constructor(dimension: DimensionId, repoId: RepoId, value: number) {
+    this.dimension = dimension
+    this.repoId = repoId
+    this.value = [dimensionIdToString(dimension), value]
+  }
+}
+class DatapointDimensionError {
+  readonly dimension: DimensionId
+  readonly repoId: RepoId
+  readonly error: string
+
+  /**
+   * Used by Echarts, matched based on the name!
+   */
+  readonly value: [string, number]
+
+  constructor(
+    dimension: DimensionId,
+    repoId: RepoId,
+    error: string,
+    dummyValue: number
+  ) {
+    this.dimension = dimension
+    this.repoId = repoId
+    this.error = error
+    this.value = [dimensionIdToString(dimension), dummyValue]
+  }
+}
+class DatapointRepoError {
+  readonly error: string
+  readonly repoId: RepoId
+
+  constructor(error: string, repoId: RepoId) {
+    this.error = error
+    this.repoId = repoId
+  }
+}
+
+type Datapoint = DatapointValue | DatapointDimensionError
 
 @Component({
   components: {
@@ -85,44 +137,65 @@ export default class StatusComparisonGraph extends Vue {
   private chartOptions: ECOption = {}
 
   @Prop()
-  private readonly datapoints!: DimensionComparisonPoint[]
+  private readonly datapoints!: StatusComparisonPoint[]
 
   @Prop({ default: null })
-  private readonly baselinePoint!: DimensionComparisonPoint | null
+  private readonly baselinePoint!: StatusComparisonPoint | null
 
-  private normalizeToBaseline(
-    dimensionName: string,
-    value: DimensionComparisonValue
-  ) {
-    if (typeof value !== 'number' || !this.baselinePoint) {
-      return value
+  private get maxDatapointValue() {
+    const values = this.datapoints
+      .map(it => it.run.result)
+      .filter(it => it instanceof RunResultSuccess)
+      .flatMap(it => (it as RunResultSuccess).measurements)
+      .filter(it => it instanceof MeasurementSuccess)
+      .map(it => (it as MeasurementSuccess).value)
+
+    if (values.length === 0) {
+      // Arbitrary placeholder so something is displayed
+      return 1
     }
-    const baselineValue = this.baselinePoint.data.get(dimensionName)
-    if (typeof baselineValue !== 'number') {
-      return value
-    }
-    return value / baselineValue
+
+    return Math.max(...values)
   }
 
-  private baselineHasDimension(dimension: string) {
-    if (!this.baselinePoint) {
-      return true
+  private get processedDataPoints(): Map<
+    string,
+    Datapoint[] | DatapointRepoError
+  > {
+    const map: Map<string, Datapoint[] | DatapointRepoError> = new Map()
+    for (const point of this.datapoints) {
+      const id = point.repoId
+      const points = this.pointsForRun(point.run, id)
+      map.set(id, points)
     }
-    return this.baselinePoint.data.has(dimension)
-  }
-
-  private get seriesData(): Map<string, RepoValue> {
-    const map = new Map<string, RepoValue>()
-
-    this.datapoints.forEach(repoPoint => {
-      const repoValue: RepoValue = Array.from(repoPoint.data.entries())
-      const normalized: RepoValue = repoValue
-        .filter(([name]) => this.baselineHasDimension(name))
-        .map(([name, value]) => [name, this.normalizeToBaseline(name, value)])
-      map.set(repoPoint.repoId, normalized)
-    })
-
     return map
+  }
+
+  private pointsForRun(
+    run: Run,
+    repoId: RepoId
+  ): DatapointRepoError | Datapoint[] {
+    if (run.result instanceof RunResultScriptError) {
+      return new DatapointRepoError(run.result.error, repoId)
+    }
+    if (run.result instanceof RunResultVelcomError) {
+      return new DatapointRepoError(run.result.error, repoId)
+    }
+    return run.result.measurements.map(measurement => {
+      if (measurement instanceof MeasurementError) {
+        return new DatapointDimensionError(
+          measurement.dimension,
+          repoId,
+          measurement.error,
+          this.maxDatapointValue
+        )
+      }
+      return new DatapointValue(
+        measurement.dimension,
+        repoId,
+        measurement.value
+      )
+    })
   }
 
   @Watch('datapoints')
@@ -184,7 +257,7 @@ export default class StatusComparisonGraph extends Vue {
       yAxis: {
         type: 'value'
       },
-      series: this.datapoints.map(this.generateSeries),
+      series: this.datapoints.map(point => this.generateSeries(point.repoId)),
       aria: {
         enabled: true,
         decal: {
@@ -194,11 +267,15 @@ export default class StatusComparisonGraph extends Vue {
     }
   }
 
-  private generateSeries(point: DimensionComparisonPoint): BarSeriesOption {
+  private generateSeries(repoId: RepoId): BarSeriesOption {
+    const data = this.processedDataPoints.get(repoId)
+    if (data instanceof DatapointRepoError) {
+      return {}
+    }
     return {
       type: 'bar',
-      name: this.repoName(point.repoId),
-      data: this.seriesData.get(point.repoId),
+      name: this.repoName(repoId),
+      data: data,
       emphasis: {
         focus: 'series',
         itemStyle: {
