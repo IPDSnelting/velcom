@@ -4,9 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.merge.MergeStrategy;
 import org.eclipse.jgit.submodule.SubmoduleWalk;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,11 +44,14 @@ class GitCloneTest {
 
 		// Commit it
 		Git subGit = Git.open(submodulePath.toFile());
+		disableGc(subGit);
 		subGit.add().addFilepattern("test.txt").call();
 		subGit.commit().setMessage("Hey").setAuthor("Aith", "er").call();
 
 		// Add submodule to repo
 		Git repoGit = Git.open(repoPath.toFile());
+		disableGc(repoGit);
+
 		repoGit
 			.submoduleAdd()
 			.setName("Submodule")
@@ -72,6 +77,12 @@ class GitCloneTest {
 		repoGit.commit().setAuthor("Auth", "er").setMessage("Updated submodule").call();
 
 		Git.init().setDirectory(tempDir.resolve("bench_repo").toFile()).call();
+	}
+
+	private void disableGc(Git repoGit) throws IOException {
+		StoredConfig config = repoGit.getRepository().getConfig();
+		config.setInt("gc", null, "auto", 0);
+		config.save();
 	}
 
 	@Test
