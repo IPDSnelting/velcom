@@ -78,10 +78,22 @@
             <span v-if="hasActiveBot && githubCommands.length === 0">
               No commands found yet
             </span>
-            <span v-if="!hasActiveBot && isAdmin">
-              No Github bot set up. Use the "Update" button to add an access
-              token.
-            </span>
+            <div v-if="!hasActiveBot && isAdmin">
+              No Github bot set up. You can do that by following these steps:
+              <ol class="mt-1">
+                <li>
+                  On GitHub, go to Settings > Developer settings > Personal
+                  access tokens
+                </li>
+                <li>
+                  Generate a new token with the "public_repo" scope (or the
+                  "repo" scope if you want to use it on a private repository)
+                </li>
+                <li>
+                  Use the "Update" button to add the access token to the repo.
+                </li>
+              </ol>
+            </div>
           </v-col>
         </v-row>
       </v-container>
