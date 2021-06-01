@@ -53,6 +53,15 @@ webAdminToken: "12345"
 benchmarkRepoRemoteUrl: "https://github.com/IPDSnelting/velcom-unibench.git"
 
 ##
+## The base URL the frontend can be reached under. For example, if the frontend's home page can be
+## reached as "https://example.com/velcom/home", this should be set to "https://example.com/velcom/"
+## (the trailing slash is optional).
+##
+## If you don't use the GitHub !bench command, this option can be safely set to any value.
+##
+frontendUrl: "https://example.com/velcom/"
+
+##
 ## The period in which the tracked repos and bench repo is checked for updates. When new commits are
 ## found, they are added to the queue.
 ##

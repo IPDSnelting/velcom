@@ -22,6 +22,8 @@ public class GlobalConfig extends Configuration {
 	private String webAdminToken;
 	@NotEmpty
 	private String benchmarkRepoRemoteUrl;
+	@NotEmpty
+	private String frontendUrl;
 	private long pollInterval = 10 * 60;
 	private long vacuumInterval = 25 * 60 * 60;
 
@@ -90,6 +92,21 @@ public class GlobalConfig extends Configuration {
 
 	public void setBenchmarkRepoRemoteUrl(String benchmarkRepoRemoteUrl) {
 		this.benchmarkRepoRemoteUrl = benchmarkRepoRemoteUrl;
+	}
+
+	/**
+	 * @return the base url the frontend can be reached under, including a trailing slash
+	 */
+	public String getFrontendUrl() {
+		if (frontendUrl.endsWith("/")) {
+			return frontendUrl;
+		} else {
+			return frontendUrl + "/";
+		}
+	}
+
+	public void setFrontendUrl(String frontendUrl) {
+		this.frontendUrl = frontendUrl;
 	}
 
 	/**

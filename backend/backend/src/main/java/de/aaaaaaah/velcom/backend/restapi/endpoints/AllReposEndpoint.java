@@ -8,11 +8,13 @@ import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.Dimension;
 import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.DimensionInfo;
 import de.aaaaaaah.velcom.backend.access.repoaccess.RepoReadAccess;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.Repo;
+import de.aaaaaaah.velcom.backend.access.repoaccess.entities.Repo.GithubInfo;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonBranch;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimension;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRepo;
 import io.micrometer.core.annotation.Timed;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -72,7 +74,11 @@ public class AllReposEndpoint {
 					repo.getName(),
 					repo.getRemoteUrl().getUrl(),
 					branches,
-					dimensions
+					dimensions,
+					repo.getGithubInfo()
+						.map(GithubInfo::getCommentCutoff)
+						.map(Instant::getEpochSecond)
+						.orElse(null)
 				);
 			})
 			.collect(toList());

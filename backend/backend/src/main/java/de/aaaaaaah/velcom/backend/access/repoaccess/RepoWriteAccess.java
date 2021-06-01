@@ -1,6 +1,7 @@
 package de.aaaaaaah.velcom.backend.access.repoaccess;
 
 import static org.jooq.codegen.db.tables.Branch.BRANCH;
+import static org.jooq.codegen.db.tables.GithubCommand.GITHUB_COMMAND;
 import static org.jooq.codegen.db.tables.Repo.REPO;
 import static org.jooq.impl.DSL.field;
 
@@ -14,6 +15,7 @@ import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.repoaccess.exceptions.FailedToAddRepoException;
 import de.aaaaaaah.velcom.backend.storage.db.DBWriteAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.Set;
 import java.util.UUID;
@@ -52,7 +54,7 @@ public class RepoWriteAccess extends RepoReadAccess {
 	 */
 	public Repo addRepo(String name, RemoteUrl remoteUrl) throws FailedToAddRepoException {
 		UUID id = UUID.randomUUID();
-		RepoRecord record = new RepoRecord(id.toString(), name, remoteUrl.getUrl());
+		RepoRecord record = new RepoRecord(id.toString(), name, remoteUrl.getUrl(), null, null);
 
 		try (DBWriteAccess db = databaseStorage.acquireWriteAccess()) {
 			db.dsl().batchInsert(record).execute();
@@ -60,7 +62,7 @@ public class RepoWriteAccess extends RepoReadAccess {
 			throw new FailedToAddRepoException(e, name, remoteUrl);
 		}
 
-		return new Repo(new RepoId(id), name, remoteUrl);
+		return new Repo(new RepoId(id), name, remoteUrl, null, null);
 	}
 
 	/**
@@ -142,5 +144,38 @@ public class RepoWriteAccess extends RepoReadAccess {
 				.where(BRANCH.REPO_ID.eq(repoId.getIdAsString()))
 				.execute();
 		}
+	}
+
+	/**
+	 * Enable Github bot functionality by setting a GitHub auth token.
+	 */
+	public void setGithubAuthToken(RepoId repoId, String token) {
+		databaseStorage.acquireWriteTransaction(db -> {
+			db.dsl()
+				.update(REPO)
+				.set(REPO.GITHUB_AUTH_TOKEN, token)
+				.set(REPO.GITHUB_COMMENT_CUTOFF, Instant.now())
+				.where(REPO.ID.eq(repoId.getIdAsString()))
+				.execute();
+		});
+	}
+
+	/**
+	 * Disable Github bot functionality by removing the GitHub auth token.
+	 */
+	public void unsetGithubAuthToken(RepoId repoId) {
+		databaseStorage.acquireWriteTransaction(db -> {
+			db.dsl()
+				.update(REPO)
+				.set(REPO.GITHUB_AUTH_TOKEN, (String) null)
+				.set(REPO.GITHUB_COMMENT_CUTOFF, (Instant) null)
+				.where(REPO.ID.eq(repoId.getIdAsString()))
+				.execute();
+
+			db.dsl()
+				.deleteFrom(GITHUB_COMMAND)
+				.where(GITHUB_COMMAND.REPO_ID.eq(repoId.getIdAsString()))
+				.execute();
+		});
 	}
 }

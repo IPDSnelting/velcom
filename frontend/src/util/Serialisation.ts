@@ -45,7 +45,8 @@ const mappers: { [key: string]: any } = {
       rawRepo.name,
       rawRepo.branches,
       rawRepo.dimensions,
-      rawRepo.remoteURL
+      rawRepo.remoteURL,
+      rawRepo.lastGithubUpdate
     )
 }
 

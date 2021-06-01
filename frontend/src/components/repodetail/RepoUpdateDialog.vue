@@ -23,7 +23,12 @@
               label="*Repository name"
               v-model="repoName"
             ></v-text-field>
-            <div class="section-header mb-2">BRANCHES</div>
+            <github-token-configuration
+              :has-token="hasGithubToken"
+              :new-token.sync="newGithubToken"
+              @update:tokenState="githubTokenState = $event"
+            ></github-token-configuration>
+            <div class="section-header mb-2 mt-4">BRANCHES</div>
             <v-data-iterator
               :custom-filter="filterName"
               :search="searchValue"
@@ -80,9 +85,9 @@
             @click="updateRepo"
             >Update Repository</v-btn
           >
-          <v-btn color="error" text outlined @click="dialogOpen = false"
-            >Close</v-btn
-          >
+          <v-btn color="error" text outlined @click="dialogOpen = false">
+            Close
+          </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -96,8 +101,12 @@ import { Repo } from '@/store/types'
 import { Prop, Watch } from 'vue-property-decorator'
 import { vxm } from '@/store'
 import { mdiMagnify } from '@mdi/js'
-
-@Component
+import GithubTokenConfiguration, {
+  TokenState
+} from '@/components/repodetail/GithubTokenConfiguration.vue'
+@Component({
+  components: { GithubTokenConfiguration }
+})
 export default class RepoUpdateDialog extends Vue {
   private dialogOpen: boolean = false
 
@@ -112,18 +121,25 @@ export default class RepoUpdateDialog extends Vue {
 
   private newTrackedBranches: string[] = []
 
-  @Prop()
-  private repoId!: string
+  private newGithubToken: string = ''
+  private githubTokenState: TokenState = 'unchanged'
 
-  get branchObjects(): { name: string; lowerCased: string }[] {
+  @Prop()
+  private readonly repoId!: string
+
+  private get branchObjects(): { name: string; lowerCased: string }[] {
     return this.repo.branches.map(it => ({
       name: it.name,
       lowerCased: it.name.toLowerCase()
     }))
   }
 
-  get repo(): Repo {
+  private get repo(): Repo {
     return vxm.repoModule.repoById(this.repoId)!
+  }
+
+  private get hasGithubToken() {
+    return this.repo.lastGithubUpdate !== undefined
   }
 
   private filterName(items: { lowerCased: string }[]) {
@@ -159,15 +175,23 @@ export default class RepoUpdateDialog extends Vue {
     }
   }
 
-  private updateRepo() {
-    vxm.repoModule
-      .updateRepo({
-        id: this.repoId,
-        name: this.repoName,
-        remoteUrl: this.remoteUrl,
-        trackedBranches: this.newTrackedBranches
-      })
-      .then(() => (this.dialogOpen = false))
+  private async updateRepo() {
+    let newToken: string | undefined
+    if (this.githubTokenState === 'delete') {
+      newToken = ''
+    } else if (this.githubTokenState === 'modify') {
+      newToken = this.newGithubToken
+    }
+
+    await vxm.repoModule.updateRepo({
+      id: this.repoId,
+      name: this.repoName,
+      remoteUrl: this.remoteUrl,
+      trackedBranches: this.newTrackedBranches,
+      githubToken: newToken
+    })
+
+    this.dialogOpen = false
   }
 
   mounted(): void {

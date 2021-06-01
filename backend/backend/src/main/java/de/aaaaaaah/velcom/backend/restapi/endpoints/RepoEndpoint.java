@@ -11,10 +11,12 @@ import de.aaaaaaah.velcom.backend.access.repoaccess.RepoWriteAccess;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.BranchName;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RemoteUrl;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.Repo;
+import de.aaaaaaah.velcom.backend.access.repoaccess.entities.Repo.GithubInfo;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.repoaccess.exceptions.FailedToAddRepoException;
 import de.aaaaaaah.velcom.backend.access.repoaccess.exceptions.NoSuchRepoException;
 import de.aaaaaaah.velcom.backend.listener.Listener;
+import de.aaaaaaah.velcom.backend.listener.SynchronizeCommitsException;
 import de.aaaaaaah.velcom.backend.restapi.authentication.Admin;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonBranch;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimension;
@@ -22,6 +24,7 @@ import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRepo;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.PATCH;
 import io.micrometer.core.annotation.Timed;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -78,7 +81,11 @@ public class RepoEndpoint {
 			repo.getName(),
 			repo.getRemoteUrlAsString(),
 			branches,
-			jsonDimensions
+			jsonDimensions,
+			repo.getGithubInfo()
+				.map(GithubInfo::getCommentCutoff)
+				.map(Instant::getEpochSecond)
+				.orElse(null)
 		);
 	}
 
@@ -90,9 +97,10 @@ public class RepoEndpoint {
 		RemoteUrl remoteUrl = new RemoteUrl(request.getRemoteUrl());
 		Repo repo = repoAccess.addRepo(request.getName(), remoteUrl);
 
-		if (listener.updateRepo(repo)) {
+		try {
+			listener.synchronizeCommitsForRepo(repo);
 			return new PostReply(toJsonRepo(repo));
-		} else {
+		} catch (SynchronizeCommitsException e) {
 			repoAccess.deleteRepo(repo.getId());
 			throw new WebApplicationException("Repo could not be cloned, invalid remote url",
 				Status.BAD_REQUEST);
@@ -141,20 +149,39 @@ public class RepoEndpoint {
 	public GetReply get(@PathParam("repoid") UUID repoUuid) throws NoSuchRepoException {
 		RepoId repoId = new RepoId(repoUuid);
 		Repo repo = repoAccess.getRepo(repoId);
+		List<JsonGithubCommand> commands = repoAccess.getCommands(repoId)
+			.stream()
+			.map(command -> new JsonGithubCommand(
+				command.getPr(),
+				command.getComment(),
+				command.getState().getTextualRepresentation()
+			))
+			.collect(toList());
 
-		return new GetReply(toJsonRepo(repo));
+		return new GetReply(toJsonRepo(repo), commands);
 	}
 
 	private static class GetReply {
 
-		private final JsonRepo repo;
+		public final JsonRepo repo;
+		public final List<JsonGithubCommand> githubCommands;
 
-		public GetReply(JsonRepo repo) {
+		public GetReply(JsonRepo repo, List<JsonGithubCommand> githubCommands) {
 			this.repo = repo;
+			this.githubCommands = githubCommands;
 		}
+	}
 
-		public JsonRepo getRepo() {
-			return repo;
+	private static class JsonGithubCommand {
+
+		public final long prNumber;
+		public final long commentId;
+		public final String status;
+
+		public JsonGithubCommand(long prNumber, long commentId, String status) {
+			this.prNumber = prNumber;
+			this.commentId = commentId;
+			this.status = status;
 		}
 	}
 
@@ -183,8 +210,19 @@ public class RepoEndpoint {
 				.collect(Collectors.toSet());
 			repoAccess.setTrackedBranches(repoId, trackedBranchNames);
 
-			if (!listener.updateRepo(repo)) {
+			try {
+				listener.synchronizeCommitsForRepo(repo);
+			} catch (SynchronizeCommitsException e) {
 				LOGGER.warn("Failed to update repo {} successfully", repoId);
+			}
+		});
+
+		request.getGithubToken().ifPresent(token -> {
+			String stripped = token.strip();
+			if (stripped.equals("")) {
+				repoAccess.unsetGithubAuthToken(repoId);
+			} else {
+				repoAccess.setGithubAuthToken(repoId, stripped);
 			}
 		});
 	}
@@ -197,14 +235,17 @@ public class RepoEndpoint {
 		private final String remoteUrl;
 		@Nullable
 		private final List<String> trackedBranches;
+		@Nullable
+		private final String githubToken;
 
 		@JsonCreator
 		public PatchRequest(@Nullable String name, @Nullable String remoteUrl,
-			@Nullable List<String> trackedBranches) {
+			@Nullable List<String> trackedBranches, @Nullable String githubToken) {
 
 			this.name = name;
 			this.remoteUrl = remoteUrl;
 			this.trackedBranches = trackedBranches;
+			this.githubToken = githubToken;
 		}
 
 		public Optional<String> getName() {
@@ -217,6 +258,10 @@ public class RepoEndpoint {
 
 		public Optional<List<String>> getTrackedBranches() {
 			return Optional.ofNullable(trackedBranches);
+		}
+
+		public Optional<String> getGithubToken() {
+			return Optional.ofNullable(githubToken);
 		}
 	}
 

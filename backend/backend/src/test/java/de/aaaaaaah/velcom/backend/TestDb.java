@@ -102,7 +102,9 @@ public class TestDb {
 		dslContext.batchInsert(new RepoRecord(
 			repoId.getIdAsString(),
 			name,
-			remoteUrl.getUrl()
+			remoteUrl.getUrl(),
+			null,
+			null
 		)).execute();
 	}
 

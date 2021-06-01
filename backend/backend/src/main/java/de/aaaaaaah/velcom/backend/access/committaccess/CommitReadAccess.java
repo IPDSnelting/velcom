@@ -27,6 +27,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -35,6 +36,8 @@ import org.jooq.SelectConditionStep;
 import org.jooq.codegen.db.tables.records.CommitRelationshipRecord;
 import org.jooq.codegen.db.tables.records.KnownCommitRecord;
 import org.jooq.exception.DataAccessException;
+import org.jooq.exception.NoDataFoundException;
+import org.jooq.exception.TooManyRowsException;
 import org.jooq.impl.DSL;
 
 /**
@@ -341,6 +344,84 @@ public class CommitReadAccess {
 				.map(record -> (String) record.getValue(0))
 				.map(CommitHash::new)
 				.collect(toList());
+		}
+	}
+
+	/**
+	 * @param repoId the id of the root commit's repo
+	 * @param rootHash the hash of the root commit
+	 * @return all tracked commits descending from the given root.
+	 */
+	public Optional<CommitHash> getFirstParentOfBranch(RepoId repoId, BranchName branch,
+		CommitHash rootHash) {
+		String query = "WITH RECURSIVE\n"
+			// Commits reachable from the branch
+			+ "reachable(hash) AS (\n"
+			+ "  SELECT branch.latest_commit_hash\n"
+			+ "  FROM branch\n"
+			+ "  WHERE branch.repo_id = ?\n" // <-- Binding #1 - repo id
+			+ "  AND branch.name = ?\n" // <-- Binding #2 - branch name
+			+ "  \n"
+			+ "  UNION\n"
+			+ "  \n"
+			+ "  SELECT commit_relationship.parent_hash\n"
+			+ "  FROM commit_relationship\n"
+			+ "  JOIN reachable\n"
+			+ "    ON reachable.hash = commit_relationship.child_hash\n"
+			+ "  WHERE commit_relationship.repo_id = ?\n" // <-- Binding #3 - repo id
+			+ "),\n"
+			+ "\n"
+			// The starting commit
+			+ "initial(hash) AS (\n"
+			+ "  VALUES (?)\n" // <-- Binding #4 - hash of starting commit
+			+ "),\n"
+			+ "\n"
+			// Parents of the starting commit that are not reachable from the branch
+			+ "parents(hash) AS (\n"
+			+ "  SELECT initial.hash\n"
+			+ "  FROM initial\n"
+			+ "  JOIN known_commit\n"
+			+ "    ON initial.hash = known_commit.hash\n"
+			+ "  WHERE known_commit.repo_id = ?\n" // <-- Binding #5 - repo id
+			+ "  AND initial.hash NOT IN reachable\n"
+			+ "  \n"
+			+ "  UNION\n"
+			+ "  \n"
+			+ "  SELECT commit_relationship.parent_hash\n"
+			+ "  FROM commit_relationship\n"
+			+ "  JOIN parents\n"
+			+ "    ON parents.hash = commit_relationship.child_hash\n"
+			+ "  WHERE commit_relationship.repo_id = ?\n" // <-- Binding #6 - repo id
+			+ "  AND commit_relationship.parent_hash NOT IN reachable\n"
+			+ ")\n"
+			+ "\n"
+			// Choose the only parents of our 'parents' table that is reachable from the branch. If there
+			// are none or multiple such parents, don't try to choose one and instead return nothing.
+			+ "SELECT commit_relationship.parent_hash\n"
+			+ "FROM commit_relationship\n"
+			+ "  JOIN parents\n"
+			+ "    ON parents.hash = commit_relationship.child_hash\n"
+			+ "  JOIN reachable\n"
+			+ "    ON reachable.hash = commit_relationship.parent_hash\n"
+			+ "";
+
+		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
+			try {
+				String hash = db.dsl()
+					.fetchSingle(
+						query,
+						repoId.getIdAsString(),
+						branch.getName(),
+						repoId.getIdAsString(),
+						rootHash.getHash(),
+						repoId.getIdAsString(),
+						repoId.getIdAsString()
+					)
+					.get(0, String.class);
+				return Optional.of(new CommitHash(hash));
+			} catch (NoDataFoundException | TooManyRowsException e) {
+				return Optional.empty();
+			}
 		}
 	}
 

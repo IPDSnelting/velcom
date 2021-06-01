@@ -1,8 +1,8 @@
 package de.aaaaaaah.velcom.backend.listener;
 
-import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toSet;
 
+import de.aaaaaaah.velcom.backend.access.committaccess.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.access.committaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.repoaccess.RepoWriteAccess;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.Repo;
@@ -10,7 +10,8 @@ import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.taskaccess.entities.TaskPriority;
 import de.aaaaaaah.velcom.backend.data.benchrepo.BenchRepo;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
-import de.aaaaaaah.velcom.backend.listener.dbupdate.DbUpdater;
+import de.aaaaaaah.velcom.backend.listener.commits.DbUpdater;
+import de.aaaaaaah.velcom.backend.listener.github.GithubPrInteractor;
 import de.aaaaaaah.velcom.backend.storage.db.DBWriteAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import de.aaaaaaah.velcom.backend.storage.repo.GuickCloning;
@@ -20,11 +21,12 @@ import de.aaaaaaah.velcom.backend.storage.repo.exception.NoSuchRepositoryExcepti
 import de.aaaaaaah.velcom.backend.storage.repo.exception.RepositoryAcquisitionException;
 import io.micrometer.core.annotation.Timed;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -48,12 +50,15 @@ public class Listener {
 	private final DatabaseStorage databaseStorage;
 	private final RepoStorage repoStorage;
 
+	private final CommitReadAccess commitAccess;
 	private final RepoWriteAccess repoAccess;
 	private final BenchRepo benchRepo;
 	private final Queue queue;
 
 	private final Duration vacuumInterval;
 	private Instant lastVacuum;
+
+	private final String frontendUrl;
 
 	// An explicit reference to the executor is kept to ensure it will never accidentally be garbage
 	// collected. This might not be strictly necessary, but it doesn't hurt either.
@@ -71,18 +76,21 @@ public class Listener {
 	 * @param pollInterval the time the listener waits between updating its repos
 	 */
 	public Listener(DatabaseStorage databaseStorage, RepoStorage repoStorage,
-		RepoWriteAccess repoAccess, BenchRepo benchRepo, Queue queue, Duration pollInterval,
-		Duration vacuumInterval) {
+		CommitReadAccess commitAccess, RepoWriteAccess repoAccess, BenchRepo benchRepo, Queue queue,
+		Duration pollInterval, Duration vacuumInterval, String frontendUrl) {
 
 		this.databaseStorage = databaseStorage;
 		this.repoStorage = repoStorage;
 
+		this.commitAccess = commitAccess;
 		this.repoAccess = repoAccess;
 		this.benchRepo = benchRepo;
 		this.queue = queue;
 
 		this.vacuumInterval = vacuumInterval;
 		this.lastVacuum = Instant.now();
+
+		this.frontendUrl = frontendUrl;
 
 		executor = Executors.newSingleThreadScheduledExecutor();
 		executor.scheduleWithFixedDelay(
@@ -109,97 +117,110 @@ public class Listener {
 	 */
 	@Timed(histogram = true)
 	public synchronized void updateAllRepos() {
-		LOGGER.info("Updating repos");
+		LOGGER.info("Updating all repos");
 
-		// Update the bench repo
-		LOGGER.debug("Updating bench repo");
-		try {
-			boolean success = updateRepoVia(
-				"benchrepo",
-				benchRepo.getDirName(),
-				benchRepo.getRemoteUrl(),
-				repository -> {
-					// No need to do anything here
-				}
-			);
+		tryToSynchronizeCommitsForBenchRepo();
 
-			if (!success) {
-				LOGGER.warn("Failed to fetch updates from benchmark repo");
-			}
-		} catch (Exception e) {
-			LOGGER.warn("Failed to fetch updates from benchmark repo", e);
-		}
+		List<Repo> currentRepos = repoAccess.getAllRepos();
+		tryToDeleteLocalReposExcept(currentRepos);
 
-		List<Repo> allRepos = repoAccess.getAllRepos();
-
-		// Remove all repos that don't exist any more
-		LOGGER.debug("Deleting old repos");
-		try {
-			deleteOldRepos(allRepos);
-		} catch (IOException e) {
-			LOGGER.warn("Failed to delete old locally cloned repositories", e);
-		}
-
-		// Update all existing repos
-		LOGGER.debug("Updating existing repos");
-		for (Repo repo : allRepos) {
-			try {
-				if (!updateRepo(repo)) {
-					LOGGER.warn("Failed to update repo {}", repo.getId());
-				}
-			} catch (Exception e) {
-				LOGGER.warn("Failed to update repo {}", repo.getId(), e);
-			}
+		for (Repo repo : currentRepos) {
+			tryToUpdateRepo(repo);
 		}
 	}
 
-	/**
-	 * Delete all repos that should not exist any more because they've been removed from the
-	 * database.
-	 *
-	 * @param allRepos the list of repos to keep
-	 * @throws IOException if listing or deleting repos goes wrong somewhere
-	 */
-	@Timed(histogram = true)
-	private void deleteOldRepos(List<Repo> allRepos) throws IOException {
+	private void tryToSynchronizeCommitsForBenchRepo() {
+		try {
+			LOGGER.debug("Synchronizing bench repo");
+			synchronizeCommitsForBenchRepo();
+		} catch (Exception e) {
+			LOGGER.warn("Failed to synchronize bench repo", e);
+		}
+	}
+
+	private void synchronizeCommitsForBenchRepo() throws SynchronizeCommitsException {
+		genericSynchronizeCommits(
+			"benchrepo",
+			benchRepo.getDirName(),
+			benchRepo.getRemoteUrl(),
+			jgitRepo -> {/* The bench repo commits are not stored in the db. */}
+		);
+	}
+
+	private void tryToDeleteLocalReposExcept(List<Repo> reposToKeep) {
+		try {
+			LOGGER.debug("Cleaning up old repos");
+			deleteLocalReposExcept(reposToKeep);
+		} catch (IOException e) {
+			LOGGER.warn("Failed to clean up old repos", e);
+		}
+	}
+
+	private void deleteLocalReposExcept(List<Repo> reposToKeep) throws IOException {
 		Set<String> reposThatShouldExist = Stream.concat(
 			Stream.of(benchRepo.getDirName()),
-			allRepos.stream()
+			reposToKeep.stream()
 				.map(Repo::getId)
 				.map(RepoId::getDirectoryName)
 		).collect(toSet());
 
-		HashSet<String> localRepos = repoStorage.getRepoDirectories().stream()
+		Set<String> reposThatShouldNotExist = repoStorage.getRepoDirectories().stream()
 			.map(Path::getFileName)
 			.map(Path::toString)
-			.collect(toCollection(HashSet::new));
+			.filter(name -> !reposThatShouldExist.contains(name))
+			.collect(toSet());
 
-		localRepos.removeAll(reposThatShouldExist);
-		// Now only the local repos that shouldn't exist remain.
-
-		for (String repoName : localRepos) {
+		for (String repoName : reposThatShouldNotExist) {
 			LOGGER.info("Deleting old repo {}", repoName);
 			repoStorage.deleteRepository(repoName);
 		}
 	}
 
+	private void tryToUpdateRepo(Repo repo) {
+		try {
+			LOGGER.debug("Updating repo {}", repo.getId());
+			updateRepo(repo);
+		} catch (Exception e) {
+			LOGGER.warn("Failed to update repo {}", repo.getId(), e);
+		}
+	}
+
+	private void updateRepo(Repo repo)
+		throws SynchronizeCommitsException, IOException, InterruptedException, URISyntaxException {
+
+		Optional<GithubPrInteractor> ghIntOpt = GithubPrInteractor
+			.fromRepo(repo, databaseStorage, commitAccess, queue, frontendUrl);
+
+		if (ghIntOpt.isPresent()) {
+			GithubPrInteractor ghInteractor = ghIntOpt.get();
+
+			ghInteractor.searchForNewPrCommands();
+
+			synchronizeCommitsForRepo(repo);
+
+			ghInteractor.markNewPrCommandsAsSeen();
+			ghInteractor.addNewPrCommandsToQueue();
+			ghInteractor.replyToFinishedPrCommands();
+			ghInteractor.replyToErroredPrCommands();
+		} else {
+			synchronizeCommitsForRepo(repo);
+		}
+	}
+
 	/**
-	 * Pull a repo (or clone it if it doesn't exist yet), read its contents and update the database.
+	 * Fetch latest commits for repo, store them in the database and add them to the queue if
+	 * necessary.
 	 *
-	 * <p> This function is threadsafe and can be called at any time, for example from the API when a
-	 * new repo is being added.
-	 *
-	 * @param repo the repository to update
-	 * @return Returns true if the repo was fetched or cloned successfully. Returns false if the
-	 * 	remote could not be reached or fetched/cloned from.
+	 * @throws SynchronizeCommitsException if any of these steps didn't work. This might be because
+	 * 	the remote url is invalid or inaccessible.
 	 */
 	@Timed(histogram = true)
-	public boolean updateRepo(Repo repo) {
-		return updateRepoVia(
+	public void synchronizeCommitsForRepo(Repo repo) throws SynchronizeCommitsException {
+		genericSynchronizeCommits(
 			repo.getName() + " (" + repo.getIdAsString() + ")",
 			repo.getId().getDirectoryName(),
 			repo.getRemoteUrlAsString(),
-			jgitRepo -> updateDbFromJgitRepo(repo, jgitRepo)
+			jgitRepo -> updateCommitsInDb(repo, jgitRepo)
 		);
 	}
 
@@ -213,12 +234,17 @@ public class Listener {
 	 * 	remote url doesn't match this target remote url.
 	 * @param jgitRepoAction this function will be called on the jgit {@link Repository} if cloning
 	 * 	or recloning was successful
-	 * @return true if the repo was successfully updated, false otherwise
+	 * @throws SynchronizeCommitsException if the commits in the db could not be updated
+	 * 	successfully. This may be because the remote url is invalid or inaccessible.
 	 */
-	private synchronized boolean updateRepoVia(String repoName, String repoDirName,
-		String targetRemoteUrl, Consumer<Repository> jgitRepoAction) {
+	private synchronized void genericSynchronizeCommits(
+		String repoName,
+		String repoDirName,
+		String targetRemoteUrl,
+		Consumer<Repository> jgitRepoAction
+	) throws SynchronizeCommitsException {
 
-		LOGGER.debug("Updating repo {}", repoName);
+		LOGGER.debug("Synchronizing commits for repo {}", repoName);
 
 		boolean reclone = false;
 
@@ -269,17 +295,14 @@ public class Listener {
 			} catch (Exception e) {
 				LOGGER.warn("Recloning repo {} has failed, possibly because remote url is invalid",
 					repoName, e);
-				return false;
+				throw new SynchronizeCommitsException();
 			}
 		}
-
-		return true;
 	}
 
-	private void updateDbFromJgitRepo(Repo repo, Repository jgitRepo) {
+	private void updateCommitsInDb(Repo repo, Repository jgitRepo) {
 		List<CommitHash> toBeQueued = databaseStorage.acquireWriteTransaction(db -> {
-			DbUpdater dbUpdater = new DbUpdater(repo, jgitRepo, db);
-			return dbUpdater.update();
+			return new DbUpdater(repo, jgitRepo, db).update();
 		});
 
 		if (toBeQueued.isEmpty()) {
@@ -305,6 +328,10 @@ public class Listener {
 		}
 	}
 
+	/**
+	 * Run the VACUUM command. Compared to ANALYZE, this one may take a while and copy data around, so
+	 * it is only ran occasionally.
+	 */
 	@Timed(histogram = true)
 	private void vacuumIfNecessary() {
 		Instant now = Instant.now();

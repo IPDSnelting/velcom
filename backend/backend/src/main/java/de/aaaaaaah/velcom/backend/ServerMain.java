@@ -163,8 +163,17 @@ public class ServerMain extends Application<GlobalConfig> {
 			runComparator);
 
 		// Listener
-		Listener listener = new Listener(databaseStorage, repoStorage, repoAccess, benchRepo, queue,
-			configuration.getPollInterval(), configuration.getVacuumInterval());
+		Listener listener = new Listener(
+			databaseStorage,
+			repoStorage,
+			commitAccess,
+			repoAccess,
+			benchRepo,
+			queue,
+			configuration.getPollInterval(),
+			configuration.getVacuumInterval(),
+			configuration.getFrontendUrl()
+		);
 
 		// Dispatcher
 		Dispatcher dispatcher = new Dispatcher(

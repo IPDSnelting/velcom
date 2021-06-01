@@ -1,6 +1,8 @@
 package de.aaaaaaah.velcom.backend.access.repoaccess;
 
+import static java.util.stream.Collectors.toList;
 import static org.jooq.codegen.db.tables.Branch.BRANCH;
+import static org.jooq.codegen.db.tables.GithubCommand.GITHUB_COMMAND;
 import static org.jooq.codegen.db.tables.Repo.REPO;
 
 import de.aaaaaaah.velcom.backend.access.committaccess.entities.CommitHash;
@@ -10,10 +12,11 @@ import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RemoteUrl;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.Repo;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.repoaccess.exceptions.NoSuchRepoException;
+import de.aaaaaaah.velcom.backend.listener.github.GithubCommand;
+import de.aaaaaaah.velcom.backend.listener.github.GithubCommandState;
 import de.aaaaaaah.velcom.backend.storage.db.DBReadAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import java.util.List;
-import java.util.stream.Collectors;
 import org.jooq.codegen.db.tables.records.BranchRecord;
 import org.jooq.codegen.db.tables.records.RepoRecord;
 import org.jooq.exception.DataAccessException;
@@ -33,7 +36,9 @@ public class RepoReadAccess {
 		return new Repo(
 			RepoId.fromString(record.getId()),
 			record.getName(),
-			new RemoteUrl(record.getRemoteUrl())
+			new RemoteUrl(record.getRemoteUrl()),
+			record.getGithubAuthToken(),
+			record.getGithubCommentCutoff()
 		);
 	}
 
@@ -51,7 +56,7 @@ public class RepoReadAccess {
 			return db.dsl()
 				.fetch(REPO).stream()
 				.map(RepoReadAccess::repoRecordToRepo)
-				.collect(Collectors.toList());
+				.collect(toList());
 		}
 	}
 
@@ -89,7 +94,29 @@ public class RepoReadAccess {
 				)
 				.stream()
 				.map(RepoReadAccess::branchRecordToBranch)
-				.collect(Collectors.toList());
+				.collect(toList());
 		}
+	}
+
+	/**
+	 * Retrieve all of a repo's github commands.
+	 */
+	public List<GithubCommand> getCommands(RepoId repoId) {
+		return databaseStorage.acquireReadTransaction(db -> {
+			return db.dsl()
+				.selectFrom(GITHUB_COMMAND)
+				.where(GITHUB_COMMAND.REPO_ID.eq(repoId.getIdAsString()))
+				.stream()
+				.map(record -> new GithubCommand(
+					RepoId.fromString(record.getRepoId()),
+					record.getPr(),
+					BranchName.fromName(record.getTargetBranch()),
+					record.getComment(),
+					new CommitHash(record.getCommitHash()),
+					GithubCommandState.fromTextualRepresentation(record.getState()),
+					record.getTriesLeft()
+				))
+				.collect(toList());
+		});
 	}
 }

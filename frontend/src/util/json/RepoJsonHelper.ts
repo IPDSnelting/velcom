@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
-import { RepoBranch, Repo, Dimension } from '@/store/types'
+import { RepoBranch, Repo, Dimension, GithubBotCommand } from '@/store/types'
 
 /**
  * Parses a repo json to a Repo object.
@@ -9,12 +9,17 @@ import { RepoBranch, Repo, Dimension } from '@/store/types'
  * @returns {Repo} the repo object
  */
 export function repoFromJson(json: any): Repo {
+  let lastGithubUpdate: Date | undefined
+  if (json.last_github_update !== undefined) {
+    lastGithubUpdate = new Date(json.last_github_update * 1000)
+  }
   return new Repo(
     json.id,
     json.name,
     json.branches.map(repoBranchFromJson),
     json.dimensions.map((it: any) => dimensionFromJson(it)),
-    json.remote_url
+    json.remote_url,
+    lastGithubUpdate
   )
 }
 
@@ -29,4 +34,8 @@ export function dimensionFromJson(json: any): Dimension {
     json.unit,
     json.interpretation
   )
+}
+
+export function githubCommandFromJson(json: any): GithubBotCommand {
+  return new GithubBotCommand(json.status, json.comment_id, json.pr_number)
 }

@@ -67,7 +67,7 @@ public class RunnerAwareServerFactory implements ServerFactory {
 
 		server.setHandler(new RoutingHandler(handlerMap));
 
-		LOGGER.info("Registered the websocket servlet");
+		LOGGER.debug("Registered the websocket servlet");
 
 		return server;
 	}

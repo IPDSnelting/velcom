@@ -19,7 +19,8 @@ class JsonRepoTest extends SerializingTest {
 				new JsonBranch("untracked", false, "bar"),
 				new JsonBranch("branches", false, "baz")
 			),
-			List.of(new JsonDimension("b", "m", "u", Interpretation.NEUTRAL))
+			List.of(new JsonDimension("b", "m", "u", Interpretation.NEUTRAL)),
+			1596881630L
 		);
 		String json = "{"
 			+ "\"id\": \"24dd4fd3-5c6d-4542-a7a4-b181f37295a6\","
@@ -35,7 +36,8 @@ class JsonRepoTest extends SerializingTest {
 			+ "  \"metric\": \"m\","
 			+ "  \"unit\": \"u\","
 			+ "  \"interpretation\": \"NEUTRAL\""
-			+ "}]"
+			+ "}],"
+			+ "\"last_github_update\": 1596881630"
 			+ "}";
 		serializedEquals(object, json);
 	}

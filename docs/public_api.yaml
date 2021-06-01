@@ -368,8 +368,29 @@ paths:
                 properties:
                   repo:
                     $ref: '#/components/schemas/Repo'
+                  github_commands:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        pr_number:
+                          type: integer
+                        comment_id:
+                          type: integer
+                        status:
+                          type: string
+                          enum:
+                            - NEW
+                            - MARKED_SEEN
+                            - QUEUED
+                            - ERROR
+                      required:
+                        - pr_number
+                        - comment_id
+                        - status
                 required:
                   - repo
+                  - github_commands
         '404':
           description: Not Found
       operationId: get-repo-repoid
@@ -417,6 +438,9 @@ paths:
                   items:
                     type: string
                     minLength: 1
+                github_token:
+                  type: string
+                  description: Set a GitHub auth token to enable GitHub bot functionality. Set this to the empty string to delete the token and disable GitHub bot functionality.
       tags:
         - repo
       description: Modify some parts of an existing repo.
@@ -1318,6 +1342,8 @@ components:
           description: All types of measurements where at least one value exists for this repo
           items:
             $ref: '#/components/schemas/Dimension'
+        last_github_update:
+          $ref: '#/components/schemas/Time'
       required:
         - id
         - name

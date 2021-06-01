@@ -24,7 +24,7 @@ export default class InlineMinimalRepoNameDisplay extends Vue {
   private get repo() {
     return (
       vxm.repoModule.repoById(this.repoId) ||
-      new Repo('Placeholder', 'Not loaded yet :/', [], [], '')
+      new Repo('Placeholder', 'Not loaded yet :/', [], [], '', undefined)
     )
   }
 }

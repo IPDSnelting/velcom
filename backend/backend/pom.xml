@@ -261,7 +261,6 @@
       <scope>provided</scope>
     </dependency>
 
-
     <!--NEEDED FOR DROPWIZARD (NO LONGER INCLUDED IN THE JDK)-->
     <dependency>
       <artifactId>jakarta.xml.bind-api</artifactId>

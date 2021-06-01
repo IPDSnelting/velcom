@@ -2,13 +2,33 @@
   <v-card>
     <v-card-title>
       <v-toolbar color="toolbarColor" dark>
-        {{ repo.name }}
-        <span class="ml-5 subtitle-1">{{ repo.id }}</span>
-        <v-spacer></v-spacer>
-        <v-btn text :to="{ name: 'search', query: { repoId: repo.id } }">
-          Search and Compare Runs
-          <v-icon right size="22">{{ searchAndCompareIcon }}</v-icon>
-        </v-btn>
+        <div
+          :class="
+            $vuetify.breakpoint.xs
+              ? ['d-flex', 'flex-wrap', 'justify-center', 'align-center']
+              : ['justify-space-between', 'd-flex', 'align-center']
+          "
+          style="width: 100%"
+        >
+          <span>{{ repo.name }}</span>
+          <span
+            style="flex: 0 0 100%"
+            class="my-1"
+            v-if="$vuetify.breakpoint.xs"
+          ></span>
+          <span class="ml-5 subtitle-1" style="margin-right: auto">
+            {{ repo.id }}
+          </span>
+          <span
+            style="flex: 0 0 100%"
+            class="my-1"
+            v-if="$vuetify.breakpoint.xs"
+          ></span>
+          <v-btn text :to="{ name: 'search', query: { repoId: repo.id } }">
+            Search and Compare Runs
+            <v-icon right size="22">{{ searchAndCompareIcon }}</v-icon>
+          </v-btn>
+        </div>
       </v-toolbar>
     </v-card-title>
     <v-card-text>
@@ -26,7 +46,11 @@
         <v-row align="center">
           <v-col cols="3" class="subtitle-2">Branches:</v-col>
           <v-col cols="9">
-            <v-tooltip top v-for="(branch, index) in branches" :key="branch.name">
+            <v-tooltip
+              top
+              v-for="(branch, index) in branches"
+              :key="branch.name"
+            >
               <template v-slot:activator="{ on }">
                 <v-chip
                   :class="{
@@ -44,23 +68,52 @@
             </v-tooltip>
           </v-col>
         </v-row>
+        <v-row v-if="hasActiveBot || isAdmin">
+          <v-col cols="3" class="subtitle-2">Github Bot</v-col>
+          <v-col cols="9">
+            <github-bot-command-chips
+              :prs="githubCommands"
+              v-if="hasActiveBot"
+            ></github-bot-command-chips>
+            <span v-if="hasActiveBot && githubCommands.length === 0">
+              No commands found yet
+            </span>
+            <div v-if="!hasActiveBot && isAdmin">
+              No Github bot set up. You can do that by following these steps:
+              <ol class="mt-1">
+                <li>
+                  On GitHub, go to Settings > Developer settings > Personal
+                  access tokens
+                </li>
+                <li>
+                  Generate a new token with the "public_repo" scope (or the
+                  "repo" scope if you want to use it on a private repository)
+                </li>
+                <li>
+                  Use the "Update" button to add the access token to the repo.
+                </li>
+              </ol>
+            </div>
+          </v-col>
+        </v-row>
       </v-container>
     </v-card-text>
     <v-card-actions v-if="isAdmin">
       <v-spacer></v-spacer>
-      <repo-update :repoId="repo.id">
+      <repo-update-dialog :repoId="repo.id">
         <template #activator="{ on }">
           <v-btn v-on="on" color="primary">update</v-btn>
         </template>
-      </repo-update>
+      </repo-update-dialog>
       <v-btn
         color="error"
         class="mr-5 ml-3"
         outlined
         text
         @click="deleteRepository"
-        >Delete Repository</v-btn
       >
+        Delete Repository
+      </v-btn>
     </v-card-actions>
   </v-card>
 </template>
@@ -69,17 +122,21 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
-import { Repo, RepoBranch } from '@/store/types'
+import { GithubBotCommand, Repo, RepoBranch } from '@/store/types'
 import { vxm } from '@/store'
 import RepoUpdateDialog from '@/components/repodetail/RepoUpdateDialog.vue'
 import { mdiCompassOutline } from '@mdi/js'
+import GithubBotCommandChips from '@/components/repodetail/GithubBotCommandChips.vue'
 
 @Component({
   components: {
-    'repo-update': RepoUpdateDialog
+    GithubBotCommandChips,
+    RepoUpdateDialog
   }
 })
 export default class RepoBaseInformation extends Vue {
+  private githubCommands: GithubBotCommand[] = []
+
   @Prop()
   private repo!: Repo
 
@@ -97,6 +154,10 @@ export default class RepoBaseInformation extends Vue {
     return vxm.userModule.isAdmin
   }
 
+  private get hasActiveBot() {
+    return this.repo.lastGithubUpdate !== undefined
+  }
+
   private async deleteRepository() {
     const confirmed = window.confirm(
       `Do you really want to delete ${this.repo.name} (${this.repo.id})?`
@@ -107,6 +168,14 @@ export default class RepoBaseInformation extends Vue {
     await vxm.repoModule.deleteRepo(this.repo.id)
     vxm.detailGraphModule.selectedRepoId = ''
     await this.$router.replace({ name: 'repo-detail', params: { id: '' } })
+  }
+
+  private async mounted() {
+    if (this.hasActiveBot) {
+      this.githubCommands = await vxm.repoModule.fetchGithubCommands(
+        this.repo.id
+      )
+    }
   }
 
   private comparatorTrackStatus(branchA: RepoBranch, branchB: RepoBranch) {
