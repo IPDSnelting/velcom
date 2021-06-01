@@ -112,6 +112,7 @@ class DatapointDimensionError {
     dimension: DimensionId,
     repoId: RepoId,
     error: string,
+    errorType: 'NO_RUN' | 'MEASUREMENT_FAILED' | 'RUN_FAILED',
     dummyValue: number,
     themeColor: (name: string) => string
   ) {
@@ -119,15 +120,24 @@ class DatapointDimensionError {
     this.repoId = repoId
     this.error = error
     this.value = [dimensionIdToString(dimension), dummyValue]
+
+    let labelText
+    if (errorType === 'NO_RUN') {
+      labelText = 'No run'
+    } else if (errorType === 'RUN_FAILED') {
+      labelText = 'Run failed'
+    } else {
+      labelText = 'Dimension failed'
+    }
     this.label = {
       show: true,
-      name: error,
-      formatter: 'Failed',
+      formatter: labelText,
       rotate: 90,
       fontWeight: 'bold',
       overflow: 'truncate',
       lineOverflow: 'truncate'
     }
+
     this.itemStyle = {
       borderType: 'dashed',
       borderColor: themeColor('warning'),
@@ -207,6 +217,7 @@ export default class StatusComparisonGraph extends Vue {
           measurement.dimension,
           repoId,
           measurement.error,
+          'MEASUREMENT_FAILED',
           this.maxDatapointValue,
           this.themeColor
         )
@@ -301,7 +312,8 @@ export default class StatusComparisonGraph extends Vue {
       if (!Object.hasOwnProperty.call(datapoint, 'error')) {
         value = this.numberFormat.format(datapoint.value[1])
       } else {
-        value = 'Failed: ' + escapeHtml(datapoint.error.substring(0, 40))
+        const error = (datapoint as any).error
+        value = escapeHtml(error.substring(0, 40))
       }
       return `
                 <tr>
@@ -329,9 +341,20 @@ export default class StatusComparisonGraph extends Vue {
   }
 
   private generateSeries(repoId: RepoId): BarSeriesOption {
-    const data = this.processedDataPoints.get(repoId)
+    let data = this.processedDataPoints.get(repoId)
+
     if (data instanceof DatapointRepoError) {
-      return {}
+      const error = data.error
+      data = vxm.statusComparisonModule.selectedDimensions.map(dimension => {
+        return new DatapointDimensionError(
+          dimension,
+          repoId,
+          error,
+          'RUN_FAILED',
+          this.maxDatapointValue,
+          this.themeColor
+        )
+      })
     }
     return {
       type: 'bar',

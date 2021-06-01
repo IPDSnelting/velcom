@@ -1,5 +1,5 @@
 import { action, createModule } from 'vuex-class-component'
-import { StatusComparisonPoint } from '@/store/types'
+import { Dimension, StatusComparisonPoint } from '@/store/types'
 import axios from 'axios'
 import { statusComparisonPointFromJson } from '@/util/json/StatusComparisonJsonHelper'
 
@@ -12,6 +12,12 @@ export class StatusComparisonStore extends VxModule {
   graph: StatusComparisonPoint[] = []
 
   baselineRepoId: string | null = null
+
+  selectedDimensions: Dimension[] = [
+    new Dimension('bench', 'this', 'cats', 'LESS_IS_BETTER'),
+    new Dimension('foo', 'this', 'cats', 'LESS_IS_BETTER'),
+    new Dimension('bench', 'this too', 'cats', 'LESS_IS_BETTER')
+  ]
 
   @action
   async fetch(): Promise<StatusComparisonPoint[]> {
