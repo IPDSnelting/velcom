@@ -53,6 +53,7 @@ import {
 import EChartsComp from 'vue-echarts'
 import { Prop, Watch } from 'vue-property-decorator'
 import { vxm } from '@/store'
+import { escapeHtml } from '@/util/Texts'
 
 use([
   BarChart,
@@ -104,16 +105,35 @@ class DatapointDimensionError {
    */
   readonly value: [string, number]
 
+  readonly itemStyle: any
+  readonly label: any
+
   constructor(
     dimension: DimensionId,
     repoId: RepoId,
     error: string,
-    dummyValue: number
+    dummyValue: number,
+    themeColor: (name: string) => string
   ) {
     this.dimension = dimension
     this.repoId = repoId
     this.error = error
     this.value = [dimensionIdToString(dimension), dummyValue]
+    this.label = {
+      show: true,
+      name: error,
+      formatter: 'Failed',
+      rotate: 90,
+      fontWeight: 'bold',
+      overflow: 'truncate',
+      lineOverflow: 'truncate'
+    }
+    this.itemStyle = {
+      borderType: 'dashed',
+      borderColor: themeColor('warning'),
+      borderWidth: 2,
+      opacity: 0.6
+    }
   }
 }
 class DatapointRepoError {
@@ -187,7 +207,8 @@ export default class StatusComparisonGraph extends Vue {
           measurement.dimension,
           repoId,
           measurement.error,
-          this.maxDatapointValue
+          this.maxDatapointValue,
+          this.themeColor
         )
       }
       return new DatapointValue(
@@ -217,7 +238,8 @@ export default class StatusComparisonGraph extends Vue {
         trigger: 'axis',
         axisPointer: {
           type: 'shadow'
-        }
+        },
+        formatter: this.tooltipFormatter
       },
       toolbox: {
         left: 'center',
@@ -261,10 +283,49 @@ export default class StatusComparisonGraph extends Vue {
       aria: {
         enabled: true,
         decal: {
-          show: true
+          show: false
         }
       }
     }
+  }
+
+  // The correct type is not exposed sadly
+  private tooltipFormatter(params: any) {
+    const values = Array.isArray(params) ? params.slice() : [params]
+    // Sort them so the order corresponds to the order of the lines
+    const seriesRows = values.map(val => {
+      const color = val.color
+      const datapoint = val.data as Datapoint
+      const safeDisplayName = escapeHtml(datapoint.repoId)
+      let value: string
+      if (!Object.hasOwnProperty.call(datapoint, 'error')) {
+        value = this.numberFormat.format(datapoint.value[1])
+      } else {
+        value = 'Failed: ' + escapeHtml(datapoint.error.substring(0, 40))
+      }
+      return `
+                <tr>
+                  <td>
+                    <span class="color-preview" style="background-color: ${color}"></span>
+                    ${safeDisplayName}
+                  </td>
+                  <td>${value}</td>
+                </tr>
+                `
+    })
+    const samplePoint = values[0].data as Datapoint
+
+    if (!samplePoint) {
+      return 'No point found :/'
+    }
+
+    const dimension = dimensionIdToString(samplePoint.dimension)
+    return `
+            ${escapeHtml(dimension)}
+           <table class="echarts-tooltip-table">
+             ${seriesRows.join('\n')}
+           </table>
+            `
   }
 
   private generateSeries(repoId: RepoId): BarSeriesOption {
@@ -295,6 +356,13 @@ export default class StatusComparisonGraph extends Vue {
 
   private mounted() {
     this.init()
+  }
+
+  private get numberFormat(): Intl.NumberFormat {
+    return new Intl.NumberFormat(
+      new Intl.NumberFormat().resolvedOptions().locale,
+      { maximumFractionDigits: 3 }
+    )
   }
 
   private get chartTheme() {
@@ -368,5 +436,28 @@ export default class StatusComparisonGraph extends Vue {
 .echarts {
   width: 100%;
   height: 100%;
+}
+.echarts-tooltip-table tr td {
+  padding: 2px;
+}
+
+.echarts-tooltip-table tr td:nth-child(2) {
+  font-family: monospace;
+}
+.echarts-tooltip-table tr td:first-child {
+  padding-right: 10px;
+}
+.echarts-tooltip-table tr td:only-child {
+  font-weight: bold;
+  padding-top: 1em;
+  font-size: 1.1em;
+}
+
+/*noinspection CssUnusedSymbol*/
+.echarts-tooltip-table .color-preview {
+  width: 10px;
+  height: 10px;
+  border-radius: 25%;
+  display: inline-block;
 }
 </style>
