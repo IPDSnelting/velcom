@@ -1066,6 +1066,53 @@ paths:
           description: Not Found
       operationId: get-commit-repoid-hash-short
       description: ''
+  /graph/status-comparison:
+    get:
+      summary: repo status comparison graph
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  runs:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        repo_id:
+                          $ref: '#/components/schemas/RepoId'
+                        commit_hash:
+                          $ref: '#/components/schemas/CommitHash'
+                        run:
+                          $ref: '#/components/schemas/Run'
+                      required:
+                        - repo_id
+                        - commit_hash
+                required:
+                  - runs
+      operationId: get-graph-status-comparison
+      description: |-
+        The `repos` query parameter consists of multiple sections separated by double colons (`::`).
+        Each section contains a repo id and a list of branch names, separated by a single colon (`:`).
+
+        For example, to select the repo `123e4567-e89b-12d3-a456-426614174000` with branches `master` and `foo/bar`, as well as the repo `00112233-4455-6677-8899-aabbccddeeff` with branches `master` and `develop`, use this string as your `repos` query parameter:
+        ```
+        123e4567-e89b-12d3-a456-426614174000:master:foo/bar::00112233-4455-6677-8899-aabbccddeeff:master:develop
+        ```
+
+        See also `man git-check-ref-format`.
+      parameters:
+        - schema:
+            type: string
+            example: '123e4567-e89b-12d3-a456-426614174000:master:foo/bar::00112233-4455-6677-8899-aabbccddeeff:master:develop'
+          in: query
+          description: The repositories and corresponding branches that should be compared
+          name: repos
+          required: true
 components:
   schemas:
     CommitHash:
