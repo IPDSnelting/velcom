@@ -81,7 +81,7 @@ type RepoValue = SeriesEntry[]
     'v-chart': EChartsComp
   }
 })
-export default class DimensionComparisonGraph extends Vue {
+export default class StatusComparisonGraph extends Vue {
   private chartOptions: ECOption = {}
 
   @Prop()
@@ -127,6 +127,7 @@ export default class DimensionComparisonGraph extends Vue {
 
   @Watch('datapoints')
   @Watch('baselinePoint')
+  @Watch('chartTheme')
   private init() {
     this.chartOptions = {
       darkMode: vxm.userModule.darkThemeSelected,

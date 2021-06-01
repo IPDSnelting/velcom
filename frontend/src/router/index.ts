@@ -17,7 +17,7 @@ import {
 import { vxm } from '@/store'
 import TaskDetailView from '@/views/TaskDetailView.vue'
 import Search from '@/views/Search.vue'
-import DimensionComparison from '@/views/DimensionComparison.vue'
+import StatusComparison from '@/views/StatusComparison.vue'
 
 Vue.use(VueRouter)
 
@@ -77,7 +77,7 @@ const routes: RouteInfo[] = [
   {
     path: '/repo-dimension-comparison',
     name: 'repo-dimension-comparison',
-    component: DimensionComparison,
+    component: StatusComparison,
     meta: {
       label: 'Repo Dimension Comparison',
       navigable: false
