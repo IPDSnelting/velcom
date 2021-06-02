@@ -279,7 +279,7 @@ export default class StatusComparisonGraph extends Vue {
   }
 
   @Watch('datapoints')
-  @Watch('baselinePoint')
+  @Watch('baselineData')
   @Watch('chartTheme')
   @Watch('selectedDimensions')
   private init() {

@@ -6,6 +6,19 @@
         class="overflow-y-auto"
         style="height: calc(100vh - 70px)"
       >
+        <v-card
+          outlined
+          class="mb-2"
+          :class="{ 'warning-outline': baselineRepoId === null }"
+        >
+          <v-card-text>
+            <repo-selection-component
+              :repos="possibleBaselineRepos"
+              label="Baseline repository"
+              v-model="baselineRepoId"
+            ></repo-selection-component>
+          </v-card-text>
+        </v-card>
         <repo-branch-selector
           :selected-branches="selectedBranches"
           @update:toggle-branch="toggleRepoBranch"
@@ -49,15 +62,18 @@ import StatusComparisonGraph from '@/components/graphs/statuscomparison/StatusCo
 import {
   Dimension,
   MeasurementSuccess,
+  RepoId,
   RunResultSuccess,
   StatusComparisonPoint
 } from '@/store/types'
 import { vxm } from '@/store'
 import ExpandableDimensionSelection from '@/components/graphs/helper/ExpandableDimensionSelection.vue'
 import { Watch } from 'vue-property-decorator'
+import RepoSelectionComponent from '@/components/misc/RepoSelectionComponent.vue'
 
 @Component({
   components: {
+    RepoSelectionComponent,
     ExpandableDimensionSelection,
     StatusComparisonGraph,
     RepoBranchSelector
@@ -100,6 +116,31 @@ export default class StatusComparison extends Vue {
     vxm.statusComparisonModule.setSelectedBranchesForRepo(payload)
   }
 
+  private get baselineRepoId() {
+    const baselineId = vxm.statusComparisonModule.baselineRepoId
+
+    if (!baselineId) {
+      return null
+    }
+
+    // Baseline is not selected => Ignore it
+    if (!vxm.statusComparisonModule.selectedBranchesMap.has(baselineId)) {
+      return null
+    }
+
+    return baselineId
+  }
+
+  private set baselineRepoId(id: RepoId | null) {
+    vxm.statusComparisonModule.baselineRepoId = id
+  }
+
+  private get possibleBaselineRepos() {
+    return Array.from(
+      vxm.statusComparisonModule.selectedBranchesMap.keys()
+    ).map(id => vxm.repoModule.repoById(id))
+  }
+
   private get overlayText() {
     if (this.selectedDimensions.length === 0) {
       return 'Please select a dimension on the left'
@@ -111,7 +152,7 @@ export default class StatusComparison extends Vue {
   }
 
   private get baselineErrorMessage() {
-    const baselineRepoId = vxm.statusComparisonModule.baselineRepoId
+    const baselineRepoId = this.baselineRepoId
     if (baselineRepoId === null) {
       return 'Please select a baseline in the top left'
     }
@@ -162,6 +203,9 @@ export default class StatusComparison extends Vue {
 }
 </script>
 
-<style scoped></style>
-
-<style></style>
+<!--suppress CssUnresolvedCustomProperty -->
+<style scoped>
+.warning-outline {
+  border-color: var(--v-warning-base) !important;
+}
+</style>

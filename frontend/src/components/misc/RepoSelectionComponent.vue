@@ -4,11 +4,11 @@
     :items="repos"
     :rules="rules"
     :value="repoId"
+    :label="label"
+    :hide-details="rules.length === 0"
     @input="setRepoId"
     item-text="name"
     item-value="id"
-    label="Repository name"
-    :hide-details="rules.length === 0"
     class="mt-0 pt-0"
   >
     <template v-slot:item="data">
@@ -33,23 +33,26 @@ import { mdiSourceBranch } from '@mdi/js'
 @Component
 export default class RepoSelectionComponent extends Vue {
   @Model('value', { type: String })
-  private repoId!: string
+  private readonly repoId!: string
 
   @Prop({ default: () => [] })
-  private rules!: [(input: string) => string | boolean]
+  private readonly rules!: [(input: string) => string | boolean]
 
   @Prop({ default: () => [] })
-  private repos!: [Repo]
+  private readonly repos!: [Repo]
 
   @Prop({ default: false })
-  private disabled!: boolean
+  private readonly disabled!: boolean
+
+  @Prop({ default: 'Repository name' })
+  private readonly label!: string
 
   private setRepoId(newValue: string) {
     this.$emit('value', newValue)
   }
 
   // ============== ICONS ==============
-  private repoIcon = mdiSourceBranch
+  private readonly repoIcon = mdiSourceBranch
   // ==============       ==============
 }
 </script>
