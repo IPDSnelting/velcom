@@ -81,6 +81,8 @@ type ECOption = ComposeOption<
   | ToolboxComponentOption
 >
 
+type DatapointErrorType = 'NO_RUN' | 'MEASUREMENT_FAILED' | 'RUN_FAILED'
+
 class DatapointValue {
   readonly dimension: DimensionId
   readonly repoId: RepoId
@@ -112,8 +114,9 @@ class DatapointDimensionError {
     dimension: DimensionId,
     repoId: RepoId,
     error: string,
-    errorType: 'NO_RUN' | 'MEASUREMENT_FAILED' | 'RUN_FAILED',
+    errorType: DatapointErrorType,
     dummyValue: number,
+    color: string,
     themeColor: (name: string) => string
   ) {
     this.dimension = dimension
@@ -123,7 +126,7 @@ class DatapointDimensionError {
 
     let labelText
     if (errorType === 'NO_RUN') {
-      labelText = 'No run'
+      labelText = 'Unbenchmarked'
     } else if (errorType === 'RUN_FAILED') {
       labelText = 'Run failed'
     } else {
@@ -137,22 +140,22 @@ class DatapointDimensionError {
       overflow: 'truncate',
       lineOverflow: 'truncate'
     }
-
     this.itemStyle = {
       borderType: 'dashed',
       borderColor: themeColor('warning'),
-      borderWidth: 2,
-      opacity: 0.6
+      borderWidth: 2
     }
   }
 }
 class DatapointRepoError {
   readonly error: string
   readonly repoId: RepoId
+  readonly type: DatapointErrorType
 
-  constructor(error: string, repoId: RepoId) {
+  constructor(error: string, repoId: RepoId, type: DatapointErrorType) {
     this.error = error
     this.repoId = repoId
+    this.type = type
   }
 }
 
@@ -174,7 +177,8 @@ export default class StatusComparisonGraph extends Vue {
 
   private get maxDatapointValue() {
     const values = this.datapoints
-      .map(it => it.run.result)
+      .filter(it => it.run)
+      .map(it => it.run!.result)
       .filter(it => it instanceof RunResultSuccess)
       .flatMap(it => (it as RunResultSuccess).measurements)
       .filter(it => it instanceof MeasurementSuccess)
@@ -195,6 +199,10 @@ export default class StatusComparisonGraph extends Vue {
     const map: Map<string, Datapoint[] | DatapointRepoError> = new Map()
     for (const point of this.datapoints) {
       const id = point.repoId
+      if (!point.run) {
+        map.set(id, new DatapointRepoError('Unbenchmarked', id, 'NO_RUN'))
+        continue
+      }
       const points = this.pointsForRun(point.run, id)
       map.set(id, points)
     }
@@ -206,10 +214,10 @@ export default class StatusComparisonGraph extends Vue {
     repoId: RepoId
   ): DatapointRepoError | Datapoint[] {
     if (run.result instanceof RunResultScriptError) {
-      return new DatapointRepoError(run.result.error, repoId)
+      return new DatapointRepoError(run.result.error, repoId, 'RUN_FAILED')
     }
     if (run.result instanceof RunResultVelcomError) {
-      return new DatapointRepoError(run.result.error, repoId)
+      return new DatapointRepoError(run.result.error, repoId, 'RUN_FAILED')
     }
     return run.result.measurements.map(measurement => {
       if (measurement instanceof MeasurementError) {
@@ -219,6 +227,7 @@ export default class StatusComparisonGraph extends Vue {
           measurement.error,
           'MEASUREMENT_FAILED',
           this.maxDatapointValue,
+          this.repoColor(repoId),
           this.themeColor
         )
       }
@@ -345,13 +354,15 @@ export default class StatusComparisonGraph extends Vue {
 
     if (data instanceof DatapointRepoError) {
       const error = data.error
+      const errorType = data.type
       data = vxm.statusComparisonModule.selectedDimensions.map(dimension => {
         return new DatapointDimensionError(
           dimension,
           repoId,
           error,
-          'RUN_FAILED',
+          errorType,
           this.maxDatapointValue,
+          this.repoColor(repoId),
           this.themeColor
         )
       })
@@ -360,6 +371,7 @@ export default class StatusComparisonGraph extends Vue {
       type: 'bar',
       name: this.repoName(repoId),
       data: data,
+      color: this.repoColor(repoId),
       emphasis: {
         focus: 'series',
         itemStyle: {
@@ -375,6 +387,12 @@ export default class StatusComparisonGraph extends Vue {
       return repo.name
     }
     return id
+  }
+
+  private repoColor(id: RepoId) {
+    return vxm.colorModule.colorByIndex(
+      vxm.repoModule.allRepos.map(it => it.id).indexOf(id)
+    )
   }
 
   private mounted() {

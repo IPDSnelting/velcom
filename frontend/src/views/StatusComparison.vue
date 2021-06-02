@@ -11,15 +11,6 @@
         ></status-comparison-graph>
       </v-col>
     </v-row>
-    <v-row>
-      <v-col cols="3"></v-col>
-      <v-col cols="9">
-        <matrix-dimension-selection
-          :repo-id="rip"
-          :selected-dimensions="[]"
-        ></matrix-dimension-selection>
-      </v-col>
-    </v-row>
   </v-container>
 </template>
 
@@ -27,22 +18,30 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import RepoBranchSelector from '@/components/graphs/comparison/RepoBranchSelector.vue'
-import { vxm } from '@/store'
-import MatrixDimensionSelection from '@/components/graphs/detail/MatrixDimensionSelection.vue'
 import StatusComparisonGraph from '@/components/graphs/statuscomparison/StatusComparisonGraph.vue'
+import {
+  Dimension,
+  MeasurementError,
+  MeasurementSuccess,
+  Run,
+  RunResultScriptError,
+  RunResultSuccess,
+  StatusComparisonPoint,
+  TarTaskSource
+} from '@/store/types'
+import { vxm } from '@/store'
 
 @Component({
   components: {
     StatusComparisonGraph,
-    MatrixDimensionSelection,
     RepoBranchSelector
   }
 })
 export default class StatusComparison extends Vue {
-  private data = []
+  private data: StatusComparisonPoint[] = []
 
-  private get rip() {
-    return vxm.repoModule.allRepos[0].id
+  private async mounted() {
+    this.data = await vxm.statusComparisonModule.fetch()
   }
 }
 </script>

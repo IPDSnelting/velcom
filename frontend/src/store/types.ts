@@ -671,10 +671,10 @@ export class ComparisonDataPoint extends GraphDataPoint {
 
 export class StatusComparisonPoint {
   readonly repoId: RepoId
-  readonly run: Run
+  readonly run?: Run
   readonly commitHash: CommitHash
 
-  constructor(repoId: RepoId, run: Run, commitHash: CommitHash) {
+  constructor(repoId: RepoId, run: Run | undefined, commitHash: CommitHash) {
     this.repoId = repoId
     this.run = run
     this.commitHash = commitHash

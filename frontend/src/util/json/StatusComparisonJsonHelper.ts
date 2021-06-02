@@ -7,7 +7,7 @@ export function statusComparisonPointFromJson(
 ): StatusComparisonPoint {
   return new StatusComparisonPoint(
     json.repo_id,
-    runFromJson(json.run),
+    json.run ? runFromJson(json.run) : undefined,
     json.commit_hash
   )
 }
