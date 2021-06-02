@@ -19,11 +19,23 @@
         ></expandable-dimension-selection>
       </v-col>
       <v-col cols="9" style="height: calc(100vh - 70px)">
-        <status-comparison-graph
-          :datapoints="data"
-          :baseline-point="data[1]"
-          :selected-dimensions="selectedDimensions"
-        ></status-comparison-graph>
+        <v-card style="height: 100%">
+          <v-card-text style="height: 100%" class="py-0 my-0">
+            <status-comparison-graph
+              :datapoints="data"
+              :baseline-data="baselineData"
+              :selected-dimensions="selectedDimensions"
+            ></status-comparison-graph>
+            <v-overlay
+              v-if="overlayText"
+              absolute
+              class="ma-0 pa-0"
+              color="black"
+            >
+              <span class="text-h6">{{ overlayText }}</span>
+            </v-overlay>
+          </v-card-text>
+        </v-card>
       </v-col>
     </v-row>
   </v-container>
@@ -34,7 +46,12 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import RepoBranchSelector from '@/components/graphs/comparison/RepoBranchSelector.vue'
 import StatusComparisonGraph from '@/components/graphs/statuscomparison/StatusComparisonGraph.vue'
-import { Dimension, StatusComparisonPoint } from '@/store/types'
+import {
+  Dimension,
+  MeasurementSuccess,
+  RunResultSuccess,
+  StatusComparisonPoint
+} from '@/store/types'
 import { vxm } from '@/store'
 import ExpandableDimensionSelection from '@/components/graphs/helper/ExpandableDimensionSelection.vue'
 import { Watch } from 'vue-property-decorator'
@@ -81,6 +98,57 @@ export default class StatusComparison extends Vue {
 
   private setRepoBranches(payload: { repoId: string; branches: string[] }) {
     vxm.statusComparisonModule.setSelectedBranchesForRepo(payload)
+  }
+
+  private get overlayText() {
+    if (this.selectedDimensions.length === 0) {
+      return 'Please select a dimension on the left'
+    }
+    if (this.selectedBranches.size === 0) {
+      return 'Please select a repo/branch on the left'
+    }
+    return this.baselineErrorMessage
+  }
+
+  private get baselineErrorMessage() {
+    const baselineRepoId = vxm.statusComparisonModule.baselineRepoId
+    if (baselineRepoId === null) {
+      return 'Please select a baseline in the top left'
+    }
+
+    const baselinePoint = this.data.find(it => it.repoId === baselineRepoId)
+    if (!baselinePoint) {
+      return 'No data found for your selected baseline'
+    }
+
+    const run = baselinePoint.run
+    if (!run) {
+      return 'Baseline has no valid run - Normalization is impossible'
+    }
+
+    if (!(run.result instanceof RunResultSuccess)) {
+      return 'Baseline run failed - Normalization is impossible'
+    }
+
+    const successfulMeasurement = run.result.measurements.find(
+      it => it instanceof MeasurementSuccess
+    )
+    if (!successfulMeasurement) {
+      return 'All metrics for baseline run failed - Normalization is impossible'
+    }
+
+    return null
+  }
+
+  private get baselineData() {
+    if (this.baselineErrorMessage !== null) {
+      return null
+    }
+    const baselineRepoId = vxm.statusComparisonModule.baselineRepoId!
+    const baselinePoint = this.data.find(it => it.repoId === baselineRepoId)!
+    const run = baselinePoint.run!
+    const result = run.result as RunResultSuccess
+    return result.measurements.filter(it => it instanceof MeasurementSuccess)
   }
 
   @Watch('selectedBranches')
