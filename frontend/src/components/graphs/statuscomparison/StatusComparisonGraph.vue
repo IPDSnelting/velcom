@@ -183,7 +183,7 @@ export default class StatusComparisonGraph extends Vue {
   private readonly datapoints!: StatusComparisonPoint[]
 
   @Prop({ default: null })
-  private readonly baselinePoint!: StatusComparisonPoint | null
+  private readonly baselineData!: MeasurementSuccess[] | null
 
   @Prop()
   private readonly selectedDimensions!: Dimension[]
@@ -196,7 +196,11 @@ export default class StatusComparisonGraph extends Vue {
       .flatMap(it => (it as RunResultSuccess).measurements)
       .filter(it => it instanceof MeasurementSuccess)
       .filter(it => this.isSelected(it.dimension))
-      .map(it => (it as MeasurementSuccess).value)
+      .map(it => {
+        const value = (it as MeasurementSuccess).value
+        const baseline = this.baselineFor(it.dimension) || 1
+        return value / baseline
+      })
 
     if (values.length === 0) {
       // Arbitrary placeholder so something is displayed
@@ -227,6 +231,17 @@ export default class StatusComparisonGraph extends Vue {
     return map
   }
 
+  private baselineFor(dimension: Dimension): undefined | number {
+    if (!this.baselineData) {
+      return undefined
+    }
+
+    const measurement = this.baselineData.find(measurement =>
+      dimensionIdEquals(measurement.dimension, dimension)
+    )
+    return measurement?.value
+  }
+
   private pointsForRun(
     run: Run,
     repoId: RepoId
@@ -251,11 +266,15 @@ export default class StatusComparisonGraph extends Vue {
             this.themeColor
           )
         }
-        return new DatapointValue(
-          measurement.dimension,
-          repoId,
-          measurement.value
-        )
+
+        let value = measurement.value
+
+        const baseline = this.baselineFor(measurement.dimension)
+        if (baseline !== undefined && baseline !== 0) {
+          value /= baseline
+        }
+
+        return new DatapointValue(measurement.dimension, repoId, value)
       })
   }
 
