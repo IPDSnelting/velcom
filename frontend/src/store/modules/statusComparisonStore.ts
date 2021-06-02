@@ -129,7 +129,7 @@ export class StatusComparisonStore extends VxModule {
   get permanentLink(): (options?: PermanentLinkOptions) => string {
     return options => {
       const route = router.resolve({
-        name: 'repo-dimension-comparison',
+        name: 'status-comparison',
         query: {
           repos: respectOptions(
             options,

@@ -24,7 +24,7 @@ Vue.use(VueRouter)
 export type RouteName =
   | 'home'
   | 'repo-comparison'
-  | 'repo-dimension-comparison'
+  | 'status-comparison'
   | 'repo-detail'
   | 'queue'
   | 'search'
@@ -75,8 +75,8 @@ const routes: RouteInfo[] = [
     }
   },
   {
-    path: '/repo-dimension-comparison',
-    name: 'repo-dimension-comparison',
+    path: '/status-comparison',
+    name: 'status-comparison',
     component: StatusComparison,
     meta: {
       label: 'Repo Dimension Comparison',
