@@ -6,6 +6,7 @@ import { fromJson, toJson } from '@/util/Serialisation'
 import { RepoStore } from '@/store/modules/repoStore'
 import { DetailGraphStore } from '@/store/modules/detailGraphStore'
 import { ComparisonGraphStore } from '@/store/modules/comparisonGraphStore'
+import { StatusComparisonStore } from '@/store/modules/statusComparisonStore'
 
 const STORAGE_VERSION_KEY = 'VELCOM_STORAGE_VERSION'
 const STORAGE_VERSION_CURRENT = '3'
@@ -75,6 +76,9 @@ export const persistenceSessionStorage = new VuexPersistence<
       ),
       comparisonGraphModule: ComparisonGraphStore.toPlainObject(
         state.comparisonGraphModule
+      ),
+      statusComparisonModule: StatusComparisonStore.toPlainObject(
+        state.statusComparisonModule
       )
     }
 

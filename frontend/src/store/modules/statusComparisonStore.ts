@@ -60,10 +60,6 @@ export class StatusComparisonStore extends VxModule {
     Vue.set(this.selectedBranches, payload.repoId, branches)
   }
 
-  get selectedBranchesForRepo(): (repoId: RepoId) => string[] {
-    return repoId => this.selectedBranches[repoId] || []
-  }
-
   get selectedBranchesMap(): Map<RepoId, string[]> {
     const repos = new Map<RepoId, string[]>()
 
@@ -74,5 +70,19 @@ export class StatusComparisonStore extends VxModule {
     })
 
     return repos
+  }
+
+  /**
+   * Converts a given store to a pure object that can be serialized.
+   *
+   * @param store the store to convert
+   */
+  static toPlainObject(store: StatusComparisonStore): unknown {
+    return {
+      selectedBranches: store.selectedBranches,
+      baselineRepoId: store.baselineRepoId,
+      selectedDimensions: store.selectedDimensions,
+      selectedDimensionSelector: store.selectedDimensionSelector
+    }
   }
 }
