@@ -96,6 +96,7 @@ import { PermanentLinkOptions } from '@/store/modules/detailGraphStore'
   }
 })
 export default class StatusComparison extends Vue {
+  private linkInitializationComplete = false
   private data: StatusComparisonPoint[] = []
 
   private get allDimensions() {
@@ -214,10 +215,16 @@ export default class StatusComparison extends Vue {
 
   @Watch('selectedBranches')
   private async fetchData() {
+    // Prevent fetching the graph twice: Once when adjusting to the link and once when explicitly calling fetchData
+    if (!this.linkInitializationComplete) {
+      return
+    }
     this.data = await vxm.statusComparisonModule.fetch()
   }
 
   private async mounted() {
+    await vxm.statusComparisonModule.adjustToPermanentLink(this.$route)
+    this.linkInitializationComplete = true
     await this.fetchData()
   }
 }
