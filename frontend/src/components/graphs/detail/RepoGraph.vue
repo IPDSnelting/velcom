@@ -60,7 +60,7 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import MatrixDimensionSelection from '@/components/graphs/detail/MatrixDimensionSelection.vue'
-import DimensionSelection from '@/components/graphs/detail/DimensionSelection.vue'
+import TreeDimensionSelection from '@/components/graphs/detail/TreeDimensionSelection.vue'
 import { vxm } from '@/store'
 import OverscrollToZoom from '@/components/graphs/helper/OverscrollToZoom'
 import {
@@ -81,7 +81,7 @@ import { selectGraphVariant } from '@/util/GraphVariantSelection'
   components: {
     GraphDatapointDialog,
     'matrix-dimension-selection': MatrixDimensionSelection,
-    'normal-dimension-selection': DimensionSelection
+    'normal-dimension-selection': TreeDimensionSelection
   }
 })
 export default class RepoGraphs extends Vue {

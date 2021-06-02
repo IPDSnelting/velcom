@@ -46,6 +46,7 @@ import Component from 'vue-class-component'
 import { vxm } from '@/store'
 import { Prop, Watch } from 'vue-property-decorator'
 import { Dimension } from '@/store/types'
+import { distinct, locallySorted } from '@/util/Arrays'
 
 class BenchmarkItem {
   id: string
@@ -72,11 +73,11 @@ class DimensionItem {
 }
 
 @Component
-export default class DimensionSelection extends Vue {
+export default class TreeDimensionSelection extends Vue {
   private search: string = ''
 
   @Prop()
-  private repoId!: string
+  private allDimensions!: Dimension[]
 
   @Prop()
   private selectedDimensions!: Dimension[]
@@ -105,16 +106,11 @@ export default class DimensionSelection extends Vue {
   }
 
   private get benchmarkItems(): BenchmarkItem[] {
-    const repo = vxm.repoModule.repoById(this.repoId)
-    if (!repo) {
-      return []
-    }
-
-    return vxm.repoModule.occuringBenchmarks([this.repoId]).map(
+    return this.allBenchmarks.map(
       benchmark =>
         new BenchmarkItem(
           benchmark,
-          repo.dimensions
+          this.allDimensions
             .filter(dimension => dimension.benchmark === benchmark)
             .map(dimension => new DimensionItem(dimension))
             .sort((a, b) => a.name.localeCompare(b.name))
@@ -159,10 +155,18 @@ export default class DimensionSelection extends Vue {
       this.benchmarkItems.find(a => a.id === it)
     )
 
-    vxm.detailGraphModule.selectedDimensions = dimensions
-      .map(it => this.dimensionItemMap.get(it.toString()))
-      .filter(it => it)
-      .map(it => it!.dimension)
+    this.$emit(
+      'update:selectedDimensions',
+      dimensions
+        .map(it => this.dimensionItemMap.get(it.toString()))
+        .filter(it => it)
+        .map(it => it!.dimension)
+    )
+  }
+
+  private get allBenchmarks(): string[] {
+    const benchmarks = this.allDimensions.map(it => it.benchmark)
+    return locallySorted(distinct(benchmarks))
   }
 }
 </script>

@@ -19,16 +19,7 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import RepoBranchSelector from '@/components/graphs/comparison/RepoBranchSelector.vue'
 import StatusComparisonGraph from '@/components/graphs/statuscomparison/StatusComparisonGraph.vue'
-import {
-  Dimension,
-  MeasurementError,
-  MeasurementSuccess,
-  Run,
-  RunResultScriptError,
-  RunResultSuccess,
-  StatusComparisonPoint,
-  TarTaskSource
-} from '@/store/types'
+import { StatusComparisonPoint } from '@/store/types'
 import { vxm } from '@/store'
 
 @Component({
