@@ -193,6 +193,7 @@ export default class StatusComparisonGraph extends Vue {
       .filter(it => it instanceof RunResultSuccess)
       .flatMap(it => (it as RunResultSuccess).measurements)
       .filter(it => it instanceof MeasurementSuccess)
+      .filter(it => this.isSelected(it.dimension))
       .map(it => (it as MeasurementSuccess).value)
 
     if (values.length === 0) {
@@ -201,6 +202,10 @@ export default class StatusComparisonGraph extends Vue {
     }
 
     return Math.max(...values)
+  }
+
+  private isSelected(dimension: Dimension) {
+    return this.selectedDimensions.find(it => dimensionIdEquals(it, dimension))
   }
 
   private get processedDataPoints(): Map<
@@ -231,11 +236,7 @@ export default class StatusComparisonGraph extends Vue {
       return new DatapointRepoError(run.result.error, repoId, 'RUN_FAILED')
     }
     return run.result.measurements
-      .filter(measurement =>
-        this.selectedDimensions.find(it =>
-          dimensionIdEquals(it, measurement.dimension)
-        )
-      )
+      .filter(measurement => this.isSelected(measurement.dimension))
       .map(measurement => {
         if (measurement instanceof MeasurementError) {
           return new DatapointDimensionError(
