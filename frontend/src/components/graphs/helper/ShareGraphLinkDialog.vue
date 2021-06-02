@@ -14,7 +14,7 @@
       </v-card-title>
       <v-card-text>
         <v-container fluid>
-          <v-row no-gutters>
+          <v-row no-gutters v-if="shareOptions.length > 0">
             <v-col
               v-for="{
                 label,

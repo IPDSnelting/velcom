@@ -1,9 +1,19 @@
 import { action, createModule, mutation } from 'vuex-class-component'
-import { Dimension, RepoId, StatusComparisonPoint } from '@/store/types'
+import {
+  Dimension,
+  dimensionIdToString,
+  RepoId,
+  StatusComparisonPoint
+} from '@/store/types'
 import axios from 'axios'
 import { statusComparisonPointFromJson } from '@/util/json/StatusComparisonJsonHelper'
-import { formatRepos } from '@/util/Texts'
+import { formatDimensions, formatRepos } from '@/util/Texts'
 import Vue from 'vue'
+import { PermanentLinkOptions } from '@/store/modules/detailGraphStore'
+import router from '@/router'
+import { respectOptions } from '@/util/LinkUtils'
+import { Route } from 'vue-router'
+import { vxm } from '@/store'
 
 const VxModule = createModule({
   namespaced: 'statusComparisonModule',
@@ -39,6 +49,47 @@ export class StatusComparisonStore extends VxModule {
     return this.graph
   }
 
+  /**
+   * Adjusts this store to the values defined in the permanent link.
+   *
+   * @param link the link to adjust to
+   */
+  @action
+  async adjustToPermanentLink(link: Route): Promise<void> {
+    if (link.query.dimensions && typeof link.query.dimensions === 'string') {
+      const dimensionMap = new Map(
+        vxm.repoModule
+          .occuringDimensions(vxm.repoModule.allRepos.map(it => it.id))
+          .map(dimension => [dimension.toString(), dimension])
+      )
+
+      const dimensionParts = link.query.dimensions.split('::')
+      this.selectedDimensions = dimensionParts
+        .flatMap(dimensionPart => {
+          const [benchmark, ...metrics] = dimensionPart.split(':')
+
+          return metrics.map(metric =>
+            dimensionMap.get(dimensionIdToString({ metric, benchmark }))
+          )
+        })
+        .filter(it => it)
+        .map(it => it!)
+    }
+
+    if (link.query.repos && typeof link.query.repos === 'string') {
+      const fullString = link.query.repos
+      const repoParts = fullString.split('::')
+      repoParts.forEach(repoPart => {
+        const [repoId, ...branches] = repoPart.split(':')
+        this.setSelectedBranchesForRepo({ repoId, branches })
+      })
+    }
+
+    if (link.query.baseline && typeof link.query.baseline === 'string') {
+      this.baselineRepoId = link.query.baseline
+    }
+  }
+
   @mutation
   setSelectedBranchesForRepo(payload: {
     repoId: RepoId
@@ -70,6 +121,36 @@ export class StatusComparisonStore extends VxModule {
     })
 
     return repos
+  }
+
+  /**
+   * Returns a permanent link to the current status comparison graph state
+   */
+  get permanentLink(): (options?: PermanentLinkOptions) => string {
+    return options => {
+      const route = router.resolve({
+        name: 'repo-dimension-comparison',
+        query: {
+          repos: respectOptions(
+            options,
+            'includeDataRestrictions',
+            formatRepos(this.selectedBranchesMap)
+          ),
+          baseline: respectOptions(
+            options,
+            'includeDataRestrictions',
+            this.baselineRepoId || undefined
+          ),
+          dimensions: respectOptions(
+            options,
+            'includeDataRestrictions',
+            formatDimensions(this.selectedDimensions)
+          )
+        }
+      })
+
+      return location.origin + route.href
+    }
   }
 
   /**

@@ -4,7 +4,7 @@
       <v-col
         cols="3"
         class="overflow-y-auto"
-        style="height: calc(100vh - 70px)"
+        style="height: calc(100vh - 64px - 12px - 8px)"
       >
         <v-card
           outlined
@@ -25,14 +25,27 @@
           @update:set-all="setRepoBranches"
         ></repo-branch-selector>
         <expandable-dimension-selection
-          class="mt-3"
+          class="mt-3 mb-1"
           :all-dimensions="allDimensions"
           :selected-dimensions.sync="selectedDimensions"
           :selector-type.sync="dimensionSelectorType"
         ></expandable-dimension-selection>
       </v-col>
-      <v-col cols="9" style="height: calc(100vh - 70px)">
-        <v-card style="height: 100%">
+      <v-col cols="9">
+        <v-card outlined class="mb-2" style="height: 64px">
+          <v-card-text
+            class="d-flex justify-end align-center py-0"
+            style="height: 100%"
+          >
+            <share-graph-link-dialog
+              :link-generator="generatePermanentLink"
+              :share-options="[]"
+            ></share-graph-link-dialog>
+          </v-card-text>
+        </v-card>
+        <v-card
+          style="height: calc(100vh - 64px - 12px - 62px - 8px - 12px - 8px)"
+        >
           <v-card-text style="height: 100%" class="py-0 my-0">
             <status-comparison-graph
               :datapoints="data"
@@ -70,9 +83,12 @@ import { vxm } from '@/store'
 import ExpandableDimensionSelection from '@/components/graphs/helper/ExpandableDimensionSelection.vue'
 import { Watch } from 'vue-property-decorator'
 import RepoSelectionComponent from '@/components/misc/RepoSelectionComponent.vue'
+import ShareGraphLinkDialog from '@/components/graphs/helper/ShareGraphLinkDialog.vue'
+import { PermanentLinkOptions } from '@/store/modules/detailGraphStore'
 
 @Component({
   components: {
+    ShareGraphLinkDialog,
     RepoSelectionComponent,
     ExpandableDimensionSelection,
     StatusComparisonGraph,
@@ -190,6 +206,10 @@ export default class StatusComparison extends Vue {
     const run = baselinePoint.run!
     const result = run.result as RunResultSuccess
     return result.measurements.filter(it => it instanceof MeasurementSuccess)
+  }
+
+  private generatePermanentLink(options: PermanentLinkOptions) {
+    return vxm.statusComparisonModule.permanentLink(options)
   }
 
   @Watch('selectedBranches')

@@ -1,5 +1,5 @@
 import AnsiUp from 'ansi_up'
-import { RepoId } from '@/store/types'
+import { DimensionId, RepoId } from '@/store/types'
 
 const converter = new AnsiUp()
 converter.use_classes = true
@@ -37,6 +37,27 @@ export function formatRepos(repos: Map<RepoId, string[]>): string {
     .filter(([, branches]) => branches.length > 0)
     .map(([repoId, branches]) => {
       return repoId + ':' + branches.join(':')
+    })
+    .join('::')
+}
+
+/**
+ * Formats a given list of dimensions according to their API serialization format:
+ * 'bench1:metric1.1:metric1.2::bench2:metric2.1' etc.
+ */
+export function formatDimensions(dimensions: DimensionId[]): string {
+  const byBenchmark = new Map<string, string[]>()
+
+  dimensions.forEach(dimension => {
+    if (!byBenchmark.has(dimension.benchmark)) {
+      byBenchmark.set(dimension.benchmark, [])
+    }
+    byBenchmark.get(dimension.benchmark)!.push(dimension.metric)
+  })
+
+  return Array.from(byBenchmark.entries())
+    .map(([benchmark, metrics]) => {
+      return benchmark + ':' + metrics.join(':')
     })
     .join('::')
 }

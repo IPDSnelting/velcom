@@ -138,7 +138,7 @@ export class ComparisonGraphStore extends VxModule {
   }
 
   /**
-   * Returns a permanent link to the current detail graph state
+   * Returns a permanent link to the current comparison graph state
    */
   get permanentLink(): (options?: PermanentLinkOptions) => string {
     return options => {
