@@ -19,6 +19,7 @@ import {
 } from '@/util/LinkUtils'
 import { Route } from 'vue-router'
 import { roundDateDown, roundDateUp } from '@/util/Times'
+import { formatRepos } from '@/util/Texts'
 
 const VxModule = createModule({
   namespaced: 'comparisonGraphModule',
@@ -36,15 +37,6 @@ function defaultStartDate() {
 function defaultEndDate() {
   // Today at midnight / start of tomorrow
   return new Date(new Date().setHours(24, 0, 0, 0))
-}
-
-function formatRepos(repos: Map<RepoId, string[]>): string {
-  return Array.from(repos.entries())
-    .filter(([, branches]) => branches.length > 0)
-    .map(([repoId, branches]) => {
-      return repoId + ':' + branches.join(':')
-    })
-    .join('::')
 }
 
 export class ComparisonGraphStore extends VxModule {

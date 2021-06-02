@@ -1,4 +1,5 @@
 import AnsiUp from 'ansi_up'
+import { RepoId } from '@/store/types'
 
 const converter = new AnsiUp()
 converter.use_classes = true
@@ -23,4 +24,19 @@ export function safeConvertAnsi(input: string): string {
   const safeInput = escapeHtml(input)
 
   return converter.ansi_to_html(safeInput)
+}
+
+/**
+ * Formats a list of repo-branch entries to a single string with the following format:
+ * "repo:branch:branch::repo2:branch:branch".
+ *
+ * @param repos the repositories to format
+ */
+export function formatRepos(repos: Map<RepoId, string[]>): string {
+  return Array.from(repos.entries())
+    .filter(([, branches]) => branches.length > 0)
+    .map(([repoId, branches]) => {
+      return repoId + ':' + branches.join(':')
+    })
+    .join('::')
 }

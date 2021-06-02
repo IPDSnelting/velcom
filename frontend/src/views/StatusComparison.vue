@@ -6,7 +6,11 @@
         class="overflow-y-auto"
         style="height: calc(100vh - 70px)"
       >
-        <repo-branch-selector></repo-branch-selector>
+        <repo-branch-selector
+          :selected-branches="selectedBranches"
+          @update:toggle-branch="toggleRepoBranch"
+          @update:set-all="setRepoBranches"
+        ></repo-branch-selector>
         <expandable-dimension-selection
           class="mt-3"
           :all-dimensions="allDimensions"
@@ -33,6 +37,7 @@ import StatusComparisonGraph from '@/components/graphs/statuscomparison/StatusCo
 import { Dimension, StatusComparisonPoint } from '@/store/types'
 import { vxm } from '@/store'
 import ExpandableDimensionSelection from '@/components/graphs/helper/ExpandableDimensionSelection.vue'
+import { Watch } from 'vue-property-decorator'
 
 @Component({
   components: {
@@ -48,6 +53,10 @@ export default class StatusComparison extends Vue {
     return vxm.repoModule.occuringDimensions(
       vxm.repoModule.allRepos.map(it => it.id)
     )
+  }
+
+  private get selectedBranches() {
+    return vxm.statusComparisonModule.selectedBranchesMap
   }
 
   private get selectedDimensions() {
@@ -66,8 +75,21 @@ export default class StatusComparison extends Vue {
     vxm.statusComparisonModule.selectedDimensionSelector = selector
   }
 
-  private async mounted() {
+  private toggleRepoBranch(payload: { repoId: string; branch: string }) {
+    vxm.statusComparisonModule.toggleRepoBranch(payload)
+  }
+
+  private setRepoBranches(payload: { repoId: string; branches: string[] }) {
+    vxm.statusComparisonModule.setSelectedBranchesForRepo(payload)
+  }
+
+  @Watch('selectedBranches')
+  private async fetchData() {
     this.data = await vxm.statusComparisonModule.fetch()
+  }
+
+  private async mounted() {
+    await this.fetchData()
   }
 }
 </script>

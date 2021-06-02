@@ -13,7 +13,11 @@
         </v-row>
         <v-row class="mt-0">
           <v-col>
-            <repo-branch-selector></repo-branch-selector>
+            <repo-branch-selector
+              :selected-branches="selectedBranches"
+              @update:toggle-branch="toggleRepoBranch"
+              @update:set-all="setRepoBranches"
+            ></repo-branch-selector>
           </v-col>
         </v-row>
       </v-col>
@@ -135,6 +139,10 @@ export default class RepoComparison extends Vue {
     vxm.comparisonGraphModule.beginYAtZero = beginYAtZero
   }
 
+  private get selectedBranches() {
+    return vxm.comparisonGraphModule.selectedBranches
+  }
+
   private get possibleDimensions() {
     const participatingRepos: Repo[] = this.selectedRepos
 
@@ -177,6 +185,14 @@ export default class RepoComparison extends Vue {
         .filter(it => it !== undefined)
         .map(it => it!)
     )
+  }
+
+  private toggleRepoBranch(payload: { repoId: string; branch: string }) {
+    vxm.comparisonGraphModule.toggleRepoBranch(payload)
+  }
+
+  private setRepoBranches(payload: { repoId: string; branches: string[] }) {
+    vxm.comparisonGraphModule.setSelectedBranchesForRepo(payload)
   }
 
   private getShareLink(options: PermanentLinkOptions) {
