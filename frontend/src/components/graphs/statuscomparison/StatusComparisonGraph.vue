@@ -56,6 +56,7 @@ import EChartsComp from 'vue-echarts'
 import { Prop, Watch } from 'vue-property-decorator'
 import { vxm } from '@/store'
 import { escapeHtml } from '@/util/Texts'
+import { mdiDotsHexagon } from '@mdi/js'
 
 use([
   BarChart,
@@ -176,6 +177,7 @@ type Datapoint = DatapointValue | DatapointDimensionError
 })
 export default class StatusComparisonGraph extends Vue {
   private chartOptions: ECOption = {}
+  private showDecals = false
 
   @Prop()
   private readonly datapoints!: StatusComparisonPoint[]
@@ -298,6 +300,16 @@ export default class StatusComparisonGraph extends Vue {
             pixelRatio: 2,
             type: 'jpg',
             backgroundColor: this.graphBackgroundColor
+          },
+          myDecal: {
+            show: true,
+            title: this.showDecals ? 'Hide decals' : 'Show decals',
+            icon: mdiDotsHexagon,
+            onclick: () => {
+              this.showDecals = !this.showDecals
+              const ariaOption = this.chartOptions.aria as AriaComponentOption
+              ariaOption.decal!.show = this.showDecals
+            }
           }
         }
       },
@@ -322,7 +334,7 @@ export default class StatusComparisonGraph extends Vue {
       aria: {
         enabled: true,
         decal: {
-          show: false
+          show: this.showDecals
         }
       }
     }
