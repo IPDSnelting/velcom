@@ -31,6 +31,8 @@ export class StatusComparisonStore extends VxModule {
 
   selectedDimensions: Dimension[] = []
 
+  selectedDimensionSelector: 'tree' | 'matrix' = 'matrix'
+
   @action
   async fetch(): Promise<StatusComparisonPoint[]> {
     const repos = new Map<RepoId, string[]>()
