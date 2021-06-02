@@ -1,11 +1,5 @@
 import { action, createModule } from 'vuex-class-component'
-import {
-  Dimension,
-  dimensionIdEquals,
-  RepoId,
-  RunResultSuccess,
-  StatusComparisonPoint
-} from '@/store/types'
+import { Dimension, RepoId, StatusComparisonPoint } from '@/store/types'
 import axios from 'axios'
 import { statusComparisonPointFromJson } from '@/util/json/StatusComparisonJsonHelper'
 import { vxm } from '@/store'

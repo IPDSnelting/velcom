@@ -18,6 +18,7 @@
         <status-comparison-graph
           :datapoints="data"
           :baseline-point="data[1]"
+          :selected-dimensions="selectedDimensions"
         ></status-comparison-graph>
       </v-col>
     </v-row>

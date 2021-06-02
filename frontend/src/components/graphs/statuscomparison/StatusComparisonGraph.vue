@@ -19,7 +19,9 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import {
+  Dimension,
   DimensionId,
+  dimensionIdEquals,
   dimensionIdToString,
   MeasurementError,
   MeasurementSuccess,
@@ -81,7 +83,11 @@ type ECOption = ComposeOption<
   | ToolboxComponentOption
 >
 
-type DatapointErrorType = 'NO_RUN' | 'MEASUREMENT_FAILED' | 'RUN_FAILED'
+type DatapointErrorType =
+  | 'NO_RUN'
+  | 'MEASUREMENT_FAILED'
+  | 'RUN_FAILED'
+  | 'NO_MEASUREMENT'
 
 class DatapointValue {
   readonly dimension: DimensionId
@@ -129,6 +135,8 @@ class DatapointDimensionError {
       labelText = 'Unbenchmarked'
     } else if (errorType === 'RUN_FAILED') {
       labelText = 'Run failed'
+    } else if (errorType === 'NO_MEASUREMENT') {
+      labelText = 'Not measured'
     } else {
       labelText = 'Dimension failed'
     }
@@ -175,6 +183,9 @@ export default class StatusComparisonGraph extends Vue {
   @Prop({ default: null })
   private readonly baselinePoint!: StatusComparisonPoint | null
 
+  @Prop()
+  private readonly selectedDimensions!: Dimension[]
+
   private get maxDatapointValue() {
     const values = this.datapoints
       .filter(it => it.run)
@@ -219,29 +230,36 @@ export default class StatusComparisonGraph extends Vue {
     if (run.result instanceof RunResultVelcomError) {
       return new DatapointRepoError(run.result.error, repoId, 'RUN_FAILED')
     }
-    return run.result.measurements.map(measurement => {
-      if (measurement instanceof MeasurementError) {
-        return new DatapointDimensionError(
+    return run.result.measurements
+      .filter(measurement =>
+        this.selectedDimensions.find(it =>
+          dimensionIdEquals(it, measurement.dimension)
+        )
+      )
+      .map(measurement => {
+        if (measurement instanceof MeasurementError) {
+          return new DatapointDimensionError(
+            measurement.dimension,
+            repoId,
+            measurement.error,
+            'MEASUREMENT_FAILED',
+            this.maxDatapointValue,
+            this.repoColor(repoId),
+            this.themeColor
+          )
+        }
+        return new DatapointValue(
           measurement.dimension,
           repoId,
-          measurement.error,
-          'MEASUREMENT_FAILED',
-          this.maxDatapointValue,
-          this.repoColor(repoId),
-          this.themeColor
+          measurement.value
         )
-      }
-      return new DatapointValue(
-        measurement.dimension,
-        repoId,
-        measurement.value
-      )
-    })
+      })
   }
 
   @Watch('datapoints')
   @Watch('baselinePoint')
   @Watch('chartTheme')
+  @Watch('selectedDimensions')
   private init() {
     this.chartOptions = {
       darkMode: vxm.userModule.darkThemeSelected,
@@ -316,7 +334,7 @@ export default class StatusComparisonGraph extends Vue {
     const seriesRows = values.map(val => {
       const color = val.color
       const datapoint = val.data as Datapoint
-      const safeDisplayName = escapeHtml(datapoint.repoId)
+      const safeDisplayName = escapeHtml(this.repoName(datapoint.repoId))
       let value: string
       if (!Object.hasOwnProperty.call(datapoint, 'error')) {
         value = this.numberFormat.format(datapoint.value[1])
@@ -350,27 +368,45 @@ export default class StatusComparisonGraph extends Vue {
   }
 
   private generateSeries(repoId: RepoId): BarSeriesOption {
-    let data = this.processedDataPoints.get(repoId)
+    const data = this.processedDataPoints.get(repoId)!
+    let datapoints: Datapoint[]
 
     if (data instanceof DatapointRepoError) {
-      const error = data.error
-      const errorType = data.type
-      data = vxm.statusComparisonModule.selectedDimensions.map(dimension => {
+      datapoints = this.selectedDimensions.map(dimension => {
         return new DatapointDimensionError(
           dimension,
           repoId,
-          error,
-          errorType,
+          data.error,
+          data.type,
           this.maxDatapointValue,
           this.repoColor(repoId),
           this.themeColor
         )
       })
+    } else {
+      datapoints = data
     }
+
+    const seriesData = this.selectedDimensions.map(dim => {
+      const displayedPoint = datapoints.find(point =>
+        dimensionIdEquals(dim, point.dimension)
+      )
+      if (displayedPoint) return displayedPoint
+      return new DatapointDimensionError(
+        dim,
+        repoId,
+        'Not measured',
+        'NO_MEASUREMENT',
+        this.maxDatapointValue,
+        this.repoColor(repoId),
+        this.themeColor
+      )
+    })
+
     return {
       type: 'bar',
       name: this.repoName(repoId),
-      data: data,
+      data: seriesData,
       color: this.repoColor(repoId),
       emphasis: {
         focus: 'series',
