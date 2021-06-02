@@ -21,7 +21,7 @@
                 selectable,
                 unselectableMessage,
                 key
-              } in selectableOptions"
+              } in shareOptions"
               :key="key"
             >
               <v-tooltip top :disabled="selectable">
@@ -72,16 +72,21 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { vxm } from '@/store'
 import { mdiLinkVariantPlus } from '@mdi/js'
 import { copyToClipboard } from '@/util/Clipboards'
 import { PermanentLinkOptions } from '@/store/modules/detailGraphStore'
 import { Prop, Watch } from 'vue-property-decorator'
 
+export type Option = {
+  label: string
+  selectable: boolean
+  unselectableMessage: string
+  key: keyof PermanentLinkOptions
+}
+
 @Component
 export default class ShareGraphLinkDialog extends Vue {
   private dialogOpen: boolean = false
-
   private options: PermanentLinkOptions = {
     includeYZoom: true,
     includeXZoom: true,
@@ -89,35 +94,10 @@ export default class ShareGraphLinkDialog extends Vue {
   }
 
   @Prop()
-  private linkGenerator!: (options: PermanentLinkOptions) => string
+  private readonly linkGenerator!: (options: PermanentLinkOptions) => string
 
   @Prop()
-  private dataRestrictionLabel!: string
-
-  private get selectableOptions() {
-    return [
-      {
-        label: 'Use X-axis zoom instead of start/end date',
-        selectable: true,
-        unselectableMessage: 'That you see this is a bug. Please report it :)',
-        key: 'includeXZoom'
-      },
-      {
-        label: 'Include Y-axis zoom',
-        selectable:
-          vxm.detailGraphModule.zoomYStartValue !== null ||
-          vxm.detailGraphModule.zoomYEndValue !== null,
-        unselectableMessage: "You haven't zoomed the Y axis",
-        key: 'includeYZoom'
-      },
-      {
-        label: this.dataRestrictionLabel,
-        selectable: vxm.detailGraphModule.selectedDimensions.length > 0,
-        unselectableMessage: "You haven't selected any dimensions",
-        key: 'includeDataRestrictions'
-      }
-    ]
-  }
+  private readonly shareOptions!: Option[]
 
   private get permanentLinkUrl() {
     return this.linkGenerator(this.options)

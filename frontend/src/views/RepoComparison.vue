@@ -31,7 +31,7 @@
             >
               <share-graph-link-dialog
                 :link-generator="getShareLink"
-                data-restriction-label="Include repos and branches"
+                :share-options="shareOptions"
               />
             </comparison-graph-settings>
           </v-col>
@@ -197,6 +197,31 @@ export default class RepoComparison extends Vue {
 
   private getShareLink(options: PermanentLinkOptions) {
     return vxm.comparisonGraphModule.permanentLink(options)
+  }
+
+  private get shareOptions() {
+    return [
+      {
+        label: 'Use X-axis zoom instead of start/end date',
+        selectable: true,
+        unselectableMessage: 'That you see this is a bug. Please report it :)',
+        key: 'includeXZoom'
+      },
+      {
+        label: 'Include Y-axis zoom',
+        selectable:
+          vxm.comparisonGraphModule.zoomYStartValue !== null ||
+          vxm.comparisonGraphModule.zoomYEndValue !== null,
+        unselectableMessage: "You haven't zoomed the Y axis",
+        key: 'includeYZoom'
+      },
+      {
+        label: 'Include repos and branches',
+        selectable: vxm.comparisonGraphModule.selectedBranches.size > 0,
+        unselectableMessage: "You haven't selected any branches or repos",
+        key: 'includeDataRestrictions'
+      }
+    ]
   }
 
   private applyDatapointTransformations(datapoints: ComparisonDataPoint[]) {

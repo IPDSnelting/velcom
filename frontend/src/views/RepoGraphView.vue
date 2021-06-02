@@ -20,7 +20,7 @@
             >
               <share-graph-link-dialog
                 :link-generator="getShareLink"
-                data-restriction-label="Include repos and branches"
+                :share-options="shareOptions"
               />
             </comparison-graph-settings>
           </v-col>
@@ -133,6 +133,31 @@ export default class RepoGraphView extends Vue {
 
   private getShareLink(options: PermanentLinkOptions) {
     return vxm.detailGraphModule.permanentLink(options)
+  }
+
+  private get shareOptions() {
+    return [
+      {
+        label: 'Use X-axis zoom instead of start/end date',
+        selectable: true,
+        unselectableMessage: 'That you see this is a bug. Please report it :)',
+        key: 'includeXZoom'
+      },
+      {
+        label: 'Include Y-axis zoom',
+        selectable:
+          vxm.detailGraphModule.zoomYStartValue !== null ||
+          vxm.detailGraphModule.zoomYEndValue !== null,
+        unselectableMessage: "You haven't zoomed the Y axis",
+        key: 'includeYZoom'
+      },
+      {
+        label: 'Include dimensions',
+        selectable: vxm.detailGraphModule.selectedDimensions.length > 0,
+        unselectableMessage: "You haven't selected any dimensions",
+        key: 'includeDataRestrictions'
+      }
+    ]
   }
 
   private get dayEquidistantGraphSelected() {
