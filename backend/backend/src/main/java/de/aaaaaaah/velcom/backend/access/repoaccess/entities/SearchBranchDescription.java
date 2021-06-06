@@ -1,6 +1,7 @@
 package de.aaaaaaah.velcom.backend.access.repoaccess.entities;
 
 import de.aaaaaaah.velcom.backend.access.committaccess.entities.CommitHash;
+import java.util.Objects;
 
 public class SearchBranchDescription {
 
@@ -38,6 +39,25 @@ public class SearchBranchDescription {
 
 	public boolean hasRun() {
 		return hasRun;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) {
+			return true;
+		}
+		if (o == null || getClass() != o.getClass()) {
+			return false;
+		}
+		SearchBranchDescription that = (SearchBranchDescription) o;
+		return hasRun == that.hasRun && Objects.equals(repoId, that.repoId) && Objects
+			.equals(name, that.name) && Objects.equals(commitHash, that.commitHash)
+			&& Objects.equals(commitSummary, that.commitSummary);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(repoId, name, commitHash, commitSummary, hasRun);
 	}
 
 	@Override

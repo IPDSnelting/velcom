@@ -107,7 +107,6 @@ public class RepoReadAccess {
 		}
 	}
 
-	// TODO: 06.06.21 Add tests for this function
 	public List<SearchBranchDescription> searchBranches(int limit, @Nullable RepoId repoId,
 		String queryStr) {
 
