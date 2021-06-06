@@ -12,6 +12,7 @@ import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.Run;
 import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.RunError;
 import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.RunErrorType;
 import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.RunId;
+import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.SearchRunDescription;
 import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.ShortRunDescription;
 import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.sources.CommitSource;
 import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.sources.TarSource;
@@ -372,8 +373,7 @@ class BenchmarkReadAccessTest {
 
 		assertThat(access.searchRuns(100, null, "a")
 			.stream()
-			.map(Pair::getFirst)
-			.map(ShortRunDescription::getId))
+			.map(SearchRunDescription::getId))
 			.containsExactly(RUN7_ID, RUN2_ID, RUN8_ID, RUN4_ID, RUN10_ID, RUN9_ID, RUN3_ID, RUN6_ID,
 				RUN5_ID, RUN1_ID);
 
@@ -381,22 +381,19 @@ class BenchmarkReadAccessTest {
 
 		assertThat(access.searchRuns(100, REPO1_ID, "a")
 			.stream()
-			.map(Pair::getFirst)
-			.map(ShortRunDescription::getId))
+			.map(SearchRunDescription::getId))
 			.containsExactly(RUN7_ID, RUN8_ID, RUN4_ID, RUN3_ID, RUN6_ID, RUN5_ID);
 
 		assertThat(access.searchRuns(100, REPO2_ID, "a")
 			.stream()
-			.map(Pair::getFirst)
-			.map(ShortRunDescription::getId))
+			.map(SearchRunDescription::getId))
 			.containsExactly(RUN10_ID, RUN9_ID);
 
 		// Commit description and hash are ignored
 
 		assertThat(access.searchRuns(100, null, "d9")
 			.stream()
-			.map(Pair::getFirst)
-			.map(ShortRunDescription::getId))
+			.map(SearchRunDescription::getId))
 			.containsExactly(RUN9_ID);
 
 		assertThat(access.searchRuns(100, null, COMMIT1_HASH.getHash()))
@@ -406,8 +403,7 @@ class BenchmarkReadAccessTest {
 
 		assertThat(access.searchRuns(4, null, "a")
 			.stream()
-			.map(Pair::getFirst)
-			.map(ShortRunDescription::getId))
+			.map(SearchRunDescription::getId))
 			.containsExactly(RUN7_ID, RUN2_ID, RUN8_ID, RUN4_ID);
 	}
 

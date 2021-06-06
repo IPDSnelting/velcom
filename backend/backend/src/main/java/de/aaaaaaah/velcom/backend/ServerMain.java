@@ -216,7 +216,7 @@ public class ServerMain extends Application<GlobalConfig> {
 				listener),
 			new RunEndpoint(benchmarkAccess, commitAccess, dimensionAccess, runCache, latestRunCache,
 				runComparator, significanceFactors, significantRunsCollector),
-			new SearchEndpoint(benchmarkAccess, commitAccess),
+			new SearchEndpoint(benchmarkAccess, commitAccess, repoAccess),
 			new TestTokenEndpoint()
 		).forEach(endpoint -> environment.jersey().register(endpoint));
 	}
