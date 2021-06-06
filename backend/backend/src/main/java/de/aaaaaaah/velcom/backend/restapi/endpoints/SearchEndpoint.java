@@ -3,7 +3,7 @@ package de.aaaaaaah.velcom.backend.restapi.endpoints;
 import static java.util.stream.Collectors.toList;
 
 import de.aaaaaaah.velcom.backend.access.benchmarkaccess.BenchmarkReadAccess;
-import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.ShortRunDescription;
+import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.SearchRunDescription;
 import de.aaaaaaah.velcom.backend.access.committaccess.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.access.committaccess.entities.Commit;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RepoId;
@@ -54,7 +54,7 @@ public class SearchEndpoint {
 		List<RunInfo> runs = benchmarkAccess
 			.searchRuns(limit, repoId.orElse(null), query)
 			.stream()
-			.map(pair -> new RunInfo(pair.getFirst(), pair.getSecond().orElse(null)))
+			.map(RunInfo::new)
 			.collect(toList());
 
 		return new SearchGetReply(commits, runs);
@@ -101,19 +101,20 @@ public class SearchEndpoint {
 		@Nullable
 		public final String repoId;
 		@Nullable
-		public final String commitHash;
-		@Nullable
 		public final String commitSummary;
 		@Nullable
 		public final String tarDescription;
+		public final long startTime;
+		public final long stopTime;
 
-		public RunInfo(ShortRunDescription run, @Nullable RepoId repoId) {
+		public RunInfo(SearchRunDescription run) {
 
 			this.id = run.getId().getIdAsString();
-			this.repoId = Optional.ofNullable(repoId).map(RepoId::getIdAsString).orElse(null);
-			this.commitHash = run.getCommitHash().orElse(null);
+			this.repoId = run.getRepoId().map(RepoId::getIdAsString).orElse(null);
 			this.commitSummary = run.getCommitSummary().orElse(null);
 			this.tarDescription = run.getTarDescription().orElse(null);
+			this.startTime = run.getStartTime().getEpochSecond();
+			this.stopTime = run.getStopTime().getEpochSecond();
 		}
 	}
 }
