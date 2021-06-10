@@ -191,7 +191,7 @@ public class QueueEndpoint {
 
 		List<CommitHash> hashes = commitReadAccess.getDescendantCommits(repoId, rootHash);
 
-		queue.addCommits(AUTHOR_NAME_ADMIN, repoId, hashes, TaskPriority.MANUAL);
+		queue.addCommits(AUTHOR_NAME_ADMIN, repoId, hashes, TaskPriority.LISTENER);
 
 		List<JsonTask> tasks = queue.getAllTasksInOrder().stream()
 			.filter(it -> it.getRepoId().map(repoId::equals).orElse(false))
