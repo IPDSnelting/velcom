@@ -73,6 +73,7 @@
           <v-col cols="9">
             <github-bot-command-chips
               :prs="githubCommands"
+              :repo="repo"
               v-if="hasActiveBot"
             ></github-bot-command-chips>
             <span v-if="hasActiveBot && githubCommands.length === 0">
