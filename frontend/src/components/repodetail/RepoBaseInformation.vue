@@ -86,7 +86,11 @@
                   On Github, create a new account for the bot if you want to.
                 </li>
                 <li>
-                  On Github, log in to the account you want the bot to use.
+                  On Github, log in to the account you want the bot to use. Note
+                  that the account must have <strong>push</strong> access to the
+                  repository.<br />
+                  VelCom only allows collaborators to trigger benchmarks and
+                  fetching the collaborator status requires push permissions.
                 </li>
                 <li>
                   On GitHub, go to Settings > Developer settings > Personal
