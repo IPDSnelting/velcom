@@ -151,21 +151,19 @@ const routes: RouteInfo[] = [
 ]
 
 class VueRouterEx extends VueRouter {
-  matcher: any
-
   public routes: RouteConfig[] = []
 
   constructor(options: RouterOptions) {
     super(options)
-    const { addRoutes } = this.matcher
     const { routes } = options
 
     this.routes = routes!
+  }
 
-    this.matcher.addRoutes = (newRoutes: RouteConfig[]) => {
-      this.routes.push(...newRoutes)
-      addRoutes(newRoutes)
-    }
+  addRoutes(routes: RouteConfig[]) {
+    super.addRoutes(routes)
+    // Track route additions
+    this.routes.push(...routes)
   }
 }
 
