@@ -7,10 +7,14 @@
 
     <v-tabs-items v-model="selectedTab">
       <v-tab-item>
-        <timeline-comparison></timeline-comparison>
+        <v-lazy>
+          <timeline-comparison></timeline-comparison>
+        </v-lazy>
       </v-tab-item>
       <v-tab-item>
-        <status-comparison :suggested-height="height"></status-comparison>
+        <v-lazy>
+          <status-comparison :suggested-height="height"></status-comparison>
+        </v-lazy>
       </v-tab-item>
     </v-tabs-items>
   </v-container>
