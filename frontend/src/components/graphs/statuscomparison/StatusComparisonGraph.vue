@@ -187,6 +187,9 @@ export default class StatusComparisonGraph extends Vue {
   @Prop()
   private readonly selectedDimensions!: Dimension[]
 
+  @Prop({ default: false })
+  private readonly logScale!: boolean
+
   private get maxDatapointValue() {
     const values = this.datapoints
       .filter(it => it.run)
@@ -367,7 +370,9 @@ export default class StatusComparisonGraph extends Vue {
         type: 'category'
       },
       yAxis: {
-        type: 'value'
+        type: this.logScale ? 'log' : 'value',
+        min: this.logScale ? 'dataMin' : undefined,
+        max: this.logScale ? 'dataMax' : undefined
       },
       series: this.datapoints.map(point => this.generateSeries(point.repoId)),
       aria: {
