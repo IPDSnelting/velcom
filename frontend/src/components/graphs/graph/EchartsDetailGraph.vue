@@ -351,6 +351,11 @@ export default class EchartsDetailGraph extends Vue {
   // The correct type is not exposed sadly
   private tooltipFormatter(params: any) {
     const values = Array.isArray(params) ? params.slice() : [params]
+
+    if (values.length === 1 && values[0].componentType !== 'series') {
+      return values[0].title
+    }
+
     // Sort them so the order corresponds to the order of the lines
     values.sort((a, b) => {
       const first = a.data as EchartsDataPoint
