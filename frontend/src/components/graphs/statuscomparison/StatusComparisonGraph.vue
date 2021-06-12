@@ -144,7 +144,6 @@ class DatapointDimensionError {
     this.label = {
       show: true,
       formatter: labelText,
-      rotate: 90,
       fontWeight: 'bold',
       overflow: 'truncate',
       lineOverflow: 'truncate'
@@ -239,7 +238,28 @@ export default class StatusComparisonGraph extends Vue {
     const measurement = this.baselineData.find(measurement =>
       dimensionIdEquals(measurement.dimension, dimension)
     )
-    return measurement?.value
+
+    if (measurement !== undefined) {
+      return measurement.value
+    }
+
+    const otherPoints = this.datapoints
+      .filter(it => it.run !== undefined)
+      .filter(it => it.run!.result instanceof RunResultSuccess)
+      .map(it => it.run!.result as RunResultSuccess)
+      .flatMap(
+        point =>
+          point.measurements.filter(
+            it => it instanceof MeasurementSuccess
+          ) as MeasurementSuccess[]
+      )
+      .filter(it => dimensionIdEquals(it.dimension, dimension))
+
+    if (otherPoints.length === 0) {
+      return undefined
+    }
+
+    return otherPoints[0].value
   }
 
   private pointsForRun(
@@ -439,6 +459,10 @@ export default class StatusComparisonGraph extends Vue {
       type: 'bar',
       name: this.repoName(repoId),
       data: seriesData,
+      labelLayout: {
+        rotate: 90,
+        moveOverlap: 'shiftY'
+      },
       color: this.repoColor(repoId),
       emphasis: {
         focus: 'series',
