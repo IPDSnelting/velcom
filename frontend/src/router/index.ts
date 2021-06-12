@@ -16,7 +16,7 @@ import {
 import { vxm } from '@/store'
 import TaskDetailView from '@/views/TaskDetailView.vue'
 import Search from '@/views/Search.vue'
-import Comparison from '@/views/Comparison.vue'
+import Comparison from '@/views/RepoComparison.vue'
 
 Vue.use(VueRouter)
 
