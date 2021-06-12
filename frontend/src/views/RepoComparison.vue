@@ -1,7 +1,7 @@
 <template>
-  <v-container fluid>
-    <v-row>
-      <v-col cols="3">
+  <v-container fluid class="px-0 pt-1" style="height: 100%">
+    <v-row style="height: 100%">
+      <v-col cols="3" style="height: 100%">
         <v-row>
           <v-col :style="{ 'min-height': 68 + 12 * 2 + 'px' }">
             <comparison-dimension-selector
@@ -11,8 +11,8 @@
             ></comparison-dimension-selector>
           </v-col>
         </v-row>
-        <v-row class="mt-0">
-          <v-col>
+        <v-row class="mt-0" style="height: 100%">
+          <v-col style="height: 100%">
             <repo-branch-selector
               :selected-branches="selectedBranches"
               @update:toggle-branch="toggleRepoBranch"
@@ -21,7 +21,7 @@
           </v-col>
         </v-row>
       </v-col>
-      <v-col cols="9" ref="graphColumn">
+      <v-col cols="9" ref="graphColumn" style="height: 100%">
         <v-row>
           <v-col>
             <comparison-graph-settings

@@ -1,11 +1,7 @@
 <template>
-  <v-container fluid>
-    <v-row>
-      <v-col
-        cols="3"
-        class="overflow-y-auto"
-        style="height: calc(100vh - 64px - 12px - 8px)"
-      >
+  <v-container fluid :style="{ height: suggestedHeight }" class="pa-0">
+    <v-row style="height: 100%">
+      <v-col cols="3" class="overflow-y-auto" style="height: 100%">
         <v-card
           outlined
           class="mb-2"
@@ -31,7 +27,7 @@
           :selector-type.sync="dimensionSelectorType"
         ></expandable-dimension-selection>
       </v-col>
-      <v-col cols="9">
+      <v-col cols="9" style="height: 100%">
         <v-card outlined class="mb-2" style="height: 64px">
           <v-card-text
             class="d-flex justify-end align-center py-0"
@@ -43,9 +39,7 @@
             ></share-graph-link-dialog>
           </v-card-text>
         </v-card>
-        <v-card
-          style="height: calc(100vh - 64px - 12px - 62px - 8px - 12px - 8px)"
-        >
+        <v-card style="height: calc(100% - 64px)">
           <v-card-text style="height: 100%" class="py-0 my-0">
             <status-comparison-graph
               :datapoints="data"
@@ -81,7 +75,7 @@ import {
 } from '@/store/types'
 import { vxm } from '@/store'
 import ExpandableDimensionSelection from '@/components/graphs/helper/ExpandableDimensionSelection.vue'
-import { Watch } from 'vue-property-decorator'
+import { Prop, Watch } from 'vue-property-decorator'
 import RepoSelectionComponent from '@/components/misc/RepoSelectionComponent.vue'
 import ShareGraphLinkDialog from '@/components/graphs/helper/ShareGraphLinkDialog.vue'
 import { PermanentLinkOptions } from '@/store/modules/detailGraphStore'
@@ -98,6 +92,9 @@ import { PermanentLinkOptions } from '@/store/modules/detailGraphStore'
 export default class StatusComparison extends Vue {
   private linkInitializationComplete = false
   private data: StatusComparisonPoint[] = []
+
+  @Prop({ default: '100%' })
+  private readonly suggestedHeight!: string
 
   private get allDimensions() {
     return vxm.repoModule.occuringDimensions(
