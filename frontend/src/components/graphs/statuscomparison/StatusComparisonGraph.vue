@@ -8,6 +8,7 @@
             :autoresize="true"
             :options="chartOptions"
             :theme="chartTheme"
+            @mousedown="datapointClicked"
           />
         </div>
       </v-col>
@@ -476,6 +477,49 @@ export default class StatusComparisonGraph extends Vue {
         }
       }
     }
+  }
+
+  private datapointClicked(e: any) {
+    if (e.data === undefined) {
+      return
+    }
+
+    const echartsPoint = e.data as Datapoint
+    // We only have one entry per repo!
+    const originalDatapoint = this.datapoints.find(
+      it => it.repoId === echartsPoint.repoId
+    )
+
+    if (!originalDatapoint) {
+      return
+    }
+
+    let params: { first: string; second?: string }
+
+    if (originalDatapoint.run) {
+      params = { first: originalDatapoint.run.id }
+    } else {
+      params = {
+        first: originalDatapoint.repoId,
+        second: originalDatapoint.commitHash
+      }
+    }
+
+    if ((e as any).event && (e as any).event.event) {
+      const event = (e as any).event.event as MouseEvent
+      if (event.ctrlKey || event.button === 1) {
+        const routeData = this.$router.resolve({
+          name: 'run-detail',
+          params: params
+        })
+        window.open(routeData.href, '_blank')
+        return
+      }
+    }
+    this.$router.push({
+      name: 'run-detail',
+      params: params
+    })
   }
 
   private repoName(id: RepoId) {
