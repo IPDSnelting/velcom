@@ -1,7 +1,6 @@
 import Vue from 'vue'
 import VueRouter, { RouteConfig, RouterOptions } from 'vue-router'
 import Home from '../views/Home.vue'
-import RepoComparison from '../views/RepoComparison.vue'
 import RepoDetailFrame from '../views/RepoDetailFrame.vue'
 import Queue from '../views/Queue.vue'
 import NotFound404 from '../views/NotFound404.vue'
@@ -17,14 +16,13 @@ import {
 import { vxm } from '@/store'
 import TaskDetailView from '@/views/TaskDetailView.vue'
 import Search from '@/views/Search.vue'
-import StatusComparison from '@/views/StatusComparison.vue'
+import Comparison from '@/views/Comparison.vue'
 
 Vue.use(VueRouter)
 
 export type RouteName =
   | 'home'
   | 'repo-comparison'
-  | 'status-comparison'
   | 'repo-detail'
   | 'queue'
   | 'search'
@@ -67,20 +65,11 @@ const routes: RouteInfo[] = [
   {
     path: '/repo-comparison',
     name: 'repo-comparison',
-    component: RepoComparison,
+    component: Comparison,
     meta: {
-      label: 'Repo Comparison',
+      label: 'Comparison',
       navigable: true,
       icon: mdiScaleBalance
-    }
-  },
-  {
-    path: '/status-comparison',
-    name: 'status-comparison',
-    component: StatusComparison,
-    meta: {
-      label: 'Repo Dimension Comparison',
-      navigable: false
     }
   },
   {

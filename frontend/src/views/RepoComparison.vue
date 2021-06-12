@@ -305,12 +305,7 @@ export default class RepoComparison extends Vue {
     this.onResized()
     window.addEventListener('resize', this.onResized)
 
-    // They will be fetched on page load anyways, but we *need* to make sure they are already loaded!
-    // Otherwise we might not find our selected dimension
-    if (vxm.repoModule.allRepos.length === 0) {
-      await vxm.repoModule.fetchRepos()
-    }
-    await vxm.comparisonGraphModule.adjustToPermanentLink(this.$route)
+    await this.debouncedUpdate()
   }
 
   // noinspection JSUnusedLocalSymbols

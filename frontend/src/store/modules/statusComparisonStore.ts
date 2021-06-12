@@ -28,6 +28,8 @@ export class StatusComparisonStore extends VxModule {
   selectedDimensions: Dimension[] = []
   selectedDimensionSelector: 'tree' | 'matrix' = 'matrix'
 
+  selectedTab: 'timeline' | 'status' = 'timeline'
+
   @action
   async fetch(): Promise<StatusComparisonPoint[]> {
     const repos = this.selectedBranchesMap
@@ -129,8 +131,9 @@ export class StatusComparisonStore extends VxModule {
   get permanentLink(): (options?: PermanentLinkOptions) => string {
     return options => {
       const route = router.resolve({
-        name: 'status-comparison',
+        name: 'repo-comparison',
         query: {
+          type: 'status',
           repos: respectOptions(
             options,
             'includeDataRestrictions',
@@ -163,7 +166,8 @@ export class StatusComparisonStore extends VxModule {
       selectedBranches: store.selectedBranches,
       baselineRepoId: store.baselineRepoId,
       selectedDimensions: store.selectedDimensions,
-      selectedDimensionSelector: store.selectedDimensionSelector
+      selectedDimensionSelector: store.selectedDimensionSelector,
+      selectedTab: store.selectedTab
     }
   }
 }

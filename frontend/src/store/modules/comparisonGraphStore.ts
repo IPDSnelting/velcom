@@ -145,6 +145,7 @@ export class ComparisonGraphStore extends VxModule {
       const route = router.resolve({
         name: 'repo-comparison',
         query: {
+          type: 'timeline',
           zoomYStart: respectOptions(
             options,
             'includeYZoom',
