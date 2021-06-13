@@ -494,8 +494,11 @@ public class GithubPrInteractor {
 					+ "?hash1=" + commitHash.getHash())
 				.orElseGet(() -> frontendUrl + "run-detail/" + reply.getRunId().getIdAsString());
 
-			String body = "Benchmark of commit " + reply.getCommitHash().getHash() + " complete.\n\n"
-				+ link;
+			String body = "Here are the [benchmark results]("
+				+ link +
+				") of commit "
+				+ reply.getCommitHash().getHash()
+				+ ".";
 
 			HttpResponse<String> response = createPrComment(reply.getPr(), body);
 
