@@ -45,24 +45,18 @@
         </v-row>
         <v-row align="center">
           <v-col cols="3" class="subtitle-2">Branches:</v-col>
-          <v-col cols="9">
-            <v-tooltip
-              top
-              v-for="(branch, index) in branches"
-              :key="branch.name"
-            >
+          <v-col cols="9" class="d-flex flex-wrap" style="gap: 8px">
+            <v-tooltip top v-for="branch in branches" :key="branch.name">
               <template v-slot:activator="{ on }">
                 <v-chip
-                  :class="{
-                    'ml-2': index > 0,
-                    untracked: !branch.tracked
-                  }"
+                  :class="{ untracked: !branch.tracked }"
                   outlined
                   label
                   v-on="on"
                   :color="branch.tracked ? 'success' : undefined"
-                  >{{ branch.name }}</v-chip
                 >
+                  {{ branch.name }}
+                </v-chip>
               </template>
               {{ branch.tracked ? 'Tracked' : 'Not Tracked' }}
             </v-tooltip>
