@@ -67,6 +67,7 @@
           <v-col cols="9">
             <github-bot-command-chips
               :prs="githubCommands"
+              :repo="repo"
               v-if="hasActiveBot"
             ></github-bot-command-chips>
             <span v-if="hasActiveBot && githubCommands.length === 0">
@@ -76,12 +77,23 @@
               No Github bot set up. You can do that by following these steps:
               <ol class="mt-1">
                 <li>
+                  On Github, create a new account for the bot if you want to.
+                </li>
+                <li>
+                  On Github, log in to the account you want the bot to use. Note
+                  that the account must have <strong>push</strong> access to the
+                  repository.<br />
+                  VelCom only allows collaborators to trigger benchmarks and
+                  fetching the collaborator status requires push permissions.
+                </li>
+                <li>
                   On GitHub, go to Settings > Developer settings > Personal
                   access tokens
                 </li>
                 <li>
-                  Generate a new token with the "public_repo" scope (or the
-                  "repo" scope if you want to use it on a private repository)
+                  On Github, generate a new token with the "public_repo" scope
+                  (or the "repo" scope if you want to use it on a private
+                  repository)
                 </li>
                 <li>
                   Use the "Update" button to add the access token to the repo.

@@ -11,6 +11,7 @@ import de.aaaaaaah.velcom.backend.access.taskaccess.entities.TaskPriority;
 import de.aaaaaaah.velcom.backend.data.benchrepo.BenchRepo;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.listener.commits.DbUpdater;
+import de.aaaaaaah.velcom.backend.listener.github.GithubApiError;
 import de.aaaaaaah.velcom.backend.listener.github.GithubPrInteractor;
 import de.aaaaaaah.velcom.backend.storage.db.DBWriteAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
@@ -180,13 +181,16 @@ public class Listener {
 		try {
 			LOGGER.debug("Updating repo {}", repo.getId());
 			updateRepo(repo);
+		} catch (GithubApiError e) {
+			LOGGER.warn("Failed to update repo {}", repo.getId());
+			LOGGER.warn("{}", e.getMessage());
 		} catch (Exception e) {
 			LOGGER.warn("Failed to update repo {}", repo.getId(), e);
 		}
 	}
 
 	private void updateRepo(Repo repo)
-		throws SynchronizeCommitsException, IOException, InterruptedException, URISyntaxException {
+		throws SynchronizeCommitsException, IOException, InterruptedException, URISyntaxException, GithubApiError {
 
 		Optional<GithubPrInteractor> ghIntOpt = GithubPrInteractor
 			.fromRepo(repo, databaseStorage, commitAccess, queue, frontendUrl);

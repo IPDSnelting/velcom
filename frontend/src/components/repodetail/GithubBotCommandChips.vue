@@ -37,7 +37,7 @@ import {
   mdiCheckAll,
   mdiCircleSlice6
 } from '@mdi/js'
-import { GithubBotCommand, GithubBotCommandState } from '@/store/types'
+import { GithubBotCommand, GithubBotCommandState, Repo } from '@/store/types'
 
 type StateData = {
   color?: string
@@ -70,6 +70,9 @@ export default class GithubBotCommandChips extends Vue {
   @Prop()
   private readonly prs!: GithubBotCommand[]
 
+  @Prop()
+  private readonly repo!: Repo
+
   private description(state: GithubBotCommandState) {
     return stateDate[state].description
   }
@@ -83,7 +86,15 @@ export default class GithubBotCommandChips extends Vue {
   }
 
   private commentLink(command: GithubBotCommand) {
-    return `https://github.com/IPDSnelting/velcom/pull/${command.prNumber}#issuecomment-${command.sourceCommentId}`
+    const regex = /^(https:\/\/|git@)github.com[:/]([^/]+\/[^/.]+)(\.git)?$/
+    const match = regex.exec(this.repo.remoteURL)
+
+    if (match === null) {
+      return undefined
+    }
+
+    const repoName = match[2]
+    return `https://github.com/${repoName}/pull/${command.prNumber}#issuecomment-${command.sourceCommentId}`
   }
 }
 </script>

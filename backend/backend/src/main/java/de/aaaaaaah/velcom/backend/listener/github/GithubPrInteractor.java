@@ -111,18 +111,33 @@ public class GithubPrInteractor {
 		);
 	}
 
-	private JsonNode getResourceFromUrl(String issueUrl)
-		throws URISyntaxException, IOException, InterruptedException {
+	private void checkResponse(HttpResponse<JsonNode> response) throws GithubApiError {
+		if (response.statusCode() < 100 || response.statusCode() >= 300) {
+			JsonNode message = response.body().get("message");
+			if (message == null) {
+				throw new GithubApiError("Something went wrong", response.uri());
+			} else {
+				throw new GithubApiError(message.toString(), response.uri());
+			}
+		}
+	}
 
-		HttpRequest request = HttpRequest.newBuilder(new URI(issueUrl))
+	private JsonNode getResourceFromUrl(String issueUrl)
+		throws URISyntaxException, IOException, InterruptedException, GithubApiError {
+
+		URI uri = new URI(issueUrl);
+		HttpRequest request = HttpRequest.newBuilder(uri)
 			.header(HttpHeaders.AUTHORIZATION, basicAuthHeader)
 			.header(HttpHeaders.ACCEPT, "application/vnd.github.v3+json")
 			.build();
 		HttpResponse<JsonNode> response = client.send(request, jsonBodyHandler);
+		checkResponse(response);
 		return response.body();
 	}
 
-	private JsonNode getCommentPage(int page) throws IOException, InterruptedException {
+	private JsonNode getCommentPage(int page)
+		throws IOException, InterruptedException, GithubApiError {
+
 		URI uri = UriBuilder.fromUri("https://api.github.com/")
 			.path("repos")
 			.path(ghInfo.getRepoName())
@@ -141,12 +156,13 @@ public class GithubPrInteractor {
 			.header(HttpHeaders.ACCEPT, "application/vnd.github.v3+json")
 			.build();
 		HttpResponse<JsonNode> response = client.send(request, jsonBodyHandler);
+		checkResponse(response);
 		return response.body();
 	}
 
 	private Optional<Instant> findNewCommandCandidates(
 		List<Pair<GithubCommand, String>> commandCandidates)
-		throws IOException, InterruptedException, URISyntaxException {
+		throws IOException, InterruptedException, URISyntaxException, GithubApiError {
 
 		Set<Long> seen = new HashSet<>();
 		Instant commentCutoff = ghInfo.getCommentCutoff();
@@ -215,7 +231,9 @@ public class GithubPrInteractor {
 	}
 
 	private List<GithubCommand> keepOnlyAuthorizedCandidates(
-		List<Pair<GithubCommand, String>> commandCandidates) throws IOException, InterruptedException {
+		List<Pair<GithubCommand, String>> commandCandidates)
+		throws IOException, InterruptedException, GithubApiError {
+
 		Set<String> usernames = commandCandidates.stream()
 			.map(Pair::getSecond)
 			.collect(toSet());
@@ -235,6 +253,7 @@ public class GithubPrInteractor {
 				.header(HttpHeaders.ACCEPT, "application/vnd.github.v3+json")
 				.build();
 			HttpResponse<JsonNode> response = client.send(request, jsonBodyHandler);
+			checkResponse(response);
 			if (response.statusCode() != 200) {
 				LOGGER.debug("User {} doesn't have write permissions (not a collaborator)", username);
 				continue;
@@ -255,7 +274,7 @@ public class GithubPrInteractor {
 	}
 
 	public void searchForNewPrCommands()
-		throws IOException, InterruptedException, URISyntaxException {
+		throws IOException, InterruptedException, URISyntaxException, GithubApiError {
 
 		LOGGER.debug("Searching for new PR commands");
 
@@ -475,8 +494,11 @@ public class GithubPrInteractor {
 					+ "?hash1=" + commitHash.getHash())
 				.orElseGet(() -> frontendUrl + "run-detail/" + reply.getRunId().getIdAsString());
 
-			String body = "Benchmark of commit " + reply.getCommitHash().getHash() + " complete.\n\n"
-				+ link;
+			String body = "Here are the [benchmark results]("
+				+ link +
+				") of commit "
+				+ reply.getCommitHash().getHash()
+				+ ".";
 
 			HttpResponse<String> response = createPrComment(reply.getPr(), body);
 
