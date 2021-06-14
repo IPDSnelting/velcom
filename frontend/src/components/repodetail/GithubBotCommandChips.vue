@@ -86,19 +86,15 @@ export default class GithubBotCommandChips extends Vue {
   }
 
   private commentLink(command: GithubBotCommand) {
-    let url = this.repo.remoteURL
-    if (url.startsWith('https://')) {
-      // https://github.com/IPDSnelting/velcom.git
-      url = url.replace('.git', '')
-    } else if (url.startsWith('git@')) {
-      // git@github.com:IPDSnelting/velcom.git
-      url = url.substring(url.indexOf(':') + 1)
-      url = url.replace('.git', '')
-      url = `https://github.com/${url}`
+    const regex = /^(https:\/\/|git@)github.com[:/]([^/]+\/[^/.]+)(\.git)?$/
+    const match = regex.exec(this.repo.remoteURL)
+
+    if (match === null) {
+      return undefined
     }
-    // Format now:
-    // https://github.com/IPDSnelting/velcom
-    return `${url}/pull/${command.prNumber}#issuecomment-${command.sourceCommentId}`
+
+    const repoName = match[2]
+    return `https://github.com/${repoName}/pull/${command.prNumber}#issuecomment-${command.sourceCommentId}`
   }
 }
 </script>
