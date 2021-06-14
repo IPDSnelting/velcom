@@ -558,7 +558,7 @@ export default class EchartsDetailGraph extends Vue {
   // <!--</editor-fold>-->
 
   // <!--<editor-fold desc="SERIES GENERATION">-->
-  private findFirstSuccessful = (seriesId: SeriesId) => {
+  private findFirstSuccessful(seriesId: SeriesId) {
     const point = this.datapoints.find(it => it.successful(seriesId))
 
     if (point) {
