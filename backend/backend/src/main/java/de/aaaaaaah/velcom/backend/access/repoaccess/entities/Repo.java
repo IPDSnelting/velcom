@@ -62,10 +62,10 @@ public class Repo {
 
 	public Optional<String> getGithubRepoName() {
 		String remoteUrl = getRemoteUrlAsString();
-		Pattern pattern = Pattern.compile("github.com[:/]([^/]+/[^/.]+)(\\.git)?");
+		Pattern pattern = Pattern.compile("^(https://|git@)github.com[:/]([^/]+/[^/.]+)(\\.git)?$");
 		Matcher matcher = pattern.matcher(remoteUrl);
 		if (matcher.find()) {
-			return Optional.of(matcher.group(1));
+			return Optional.of(matcher.group(2));
 		} else {
 			return Optional.empty();
 		}
