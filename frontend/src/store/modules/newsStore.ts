@@ -63,7 +63,7 @@ export class NewsStore extends VxModule {
       (it: any) =>
         new RunDescriptionWithDifferences(
           runDescriptionFromJson(it.run),
-          it.significant_dimensions.map(differenceFromJson)
+          it.significant_differences.map(differenceFromJson)
         )
     )
 

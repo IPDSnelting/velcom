@@ -374,17 +374,20 @@ export class RunDescription {
 
 export class RunWithDifferences {
   readonly run: Run
-  readonly differences?: DimensionDifference[]
-  readonly significantDifferences?: DimensionDifference[]
+  readonly differences: DimensionDifference[]
+  readonly significantDifferences: DimensionDifference[]
+  readonly significantFailedDimensions: Dimension[]
 
   constructor(
     run: Run,
-    differences?: DimensionDifference[],
-    significantDifferences?: DimensionDifference[]
+    differences: DimensionDifference[],
+    significantDifferences: DimensionDifference[],
+    significantFailedDimensions: Dimension[]
   ) {
     this.run = run
     this.differences = differences
     this.significantDifferences = significantDifferences
+    this.significantFailedDimensions = significantFailedDimensions
   }
 }
 
@@ -446,11 +449,21 @@ export class RunComparison {
   readonly run1: Run
   readonly run2: Run
   readonly differences: DimensionDifference[]
+  readonly significantDifferences: DimensionDifference[]
+  readonly significantFailedDimensions: Dimension[]
 
-  constructor(run1: Run, run2: Run, differences: DimensionDifference[]) {
+  constructor(
+    run1: Run,
+    run2: Run,
+    differences: DimensionDifference[],
+    significantDifferences: DimensionDifference[],
+    significantFailedDimensions: Dimension[]
+  ) {
     this.run1 = run1
     this.run2 = run2
     this.differences = differences
+    this.significantDifferences = significantDifferences
+    this.significantFailedDimensions = significantFailedDimensions
   }
 }
 

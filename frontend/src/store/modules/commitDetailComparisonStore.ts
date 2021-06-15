@@ -9,10 +9,9 @@ import {
 } from '@/store/types'
 import axios from 'axios'
 import {
-  runFromJson,
   commitFromJson,
   comparisonFromJson,
-  differenceFromJson
+  runWithDifferencesFromJson
 } from '@/util/json/CommitComparisonJsonHelper'
 
 export class NotFoundError extends Error {}
@@ -41,18 +40,7 @@ export class CommitDetailComparisonStore extends VxModule {
         }
       })
 
-      const differences = response.data.differences
-        ? response.data.differences.map(differenceFromJson)
-        : undefined
-      const significantDifferences = response.data.significant_differences
-        ? response.data.significant_differences.map(differenceFromJson)
-        : undefined
-
-      return new RunWithDifferences(
-        runFromJson(response.data.run),
-        differences,
-        significantDifferences
-      )
+      return runWithDifferencesFromJson(response.data)
     } catch (e) {
       if (e.response && e.response.status === 404) {
         throw new NotFoundError()
