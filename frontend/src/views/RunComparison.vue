@@ -7,6 +7,12 @@
             <v-toolbar dark color="toolbarColor">Run Comparison</v-toolbar>
           </v-card-title>
           <v-card-text style="max-width: 1185px; margin: auto">
+            <run-significance-chips
+              class="mb-6"
+              :center="true"
+              :differences="comparison.differences"
+              :run-id="comparison.run2.id"
+            ></run-significance-chips>
             <comparison-table
               :first="comparison.run1"
               :second="comparison.run2"
@@ -46,9 +52,11 @@ import CommitOverviewBase from '@/components/overviews/CommitOverviewBase.vue'
 import RunInfo from '@/components/rundetail/RunInfo.vue'
 import TarOverview from '@/components/overviews/TarOverview.vue'
 import ComparisonRunInfo from '@/components/comparison/ComparisonRunInfo.vue'
+import RunSignificanceChips from '@/components/runs/RunSignificanceChips.vue'
 
 @Component({
   components: {
+    RunSignificanceChips,
     ComparisonRunInfo,
     'tar-overview': TarOverview,
     'commit-overview-base': CommitOverviewBase,

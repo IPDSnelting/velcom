@@ -3,7 +3,7 @@
     no-gutters
     class="ma-0 d-flex flex-wrap spaced"
     justify="center"
-    justify-sm="start"
+    :justify-sm="center ? 'center' : 'start'"
   >
     <v-col
       v-for="relevantChange in relevantChanges"
@@ -160,6 +160,9 @@ export default class RunSignificanceChips extends Vue {
 
   @Prop()
   private readonly runId!: RunId
+
+  @Prop({ default: false })
+  private readonly center!: boolean
 
   private get relevantChanges(): RelevantChange[] {
     return this.differences.map(it => new RelevantChange(it))
