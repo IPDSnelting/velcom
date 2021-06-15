@@ -11,7 +11,7 @@ import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.Dimension;
 import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.DimensionInfo;
 import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparator;
 import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparison;
-import de.aaaaaaah.velcom.backend.data.runcomparison.SignificanceFactors;
+import de.aaaaaaah.velcom.backend.data.significance.SignificanceFactors;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.utils.EndpointUtils;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimensionDifference;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRun;

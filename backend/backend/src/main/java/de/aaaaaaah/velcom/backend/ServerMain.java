@@ -16,7 +16,7 @@ import de.aaaaaaah.velcom.backend.data.benchrepo.BenchRepo;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.data.recentruns.SignificantRunsCollector;
 import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparator;
-import de.aaaaaaah.velcom.backend.data.runcomparison.SignificanceFactors;
+import de.aaaaaaah.velcom.backend.data.significance.SignificanceFactors;
 import de.aaaaaaah.velcom.backend.listener.Listener;
 import de.aaaaaaah.velcom.backend.restapi.authentication.Admin;
 import de.aaaaaaah.velcom.backend.restapi.authentication.AdminAuthenticator;

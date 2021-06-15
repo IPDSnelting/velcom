@@ -17,7 +17,7 @@ import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.Dimension;
 import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.DimensionInfo;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.BranchName;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RepoId;
-import de.aaaaaaah.velcom.backend.data.runcomparison.SignificanceFactors;
+import de.aaaaaaah.velcom.backend.data.significance.SignificanceFactors;
 import de.aaaaaaah.velcom.backend.restapi.exception.InvalidQueryParamsException;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonResult;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRun;

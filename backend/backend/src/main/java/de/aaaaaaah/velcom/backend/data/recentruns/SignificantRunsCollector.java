@@ -21,7 +21,7 @@ import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.Dimension;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.data.runcomparison.DimensionDifference;
 import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparator;
-import de.aaaaaaah.velcom.backend.data.runcomparison.SignificanceFactors;
+import de.aaaaaaah.velcom.backend.data.significance.SignificanceFactors;
 import io.micrometer.core.annotation.Timed;
 import java.util.ArrayList;
 import java.util.Collection;
