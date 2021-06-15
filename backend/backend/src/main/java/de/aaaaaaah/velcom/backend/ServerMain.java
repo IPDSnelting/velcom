@@ -169,9 +169,12 @@ public class ServerMain extends Application<GlobalConfig> {
 		Listener listener = new Listener(
 			databaseStorage,
 			repoStorage,
+			benchmarkAccess,
 			commitAccess,
+			dimensionAccess,
 			repoAccess,
 			benchRepo,
+			significanceDetector,
 			queue,
 			configuration.getPollInterval(),
 			configuration.getVacuumInterval(),

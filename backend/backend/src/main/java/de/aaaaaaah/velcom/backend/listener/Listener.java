@@ -2,14 +2,17 @@ package de.aaaaaaah.velcom.backend.listener;
 
 import static java.util.stream.Collectors.toSet;
 
+import de.aaaaaaah.velcom.backend.access.benchmarkaccess.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.access.committaccess.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.access.committaccess.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.access.dimensionaccess.DimensionReadAccess;
 import de.aaaaaaah.velcom.backend.access.repoaccess.RepoWriteAccess;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.Repo;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.taskaccess.entities.TaskPriority;
 import de.aaaaaaah.velcom.backend.data.benchrepo.BenchRepo;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
+import de.aaaaaaah.velcom.backend.data.significance.SignificanceDetector;
 import de.aaaaaaah.velcom.backend.listener.commits.DbUpdater;
 import de.aaaaaaah.velcom.backend.listener.github.GithubApiError;
 import de.aaaaaaah.velcom.backend.listener.github.GithubPrInteractor;
@@ -51,9 +54,12 @@ public class Listener {
 	private final DatabaseStorage databaseStorage;
 	private final RepoStorage repoStorage;
 
+	private final BenchmarkReadAccess benchmarkAccess;
 	private final CommitReadAccess commitAccess;
+	private final DimensionReadAccess dimensionAccess;
 	private final RepoWriteAccess repoAccess;
 	private final BenchRepo benchRepo;
+	private final SignificanceDetector significanceDetector;
 	private final Queue queue;
 
 	private final Duration vacuumInterval;
@@ -76,16 +82,21 @@ public class Listener {
 	 * @param queue used to add new commits to the queue
 	 * @param pollInterval the time the listener waits between updating its repos
 	 */
-	public Listener(DatabaseStorage databaseStorage, RepoStorage repoStorage,
-		CommitReadAccess commitAccess, RepoWriteAccess repoAccess, BenchRepo benchRepo, Queue queue,
+	public Listener(
+		DatabaseStorage databaseStorage, RepoStorage repoStorage, BenchmarkReadAccess benchmarkAccess,
+		CommitReadAccess commitAccess, DimensionReadAccess dimensionAccess, RepoWriteAccess repoAccess,
+		BenchRepo benchRepo, SignificanceDetector significanceDetector, Queue queue,
 		Duration pollInterval, Duration vacuumInterval, String frontendUrl) {
 
 		this.databaseStorage = databaseStorage;
 		this.repoStorage = repoStorage;
 
+		this.benchmarkAccess = benchmarkAccess;
 		this.commitAccess = commitAccess;
+		this.dimensionAccess = dimensionAccess;
 		this.repoAccess = repoAccess;
 		this.benchRepo = benchRepo;
+		this.significanceDetector = significanceDetector;
 		this.queue = queue;
 
 		this.vacuumInterval = vacuumInterval;
@@ -192,8 +203,16 @@ public class Listener {
 	private void updateRepo(Repo repo)
 		throws SynchronizeCommitsException, IOException, InterruptedException, URISyntaxException, GithubApiError {
 
-		Optional<GithubPrInteractor> ghIntOpt = GithubPrInteractor
-			.fromRepo(repo, databaseStorage, commitAccess, queue, frontendUrl);
+		Optional<GithubPrInteractor> ghIntOpt = GithubPrInteractor.fromRepo(
+			repo,
+			databaseStorage,
+			benchmarkAccess,
+			commitAccess,
+			dimensionAccess,
+			significanceDetector,
+			queue,
+			frontendUrl
+		);
 
 		if (ghIntOpt.isPresent()) {
 			GithubPrInteractor ghInteractor = ghIntOpt.get();
