@@ -27,6 +27,13 @@
       </span>
     </template>
 
+    <template #[`item.stddevPercent`]="{ item, value }">
+      <span v-if="Number.isFinite(value)">
+        {{ item.formatNumber(value * 100) }} %
+      </span>
+      <span v-else>-</span>
+    </template>
+
     <template
       v-for="slotName in ['item.valueFirst', 'item.valueSecond']"
       v-slot:[slotName]="{ item, value }"
@@ -69,6 +76,7 @@ class TableItem {
   readonly differencePercent?: number
   readonly valueSecond?: number
   readonly changeColor: string
+  readonly stddevPercent?: number
 
   constructor(
     benchmark: string,
@@ -78,6 +86,7 @@ class TableItem {
     valueFirst?: number,
     difference?: number,
     differencePercent?: number,
+    stddevPercent?: number,
     valueSecond?: number
   ) {
     this.benchmark = benchmark
@@ -86,6 +95,7 @@ class TableItem {
     this.valueFirst = valueFirst
     this.difference = difference
     this.differencePercent = differencePercent
+    this.stddevPercent = stddevPercent
     this.valueSecond = valueSecond
     this.changeColor = this.computeChangeColor(interpretation, difference)
   }
@@ -142,6 +152,7 @@ export default class RunComparisonTable extends Vue {
       { text: 'Benchmark', value: 'benchmark', align: 'left' },
       { text: 'Metric', value: 'metric', align: 'left' },
       { text: 'Unit', value: 'unit', align: 'left' },
+      { text: 'Stddev %', value: 'stddevPercent', align: 'left' },
       { text: this.first.id, value: 'valueFirst', align: 'right' },
       {
         text: '->',
@@ -176,6 +187,7 @@ export default class RunComparisonTable extends Vue {
           this.getValue(this.first, dimension),
           this.getDifference(dimension),
           this.getDifferencePercent(dimension),
+          this.getStddevPercent(dimension),
           this.getValue(this.second, dimension)
         )
     )
@@ -204,6 +216,23 @@ export default class RunComparisonTable extends Vue {
     )
     if (difference) {
       return difference.relDiff
+    }
+    return undefined
+  }
+
+  private getStddevPercent(dimension: Dimension): number | undefined {
+    const difference = this.differences.find(it =>
+      it.dimension.equals(dimension)
+    )
+    if (difference) {
+      const value = this.getValue(this.second, dimension)
+      const stddevDiff = difference.stddevDiff
+
+      if (value === undefined || stddevDiff === undefined) {
+        return undefined
+      }
+
+      return stddevDiff / value
     }
     return undefined
   }
