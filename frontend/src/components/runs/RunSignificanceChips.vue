@@ -1,5 +1,10 @@
 <template>
-  <v-row no-gutters class="ma-0" justify="center" justify-sm="start">
+  <v-row
+    no-gutters
+    class="ma-0 d-flex flex-wrap spaced"
+    justify="center"
+    justify-sm="start"
+  >
     <v-col
       v-for="relevantChange in relevantChanges"
       :key="
@@ -8,7 +13,6 @@
         relevantChange.id.metric
       "
       cols="auto"
-      class="mr-2 mt-2"
     >
       <v-chip
         label
@@ -162,3 +166,9 @@ export default class RunSignificanceChips extends Vue {
   }
 }
 </script>
+
+<style scoped>
+.spaced {
+  gap: 8px;
+}
+</style>
