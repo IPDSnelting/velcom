@@ -1,7 +1,7 @@
 <template>
   <v-card>
     <v-card-title>
-      <v-toolbar dark color="toolbarColor">
+      <v-toolbar dark :color="toolbarColor">
         <slot name="title">Run Information</slot>
       </v-toolbar>
     </v-card-title>
@@ -44,7 +44,7 @@ import {
 } from '@mdi/js'
 import { formatDate, formatDurationHuman } from '@/util/Times'
 import { Prop } from 'vue-property-decorator'
-import { Run } from '@/store/types'
+import { Run, RunResultSuccess } from '@/store/types'
 
 @Component
 export default class RunInfo extends Vue {
@@ -57,6 +57,11 @@ export default class RunInfo extends Vue {
 
   private formatDuration(start: Date, end: Date) {
     return formatDurationHuman(start, end)
+  }
+
+  private get toolbarColor() {
+    const successful = this.run.result instanceof RunResultSuccess
+    return successful ? 'toolbarColor' : 'warning'
   }
 
   private get runInfoItems() {
