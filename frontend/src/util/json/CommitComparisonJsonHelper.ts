@@ -118,11 +118,13 @@ export function comparisonFromJson(json: any): RunComparison {
 }
 
 export function runWithDifferencesFromJson(json: any): RunWithDifferences {
-  const differences = json.differences.map(differenceFromJson)
-  const significantDifferences =
-    json.significant_differences.map(differenceFromJson)
-  const significantFailedDimensions =
-    json.significant_failed_dimensions.map(dimensionFromJson)
+  const differences = (json.differences || []).map(differenceFromJson)
+  const significantDifferences = (json.significant_differences || []).map(
+    differenceFromJson
+  )
+  const significantFailedDimensions = (
+    json.significant_failed_dimensions || []
+  ).map(dimensionFromJson)
 
   return new RunWithDifferences(
     runFromJson(json.run),
