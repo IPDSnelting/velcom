@@ -540,36 +540,37 @@ public class GithubPrInteractor {
 
 			if (reasons.isPresent()) {
 				if (reasons.get().isEntireRunFailed()) {
-					msgBuilder.append("\nThe entire run has failed.");
+					msgBuilder.append("\nThe entire run failed.");
 				}
 
-				// e. g. "backend.build_time failed."
+				// e. g. "backend - build_time: failed"
 				for (Dimension dim : reasons.get().getSignificantFailedDimensions()) {
 					msgBuilder.append("\n")
 						.append(dim.getBenchmark())
-						.append(".")
+						.append(" - ")
 						.append(dim.getMetric())
-						.append(" failed.");
+						.append(": failed");
 				}
 
-				// e. g. "backend.build_time increased by 2.2 %." or  "frontend.todos changed to 0."
+				// e. g. "backend - build_time: increased by 2.2 %" or  "frontend - todos: changed to 0"
 				for (DimensionDifference diff : reasons.get().getSignificantDifferences()) {
 					msgBuilder
 						.append("\n")
 						.append(diff.getDimension().getBenchmark())
-						.append(".")
-						.append(diff.getDimension().getMetric());
+						.append(" - ")
+						.append(diff.getDimension().getMetric())
+						.append(": ");
 
 					Optional<Double> reldiff = diff.getReldiff();
 					if (reldiff.isPresent()) {
 						if (reldiff.get() > 0) {
-							msgBuilder.append(" increased by ");
+							msgBuilder.append("increased by ");
 						} else {
-							msgBuilder.append(" decreased by ");
+							msgBuilder.append("decreased by ");
 						}
-						msgBuilder.append(String.format("%.1f", reldiff.get())).append(" %.");
+						msgBuilder.append(String.format("%.1f", reldiff.get())).append(" %");
 					} else {
-						msgBuilder.append(" changed to 0.");
+						msgBuilder.append("changed to 0");
 					}
 				}
 			}
