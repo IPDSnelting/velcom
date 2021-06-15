@@ -197,7 +197,7 @@ public class ServerMain extends Application<GlobalConfig> {
 			new AllReposEndpoint(dimensionAccess, repoAccess, availableDimensionsCache),
 			new CommitEndpoint(benchmarkAccess, commitAccess, runCache),
 			new CompareEndpoint(benchmarkAccess, commitAccess, dimensionAccess, runCache, latestRunCache,
-				runComparator, significanceFactors),
+				runComparator, significanceDetector, significanceFactors),
 			new DebugEndpoint(benchmarkAccess, dispatcher),
 			new GraphComparisonEndpoint(benchmarkAccess, commitAccess, dimensionAccess),
 			new GraphDetailEndpoint(commitAccess, benchmarkAccess, dimensionAccess, repoAccess, runCache,
