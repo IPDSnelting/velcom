@@ -1,8 +1,12 @@
 package de.aaaaaaah.velcom.backend.data.significance;
 
+import static java.util.stream.Collectors.toSet;
+
 import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.Dimension;
 import de.aaaaaaah.velcom.backend.data.runcomparison.DimensionDifference;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Stream;
 
 public class SignificanceReasons {
 
@@ -28,5 +32,21 @@ public class SignificanceReasons {
 
 	public boolean isEntireRunFailed() {
 		return entireRunFailed;
+	}
+
+	public Set<Dimension> getDimensions() {
+		return Stream.concat(
+			significantDifferences.stream().map(DimensionDifference::getDimension),
+			significantFailedDimensions.stream()
+		).collect(toSet());
+	}
+
+	@Override
+	public String toString() {
+		return "SignificanceReasons{" +
+			"significantDifferences=" + significantDifferences +
+			", significantFailedDimensions=" + significantFailedDimensions +
+			", entireRunFailed=" + entireRunFailed +
+			'}';
 	}
 }

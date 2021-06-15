@@ -7,6 +7,7 @@ import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.Run;
 import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.Dimension;
 import de.aaaaaaah.velcom.backend.data.runcomparison.DimensionDifference;
 import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparator;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -16,13 +17,23 @@ public class SignificanceDetector {
 	private final SignificanceFactors significanceFactors;
 	private final RunComparator runComparator;
 
-	public SignificanceDetector(SignificanceFactors significanceFactors) {
-		this.significanceFactors = significanceFactors;
+	public SignificanceDetector(SignificanceFactors significanceFactors,
+		RunComparator runComparator) {
 
-		runComparator = new RunComparator(significanceFactors);
+		this.significanceFactors = significanceFactors;
+		this.runComparator = runComparator;
 	}
 
-	public Optional<SignificanceReasons> getSignificance(Run run, List<Run> comparedto,
+	/**
+	 * Check whether a run is significant when compared to multiple other runs.
+	 *
+	 * @param run the run whose significance to determine
+	 * @param comparedTo the other runs to compare against
+	 * @param significantDimensions the currently significant dimensions
+	 * @return a {@link SignificanceReasons} instance detailing why the run is significant, or {@code
+	 * 	Optional.empty()} if the run is not significant.
+	 */
+	public Optional<SignificanceReasons> getSignificance(Run run, Collection<Run> comparedTo,
 		Set<Dimension> significantDimensions) {
 
 		if (run.getResult().getRight().isEmpty()) {
@@ -38,7 +49,7 @@ public class SignificanceDetector {
 			.filter(significantDimensions::contains)
 			.collect(toList());
 
-		List<DimensionDifference> significantDifferences = comparedto.stream()
+		List<DimensionDifference> significantDifferences = comparedTo.stream()
 			.map(first -> runComparator.compare(first, run))
 			.flatMap(comparison -> comparison.getDifferences().stream())
 			.filter(difference -> significantDimensions.contains(difference.getDimension()))

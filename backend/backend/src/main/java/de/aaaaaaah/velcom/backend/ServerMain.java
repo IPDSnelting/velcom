@@ -16,6 +16,7 @@ import de.aaaaaaah.velcom.backend.data.benchrepo.BenchRepo;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.data.recentruns.SignificantRunsCollector;
 import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparator;
+import de.aaaaaaah.velcom.backend.data.significance.SignificanceDetector;
 import de.aaaaaaah.velcom.backend.data.significance.SignificanceFactors;
 import de.aaaaaaah.velcom.backend.listener.Listener;
 import de.aaaaaaah.velcom.backend.restapi.authentication.Admin;
@@ -158,9 +159,11 @@ public class ServerMain extends Application<GlobalConfig> {
 			configuration.getSignificanceMinStddevAmount()
 		);
 		RunComparator runComparator = new RunComparator(significanceFactors);
+		SignificanceDetector significanceDetector = new SignificanceDetector(significanceFactors,
+			runComparator);
 		SignificantRunsCollector significantRunsCollector = new SignificantRunsCollector(
 			significanceFactors, benchmarkAccess, commitAccess, dimensionAccess, runCache, latestRunCache,
-			runComparator);
+			significanceDetector);
 
 		// Listener
 		Listener listener = new Listener(

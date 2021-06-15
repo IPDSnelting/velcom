@@ -2,9 +2,7 @@ package de.aaaaaaah.velcom.backend.data.recentruns;
 
 import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.Run;
 import de.aaaaaaah.velcom.backend.data.runcomparison.DimensionDifference;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import de.aaaaaaah.velcom.backend.data.significance.SignificanceReasons;
 
 /**
  * A run that has been found to be significant. Contains the significant {@link
@@ -13,26 +11,26 @@ import java.util.Objects;
 public class SignificantRun {
 
 	private final Run run;
-	private final List<DimensionDifference> significantDifferences;
+	private final SignificanceReasons reasons;
 
-	public SignificantRun(Run run, List<DimensionDifference> significantDifferences) {
-		this.run = Objects.requireNonNull(run);
-		this.significantDifferences = new ArrayList<>(Objects.requireNonNull(significantDifferences));
+	public SignificantRun(Run run, SignificanceReasons reasons) {
+		this.run = run;
+		this.reasons = reasons;
 	}
 
 	public Run getRun() {
 		return run;
 	}
 
-	public List<DimensionDifference> getSignificantDifferences() {
-		return significantDifferences;
+	public SignificanceReasons getReasons() {
+		return reasons;
 	}
 
 	@Override
 	public String toString() {
 		return "SignificantRun{" +
 			"run=" + run +
-			", significantDifferences=" + significantDifferences +
+			", reasons=" + reasons +
 			'}';
 	}
 }
