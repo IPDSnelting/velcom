@@ -117,12 +117,12 @@ export function storeToLocalStorage(): void {
 }
 
 export async function restoreFromPassedSession(): Promise<void> {
-  console.log('Trying to restore')
+  console.info('Trying to restore tab state')
 
   const rawData = localStorage.getItem('persisted_session_state')
 
   if (rawData === null) {
-    console.log('Raw data really null')
+    console.info("Couldn't find any past state. Assuming I am a new tab")
     return
   }
 
@@ -130,11 +130,9 @@ export async function restoreFromPassedSession(): Promise<void> {
 
   // Older than 10 seconds. Should not happen, but better be safe than sorry.
   if (new Date().getTime() - accessTime > 10 * 1000) {
-    console.log('Is too old: ' + accessTime)
+    console.info('Found state is too old: ' + accessTime)
     return
   }
-
-  console.log('Used data: ' + data)
 
   sessionStorage.setItem('persisted_session_state_unwrapped', data)
 
@@ -150,8 +148,7 @@ export async function restoreFromPassedSession(): Promise<void> {
     state = stateWrapped
   }
 
-  console.log('Used state')
-  console.log(state)
+  console.info('Restored from saved tab state')
 
   // Detail module
   Object.assign(vxm.detailGraphModule, state.detailGraphModule)
