@@ -133,7 +133,8 @@ export default class StatusComparison extends Vue {
   private get baselineRepoId() {
     const baselineId = vxm.statusComparisonModule.baselineRepoId
 
-    if (!baselineId) {
+    // No baseline or doesn't exist anymore
+    if (!baselineId || !vxm.repoModule.repoById(baselineId)) {
       return null
     }
 
@@ -150,9 +151,9 @@ export default class StatusComparison extends Vue {
   }
 
   private get possibleBaselineRepos() {
-    return Array.from(
-      vxm.statusComparisonModule.selectedBranchesMap.keys()
-    ).map(id => vxm.repoModule.repoById(id))
+    return Array.from(vxm.statusComparisonModule.selectedBranchesMap.keys())
+      .map(id => vxm.repoModule.repoById(id))
+      .filter(it => it)
   }
 
   private get overlayText() {
