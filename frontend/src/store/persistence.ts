@@ -40,6 +40,7 @@ export const persistenceLocalStorage = new VuexPersistence<Partial<RootState>>({
       storage!.setItem(key, toJson(persistable))
       storage!.setItem(STORAGE_VERSION_KEY, STORAGE_VERSION_CURRENT)
     } catch (e) {
+      // eslint-disable-next-line no-console
       console.warn('Unable to save session data', e)
       // Ignore the store on error. This is nicer than displaying a white
       // page and rendering VelCom unusable.
@@ -55,6 +56,7 @@ export const persistenceLocalStorage = new VuexPersistence<Partial<RootState>>({
     try {
       return fromJson(data)
     } catch (e) {
+      // eslint-disable-next-line no-console
       console.warn('Unable to restore local data', e)
       // Discard local state on error. This is nicer than displaying a white
       // page and rendering VelCom unusable.
@@ -86,6 +88,7 @@ export const persistenceSessionStorage = new VuexPersistence<
       storage!.setItem(key, toJson(persistable))
       storage!.setItem(STORAGE_VERSION_KEY, STORAGE_VERSION_CURRENT)
     } catch (e) {
+      // eslint-disable-next-line no-console
       console.warn('Unable to save session data', e)
       // Ignore the store on error. This is nicer than displaying a white
       // page and rendering VelCom unusable.
@@ -100,6 +103,7 @@ export const persistenceSessionStorage = new VuexPersistence<
     try {
       return fromJson(data)
     } catch (e) {
+      // eslint-disable-next-line no-console
       console.warn('Unable to restore session data', e)
       // Discard local state on error. This is nicer than displaying a white
       // page and rendering VelCom unusable.
@@ -117,11 +121,13 @@ export function storeToLocalStorage(): void {
 }
 
 export async function restoreFromPassedSession(): Promise<void> {
+  // eslint-disable-next-line no-console
   console.info('Trying to restore tab state')
 
   const rawData = localStorage.getItem('persisted_session_state')
 
   if (rawData === null) {
+    // eslint-disable-next-line no-console
     console.info("Couldn't find any past state. Assuming I am a new tab")
     return
   }
@@ -130,6 +136,7 @@ export async function restoreFromPassedSession(): Promise<void> {
 
   // Older than 10 seconds. Should not happen, but better be safe than sorry.
   if (new Date().getTime() - accessTime > 10 * 1000) {
+    // eslint-disable-next-line no-console
     console.info('Found state is too old: ' + accessTime)
     return
   }
@@ -148,6 +155,7 @@ export async function restoreFromPassedSession(): Promise<void> {
     state = stateWrapped
   }
 
+  // eslint-disable-next-line no-console
   console.info('Restored from saved tab state')
 
   // Detail module
