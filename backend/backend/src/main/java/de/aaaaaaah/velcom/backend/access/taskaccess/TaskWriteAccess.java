@@ -10,6 +10,7 @@ import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.taskaccess.entities.Task;
 import de.aaaaaaah.velcom.backend.access.taskaccess.entities.TaskId;
 import de.aaaaaaah.velcom.backend.access.taskaccess.entities.TaskPriority;
+import de.aaaaaaah.velcom.backend.access.taskaccess.exceptions.NoSuchTaskException;
 import de.aaaaaaah.velcom.backend.access.taskaccess.exceptions.TaskCreationException;
 import de.aaaaaaah.velcom.backend.storage.db.DBReadAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DBWriteAccess;
@@ -183,9 +184,8 @@ public class TaskWriteAccess extends TaskReadAccess {
 			if (taskToStart.isEmpty()) {
 				return Optional.empty();
 			} else if (!allTaskIds.contains(taskToStart.get())) {
-				// The selector has returned an invalid task, which we'll just ignore.
-				// TODO: 08.11.20 Be more aggressive, throw an exception?
-				return Optional.empty();
+				// The selector is broken and has returned an invalid task
+				throw new NoSuchTaskException(taskToStart.get());
 			}
 
 			// The selector has returned a valid task

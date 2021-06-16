@@ -27,9 +27,9 @@ public class JsonShortRunDescription {
 	public static JsonShortRunDescription fromShortRunDescription(ShortRunDescription description) {
 		return new JsonShortRunDescription(
 			description.getId().getId(),
-			description.getCommitHash(),
-			description.getCommitSummary(),
-			description.getTarDescription()
+			description.getCommitHash().orElse(null),
+			description.getCommitSummary().orElse(null),
+			description.getTarDescription().orElse(null)
 		);
 	}
 

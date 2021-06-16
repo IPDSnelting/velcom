@@ -278,7 +278,5 @@ public class RepoEndpoint {
 		// since all (relevant) foreign key restraints are marked as ON DELETE CASCADE. This includes
 		// the queue table.
 		repoAccess.deleteRepo(repoId);
-
-		// TODO: 04.10.20 Notify queue/dispatcher of this deletion
 	}
 }

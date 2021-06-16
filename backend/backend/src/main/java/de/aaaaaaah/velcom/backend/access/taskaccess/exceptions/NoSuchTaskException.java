@@ -9,6 +9,11 @@ public class NoSuchTaskException extends RuntimeException {
 
 	private final TaskId invalidId;
 
+	public NoSuchTaskException(TaskId invalidId) {
+		super("no task with id " + invalidId);
+		this.invalidId = invalidId;
+	}
+
 	public NoSuchTaskException(Throwable t, TaskId invalidId) {
 		super("no task with id " + invalidId, t);
 		this.invalidId = invalidId;

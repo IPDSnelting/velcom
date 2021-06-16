@@ -75,7 +75,6 @@ public class BenchmarkReadAccess {
 			.join(MEASUREMENT_VALUE)
 			.on(MEASUREMENT_VALUE.MEASUREMENT_ID.eq(MEASUREMENT.ID))
 			.where(MEASUREMENT.RUN_ID.in(runIds))
-			// TODO: 20.12.20 Preserve order of values?
 			.fetchGroups(MEASUREMENT.ID, MEASUREMENT_VALUE.VALUE);
 
 		// 2. Load measurements
