@@ -8,6 +8,7 @@ import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.Dimension;
 import de.aaaaaaah.velcom.backend.data.runcomparison.DimensionDifference;
 import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparator;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -47,6 +48,7 @@ public class SignificanceDetector {
 			.filter(measurement -> measurement.getContent().isLeft())
 			.map(Measurement::getDimension)
 			.filter(significantDimensions::contains)
+			.sorted()
 			.collect(toList());
 
 		List<DimensionDifference> significantDifferences = comparedTo.stream()
@@ -54,6 +56,7 @@ public class SignificanceDetector {
 			.flatMap(comparison -> comparison.getDifferences().stream())
 			.filter(difference -> significantDimensions.contains(difference.getDimension()))
 			.filter(this::isSignificantDifference)
+			.sorted(Comparator.comparing(DimensionDifference::getDimension))
 			.collect(toList());
 
 		if (!significantDifferences.isEmpty() || !significantFailedDimensions.isEmpty()) {
