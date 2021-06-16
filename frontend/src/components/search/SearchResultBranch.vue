@@ -14,12 +14,7 @@
                 </router-link>
               </v-list-item-title>
               <v-list-item-subtitle>
-                <span v-if="item.commitSummary">
-                  {{ item.commitSummary }}
-                </span>
-                <span v-else class="font-italic">
-                  Loading data for branch head...
-                </span>
+                {{ item.commitSummary }}
               </v-list-item-subtitle>
             </v-col>
             <v-col cols="auto">
@@ -29,7 +24,7 @@
                     <text-chip :text="item.hash"></text-chip>
                   </v-col>
                   <span class="pl-3">
-                    <slot name="compare-actions" :has-run="hasRun"></slot>
+                    <slot name="compare-actions" :has-run="item.hasRun"></slot>
                   </span>
                 </v-row>
               </v-container>
@@ -66,10 +61,6 @@ export default class SearchResultBranch extends Vue {
       name: 'run-detail',
       params: { first: this.item.repoId, second: this.item.hash }
     }
-  }
-
-  private get hasRun() {
-    return this.item.runId !== undefined
   }
 
   private readonly branchIcon = mdiSourceBranch

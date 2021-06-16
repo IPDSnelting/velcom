@@ -752,21 +752,21 @@ export class SearchItemBranch {
   readonly repoId: RepoId
   readonly name: string
   readonly hash: CommitHash
-  runId?: RunId
-  commitSummary?: string
+  readonly commitSummary: string
+  readonly hasRun: boolean
 
   constructor(
     repoId: RepoId,
     name: string,
     hash: CommitHash,
-    commitSummary?: string,
-    runId?: RunId
+    commitSummary: string,
+    hasRun: boolean
   ) {
     this.repoId = repoId
     this.name = name
     this.hash = hash
     this.commitSummary = commitSummary
-    this.runId = runId
+    this.hasRun = hasRun
   }
 }
 
