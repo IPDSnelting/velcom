@@ -82,6 +82,9 @@ def get_lines(repo_path: Path, languages: List[str]) -> int:
 
     total = 0
     for language in languages:
+        if not language in parsed_json:
+            continue
+
         total += parsed_json[language]["code"]
 
         # Tokei spits out a nested object of the format:
@@ -181,7 +184,7 @@ def main():
             "sloc",
             "lines",
             I_NEUTRAL,
-            lambda: [get_lines(repo_path, ["TypeScript", "Vue", "Css", "Html"])],
+            lambda: [get_lines(repo_path, ["TypeScript", "Vue", "Css", "CSS", "Html"])],
         )
 
         measure(
