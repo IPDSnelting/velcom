@@ -164,7 +164,6 @@ public class QueueEndpoint {
 		// of that happening is low enough that putting in the effort to perform the checks in an atomic
 		// way is not worth it.
 
-		// TODO: Really don't tell them the id of the existing task?
 		final Optional<Task> insertedTask = queue
 			.addCommit(AUTHOR_NAME_ADMIN, repoId, commitHash, TaskPriority.MANUAL);
 

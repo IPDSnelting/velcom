@@ -18,7 +18,6 @@ public class Task {
 	private final TaskId id;
 	private final String author;
 	private final TaskPriority priority;
-	// TODO: 07.11.20 Get rid of one of these two times
 	private final Instant insertTime;
 	private final Instant updateTime;
 	private final Either<CommitSource, TarSource> source;

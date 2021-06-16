@@ -297,8 +297,9 @@ public class Listener {
 			reclone = true;
 
 		} catch (InvalidRemoteUrlException e) {
-			// TODO: 19.10.20 Maybe just change remote url instead of recloning the entire repo?
-			// Shouldn't matter too much in any case, as this is expected to happen very rarely.
+			// This reclones the entire repo instead of trying to change the remote url. This should be
+			// more robust than trying to set the remote url. The extra overhead doesn't really matter as
+			// this is expected to happen very rarely.
 			LOGGER.info("Repo {} has wrong remote url, recloning...", repoName);
 			LOGGER.debug("real url: {}, target url: {}", e.getRealRemoteUrl(), e.getTargetRemoteUrl());
 			reclone = true;

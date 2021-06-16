@@ -61,7 +61,6 @@ public class DbUpdater {
 	 * @throws DbUpdateException if the db could not be updated for a repo. Other repos may have
 	 * 	already been updated successfully.
 	 */
-	// TODO: 21.10.20 Delete unreachable commits
 	public List<CommitHash> update() throws DbUpdateException {
 		try {
 			// Checking this now since #insertAllUnknownCommits() will change the result
