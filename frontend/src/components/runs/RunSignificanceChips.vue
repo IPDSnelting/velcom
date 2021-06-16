@@ -40,7 +40,7 @@
       :key="failedDimension.toString()"
       cols="auto"
     >
-      <v-chip label outlined color="warning" :input-value="true">
+      <v-chip label outlined color="warning" :input-value="false">
         <v-icon left :size="20">{{ failedIcon }}</v-icon>
         {{ failedDimension.toString() }}
         <span class="font-weight-bold pl-3" style="font-size: 1.1rem">
@@ -175,7 +175,7 @@ export default class RunSignificanceChips extends Vue {
   @Prop()
   private readonly runId!: RunId
 
-  @Prop({ default: [] })
+  @Prop({ default: () => [] })
   private readonly failedSignificantDimensions!: Dimension[]
 
   @Prop({ default: false })

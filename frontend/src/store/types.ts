@@ -393,11 +393,17 @@ export class RunWithDifferences {
 
 export class RunDescriptionWithDifferences {
   readonly run: RunDescription
-  readonly differences: DimensionDifference[]
+  readonly significantDifferences: DimensionDifference[]
+  readonly significantFailedDimensions: Dimension[]
 
-  constructor(run: RunDescription, differences: DimensionDifference[]) {
+  constructor(
+    run: RunDescription,
+    significantDifferences: DimensionDifference[],
+    significantFailedDimensions: Dimension[]
+  ) {
     this.run = run
-    this.differences = differences
+    this.significantDifferences = significantDifferences
+    this.significantFailedDimensions = significantFailedDimensions
   }
 }
 
