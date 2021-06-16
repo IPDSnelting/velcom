@@ -1,8 +1,8 @@
 <template>
   <v-container fluid class="pb-0">
     <v-tabs v-model="selectedTab" height="25" centered class="mb-2">
-      <v-tab>Over Time</v-tab>
-      <v-tab>Status Comparison</v-tab>
+      <v-tab>Change over time</v-tab>
+      <v-tab>Current status</v-tab>
     </v-tabs>
 
     <v-tabs-items v-model="selectedTab">
