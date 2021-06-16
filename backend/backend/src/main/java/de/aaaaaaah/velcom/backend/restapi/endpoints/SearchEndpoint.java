@@ -111,9 +111,9 @@ public class SearchEndpoint {
 
 			this.id = run.getId().getIdAsString();
 			this.repoId = Optional.ofNullable(repoId).map(RepoId::getIdAsString).orElse(null);
-			this.commitHash = run.getCommitHash();
-			this.commitSummary = run.getCommitSummary();
-			this.tarDescription = run.getTarDescription();
+			this.commitHash = run.getCommitHash().orElse(null);
+			this.commitSummary = run.getCommitSummary().orElse(null);
+			this.tarDescription = run.getTarDescription().orElse(null);
 		}
 	}
 }

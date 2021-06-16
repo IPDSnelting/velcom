@@ -10,7 +10,8 @@ public class ShortRunDescription {
 
 	private final RunId id;
 
-	// TODO: 2020-12-30 Use Either
+	// Not using an Either since this data type's abstraction level is pretty low and in the places it
+	// is used, we don't really need the guarantees that would give us.
 	@Nullable
 	private final String commitHash;
 	@Nullable
@@ -20,6 +21,18 @@ public class ShortRunDescription {
 
 	public ShortRunDescription(RunId id, @Nullable String commitHash, @Nullable String commitMessage,
 		@Nullable String tarDescription) {
+
+		boolean commitHashNull = commitHash == null;
+		boolean commitMessageNull = commitMessage == null;
+		boolean tarDescriptionNull = tarDescription == null;
+		if (commitHashNull != commitMessageNull) {
+			throw new IllegalArgumentException(
+				"commitHash and commitMessage must either both be null or non-null");
+		}
+		if (commitHashNull == tarDescriptionNull) {
+			throw new IllegalArgumentException(
+				"exactly one of commitHash and tarDescription must be null");
+		}
 
 		this.id = id;
 		this.commitHash = commitHash;
@@ -34,19 +47,16 @@ public class ShortRunDescription {
 		return id;
 	}
 
-	@Nullable
-	public String getCommitHash() {
-		return commitHash;
+	public Optional<String> getCommitHash() {
+		return Optional.ofNullable(commitHash);
 	}
 
-	@Nullable
-	public String getCommitSummary() {
-		return commitSummary;
+	public Optional<String> getCommitSummary() {
+		return Optional.ofNullable(commitSummary);
 	}
 
-	@Nullable
-	public String getTarDescription() {
-		return tarDescription;
+	public Optional<String> getTarDescription() {
+		return Optional.ofNullable(tarDescription);
 	}
 
 	@Override
