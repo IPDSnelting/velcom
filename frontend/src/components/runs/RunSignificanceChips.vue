@@ -17,8 +17,9 @@
       <v-chip
         label
         outlined
+        active-class="hide-active-state"
         :color="relevantChange.color"
-        :input-value="true"
+        :input-value="false"
         :to="{
           name: 'run-comparison',
           params: {
@@ -194,5 +195,8 @@ export default class RunSignificanceChips extends Vue {
 <style scoped>
 .spaced {
   gap: 8px;
+}
+.hide-active-state::before {
+  background: transparent !important;
 }
 </style>
