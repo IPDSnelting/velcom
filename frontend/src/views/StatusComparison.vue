@@ -90,7 +90,6 @@ import { PermanentLinkOptions } from '@/store/modules/detailGraphStore'
   }
 })
 export default class StatusComparison extends Vue {
-  private linkInitializationComplete = false
   private data: StatusComparisonPoint[] = []
 
   @Prop({ default: '100%' })
@@ -103,7 +102,7 @@ export default class StatusComparison extends Vue {
   }
 
   private get selectedBranches() {
-    return vxm.statusComparisonModule.selectedBranchesMap
+    return vxm.comparisonGraphModule.selectedBranches
   }
 
   private get selectedDimensions() {
@@ -123,11 +122,11 @@ export default class StatusComparison extends Vue {
   }
 
   private toggleRepoBranch(payload: { repoId: string; branch: string }) {
-    vxm.statusComparisonModule.toggleRepoBranch(payload)
+    vxm.comparisonGraphModule.toggleRepoBranch(payload)
   }
 
   private setRepoBranches(payload: { repoId: string; branches: string[] }) {
-    vxm.statusComparisonModule.setSelectedBranchesForRepo(payload)
+    vxm.comparisonGraphModule.setSelectedBranchesForRepo(payload)
   }
 
   private get baselineRepoId() {
@@ -139,7 +138,7 @@ export default class StatusComparison extends Vue {
     }
 
     // Baseline is not selected => Ignore it
-    if (!vxm.statusComparisonModule.selectedBranchesMap.has(baselineId)) {
+    if (!vxm.comparisonGraphModule.selectedBranches.has(baselineId)) {
       return null
     }
 
@@ -151,7 +150,7 @@ export default class StatusComparison extends Vue {
   }
 
   private get possibleBaselineRepos() {
-    return Array.from(vxm.statusComparisonModule.selectedBranchesMap.keys())
+    return Array.from(vxm.comparisonGraphModule.selectedBranches.keys())
       .map(id => vxm.repoModule.repoById(id))
       .filter(it => it)
   }
@@ -212,17 +211,52 @@ export default class StatusComparison extends Vue {
   }
 
   @Watch('selectedBranches')
-  private async fetchData() {
-    // Prevent fetching the graph twice: Once when adjusting to the link and once when explicitly calling fetchData
-    if (!this.linkInitializationComplete) {
+  private async onBranchesChanged(
+    newBranches: Map<RepoId, string[]>,
+    oldBranches: Map<RepoId, string[]>
+  ) {
+    // This might happen if the repos are re-created. We only need to make an HTTP request on actual changes though
+    // TODO: This should probably be handled in the store and not the callers?
+    if (this.mapEquals(oldBranches, newBranches)) {
       return
     }
+    await this.fetchData()
+  }
+
+  private mapEquals(
+    first: Map<RepoId, string[]>,
+    second: Map<RepoId, string[]>
+  ) {
+    if (first.size !== second.size) {
+      return false
+    }
+
+    for (const [key, val] of first) {
+      if (!second.has(key)) {
+        return false
+      }
+      const firstValues = new Set(val)
+      const secondValues = second.get(key)!
+
+      if (firstValues.size !== secondValues.length) {
+        return false
+      }
+
+      for (const secondValue of secondValues) {
+        if (!firstValues.has(secondValue)) {
+          return false
+        }
+      }
+    }
+
+    return true
+  }
+
+  private async fetchData() {
     this.data = await vxm.statusComparisonModule.fetch()
   }
 
   private async mounted() {
-    await vxm.statusComparisonModule.adjustToPermanentLink(this.$route)
-    this.linkInitializationComplete = true
     await this.fetchData()
   }
 }

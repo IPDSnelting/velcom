@@ -196,7 +196,9 @@ export class ComparisonGraphStore extends VxModule {
       // Repos might not exist anymore, as the selected branches are persisted
       .filter(id => vxm.repoModule.repoById(id) !== undefined)
       .forEach(repoId => {
-        const branches = this._selectedBranches[repoId]
+        // Slicing so the arrays are not shared! Sharing them might lead to
+        // weird behaviour when comparing with a previous version of this map
+        const branches = this._selectedBranches[repoId].slice()
         if (branches && branches.length > 0) {
           map.set(repoId, branches)
         }

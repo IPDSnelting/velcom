@@ -1,14 +1,12 @@
-import { action, createModule, mutation } from 'vuex-class-component'
+import { action, createModule } from 'vuex-class-component'
 import {
   Dimension,
   dimensionIdToString,
-  RepoId,
   StatusComparisonPoint
 } from '@/store/types'
 import axios from 'axios'
 import { statusComparisonPointFromJson } from '@/util/json/StatusComparisonJsonHelper'
 import { formatDimensions, formatRepos } from '@/util/Texts'
-import Vue from 'vue'
 import { PermanentLinkOptions } from '@/store/modules/detailGraphStore'
 import router from '@/router'
 import { respectOptions } from '@/util/LinkUtils'
@@ -21,8 +19,6 @@ const VxModule = createModule({
 })
 
 export class StatusComparisonStore extends VxModule {
-  private selectedBranches: { [repoId: string]: string[] } = {}
-
   graph: StatusComparisonPoint[] = []
   baselineRepoId: string | null = null
   selectedDimensions: Dimension[] = []
@@ -32,7 +28,7 @@ export class StatusComparisonStore extends VxModule {
 
   @action
   async fetch(): Promise<StatusComparisonPoint[]> {
-    const repos = this.selectedBranchesMap
+    const repos = vxm.comparisonGraphModule.selectedBranches
 
     // Nothing selected
     if (repos.size === 0) {
@@ -83,46 +79,16 @@ export class StatusComparisonStore extends VxModule {
       const repoParts = fullString.split('::')
       repoParts.forEach(repoPart => {
         const [repoId, ...branches] = repoPart.split(':')
-        this.setSelectedBranchesForRepo({ repoId, branches })
+        vxm.comparisonGraphModule.setSelectedBranchesForRepo({
+          repoId,
+          branches
+        })
       })
     }
 
     if (link.query.baseline && typeof link.query.baseline === 'string') {
       this.baselineRepoId = link.query.baseline
     }
-  }
-
-  @mutation
-  setSelectedBranchesForRepo(payload: {
-    repoId: RepoId
-    branches: string[]
-  }): void {
-    Vue.set(this.selectedBranches, payload.repoId, payload.branches)
-  }
-
-  @mutation
-  toggleRepoBranch(payload: { repoId: RepoId; branch: string }): void {
-    let branches: string[] = this.selectedBranches[payload.repoId] || []
-
-    if (branches.includes(payload.branch)) {
-      branches = branches.filter(it => it !== payload.branch)
-    } else {
-      branches.push(payload.branch)
-    }
-
-    Vue.set(this.selectedBranches, payload.repoId, branches)
-  }
-
-  get selectedBranchesMap(): Map<RepoId, string[]> {
-    const repos = new Map<RepoId, string[]>()
-
-    Object.entries(this.selectedBranches).forEach(([repoId, branches]) => {
-      if (branches.length > 0) {
-        repos.set(repoId, branches)
-      }
-    })
-
-    return repos
   }
 
   /**
@@ -137,7 +103,7 @@ export class StatusComparisonStore extends VxModule {
           repos: respectOptions(
             options,
             'includeDataRestrictions',
-            formatRepos(this.selectedBranchesMap)
+            formatRepos(vxm.comparisonGraphModule.selectedBranches)
           ),
           baseline: respectOptions(
             options,
@@ -163,7 +129,6 @@ export class StatusComparisonStore extends VxModule {
    */
   static toPlainObject(store: StatusComparisonStore): unknown {
     return {
-      selectedBranches: store.selectedBranches,
       baselineRepoId: store.baselineRepoId,
       selectedDimensions: store.selectedDimensions,
       selectedDimensionSelector: store.selectedDimensionSelector,
