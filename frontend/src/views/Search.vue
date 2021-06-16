@@ -106,7 +106,6 @@ import Component from 'vue-class-component'
 import SearchResultList from '@/components/search/SearchResultList.vue'
 import { vxm } from '@/store'
 import {
-  RepoBranch,
   RepoId,
   SearchItem,
   SearchItemBranch,
@@ -118,9 +117,6 @@ import { debounce } from '@/util/Debouncer'
 import { mdiSwapHorizontalBold } from '@mdi/js'
 import { RawLocation } from 'vue-router'
 import RepoSelectionComponent from '@/components/misc/RepoSelectionComponent.vue'
-import { Flavor } from '@/util/FlavorTypes'
-
-type CommitIdentifier = Flavor<string, 'repo_identifier'>
 
 @Component({
   components: { RepoSelectionComponent, SearchResultList }
@@ -133,7 +129,6 @@ export default class Search extends Vue {
   private compareSecond: SearchItem | null = null
   private repoId: RepoId | null = null
   private constrainToRepo = false
-  private branchItems: Map<CommitIdentifier, SearchItemBranch> = new Map()
 
   @Watch('searchQuery')
   private onQueryChange() {
@@ -223,64 +218,15 @@ export default class Search extends Vue {
     }
   }
 
-  private findBranchItems(): SearchItemBranch[] {
-    if (this.searchQuery.length === 0) {
-      return []
-    }
-
-    const branchMatchesQuery = (branch: RepoBranch) =>
-      branch.name
-        .toLocaleLowerCase()
-        .includes(this.searchQuery.toLocaleLowerCase())
-
-    return this.allRepos
-      .filter(it => !this.constrainToRepo || it.id === this.repoId)
-      .flatMap(repo => {
-        return repo.branches.filter(branchMatchesQuery).map(branch => {
-          const key = branch.lastCommit + repo.id
-          if (this.branchItems.has(key)) {
-            return this.branchItems.get(key)!
-          }
-          const item = new SearchItemBranch(
-            repo.id,
-            branch.name,
-            branch.lastCommit,
-            undefined,
-            undefined
-          )
-          this.branchItems.set(key, item)
-          this.fetchBranchInformation(item)
-
-          return item
-        })
-      })
-  }
-
-  private async fetchBranchInformation(branchItem: SearchItemBranch) {
-    const commit = await vxm.commitDetailComparisonModule.fetchCommit({
-      commitHash: branchItem.hash,
-      repoId: branchItem.repoId
-    })
-    branchItem.commitSummary = commit.summary
-    if (commit.runs.length > 0) {
-      branchItem.runId = commit.runs[0].runId
-    }
-  }
-
-  private setItems(items: SearchItem[]) {
-    this.items = (this.findBranchItems() as SearchItem[]).concat(items)
-  }
-
   private async executeSearch() {
     if (this.searchQuery.length === 0) {
-      this.setItems([])
+      this.items = []
       return
     }
-    const items = await vxm.runSearchModule.searchRun({
+    this.items = await vxm.runSearchModule.searchRun({
       query: this.searchQuery,
       repoId: this.constrainToRepo ? this.repoId || undefined : undefined
     })
-    this.setItems(items)
   }
 
   private mounted() {

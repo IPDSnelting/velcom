@@ -24,10 +24,12 @@ import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.Run;
 import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.RunError;
 import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.RunErrorType;
 import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.RunId;
+import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.SearchRunDescription;
 import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.ShortRunDescription;
 import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.sources.CommitSource;
 import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.sources.TarSource;
 import de.aaaaaaah.velcom.backend.access.benchmarkaccess.exceptions.NoSuchRunException;
+import de.aaaaaaah.velcom.backend.access.committaccess.entities.Commit;
 import de.aaaaaaah.velcom.backend.access.committaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.Dimension;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RepoId;
@@ -275,15 +277,23 @@ public class BenchmarkReadAccess {
 		}
 	}
 
-	public List<Pair<ShortRunDescription, Optional<RepoId>>> searchRuns(Integer limit,
+	public List<SearchRunDescription> searchRuns(Integer limit,
 		@Nullable RepoId repoId, String queryStr) {
 
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
 			var query = db.dsl()
-				.select(RUN.ID, KNOWN_COMMIT.HASH, KNOWN_COMMIT.MESSAGE, RUN.TAR_DESC, RUN.REPO_ID)
+				.select(
+					RUN.ID,
+					RUN.REPO_ID,
+					KNOWN_COMMIT.MESSAGE,
+					RUN.TAR_DESC,
+					RUN.START_TIME,
+					RUN.STOP_TIME
+				)
 				.from(RUN)
 				.leftOuterJoin(KNOWN_COMMIT)
-				.on(KNOWN_COMMIT.HASH.eq(RUN.COMMIT_HASH))
+				.on(KNOWN_COMMIT.REPO_ID.eq(RUN.REPO_ID))
+				.and(KNOWN_COMMIT.HASH.eq(RUN.COMMIT_HASH))
 				.where(RUN.ID.contains(queryStr)
 					.or(RUN.AUTHOR.contains(queryStr))
 					.or(RUN.RUNNER_NAME.contains(queryStr))
@@ -297,14 +307,16 @@ public class BenchmarkReadAccess {
 			return query.orderBy(RUN.START_TIME.desc())
 				.limit(limit)
 				.stream()
-				.map(record -> new Pair<>(
-					new ShortRunDescription(
-						RunId.fromString(record.value1()),
-						record.value2(),
-						record.value3(),
-						record.value4()
-					),
-					Optional.ofNullable(record.value5()).map(RepoId::fromString)
+				.map(record -> new SearchRunDescription(
+					RunId.fromString(record.value1()),
+					Optional.ofNullable(record.value2()).map(RepoId::fromString).orElse(null),
+					Optional.ofNullable(record.value3())
+						.map(Commit::splitMessageIntoSections)
+						.map(Pair::getFirst)
+						.orElse(null),
+					record.value4(),
+					record.value5(),
+					record.value6()
 				))
 				.collect(toList());
 		}

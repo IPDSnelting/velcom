@@ -12,6 +12,7 @@ import de.aaaaaaah.velcom.backend.access.repoaccess.entities.BranchName;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RemoteUrl;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.Repo;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RepoId;
+import de.aaaaaaah.velcom.backend.access.repoaccess.entities.SearchBranchDescription;
 import de.aaaaaaah.velcom.backend.access.repoaccess.exceptions.NoSuchRepoException;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import java.nio.file.Path;
@@ -163,7 +164,7 @@ class RepoReadAccessTest {
 	}
 
 	@Test
-	void getBranches() {
+	void getAllBranches() {
 		assertThat(access.getAllBranches(REPO1_ID))
 			.containsExactlyInAnyOrderElementsOf(REPO1_BRANCHES);
 
@@ -175,5 +176,30 @@ class RepoReadAccessTest {
 
 		assertThat(access.getAllBranches(new RepoId()))
 			.isEmpty();
+	}
+
+	@Test
+	void searchBranches() {
+		assertThat(access.searchBranches(5, null, "n"))
+			.containsExactlyInAnyOrder(
+				new SearchBranchDescription(REPO1_ID, BranchName.fromName("main"),
+					new CommitHash("07dcbfbee1c5c833614d00ce70c15621c939806c"), "message", false),
+				new SearchBranchDescription(REPO2_ID, BranchName.fromName("green"),
+					new CommitHash("018ec13f2c2d2a711c44a4f8b7ff0f29050e6234"), "message", false)
+			);
+
+		assertThat(access.searchBranches(5, REPO1_ID, "e"))
+			.containsExactlyInAnyOrder(
+				new SearchBranchDescription(REPO1_ID, BranchName.fromName("test"),
+					new CommitHash("57b0e77894a2b7270ade8767b355ed8a283fffb0"), "message", false)
+			);
+
+		assertThat(access.searchBranches(2, null, "e"))
+			.containsExactly(
+				new SearchBranchDescription(REPO2_ID, BranchName.fromName("blue"),
+					new CommitHash("0b4f005028fb79d1e8f6c1f6e84dcf804fcf5103"), "message", false),
+				new SearchBranchDescription(REPO2_ID, BranchName.fromName("green"),
+					new CommitHash("018ec13f2c2d2a711c44a4f8b7ff0f29050e6234"), "message", false)
+			);
 	}
 }

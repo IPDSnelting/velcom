@@ -9,6 +9,7 @@ import static org.jooq.codegen.db.tables.KnownCommit.KNOWN_COMMIT;
 import static org.jooq.codegen.db.tables.Run.RUN;
 import static org.jooq.impl.DSL.exists;
 import static org.jooq.impl.DSL.field;
+import static org.jooq.impl.DSL.one;
 import static org.jooq.impl.DSL.select;
 
 import de.aaaaaaah.velcom.backend.access.committaccess.entities.Commit;
@@ -38,7 +39,6 @@ import org.jooq.codegen.db.tables.records.KnownCommitRecord;
 import org.jooq.exception.DataAccessException;
 import org.jooq.exception.NoDataFoundException;
 import org.jooq.exception.TooManyRowsException;
-import org.jooq.impl.DSL;
 
 /**
  * Provides read access to the git commits stored in the database.
@@ -511,6 +511,7 @@ public class CommitReadAccess {
 		}
 	}
 
+	// TODO: 06.06.21 Add tests for this function
 	public List<Pair<Commit, Boolean>> searchCommits(int limit, @Nullable RepoId repoId,
 		String queryStr) {
 
@@ -526,7 +527,7 @@ public class CommitReadAccess {
 					KNOWN_COMMIT.COMMITTER,
 					KNOWN_COMMIT.COMMITTER_DATE,
 					KNOWN_COMMIT.MESSAGE,
-					field(exists(select(DSL.one())
+					field(exists(select(one())
 						.from(RUN)
 						.where(RUN.REPO_ID.eq(KNOWN_COMMIT.REPO_ID))
 						.and(RUN.COMMIT_HASH.eq(KNOWN_COMMIT.HASH))

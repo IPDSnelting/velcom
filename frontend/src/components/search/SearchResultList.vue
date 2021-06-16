@@ -55,7 +55,6 @@ import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 import { SearchItem, SearchItemCommit, SearchItemRun } from '@/store/types'
 import SearchResultCommit from '@/components/search/SearchResultCommit.vue'
-import SearchResultTar from '@/components/search/SearchResultTar.vue'
 import SearchResultRun from '@/components/search/SearchResultRun.vue'
 import { mdiScaleBalance } from '@mdi/js'
 import SearchResultBranch from '@/components/search/SearchResultBranch.vue'
@@ -85,8 +84,8 @@ class DisplayedItem {
   components: {
     commit: SearchResultCommit,
     branch: SearchResultBranch,
-    tar: SearchResultTar,
-    run: SearchResultRun
+    run: SearchResultRun,
+    tar: SearchResultRun
   }
 })
 export default class SearchResultList extends Vue {

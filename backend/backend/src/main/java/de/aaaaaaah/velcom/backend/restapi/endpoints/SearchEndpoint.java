@@ -3,10 +3,12 @@ package de.aaaaaaah.velcom.backend.restapi.endpoints;
 import static java.util.stream.Collectors.toList;
 
 import de.aaaaaaah.velcom.backend.access.benchmarkaccess.BenchmarkReadAccess;
-import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.ShortRunDescription;
+import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.SearchRunDescription;
 import de.aaaaaaah.velcom.backend.access.committaccess.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.access.committaccess.entities.Commit;
+import de.aaaaaaah.velcom.backend.access.repoaccess.RepoReadAccess;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RepoId;
+import de.aaaaaaah.velcom.backend.access.repoaccess.entities.SearchBranchDescription;
 import io.micrometer.core.annotation.Timed;
 import java.util.List;
 import java.util.Optional;
@@ -27,10 +29,14 @@ public class SearchEndpoint {
 
 	private final BenchmarkReadAccess benchmarkAccess;
 	private final CommitReadAccess commitAccess;
+	private final RepoReadAccess repoAccess;
 
-	public SearchEndpoint(BenchmarkReadAccess benchmarkAccess, CommitReadAccess commitAccess) {
+	public SearchEndpoint(BenchmarkReadAccess benchmarkAccess, CommitReadAccess commitAccess,
+		RepoReadAccess repoAccess) {
+
 		this.benchmarkAccess = benchmarkAccess;
 		this.commitAccess = commitAccess;
+		this.repoAccess = repoAccess;
 	}
 
 	@GET
@@ -43,6 +49,14 @@ public class SearchEndpoint {
 		Optional<RepoId> repoId = Optional.ofNullable(repoUuid).map(RepoId::new);
 		int limit = Optional.ofNullable(maybeLimit).orElse(SEARCH_LIMIT);
 
+		List<BranchInfo> branches = repoAccess
+			.searchBranches(limit, repoId.orElse(null), query)
+			.stream()
+			.map(BranchInfo::new)
+			.collect(toList());
+
+		limit = Math.max(0, limit - branches.size());
+
 		List<CommitInfo> commits = commitAccess
 			.searchCommits(limit, repoId.orElse(null), query)
 			.stream()
@@ -54,20 +68,22 @@ public class SearchEndpoint {
 		List<RunInfo> runs = benchmarkAccess
 			.searchRuns(limit, repoId.orElse(null), query)
 			.stream()
-			.map(pair -> new RunInfo(pair.getFirst(), pair.getSecond().orElse(null)))
+			.map(RunInfo::new)
 			.collect(toList());
 
-		return new SearchGetReply(commits, runs);
+		return new SearchGetReply(commits, runs, branches);
 	}
 
 	private static class SearchGetReply {
 
 		public final List<CommitInfo> commits;
 		public final List<RunInfo> runs;
+		public final List<BranchInfo> branches;
 
-		public SearchGetReply(List<CommitInfo> commits, List<RunInfo> runs) {
+		public SearchGetReply(List<CommitInfo> commits, List<RunInfo> runs, List<BranchInfo> branches) {
 			this.commits = commits;
 			this.runs = runs;
+			this.branches = branches;
 		}
 	}
 
@@ -101,19 +117,37 @@ public class SearchEndpoint {
 		@Nullable
 		public final String repoId;
 		@Nullable
-		public final String commitHash;
-		@Nullable
 		public final String commitSummary;
 		@Nullable
 		public final String tarDescription;
+		public final long startTime;
+		public final long stopTime;
 
-		public RunInfo(ShortRunDescription run, @Nullable RepoId repoId) {
+		public RunInfo(SearchRunDescription run) {
 
 			this.id = run.getId().getIdAsString();
-			this.repoId = Optional.ofNullable(repoId).map(RepoId::getIdAsString).orElse(null);
-			this.commitHash = run.getCommitHash().orElse(null);
+			this.repoId = run.getRepoId().map(RepoId::getIdAsString).orElse(null);
 			this.commitSummary = run.getCommitSummary().orElse(null);
 			this.tarDescription = run.getTarDescription().orElse(null);
+			this.startTime = run.getStartTime().getEpochSecond();
+			this.stopTime = run.getStopTime().getEpochSecond();
+		}
+	}
+
+	private static class BranchInfo {
+
+		public final String repoId;
+		public final String name;
+		public final String commitHash;
+		public final String commitSummary;
+		public final boolean hasRun;
+
+		public BranchInfo(SearchBranchDescription branch) {
+			this.repoId = branch.getRepoId().getIdAsString();
+			this.name = branch.getName().getName();
+			this.commitHash = branch.getCommitHash().getHash();
+			this.commitSummary = branch.getCommitSummary();
+			this.hasRun = branch.hasRun();
 		}
 	}
 }

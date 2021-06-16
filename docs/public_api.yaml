@@ -974,17 +974,43 @@ paths:
                           $ref: '#/components/schemas/RunId'
                         repo_id:
                           $ref: '#/components/schemas/RepoId'
-                        commit_hash:
-                          $ref: '#/components/schemas/CommitHash'
                         commit_summary:
                           type: string
                         tar_description:
                           type: string
+                        start_time:
+                          $ref: '#/components/schemas/Time'
+                        stop_time:
+                          $ref: '#/components/schemas/Time'
                       required:
                         - id
+                        - start_time
+                        - stop_time
+                  branches:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        repo_id:
+                          $ref: '#/components/schemas/RepoId'
+                        name:
+                          type: string
+                        commit_hash:
+                          $ref: '#/components/schemas/CommitHash'
+                        commit_summary:
+                          type: string
+                        has_run:
+                          type: boolean
+                      required:
+                        - repo_id
+                        - name
+                        - commit_hash
+                        - commit_summary
+                        - has_run
                 required:
                   - commits
                   - runs
+                  - branches
       operationId: get-search
       parameters:
         - schema:
