@@ -20,13 +20,7 @@
         active-class="hide-active-state"
         :color="relevantChange.color"
         :input-value="false"
-        :to="{
-          name: 'run-comparison',
-          params: {
-            first: relevantChange.oldRunId,
-            second: runId
-          }
-        }"
+        :to="linkLocation(relevantChange)"
       >
         <v-icon left :size="20">{{ relevantChange.icon }}</v-icon>
         {{ relevantChange.id.benchmark }} —
@@ -182,13 +176,27 @@ export default class RunSignificanceChips extends Vue {
   @Prop({ default: false })
   private readonly center!: boolean
 
+  @Prop({ default: false })
+  private readonly noLinks!: boolean
+
   private get relevantChanges(): RelevantChange[] {
     return this.differences.map(it => new RelevantChange(it))
   }
 
-  private get failedIcon() {
-    return mdiCloseCircleOutline
+  private linkLocation(relevantChange: RelevantChange) {
+    if (this.noLinks) {
+      return undefined
+    }
+    return {
+      name: 'run-comparison',
+      params: {
+        first: relevantChange.oldRunId,
+        second: this.runId
+      }
+    }
   }
+
+  private readonly failedIcon = mdiCloseCircleOutline
 }
 </script>
 

@@ -27,6 +27,7 @@
             <run-significance-chips
               class="mb-6"
               :center="true"
+              :no-links="true"
               :differences="comparison.significantDifferences"
               :run-id="comparison.run2.id"
               :failed-significant-dimensions="
