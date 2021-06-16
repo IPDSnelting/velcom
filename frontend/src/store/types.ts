@@ -732,19 +732,26 @@ export class SearchItemRun {
   readonly commitHash?: CommitHash
   readonly commitSummary?: string
   readonly tarDescription?: string
+  readonly startTime: Date
+  readonly stopTime: Date
 
+  // noinspection DuplicatedCode
   constructor(
     id: RunId,
     repoId: RepoId,
     commitHash: CommitHash,
     commitSummary: string,
-    tarDescription: string
+    tarDescription: string,
+    startTime: Date,
+    stopTime: Date
   ) {
     this.id = id
     this.repoId = repoId
     this.commitHash = commitHash
     this.commitSummary = commitSummary
     this.tarDescription = tarDescription
+    this.startTime = startTime
+    this.stopTime = stopTime
   }
 }
 

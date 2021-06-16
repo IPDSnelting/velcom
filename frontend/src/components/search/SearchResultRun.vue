@@ -7,18 +7,18 @@
           <v-row no-gutters align="center" justify="space-between">
             <v-col cols="auto" class="flex-shrink-too mr-3">
               <v-list-item-title>
+                <repo-display
+                  v-if="item.repoId"
+                  :repoId="item.repoId"
+                ></repo-display>
+                <span v-if="item.repoId" class="mx-2">—</span>
                 <router-link class="concealed-link" :to="linkLocation">
                   {{ item.commitSummary }}
                 </router-link>
               </v-list-item-title>
-              <v-list-item-subtitle v-if="attachedRepoId || item.commitHash">
-                <span class="commit-hash" v-if="item.commitHash">
-                  {{ item.commitHash }}
-                </span>
-                <span v-if="attachedRepoId">
-                  in repo
-                  <repo-display :repo-id="attachedRepoId"></repo-display>
-                </span>
+              <v-list-item-subtitle>
+                Started at {{ startTimeString }} and ran for
+                {{ durationString }}
               </v-list-item-subtitle>
             </v-col>
             <v-col cols="auto">
@@ -49,6 +49,7 @@ import TextChip from '@/components/misc/TextChip.vue'
 import InlineMinimalRepoDisplay from '@/components/misc/InlineMinimalRepoDisplay.vue'
 import { mdiRunFast } from '@mdi/js'
 import { SearchItemRun } from '@/store/types'
+import { formatDate, formatDurationHuman } from '@/util/Times'
 
 @Component({
   components: {
@@ -67,8 +68,12 @@ export default class SearchResultRun extends Vue {
     }
   }
 
-  private get attachedRepoId() {
-    return this.item.repoId
+  private get startTimeString() {
+    return formatDate(this.item.startTime)
+  }
+
+  private get durationString() {
+    return formatDurationHuman(this.item.startTime, this.item.stopTime)
   }
 
   private readonly runIcon = mdiRunFast

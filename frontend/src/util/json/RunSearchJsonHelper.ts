@@ -25,7 +25,9 @@ function searchItemRunFromJson(json: any): SearchItemRun {
     json.repo_id,
     json.commit_hash,
     json.commit_summary,
-    json.tar_description
+    json.tar_description,
+    new Date(json.start_time * 1000),
+    new Date(json.stop_time * 1000)
   )
 }
 
