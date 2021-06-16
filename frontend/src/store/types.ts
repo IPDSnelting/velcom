@@ -68,6 +68,13 @@ export function dimensionIdToString(dimensionId: DimensionId): string {
   return `${dimensionId.benchmark} - ${dimensionId.metric}`
 }
 
+export function dimensionIdEquals(
+  first: DimensionId,
+  second: DimensionId
+): boolean {
+  return first.benchmark === second.benchmark && first.metric === second.metric
+}
+
 export class Dimension {
   static readonly SERIALIZED_NAME = 'Dimension'
 
@@ -314,6 +321,12 @@ export class RunResultSuccess {
 
   constructor(measurements: Measurement[]) {
     this.measurements = measurements
+  }
+
+  public resultForDimension(dimension: DimensionId): Measurement | undefined {
+    return this.measurements.find(measurement => {
+      return dimensionIdEquals(measurement.dimension, dimension)
+    })
   }
 }
 export type RunResult =
@@ -653,6 +666,18 @@ export class ComparisonDataPoint extends GraphDataPoint {
       this.summary,
       this.author
     )
+  }
+}
+
+export class StatusComparisonPoint {
+  readonly repoId: RepoId
+  readonly run?: Run
+  readonly commitHash: CommitHash
+
+  constructor(repoId: RepoId, run: Run | undefined, commitHash: CommitHash) {
+    this.repoId = repoId
+    this.run = run
+    this.commitHash = commitHash
   }
 }
 

@@ -1,7 +1,6 @@
 import Vue from 'vue'
 import VueRouter, { RouteConfig, RouterOptions } from 'vue-router'
 import Home from '../views/Home.vue'
-import RepoComparison from '../views/RepoComparison.vue'
 import RepoDetailFrame from '../views/RepoDetailFrame.vue'
 import Queue from '../views/Queue.vue'
 import NotFound404 from '../views/NotFound404.vue'
@@ -17,6 +16,7 @@ import {
 import { vxm } from '@/store'
 import TaskDetailView from '@/views/TaskDetailView.vue'
 import Search from '@/views/Search.vue'
+import Comparison from '@/views/RepoComparison.vue'
 
 Vue.use(VueRouter)
 
@@ -65,9 +65,9 @@ const routes: RouteInfo[] = [
   {
     path: '/repo-comparison',
     name: 'repo-comparison',
-    component: RepoComparison,
+    component: Comparison,
     meta: {
-      label: 'Repo Comparison',
+      label: 'Comparison',
       navigable: true,
       icon: mdiScaleBalance
     }

@@ -22,7 +22,9 @@ export default new Vuetify({
         graphBackground: '#FFFFFF', // white
         graphFailedOrUnbenchmarked: '#696969', // dimgrey
         graphReferenceElements: '808080', // grey
-        rowHighlight: '#d3d3d3'
+        rowHighlight: '#d3d3d3',
+        // only used in graphs. Should match normal text color
+        graphTextColor: '#212121'
       },
       dark: {
         primary: '#7f9bff',
@@ -37,7 +39,9 @@ export default new Vuetify({
         graphBackground: '#2f3136',
         graphFailedOrUnbenchmarked: '#d3d3d3', // lightgray
         graphReferenceElements: '#d3d3d3', // lightgray
-        rowHighlight: '#616161'
+        rowHighlight: '#616161',
+        // only used in graphs. Should match normal text color
+        graphTextColor: '#e6ebf8'
       }
     }
   },

@@ -51,6 +51,7 @@ export default class ThemeSelector extends Vue {
   position: fixed;
   bottom: 16px;
   right: 16px;
+  z-index: 100;
 }
 
 .icon {

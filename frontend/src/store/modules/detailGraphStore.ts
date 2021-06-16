@@ -22,6 +22,7 @@ import {
   respectOptions
 } from '@/util/LinkUtils'
 import { roundDateDown, roundDateUp } from '@/util/Times'
+import { formatDimensions } from '@/util/Texts'
 
 const VxModule = createModule({
   namespaced: 'detailGraphModule',
@@ -104,7 +105,7 @@ export class DetailGraphStore extends VxModule {
         start_time: effectiveStartTime,
         end_time: effectiveEndTime,
         duration: undefined,
-        dimensions: this.dimensionString
+        dimensions: formatDimensions(this.selectedDimensions)
       }
     })
 
@@ -271,46 +272,6 @@ export class DetailGraphStore extends VxModule {
     })
     this._selectedDimensions = dimensions
   }
-
-  /**
-   * string of requested dimensions for a detail graph,
-   * formatted as 'bench1:metric1.1:metric1.2::bench2:metric2.1' etc.
-   *
-   * @readonly
-   * @private
-   * @type {string}
-   * @memberof DetailGraphStore
-   */
-  private get dimensionString(): string {
-    let resultString: string = ''
-
-    const groupedDimensions: {
-      [key: string]: Dimension[]
-    } = this._selectedDimensions.reduce(
-      (benchmarkGroup: { [key: string]: Dimension[] }, cur: Dimension) => {
-        ;(benchmarkGroup[cur.benchmark] =
-          benchmarkGroup[cur.benchmark] || []).push(cur)
-        return benchmarkGroup
-      },
-      {}
-    )
-
-    const groupedDimensionsArray: Dimension[][] = Object.keys(
-      groupedDimensions
-    ).map(benchmark => {
-      return groupedDimensions[benchmark]
-    })
-
-    groupedDimensionsArray.forEach((benchmarkGroup: Dimension[]) => {
-      resultString = resultString.concat(benchmarkGroup[0].benchmark)
-      benchmarkGroup.forEach((dimension: Dimension) => {
-        resultString = resultString.concat(':' + dimension.metric)
-      })
-      resultString = resultString.concat('::')
-    })
-
-    return resultString.slice(0, resultString.length - 2)
-  }
   //  <!--</editor-fold>-->
 
   // <!--<editor-fold desc="GET / SET GRAPH">-->
@@ -432,7 +393,7 @@ export class DetailGraphStore extends VxModule {
           dimensions: respectOptions(
             options,
             'includeDataRestrictions',
-            this.dimensionString
+            formatDimensions(this.selectedDimensions)
           ),
           dayEquidistant: this.dayEquidistantGraph ? 'true' : undefined
         }

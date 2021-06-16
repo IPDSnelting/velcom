@@ -9,6 +9,7 @@ import { NewsStore } from './modules/newsStore'
 import { QueueStore } from './modules/queueStore'
 import { ComparisonGraphStore } from './modules/comparisonGraphStore'
 import { DetailGraphStore } from './modules/detailGraphStore'
+import { StatusComparisonStore } from './modules/statusComparisonStore'
 import {
   deletedOutdatedLocalData,
   persistenceLocalStorage,
@@ -27,6 +28,7 @@ export interface RootState {
   detailGraphModule: DetailGraphStore
   userModule: UserStore
   runSearchModule: RunSearchStore
+  statusComparisonModule: StatusComparisonStore
 }
 
 deletedOutdatedLocalData()
@@ -46,7 +48,8 @@ export const store = new Vuex.Store({
     ...extractVuexModule(DetailGraphStore),
     ...extractVuexModule(RepoStore),
     ...extractVuexModule(UserStore),
-    ...extractVuexModule(RunSearchStore)
+    ...extractVuexModule(RunSearchStore),
+    ...extractVuexModule(StatusComparisonStore)
   },
   plugins: [persistenceLocalStorage.plugin, persistenceSessionStorage.plugin]
 })
@@ -60,5 +63,6 @@ export const vxm = {
   repoModule: createProxy(store, RepoStore),
   userModule: createProxy(store, UserStore),
   detailGraphModule: createProxy(store, DetailGraphStore),
-  runSearchModule: createProxy(store, RunSearchStore)
+  runSearchModule: createProxy(store, RunSearchStore),
+  statusComparisonModule: createProxy(store, StatusComparisonStore)
 }

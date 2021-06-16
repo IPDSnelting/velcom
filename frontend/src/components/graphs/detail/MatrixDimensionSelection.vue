@@ -42,14 +42,19 @@ import Component from 'vue-class-component'
 import { vxm } from '@/store'
 import { Prop } from 'vue-property-decorator'
 import { Dimension } from '@/store/types'
+import { distinct, locallySorted } from '@/util/Arrays'
 
 @Component
 export default class MatrixMeasurementIdSelection extends Vue {
   @Prop()
-  private repoId!: string
+  private allDimensions!: Dimension[]
 
   @Prop()
   private selectedDimensions!: Dimension[]
+
+  private updateSelectedDimensions(newSelected: Dimension[]) {
+    this.$emit('update:selectedDimensions', newSelected)
+  }
 
   private get selectedDimensionSet(): Set<string> {
     return new Set(this.selectedDimensions.map(it => it.toString()))
@@ -64,13 +69,17 @@ export default class MatrixMeasurementIdSelection extends Vue {
   }
 
   private get allBenchmarks(): string[] {
-    return vxm.repoModule
-      .occuringBenchmarks([this.repoId])
-      .sort((a, b) => a.localeCompare(b))
+    const benchmarks = this.allDimensions.map(it => it.benchmark)
+    return locallySorted(distinct(benchmarks))
   }
 
   private metricsFor(benchmark: string): string[] {
-    return vxm.repoModule.metricsForBenchmark(benchmark)
+    const metrics = distinct(
+      this.allDimensions
+        .filter(it => it.benchmark === benchmark)
+        .map(it => it.metric)
+    )
+    return locallySorted(metrics)
   }
 
   private toggleAllForMetric(metric: string) {
@@ -93,8 +102,7 @@ export default class MatrixMeasurementIdSelection extends Vue {
       // select all dimensions with given metric
 
       // figure out which dimensions need to bee added
-      const notYetSelectedDimensions: Dimension[] = vxm.repoModule
-        .occuringDimensions([this.repoId])
+      const notYetSelectedDimensions: Dimension[] = this.allDimensions
         .filter(it => it.metric === metric)
         .filter(dimension => !this.selectedDimensions.includes(dimension))
 
@@ -104,7 +112,7 @@ export default class MatrixMeasurementIdSelection extends Vue {
       )
     }
 
-    vxm.detailGraphModule.selectedDimensions = resultingSelectedDimensions
+    this.updateSelectedDimensions(resultingSelectedDimensions)
   }
 
   private toggleAllForBenchmark(benchmark: string) {
@@ -125,8 +133,7 @@ export default class MatrixMeasurementIdSelection extends Vue {
       // select all dimensions with given benchmark
 
       // figure out which dimensions need to bee added
-      const notYetSelectedDimensions: Dimension[] = vxm.repoModule
-        .occuringDimensions([this.repoId])
+      const notYetSelectedDimensions: Dimension[] = this.allDimensions
         .filter(it => it.benchmark === benchmark)
         .filter(dimension => !this.selectedDimensions.includes(dimension))
 
@@ -135,7 +142,7 @@ export default class MatrixMeasurementIdSelection extends Vue {
         notYetSelectedDimensions
       )
     }
-    vxm.detailGraphModule.selectedDimensions = resultingSelectedDimensions
+    this.updateSelectedDimensions(resultingSelectedDimensions)
   }
 
   private get allMetrics(): string[] {
@@ -158,18 +165,21 @@ export default class MatrixMeasurementIdSelection extends Vue {
 
   private changed(checked: boolean, benchmark: string, metric: string) {
     if (checked) {
-      const newlyCheckedDimension: Dimension | undefined = vxm.repoModule
-        .occuringDimensions([this.repoId])
-        .find(it => it.benchmark === benchmark && it.metric === metric)
+      const newlyCheckedDimension: Dimension | undefined =
+        this.allDimensions.find(
+          it => it.benchmark === benchmark && it.metric === metric
+        )
 
       if (newlyCheckedDimension) {
-        // reassigning fires change listener
-        vxm.detailGraphModule.selectedDimensions =
-          vxm.detailGraphModule.selectedDimensions.concat(newlyCheckedDimension)
+        this.updateSelectedDimensions(
+          this.selectedDimensions.concat(newlyCheckedDimension)
+        )
       }
     } else {
-      vxm.detailGraphModule.selectedDimensions = this.selectedDimensions.filter(
-        it => it.benchmark !== benchmark || it.metric !== metric
+      this.updateSelectedDimensions(
+        this.selectedDimensions.filter(
+          it => it.benchmark !== benchmark || it.metric !== metric
+        )
       )
     }
   }

@@ -64,11 +64,15 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Repo, RepoId } from '@/store/types'
 import { vxm } from '@/store'
+import { Prop } from 'vue-property-decorator'
 
 @Component
 export default class RepoBranchSelector extends Vue {
+  @Prop()
+  private readonly selectedBranches!: Map<RepoId, string[]>
+
   private selectedBranchesForRepo(repoId: RepoId) {
-    return vxm.comparisonGraphModule.selectedBranchesForRepo(repoId)
+    return this.selectedBranches.get(repoId) || []
   }
 
   private get sortedRepos() {
@@ -112,12 +116,12 @@ export default class RepoBranchSelector extends Vue {
 
   private toggleRepo(repo: Repo) {
     if (this.allBranchesSelected(repo)) {
-      vxm.comparisonGraphModule.setSelectedBranchesForRepo({
+      this.$emit('update:set-all', {
         repoId: repo.id,
         branches: []
       })
     } else {
-      vxm.comparisonGraphModule.setSelectedBranchesForRepo({
+      this.$emit('update:set-all', {
         repoId: repo.id,
         branches: repo.trackedBranches
       })
@@ -125,7 +129,7 @@ export default class RepoBranchSelector extends Vue {
   }
 
   private toggleBranch(repo: Repo, branch: string) {
-    vxm.comparisonGraphModule.toggleRepoBranch({
+    this.$emit('update:toggle-branch', {
       repoId: repo.id,
       branch: branch
     })

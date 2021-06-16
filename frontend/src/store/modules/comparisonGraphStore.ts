@@ -19,6 +19,7 @@ import {
 } from '@/util/LinkUtils'
 import { Route } from 'vue-router'
 import { roundDateDown, roundDateUp } from '@/util/Times'
+import { formatRepos } from '@/util/Texts'
 
 const VxModule = createModule({
   namespaced: 'comparisonGraphModule',
@@ -36,15 +37,6 @@ function defaultStartDate() {
 function defaultEndDate() {
   // Today at midnight / start of tomorrow
   return new Date(new Date().setHours(24, 0, 0, 0))
-}
-
-function formatRepos(repos: Map<RepoId, string[]>): string {
-  return Array.from(repos.entries())
-    .filter(([, branches]) => branches.length > 0)
-    .map(([repoId, branches]) => {
-      return repoId + ':' + branches.join(':')
-    })
-    .join('::')
 }
 
 export class ComparisonGraphStore extends VxModule {
@@ -146,13 +138,14 @@ export class ComparisonGraphStore extends VxModule {
   }
 
   /**
-   * Returns a permanent link to the current detail graph state
+   * Returns a permanent link to the current comparison graph state
    */
   get permanentLink(): (options?: PermanentLinkOptions) => string {
     return options => {
       const route = router.resolve({
         name: 'repo-comparison',
         query: {
+          type: 'timeline',
           zoomYStart: respectOptions(
             options,
             'includeYZoom',
@@ -203,7 +196,9 @@ export class ComparisonGraphStore extends VxModule {
       // Repos might not exist anymore, as the selected branches are persisted
       .filter(id => vxm.repoModule.repoById(id) !== undefined)
       .forEach(repoId => {
-        const branches = this._selectedBranches[repoId]
+        // Slicing so the arrays are not shared! Sharing them might lead to
+        // weird behaviour when comparing with a previous version of this map
+        const branches = this._selectedBranches[repoId].slice()
         if (branches && branches.length > 0) {
           map.set(repoId, branches)
         }
