@@ -15,6 +15,7 @@
             <run-significance-chips
               :differences="dimensionDifferences"
               :run-id="runWithDifferences.run.id"
+              :failed-significant-dimensions="significantFailedDimensions"
             ></run-significance-chips>
           </template>
         </commit-detail>
@@ -123,6 +124,13 @@ export default class RunCommitDetailView extends Vue {
       return undefined
     }
     return this.runWithDifferences.significantDifferences
+  }
+
+  private get significantFailedDimensions(): Dimension[] {
+    if (!this.runWithDifferences) {
+      return []
+    }
+    return this.runWithDifferences.significantFailedDimensions
   }
 
   private async navigateToDetailGraph(dimension: Dimension) {
