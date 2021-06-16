@@ -2,9 +2,10 @@
   <div>
     <div v-for="item in runs" :key="run(item).runId" class="my-2">
       <run-overview :run="run(item)" class="full-width">
-        <template #content v-if="differences(item)">
+        <template #content>
           <run-significance-chips
-            :differences="differences(item)"
+            :differences="significantDifferences(item)"
+            :failed-significant-dimensions="failedSignificantDimensions(item)"
             :run-id="run(item).runId"
           ></run-significance-chips>
         </template>
@@ -18,6 +19,7 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 import {
+  Dimension,
   DimensionDifference,
   RunDescription,
   RunDescriptionWithDifferences
@@ -44,12 +46,20 @@ export default class MultipleRunOverview extends Vue {
     return run instanceof RunDescriptionWithDifferences ? run.run : run
   }
 
-  private differences(
+  private significantDifferences(
     run: RunDescription | RunDescriptionWithDifferences
   ): DimensionDifference[] | undefined {
     return run instanceof RunDescriptionWithDifferences
-      ? run.differences
-      : undefined
+      ? run.significantDifferences
+      : []
+  }
+
+  private failedSignificantDimensions(
+    run: RunDescription | RunDescriptionWithDifferences
+  ): Dimension[] {
+    return run instanceof RunDescriptionWithDifferences
+      ? run.significantFailedDimensions
+      : []
   }
 }
 </script>

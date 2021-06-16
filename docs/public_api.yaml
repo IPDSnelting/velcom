@@ -214,6 +214,11 @@ paths:
                     description: The runs significant differences to all direct parent runs. Only present if the `diff_prev` parameter is set to `true`.
                     items:
                       $ref: '#/components/schemas/DimensionDifference'
+                  significant_failed_dimensions:
+                    description: Only present if the `diff_prev` parameter is set to `true`.
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Dimension'
                 required:
                   - run
         '404':
@@ -264,10 +269,20 @@ paths:
                     description: A list of differences between the runs (`run2` - `run1`)
                     items:
                       $ref: '#/components/schemas/DimensionDifference'
+                  significant_differences:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DimensionDifference'
+                  significant_failed_dimensions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Dimension'
                 required:
                   - run1
                   - run2
                   - differences
+                  - significant_differences
+                  - significant_failed_dimensions
         '404':
           description: Either one or both runs could not be found
       operationId: get-compare-runid1-to-runid2
@@ -648,11 +663,16 @@ paths:
                       properties:
                         run:
                           $ref: '#/components/schemas/RunDescription'
-                        significant_dimensions:
+                        significant_differences:
                           type: array
                           description: Present only when significant runs were requested
                           items:
                             $ref: '#/components/schemas/DimensionDifference'
+                        significant_failed_dimensions:
+                          description: Present only when significant runs were requested
+                          type: array
+                          items:
+                            $ref: '#/components/schemas/Dimension'
                       required:
                         - run
                 required:

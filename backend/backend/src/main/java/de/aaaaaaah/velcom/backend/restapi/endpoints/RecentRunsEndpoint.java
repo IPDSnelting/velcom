@@ -1,5 +1,7 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
+import static java.util.stream.Collectors.toList;
+
 import de.aaaaaaah.velcom.backend.access.benchmarkaccess.BenchmarkReadAccess;
 import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.Run;
 import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.RunId;
@@ -9,7 +11,8 @@ import de.aaaaaaah.velcom.backend.access.dimensionaccess.DimensionReadAccess;
 import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.Dimension;
 import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.DimensionInfo;
 import de.aaaaaaah.velcom.backend.data.recentruns.SignificantRunsCollector;
-import de.aaaaaaah.velcom.backend.data.runcomparison.DimensionDifference;
+import de.aaaaaaah.velcom.backend.data.significance.SignificanceReasons;
+import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimension;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimensionDifference;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRunDescription;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonRunDescription.JsonSuccess;
@@ -17,8 +20,8 @@ import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonSource;
 import io.micrometer.core.annotation.Timed;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -68,31 +71,39 @@ public class RecentRunsEndpoint {
 		final List<JsonRunEntry> runEntries;
 		if (significant) {
 			runEntries = significantRunsCollector.collectMostRecent(n).stream()
-				.map(run -> toJsonRunEntry(run.getRun(), run.getSignificantDifferences()))
-				.collect(Collectors.toList());
+				.map(run -> toJsonRunEntry(run.getRun(), run.getReasons()))
+				.collect(toList());
 		} else {
 			List<RunId> recentRunIds = benchmarkAccess.getRecentRunIds(0, n);
 			runEntries = runCache.getRunsInOrder(benchmarkAccess, recentRunIds).stream()
 				.map(run -> toJsonRunEntry(run, null))
-				.collect(Collectors.toList());
+				.collect(toList());
 		}
 
 		return new GetReply(runEntries);
 	}
 
-	private JsonRunEntry toJsonRunEntry(Run run, @Nullable List<DimensionDifference> differences) {
-		@Nullable
-		List<JsonDimensionDifference> jsonDiffs = null;
-		if (differences != null) {
-			Set<Dimension> dimensions = differences.stream()
-				.map(DimensionDifference::getDimension)
-				.collect(Collectors.toSet());
+	private JsonRunEntry toJsonRunEntry(Run run, @Nullable SignificanceReasons reasons) {
+		final Optional<List<JsonDimensionDifference>> significantDifferences;
+		final Optional<List<JsonDimension>> significantFailedDimensions;
 
+		if (reasons == null) {
+			significantDifferences = Optional.empty();
+			significantFailedDimensions = Optional.empty();
+		} else {
+			Set<Dimension> dimensions = reasons.getDimensions();
 			Map<Dimension, DimensionInfo> dimInfos = dimensionAccess.getDimensionInfoMap(dimensions);
 
-			jsonDiffs = differences.stream()
+			significantDifferences = Optional.of(reasons.getSignificantDifferences()
+				.stream()
 				.map(diff -> JsonDimensionDifference.fromDimensionDifference(diff, dimInfos))
-				.collect(Collectors.toList());
+				.collect(toList()));
+
+			significantFailedDimensions = Optional.of(reasons.getSignificantFailedDimensions()
+				.stream()
+				.map(dimInfos::get)
+				.map(JsonDimension::fromDimensionInfo)
+				.collect(toList()));
 		}
 
 		return new JsonRunEntry(
@@ -102,43 +113,35 @@ public class RecentRunsEndpoint {
 				JsonSuccess.fromRunResult(run.getResult()),
 				JsonSource.fromSource(run.getSource(), commitAccess)
 			),
-			jsonDiffs
+			significantDifferences.orElse(null),
+			significantFailedDimensions.orElse(null)
 		);
 	}
 
 	private static class GetReply {
 
-		private final List<JsonRunEntry> runs;
+		public final List<JsonRunEntry> runs;
 
 		public GetReply(List<JsonRunEntry> runs) {
 			this.runs = runs;
-		}
-
-		public List<JsonRunEntry> getRuns() {
-			return runs;
 		}
 	}
 
 	private static class JsonRunEntry {
 
-		private final JsonRunDescription run;
+		public final JsonRunDescription run;
 		@Nullable
-		private final List<JsonDimensionDifference> significantDimensions;
+		public final List<JsonDimensionDifference> significantDifferences;
+		@Nullable
+		public final List<JsonDimension> significantFailedDimensions;
 
 		public JsonRunEntry(JsonRunDescription run,
-			@Nullable List<JsonDimensionDifference> significantDimensions) {
+			@Nullable List<JsonDimensionDifference> significantDifferences,
+			@Nullable List<JsonDimension> significantFailedDimensions) {
 
 			this.run = run;
-			this.significantDimensions = significantDimensions;
-		}
-
-		public JsonRunDescription getRun() {
-			return run;
-		}
-
-		@Nullable
-		public List<JsonDimensionDifference> getSignificantDimensions() {
-			return significantDimensions;
+			this.significantDifferences = significantDifferences;
+			this.significantFailedDimensions = significantFailedDimensions;
 		}
 	}
 }

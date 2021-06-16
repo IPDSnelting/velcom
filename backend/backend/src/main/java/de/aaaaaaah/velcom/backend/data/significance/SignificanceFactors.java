@@ -1,4 +1,4 @@
-package de.aaaaaaah.velcom.backend.data.runcomparison;
+package de.aaaaaaah.velcom.backend.data.significance;
 
 /**
  * A few factors describing how the standard deviation and significance of a run should be

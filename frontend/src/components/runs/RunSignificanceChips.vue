@@ -1,5 +1,10 @@
 <template>
-  <v-row no-gutters class="ma-0" justify="center" justify-sm="start">
+  <v-row
+    no-gutters
+    class="ma-0 d-flex flex-wrap spaced"
+    justify="center"
+    :justify-sm="center ? 'center' : 'start'"
+  >
     <v-col
       v-for="relevantChange in relevantChanges"
       :key="
@@ -8,26 +13,33 @@
         relevantChange.id.metric
       "
       cols="auto"
-      class="mr-2 mt-2"
     >
       <v-chip
         label
         outlined
+        active-class="hide-active-state"
         :color="relevantChange.color"
-        :input-value="true"
-        :to="{
-          name: 'run-comparison',
-          params: {
-            first: relevantChange.oldRunId,
-            second: runId
-          }
-        }"
+        :input-value="false"
+        :to="linkLocation(relevantChange)"
       >
-        <v-icon left>{{ relevantChange.icon }}</v-icon>
+        <v-icon left :size="20">{{ relevantChange.icon }}</v-icon>
         {{ relevantChange.id.benchmark }} —
         {{ relevantChange.id.metric }}
         <span class="font-weight-bold pl-3" style="font-size: 1.1rem">
           {{ relevantChange.change }}
+        </span>
+      </v-chip>
+    </v-col>
+    <v-col
+      v-for="failedDimension in failedSignificantDimensions"
+      :key="failedDimension.toString()"
+      cols="auto"
+    >
+      <v-chip label outlined color="warning" :input-value="false">
+        <v-icon left :size="20">{{ failedIcon }}</v-icon>
+        {{ failedDimension.toString() }}
+        <span class="font-weight-bold pl-3" style="font-size: 1.1rem">
+          Failed
         </span>
       </v-chip>
     </v-col>
@@ -49,7 +61,8 @@ import {
   mdiChevronDown,
   mdiChevronTripleDown,
   mdiChevronTripleUp,
-  mdiChevronUp
+  mdiChevronUp,
+  mdiCloseCircleOutline
 } from '@mdi/js'
 import { Prop } from 'vue-property-decorator'
 
@@ -157,8 +170,41 @@ export default class RunSignificanceChips extends Vue {
   @Prop()
   private readonly runId!: RunId
 
+  @Prop({ default: () => [] })
+  private readonly failedSignificantDimensions!: Dimension[]
+
+  @Prop({ default: false })
+  private readonly center!: boolean
+
+  @Prop({ default: false })
+  private readonly noLinks!: boolean
+
   private get relevantChanges(): RelevantChange[] {
     return this.differences.map(it => new RelevantChange(it))
   }
+
+  private linkLocation(relevantChange: RelevantChange) {
+    if (this.noLinks) {
+      return undefined
+    }
+    return {
+      name: 'run-comparison',
+      params: {
+        first: relevantChange.oldRunId,
+        second: this.runId
+      }
+    }
+  }
+
+  private readonly failedIcon = mdiCloseCircleOutline
 }
 </script>
+
+<style scoped>
+.spaced {
+  gap: 8px;
+}
+.hide-active-state::before {
+  background: transparent !important;
+}
+</style>

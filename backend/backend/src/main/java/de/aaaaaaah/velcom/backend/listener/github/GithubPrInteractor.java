@@ -11,15 +11,22 @@ import static org.jooq.impl.DSL.select;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import de.aaaaaaah.velcom.backend.access.benchmarkaccess.BenchmarkReadAccess;
+import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.Run;
 import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.RunId;
 import de.aaaaaaah.velcom.backend.access.committaccess.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.access.committaccess.entities.CommitHash;
+import de.aaaaaaah.velcom.backend.access.dimensionaccess.DimensionReadAccess;
+import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.Dimension;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.BranchName;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.Repo;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.Repo.GithubInfo;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RepoId;
 import de.aaaaaaah.velcom.backend.access.taskaccess.entities.TaskPriority;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
+import de.aaaaaaah.velcom.backend.data.runcomparison.DimensionDifference;
+import de.aaaaaaah.velcom.backend.data.significance.SignificanceDetector;
+import de.aaaaaaah.velcom.backend.data.significance.SignificanceReasons;
 import de.aaaaaaah.velcom.backend.storage.db.DBWriteAccess;
 import de.aaaaaaah.velcom.backend.storage.db.DatabaseStorage;
 import de.aaaaaaah.velcom.shared.util.Pair;
@@ -56,7 +63,10 @@ public class GithubPrInteractor {
 	private final Repo repo;
 	private final GithubInfo ghInfo;
 	private final DatabaseStorage databaseStorage;
+	private final BenchmarkReadAccess benchmarkAccess;
 	private final CommitReadAccess commitAccess;
+	private final DimensionReadAccess dimensionAccess;
+	private final SignificanceDetector significanceDetector;
 	private final Queue queue;
 
 	private final String frontendUrl;
@@ -66,12 +76,17 @@ public class GithubPrInteractor {
 	private final String basicAuthHeader;
 
 	private GithubPrInteractor(Repo repo, GithubInfo ghInfo, DatabaseStorage databaseStorage,
-		CommitReadAccess commitAccess, Queue queue, String frontendUrl) {
+		BenchmarkReadAccess benchmarkAccess, CommitReadAccess commitAccess,
+		DimensionReadAccess dimensionAccess, SignificanceDetector significanceDetector, Queue queue,
+		String frontendUrl) {
 
 		this.repo = repo;
 		this.ghInfo = ghInfo;
 		this.databaseStorage = databaseStorage;
+		this.benchmarkAccess = benchmarkAccess;
 		this.commitAccess = commitAccess;
+		this.dimensionAccess = dimensionAccess;
+		this.significanceDetector = significanceDetector;
 		this.queue = queue;
 
 		this.frontendUrl = frontendUrl;
@@ -86,14 +101,19 @@ public class GithubPrInteractor {
 	}
 
 	public static Optional<GithubPrInteractor> fromRepo(Repo repo, DatabaseStorage databaseStorage,
-		CommitReadAccess commitAccess, Queue queue, String frontendUrl) {
+		BenchmarkReadAccess benchmarkAccess, CommitReadAccess commitAccess,
+		DimensionReadAccess dimensionAccess, SignificanceDetector significanceDetector, Queue queue,
+		String frontendUrl) {
 
 		Optional<GithubInfo> ghInfoOpt = repo.getGithubInfo();
 		return ghInfoOpt.map(githubInfo -> new GithubPrInteractor(
 			repo,
 			githubInfo,
 			databaseStorage,
+			benchmarkAccess,
 			commitAccess,
+			dimensionAccess,
+			significanceDetector,
 			queue,
 			frontendUrl
 		));
@@ -460,7 +480,7 @@ public class GithubPrInteractor {
 
 	public void replyToFinishedPrCommands() throws IOException, InterruptedException {
 		LOGGER.debug("Replying to finished commands");
-		String repoId = repo.getIdAsString();
+		String repoIdStr = repo.getIdAsString();
 
 		List<FinishedGithubCommand> replies = databaseStorage.acquireReadTransaction(db -> {
 			return db.dsl()
@@ -469,8 +489,8 @@ public class GithubPrInteractor {
 				.from(GITHUB_COMMAND)
 				.join(RUN)
 				.on(RUN.COMMIT_HASH.eq(GITHUB_COMMAND.COMMIT_HASH))
-				.where(GITHUB_COMMAND.REPO_ID.eq(repoId))
-				.and(RUN.REPO_ID.eq(repoId))
+				.where(GITHUB_COMMAND.REPO_ID.eq(repoIdStr))
+				.and(RUN.REPO_ID.eq(repoIdStr))
 				.stream()
 				.map(record -> new FinishedGithubCommand(
 					record.value1(),
@@ -485,28 +505,83 @@ public class GithubPrInteractor {
 			LOGGER
 				.debug("Replying to PR #{} and hash {}", reply.getPr(), reply.getCommitHash().getHash());
 
-			Optional<CommitHash> compareTo = commitAccess
+			// Get run
+			RunId runId = reply.getRunId();
+			Run run = benchmarkAccess.getRun(runId);
+
+			// Get commit and run to compare to
+			Optional<CommitHash> compareToHash = commitAccess
 				.getFirstParentOfBranch(repo.getId(), reply.getTargetBranch(), reply.getCommitHash());
+			List<Run> compareToRun = compareToHash
+				.flatMap(hash -> benchmarkAccess.getLatestRunId(repo.getId(), hash))
+				.map(benchmarkAccess::getRun)
+				.map(List::of)
+				.orElse(List.of());
 
-			final String link;
-			link = compareTo.map(
-				commitHash -> frontendUrl + "compare/" + repoId + "/to/" + reply.getRunId().getIdAsString()
+			// Determine Significance of run
+			Set<Dimension> significantDimensions = dimensionAccess.getSignificantDimensions();
+			Optional<SignificanceReasons> reasons = significanceDetector
+				.getSignificance(run, compareToRun, significantDimensions);
+
+			// Determine link either to run comparison or run detail page
+			final String link = compareToHash.map(
+				commitHash -> frontendUrl + "compare/" + repoIdStr + "/to/" + runId.getIdAsString()
 					+ "?hash1=" + commitHash.getHash())
-				.orElseGet(() -> frontendUrl + "run-detail/" + reply.getRunId().getIdAsString());
+				.orElseGet(() -> frontendUrl + "run-detail/" + runId.getIdAsString());
 
-			String body = "Here are the [benchmark results]("
-				+ link +
-				") of commit "
-				+ reply.getCommitHash().getHash()
-				+ ".";
+			// Write message itself
+			StringBuilder msgBuilder = new StringBuilder();
+			msgBuilder
+				.append("Here are the [benchmark results](")
+				.append(link)
+				.append(") for commit ")
+				.append(reply.getCommitHash().getHash())
+				.append(".");
 
-			HttpResponse<String> response = createPrComment(reply.getPr(), body);
+			if (reasons.isPresent()) {
+				if (reasons.get().isEntireRunFailed()) {
+					msgBuilder.append("\nThe entire run failed.");
+				}
+
+				// e. g. "backend - build_time: failed"
+				for (Dimension dim : reasons.get().getSignificantFailedDimensions()) {
+					msgBuilder.append("\n")
+						.append(dim.getBenchmark())
+						.append(" - ")
+						.append(dim.getMetric())
+						.append(": failed");
+				}
+
+				// e. g. "backend - build_time: increased by 2.2 %" or  "frontend - todos: changed to 0"
+				for (DimensionDifference diff : reasons.get().getSignificantDifferences()) {
+					msgBuilder
+						.append("\n")
+						.append(diff.getDimension().getBenchmark())
+						.append(" - ")
+						.append(diff.getDimension().getMetric())
+						.append(": ");
+
+					Optional<Double> reldiff = diff.getReldiff();
+					if (reldiff.isPresent()) {
+						if (reldiff.get() > 0) {
+							msgBuilder.append("increased by ");
+						} else {
+							msgBuilder.append("decreased by ");
+						}
+						msgBuilder.append(String.format("%.1f", reldiff.get())).append(" %");
+					} else {
+						msgBuilder.append("changed to 0");
+					}
+				}
+			}
+
+			HttpResponse<String> response = createPrComment(reply.getPr(), msgBuilder.toString());
 
 			if (response.statusCode() >= 200 && response.statusCode() < 300) {
 				databaseStorage.acquireWriteTransaction(db -> {
 					db.dsl()
 						.deleteFrom(GITHUB_COMMAND)
-						.where(GITHUB_COMMAND.REPO_ID.eq(repoId))
+						.where(GITHUB_COMMAND.REPO_ID.eq(repoIdStr))
 						.and(GITHUB_COMMAND.PR.eq(reply.getPr()))
 						.and(GITHUB_COMMAND.COMMIT_HASH.eq(reply.getCommitHash().getHash()))
 						.execute();

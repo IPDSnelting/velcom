@@ -1,10 +1,8 @@
 import { createModule, mutation, action } from 'vuex-class-component'
 import { RunDescriptionWithDifferences, RunDescription } from '@/store/types'
 import axios from 'axios'
-import {
-  differenceFromJson,
-  runDescriptionFromJson
-} from '@/util/json/CommitComparisonJsonHelper'
+import { runDescriptionFromJson } from '@/util/json/CommitComparisonJsonHelper'
+import { runDescriptionWithDifferencesFromJson } from '@/util/json/NewJsonHelper'
 
 const VxModule = createModule({
   namespaced: 'newsModule',
@@ -59,13 +57,7 @@ export class NewsStore extends VxModule {
       }
     })
 
-    const runs = response.data.runs.map(
-      (it: any) =>
-        new RunDescriptionWithDifferences(
-          runDescriptionFromJson(it.run),
-          it.significant_dimensions.map(differenceFromJson)
-        )
-    )
+    const runs = response.data.runs.map(runDescriptionWithDifferencesFromJson)
 
     this.setRecentSignificantRuns(runs)
     return runs

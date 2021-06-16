@@ -2,7 +2,7 @@ package de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities;
 
 import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.Interpretation;
 import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.Unit;
-import de.aaaaaaah.velcom.backend.data.runcomparison.SignificanceFactors;
+import de.aaaaaaah.velcom.backend.data.significance.SignificanceFactors;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;

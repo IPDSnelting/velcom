@@ -4,6 +4,7 @@ import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.Measurement;
 import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.MeasurementValues;
 import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.Run;
 import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.Dimension;
+import de.aaaaaaah.velcom.backend.data.significance.SignificanceFactors;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;

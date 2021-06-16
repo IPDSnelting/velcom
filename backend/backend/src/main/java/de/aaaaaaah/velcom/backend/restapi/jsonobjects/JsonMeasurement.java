@@ -2,7 +2,7 @@ package de.aaaaaaah.velcom.backend.restapi.jsonobjects;
 
 import de.aaaaaaah.velcom.backend.access.benchmarkaccess.entities.Measurement;
 import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.DimensionInfo;
-import de.aaaaaaah.velcom.backend.data.runcomparison.SignificanceFactors;
+import de.aaaaaaah.velcom.backend.data.significance.SignificanceFactors;
 import java.util.List;
 import javax.annotation.Nullable;
 

@@ -19,16 +19,14 @@ import de.aaaaaaah.velcom.backend.access.committaccess.entities.FullCommit;
 import de.aaaaaaah.velcom.backend.access.dimensionaccess.DimensionReadAccess;
 import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.Dimension;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RepoId;
-import de.aaaaaaah.velcom.backend.data.runcomparison.DimensionDifference;
-import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparator;
-import de.aaaaaaah.velcom.backend.data.runcomparison.SignificanceFactors;
+import de.aaaaaaah.velcom.backend.data.significance.SignificanceDetector;
+import de.aaaaaaah.velcom.backend.data.significance.SignificanceFactors;
 import io.micrometer.core.annotation.Timed;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -46,20 +44,20 @@ public class SignificantRunsCollector {
 	private final DimensionReadAccess dimensionAccess;
 	private final RunCache runCache;
 	private final LatestRunCache latestRunCache;
-	private final RunComparator runComparator;
+	private final SignificanceDetector significanceDetector;
 
 	public SignificantRunsCollector(SignificanceFactors significanceFactors,
 		BenchmarkReadAccess benchmarkAccess, CommitReadAccess commitAccess,
 		DimensionReadAccess dimensionAccess, RunCache runCache, LatestRunCache latestRunCache,
-		RunComparator runComparator) {
+		SignificanceDetector significanceDetector) {
 
 		this.significanceFactors = significanceFactors;
-		this.benchmarkAccess = Objects.requireNonNull(benchmarkAccess);
-		this.commitAccess = Objects.requireNonNull(commitAccess);
+		this.benchmarkAccess = benchmarkAccess;
+		this.commitAccess = commitAccess;
 		this.dimensionAccess = dimensionAccess;
 		this.runCache = runCache;
 		this.latestRunCache = latestRunCache;
-		this.runComparator = Objects.requireNonNull(runComparator);
+		this.significanceDetector = significanceDetector;
 	}
 
 	/**
@@ -173,65 +171,18 @@ public class SignificantRunsCollector {
 	 * Check if a run is significant.
 	 *
 	 * @param run a run
-	 * @param parents a map of all known commits' parent runs. Is not required to contain an entry
+	 * @param parentMap a map of all known commits' parent runs. Is not required to contain an entry
 	 * 	for this particular run
 	 * @param significantDimensions all significant dimensions
 	 * @return a {@link SignificantRun} if the run is significant, {@link Optional#empty()} otherwise
 	 */
 	private Optional<SignificantRun> getSignificantRun(Run run,
-		Map<CommitSource, Collection<Run>> parents, Set<Dimension> significantDimensions) {
+		Map<CommitSource, Collection<Run>> parentMap, Set<Dimension> significantDimensions) {
 
-		List<DimensionDifference> significantDifferences = run.getSource().getLeft()
-			.flatMap(source -> Optional.ofNullable(parents.get(source)))
-			.stream()
-			.flatMap(Collection::stream)
-			.map(parent -> runComparator.compare(parent, run))
-			.flatMap(comparison -> comparison.getDifferences().stream())
-			.filter(difference -> isDifferenceSignificant(difference, significantDimensions))
-			.collect(toList());
-
-		if (hasSignificantFails(run, significantDimensions) || !significantDifferences.isEmpty()) {
-			return Optional.of(new SignificantRun(run, significantDifferences));
-		} else {
-			return Optional.empty();
-		}
-	}
-
-	/**
-	 * @param run a run
-	 * @param significantDimensions all significant dimensions
-	 * @return true if the run has failed significant measurements or is entirely failed
-	 */
-	private boolean hasSignificantFails(Run run, Set<Dimension> significantDimensions) {
-		return run.getResult().getRight()
-			.map(ms -> ms.stream()
-				.filter(m -> significantDimensions.contains(m.getDimension()))
-				.anyMatch(m -> m.getContent().isLeft()))
-			.orElse(true);
-	}
-
-	/**
-	 * @param diff the difference to check
-	 * @param significantDimensions all significant dimensions
-	 * @return true if the difference is significant according to the {@code significanceFactors}
-	 */
-	private boolean isDifferenceSignificant(DimensionDifference diff,
-		Set<Dimension> significantDimensions) {
-
-		boolean dimensionSignificant = significantDimensions.contains(diff.getDimension());
-
-		boolean relSignificant = diff.getReldiff()
-			.map(reldiff -> Math.abs(reldiff) >= significanceFactors.getRelativeThreshold())
-			// There is no reldiff if the first value is 0. But if the second value is also zero, that
-			// hardly constitutes a significant difference. Otherwise, it is a move away from 0, which is
-			// always significant.
-			.orElse(diff.getFirst() != diff.getSecond());
-
-		boolean stddevSignificant = diff.getSecondStddev()
-			.map(stddev -> Math.abs(diff.getDiff()) >= significanceFactors.getStddevThreshold() * stddev)
-			// If there is no stddev, this check should not prevent differences from being significant
-			.orElse(true);
-
-		return dimensionSignificant && relSignificant && stddevSignificant;
+		return run.getSource()
+			.getLeft()
+			.map(source -> Optional.ofNullable(parentMap.get(source)).orElse(List.of()))
+			.flatMap(parents -> significanceDetector.getSignificance(run, parents, significantDimensions))
+			.map(reasons -> new SignificantRun(run, reasons));
 	}
 }

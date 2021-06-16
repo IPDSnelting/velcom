@@ -16,7 +16,8 @@ import de.aaaaaaah.velcom.backend.data.benchrepo.BenchRepo;
 import de.aaaaaaah.velcom.backend.data.queue.Queue;
 import de.aaaaaaah.velcom.backend.data.recentruns.SignificantRunsCollector;
 import de.aaaaaaah.velcom.backend.data.runcomparison.RunComparator;
-import de.aaaaaaah.velcom.backend.data.runcomparison.SignificanceFactors;
+import de.aaaaaaah.velcom.backend.data.significance.SignificanceDetector;
+import de.aaaaaaah.velcom.backend.data.significance.SignificanceFactors;
 import de.aaaaaaah.velcom.backend.listener.Listener;
 import de.aaaaaaah.velcom.backend.restapi.authentication.Admin;
 import de.aaaaaaah.velcom.backend.restapi.authentication.AdminAuthenticator;
@@ -158,17 +159,22 @@ public class ServerMain extends Application<GlobalConfig> {
 			configuration.getSignificanceMinStddevAmount()
 		);
 		RunComparator runComparator = new RunComparator(significanceFactors);
+		SignificanceDetector significanceDetector = new SignificanceDetector(significanceFactors,
+			runComparator);
 		SignificantRunsCollector significantRunsCollector = new SignificantRunsCollector(
 			significanceFactors, benchmarkAccess, commitAccess, dimensionAccess, runCache, latestRunCache,
-			runComparator);
+			significanceDetector);
 
 		// Listener
 		Listener listener = new Listener(
 			databaseStorage,
 			repoStorage,
+			benchmarkAccess,
 			commitAccess,
+			dimensionAccess,
 			repoAccess,
 			benchRepo,
+			significanceDetector,
 			queue,
 			configuration.getPollInterval(),
 			configuration.getVacuumInterval(),
@@ -194,7 +200,7 @@ public class ServerMain extends Application<GlobalConfig> {
 			new AllReposEndpoint(dimensionAccess, repoAccess, availableDimensionsCache),
 			new CommitEndpoint(benchmarkAccess, commitAccess, runCache),
 			new CompareEndpoint(benchmarkAccess, commitAccess, dimensionAccess, runCache, latestRunCache,
-				runComparator, significanceFactors),
+				runComparator, significanceDetector, significanceFactors),
 			new DebugEndpoint(benchmarkAccess, dispatcher),
 			new GraphComparisonEndpoint(benchmarkAccess, commitAccess, dimensionAccess),
 			new GraphDetailEndpoint(commitAccess, benchmarkAccess, dimensionAccess, repoAccess, runCache,
