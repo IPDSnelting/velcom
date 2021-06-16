@@ -256,8 +256,6 @@ export default class EchartsDetailGraph extends Vue {
   @Watch('refreshKey')
   @Watch('graphFailedOrUnbenchmarkedColor') // DataPoints need adjusting, they store the color
   private updateGraph() {
-    console.log('Echarts updated')
-
     this.selectAppropriateSeries()
 
     this.chartOptions = {

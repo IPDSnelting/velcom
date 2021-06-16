@@ -180,14 +180,14 @@ export class DetailGraphStore extends VxModule {
   @mutation
   centerOnCommit(payload: { commit: Commit; dimension: Dimension }): void {
     this.selectedTab = 'graph'
-    this.startTime = new Date(
+    vxm.detailGraphModule.startTime = new Date(
       payload.commit.committerDate.getTime() - 1000 * 60 * 60 * 24 * 4
     )
-    this.endTime = new Date(
+    vxm.detailGraphModule.endTime = new Date(
       payload.commit.committerDate.getTime() + 1000 * 60 * 60 * 24 * 4
     )
-    this.selectedRepoId = payload.commit.repoId
-    this.selectedDimensions = [payload.dimension]
+    vxm.detailGraphModule.selectedRepoId = payload.commit.repoId
+    vxm.detailGraphModule.selectedDimensions = [payload.dimension]
   }
   //  <!--</editor-fold>-->
 

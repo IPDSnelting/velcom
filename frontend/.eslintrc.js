@@ -14,7 +14,7 @@ module.exports = {
     '@typescript-eslint/no-use-before-define': 0,
     '@typescript-eslint/interface-name-prefix': 0,
     '@typescript-eslint/camelcase': 0,
-    'no-console': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
+    'no-console': 'warn',
     '@typescript-eslint/no-inferrable-types': 0,
     'dot-notation': 0,
     'no-use-before-define': 0
