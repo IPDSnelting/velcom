@@ -173,23 +173,6 @@ export class RepoStore extends VxModule {
     }
   }
 
-  get occuringBenchmarks(): (selectedRepos: RepoId[]) => string[] {
-    return (selectedRepos: string[]) => {
-      const benchmarks = Object.values(this.repos)
-        .filter(repo => selectedRepos.includes(repo.id))
-        .flatMap(repo => repo.dimensions)
-        .map(dimension => dimension.benchmark)
-        .reduce(
-          (benchmarks, newBenchmark) => benchmarks.add(newBenchmark),
-          new Set<string>()
-        )
-
-      return Array.from(benchmarks).sort((a, b) =>
-        a.localeCompare(b, undefined, { sensitivity: 'base' })
-      )
-    }
-  }
-
   get metricsForBenchmark(): (benchmark: string) => string[] {
     return (benchmark: string) => {
       const metrics = Object.values(this.repos)
