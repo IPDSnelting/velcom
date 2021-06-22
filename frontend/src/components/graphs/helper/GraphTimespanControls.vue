@@ -124,14 +124,8 @@ export default class GraphTimespanControls extends Vue {
       value: this.startTimeString,
       role: 'start',
       opened: false,
-      saveFunction: (field: TimeField, value: string) => {
-        this.saveMenu(field.ref, value)
-        this.$emit('update:startTime', new Date(value))
-        this.$emit('reload-graph-data')
-      },
-      allowedDates: (value: string) => {
-        return new Date(value) <= this.endTime
-      },
+      saveFunction: this.saveStartTime,
+      allowedDates: this.allowedDatesStart,
       rules: []
     },
     {
@@ -139,14 +133,8 @@ export default class GraphTimespanControls extends Vue {
       value: this.endTimeString,
       role: 'end',
       opened: false,
-      saveFunction: (field: TimeField, value: string) => {
-        this.saveMenu(field.ref, value)
-        this.$emit('update:endTime', new Date(value))
-        this.$emit('reload-graph-data')
-      },
-      allowedDates: (value: string) => {
-        return new Date(value) >= this.startTime
-      },
+      saveFunction: this.saveEndTime,
+      allowedDates: this.allowedDatesEnd,
       rules: [this.ruleStopAfterStart]
     }
   ]
@@ -160,6 +148,27 @@ export default class GraphTimespanControls extends Vue {
   private readonly startTime!: Date
   // <!--</editor-fold>-->
 
+  // <!--<editor-fold desc="Save helpers to bind to correct this">-->
+  private allowedDatesStart(dateString: string) {
+    return new Date(dateString) <= this.endTime
+  }
+
+  private allowedDatesEnd(dateString: string) {
+    return new Date(dateString) >= this.startTime
+  }
+
+  private saveStartTime(field: TimeField, value: string) {
+    this.saveMenu(field.ref, value)
+    this.$emit('update:startTime', new Date(value))
+    this.$emit('reload-graph-data')
+  }
+
+  private saveEndTime(field: TimeField, value: string) {
+    this.saveMenu(field.ref, value)
+    this.$emit('update:endTime', new Date(value))
+    this.$emit('reload-graph-data')
+  }
+
   private saveMenu(ref: string, value: string) {
     let field: any
     const readRef = this.$refs[ref]
@@ -171,6 +180,7 @@ export default class GraphTimespanControls extends Vue {
     }
     field.save(value)
   }
+  // <!--</editor-fold>-->
 
   // <!--<editor-fold desc="Duration">-->
   private get duration(): number {

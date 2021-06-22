@@ -322,12 +322,6 @@ export class RunResultSuccess {
   constructor(measurements: Measurement[]) {
     this.measurements = measurements
   }
-
-  public resultForDimension(dimension: DimensionId): Measurement | undefined {
-    return this.measurements.find(measurement => {
-      return dimensionIdEquals(measurement.dimension, dimension)
-    })
-  }
 }
 export type RunResult =
   | RunResultScriptError
