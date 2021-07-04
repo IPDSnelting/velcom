@@ -568,7 +568,7 @@ public class GithubPrInteractor {
 						} else {
 							msgBuilder.append("decreased by ");
 						}
-						msgBuilder.append(String.format("%.1f", reldiff.get())).append(" %");
+						msgBuilder.append(String.format("%.0f%%", Math.abs(reldiff.get() * 100)));
 					} else {
 						msgBuilder.append("changed to 0");
 					}
