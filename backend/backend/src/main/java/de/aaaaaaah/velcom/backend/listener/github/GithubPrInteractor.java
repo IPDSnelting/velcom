@@ -1,5 +1,6 @@
 package de.aaaaaaah.velcom.backend.listener.github;
 
+import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static org.jooq.codegen.db.tables.GithubCommand.GITHUB_COMMAND;
@@ -18,6 +19,8 @@ import de.aaaaaaah.velcom.backend.access.committaccess.CommitReadAccess;
 import de.aaaaaaah.velcom.backend.access.committaccess.entities.CommitHash;
 import de.aaaaaaah.velcom.backend.access.dimensionaccess.DimensionReadAccess;
 import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.Dimension;
+import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.DimensionInfo;
+import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.Interpretation;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.BranchName;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.Repo;
 import de.aaaaaaah.velcom.backend.access.repoaccess.entities.Repo.GithubInfo;
@@ -42,10 +45,14 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
+import javax.annotation.Nullable;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.UriBuilder;
 import org.jooq.codegen.db.tables.records.GithubCommandRecord;
@@ -522,6 +529,11 @@ public class GithubPrInteractor {
 			Set<Dimension> significantDimensions = dimensionAccess.getSignificantDimensions();
 			Optional<SignificanceReasons> reasons = significanceDetector
 				.getSignificance(run, compareToRun, significantDimensions);
+			Set<Dimension> dimensions = reasons.stream()
+				.map(SignificanceReasons::getDimensions)
+				.flatMap(Collection::stream)
+				.collect(toSet());
+			Map<Dimension, DimensionInfo> infos = dimensionAccess.getDimensionInfoMap(dimensions);
 
 			// Determine link either to run comparison or run detail page
 			final String link = compareToHash.map(
@@ -529,53 +541,8 @@ public class GithubPrInteractor {
 					+ "?hash1=" + commitHash.getHash())
 				.orElseGet(() -> frontendUrl + "run-detail/" + runId.getIdAsString());
 
-			// Write message itself
-			StringBuilder msgBuilder = new StringBuilder();
-			msgBuilder
-				.append("Here are the [benchmark results](")
-				.append(link)
-				.append(") for commit ")
-				.append(reply.getCommitHash().getHash())
-				.append(".");
-
-			if (reasons.isPresent()) {
-				if (reasons.get().isEntireRunFailed()) {
-					msgBuilder.append("\nThe entire run failed.");
-				}
-
-				// e. g. "backend - build_time: failed"
-				for (Dimension dim : reasons.get().getSignificantFailedDimensions()) {
-					msgBuilder.append("\n")
-						.append(dim.getBenchmark())
-						.append(" - ")
-						.append(dim.getMetric())
-						.append(": failed");
-				}
-
-				// e. g. "backend - build_time: increased by 2.2 %" or  "frontend - todos: changed to 0"
-				for (DimensionDifference diff : reasons.get().getSignificantDifferences()) {
-					msgBuilder
-						.append("\n")
-						.append(diff.getDimension().getBenchmark())
-						.append(" - ")
-						.append(diff.getDimension().getMetric())
-						.append(": ");
-
-					Optional<Double> reldiff = diff.getReldiff();
-					if (reldiff.isPresent()) {
-						if (reldiff.get() > 0) {
-							msgBuilder.append("increased by ");
-						} else {
-							msgBuilder.append("decreased by ");
-						}
-						msgBuilder.append(String.format("%.0f%%", Math.abs(reldiff.get() * 100)));
-					} else {
-						msgBuilder.append("changed to 0");
-					}
-				}
-			}
-
-			HttpResponse<String> response = createPrComment(reply.getPr(), msgBuilder.toString());
+			String message = buildFinishedPrReply(reply, link, reasons.orElse(null), infos);
+			HttpResponse<String> response = createPrComment(reply.getPr(), message);
 
 			if (response.statusCode() >= 200 && response.statusCode() < 300) {
 				databaseStorage.acquireWriteTransaction(db -> {
@@ -590,6 +557,166 @@ public class GithubPrInteractor {
 				LOGGER.warn("Failed to reply: {}", response.body());
 			}
 		}
+	}
+
+	private static String buildFinishedPrReply(FinishedGithubCommand reply, String link,
+		@Nullable SignificanceReasons reasons, Map<Dimension, DimensionInfo> infos) {
+
+		StringBuilder builder = new StringBuilder();
+
+		builder
+			.append("Here are the [benchmark results](")
+			.append(link)
+			.append(") for commit ")
+			.append(reply.getCommitHash().getHash())
+			.append(".");
+
+		if (reasons == null) {
+			builder.append("\nThere were no significant changes.");
+			return builder.toString();
+		}
+
+		if (reasons.isEntireRunFailed()) {
+			builder.append("\nThe entire run failed.");
+		}
+
+		List<DimensionDifference> significantDifferences = reasons.getSignificantDifferences();
+		List<Dimension> significantFailedDimensions = reasons.getSignificantFailedDimensions();
+		if (!significantDifferences.isEmpty() || !significantFailedDimensions.isEmpty()) {
+			buildSignificanceDiff(builder, significantDifferences, significantFailedDimensions, infos);
+		}
+
+		return builder.toString();
+	}
+
+	private static class TableLine {
+
+		// Left-aligned
+		public final String prefix;
+		public final String benchmark;
+		public final String metric;
+		// Right-aligned
+		public final String percentage;
+		@Nullable
+		public final String stddev;
+
+		public TableLine(String prefix, String benchmark, String metric, String percentage,
+			@Nullable String stddev) {
+			this.prefix = prefix;
+			this.benchmark = benchmark;
+			this.metric = metric;
+			this.percentage = percentage;
+			this.stddev = stddev;
+		}
+
+		public Optional<String> getStddev() {
+			return Optional.ofNullable(stddev);
+		}
+	}
+
+	private static String ljust(int width, String string) {
+		return String.format("%-" + width + "s", string);
+	}
+
+	private static String rjust(int width, String string) {
+		return String.format("%" + width + "s", string);
+	}
+
+	public static void buildSignificanceDiff(StringBuilder builder,
+		List<DimensionDifference> differences, List<Dimension> failed,
+		Map<Dimension, DimensionInfo> infos) {
+
+		List<TableLine> lines = new ArrayList<>();
+		differences.stream()
+			.sorted(comparing(DimensionDifference::getDimension))
+			.map(diff -> {
+				DimensionInfo info = infos.get(diff.getDimension());
+				boolean less_is_better = info.getInterpretation() == Interpretation.LESS_IS_BETTER;
+				boolean more_is_better = info.getInterpretation() == Interpretation.MORE_IS_BETTER;
+				boolean less = diff.getDiff() < 0;
+				boolean more = diff.getDiff() > 0;
+				final String prefix;
+				if ((less_is_better && less) || (more_is_better && more)) {
+					prefix = "+";
+				} else if ((less_is_better && more) || (more_is_better && less)) {
+					prefix = "-";
+				} else {
+					prefix = " ";
+				}
+
+				return new TableLine(
+					prefix,
+					diff.getDimension().getBenchmark(),
+					diff.getDimension().getMetric(),
+					diff.getReldiff().map(d -> String.format("%.0f%%", d * 100)).orElse("-"),
+					diff.getStddevDiff().map(d -> String.format("(%.1f σ)", d)).orElse(null)
+				);
+			})
+			.forEach(lines::add);
+		failed.stream()
+			.sorted()
+			.map(dim -> new TableLine("-", dim.getBenchmark(), dim.getMetric(), "failed", null))
+			.forEach(lines::add);
+
+		TableLine legend = new TableLine(" ", "Benchmark", "Metric", "Change", null);
+		int maxBenchWidth = Stream.concat(Stream.of(legend), lines.stream())
+			.mapToInt(line -> line.benchmark.length())
+			.max()
+			.orElse(0);
+		int maxMetricWidth = Stream.concat(Stream.of(legend), lines.stream())
+			.mapToInt(line -> line.metric.length())
+			.max()
+			.orElse(0);
+		int maxChangeWidth = Stream.concat(Stream.of(legend), lines.stream())
+			.mapToInt(line -> line.percentage.length())
+			.max()
+			.orElse(0);
+		int maxStddevWidth = Stream.concat(Stream.of(legend), lines.stream())
+			.flatMap(line -> line.getStddev().stream())
+			.mapToInt(String::length)
+			.max()
+			.orElse(0);
+		int totalWidthWithoutPrefix = maxBenchWidth + 3 + maxMetricWidth + 3 + maxChangeWidth;
+		if (maxStddevWidth > 0) {
+			totalWidthWithoutPrefix += 1 + maxStddevWidth;
+		}
+
+		builder.append("\n```diff");
+
+		// Legend
+		builder
+			.append("\n")
+			.append(legend.prefix)
+			.append(" ")
+			.append(ljust(maxBenchWidth, legend.benchmark))
+			.append("   ")
+			.append(ljust(maxMetricWidth, legend.metric))
+			.append("   ")
+			.append(rjust(maxChangeWidth, legend.percentage));
+		// Separator
+		builder
+			.append("\n  ")
+			.append("=".repeat(totalWidthWithoutPrefix));
+		// Actual lines
+		for (TableLine line : lines) {
+			builder
+				.append("\n")
+				.append(line.prefix)
+				.append(" ")
+				.append(ljust(maxBenchWidth, line.benchmark))
+				.append("   ")
+				.append(ljust(maxMetricWidth, line.metric))
+				.append("   ")
+				.append(rjust(maxChangeWidth, line.percentage));
+
+			if (line.stddev != null) {
+				builder
+					.append(" ")
+					.append(rjust(maxStddevWidth, line.stddev));
+			}
+		}
+
+		builder.append("\n```");
 	}
 
 	public void replyToErroredPrCommands() throws IOException, InterruptedException {
