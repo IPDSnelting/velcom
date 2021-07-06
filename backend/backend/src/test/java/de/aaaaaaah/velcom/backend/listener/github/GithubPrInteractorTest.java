@@ -34,6 +34,10 @@ class GithubPrInteractorTest {
 			new DimensionDifference(
 				new Dimension("deriv", "maxrss"),
 				0.0, 10.0, new RunId(), 1.0
+			),
+			new DimensionDifference(
+				new Dimension("const_fold", "branches"),
+				100.0, 10.0, new RunId(), null
 			)
 		);
 		List<Dimension> failed = List.of(
@@ -63,6 +67,12 @@ class GithubPrInteractorTest {
 				new Dimension("deriv", "maxrss"),
 				new Unit("thingies"),
 				Interpretation.MORE_IS_BETTER
+			),
+			new Dimension("const_fold", "branches"),
+			new DimensionInfo(
+				new Dimension("const_fold", "branches"),
+				new Unit("bits and bobs"),
+				Interpretation.NEUTRAL
 			)
 		);
 		GithubPrInteractor.buildSignificanceDiff(builder, differences, failed, infos);
@@ -74,6 +84,7 @@ class GithubPrInteractorTest {
 			+ "\n+ bin/lean      binary size      -100%"
 			+ "\n- binarytrees   branch-misses      11%   (18.5 σ)"
 			+ "\n- binarytrees   instructions        3% (1841.7 σ)"
+			+ "\n  const_fold    branches          -90%"
 			+ "\n+ deriv         maxrss               -   (10.0 σ)"
 			+ "\n- stdlib        task-clock      failed"
 			+ "\n```";
