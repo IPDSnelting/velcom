@@ -41,7 +41,7 @@ class GithubPrInteractorTest {
 			)
 		);
 		List<Dimension> failed = List.of(
-			new Dimension("stdlib", "task-clock")
+			new Dimension("const_fold", "instructions")
 		);
 		Map<Dimension, DimensionInfo> infos = Map.of(
 			new Dimension("bin/lean", "binary size"),
@@ -85,8 +85,8 @@ class GithubPrInteractorTest {
 			+ "\n- binarytrees   branch-misses      11%   (18.5 σ)"
 			+ "\n- binarytrees   instructions        3% (1841.7 σ)"
 			+ "\n  const_fold    branches          -90%"
+			+ "\n- const_fold    instructions    failed"
 			+ "\n+ deriv         maxrss               -   (10.0 σ)"
-			+ "\n- stdlib        task-clock      failed"
 			+ "\n```";
 
 		System.out.println(builder.toString());

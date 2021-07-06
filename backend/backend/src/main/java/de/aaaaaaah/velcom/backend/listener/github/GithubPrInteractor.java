@@ -628,7 +628,6 @@ public class GithubPrInteractor {
 
 		List<TableLine> lines = new ArrayList<>();
 		differences.stream()
-			.sorted(comparing(DimensionDifference::getDimension))
 			.map(diff -> {
 				DimensionInfo info = infos.get(diff.getDimension());
 				boolean less_is_better = info.getInterpretation() == Interpretation.LESS_IS_BETTER;
@@ -654,9 +653,9 @@ public class GithubPrInteractor {
 			})
 			.forEach(lines::add);
 		failed.stream()
-			.sorted()
 			.map(dim -> new TableLine("-", dim.getBenchmark(), dim.getMetric(), "failed", null))
 			.forEach(lines::add);
+		lines.sort(comparing(line -> new Dimension(line.benchmark, line.metric)));
 
 		TableLine legend = new TableLine(" ", "Benchmark", "Metric", "Change", null);
 		int maxBenchWidth = Stream.concat(Stream.of(legend), lines.stream())
