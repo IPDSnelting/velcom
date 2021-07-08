@@ -176,7 +176,7 @@ jobs:
     needs: [build-frontend-kit, build-backend]
 
     runs-on: ubuntu-latest
-    if: "github.event_name == 'push' && github.ref == 'refs/heads/stable'"
+    if: "github.event_name == 'push' && github.ref == 'refs/heads/main'"
 
     steps:
       # SETUP
@@ -235,7 +235,7 @@ jobs:
     needs: [push-kit]
 
     runs-on: ubuntu-latest
-    if: "github.event_name == 'push' && github.ref == 'refs/heads/stable'"
+    if: "github.event_name == 'push' && github.ref == 'refs/heads/main'"
 
     env:
       ENDPOINT: ${{ secrets.KIT_DEPLOY_ENDPOINT }}
