@@ -346,7 +346,9 @@ export default class StatusComparisonGraph extends Vue {
           },
           myDecal: {
             show: true,
-            title: this.showDecals ? 'Hide decals' : 'Show decals',
+            title: this.showDecals
+              ? 'Hide pattern in bars'
+              : 'Show pattern in bars',
             icon: mdiDotsHexagon,
             onclick: () => {
               this.showDecals = !this.showDecals
