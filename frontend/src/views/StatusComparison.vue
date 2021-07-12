@@ -10,6 +10,7 @@
           <v-card-text>
             <repo-selection-component
               :repos="possibleBaselineRepos"
+              :clearable="true"
               label="Baseline repository"
               v-model="baselineRepoId"
             ></repo-selection-component>
@@ -168,7 +169,7 @@ export default class StatusComparison extends Vue {
   private get baselineErrorMessage() {
     const baselineRepoId = this.baselineRepoId
     if (baselineRepoId === null) {
-      return 'Please select a baseline in the top left'
+      return null
     }
 
     const baselinePoint = this.data.find(it => it.repoId === baselineRepoId)
@@ -199,7 +200,12 @@ export default class StatusComparison extends Vue {
     if (this.baselineErrorMessage !== null) {
       return null
     }
-    const baselineRepoId = vxm.statusComparisonModule.baselineRepoId!
+    const baselineRepoId = vxm.statusComparisonModule.baselineRepoId
+
+    if (baselineRepoId === null) {
+      return null
+    }
+
     const baselinePoint = this.data.find(it => it.repoId === baselineRepoId)!
     const run = baselinePoint.run!
     const result = run.result as RunResultSuccess

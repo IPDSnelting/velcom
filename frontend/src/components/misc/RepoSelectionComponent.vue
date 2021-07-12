@@ -6,6 +6,7 @@
     :value="repoId"
     :label="label"
     :hide-details="rules.length === 0"
+    :clearable="clearable"
     @input="setRepoId"
     item-text="name"
     item-value="id"
@@ -46,6 +47,9 @@ export default class RepoSelectionComponent extends Vue {
 
   @Prop({ default: 'Repository name' })
   private readonly label!: string
+
+  @Prop({ default: false })
+  private readonly clearable!: boolean
 
   private setRepoId(newValue: string) {
     this.$emit('value', newValue)
