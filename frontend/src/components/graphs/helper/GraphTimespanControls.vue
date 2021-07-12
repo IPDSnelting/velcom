@@ -42,7 +42,6 @@
                       v-model="field.value"
                       no-title
                       scrollable
-                      :max="today"
                       :allowed-dates="field.allowedDates"
                       :events="[startTimeString, endTimeString]"
                       :event-color="
@@ -97,7 +96,7 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { mdiCalendar, mdiLock, mdiLockOpenVariant } from '@mdi/js'
-import { Prop, Watch } from 'vue-property-decorator'
+import { Prop } from 'vue-property-decorator'
 
 type TimeField = {
   ref: string
@@ -220,16 +219,6 @@ export default class GraphTimespanControls extends Vue {
   // <!--</editor-fold>-->
 
   // <!--<editor-fold desc="Start/Stop time">-->
-  @Watch('startTimeString')
-  private onStartTimeChange() {
-    this.timeFields[0].value = this.startTimeString
-  }
-
-  @Watch('endTimeString')
-  private onEndTimeChange() {
-    this.timeFields[1].value = this.endTimeString
-  }
-
   private get startTimeString(): string {
     return this.startTime.toISOString().substring(0, 10)
   }
