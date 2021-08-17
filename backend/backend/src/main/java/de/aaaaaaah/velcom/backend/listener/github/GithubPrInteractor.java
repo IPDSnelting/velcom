@@ -358,7 +358,7 @@ public class GithubPrInteractor {
 			LOGGER.debug("Marking command {} in pr #{}", command.getComment(), command.getPr());
 
 			ObjectNode requestBody = new ObjectMapper().createObjectNode()
-				.put("content", "+1");
+				.put("content", "rocket");
 			URI uri = UriBuilder.fromUri("https://api.github.com/")
 				.path("repos")
 				.path(ghInfo.getRepoName())
