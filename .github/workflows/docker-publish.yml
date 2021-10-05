@@ -157,8 +157,6 @@ jobs:
       CD_USER: ${{ secrets.CD_USER }}
       SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
       SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-      AAAAAAAH_CD_RUNNER_URL: ${{ secrets.AAAAAAAH_CD_RUNNER_URL }}
-      AAAAAAAH_CD_RUNNER_PORT: ${{ secrets.AAAAAAAH_CD_RUNNER_PORT }}
 
     steps:
       - uses: actions/checkout@v2
