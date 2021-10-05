@@ -29,7 +29,7 @@
 
     <template #[`item.stddevDiff`]="{ item, value }">
       <span v-if="Number.isFinite(value)">
-        {{ item.formatNumber(value * 100) }} %
+        {{ item.formatNumber(value) }} σ
       </span>
       <span v-else>-</span>
     </template>
