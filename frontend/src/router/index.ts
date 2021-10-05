@@ -32,15 +32,14 @@ export type RouteName =
   | 'about'
   | '404'
 
-type RouteInfo = Partial<{
-  name: RouteName
-  meta: Partial<{
-    navigable: boolean
-    label: string
-    icon: string
-  }>
-}> &
-  RouteConfig
+type RouteInfo = {
+  name?: RouteName
+  meta: {
+    navigable?: boolean
+    label?: string
+    icon?: string
+  }
+} & RouteConfig
 
 const routes: RouteInfo[] = [
   {
@@ -177,7 +176,7 @@ const router = new VueRouterEx({
 
 router.afterEach(to => {
   Vue.nextTick(() => {
-    document.title = to.meta.label ? 'VelCom - ' + to.meta.label : 'VelCom'
+    document.title = to.meta!.label ? 'VelCom - ' + to.meta!.label : 'VelCom'
   })
 })
 

@@ -41,7 +41,7 @@ export class CommitDetailComparisonStore extends VxModule {
       })
 
       return runWithDifferencesFromJson(response.data)
-    } catch (e) {
+    } catch (e: any) {
       if (e.response && e.response.status === 404) {
         throw new NotFoundError()
       }
@@ -71,7 +71,7 @@ export class CommitDetailComparisonStore extends VxModule {
       )
 
       return commitFromJson(response.data.commit)
-    } catch (e) {
+    } catch (e: any) {
       if (e.response && e.response.status === 404) {
         throw new NotFoundError()
       }
@@ -112,7 +112,7 @@ export class CommitDetailComparisonStore extends VxModule {
       )
 
       return comparisonFromJson(response.data)
-    } catch (e) {
+    } catch (e: any) {
       if (e.response && e.response.status === 404) {
         throw new NotFoundError()
       }
