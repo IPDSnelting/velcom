@@ -18,8 +18,9 @@
           <v-chart
             ref="chart"
             :autoresize="true"
-            :options="chartOptions"
+            :option="chartOptions"
             :theme="chartTheme"
+            :update-options="{ notMerge: true }"
             @datazoom="echartsZoomed"
             @contextmenu="echartsOpenContextMenu"
             @click="echartsClicked"
@@ -49,6 +50,7 @@ import {
   GraphChart,
   GraphSeriesOption
 } from 'echarts/charts'
+import { CanvasRenderer } from 'echarts/renderers'
 import {
   GridComponent,
   GridComponentOption,
@@ -73,6 +75,7 @@ import { escapeHtml } from '@/util/Texts'
 import { formatDate } from '@/util/Times'
 
 use([
+  CanvasRenderer,
   LineChart,
   GraphChart,
   GridComponent,
@@ -828,7 +831,7 @@ export default class EchartsDetailGraph extends Vue {
   }
 
   private setZoomOnCorrectAxis(seriesId: string) {
-    const actualOptions: ECOption = (this.$refs['chart'] as any).computedOptions
+    const actualOptions: ECOption = (this.$refs['chart'] as any).getOption()
 
     const orNull = (zoom: DataZoomComponentOption, start: 'start' | 'end') => {
       const value =
@@ -997,10 +1000,10 @@ export default class EchartsDetailGraph extends Vue {
 
 <style>
 /*noinspection CssUnusedSymbol*/
-.echarts {
-  width: 100%;
-  height: 100%;
-}
+/*.echarts {*/
+/*  width: 100%;*/
+/*  height: 100%;*/
+/*}*/
 
 .echarts-tooltip-table tr td {
   padding: 2px;

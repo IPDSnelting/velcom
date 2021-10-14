@@ -4,9 +4,9 @@
       <v-col class="full-height">
         <div id="chart-container" class="full-height">
           <v-chart
-            ref="chart"
             :autoresize="true"
-            :options="chartOptions"
+            :option="chartOptions"
+            :update-options="{ notMerge: true }"
             :theme="chartTheme"
             @mousedown="datapointClicked"
           />
@@ -34,6 +34,7 @@ import {
   StatusComparisonPoint
 } from '@/store/types'
 import { ComposeOption, use } from 'echarts/core'
+import { CanvasRenderer } from 'echarts/renderers'
 import { BarChart, BarSeriesOption } from 'echarts/charts'
 import {
   AriaComponent,
@@ -60,6 +61,7 @@ import { escapeHtml } from '@/util/Texts'
 import { mdiDotsHexagon } from '@mdi/js'
 
 use([
+  CanvasRenderer,
   BarChart,
   GridComponent,
   GridComponent,
