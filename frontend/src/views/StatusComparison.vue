@@ -207,6 +207,11 @@ export default class StatusComparison extends Vue {
     }
 
     const baselinePoint = this.data.find(it => it.repoId === baselineRepoId)!
+
+    if (!baselinePoint) {
+      return null
+    }
+
     const run = baselinePoint.run!
     const result = run.result as RunResultSuccess
     return result.measurements.filter(it => it instanceof MeasurementSuccess)

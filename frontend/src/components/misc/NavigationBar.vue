@@ -132,7 +132,7 @@ export default class NavigationBar extends Vue {
       .filter(this.filterRoute)
       .map(
         route =>
-          new NavigationItem(route.name!, route.meta.icon, route.meta.label)
+          new NavigationItem(route.name!, route.meta!.icon, route.meta!.label)
       )
   }
 
@@ -143,7 +143,7 @@ export default class NavigationBar extends Vue {
     ) {
       return false
     }
-    return route.meta.navigable
+    return route.meta!.navigable
   }
 
   private get currentRouteName(): string {

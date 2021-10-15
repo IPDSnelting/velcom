@@ -152,8 +152,8 @@ export class QueueStore extends VxModule {
           ? new Date(response.data.running_since * 1000)
           : null
       }
-    } catch (e) {
-      if (e.response.status === 404) {
+    } catch (e: any) {
+      if (e.response && e.response.status === 404) {
         return null
       }
       throw e

@@ -4,9 +4,9 @@
       <v-col class="full-height">
         <div id="chart-container" class="full-height">
           <v-chart
-            ref="chart"
             :autoresize="true"
-            :options="chartOptions"
+            :option="chartOptions"
+            :update-options="{ notMerge: true }"
             :theme="chartTheme"
             @mousedown="datapointClicked"
           />
@@ -34,6 +34,7 @@ import {
   StatusComparisonPoint
 } from '@/store/types'
 import { ComposeOption, use } from 'echarts/core'
+import { CanvasRenderer } from 'echarts/renderers'
 import { BarChart, BarSeriesOption } from 'echarts/charts'
 import {
   AriaComponent,
@@ -60,6 +61,7 @@ import { escapeHtml } from '@/util/Texts'
 import { mdiDotsHexagon } from '@mdi/js'
 
 use([
+  CanvasRenderer,
   BarChart,
   GridComponent,
   GridComponent,
@@ -617,10 +619,6 @@ export default class StatusComparisonGraph extends Vue {
 </style>
 
 <style>
-.echarts {
-  width: 100%;
-  height: 100%;
-}
 .echarts-tooltip-table tr td {
   padding: 2px;
 }
@@ -637,6 +635,7 @@ export default class StatusComparisonGraph extends Vue {
   font-size: 1.1em;
 }
 
+/* Used in dynamically generated HTML */
 /*noinspection CssUnusedSymbol*/
 .echarts-tooltip-table .color-preview {
   width: 10px;
