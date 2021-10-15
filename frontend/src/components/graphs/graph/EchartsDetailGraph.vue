@@ -999,12 +999,6 @@ export default class EchartsDetailGraph extends Vue {
 </style>
 
 <style>
-/*noinspection CssUnusedSymbol*/
-/*.echarts {*/
-/*  width: 100%;*/
-/*  height: 100%;*/
-/*}*/
-
 .echarts-tooltip-table tr td {
   padding: 2px;
 }
@@ -1021,7 +1015,8 @@ export default class EchartsDetailGraph extends Vue {
   font-size: 1.1em;
 }
 
-/*noinspection CssUnusedSymbol*/
+/* Used in dynamically generated HTML */
+/*noinspection CssUnusedSymbol */
 .echarts-tooltip-table .color-preview {
   width: 10px;
   height: 10px;
