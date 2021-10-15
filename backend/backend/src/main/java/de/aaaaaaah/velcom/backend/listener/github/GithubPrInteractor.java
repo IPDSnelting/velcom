@@ -48,6 +48,7 @@ import java.util.Base64;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -647,8 +648,8 @@ public class GithubPrInteractor {
 					prefix,
 					diff.getDimension().getBenchmark(),
 					diff.getDimension().getMetric(),
-					diff.getReldiff().map(d -> String.format("%.0f%%", d * 100)).orElse("-"),
-					diff.getStddevDiff().map(d -> String.format("(%.1f σ)", d)).orElse(null)
+					diff.getReldiff().map(d -> String.format(Locale.ROOT, "%.0f%%", d * 100)).orElse("-"),
+					diff.getStddevDiff().map(d -> String.format(Locale.ROOT, "(%.1f σ)", d)).orElse(null)
 				);
 			})
 			.forEach(lines::add);
