@@ -18,7 +18,6 @@ import {
 import { RunSearchStore } from '@/store/modules/runSearchStore'
 
 export interface RootState {
-  baseUrl: string
   colorModule: ColorStore
   commitDetailComparisonModule: CommitDetailComparisonStore
   newsModule: NewsStore
@@ -36,9 +35,7 @@ deletedOutdatedLocalData()
 Vue.use(Vuex)
 
 export const store = new Vuex.Store({
-  state: {
-    baseUrl: process.env.VUE_APP_BASE_URL
-  } as RootState,
+  state: {} as RootState,
   modules: {
     ...extractVuexModule(ColorStore),
     ...extractVuexModule(CommitDetailComparisonStore),

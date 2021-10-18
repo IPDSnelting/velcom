@@ -1,7 +1,7 @@
 import Vue from 'vue'
 import './class-components-router-hooks' // Register custom hooks
 import App from './App.vue'
-import router from './router'
+import router, { routerBaseUrl } from './router'
 import { store, vxm } from './store'
 import axios from 'axios'
 import vuetify from './plugins/vuetify'
@@ -10,7 +10,13 @@ import { restoreFromPassedSession } from './store/persistence'
 
 Vue.config.productionTip = false
 
-axios.defaults.baseURL = store.state.baseUrl
+if (process.env.VUE_APP_LOCATION_INDEPENDENT_IMAGE) {
+  let url = '/' + routerBaseUrl + '/api'
+  url = url.replaceAll(/\/+/g, '/')
+  axios.defaults.baseURL = url
+} else {
+  axios.defaults.baseURL = process.env.VUE_APP_BASE_URL
+}
 
 window.addEventListener('storage', event => {
   if (!event.newValue) {

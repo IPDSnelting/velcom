@@ -168,9 +168,17 @@ class VueRouterEx extends VueRouter {
 
 Vue.use(VueRouterEx)
 
+export let routerBaseUrl = ''
+
+if (process.env.VUE_APP_LOCATION_INDEPENDENT_IMAGE) {
+  routerBaseUrl = computeRuntimeBaseUrl()
+} else {
+  routerBaseUrl = process.env.BASE_URL
+}
+
 const router = new VueRouterEx({
   mode: 'history',
-  base: process.env.BASE_URL,
+  base: routerBaseUrl,
   routes: routes
 })
 
@@ -199,3 +207,18 @@ router.beforeEach((to, from, next) => {
 })
 
 export default router
+
+function computeRuntimeBaseUrl() {
+  let path = window.location.pathname
+
+  const routeFirstPathComponents = routes
+    .map(it => it.path)
+    .filter(it => it.length > 1 && it.startsWith('/'))
+    .map(it => it.replace(/\/(.+?)\/.*/, '$1'))
+
+  for (const component of routeFirstPathComponents) {
+    path = path.replace(new RegExp(component + '(/.*)?', 'g'), '')
+  }
+
+  return path
+}
