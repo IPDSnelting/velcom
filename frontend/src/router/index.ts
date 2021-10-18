@@ -211,6 +211,18 @@ export default router
 function computeRuntimeBaseUrl() {
   let path = window.location.pathname
 
+  const maxRouteNestingLevel = routes
+    .map(it => it.path)
+    .map(it => Array.from(it).filter(it => it === '/').length)
+    .reduce((a, b) => Math.max(a, b))
+
+  if (maxRouteNestingLevel > 4) {
+    throw Error(
+      'Frontend route nesting level is larger than expected, please make sure the "scripts/docker/build-docker" ' +
+        'script can deal with them!'
+    )
+  }
+
   const routeFirstPathComponents = routes
     .map(it => it.path)
     .filter(it => it.length > 1 && it.startsWith('/'))

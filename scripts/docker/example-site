@@ -31,7 +31,8 @@ server {
    # Property 1: Proxy pass all requests to the backend
    # Notice the trailing '/'! See the 'proxy_pass' directive below for
    # information.
-   location /api/ {
+   location ~ ^/api/.*$ {
+      rewrite ^/api/(.*) /$1 break;
       proxy_set_header        Host $host:$server_port;
       proxy_set_header        X-Real-IP $remote_addr;
       proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -39,12 +40,15 @@ server {
       proxy_set_header        X-Forwarded-Host $host;
 
       # Backend is running at port 9001 in our example
-      # The trailing '/' is REQUIRED as otherwise nginx does not replace the
-      # '/api/' part in the url. This leads to a 404 as the backend does not
-      # know the path '/api/<url>' or '//<url>' (if you do not have a trailing
-      # slash at the end of the location block)
-      proxy_pass              http://127.0.0.1:9001/;
+      # You must not add a trailing '/' here or else nginx complains that
+      # you added a proxy pass in a regex rule.
+      proxy_pass              http://127.0.0.1:9001;
    }
+
+   # Leave the following line EXACTLY as is, as it is used as a marker to when
+   # generating a position independent image.
+   # {Placeholder for generated rules}
+
 }
 
 ###### Runner connection port ######
