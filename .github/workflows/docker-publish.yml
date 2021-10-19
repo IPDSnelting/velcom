@@ -46,6 +46,24 @@ jobs:
           name: frontend-artifacts-kit
           path: frontend/dist
 
+  # Build the location independent frontend
+  build-frontend-location-independent:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2-beta
+        with:
+          node-version: '12'
+
+      - name: "Build frontend (location independent)"
+        run: "./scripts/build-frontend --env location-independent"
+      - name: "Upload frontend artifacts (location independent)"
+        uses: actions/upload-artifact@v2
+        with:
+          name: frontend-artifacts-location-independent
+          path: frontend/dist
+
   # Build the shared backend
   build-backend:
     runs-on: ubuntu-latest
@@ -250,3 +268,65 @@ jobs:
           name: backend-artifacts
       - name: "Call deploy script"
         run: "bash scripts/deploy-kit/deploy.sh"
+
+  # Push location independent image to GitHub Packages.
+  push-location-independent:
+    # Ensure build job passes before pushing image.
+    needs: [build-frontend-location-independent, build-backend]
+
+    runs-on: ubuntu-latest
+    if: "github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/chore/build-location-independent')"
+
+    steps:
+      # SETUP
+      - uses: actions/checkout@v2
+      - uses: actions/setup-java@v1
+        with:
+          java-version: '11'
+      - uses: actions/setup-node@v2-beta
+        with:
+          node-version: '12'
+
+      # CACHE
+      - name: "Download frontend artifacts"
+        uses: actions/download-artifact@v2
+        with:
+          name: frontend-artifacts-location-independent
+          path: dist
+      - name: "Download backend artifact"
+        uses: actions/download-artifact@v2
+        with:
+          name: backend-artifacts
+      - name: "Download aspectjweaver artifact"
+        uses: actions/download-artifact@v2
+        with:
+          name: aspectjweaver-artifact
+
+      # BUILDING
+      - name: "Build image"
+        run: "./scripts/docker/build-docker --uid $UID --metrics CI"
+
+      - name: "Log into registry"
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
+
+      - name: Push image
+        run: |
+          IMAGE_ID=docker.pkg.github.com/${{ github.repository }}/$IMAGE_NAME
+
+          # Change all uppercase to lowercase
+          IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
+
+          # Strip git ref prefix from version
+          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+
+          # Strip "v" prefix from tag name
+          [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
+
+          # Use Docker `latest` tag convention
+          [ "$VERSION" == "master" ] && VERSION=latest
+
+          echo IMAGE_ID=$IMAGE_ID
+          echo VERSION=$VERSION
+
+          docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
+          docker push $IMAGE_ID:$VERSION
