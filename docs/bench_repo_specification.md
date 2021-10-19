@@ -37,8 +37,8 @@ Example:
 | 2 | Incorrect script usage |
 
 The script should output its results on `stdout`.
-Nothing should be printed to `stderr`.
 The result is encoded in JSON.
+Output to `stderr` is shown only while benchmarking and in case of an error.
 
 ### Output format
 
