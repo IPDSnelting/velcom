@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
 import argparse
-import subprocess
+import re
 import shutil
+import subprocess
 from pathlib import Path
 
 
@@ -53,6 +54,54 @@ def copyFiles(file_mappings):
             shutil.copytree(source_path, destination_path, symlinks=True)
         else:
             shutil.copy2(source_path, destination_path, follow_symlinks=False)
+
+    # Always doing this is not a problem, as the bundler will generate absolute URLs for normal
+    # configurations. Adding a base tag does not affect those in any way.
+    applyLocationIndependentFrontendCompatibility()
+
+
+def applyLocationIndependentFrontendCompatibility():
+    # Adjust built nginx site and add new index.html files for each nesting level.
+    # These files have a HTML "base" tag with a proper relative path, to ensure
+    # resources can be loaded normally.
+    # See: https://github.com/IPDSnelting/velcom/issues/293
+
+    root_dir = Path(".docker")
+    dist_dir = root_dir / "dist"
+    nginx_file = root_dir / "velcom-site"
+
+    if not nginx_file.exists():
+        raise RuntimeError(f"{nginx_file} was not found!")
+
+    with open(dist_dir / "index.html", "r") as f:
+        base_file = f.read()
+
+    # The maximum nesting level of frontend routes.
+    #   `/hello/world` has a nesting level of 2
+    #   `/compare/:id/to/:id` of 4
+    maximum_frontend_route_depth = 5
+    for depth in range(1, maximum_frontend_route_depth + 1):
+        # Special case the first as a base of "." is the *parent*
+        # (as it represents the containing directory)
+        relative_path = "." if depth == 1 else "../" * (depth - 1)
+        text = re.sub("<head>", f'<head>\n<base href="{relative_path}">', base_file)
+
+        with open(dist_dir / f"index-{depth}.html", "w") as f:
+            f.write(text)
+
+    new_nginx_rules = ""
+    for depth in range(1, maximum_frontend_route_depth + 1):
+        new_nginx_rules += f"""
+        location ~ ^{'/[^/]+' * depth}$ {{
+            try_files $uri $uri/ /index-{depth}.html =404;
+        }}
+        """
+
+    with open(root_dir / "velcom-site", "r+") as f:
+        nginx_config = f.read()
+        nginx_config = nginx_config.replace("{Placeholder for generated rules}", "\n" + new_nginx_rules)
+        f.seek(0)
+        f.write(nginx_config)
 
 
 def build(uid):
