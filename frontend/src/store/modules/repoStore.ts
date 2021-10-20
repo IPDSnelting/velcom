@@ -143,6 +143,12 @@ export class RepoStore extends VxModule {
     return Array.from(Object.values(this.repos))
   }
 
+  get allReposSortedById(): Repo[] {
+    return Array.from(Object.values(this.repos)).sort((a, b) =>
+      a.id.localeCompare(b.id)
+    )
+  }
+
   get repoById(): (payload: RepoId) => Repo | undefined {
     return (payload: RepoId) => this.repos[payload]
   }

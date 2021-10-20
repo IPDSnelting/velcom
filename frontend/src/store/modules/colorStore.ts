@@ -1,6 +1,7 @@
-import { createModule, mutation, action } from 'vuex-class-component'
+import { createModule, mutation } from 'vuex-class-component'
 import { hexToHsl, hslToHex } from '@/util/ColorUtils'
 import { vxm } from '..'
+import { DimensionId, RepoId } from '@/store/types'
 
 const VxModule = createModule({
   namespaced: 'colorModule',
@@ -44,10 +45,10 @@ export class ColorStore extends VxModule {
    * @param {number} amount the number of colors to generate
    * @memberof ColorModuleStore
    */
-  @action
-  async addColors(amount: number): Promise<void> {
-    this.addColorToTheme({ amount: amount, muted: true })
-    this.addColorToTheme({ amount: amount, muted: false })
+  @mutation
+  addColors(amount: number): void {
+    vxm.colorModule.addColorToTheme({ amount: amount, muted: true })
+    vxm.colorModule.addColorToTheme({ amount: amount, muted: false })
   }
 
   @mutation
@@ -101,6 +102,31 @@ export class ColorStore extends VxModule {
       return vxm.userModule.darkThemeSelected
         ? this.pastelColors[index]
         : this.mutedColors[index]
+    }
+  }
+
+  /**
+   * Returns the color for a given repository.
+   */
+  get colorForRepo(): (repoId: RepoId) => string {
+    return (repoId: RepoId) => {
+      const index = vxm.repoModule.allReposSortedById.findIndex(
+        value => value.id === repoId
+      )
+      return this.colorByIndex(index)
+    }
+  }
+
+  /**
+   * Returns the color in the detail graph for a given dimension.
+   */
+  get colorForDetailDimension(): (dimensionId: DimensionId) => string {
+    return (dimensionId: DimensionId) => {
+      const index = vxm.detailGraphModule.colorIndex(dimensionId)
+      if (index === undefined) {
+        return 'red'
+      }
+      return this.colorByIndex(index)
     }
   }
 

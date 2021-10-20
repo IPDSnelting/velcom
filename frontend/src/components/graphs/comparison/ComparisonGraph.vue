@@ -96,9 +96,7 @@ export default class ComparisonGraph extends Vue {
     return Array.from(vxm.comparisonGraphModule.selectedBranches.keys()).map(
       repoId => ({
         id: repoId as SeriesId,
-        color: vxm.colorModule.colorByIndex(
-          vxm.repoModule.allRepos.findIndex(it => it.id === repoId)
-        ),
+        color: vxm.colorModule.colorForRepo(repoId),
         displayName: vxm.repoModule.repoById(repoId)!.name
       })
     )

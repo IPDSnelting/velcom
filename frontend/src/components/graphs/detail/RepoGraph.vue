@@ -180,9 +180,7 @@ export default class RepoGraphs extends Vue {
   }
 
   private dimensionColor(dimension: DimensionId) {
-    return vxm.colorModule.colorByIndex(
-      vxm.detailGraphModule.colorIndex(dimension)!
-    )
+    return vxm.colorModule.colorForDetailDimension(dimension)
   }
 
   private get visiblePointCount() {

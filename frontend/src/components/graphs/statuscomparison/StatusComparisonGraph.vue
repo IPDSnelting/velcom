@@ -535,9 +535,7 @@ export default class StatusComparisonGraph extends Vue {
   }
 
   private repoColor(id: RepoId) {
-    return vxm.colorModule.colorByIndex(
-      vxm.repoModule.allRepos.map(it => it.id).indexOf(id)
-    )
+    return vxm.colorModule.colorForRepo(id)
   }
 
   private mounted() {
