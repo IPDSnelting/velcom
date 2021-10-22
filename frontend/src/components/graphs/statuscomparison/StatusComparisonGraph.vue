@@ -379,7 +379,10 @@ export default class StatusComparisonGraph extends Vue {
         min: this.logScale ? 'dataMin' : undefined,
         max: this.logScale ? 'dataMax' : undefined
       },
-      series: this.datapoints.map(point => this.generateSeries(point.repoId)),
+      // Sort series by name
+      series: this.datapoints
+        .map(point => this.generateSeries(point.repoId))
+        .sort((a, b) => a.name.localeCompare(b.name)),
       aria: {
         enabled: true,
         decal: {
@@ -429,7 +432,7 @@ export default class StatusComparisonGraph extends Vue {
             `
   }
 
-  private generateSeries(repoId: RepoId): BarSeriesOption {
+  private generateSeries(repoId: RepoId): BarSeriesOption & { name: string } {
     const data = this.processedDataPoints.get(repoId)!
     let datapoints: Datapoint[]
 
