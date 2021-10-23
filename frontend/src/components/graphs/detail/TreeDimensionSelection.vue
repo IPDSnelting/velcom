@@ -140,9 +140,7 @@ export default class TreeDimensionSelection extends Vue {
       return 'accent'
     }
     if (item instanceof DimensionItem) {
-      return vxm.colorModule.colorByIndex(
-        vxm.detailGraphModule.colorIndex(item.dimension)!
-      )
+      return vxm.colorModule.colorForDetailDimension(item.dimension)
     } else if (item.children) {
       return this.metricColor(item.children[0])
     } else {

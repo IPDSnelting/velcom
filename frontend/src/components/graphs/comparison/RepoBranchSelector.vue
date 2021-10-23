@@ -96,9 +96,7 @@ export default class RepoBranchSelector extends Vue {
   }
 
   private colorForRepo(repoId: RepoId) {
-    return vxm.colorModule.colorByIndex(
-      vxm.repoModule.allRepos.findIndex(repo => repo.id === repoId) || 0
-    )
+    return vxm.colorModule.colorForRepo(repoId)
   }
 
   private onlySomeBranchesSelected(repo: Repo) {

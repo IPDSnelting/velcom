@@ -24,7 +24,6 @@ export class RepoStore extends VxModule {
     })
 
     const repos: Repo[] = response.data.repos.map(repoFromJson)
-    repos.sort((a, b) => a.id.localeCompare(b.id))
 
     this.setRepos(repos)
     return repos
@@ -143,22 +142,14 @@ export class RepoStore extends VxModule {
     return Array.from(Object.values(this.repos))
   }
 
+  get allReposSortedById(): Repo[] {
+    return Array.from(Object.values(this.repos)).sort((a, b) =>
+      a.id.localeCompare(b.id)
+    )
+  }
+
   get repoById(): (payload: RepoId) => Repo | undefined {
     return (payload: RepoId) => this.repos[payload]
-  }
-
-  get trackedBranchesByRepoID(): { [key: string]: string[] } {
-    const branchesByRepoID: { [key: string]: string[] } = {}
-    this.allRepos.forEach(repo => {
-      branchesByRepoID[repo.id] = repo.branches
-        .filter(it => it.tracked)
-        .map(it => it.name)
-    })
-    return branchesByRepoID
-  }
-
-  get repoIndex(): (repoID: RepoId) => number {
-    return (repoID: string) => this.repoIndices[repoID]
   }
 
   get occuringDimensions(): (selectedRepos: RepoId[]) => Dimension[] {
@@ -170,22 +161,6 @@ export class RepoStore extends VxModule {
           (dimension, index, dimensionArray) =>
             index === dimensionArray.findIndex(dim => dim.equals(dimension))
         )
-    }
-  }
-
-  get metricsForBenchmark(): (benchmark: string) => string[] {
-    return (benchmark: string) => {
-      const metrics = Object.values(this.repos)
-        .flatMap(repo => repo.dimensions)
-        .filter(dimension => dimension.benchmark === benchmark)
-        .map(dimension => dimension.metric)
-        .reduce(
-          (metrics, newMetric) => metrics.add(newMetric),
-          new Set<string>()
-        )
-      return Array.from(metrics).sort((a, b) =>
-        a.localeCompare(b, undefined, { sensitivity: 'base' })
-      )
     }
   }
 

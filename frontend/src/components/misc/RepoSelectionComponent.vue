@@ -1,7 +1,7 @@
 <template>
   <v-autocomplete
     :disabled="disabled"
-    :items="repos"
+    :items="sortedRepos"
     :rules="rules"
     :value="repoId"
     :label="label"
@@ -53,6 +53,10 @@ export default class RepoSelectionComponent extends Vue {
 
   private setRepoId(newValue: string) {
     this.$emit('value', newValue)
+  }
+
+  private get sortedRepos() {
+    return this.repos.slice().sort((a, b) => a.name.localeCompare(b.name))
   }
 
   // ============== ICONS ==============
