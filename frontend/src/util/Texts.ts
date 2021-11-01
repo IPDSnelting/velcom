@@ -21,9 +21,9 @@ export function escapeHtml(input: string): string {
  * @param input the input text
  */
 export function safeConvertAnsi(input: string): string {
-  const safeInput = escapeHtml(input)
-
-  return converter.ansi_to_html(safeInput)
+  // The conversion function of ansi_up 5+ sanitizes input by itself, so
+  // just converting it is safe
+  return converter.ansi_to_html(input)
 }
 
 /**
