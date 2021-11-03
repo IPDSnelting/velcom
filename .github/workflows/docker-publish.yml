@@ -275,7 +275,7 @@ jobs:
     needs: [build-frontend-location-independent, build-backend]
 
     runs-on: ubuntu-latest
-    if: "github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/chore/build-location-independent')"
+    if: "github.event_name == 'push' && github.ref == 'refs/heads/main'"
 
     steps:
       # SETUP
@@ -315,15 +315,7 @@ jobs:
 
           # Change all uppercase to lowercase
           IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
-
-          # Strip git ref prefix from version
-          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
-
-          # Strip "v" prefix from tag name
-          [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
-
-          # Use Docker `latest` tag convention
-          [ "$VERSION" == "master" ] && VERSION=latest
+          VERSION=build-location-independent
 
           echo IMAGE_ID=$IMAGE_ID
           echo VERSION=$VERSION
