@@ -46,7 +46,7 @@
                     <br />
                     In total,
                     <span class="font-weight-bold subtitle-1">
-                      {{ attachedMeasurementCount }} measurements
+                      {{ deletedMeasurementsCount }} measurements
                     </span>
                     will be deleted.
                     <br />
@@ -135,7 +135,7 @@ export default class CleanupDimensions extends Vue {
       )
   }
 
-  private get attachedMeasurementCount() {
+  private get deletedMeasurementsCount() {
     return this.selectedDimensions.map(it => it.runs).reduce((a, b) => a + b, 0)
   }
 
@@ -143,9 +143,12 @@ export default class CleanupDimensions extends Vue {
     return (
       'delete ' +
       this.selectedDimensions.length +
-      ' dimensions and ' +
-      this.attachedMeasurementCount +
-      ' measurements'
+      ' dimension' +
+      (this.selectedDimensions.length !== 1 ? 's' : '') +
+      ' and ' +
+      this.deletedMeasurementsCount +
+      ' measurement' +
+      (this.deletedMeasurementsCount !== 1 ? 's' : '')
     )
   }
 
