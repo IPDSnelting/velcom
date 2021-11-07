@@ -16,7 +16,6 @@
                     :items="allDimensions || []"
                     :items-per-page="-1"
                     :loading="allDimensions === null"
-                    :sort-by="['dimension.benchmark', 'dimension.metric']"
                     checkbox-color="primary"
                     item-key="key"
                     show-select
@@ -125,7 +124,14 @@ export default class CleanupDimensions extends Vue {
   private confirmText: string = ''
 
   private get allDimensions(): CleanupDimension[] | null {
+    if (vxm.cleanupModule.dimensions === null) {
+      return null
+    }
     return vxm.cleanupModule.dimensions
+      .slice()
+      .sort((a, b) =>
+        a.dimension.toString().localeCompare(b.dimension.toString())
+      )
   }
 
   private get attachedMeasurementCount() {
