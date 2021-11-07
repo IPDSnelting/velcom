@@ -32,12 +32,16 @@ public class AllDimensionsEndpoint {
 	public GetReply get() {
 		Set<DimensionInfo> dimensions = dimensionAccess.getAllDimensions();
 		Map<Dimension, Integer> runs = dimensionAccess.getRunsPerDimension();
+		Map<Dimension, Integer> untrackedRuns = dimensionAccess.getUntrackedRunsPerDimension();
+		Map<Dimension, Integer> unreachableRuns = dimensionAccess.getUnreachableRunsPerDimension();
 
 		List<DimensionEntry> entries = dimensions.stream()
 			.map(info -> new DimensionEntry(
 				JsonDimension.fromDimensionInfo(info),
 				info.isSignificant(),
-				runs.getOrDefault(info.getDimension(), 0)
+				runs.getOrDefault(info.getDimension(), 0),
+				untrackedRuns.getOrDefault(info.getDimension(), 0),
+				unreachableRuns.getOrDefault(info.getDimension(), 0)
 			))
 			.collect(Collectors.toList());
 
@@ -49,11 +53,17 @@ public class AllDimensionsEndpoint {
 		public final JsonDimension dimension;
 		public final boolean significant;
 		public final int runs;
+		public final int untracked_runs;
+		public final int unreachable_runs;
 
-		public DimensionEntry(JsonDimension dimension, boolean significant, int runs) {
+		public DimensionEntry(JsonDimension dimension, boolean significant, int runs,
+			int untracked_runs, int unreachable_runs) {
+
 			this.dimension = dimension;
 			this.significant = significant;
 			this.runs = runs;
+			this.untracked_runs = untracked_runs;
+			this.unreachable_runs = unreachable_runs;
 		}
 	}
 

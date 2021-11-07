@@ -1160,9 +1160,15 @@ paths:
                           $ref: '#/components/schemas/Dimension'
                         runs:
                           type: integer
+                        untracked_runs:
+                          type: integer
+                        unreachable_runs:
+                          type: integer
                       required:
                         - dimension
                         - runs
+                        - untracked_runs
+                        - unreachable_runs
                 required:
                   - dimensions
       operationId: get-dimensions
