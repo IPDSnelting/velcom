@@ -3,8 +3,11 @@ package de.aaaaaaah.velcom.backend.access.dimensionaccess;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 import static org.jooq.codegen.db.tables.Dimension.DIMENSION;
+import static org.jooq.codegen.db.tables.KnownCommit.KNOWN_COMMIT;
 import static org.jooq.codegen.db.tables.Measurement.MEASUREMENT;
 import static org.jooq.codegen.db.tables.Run.RUN;
+import static org.jooq.impl.DSL.count;
+import static org.jooq.impl.DSL.not;
 
 import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.Dimension;
 import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.DimensionInfo;
@@ -20,6 +23,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.jooq.Record3;
 import org.jooq.codegen.db.tables.records.DimensionRecord;
 import org.jooq.exception.DataAccessException;
 import org.slf4j.Logger;
@@ -164,6 +168,57 @@ public class DimensionReadAccess {
 				.stream()
 				.map(DimensionReadAccess::dimRecordToDim)
 				.collect(toSet());
+		}
+	}
+
+	public Map<Dimension, Integer> getRunsPerDimension() {
+		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
+			return db.dsl()
+				.select(MEASUREMENT.BENCHMARK, MEASUREMENT.METRIC, count())
+				.from(MEASUREMENT)
+				.groupBy(MEASUREMENT.BENCHMARK, MEASUREMENT.METRIC)
+				.fetchMap(
+					record -> new Dimension(record.value1(), record.value2()),
+					Record3::value3
+				);
+		}
+	}
+
+	public Map<Dimension, Integer> getUntrackedRunsPerDimension() {
+		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
+			return db.dsl()
+				.select(MEASUREMENT.BENCHMARK, MEASUREMENT.METRIC, count())
+				.from(MEASUREMENT)
+				.join(RUN)
+				.on(RUN.ID.eq(MEASUREMENT.RUN_ID))
+				.join(KNOWN_COMMIT)
+				.on(KNOWN_COMMIT.REPO_ID.eq(RUN.REPO_ID)
+					.and(KNOWN_COMMIT.HASH.eq(RUN.COMMIT_HASH)))
+				.where(not(KNOWN_COMMIT.TRACKED))
+				.groupBy(MEASUREMENT.BENCHMARK, MEASUREMENT.METRIC)
+				.fetchMap(
+					record -> new Dimension(record.value1(), record.value2()),
+					Record3::value3
+				);
+		}
+	}
+
+	public Map<Dimension, Integer> getUnreachableRunsPerDimension() {
+		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
+			return db.dsl()
+				.select(MEASUREMENT.BENCHMARK, MEASUREMENT.METRIC, count())
+				.from(MEASUREMENT)
+				.join(RUN)
+				.on(RUN.ID.eq(MEASUREMENT.RUN_ID))
+				.join(KNOWN_COMMIT)
+				.on(KNOWN_COMMIT.REPO_ID.eq(RUN.REPO_ID)
+					.and(KNOWN_COMMIT.HASH.eq(RUN.COMMIT_HASH)))
+				.where(not(KNOWN_COMMIT.REACHABLE))
+				.groupBy(MEASUREMENT.BENCHMARK, MEASUREMENT.METRIC)
+				.fetchMap(
+					record -> new Dimension(record.value1(), record.value2()),
+					Record3::value3
+				);
 		}
 	}
 

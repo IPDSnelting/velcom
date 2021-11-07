@@ -11,26 +11,29 @@ import {
   mdiScaleBalance,
   mdiSourceBranch,
   mdiInformationOutline,
-  mdiCircleSlice6
+  mdiCircleSlice6,
+  mdiCog
 } from '@mdi/js'
 import { vxm } from '@/store'
 import TaskDetailView from '@/views/TaskDetailView.vue'
 import Search from '@/views/Search.vue'
 import Comparison from '@/views/RepoComparison.vue'
+import Settings from '@/views/Settings.vue'
 
 Vue.use(VueRouter)
 
 export type RouteName =
+  | '404'
+  | 'about'
   | 'home'
+  | 'queue'
   | 'repo-comparison'
   | 'repo-detail'
-  | 'queue'
-  | 'search'
   | 'run-comparison'
   | 'run-detail'
+  | 'search'
+  | 'settings'
   | 'task-detail'
-  | 'about'
-  | '404'
 
 type RouteInfo = {
   name?: RouteName
@@ -38,6 +41,7 @@ type RouteInfo = {
     navigable?: boolean
     label?: string
     icon?: string
+    adminOnly?: boolean
   }
 } & RouteConfig
 
@@ -136,6 +140,17 @@ const routes: RouteInfo[] = [
       label: 'About',
       navigable: true,
       icon: mdiInformationOutline
+    }
+  },
+  {
+    path: '/settings',
+    name: 'settings',
+    component: Settings,
+    meta: {
+      navigable: true,
+      label: 'Settings',
+      adminOnly: true,
+      icon: mdiCog
     }
   },
   {

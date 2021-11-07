@@ -16,8 +16,10 @@ import {
   persistenceSessionStorage
 } from './persistence'
 import { RunSearchStore } from '@/store/modules/runSearchStore'
+import { CleanupStore } from '@/store/modules/cleanupStore'
 
 export interface RootState {
+  cleanupModule: CleanupStore
   colorModule: ColorStore
   commitDetailComparisonModule: CommitDetailComparisonStore
   newsModule: NewsStore
@@ -37,6 +39,7 @@ Vue.use(Vuex)
 export const store = new Vuex.Store({
   state: {} as RootState,
   modules: {
+    ...extractVuexModule(CleanupStore),
     ...extractVuexModule(ColorStore),
     ...extractVuexModule(CommitDetailComparisonStore),
     ...extractVuexModule(NewsStore),
@@ -52,6 +55,7 @@ export const store = new Vuex.Store({
 })
 
 export const vxm = {
+  cleanupModule: createProxy(store, CleanupStore),
   colorModule: createProxy(store, ColorStore),
   commitDetailComparisonModule: createProxy(store, CommitDetailComparisonStore),
   newsModule: createProxy(store, NewsStore),
