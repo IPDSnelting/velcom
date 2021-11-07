@@ -1139,6 +1139,42 @@ paths:
           description: The repositories and corresponding branches that should be compared
           name: repos
           required: true
+  /all-dimensions:
+    get:
+      summary: get all dimensions
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Dimension'
+      operationId: get-dimensions
+    parameters: []
+  '/dimension/{benchmark}/{metric}':
+    parameters:
+      - schema:
+          type: string
+        name: benchmark
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: metric
+        in: path
+        required: true
+    delete:
+      summary: delete dimension
+      operationId: delete-dimensions-benchmark-metric
+      responses:
+        '204':
+          description: No Content
+      description: Delete a dimension and all its benchmarks. Does *not* remove empty runs afterwards.
+      security:
+        - admin_credentials: []
 components:
   schemas:
     CommitHash:

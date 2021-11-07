@@ -54,4 +54,11 @@ public class AvailableDimensionsCache {
 	public void invalidate(RepoId repoId) {
 		cache.invalidate(repoId);
 	}
+
+	/**
+	 * Invalidate all entries.
+	 */
+	public void invalidateAll() {
+		cache.invalidateAll();
+	}
 }

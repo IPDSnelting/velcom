@@ -9,7 +9,7 @@ import de.aaaaaaah.velcom.backend.access.caches.AvailableDimensionsCache;
 import de.aaaaaaah.velcom.backend.access.caches.LatestRunCache;
 import de.aaaaaaah.velcom.backend.access.caches.RunCache;
 import de.aaaaaaah.velcom.backend.access.committaccess.CommitReadAccess;
-import de.aaaaaaah.velcom.backend.access.dimensionaccess.DimensionReadAccess;
+import de.aaaaaaah.velcom.backend.access.dimensionaccess.DimensionWriteAccess;
 import de.aaaaaaah.velcom.backend.access.repoaccess.RepoWriteAccess;
 import de.aaaaaaah.velcom.backend.access.taskaccess.TaskWriteAccess;
 import de.aaaaaaah.velcom.backend.data.benchrepo.BenchRepo;
@@ -21,10 +21,12 @@ import de.aaaaaaah.velcom.backend.data.significance.SignificanceFactors;
 import de.aaaaaaah.velcom.backend.listener.Listener;
 import de.aaaaaaah.velcom.backend.restapi.authentication.Admin;
 import de.aaaaaaah.velcom.backend.restapi.authentication.AdminAuthenticator;
+import de.aaaaaaah.velcom.backend.restapi.endpoints.AllDimensionsEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.AllReposEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.CommitEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.CompareEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.DebugEndpoint;
+import de.aaaaaaah.velcom.backend.restapi.endpoints.DimensionEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.GraphComparisonEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.GraphDetailEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.GraphStatusComparisonEndpoint;
@@ -136,7 +138,8 @@ public class ServerMain extends Application<GlobalConfig> {
 		// Access layer
 		TaskWriteAccess taskAccess = new TaskWriteAccess(databaseStorage, tarFileStorage);
 		CommitReadAccess commitAccess = new CommitReadAccess(databaseStorage);
-		DimensionReadAccess dimensionAccess = new DimensionReadAccess(databaseStorage);
+		DimensionWriteAccess dimensionAccess = new DimensionWriteAccess(databaseStorage,
+			availableDimensionsCache);
 		RepoWriteAccess repoAccess = new RepoWriteAccess(databaseStorage, availableDimensionsCache,
 			runCache, latestRunCache);
 		ArchiveReadAccess archiveAccess = new ArchiveReadAccess(
@@ -198,11 +201,13 @@ public class ServerMain extends Application<GlobalConfig> {
 
 		// Endpoints
 		Stream.of(
+			new AllDimensionsEndpoint(dimensionAccess),
 			new AllReposEndpoint(dimensionAccess, repoAccess, availableDimensionsCache),
 			new CommitEndpoint(benchmarkAccess, commitAccess, runCache),
 			new CompareEndpoint(benchmarkAccess, commitAccess, dimensionAccess, runCache, latestRunCache,
 				runComparator, significanceDetector, significanceFactors),
 			new DebugEndpoint(benchmarkAccess, dispatcher),
+			new DimensionEndpoint(dimensionAccess),
 			new GraphComparisonEndpoint(benchmarkAccess, commitAccess, dimensionAccess),
 			new GraphDetailEndpoint(commitAccess, benchmarkAccess, dimensionAccess, repoAccess, runCache,
 				latestRunCache),
