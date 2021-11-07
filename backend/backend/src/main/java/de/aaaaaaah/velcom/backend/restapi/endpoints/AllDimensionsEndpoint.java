@@ -1,11 +1,13 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
 import de.aaaaaaah.velcom.backend.access.dimensionaccess.DimensionReadAccess;
+import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.Dimension;
 import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.DimensionInfo;
 import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimension;
 import io.micrometer.core.annotation.Timed;
-import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -28,20 +30,38 @@ public class AllDimensionsEndpoint {
 	@GET
 	@Timed(histogram = true)
 	public GetReply get() {
-		List<JsonDimension> dimensions = dimensionAccess.getAllDimensions()
-			.stream()
-			.sorted(Comparator.comparing(DimensionInfo::getDimension))
-			.map(JsonDimension::fromDimensionInfo)
+		Set<DimensionInfo> dimensions = dimensionAccess.getAllDimensions();
+		Map<Dimension, Integer> runs = dimensionAccess.getRunsPerDimension();
+
+		List<DimensionEntry> entries = dimensions.stream()
+			.map(info -> new DimensionEntry(
+				JsonDimension.fromDimensionInfo(info),
+				info.isSignificant(),
+				runs.getOrDefault(info.getDimension(), 0)
+			))
 			.collect(Collectors.toList());
 
-		return new GetReply(dimensions);
+		return new GetReply(entries);
+	}
+
+	private static class DimensionEntry {
+
+		public final JsonDimension dimension;
+		public final boolean significant;
+		public final int runs;
+
+		public DimensionEntry(JsonDimension dimension, boolean significant, int runs) {
+			this.dimension = dimension;
+			this.significant = significant;
+			this.runs = runs;
+		}
 	}
 
 	private static class GetReply {
 
-		public final List<JsonDimension> dimensions;
+		public final List<DimensionEntry> dimensions;
 
-		public GetReply(List<JsonDimension> dimensions) {
+		public GetReply(List<DimensionEntry> dimensions) {
 			this.dimensions = dimensions;
 		}
 	}

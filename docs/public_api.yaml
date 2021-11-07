@@ -1149,9 +1149,22 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Dimension'
+                type: object
+                properties:
+                  dimensions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        dimension:
+                          $ref: '#/components/schemas/Dimension'
+                        runs:
+                          type: integer
+                      required:
+                        - dimension
+                        - runs
+                required:
+                  - dimensions
       operationId: get-dimensions
     parameters: []
   '/dimension/{benchmark}/{metric}':
