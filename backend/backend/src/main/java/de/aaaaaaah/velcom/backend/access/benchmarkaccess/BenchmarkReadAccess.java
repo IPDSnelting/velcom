@@ -410,7 +410,8 @@ public class BenchmarkReadAccess {
 				.select(count())
 				.from(RUN)
 				.join(KNOWN_COMMIT)
-				.on(KNOWN_COMMIT.HASH.eq(RUN.COMMIT_HASH))
+				.on(KNOWN_COMMIT.REPO_ID.eq(RUN.REPO_ID)
+					.and(KNOWN_COMMIT.HASH.eq(RUN.COMMIT_HASH)))
 				.where(not(KNOWN_COMMIT.TRACKED))
 				.fetchSingle()
 				.value1();
@@ -423,7 +424,8 @@ public class BenchmarkReadAccess {
 				.select(count())
 				.from(RUN)
 				.join(KNOWN_COMMIT)
-				.on(KNOWN_COMMIT.HASH.eq(RUN.COMMIT_HASH))
+				.on(KNOWN_COMMIT.REPO_ID.eq(RUN.REPO_ID)
+					.and(KNOWN_COMMIT.HASH.eq(RUN.COMMIT_HASH)))
 				.where(not(KNOWN_COMMIT.REACHABLE))
 				.fetchSingle()
 				.value1();
