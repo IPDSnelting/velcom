@@ -792,3 +792,26 @@ export class GithubBotCommand {
     this.prNumber = prNumber
   }
 }
+
+export class CleanupDimension {
+  readonly dimension: Dimension
+  readonly runs: number
+  readonly untrackedRuns: number
+  readonly unreachableRuns: number
+
+  constructor(
+    dimension: Dimension,
+    runs: number,
+    untrackedRuns: number,
+    unreachableRuns: number
+  ) {
+    this.dimension = dimension
+    this.runs = runs
+    this.untrackedRuns = untrackedRuns
+    this.unreachableRuns = unreachableRuns
+  }
+
+  get key(): string {
+    return this.dimension.toString()
+  }
+}

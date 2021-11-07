@@ -17,20 +17,22 @@ import { vxm } from '@/store'
 import TaskDetailView from '@/views/TaskDetailView.vue'
 import Search from '@/views/Search.vue'
 import Comparison from '@/views/RepoComparison.vue'
+import Cleanup from '@/views/Cleanup.vue'
 
 Vue.use(VueRouter)
 
 export type RouteName =
+  | '404'
+  | 'about'
+  | 'cleanup'
   | 'home'
+  | 'queue'
   | 'repo-comparison'
   | 'repo-detail'
-  | 'queue'
-  | 'search'
   | 'run-comparison'
   | 'run-detail'
+  | 'search'
   | 'task-detail'
-  | 'about'
-  | '404'
 
 type RouteInfo = {
   name?: RouteName
@@ -125,6 +127,15 @@ const routes: RouteInfo[] = [
     meta: {
       navigable: false,
       label: 'Task-Detail'
+    }
+  },
+  {
+    path: '/cleanup',
+    name: 'cleanup',
+    component: Cleanup,
+    meta: {
+      navigable: false,
+      label: 'Cleanup'
     }
   },
   {
