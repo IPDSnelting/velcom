@@ -14,7 +14,10 @@
                   color="warning"
                   text
                   outlined
-                  @click="showDeleteDialog = true"
+                  @click="
+                    showDeleteDialog = true
+                    confirmText = ''
+                  "
                   :disabled="selectedDimensions.length === 0"
                 >
                   Delete selected dimensions
@@ -158,7 +161,8 @@ export default class CleanupDimensions extends Vue {
     this.selectedDimensions = []
     this.$globalSnackbar.setSuccess(
       'cleanup',
-      'Dimensions and measurements deleted'
+      'Dimensions and measurements deleted',
+      2
     )
     await vxm.cleanupModule.fetchDimensions()
   }
