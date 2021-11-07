@@ -248,7 +248,7 @@ jobs:
   # Deploy master branch to speedcenter.informatik.kit.edu
   deploy-kit:
     # Ensure build job passes before pushing image.
-    needs: [push-kit]
+    needs: [push-kit, push-location-independent]
 
     runs-on: ubuntu-latest
     if: "github.event_name == 'push' && github.ref == 'refs/heads/main'"
