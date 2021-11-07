@@ -139,7 +139,7 @@ public class ServerMain extends Application<GlobalConfig> {
 		TaskWriteAccess taskAccess = new TaskWriteAccess(databaseStorage, tarFileStorage);
 		CommitReadAccess commitAccess = new CommitReadAccess(databaseStorage);
 		DimensionWriteAccess dimensionAccess = new DimensionWriteAccess(databaseStorage,
-			availableDimensionsCache);
+			availableDimensionsCache, runCache);
 		RepoWriteAccess repoAccess = new RepoWriteAccess(databaseStorage, availableDimensionsCache,
 			runCache, latestRunCache);
 		ArchiveReadAccess archiveAccess = new ArchiveReadAccess(
