@@ -40,7 +40,7 @@ type RouteInfo = {
   meta: {
     navigable?: boolean
     label?: string
-    icon?: string,
+    icon?: string
     adminOnly?: boolean
   }
 } & RouteConfig

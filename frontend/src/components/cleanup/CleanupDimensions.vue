@@ -6,28 +6,7 @@
           <v-card-title>
             <v-toolbar color="toolbarColor" dark>Clean up Dimensions</v-toolbar>
           </v-card-title>
-          <v-card-text>
-            <v-container fluid class="mt-0 pt-0">
-              <v-row justify="center">
-                <v-col>
-                  <v-data-table
-                    v-model="selectedDimensions"
-                    :headers="headers"
-                    :items="allDimensions || []"
-                    :items-per-page="-1"
-                    :loading="allDimensions === null"
-                    checkbox-color="primary"
-                    item-key="key"
-                    show-select
-                    multi-sort
-                    dense
-                  >
-                  </v-data-table>
-                </v-col>
-              </v-row>
-            </v-container>
-          </v-card-text>
-          <v-card-actions class="d-flex justify-center">
+          <v-card-actions class="d-flex justify-start ml-2">
             <v-dialog v-model="showDeleteDialog" width="700">
               <template #activator="{ on }">
                 <v-btn
@@ -95,6 +74,27 @@
               </v-card>
             </v-dialog>
           </v-card-actions>
+          <v-card-text>
+            <v-container fluid class="mt-0 pt-0">
+              <v-row justify="center">
+                <v-col>
+                  <v-data-table
+                    v-model="selectedDimensions"
+                    :headers="headers"
+                    :items="allDimensions || []"
+                    :items-per-page="-1"
+                    :loading="allDimensions === null"
+                    checkbox-color="primary"
+                    item-key="key"
+                    show-select
+                    multi-sort
+                    dense
+                  >
+                  </v-data-table>
+                </v-col>
+              </v-row>
+            </v-container>
+          </v-card-text>
         </v-card>
       </v-col>
     </v-row>
