@@ -157,10 +157,10 @@ export default class CleanupDimensions extends Vue {
   }
 
   private async deleteSelectedDimensions() {
+    this.showDeleteDialog = false
     await vxm.cleanupModule.deleteDimensions(
       this.selectedDimensions.map(it => it.dimension)
     )
-    this.showDeleteDialog = false
     this.selectedDimensions = []
     this.$globalSnackbar.setSuccess(
       'cleanup',
