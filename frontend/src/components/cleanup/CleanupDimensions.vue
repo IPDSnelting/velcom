@@ -4,7 +4,7 @@
       <v-col>
         <v-card>
           <v-card-title>
-            <v-toolbar color="toolbarColor" dark>Cleanup Dimension</v-toolbar>
+            <v-toolbar color="toolbarColor" dark>Clean up Dimensions</v-toolbar>
           </v-card-title>
           <v-card-text>
             <v-container fluid class="mt-0 pt-0">
@@ -27,7 +27,7 @@
               </v-row>
             </v-container>
           </v-card-text>
-          <v-card-actions class="d-flex justify-center" v-if="isAdmin">
+          <v-card-actions class="d-flex justify-center">
             <v-dialog v-model="showDeleteDialog" width="700">
               <template #activator="{ on }">
                 <v-btn
@@ -87,8 +87,6 @@
                   <v-btn
                     color="warning"
                     :disabled="!confirmedDeletion"
-                    text
-                    outlined
                     @click="deleteSelectedDimensions"
                   >
                     Confirm deletion
@@ -141,19 +139,15 @@ export default class CleanupDimensions extends Vue {
   private get expectedConfirmationText() {
     return (
       'delete ' +
-      this.attachedMeasurementCount +
-      ' measurements and ' +
       this.selectedDimensions.length +
-      ' dimensions'
+      ' dimensions and ' +
+      this.attachedMeasurementCount +
+      ' measurements'
     )
   }
 
   private get confirmedDeletion() {
     return this.confirmText === this.expectedConfirmationText
-  }
-
-  private get isAdmin() {
-    return vxm.userModule.isAdmin
   }
 
   private async deleteSelectedDimensions() {
@@ -162,6 +156,10 @@ export default class CleanupDimensions extends Vue {
     )
     this.showDeleteDialog = false
     this.selectedDimensions = []
+    this.$globalSnackbar.setSuccess(
+      'cleanup',
+      'Dimensions and measurements deleted'
+    )
     await vxm.cleanupModule.fetchDimensions()
   }
 

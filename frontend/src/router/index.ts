@@ -11,20 +11,20 @@ import {
   mdiScaleBalance,
   mdiSourceBranch,
   mdiInformationOutline,
-  mdiCircleSlice6
+  mdiCircleSlice6,
+  mdiCog
 } from '@mdi/js'
 import { vxm } from '@/store'
 import TaskDetailView from '@/views/TaskDetailView.vue'
 import Search from '@/views/Search.vue'
 import Comparison from '@/views/RepoComparison.vue'
-import Cleanup from '@/views/Cleanup.vue'
+import Settings from '@/views/Settings.vue'
 
 Vue.use(VueRouter)
 
 export type RouteName =
   | '404'
   | 'about'
-  | 'cleanup'
   | 'home'
   | 'queue'
   | 'repo-comparison'
@@ -32,6 +32,7 @@ export type RouteName =
   | 'run-comparison'
   | 'run-detail'
   | 'search'
+  | 'settings'
   | 'task-detail'
 
 type RouteInfo = {
@@ -39,7 +40,8 @@ type RouteInfo = {
   meta: {
     navigable?: boolean
     label?: string
-    icon?: string
+    icon?: string,
+    adminOnly?: boolean
   }
 } & RouteConfig
 
@@ -130,15 +132,6 @@ const routes: RouteInfo[] = [
     }
   },
   {
-    path: '/cleanup',
-    name: 'cleanup',
-    component: Cleanup,
-    meta: {
-      navigable: false,
-      label: 'Cleanup'
-    }
-  },
-  {
     path: '/about',
     name: 'about',
     component: () =>
@@ -147,6 +140,17 @@ const routes: RouteInfo[] = [
       label: 'About',
       navigable: true,
       icon: mdiInformationOutline
+    }
+  },
+  {
+    path: '/settings',
+    name: 'settings',
+    component: Settings,
+    meta: {
+      navigable: true,
+      label: 'Settings',
+      adminOnly: true,
+      icon: mdiCog
     }
   },
   {

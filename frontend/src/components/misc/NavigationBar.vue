@@ -42,7 +42,7 @@
         <v-icon right dark :size="iconFontSize">{{ item.icon }}</v-icon>
       </v-btn>
 
-      <login v-if="!loggedIn">
+      <login v-if="!isAdmin">
         <template #activator="{ on }">
           <v-btn v-on="on" text>
             Login
@@ -50,7 +50,7 @@
           </v-btn>
         </template>
       </login>
-      <v-btn v-if="loggedIn" text @click="logout">
+      <v-btn v-if="isAdmin" text @click="logout">
         Logout
         <v-icon right dark :size="iconFontSize">{{ logoutIcon }}</v-icon>
       </v-btn>
@@ -143,6 +143,9 @@ export default class NavigationBar extends Vue {
     ) {
       return false
     }
+    if (route.meta!.adminOnly && !this.isAdmin) {
+      return false
+    }
     return route.meta!.navigable
   }
 
@@ -155,7 +158,7 @@ export default class NavigationBar extends Vue {
     this.lastNavigatedRoute = newValue
   }
 
-  get loggedIn(): boolean {
+  get isAdmin(): boolean {
     return vxm.userModule.isAdmin
   }
 
