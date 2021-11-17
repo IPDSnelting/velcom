@@ -452,21 +452,24 @@ export default class StatusComparisonGraph extends Vue {
       datapoints = data
     }
 
-    const seriesData = this.selectedDimensions.map(dim => {
-      const displayedPoint = datapoints.find(point =>
-        dimensionIdEquals(dim, point.dimension)
-      )
-      if (displayedPoint) return displayedPoint
-      return new DatapointDimensionError(
-        dim,
-        repoId,
-        'Not measured',
-        'NO_MEASUREMENT',
-        this.maxDatapointValue,
-        this.repoColor(repoId),
-        this.themeColor
-      )
-    })
+    const seriesData = this.selectedDimensions
+      .slice()
+      .sort((a, b) => a.toString().localeCompare(b.toString()))
+      .map(dim => {
+        const displayedPoint = datapoints.find(point =>
+          dimensionIdEquals(dim, point.dimension)
+        )
+        if (displayedPoint) return displayedPoint
+        return new DatapointDimensionError(
+          dim,
+          repoId,
+          'Not measured',
+          'NO_MEASUREMENT',
+          this.maxDatapointValue,
+          this.repoColor(repoId),
+          this.themeColor
+        )
+      })
 
     return {
       type: 'bar',
