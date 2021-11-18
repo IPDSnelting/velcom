@@ -98,7 +98,9 @@ jobs:
 
       - name: Push image
         run: |
-          IMAGE_ID=docker.pkg.github.com/${{ github.repository }}/$IMAGE_NAME
+          IMAGE_ID=docker.pkg.github.com/$IMAGE_ID/$IMAGE_NAME
+          # MUST change all uppercase to lowercase for Docker
+          IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
 
           # Offer the image as latest
           docker tag $IMAGE_NAME $IMAGE_ID:latest
