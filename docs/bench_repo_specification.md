@@ -30,19 +30,42 @@ Example:
 ./bench ../my_little_compiler/
 ```
 
-| Return code | Explanation |
-|-------------|-------------|
-| 0 | No error |
-| 1 | Internal script error |
-| 2 | Incorrect script usage |
+| Return code | Explanation            |
+|-------------|------------------------|
+| 0           | No error               |
+| 1           | Internal script error  |
+| 2           | Incorrect script usage |
 
 The script should output its results on `stdout`.
 The result is encoded in JSON.
-Output to `stderr` is shown only while benchmarking and in case of an error.
+Output to `stderr` is shown only while benchmarking (streamed to the
+task-detail page) and in case of a *benchmark script panic* (see below).
 
-### Output format
+### Failure modes
 
-If an error occurs that prevented the benchmark script from running successfully, this format should be used:
+Executing the `bench` script isn't always successful and VelCom groups the
+errors into two categories:
+- `bench` script panics, which indicate that the benchmark script itself
+  crashed (i.e. the author of the benchmark repo needs to fix a bug).  
+  Example: The `bench` script suffered a segmentation fault.
+- errors of the benchmarked program, which indicate that the `bench` script
+  worked correctly, but the revision it tested had a critical problem (i.e. the
+  program under test has a problem and needs to be fixed).  
+  Example: The program under test fails to compile and therefore the bench
+  `script` can not test it.
+
+Benchmark script panics are indicated by a non-zero exit code of the `bench`
+script. If this happens, VelCom tries to provide as much information as it can
+in the UI, including the full `stdout`, `stderr`, information about the
+execution environment and maybe a potential cause for the error. Panics always
+take precedence over errors of the benchmarked program: If the `bench` script
+exits with a non-zero exit code, it is *always* treated as a benchmark script
+panic.
+
+
+If instead the program under test suffered a critical failure and the `bench`
+script is not able to test it, it should use the following output format and
+terminate with a zero exit code:
 ```
 {
     "error": <error_string>
@@ -50,7 +73,11 @@ If an error occurs that prevented the benchmark script from running successfully
 ```
 * `<error_string>` is a string describing the error.
 
-Otherwise, this format should be used:
+
+## Output format
+
+If the `bench` script did not crash and the tested revision works well enough
+that measurements could be taken, this format should be used:
 ```
 {
     <benchmark>: {
@@ -113,6 +140,6 @@ A successful run with two successful sets and one failed set of measurements:
 A failed run:
 ```json
 {
-    "error": "Could not find makefile"
+    "error": "Could not find Makefile"
 }
 ```
