@@ -38,9 +38,10 @@ Example:
 
 The script should output its results on `stdout`.
 The result is encoded in JSON.
-Output to `stderr` is shown only while benchmarking (streamed to the task-detail page) and in case of an error.
+Output to `stderr` is shown only while benchmarking (streamed to the
+task-detail page) and in case of a *benchmark script panic* (see below).
 
-### Output format
+### Failure modes
 
 Executing the `bench` script isn't always successful and VelCom groups the
 errors into two categories:
@@ -73,7 +74,7 @@ terminate with a zero exit code:
 * `<error_string>` is a string describing the error.
 
 
-----
+## Output format
 
 If the `bench` script did not crash and the tested revision works well enough
 that measurements could be taken, this format should be used:
