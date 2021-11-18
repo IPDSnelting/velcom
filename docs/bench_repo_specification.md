@@ -38,19 +38,11 @@ Example:
 
 The script should output its results on `stdout`.
 The result is encoded in JSON.
-Output to `stderr` is shown only while benchmarking and in case of an error.
+Output to `stderr` is shown only while benchmarking and in case of an error, as indicated by one of the non-zero exit codes.
 
 ### Output format
 
-If an error occurs that prevented the benchmark script from running successfully, this format should be used:
-```
-{
-    "error": <error_string>
-}
-```
-* `<error_string>` is a string describing the error.
-
-Otherwise, this format should be used:
+If there is no error with the benchmark script, this JSON format should be used to emit measurements for the benchmarks:
 ```
 {
     <benchmark>: {
@@ -73,7 +65,7 @@ If the measurement was taken successfully, this format should be used for `<meas
 * `<interpretation>` can be one of `"LESS_IS_BETTER"`, `"MORE_IS_BETTER"` or `"NEUTRAL"`.
 * `<values>` is an array containing the measured values as numbers. The values will be interpreted as 64 bit floating point.
 
-If an error occurred that prevented this set of measurements to be taken, this format should be used for `<measurements>`:
+If an error occurred that prevented this set of measurements to be taken (perhaps because of an output mismatch or because the commit to benchmark failed to build or crashed), this format should be used for `<measurements>`:
 ```
 {
     "unit": <unit>,
@@ -107,12 +99,5 @@ A successful run with two successful sets and one failed set of measurements:
             "error": "Program exited with error code 1"
         }
     }
-}
-```
-
-A failed run:
-```json
-{
-    "error": "Could not find makefile"
 }
 ```
