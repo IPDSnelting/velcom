@@ -142,5 +142,5 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: "Call deploy script"
-        run: 'curl -H "Authorization: Bearer ${{ secrets.AAAAAAAH_PING_TOKEN }}" ${{ secrets.AAAAAAAH_PING_ENDPOINT }}'
+        run: 'curl -H "Authorization: Bearer ${{ secrets.AAAAAAAH_PING_TOKEN }}" ${{ secrets.AAAAAAAH_PING_ENDPOINT }} || echo "We only need the ping, not the response."'
 
