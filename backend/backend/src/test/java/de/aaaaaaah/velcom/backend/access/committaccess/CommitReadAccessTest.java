@@ -30,9 +30,9 @@ class CommitReadAccessTest {
 	 *
 	 *               H
 	 *              /
-	 *        C -- D -- E
+	 *        C -- D -- E <= T
 	 *       /      \
-	 * A -- B ------ F -- G
+	 * A -- B ------ F -- G <= U
 	 *                \
 	 *                 I
 	 *
@@ -407,43 +407,43 @@ class CommitReadAccessTest {
 
 	@Test
 	void getFirstParentOfBranch() {
-		assertThat(access.getFirstParentOfBranch(REPO_ID, BRANCH_T, COMM_A_HASH))
-			.isEqualTo(Optional.empty());
-		assertThat(access.getFirstParentOfBranch(REPO_ID, BRANCH_T, COMM_B_HASH))
-			.isEqualTo(Optional.empty());
-		assertThat(access.getFirstParentOfBranch(REPO_ID, BRANCH_T, COMM_C_HASH))
-			.isEqualTo(Optional.empty());
-		assertThat(access.getFirstParentOfBranch(REPO_ID, BRANCH_T, COMM_D_HASH))
-			.isEqualTo(Optional.empty());
-		assertThat(access.getFirstParentOfBranch(REPO_ID, BRANCH_T, COMM_E_HASH))
-			.isEqualTo(Optional.empty());
-		assertThat(access.getFirstParentOfBranch(REPO_ID, BRANCH_T, COMM_F_HASH))
-			.isEqualTo(Optional.empty());
-		assertThat(access.getFirstParentOfBranch(REPO_ID, BRANCH_T, COMM_G_HASH))
-			.isEqualTo(Optional.empty());
-		assertThat(access.getFirstParentOfBranch(REPO_ID, BRANCH_T, COMM_H_HASH))
-			.isEqualTo(Optional.of(COMM_D_HASH));
-		assertThat(access.getFirstParentOfBranch(REPO_ID, BRANCH_T, COMM_I_HASH))
-			.isEqualTo(Optional.empty());
+		assertThat(access.getFirstParentsOfBranch(REPO_ID, BRANCH_T, COMM_A_HASH))
+			.isEmpty();
+		assertThat(access.getFirstParentsOfBranch(REPO_ID, BRANCH_T, COMM_B_HASH))
+			.isEmpty();
+		assertThat(access.getFirstParentsOfBranch(REPO_ID, BRANCH_T, COMM_C_HASH))
+			.isEmpty();
+		assertThat(access.getFirstParentsOfBranch(REPO_ID, BRANCH_T, COMM_D_HASH))
+			.isEmpty();
+		assertThat(access.getFirstParentsOfBranch(REPO_ID, BRANCH_T, COMM_E_HASH))
+			.isEmpty();
+		assertThat(access.getFirstParentsOfBranch(REPO_ID, BRANCH_T, COMM_F_HASH))
+			.containsExactlyInAnyOrder(COMM_B_HASH, COMM_D_HASH);
+		assertThat(access.getFirstParentsOfBranch(REPO_ID, BRANCH_T, COMM_G_HASH))
+			.containsExactlyInAnyOrder(COMM_B_HASH, COMM_D_HASH);
+		assertThat(access.getFirstParentsOfBranch(REPO_ID, BRANCH_T, COMM_H_HASH))
+			.containsExactlyInAnyOrder(COMM_D_HASH);
+		assertThat(access.getFirstParentsOfBranch(REPO_ID, BRANCH_T, COMM_I_HASH))
+			.containsExactlyInAnyOrder(COMM_B_HASH, COMM_D_HASH);
 
-		assertThat(access.getFirstParentOfBranch(REPO_ID, BRANCH_U, COMM_A_HASH))
-			.isEqualTo(Optional.empty());
-		assertThat(access.getFirstParentOfBranch(REPO_ID, BRANCH_U, COMM_B_HASH))
-			.isEqualTo(Optional.empty());
-		assertThat(access.getFirstParentOfBranch(REPO_ID, BRANCH_U, COMM_C_HASH))
-			.isEqualTo(Optional.empty());
-		assertThat(access.getFirstParentOfBranch(REPO_ID, BRANCH_U, COMM_D_HASH))
-			.isEqualTo(Optional.empty());
-		assertThat(access.getFirstParentOfBranch(REPO_ID, BRANCH_U, COMM_E_HASH))
-			.isEqualTo(Optional.of(COMM_D_HASH));
-		assertThat(access.getFirstParentOfBranch(REPO_ID, BRANCH_U, COMM_F_HASH))
-			.isEqualTo(Optional.empty());
-		assertThat(access.getFirstParentOfBranch(REPO_ID, BRANCH_U, COMM_G_HASH))
-			.isEqualTo(Optional.empty());
-		assertThat(access.getFirstParentOfBranch(REPO_ID, BRANCH_U, COMM_H_HASH))
-			.isEqualTo(Optional.of(COMM_D_HASH));
-		assertThat(access.getFirstParentOfBranch(REPO_ID, BRANCH_U, COMM_I_HASH))
-			.isEqualTo(Optional.of(COMM_F_HASH));
+		assertThat(access.getFirstParentsOfBranch(REPO_ID, BRANCH_U, COMM_A_HASH))
+			.isEmpty();
+		assertThat(access.getFirstParentsOfBranch(REPO_ID, BRANCH_U, COMM_B_HASH))
+			.isEmpty();
+		assertThat(access.getFirstParentsOfBranch(REPO_ID, BRANCH_U, COMM_C_HASH))
+			.isEmpty();
+		assertThat(access.getFirstParentsOfBranch(REPO_ID, BRANCH_U, COMM_D_HASH))
+			.isEmpty();
+		assertThat(access.getFirstParentsOfBranch(REPO_ID, BRANCH_U, COMM_E_HASH))
+			.containsExactlyInAnyOrder(COMM_D_HASH);
+		assertThat(access.getFirstParentsOfBranch(REPO_ID, BRANCH_U, COMM_F_HASH))
+			.isEmpty();
+		assertThat(access.getFirstParentsOfBranch(REPO_ID, BRANCH_U, COMM_G_HASH))
+			.isEmpty();
+		assertThat(access.getFirstParentsOfBranch(REPO_ID, BRANCH_U, COMM_H_HASH))
+			.containsExactlyInAnyOrder(COMM_D_HASH);
+		assertThat(access.getFirstParentsOfBranch(REPO_ID, BRANCH_U, COMM_I_HASH))
+			.containsExactlyInAnyOrder(COMM_F_HASH);
 	}
 
 	@Test
