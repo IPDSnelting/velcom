@@ -610,7 +610,7 @@ public class GithubPrInteractor {
 					.append("/to/")
 					.append(runId.getIdAsString())
 					.append(") against commit ")
-					.append(run.getSource().getLeft().get().getHash())
+					.append(run.getSource().getLeft().get().getHash().getHash())
 					.append(":");
 				buildSignificanceDiff(builder, diffs, List.of(), infos);
 			}
