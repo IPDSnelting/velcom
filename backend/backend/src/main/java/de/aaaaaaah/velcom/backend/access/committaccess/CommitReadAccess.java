@@ -347,13 +347,9 @@ public class CommitReadAccess {
 		}
 	}
 
-	/**
-	 * @param repoId the id of the root commit's repo
-	 * @param rootHash the hash of the root commit
-	 * @return all tracked commits descending from the given root.
-	 */
-	public Optional<CommitHash> getFirstParentOfBranch(RepoId repoId, BranchName branch,
+	public List<CommitHash> getFirstParentsOfBranch(RepoId repoId, BranchName branch,
 		CommitHash rootHash) {
+
 		String query = "WITH RECURSIVE\n"
 			// Commits reachable from the branch
 			+ "reachable(hash) AS (\n"
@@ -395,8 +391,6 @@ public class CommitReadAccess {
 			+ "  AND commit_relationship.parent_hash NOT IN reachable\n"
 			+ ")\n"
 			+ "\n"
-			// Choose the only parents of our 'parents' table that is reachable from the branch. If there
-			// are none or multiple such parents, don't try to choose one and instead return nothing.
 			+ "SELECT commit_relationship.parent_hash\n"
 			+ "FROM commit_relationship\n"
 			+ "  JOIN parents\n"
@@ -406,22 +400,18 @@ public class CommitReadAccess {
 			+ "";
 
 		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			try {
-				String hash = db.dsl()
-					.fetchSingle(
-						query,
-						repoId.getIdAsString(),
-						branch.getName(),
-						repoId.getIdAsString(),
-						rootHash.getHash(),
-						repoId.getIdAsString(),
-						repoId.getIdAsString()
-					)
-					.get(0, String.class);
-				return Optional.of(new CommitHash(hash));
-			} catch (NoDataFoundException | TooManyRowsException e) {
-				return Optional.empty();
-			}
+			return db.dsl()
+				.fetchStream(
+					query,
+					repoId.getIdAsString(),
+					branch.getName(),
+					repoId.getIdAsString(),
+					rootHash.getHash(),
+					repoId.getIdAsString(),
+					repoId.getIdAsString()
+				).map(record -> record.get(0, String.class))
+				.map(CommitHash::new)
+				.collect(toList());
 		}
 	}
 

@@ -1,7 +1,9 @@
 package de.aaaaaaah.velcom.backend.listener.github;
 
 import static java.util.Comparator.comparing;
+import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 import static org.jooq.codegen.db.tables.GithubCommand.GITHUB_COMMAND;
 import static org.jooq.codegen.db.tables.Repo.REPO;
@@ -52,6 +54,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import javax.ws.rs.core.HttpHeaders;
@@ -517,32 +520,24 @@ public class GithubPrInteractor {
 			RunId runId = reply.getRunId();
 			Run run = benchmarkAccess.getRun(runId);
 
-			// Get commit and run to compare to
-			Optional<CommitHash> compareToHash = commitAccess
-				.getFirstParentOfBranch(repo.getId(), reply.getTargetBranch(), reply.getCommitHash());
-			List<Run> compareToRun = compareToHash
-				.flatMap(hash -> benchmarkAccess.getLatestRunId(repo.getId(), hash))
-				.map(benchmarkAccess::getRun)
-				.map(List::of)
-				.orElse(List.of());
+			// Get commits and runs to compare to
+			List<CommitHash> compareToHash = commitAccess
+				.getFirstParentsOfBranch(repo.getId(), reply.getTargetBranch(), reply.getCommitHash());
+			Map<CommitHash, RunId> runIds = benchmarkAccess.getLatestRunIds(repo.getId(), compareToHash);
+			List<Run> compareToRuns = benchmarkAccess.getRuns(runIds.values());
 
 			// Determine Significance of run
 			Set<Dimension> significantDimensions = dimensionAccess.getSignificantDimensions();
 			Optional<SignificanceReasons> reasons = significanceDetector
-				.getSignificance(run, compareToRun, significantDimensions);
+				.getSignificance(run, compareToRuns, significantDimensions);
 			Set<Dimension> dimensions = reasons.stream()
 				.map(SignificanceReasons::getDimensions)
 				.flatMap(Collection::stream)
 				.collect(toSet());
 			Map<Dimension, DimensionInfo> infos = dimensionAccess.getDimensionInfoMap(dimensions);
 
-			// Determine link either to run comparison or run detail page
-			final String link = compareToHash.map(
-				commitHash -> frontendUrl + "compare/" + repoIdStr + "/to/" + runId.getIdAsString()
-					+ "?hash1=" + commitHash.getHash())
-				.orElseGet(() -> frontendUrl + "run-detail/" + runId.getIdAsString());
-
-			String message = buildFinishedPrReply(reply, link, reasons.orElse(null), infos);
+			String message = buildFinishedPrReply(reply, runId, compareToRuns, reasons.orElse(null),
+				infos);
 			HttpResponse<String> response = createPrComment(reply.getPr(), message);
 
 			if (response.statusCode() >= 200 && response.statusCode() < 300) {
@@ -560,14 +555,17 @@ public class GithubPrInteractor {
 		}
 	}
 
-	private static String buildFinishedPrReply(FinishedGithubCommand reply, String link,
-		@Nullable SignificanceReasons reasons, Map<Dimension, DimensionInfo> infos) {
+	private String buildFinishedPrReply(FinishedGithubCommand reply, RunId runId,
+		List<Run> compareToRuns, @Nullable SignificanceReasons reasons,
+		Map<Dimension, DimensionInfo> infos) {
 
 		StringBuilder builder = new StringBuilder();
 
 		builder
 			.append("Here are the [benchmark results](")
-			.append(link)
+			.append(frontendUrl)
+			.append("run-detail/")
+			.append(runId.getIdAsString())
 			.append(") for commit ")
 			.append(reply.getCommitHash().getHash())
 			.append(".");
@@ -581,10 +579,41 @@ public class GithubPrInteractor {
 			builder.append("\nThe entire run failed.");
 		}
 
-		List<DimensionDifference> significantDifferences = reasons.getSignificantDifferences();
-		List<Dimension> significantFailedDimensions = reasons.getSignificantFailedDimensions();
-		if (!significantDifferences.isEmpty() || !significantFailedDimensions.isEmpty()) {
-			buildSignificanceDiff(builder, significantDifferences, significantFailedDimensions, infos);
+		if (!reasons.getSignificantFailedDimensions().isEmpty()) {
+			builder.append("\nThese dimensions failed:");
+			buildSignificanceDiff(builder, List.of(), reasons.getSignificantFailedDimensions(), infos);
+		}
+
+		if (compareToRuns.isEmpty()) {
+			builder.append("\nFound no runs to compare against.");
+		} else if (reasons.getSignificantDifferences().isEmpty()) {
+			builder.append("\nFound no significant differences.");
+		} else {
+			Map<RunId, List<DimensionDifference>> diffsByRun = reasons.getSignificantDifferences()
+				.stream()
+				.collect(groupingBy(DimensionDifference::getOldRunId));
+			for (Run run : compareToRuns) {
+				List<DimensionDifference> diffs = diffsByRun.get(run.getId());
+				if (diffs == null || diffs.isEmpty()) {
+					continue;
+				}
+				if (run.getSource().getLeft().isEmpty()) {
+					// This should never happen since all runs are obtained from commits
+					continue;
+				}
+
+				builder
+					.append("\nThere were [significant changes](")
+					.append(frontendUrl)
+					.append("compare/")
+					.append(run.getId().getIdAsString())
+					.append("/to/")
+					.append(runId.getIdAsString())
+					.append(") against commit ")
+					.append(run.getSource().getLeft().get().getHash().getHash())
+					.append(":");
+				buildSignificanceDiff(builder, diffs, List.of(), infos);
+			}
 		}
 
 		return builder.toString();
