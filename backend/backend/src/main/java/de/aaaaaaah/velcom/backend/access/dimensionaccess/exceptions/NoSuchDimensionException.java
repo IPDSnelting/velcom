@@ -9,6 +9,11 @@ public class NoSuchDimensionException extends RuntimeException {
 
 	private final Dimension invalidDimension;
 
+	public NoSuchDimensionException(Dimension invalidDimension) {
+		super("no dimension " + invalidDimension);
+		this.invalidDimension = invalidDimension;
+	}
+
 	public NoSuchDimensionException(Throwable t, Dimension invalidDimension) {
 		super("no dimension " + invalidDimension, t);
 		this.invalidDimension = invalidDimension;

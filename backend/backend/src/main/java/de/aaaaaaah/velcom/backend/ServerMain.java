@@ -26,7 +26,7 @@ import de.aaaaaaah.velcom.backend.restapi.endpoints.AllReposEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.CommitEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.CompareEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.DebugEndpoint;
-import de.aaaaaaah.velcom.backend.restapi.endpoints.DimensionEndpoint;
+import de.aaaaaaah.velcom.backend.restapi.endpoints.DimensionsEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.GraphComparisonEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.GraphDetailEndpoint;
 import de.aaaaaaah.velcom.backend.restapi.endpoints.GraphStatusComparisonEndpoint;
@@ -207,7 +207,7 @@ public class ServerMain extends Application<GlobalConfig> {
 			new CompareEndpoint(benchmarkAccess, commitAccess, dimensionAccess, runCache, latestRunCache,
 				runComparator, significanceDetector, significanceFactors),
 			new DebugEndpoint(benchmarkAccess, dispatcher),
-			new DimensionEndpoint(dimensionAccess),
+			new DimensionsEndpoint(dimensionAccess),
 			new GraphComparisonEndpoint(benchmarkAccess, commitAccess, dimensionAccess),
 			new GraphDetailEndpoint(commitAccess, benchmarkAccess, dimensionAccess, repoAccess, runCache,
 				latestRunCache),

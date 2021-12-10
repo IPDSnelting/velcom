@@ -1,26 +1,28 @@
 package de.aaaaaaah.velcom.backend.restapi.endpoints;
 
 import de.aaaaaaah.velcom.backend.access.dimensionaccess.DimensionWriteAccess;
-import de.aaaaaaah.velcom.backend.access.dimensionaccess.entities.Dimension;
 import de.aaaaaaah.velcom.backend.restapi.authentication.Admin;
+import de.aaaaaaah.velcom.backend.restapi.jsonobjects.JsonDimensionId;
 import io.dropwizard.auth.Auth;
 import io.micrometer.core.annotation.Timed;
+import java.util.List;
+import java.util.stream.Collectors;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 /**
  * Endpoint for deleting dimensions.
  */
-@Path("/dimension/{benchmark}/{metric}")
+@Path("/dimensions/")
 @Produces(MediaType.APPLICATION_JSON)
-public class DimensionEndpoint {
+public class DimensionsEndpoint {
 
 	private final DimensionWriteAccess dimensionAccess;
 
-	public DimensionEndpoint(DimensionWriteAccess dimensionAccess) {
+	public DimensionsEndpoint(DimensionWriteAccess dimensionAccess) {
 		this.dimensionAccess = dimensionAccess;
 	}
 
@@ -28,9 +30,13 @@ public class DimensionEndpoint {
 	@Timed(histogram = true)
 	public void delete(
 		@Auth Admin admin,
-		@PathParam("benchmark") String benchmark,
-		@PathParam("metric") String metric
+		@NotNull List<JsonDimensionId> request
 	) {
-		dimensionAccess.deleteDimension(new Dimension(benchmark, metric));
+		dimensionAccess.deleteDimensions(
+			request
+				.stream()
+				.map(JsonDimensionId::toDimension)
+				.collect(Collectors.toList())
+		);
 	}
 }
