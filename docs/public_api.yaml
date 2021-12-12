@@ -1181,6 +1181,22 @@ paths:
       responses:
         '204':
           description: No Content
+        '404':
+          description: 'If any dimension could not be found. If this is returned, *no data* was deleted.'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: A message describing the error
+                  benchmark:
+                    type: string
+                    description: The benchmark part of the dimension that could not be found
+                  metric:
+                    type: string
+                    description: The metric part of the dimension that could not be found
       description: |-
         Deletes all given dimension and all their benchmarks. Does *not* remove empty runs afterwards.
 
