@@ -1173,27 +1173,43 @@ paths:
                   - dimensions
       operationId: get-dimensions
     parameters: []
-  '/dimension/{benchmark}/{metric}':
-    parameters:
-      - schema:
-          type: string
-        name: benchmark
-        in: path
-        required: true
-      - schema:
-          type: string
-        name: metric
-        in: path
-        required: true
+  /dimensions:
+    parameters: []
     delete:
       summary: delete dimension
       operationId: delete-dimensions-benchmark-metric
       responses:
         '204':
           description: No Content
-      description: Delete a dimension and all its benchmarks. Does *not* remove empty runs afterwards.
+        '404':
+          description: 'If any dimension could not be found. If this is returned, *no data* was deleted.'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: A message describing the error
+                  benchmark:
+                    type: string
+                    description: The benchmark part of the dimension that could not be found
+                  metric:
+                    type: string
+                    description: The metric part of the dimension that could not be found
+      description: |-
+        Deletes all given dimension and all their benchmarks. Does *not* remove empty runs afterwards.
+
+        If any dimension in the request could not be found, the deletion is aborted atomically and *nothing* is deleted.
       security:
         - admin_credentials: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/DimensionId'
 components:
   schemas:
     CommitHash:
@@ -1532,6 +1548,14 @@ components:
         - metric
         - unit
         - interpretation
+    DimensionId:
+      title: DimensionId
+      type: object
+      properties:
+        benchmark:
+          type: string
+        metric:
+          type: string
     DimensionDifference:
       title: DimensionDifference
       type: object

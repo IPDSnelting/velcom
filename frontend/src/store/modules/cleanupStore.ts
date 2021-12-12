@@ -20,10 +20,11 @@ export class CleanupStore extends VxModule {
 
   @action
   async deleteDimensions(dimensions: Dimension[]): Promise<void> {
-    for (const dimension of dimensions) {
-      const benchmark = encodeURIComponent(dimension.benchmark)
-      const metric = encodeURIComponent(dimension.metric)
-      await axios.delete(`/dimension/${benchmark}/${metric}`)
-    }
+    const dimensionIds = dimensions.map(it => ({
+      metric: it.metric,
+      benchmark: it.benchmark
+    }))
+
+    await axios.delete(`/dimensions`, { data: dimensionIds })
   }
 }
