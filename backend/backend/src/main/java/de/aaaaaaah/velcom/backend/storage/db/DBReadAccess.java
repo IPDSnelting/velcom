@@ -17,7 +17,8 @@ public class DBReadAccess implements Closeable {
 
 	@Override
 	public void close() {
-		ctx.close();
+		// No longer needed
+		// TODO: Remove this and clear up all usages?
 	}
 
 	public DSLContext dsl() {

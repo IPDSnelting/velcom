@@ -94,7 +94,7 @@ public class TestDb {
 	 * @return a jdbc url that can be used to connect to the database
 	 */
 	public String closeAndGetJdbcUrl() {
-		dslContext.close();
+		// TODO: Closing does not seem to be needed
 		return jdbcUrl;
 	}
 
