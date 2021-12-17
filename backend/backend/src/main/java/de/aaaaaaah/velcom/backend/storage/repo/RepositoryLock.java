@@ -216,7 +216,7 @@ public class RepositoryLock extends Repository {
 
 	@Override
 	@NonNull
-	public Set<ObjectId> getAdditionalHaves() {
+	public Set<ObjectId> getAdditionalHaves() throws IOException {
 		return repository.getAdditionalHaves();
 	}
 
@@ -246,7 +246,7 @@ public class RepositoryLock extends Repository {
 
 	@Override
 	@NonNull
-	public Map<AnyObjectId, Set<Ref>> getAllRefsByPeeledObjectId() {
+	public Map<AnyObjectId, Set<Ref>> getAllRefsByPeeledObjectId() throws IOException {
 		return repository.getAllRefsByPeeledObjectId();
 	}
 

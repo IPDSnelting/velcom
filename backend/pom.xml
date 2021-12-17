@@ -22,13 +22,13 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-    <assertj.version>3.17.2</assertj.version>
+    <assertj.version>3.21.0</assertj.version>
     <commons-compress.version>1.21</commons-compress.version>
-    <jackson.version>2.11.2</jackson.version>
-    <junit.version>5.7.0-RC1</junit.version>
-    <logback.version>1.2.3</logback.version>
-    <mockito.version>3.5.10</mockito.version>
-    <slf4j.version>1.7.30</slf4j.version>
+    <jackson.version>2.13.0</jackson.version>
+    <junit.version>5.8.2</junit.version>
+    <logback.version>1.2.9</logback.version>
+    <mockito.version>4.2.0</mockito.version>
+    <slf4j.version>1.7.32</slf4j.version>
 
     <git-commit-id-plugin.version>4.0.0</git-commit-id-plugin.version>
     <jacoco-maven-plugin.version>0.8.7</jacoco-maven-plugin.version>
