@@ -12,7 +12,7 @@
     "ansi_up": "^5.0.0",
     "axios": "^0.21.2",
     "core-js": "^3.18.3",
-    "dygraphs": "git://github.com/I-Al-Istannen/dygraphs.git#1e0170e98b5e8501d0ab12d897e14b1b322bd169",
+    "dygraphs": "I-Al-Istannen/dygraphs#1e0170e98b5e8501d0ab12d897e14b1b322bd169",
     "echarts": "^5.2.1",
     "vue": "^2.6.14",
     "vue-class-component": "^7.2.6",
