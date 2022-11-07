@@ -572,7 +572,7 @@ public class GithubPrInteractor {
 
 		if (reasons == null) {
 			if (compareToRuns.size() == 1) {  // no idea why we would even have more than 1
-				Run run = compareToRuns[0];
+				Run run = compareToRuns.get(0);
 				builder
 					.append("\nThere were [no significant changes](")
 					.append(frontendUrl)
