@@ -571,7 +571,21 @@ public class GithubPrInteractor {
 			.append(".");
 
 		if (reasons == null) {
-			builder.append("\nThere were no significant changes.");
+			if (compareToRuns.size() == 1) {  // no idea why we would even have more than 1
+				Run run = compareToRuns.get(0);
+				builder
+					.append("\nThere were [no significant changes](")
+					.append(frontendUrl)
+					.append("compare/")
+					.append(run.getId().getIdAsString())
+					.append("/to/")
+					.append(runId.getIdAsString())
+					.append(") against commit ")
+					.append(run.getSource().getLeft().get().getHash().getHash())
+					.append(".");
+			} else {
+				builder.append("\nThere were no significant changes.");
+			}
 			return builder.toString();
 		}
 
