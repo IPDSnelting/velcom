@@ -570,7 +570,7 @@ public class GithubPrInteractor {
 			.append(reply.getCommitHash().getHash())
 			.append(".");
 
-		if (reasons == null) {
+		if (!compareToRuns.isEmpty() && reasons == null) {
 			if (compareToRuns.size() == 1) {  // no idea why we would even have more than 1
 				Run run = compareToRuns.get(0);
 				builder
