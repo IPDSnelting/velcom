@@ -234,7 +234,7 @@ public class GithubPrInteractor {
 				seen.add(commentId);
 
 				String commentBody = comment.get("body").asText();
-				if (!commentBody.strip().equals("!bench")) {
+				if (!commentBody.strip().startsWith("!bench")) {
 					LOGGER.debug("Ignoring comment without command ({})", commentBody);
 					continue; // Not a command, just a normal comment
 				}
