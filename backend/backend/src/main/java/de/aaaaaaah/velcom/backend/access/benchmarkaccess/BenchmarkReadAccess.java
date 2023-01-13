@@ -222,6 +222,7 @@ public class BenchmarkReadAccess {
 				.join(KNOWN_COMMIT)
 				.on(KNOWN_COMMIT.REPO_ID.eq(RUN.REPO_ID)
 					.and(KNOWN_COMMIT.HASH.eq(RUN.COMMIT_HASH)))
+				.where(KNOWN_COMMIT.TRACKED)
 				.orderBy(KNOWN_COMMIT.COMMITTER_DATE.desc(), RUN.START_TIME.desc())
 				.limit(skip, amount)
 				.stream()
