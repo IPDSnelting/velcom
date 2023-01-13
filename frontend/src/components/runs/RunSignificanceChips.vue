@@ -114,7 +114,7 @@ class RelevantChange {
   }
 
   private formatPercentage(percentage: number): string {
-    const scaled = Math.round(percentage * 100)
+    const scaled = Math.round(percentage * 1000) / 10
     return `${scaled}%`
   }
 

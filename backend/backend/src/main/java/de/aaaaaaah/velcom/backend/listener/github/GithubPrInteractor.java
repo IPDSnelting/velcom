@@ -677,7 +677,7 @@ public class GithubPrInteractor {
 					prefix,
 					diff.getDimension().getBenchmark(),
 					diff.getDimension().getMetric(),
-					diff.getReldiff().map(d -> String.format(Locale.ROOT, "%.0f%%", d * 100)).orElse("-"),
+					diff.getReldiff().map(d -> String.format(Locale.ROOT, "%.1f%%", d * 100)).orElse("-"),
 					diff.getStddevDiff().map(d -> String.format(Locale.ROOT, "(%.1f σ)", d)).orElse(null)
 				);
 			})
