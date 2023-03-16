@@ -16,6 +16,7 @@
             <comparison-graph-settings
               :begin-y-at-zero.sync="beginYAtZero"
               :stacked.sync="stacked"
+              :normalized.sync="normalized"
               :graph-component.sync="graphComponent"
               :day-equidistant-graph-selected.sync="dayEquidistantGraphSelected"
             >
@@ -139,6 +140,15 @@ export default class RepoGraphView extends Vue {
   // noinspection JSUnusedLocalSymbols
   private set stacked(stacked: boolean) {
     vxm.detailGraphModule.stacked = stacked
+  }
+
+  private get normalized() {
+    return vxm.detailGraphModule.normalized
+  }
+
+  // noinspection JSUnusedLocalSymbols
+  private set normalized(normalized: boolean) {
+    vxm.detailGraphModule.normalized = normalized
   }
 
   private getShareLink(options: PermanentLinkOptions) {

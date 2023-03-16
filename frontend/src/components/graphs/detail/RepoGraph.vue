@@ -21,6 +21,7 @@
             :commit-to-compare="commitToCompare"
             :begin-y-at-zero="yStartsAtZero"
             :stacked="stacked"
+            :normalized="normalized"
             :refresh-key="graphRefreshKey"
             @wheel="overscrollToZoom.scrolled($event)"
             @reset-zoom="resetZoom"
@@ -105,6 +106,10 @@ export default class RepoGraphs extends Vue {
 
   private get stacked() {
     return vxm.detailGraphModule.stacked
+  }
+
+  private get normalized() {
+    return vxm.detailGraphModule.normalized
   }
 
   private get overscrollToZoom() {

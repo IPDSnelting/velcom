@@ -69,6 +69,7 @@ export class DetailGraphStore extends VxModule {
 
   beginYScaleAtZero: boolean = true
   stacked: boolean = false
+  normalized: boolean = false
   dayEquidistantGraph: boolean = true
 
   selectedTab: 'information' | 'graph' = 'graph'
@@ -426,6 +427,7 @@ export class DetailGraphStore extends VxModule {
       commitToCompare: store.commitToCompare,
       beginYScaleAtZero: store.beginYScaleAtZero,
       stacked: store.stacked,
+      normalized: store.normalized,
       dayEquidistantGraph: store.dayEquidistantGraph,
       selectedTab: store.selectedTab,
       selectedDimensionSelector: store.selectedDimensionSelector

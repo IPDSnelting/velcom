@@ -206,6 +206,9 @@ export default class EchartsDetailGraph extends Vue {
   @Prop({ default: false })
   private readonly stacked!: boolean
 
+  @Prop({ default: false })
+  private readonly normalized!: boolean
+
   @Prop()
   private readonly zoomXStartValue!: number | null
 
@@ -258,6 +261,7 @@ export default class EchartsDetailGraph extends Vue {
   @Watch('datapoints')
   @Watch('beginYAtZero')
   @Watch('stacked')
+  @Watch('normalized')
   @Watch('dataRangeMin')
   @Watch('dataRangeMax')
   @Watch('refreshKey')
@@ -571,18 +575,30 @@ export default class EchartsDetailGraph extends Vue {
   // <!--</editor-fold>-->
 
   // <!--<editor-fold desc="SERIES GENERATION">-->
+  private getHighestPointValue(point: GraphDataPoint): number {
+    return Math.max(
+      0,
+      ...Array.from(point.values.values()).filter(
+        (v): v is number => typeof v === 'number'
+      )
+    )
+  }
+
   private findFirstSuccessful(seriesId: SeriesId) {
     const point = this.datapoints.find(it => it.successful(seriesId))
 
     if (point) {
-      return point.values.get(seriesId) as number
+      return [
+        point.values.get(seriesId) as number,
+        this.getHighestPointValue(point)
+      ]
     }
-    return 0
+    return [0, 0]
   }
 
   private buildPointsForSeries(seriesInformation: SeriesInformation) {
     const seriesId = seriesInformation.id
-    let lastSuccessfulValue: number = this.findFirstSuccessful(seriesId)
+    const lastSuccessfulValues = this.findFirstSuccessful(seriesId)
     return this.datapoints
       .filter(it => it.values.has(seriesId))
       .map(point => {
@@ -592,9 +608,15 @@ export default class EchartsDetailGraph extends Vue {
 
         let pointValue = point.values.get(seriesId)
         if (typeof pointValue !== 'number') {
-          pointValue = lastSuccessfulValue
+          pointValue = lastSuccessfulValues[0]
         }
-        lastSuccessfulValue = pointValue
+        lastSuccessfulValues[0] = pointValue
+        if (this.normalized) {
+          let normValue = this.getHighestPointValue(point)
+          if (normValue === 0) normValue = lastSuccessfulValues[1]
+          lastSuccessfulValues[1] = normValue
+          pointValue = pointValue / normValue
+        }
 
         if (point.failed(seriesId)) {
           // grey circle

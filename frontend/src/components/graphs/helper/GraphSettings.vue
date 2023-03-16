@@ -15,6 +15,17 @@
         </v-col>
         <v-col cols="auto" style="gap: 12px" class="d-flex flex-wrap">
           <v-btn
+            @click="$emit('update:normalized', !normalized)"
+            color="primary"
+            outlined
+            text
+          >
+            Normalize
+            <v-icon class="ml-2" style="margin-right: -6px">
+              {{ normalized ? iconOn : iconOff }}
+            </v-icon>
+          </v-btn>
+          <v-btn
             @click="$emit('update:stacked', !stacked)"
             color="primary"
             outlined
@@ -76,6 +87,9 @@ export default class GraphSettings extends Vue {
 
   @Prop({ default: false })
   private stacked!: boolean
+
+  @Prop({ default: false })
+  private normalized!: boolean
 
   @Prop({ default: true })
   private dayEquidistantGraphSelected!: boolean
