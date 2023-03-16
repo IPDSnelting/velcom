@@ -203,6 +203,9 @@ export default class EchartsDetailGraph extends Vue {
   @Prop({ default: false })
   private readonly beginYAtZero!: boolean
 
+  @Prop({ default: false })
+  private readonly stacked!: boolean
+
   @Prop()
   private readonly zoomXStartValue!: number | null
 
@@ -254,6 +257,7 @@ export default class EchartsDetailGraph extends Vue {
   // <!--<editor-fold desc="ECHARTS GRAPH OPTIONS">-->
   @Watch('datapoints')
   @Watch('beginYAtZero')
+  @Watch('stacked')
   @Watch('dataRangeMin')
   @Watch('dataRangeMax')
   @Watch('refreshKey')
@@ -642,7 +646,8 @@ export default class EchartsDetailGraph extends Vue {
         color: series.color
       },
       data: echartPoints as any,
-      yAxisIndex: series.unit === 's' ? 0 : 1
+      yAxisIndex: series.unit === 's' ? 0 : 1,
+      stack: this.stacked ? 'x' : undefined
     }
   }
 

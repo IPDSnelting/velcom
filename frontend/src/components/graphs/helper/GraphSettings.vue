@@ -15,6 +15,17 @@
         </v-col>
         <v-col cols="auto" style="gap: 12px" class="d-flex flex-wrap">
           <v-btn
+            @click="$emit('update:stacked', !stacked)"
+            color="primary"
+            outlined
+            text
+          >
+            Stack Charts
+            <v-icon class="ml-2" style="margin-right: -6px">
+              {{ stacked ? iconOn : iconOff }}
+            </v-icon>
+          </v-btn>
+          <v-btn
             @click="$emit('update:beginYAtZero', !beginYAtZero)"
             color="primary"
             outlined
@@ -62,6 +73,9 @@ export default class GraphSettings extends Vue {
 
   @Prop({ default: true })
   private beginYAtZero!: boolean
+
+  @Prop({ default: false })
+  private stacked!: boolean
 
   @Prop({ default: true })
   private dayEquidistantGraphSelected!: boolean

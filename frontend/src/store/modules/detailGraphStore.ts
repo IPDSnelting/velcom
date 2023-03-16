@@ -68,6 +68,7 @@ export class DetailGraphStore extends VxModule {
   private bufferRatio: number = 0.5
 
   beginYScaleAtZero: boolean = true
+  stacked: boolean = false
   dayEquidistantGraph: boolean = true
 
   selectedTab: 'information' | 'graph' = 'graph'
@@ -424,6 +425,7 @@ export class DetailGraphStore extends VxModule {
       colorIndexMap: store.colorIndexMap,
       commitToCompare: store.commitToCompare,
       beginYScaleAtZero: store.beginYScaleAtZero,
+      stacked: store.stacked,
       dayEquidistantGraph: store.dayEquidistantGraph,
       selectedTab: store.selectedTab,
       selectedDimensionSelector: store.selectedDimensionSelector

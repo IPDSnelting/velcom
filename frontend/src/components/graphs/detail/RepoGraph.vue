@@ -20,6 +20,7 @@
             :reference-datapoint="referenceDatapoint"
             :commit-to-compare="commitToCompare"
             :begin-y-at-zero="yStartsAtZero"
+            :stacked="stacked"
             :refresh-key="graphRefreshKey"
             @wheel="overscrollToZoom.scrolled($event)"
             @reset-zoom="resetZoom"
@@ -100,6 +101,10 @@ export default class RepoGraphs extends Vue {
 
   private get yStartsAtZero() {
     return vxm.detailGraphModule.beginYScaleAtZero
+  }
+
+  private get stacked() {
+    return vxm.detailGraphModule.stacked
   }
 
   private get overscrollToZoom() {

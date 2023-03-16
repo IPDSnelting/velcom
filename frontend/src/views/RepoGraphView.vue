@@ -15,6 +15,7 @@
           <v-col cols="12">
             <comparison-graph-settings
               :begin-y-at-zero.sync="beginYAtZero"
+              :stacked.sync="stacked"
               :graph-component.sync="graphComponent"
               :day-equidistant-graph-selected.sync="dayEquidistantGraphSelected"
             >
@@ -129,6 +130,15 @@ export default class RepoGraphView extends Vue {
   // noinspection JSUnusedLocalSymbols
   private set beginYAtZero(beginYAtZero: boolean) {
     vxm.detailGraphModule.beginYScaleAtZero = beginYAtZero
+  }
+
+  private get stacked() {
+    return vxm.detailGraphModule.stacked
+  }
+
+  // noinspection JSUnusedLocalSymbols
+  private set stacked(stacked: boolean) {
+    vxm.detailGraphModule.stacked = stacked
   }
 
   private getShareLink(options: PermanentLinkOptions) {
