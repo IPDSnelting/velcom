@@ -25,6 +25,7 @@
               {{ normalized ? iconOn : iconOff }}
             </v-icon>
           </v-btn>
+          <!--
           <v-btn
             @click="$emit('update:stacked', !stacked)"
             color="primary"
@@ -36,6 +37,7 @@
               {{ stacked ? iconOn : iconOff }}
             </v-icon>
           </v-btn>
+          -->
           <v-btn
             @click="$emit('update:beginYAtZero', !beginYAtZero)"
             color="primary"
