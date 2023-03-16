@@ -175,7 +175,8 @@ export default class RepoGraphs extends Vue {
     return this.selectedDimensions.map(dimension => ({
       displayName: dimension.toString(),
       id: dimension.toString(),
-      color: this.dimensionColor(dimension)
+      color: this.dimensionColor(dimension),
+      unit: dimension.unit
     }))
   }
 

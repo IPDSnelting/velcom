@@ -279,10 +279,18 @@ export default class EchartsDetailGraph extends Vue {
           }
         }
       },
-      yAxis: {
-        type: 'value',
-        scale: !this.beginYAtZero
-      },
+      yAxis: [
+        {
+          type: 'value',
+          name: 's',
+          scale: !this.beginYAtZero
+        },
+        {
+          type: 'value',
+          name: 'other',
+          scale: !this.beginYAtZero
+        }
+      ],
       toolbox: {
         left: 'center',
         show: true,
@@ -314,7 +322,7 @@ export default class EchartsDetailGraph extends Vue {
         {
           id: 'y',
           type: 'inside',
-          yAxisIndex: [0],
+          yAxisIndex: [0, 1],
           startValue: this.zoomYStartValue || undefined,
           endValue: this.zoomYEndValue || undefined,
           zoomOnMouseWheel: false
@@ -633,7 +641,8 @@ export default class EchartsDetailGraph extends Vue {
       lineStyle: {
         color: series.color
       },
-      data: echartPoints as any
+      data: echartPoints as any,
+      yAxisIndex: series.unit === 's' ? 0 : 1
     }
   }
 

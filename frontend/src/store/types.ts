@@ -486,6 +486,7 @@ export type SeriesInformation = {
   id: SeriesId
   displayName: string
   color: string
+  unit?: string
 }
 
 export type GraphDataPointValue =
