@@ -47,7 +47,7 @@ export class ComparisonGraphStore extends VxModule {
 
   selectedDimension: Dimension | null = null
   dayEquidistantGraphSelected: boolean = true
-  beginYAtZero: boolean = false
+  beginYAtZero: boolean = true
 
   zoomXStartValue: number | null = null
   zoomXEndValue: number | null = null

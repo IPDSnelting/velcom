@@ -67,7 +67,7 @@ export class DetailGraphStore extends VxModule {
   private maxBuffer: number = 182 // ~ half a year
   private bufferRatio: number = 0.5
 
-  beginYScaleAtZero: boolean = false
+  beginYScaleAtZero: boolean = true
   dayEquidistantGraph: boolean = true
 
   selectedTab: 'information' | 'graph' = 'graph'
