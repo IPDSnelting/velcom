@@ -2,7 +2,7 @@
   <v-data-table
     :headers="headers"
     :items="items"
-    :items-per-page="-1"
+    :items-per-page="200"
     multi-sort
     dense
     class="compare-table"

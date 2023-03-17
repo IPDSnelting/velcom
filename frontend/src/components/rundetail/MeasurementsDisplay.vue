@@ -29,7 +29,7 @@
       multi-sort
       :headers="headers"
       :items="items"
-      :items-per-page="-1"
+      :items-per-page="200"
       class="measurement-table"
       @click:row="rowClicked"
     >
