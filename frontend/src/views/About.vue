@@ -228,7 +228,7 @@ export default class About extends Vue {
 
     y = Math.sin(baseAngle + theta) * baseDistance
 
-    return { x: x, y: y }
+    return { x, y }
   }
 
   async mounted(): Promise<void> {

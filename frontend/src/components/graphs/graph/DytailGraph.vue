@@ -524,7 +524,7 @@ export default class DytailGraph extends Vue {
     }
 
     this.$emit('click', {
-      datapoint: datapoint,
+      datapoint,
       ctrl: e.ctrlKey
     })
   }

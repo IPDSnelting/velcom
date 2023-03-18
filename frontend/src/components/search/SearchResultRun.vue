@@ -54,7 +54,7 @@ import { formatDate, formatDurationHuman } from '@/util/Times'
 @Component({
   components: {
     'repo-display': InlineMinimalRepoDisplay,
-    TextChip: TextChip
+    TextChip
   }
 })
 export default class SearchResultRun extends Vue {

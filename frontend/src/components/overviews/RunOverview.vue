@@ -32,7 +32,7 @@
         </v-tooltip>
       </v-list-item-avatar>
     </template>
-    <template #actions v-if="commit" class="ml-3">
+    <template #actions v-if="commit">
       <commit-benchmark-actions
         :hasExistingBenchmark="true"
         :commitDescription="commit"

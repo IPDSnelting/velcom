@@ -47,8 +47,8 @@ export class ColorStore extends VxModule {
    */
   @mutation
   addColors(amount: number): void {
-    vxm.colorModule.addColorToTheme({ amount: amount, muted: true })
-    vxm.colorModule.addColorToTheme({ amount: amount, muted: false })
+    vxm.colorModule.addColorToTheme({ amount, muted: true })
+    vxm.colorModule.addColorToTheme({ amount, muted: false })
   }
 
   @mutation

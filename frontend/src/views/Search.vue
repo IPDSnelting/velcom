@@ -213,8 +213,8 @@ export default class Search extends Vue {
 
     return {
       name: 'run-comparison',
-      params: params,
-      query: query
+      params,
+      query
     }
   }
 

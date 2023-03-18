@@ -129,7 +129,7 @@ export default class RepoBranchSelector extends Vue {
   private toggleBranch(repo: Repo, branch: string) {
     this.$emit('update:toggle-branch', {
       repoId: repo.id,
-      branch: branch
+      branch
     })
   }
 }
