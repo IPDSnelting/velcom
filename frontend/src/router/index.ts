@@ -194,7 +194,7 @@ if (process.env.VUE_APP_LOCATION_INDEPENDENT_IMAGE) {
 const router = new VueRouterEx({
   mode: 'history',
   base: routerBaseUrl,
-  routes: routes
+  routes
 })
 
 router.afterEach(to => {

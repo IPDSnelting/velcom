@@ -343,7 +343,7 @@ export default class StatusComparisonGraph extends Vue {
           saveAsImage: {
             show: true,
             pixelRatio: 2,
-            type: 'jpg',
+            type: 'jpeg',
             backgroundColor: this.graphBackgroundColor
           },
           myDecal: {
@@ -520,7 +520,7 @@ export default class StatusComparisonGraph extends Vue {
       if (event.ctrlKey || event.button === 1) {
         const routeData = this.$router.resolve({
           name: 'run-detail',
-          params: params
+          params
         })
         window.open(routeData.href, '_blank')
         return
@@ -528,7 +528,7 @@ export default class StatusComparisonGraph extends Vue {
     }
     this.$router.push({
       name: 'run-detail',
-      params: params
+      params
     })
   }
 

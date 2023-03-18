@@ -49,7 +49,7 @@ import { mdiSourceBranch } from '@mdi/js'
 @Component({
   components: {
     'repo-display': InlineMinimalRepoDisplay,
-    TextChip: TextChip
+    TextChip
   }
 })
 export default class SearchResultBranch extends Vue {

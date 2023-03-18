@@ -18,7 +18,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2-beta
         with:
-          node-version: '12'
+          node-version: '19'
 
       - name: "Build frontend (location independent)"
         run: "./scripts/build-frontend --env production"

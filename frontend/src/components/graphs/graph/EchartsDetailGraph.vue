@@ -180,8 +180,8 @@ class EchartsDataPoint {
     this.benchmarkStatus = benchmarkStatus
     this.name = name
     this.itemStyle = {
-      color: color,
-      borderColor: borderColor,
+      color,
+      borderColor,
       borderWidth: 2
     }
 
@@ -703,7 +703,7 @@ export default class EchartsDetailGraph extends Vue {
       lineStyle: {
         color: series.color
       },
-      links: links,
+      links,
       data: echartPoints as any
     }
   }

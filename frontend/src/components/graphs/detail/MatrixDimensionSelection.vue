@@ -154,8 +154,8 @@ export default class MatrixMeasurementIdSelection extends Vue {
   private metricColor(benchmark: string, metric: string): string {
     if (this.selectedDimensionSet.has(benchmark + ' - ' + metric)) {
       return vxm.colorModule.colorForDetailDimension({
-        benchmark: benchmark,
-        metric: metric
+        benchmark,
+        metric
       })
     }
     return 'accent'
