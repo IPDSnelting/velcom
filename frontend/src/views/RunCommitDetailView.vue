@@ -5,7 +5,12 @@
         <v-skeleton-loader type="card"></v-skeleton-loader>
       </v-col>
     </v-row>
-    <v-row v-if="commit">
+    <!--
+        Vue reuses elements on conditional re-render. The run-detail page's render method is relatively heavy though,
+        so we need to prevent Vue reusing its slot for the asynchronously loaded commit row.
+        See https://github.com/IPDSnelting/velcom/pull/342 for more information.
+     -->
+    <v-row v-if="commit" key="commitsource">
       <v-col>
         <commit-detail
           :commit="commit"
@@ -21,7 +26,7 @@
         </commit-detail>
       </v-col>
     </v-row>
-    <v-row v-if="tarSource" justify="center">
+    <v-row v-if="tarSource" justify="center" key="tarsource">
       <v-col cols="auto">
         <tar-overview
           :tar-source="tarSource"
@@ -29,7 +34,7 @@
         ></tar-overview>
       </v-col>
     </v-row>
-    <v-row v-if="runWithDifferences">
+    <v-row v-if="runWithDifferences" key="runwithdiffs">
       <v-col>
         <run-detail
           @navigate-to-detail-graph="navigateToDetailGraph"
@@ -37,7 +42,7 @@
         ></run-detail>
       </v-col>
     </v-row>
-    <v-row v-if="finishedLoading && !runWithDifferences">
+    <v-row v-if="finishedLoading && !runWithDifferences" key="notbenchmarked">
       <v-col>
         <v-card>
           <v-card-title>
@@ -59,10 +64,10 @@
         </v-card>
       </v-col>
     </v-row>
-    <v-row v-if="show404">
+    <v-row v-if="show404" key="404">
       <page-404></page-404>
     </v-row>
-    <v-row v-if="commit && runWithDifferences" no-gutters>
+    <v-row v-if="commit && runWithDifferences" no-gutters key="timeline">
       <v-col>
         <run-timeline
           :selectedRunId="runWithDifferences ? runWithDifferences.run.id : null"
