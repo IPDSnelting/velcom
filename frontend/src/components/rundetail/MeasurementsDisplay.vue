@@ -71,12 +71,12 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import {
+  Dimension,
+  DimensionDifference,
+  DimensionInterpretation,
   Measurement,
   MeasurementError,
-  MeasurementSuccess,
-  DimensionInterpretation,
-  DimensionDifference,
-  Dimension
+  MeasurementSuccess
 } from '@/store/types'
 import MeasurementValueDisplay from '@/components/rundetail/MeasurementValueDisplay.vue'
 import { safeConvertAnsi } from '@/util/Texts'
@@ -284,10 +284,22 @@ export default class MeasurementsDisplay extends Vue {
   private differenceForDimension(
     dimension: Dimension
   ): DimensionDifference | undefined {
+    return this.differencesByDimension[dimension.toString()]
+  }
+
+  private get differencesByDimension(): {
+    [asString: string]: DimensionDifference
+  } {
     if (!this.differences) {
-      return undefined
+      return {}
     }
-    return this.differences.find(it => it.dimension.equals(dimension))
+    const differencesByDimension: {
+      [asString: string]: DimensionDifference
+    } = {}
+    this.differences.forEach(it => {
+      differencesByDimension[it.dimension.toString()] = it
+    })
+    return differencesByDimension
   }
 
   private errorToItem(measurementError: MeasurementError): Item {
