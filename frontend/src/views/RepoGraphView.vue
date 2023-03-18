@@ -78,7 +78,9 @@ export default class RepoGraphView extends Vue {
 
   // <!--<editor-fold desc="Dimension selection">-->
   private get allDimensions() {
-    return this.repo ? this.repo.dimensions : []
+    return this.repo
+      ? this.repo.dimensions.filter(d => !d.benchmark.startsWith('~'))
+      : []
   }
 
   private get selectedDimensions() {
