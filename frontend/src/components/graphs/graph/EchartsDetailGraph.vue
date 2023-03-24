@@ -280,11 +280,7 @@ export default class EchartsDetailGraph extends Vue {
         min: this.dataRangeMin.getTime(),
         max: this.dataRangeMax.getTime(),
         axisLabel: {
-          formatter: {
-            year: '{MMM}\n{yyyy}',
-            month: '{MMM}\n{yyyy}',
-            day: '{dd}.{MM}.\n{yyyy}'
-          }
+          formatter: '{yyyy}-{MM}-{dd}'
         }
       },
       yAxis: [
