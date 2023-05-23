@@ -27,7 +27,7 @@
     <metainf-services.version>1.8</metainf-services.version>
     <micrometer.version>1.8.1</micrometer.version>
     <prometheus.version>0.13.0</prometheus.version>
-    <sqlite.version>3.36.0.3</sqlite.version>
+    <sqlite.version>3.41.2.2</sqlite.version>
 
     <maven-antrun-plugin.version>3.0.0</maven-antrun-plugin.version>
     <maven-dependency-plugin.version>3.1.2</maven-dependency-plugin.version>
