@@ -523,6 +523,10 @@ public class GithubPrInteractor {
 			// Get commits and runs to compare to
 			List<CommitHash> compareToHash = commitAccess
 				.getFirstParentsOfBranch(repo.getId(), reply.getTargetBranch(), reply.getCommitHash());
+			// Actually we only care about the first join point
+			if (compareToHash.size() > 0) {
+			    compareToHash = compareToHash.subList(0, 1);
+			}
 			Map<CommitHash, RunId> runIds = benchmarkAccess.getLatestRunIds(repo.getId(), compareToHash);
 			List<Run> compareToRuns = benchmarkAccess.getRuns(runIds.values());
 
