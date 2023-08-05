@@ -125,12 +125,15 @@ export default class RunComparisonView extends Vue {
   private async fetchData() {
     this.comparison = null
 
-    this.comparison = await vxm.commitDetailComparisonModule.fetchComparison({
-      first: this.first,
-      second: this.second,
-      hash1: this.hash1,
-      hash2: this.hash2
-    })
+    // We don't need reactivity on this object, we only swap it wholesale.
+    this.comparison = Object.freeze(
+      await vxm.commitDetailComparisonModule.fetchComparison({
+        first: this.first,
+        second: this.second,
+        hash1: this.hash1,
+        hash2: this.hash2
+      })
+    )
   }
 
   mounted(): void {
