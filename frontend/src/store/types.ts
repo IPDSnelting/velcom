@@ -318,11 +318,33 @@ export class RunResultVelcomError {
 }
 export class RunResultSuccess {
   readonly measurements: Measurement[]
+  perDimension?: Map<string, Measurement>
 
   constructor(measurements: Measurement[]) {
     this.measurements = measurements
   }
+
+  /**
+   * Returns the measurement for a given dimension from a lazily-populated cache.
+   *
+   * @param dimension the dimension to look up the measurement for
+   */
+  public forDimension(dimension: Dimension): Measurement | undefined {
+    if (this.perDimension === undefined) {
+      this.perDimension = new Map()
+      for (const measurement of this.measurements) {
+        // We only have one measurement per dimension, so this index is safe and won't collide.
+        // Freeze the object as we won't make fine-granular changes to it (we always re-fetch the whole run)
+        this.perDimension.set(
+          measurement.dimension.toString(),
+          Object.freeze(measurement)
+        )
+      }
+    }
+    return this.perDimension!.get(dimension.toString())
+  }
 }
+
 export type RunResult =
   | RunResultScriptError
   | RunResultVelcomError
