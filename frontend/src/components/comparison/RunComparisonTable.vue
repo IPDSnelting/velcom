@@ -53,12 +53,12 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import {
-  Run,
-  DimensionDifference,
   Dimension,
-  RunResultSuccess,
+  DimensionDifference,
+  DimensionInterpretation,
   MeasurementSuccess,
-  DimensionInterpretation
+  Run,
+  RunResultSuccess
 } from '@/store/types'
 import { Prop } from 'vue-property-decorator'
 
@@ -165,19 +165,36 @@ export default class RunComparisonTable extends Vue {
     ]
   }
 
+  /**
+   * Cache the differences indexed by dimension as that is the main lookup direction in the item generation.
+   */
+  get differencesPerDimension(): Map<string, DimensionDifference> {
+    const diffsPerDim: Map<string, DimensionDifference> = new Map()
+    for (const diff of this.differences) {
+      // We only have one measurement per dimension, so this index is safe and won't collide.
+      // Safety assertion if this ever changes
+      if (diffsPerDim.has(diff.dimension.toString())) {
+        throw new Error(
+          'Duplicated dimension detected: ' + diff.dimension.toString()
+        )
+      }
+      // We never partially modify the contents, ignore changes to them.
+      diffsPerDim.set(diff.dimension.toString(), Object.freeze(diff))
+    }
+    return diffsPerDim
+  }
+
   private get items(): TableItem[] {
     const allDimensions = this.getDimensionsForRun(this.first).concat(
       this.getDimensionsForRun(this.second)
     )
 
-    const uniqueDimensions: Dimension[] = []
+    const uniqueDimensions: Map<string, Dimension> = new Map()
     allDimensions.forEach(dim => {
-      if (!uniqueDimensions.find(existing => existing.equals(dim))) {
-        uniqueDimensions.push(dim)
-      }
+      uniqueDimensions.set(dim.toString(), dim)
     })
 
-    return uniqueDimensions.map(
+    return Array.from(uniqueDimensions.values()).map(
       dimension =>
         new TableItem(
           dimension.benchmark,
@@ -201,9 +218,7 @@ export default class RunComparisonTable extends Vue {
   }
 
   private getDifference(dimension: Dimension): number | undefined {
-    const difference = this.differences.find(it =>
-      it.dimension.equals(dimension)
-    )
+    const difference = this.differencesPerDimension.get(dimension.toString())
     if (difference) {
       return difference.absDiff
     }
@@ -211,9 +226,7 @@ export default class RunComparisonTable extends Vue {
   }
 
   private getDifferencePercent(dimension: Dimension): number | undefined {
-    const difference = this.differences.find(it =>
-      it.dimension.equals(dimension)
-    )
+    const difference = this.differencesPerDimension.get(dimension.toString())
     if (difference) {
       return difference.relDiff
     }
@@ -221,9 +234,7 @@ export default class RunComparisonTable extends Vue {
   }
 
   private getStddevDiff(dimension: Dimension): number | undefined {
-    const difference = this.differences.find(it =>
-      it.dimension.equals(dimension)
-    )
+    const difference = this.differencesPerDimension.get(dimension.toString())
     if (difference) {
       return difference.stddevDiff
     }
@@ -232,9 +243,7 @@ export default class RunComparisonTable extends Vue {
 
   private getValue(run: Run, dimension: Dimension): number | undefined {
     if (run.result instanceof RunResultSuccess) {
-      const relevantMeasurement = run.result.measurements.find(it =>
-        it.dimension.equals(dimension)
-      )
+      const relevantMeasurement = run.result.forDimension(dimension)
       if (!relevantMeasurement) {
         return undefined
       }
