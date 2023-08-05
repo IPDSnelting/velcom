@@ -170,14 +170,12 @@ export default class RunComparisonTable extends Vue {
       this.getDimensionsForRun(this.second)
     )
 
-    const uniqueDimensions: Dimension[] = []
+    const uniqueDimensions: Map<string, Dimension> = new Map()
     allDimensions.forEach(dim => {
-      if (!uniqueDimensions.find(existing => existing.equals(dim))) {
-        uniqueDimensions.push(dim)
-      }
+      uniqueDimensions.set(dim.toString(), dim)
     })
 
-    return uniqueDimensions.map(
+    return Array.from(uniqueDimensions.values()).map(
       dimension =>
         new TableItem(
           dimension.benchmark,
