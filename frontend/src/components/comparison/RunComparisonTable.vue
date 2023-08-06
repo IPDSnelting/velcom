@@ -3,6 +3,7 @@
     :headers="headers"
     :items="items"
     :items-per-page="200"
+    :footer-props="{ itemsPerPageOptions: [5, 25, 100, 200, 500, -1] }"
     multi-sort
     dense
     class="compare-table"
