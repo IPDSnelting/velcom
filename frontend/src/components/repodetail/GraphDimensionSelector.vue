@@ -3,6 +3,7 @@
     <v-card-text>
       <div class="d-flex align-center justify-space-between">
         <v-btn
+          v-if="canUseMatrixSelector"
           @click="useMatrixSelector = !useMatrixSelector"
           color="primary"
           :outlined="!isFullscreen"
@@ -12,6 +13,10 @@
           <span v-if="useMatrixSelector">Use tree selector</span>
           <span v-if="!useMatrixSelector">Use matrix selector</span>
         </v-btn>
+        <span v-else class="font-italic">
+          Matrix selector disabled ({{ matrixSelectorCellCount }} cells >
+          {{ maxMatrixSelectorCellCount }})
+        </span>
 
         <v-btn v-if="!isFullscreen" icon @click="$emit('expand')">
           <v-icon>{{ expandIcon }}</v-icon>
@@ -67,6 +72,8 @@ export default class GraphDimensionSelector extends Vue {
   @Prop({ default: 'matrix' })
   private readonly selectorType!: 'tree' | 'matrix'
 
+  private readonly maxMatrixSelectorCellCount = 3000
+
   @Watch('selectedDimensions')
   @Watch('repoId')
   private reloadGraphData() {
@@ -77,8 +84,24 @@ export default class GraphDimensionSelector extends Vue {
     this.$emit('update:selectedDimensions', newDimensions)
   }
 
+  private get matrixSelectorCellCount() {
+    const benchmarks = new Set()
+    const metrics = new Set()
+    for (const dim of this.allDimensions) {
+      benchmarks.add(dim.benchmark)
+      metrics.add(dim.metric)
+    }
+    return benchmarks.size * metrics.size
+  }
+
+  private get canUseMatrixSelector() {
+    // This limit is arbitrary. It was chosen as a round number that does not cause rendering glitches in my browser...
+    // At some point you can not see the whole matrix in full-screen either, making it less useful
+    return this.matrixSelectorCellCount < this.maxMatrixSelectorCellCount
+  }
+
   private get useMatrixSelector() {
-    return this.selectorType === 'matrix'
+    return this.selectorType === 'matrix' && this.canUseMatrixSelector
   }
 
   private set useMatrixSelector(useMatrixSelector: boolean) {

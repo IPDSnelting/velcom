@@ -19,10 +19,13 @@
           >
             {{ benchmark }}
           </th>
-          <td v-for="metric in allMetrics" :key="benchmark + metric">
+          <td
+            v-for="[metric, exists] in benchmarkRow(benchmark)"
+            :key="benchmark + metric"
+          >
             <v-checkbox
+              v-if="exists"
               :input-value="isSelected(benchmark, metric)"
-              v-if="combinationExists(benchmark, metric)"
               :color="metricColor(benchmark, metric)"
               dense
               hide-details
@@ -64,8 +67,21 @@ export default class MatrixMeasurementIdSelection extends Vue {
     return this.selectedDimensionSet.has(benchmark + ' - ' + metric)
   }
 
-  private combinationExists(benchmark: string, metric: string) {
-    return this.metricsFor(benchmark).includes(metric)
+  private get benchmarkToMetrics(): Map<string, Set<string>> {
+    const map: Map<string, Set<string>> = new Map()
+    for (const dim of this.allDimensions) {
+      if (!map.has(dim.benchmark)) {
+        map.set(dim.benchmark, new Set())
+      }
+      map.get(dim.benchmark)!.add(dim.metric)
+    }
+    return map
+  }
+
+  private benchmarkRow(benchmark: string): [string, boolean][] {
+    const metrics = this.benchmarkToMetrics.get(benchmark)!
+
+    return this.allMetrics.map(metric => [metric, metrics.has(metric)])
   }
 
   private get allBenchmarks(): string[] {
@@ -73,18 +89,23 @@ export default class MatrixMeasurementIdSelection extends Vue {
     return locallySorted(distinct(benchmarks))
   }
 
-  private metricsFor(benchmark: string): string[] {
-    const metrics = distinct(
-      this.allDimensions
-        .filter(it => it.benchmark === benchmark)
-        .map(it => it.metric)
-    )
-    return locallySorted(metrics)
+  private get allMetrics(): string[] {
+    const allMetrics: Set<string> = new Set()
+    for (const metrics of this.benchmarkToMetrics.values()) {
+      for (const metric of metrics.values()) {
+        allMetrics.add(metric)
+      }
+    }
+    return locallySorted(Array.from(allMetrics.values()))
+  }
+
+  private metricsFor(benchmark: string): Set<string> {
+    return this.benchmarkToMetrics.get(benchmark)!
   }
 
   private toggleAllForMetric(metric: string) {
     const relevantBenchmarks: string[] = this.allBenchmarks.filter(benchmark =>
-      this.metricsFor(benchmark).includes(metric)
+      this.metricsFor(benchmark).has(metric)
     )
 
     let resultingSelectedDimensions: Dimension[]
@@ -116,7 +137,7 @@ export default class MatrixMeasurementIdSelection extends Vue {
   }
 
   private toggleAllForBenchmark(benchmark: string) {
-    const relevantMetrics = this.metricsFor(benchmark)
+    const relevantMetrics = Array.from(this.metricsFor(benchmark))
 
     let resultingSelectedDimensions: Dimension[]
 
@@ -143,12 +164,6 @@ export default class MatrixMeasurementIdSelection extends Vue {
       )
     }
     this.updateSelectedDimensions(resultingSelectedDimensions)
-  }
-
-  private get allMetrics(): string[] {
-    return Array.from(
-      new Set(this.allBenchmarks.flatMap(it => this.metricsFor(it))).values()
-    ).sort((a, b) => a.localeCompare(b))
   }
 
   private metricColor(benchmark: string, metric: string): string {
