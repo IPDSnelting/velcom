@@ -106,31 +106,6 @@ jobs:
           docker tag $IMAGE_NAME $IMAGE_ID:latest
           docker push $IMAGE_ID:latest
 
-
-  # Deploy master branch to speedcenter.informatik.kit.edu
-  deploy-kit:
-    # Ensure build job passes before pushing image.
-    needs: [push-docker-image]
-
-    runs-on: ubuntu-latest
-    if: "github.event_name == 'push' && github.ref == 'refs/heads/main'"
-
-    env:
-      ENDPOINT: ${{ secrets.KIT_DEPLOY_ENDPOINT }}
-      DEPLOY_SECRET: ${{ secrets.KIT_DEPLOY_SECRET }}
-      GITHUB_NAME: ${{ github.actor }}
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      GITHUB_RUN_ID: ${{ github.run_id }}
-
-    steps:
-      - uses: actions/checkout@v2
-      - name: "Download backend artifacts"
-        uses: actions/download-artifact@v2
-        with:
-          name: backend-artifacts
-      - name: "Call deploy script"
-        run: "bash scripts/deploy-kit/deploy.sh"
-
   # Deploy main branch to velcom.aaaaaaah.de
   deploy-aaaaaaah:
     # Ensure build job passes before pushing image.
