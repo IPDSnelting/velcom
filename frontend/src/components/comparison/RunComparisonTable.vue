@@ -65,7 +65,7 @@ import { Prop } from 'vue-property-decorator'
 
 const numberFormat: Intl.NumberFormat = new Intl.NumberFormat(
   new Intl.NumberFormat().resolvedOptions().locale,
-  { maximumFractionDigits: 3 }
+  { maximumFractionDigits: 3, notation: 'compact' }
 )
 
 class TableItem {

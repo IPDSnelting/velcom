@@ -172,6 +172,8 @@
         </executions>
         <configuration>
           <dotGitDirectory>${project.basedir}/../../.git</dotGitDirectory>
+          <failOnUnableToExtractRepoInfo>false</failOnUnableToExtractRepoInfo>
+          <failOnNoGitDirectory>false</failOnNoGitDirectory>
           <generateGitPropertiesFile>true</generateGitPropertiesFile>
           <generateGitPropertiesFilename>${project.build.outputDirectory}/git.properties
           </generateGitPropertiesFilename>
