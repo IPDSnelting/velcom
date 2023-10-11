@@ -68,6 +68,10 @@ public class SignificanceDetector {
 	}
 
 	private boolean isSignificantDifference(DimensionDifference diff) {
+		if (diff.getDimension().getBenchmark().startsWith("~"))
+			// 1B instructions
+			return diff.getDiff() >= 1_000_000_000;
+
 		boolean relSignificant = diff.getReldiff()
 			.map(reldiff -> Math.abs(reldiff) >= significanceFactors.getRelativeThreshold())
 			// There is no reldiff if the first value is 0. But if the second value is also zero, that

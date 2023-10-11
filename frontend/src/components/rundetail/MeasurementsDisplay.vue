@@ -85,7 +85,7 @@ import { vxm } from '@/store'
 
 const numberFormat: Intl.NumberFormat = new Intl.NumberFormat(
   new Intl.NumberFormat().resolvedOptions().locale,
-  { maximumFractionDigits: 3 }
+  { maximumFractionDigits: 3, notation: 'compact' }
 )
 
 class Item {

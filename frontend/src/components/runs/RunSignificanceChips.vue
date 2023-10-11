@@ -68,7 +68,7 @@ import { Prop } from 'vue-property-decorator'
 
 const numberFormat: Intl.NumberFormat = new Intl.NumberFormat(
   new Intl.NumberFormat().resolvedOptions().locale,
-  { maximumFractionDigits: 1 }
+  { maximumFractionDigits: 1, notation: 'compact' }
 )
 
 const iconMappings = {
@@ -102,7 +102,7 @@ class RelevantChange {
 
       this.change = change
     } else {
-      this.change = difference.relDiff
+      this.change = difference.relDiff && !this.id.benchmark.startsWith('~')
         ? this.formatPercentage(difference.relDiff)
         : this.formatNumber(difference.absDiff)
     }
