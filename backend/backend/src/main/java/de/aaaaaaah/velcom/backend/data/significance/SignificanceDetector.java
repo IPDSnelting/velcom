@@ -70,7 +70,7 @@ public class SignificanceDetector {
 	private boolean isSignificantDifference(DimensionDifference diff) {
 		if (diff.getDimension().getBenchmark().startsWith("~"))
 			// 1B instructions
-			return Math.abs(diff.getDiff()) >= 10_000_000_000;
+			return Math.abs(diff.getDiff()) >= 10_000_000_000L;
 
 		boolean relSignificant = diff.getReldiff()
 			.map(reldiff -> Math.abs(reldiff) >= significanceFactors.getRelativeThreshold())
