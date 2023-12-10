@@ -63,10 +63,9 @@ jobs:
           name: backend-artifacts
           path: backend/runner/target/runner.jar
       - name: Release runner
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v1
         with:
-          name: runner-${{ github.sha }}
           files: backend/runner/target/runner.jar
           fail_on_unmatched_files: true
         env:
