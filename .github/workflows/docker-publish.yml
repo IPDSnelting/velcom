@@ -62,6 +62,16 @@ jobs:
         with:
           name: backend-artifacts
           path: backend/runner/target/runner.jar
+      - name: Release runner
+        if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+        uses: softprops/action-gh-release@v1
+        with:
+          name: runner-${{ github.sha }}
+          files: backend/runner/target/runner.jar
+          fail_on_unmatched_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  
 
   # Push location independent image to GitHub Packages.
   push-docker-image:
@@ -69,7 +79,7 @@ jobs:
     needs: [build-frontend, build-backend]
 
     runs-on: ubuntu-latest
-    if: "github.event_name == 'push' && github.ref == 'refs/heads/main'"
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     steps:
       # SETUP
@@ -112,7 +122,7 @@ jobs:
     needs: [push-docker-image]
 
     runs-on: ubuntu-latest
-    if: "github.event_name == 'push' && github.ref == 'refs/heads/main'"
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     steps:
       - uses: actions/checkout@v2
