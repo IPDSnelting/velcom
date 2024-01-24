@@ -13,7 +13,7 @@ public class HeartbeatHandler {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(HeartbeatHandler.class);
 
-	private static final int DEFAULT_TIMEOUT_SECONDS = 20;
+	private static final int DEFAULT_TIMEOUT_SECONDS = 200;
 
 	private final AtomicReference<Instant> lastTime;
 	private volatile boolean run;
@@ -22,7 +22,7 @@ public class HeartbeatHandler {
 	 * Creates a new heartbeat handler for the given socket.
 	 *
 	 * <p>
-	 * Uses the default timeout of <em>currently</em> 20 seconds.
+	 * Uses the default timeout of <em>currently</em> 200 seconds.
 	 *
 	 * @param socketConnection the socket to monitor
 	 */
