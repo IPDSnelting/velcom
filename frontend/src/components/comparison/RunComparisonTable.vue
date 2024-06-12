@@ -158,7 +158,6 @@ export default class RunComparisonTable extends Vue {
       {
         text: '->',
         value: 'difference',
-        sortable: false,
         filterable: false,
         align: 'end'
       },
