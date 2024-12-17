@@ -117,16 +117,3 @@ jobs:
           docker tag $IMAGE_NAME $IMAGE_ID:latest
           docker push $IMAGE_ID:latest
 
-  # Deploy main branch to velcom.aaaaaaah.de
-  deploy-aaaaaaah:
-    # Ensure build job passes before pushing image.
-    needs: [push-docker-image]
-
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-
-    steps:
-      - uses: actions/checkout@v2
-      - name: "Call deploy script"
-        run: 'curl -H "Authorization: Bearer ${{ secrets.AAAAAAAH_PING_TOKEN }}" ${{ secrets.AAAAAAAH_PING_ENDPOINT }} || echo "We only need the ping, not the response."'
-
