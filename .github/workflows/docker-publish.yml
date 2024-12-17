@@ -15,15 +15,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2-beta
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '19'
 
       - name: "Build frontend (location independent)"
         run: "./scripts/build-frontend --env production"
       - name: "Upload frontend artifacts (location independent)"
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: frontend-artifacts
           path: frontend/dist
@@ -33,11 +33,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-java@v1
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
         with:
+          distribution: 'temurin'
           java-version: '11'
-      - uses: actions/cache@v2
+      - uses: actions/cache@v4
         with:
           path: ~/.m2/repository
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
@@ -48,29 +49,29 @@ jobs:
         run: "./scripts/build-backend"
 
       - name: "Upload backend/backend artifact"
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
-          name: backend-artifacts
+          name: backend-artifacts-backend
           path: backend/backend/target/backend.jar
       - name: "Upload aspectjweaver artifact"
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: aspectjweaver-artifact
           path: backend/backend/target/dependency/aspectjweaver.jar
       - name: "Upload backend/runner artifacts"
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
-          name: backend-artifacts
+          name: backend-artifacts-runner
           path: backend/runner/target/runner.jar
       - name: Release runner
         if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: backend/runner/target/runner.jar
           fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  
+
 
   # Push location independent image to GitHub Packages.
   push-docker-image:
@@ -82,19 +83,20 @@ jobs:
 
     steps:
       # SETUP
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: "Download frontend artifacts"
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: frontend-artifacts
           path: dist
-      - name: "Download backend artifact"
-        uses: actions/download-artifact@v2
+      - name: "Download backend artifacts"
+        uses: actions/download-artifact@v4
         with:
-          name: backend-artifacts
+          pattern: backend-artifacts-*
+          merge-multiple: true
       - name: "Download aspectjweaver artifact"
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: aspectjweaver-artifact
 
