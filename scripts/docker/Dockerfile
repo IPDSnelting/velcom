@@ -1,7 +1,7 @@
 # vim: ft=dockerfile
 
 # Base image is java 11
-FROM openjdk:11-slim
+FROM eclipse-temurin:11
 LABEL "velcom-server"="true"
 
 
