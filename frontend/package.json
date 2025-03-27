@@ -10,7 +10,7 @@
   "dependencies": {
     "@types/dygraphs": "^1.1.11",
     "ansi_up": "^5.1.0",
-    "axios": "^1.6.0",
+    "axios": "^1.8.2",
     "core-js": "^3.29.1",
     "dygraphs": "I-Al-Istannen/dygraphs#1e0170e98b5e8501d0ab12d897e14b1b322bd169",
     "vue": "^2.6.14",
